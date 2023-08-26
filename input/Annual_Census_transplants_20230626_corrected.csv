@@ -1,5 +1,4 @@
-﻿,,,,,,,,,,,,,veg ,repro ,repro ,repro ,repro ,
-date,block ,row ,col ,pop ,mf ,rep ,pheno ,diam mm ,height cm ,total branch ,herb dam ,wilt status ,longest leaf_cm ,flowers ,fruits ,longest fruit_cm ,repro_ branch ,notes 
+﻿date,block ,row ,col ,pop ,mf ,rep ,pheno ,diam_mm ,height_cm ,total_branch ,herb_dam ,wilt_status ,longest_leaf_cm_veg,flowers_repro,fruits_repro ,longest_fruit_cm_repro,repro_branch_repro ,notes 
 6/26/23,D1 ,1,A ,buffer ,,,,,,,,,,,,,,
 6/26/23,D1 ,1,B ,buffer ,,,,,,,,,,,,,,
 6/26/23,D1 ,2,A ,buffer ,,,,,,,,,,,,,,

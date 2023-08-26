@@ -1,0 +1,135 @@
+---
+title: "Data Exploration"
+author: "Brandie Quarles"
+date: "2023-08-03"
+output: html_document:
+  keep_md: yes
+---
+
+To Do
+- read through notes to distinguish between "transplants" and "germination"
+- figure out what germination surveys are - see UCD notes 
+- read protocol of annual census - what's the purpose?
+
+#Note: Not all data has been added to the corrected csvs folder, some are still in raw csvs
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+##Relevant Libraries and Functions
+```{r}
+library(tidyverse)
+library(naniar) #replaces values with NA
+sem <- function(x, na.rm=FALSE) {
+  sd(x,na.rm=na.rm)/sqrt(length(na.omit(x)))
+} #standard error function 
+```
+
+
+##Figuring out what the different data are 
+#Annual Censuses of Germination and Transplant Beds
+Purpose: match native populations annual demog. censuses? 
+```{r}
+#Note: BQC edited the csvs prior to importing to R b/c of issues with the naming of columns and the first row of the transplants sheets not being the heading row (veg, repo info and not block, mf etc...) 
+anncensusgerm <- read_csv("input/Annual_census_germination_20230626_corrected.csv")
+head(anncensusgerm)
+summary(anncensusgerm)
+#convert "n/a" to NA
+anncensusgerm_nacorrected <- anncensusgerm %>% replace_with_na_all(condition = ~.x == "n/a")
+head(anncensusgerm_nacorrected, 30)
+summary(anncensusgerm_nacorrected) #only block:mf, pheno, herb_dam, wilt_status, and notes should be character
+anncensusgerm_nanumcorrected <- anncensusgerm_nacorrected %>% mutate_at(c("diam_mm", "height_cm", "total_branch", "longest_leaf_cm", "flowers", "fruits", "longest_fruit_cm", "repro_branch"), as.double)
+summary(anncensusgerm_nanumcorrected)
+
+anncensustrans_0522 <- read_csv("input/Annual_Census_Transplants_20230522_corrected.csv")
+head(anncensustrans_0522)
+summary(anncensustrans_0522)
+anncensustrans_0522 %>% filter(diam_mm=="X") #747 rows 
+anncensustrans_0522 %>% filter(is.na(diam_mm)) #53 rows 
+anncensustrans_0522_numcorrected <- anncensustrans_0522 %>% mutate_at(c("diam_mm", "height_cm", "total_branch", "longest_leaf_cm_veg", "flowers_repro", "fruits_repro", "longest_fruit_cm_repro", "repro_branch"), as.double)
+summary(anncensustrans_0522_numcorrected) #correct number of NAs
+
+anncensustrans_0626 <- read_csv("input/Annual_Census_transplants_20230626_corrected.csv")
+head(anncensustrans_0626)
+summary(anncensustrans_0626)
+
+names(anncensusgerm_nanumcorrected)
+names(anncensustrans_0522_numcorrected)
+names(anncensustrans_0626)
+```
+
+
+#Germination Surveys
+Purpose: monitor germination of planted seeds in germ beds (plants that didn't germinate in the lab)
+```{r}
+germsurvey_0127 = read_csv("input/Germination_survey_20230127_corrected.csv")
+summary(germsurvey_0127)
+head(germsurvey_0127)
+
+germsurvey_0210 = read_csv("input/Germination_survey_20230210_corrected.csv")
+summary(germsurvey_0210)
+head(germsurvey_0210)
+
+germsurvey_0508 = read_csv("input/Germination_survey_20230508_corrected.csv")
+summary(germsurvey_0508)
+head(germsurvey_0508)
+```
+
+
+#Mortality Survey?
+```{r}
+mortsurvey <- read_csv("input/Mortality_survey_20230217_corrected.csv")
+summary(mortsurvey) #859 rows so proably only transplant beds?
+head(mortsurvey)
+```
+
+
+#Phenology Survey of Germination Bed?
+```{r}
+pheno_germs <- read_csv("input/Phenology_survey_germination_20230515_corrected.csv")
+summary(pheno_germs)
+head(pheno_germs)
+```
+
+
+#Size Surveys of Germination and Transplant Beds?
+```{r}
+size_germs_0303
+size_germs_0317
+size_germs_0324
+size_germs_0403
+size_germs_0417
+size_germs_0424
+size_germs_0508
+size_germs_0515
+size_germs_0605
+
+size_trans_1213
+sie_trans_0303
+sie_trans_0317
+sie_trans_0324
+sie_trans_0403
+sie_trans_0417
+sie_trans_0424
+sie_trans_0401
+sie_trans_0508
+sie_trans_0605
+
+ucd_garden_size_1128 <- read_csv("input/UCD_garden_size_measurements_20221128_corrected.csv")
+summary(ucd_garden_size_1128) #2264 rows... maybe germs and trans combined?
+head (ucd_garden_size_1128)
+```
+
+##Annual Census Analysis 
+Questions:
+- Is there more variation b/t populations than b/t mfs?
+- Are certain traits related to fitness?
+- Did low elevation populations perform better than high elevation populations?
+- Connection to climate of home site?
+```{r}
+names(anncensusgerm_nanumcorrected) #not a lot of actual observations, when was this collected?
+names(anncensustrans_0522_numcorrected)
+names(anncensustrans_0626)
+```
+
