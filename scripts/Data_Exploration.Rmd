@@ -1,0 +1,204 @@
+---
+title: "Data Exploration"
+author: "Brandie Quarles"
+date: "2023-08-03"
+output: html_document:
+  keep_md: yes
+---
+
+To Do
+- read through notes to distinguish between "transplants" and "germination"
+- figure out what germination surveys are - see UCD notes 
+- read protocol of annual census - what's the purpose?
+
+#Note: Not all data has been added to the corrected csvs folder, some are still in raw csvs
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+##Relevant Libraries and Functions
+```{r}
+library(tidyverse)
+library(naniar) #replaces values with NA
+sem <- function(x, na.rm=FALSE) {
+  sd(x,na.rm=na.rm)/sqrt(length(na.omit(x)))
+} #standard error function 
+
+elev_three_palette <- c("#0043F0", "#C9727F", "#F5A540") #colors from Gremer et al 2019
+elev_order <- c("high", "mid", "low")
+```
+
+
+##Figuring out what the different data are 
+#Annual Censuses of Germination and Transplant Beds
+Purpose: match native populations annual demog. censuses? 
+```{r}
+#Note: BQC edited the csvs prior to importing to R b/c of issues with the naming of columns and the first row of the transplants sheets not being the heading row (veg, repo info and not block, mf etc...) 
+pop_elev <- read_csv("../input/Pops_for_2022_UCD.csv")
+summary(pop_elev)
+pop_elev_nonotes <- pop_elev %>% select(-notes)
+pop_elev_nonotes
+
+anncensusgerm <- read_csv("../input/Annual_census_germination_20230626_corrected.csv")
+head(anncensusgerm)
+summary(anncensusgerm)
+#convert "n/a" to NA
+anncensusgerm_nacorrected <- anncensusgerm %>% replace_with_na_all(condition = ~.x == "n/a")
+head(anncensusgerm_nacorrected, 30)
+summary(anncensusgerm_nacorrected) #only block:mf, pheno, herb_dam, wilt_status, and notes should be character
+anncensusgerm_nanumcorrected <- anncensusgerm_nacorrected %>% mutate_at(c("diam_mm", "height_cm", "total_branch", "longest_leaf_cm", "flowers", "fruits", "longest_fruit_cm", "repro_branch"), as.double)
+summary(anncensusgerm_nanumcorrected)
+
+anncensustrans_0522 <- read_csv("../input/Annual_Census_Transplants_20230522_corrected.csv")
+head(anncensustrans_0522)
+summary(anncensustrans_0522)
+anncensustrans_0522 %>% filter(diam_mm=="X") #747 rows 
+anncensustrans_0522 %>% filter(is.na(diam_mm)) #53 rows 
+anncensustrans_0522_numcorrected <- anncensustrans_0522 %>% mutate_at(c("diam_mm", "height_cm", "total_branch", "longest_leaf_cm_veg", "flowers_repro", "fruits_repro", "longest_fruit_cm_repro", "repro_branch"), as.double)
+summary(anncensustrans_0522_numcorrected) #correct number of NAs
+
+anncensustrans_0626 <- read_csv("../input/Annual_Census_transplants_20230626_corrected.csv")
+head(anncensustrans_0626)
+summary(anncensustrans_0626)
+
+names(anncensusgerm_nanumcorrected)
+names(anncensustrans_0522_numcorrected)
+names(anncensustrans_0626)
+names(pop_elev_nonotes)
+
+#merge with elevation info 
+anncensustrans_0522_elev <- left_join(anncensustrans_0522_numcorrected, pop_elev_nonotes, by=c("pop"="parent.pop"))
+head(anncensustrans_0522_elev, 30)
+summary(anncensustrans_0522_elev)
+```
+
+
+#Germination Surveys
+Purpose: monitor germination of planted seeds in germ beds (plants that didn't germinate in the lab)
+```{r}
+germsurvey_0127 = read_csv("../input/Germination_survey_20230127_corrected.csv")
+summary(germsurvey_0127)
+head(germsurvey_0127)
+
+germsurvey_0210 = read_csv("../input/Germination_survey_20230210_corrected.csv")
+summary(germsurvey_0210)
+head(germsurvey_0210)
+
+germsurvey_0508 = read_csv("../input/Germination_survey_20230508_corrected.csv")
+summary(germsurvey_0508)
+head(germsurvey_0508)
+```
+
+
+#Mortality Survey?
+```{r}
+mortsurvey <- read_csv("../input/Mortality_survey_20230217_corrected.csv")
+summary(mortsurvey) #859 rows so proably only transplant beds?
+head(mortsurvey)
+```
+
+
+#Phenology Survey of Germination Bed?
+```{r}
+pheno_germs <- read_csv("../input/Phenology_survey_germination_20230515_corrected.csv")
+summary(pheno_germs)
+head(pheno_germs)
+```
+
+
+#Size Surveys of Germination and Transplant Beds?
+```{r}
+size_germs_0303
+size_germs_0317
+size_germs_0324
+size_germs_0403
+size_germs_0417
+size_germs_0424
+size_germs_0508
+size_germs_0515
+size_germs_0605
+
+size_trans_1213
+sie_trans_0303
+sie_trans_0317
+sie_trans_0324
+sie_trans_0403
+sie_trans_0417
+sie_trans_0424
+sie_trans_0401
+sie_trans_0508
+sie_trans_0605
+
+ucd_garden_size_1128 <- read_csv("../input/UCD_garden_size_measurements_20221128_corrected.csv")
+summary(ucd_garden_size_1128) #2264 rows... maybe germs and trans combined?
+head (ucd_garden_size_1128)
+```
+
+##Annual Census Analysis 
+Questions:
+- Is there more variation b/t populations than b/t mfs?
+- Are certain traits related to fitness?
+- Did low elevation populations perform better than high elevation populations?
+- Connection to climate of home site?
+```{r}
+names(anncensusgerm_nanumcorrected) #not a lot of actual observations, when was this collected?
+names(anncensustrans_0522_numcorrected)
+names(anncensustrans_0626)
+
+#histograms
+anncensustrans_0522_numcorrected %>% ggplot(aes(x=diam_mm)) + geom_histogram()
+anncensustrans_0522_numcorrected %>% ggplot(aes(x=height_cm)) + geom_histogram()
+anncensustrans_0522_numcorrected %>% ggplot(aes(x=total_branch)) + geom_histogram()
+anncensustrans_0522_numcorrected %>% ggplot(aes(x=longest_leaf_cm_veg)) + geom_histogram()
+anncensustrans_0522_numcorrected %>% ggplot(aes(x=flowers_repro)) + geom_histogram()
+anncensustrans_0522_numcorrected %>% ggplot(aes(x=fruits_repro)) + geom_histogram()
+anncensustrans_0522_numcorrected %>% ggplot(aes(x=longest_fruit_cm_repro)) + geom_histogram()
+
+#plot traits across pops and mfs 
+anncensustrans_0522_numcorrected %>% ggplot(aes(x=pop, y=diam_mm)) + geom_boxplot() #more pops with data on 0522 than 0626
+anncensustrans_0626 %>% ggplot(aes(x=pop, y=diam_mm)) + geom_boxplot()
+
+```
+
+Checking Survival to May 22, 2023
+```{r}
+#table of phenology variable 
+xtabs(~pheno, data = anncensustrans_0522_numcorrected) 
+#747 dead (X)
+#32 vegetative (V)
+#15 post flowering (fruiting) (P)
+#8 budding (B)
+#3 flowering (F)
+
+#convert everything not dead to alive
+anncensustrans_0522_elev_surv <- anncensustrans_0522_elev %>% mutate(Surv=ifelse(pheno == "X", 0, 1)) %>% select(phylogroup, elevation.group, UCD.seed.year, date:repro_branch, Surv) #1=survived, 0=dead 
+head(anncensustrans_0522_elev_surv, 30)
+tail(anncensustrans_0522_elev_surv, 30)
+
+xtabs(~Surv, data = anncensustrans_0522_elev_surv) #only 58 plants alive late May 
+surv_popmeans <- anncensustrans_0522_elev_surv %>% group_by(pop, elevation.group) %>% summarise(meanSurv=mean(Surv, na.rm = TRUE), sem.mort=sem(Surv, na.rm=TRUE))
+surv_popmeans <- surv_popmeans %>% subset(pop != "buffer")
+surv_popmeans
+
+surv_popmeans$elevation.group <- factor(surv_popmeans$elevation.group, levels=elev_order)
+surv_popmeans$pop <- factor(surv_popmeans$pop)
+
+surv_popmeans %>% 
+  ggplot(aes(x=fct_reorder(pop, meanSurv), y=meanSurv, fill=elevation.group)) + 
+  geom_col(width = 0.7,position = position_dodge(0.75)) + 
+  geom_errorbar(aes(ymin=meanSurv-sem.mort,ymax=meanSurv+sem.mort),width=.2, position = 
+                  position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_manual(values=elev_three_palette) + 
+  labs(fill="Elevation") +
+   theme_classic() +
+  xlab("Population") +
+  #geom_hline(yintercept=0.5, linetype="dashed", color="red") +
+  theme(axis.text.x = element_text(angle = 45,  hjust = 1))
+
+xtabs(~elevation.group + Surv, data = anncensustrans_0522_elev_surv) #low elevation has the most alive and mid-elevation has the least, but this isn't standardized by the total amount planted
+
+surv_popmeans %>% ggplot(aes(x=elevation.group, y=meanSurv)) + geom_boxplot()
+```
+
