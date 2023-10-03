@@ -1,4 +1,4 @@
-﻿date,block ,row ,col ,pop ,mf ,rep ,pheno ,diam_mm ,height_cm ,total_branch ,herb_dam ,wilt_status ,longest_leaf_cm_veg,flowers_repro,fruits_repro ,longest_fruit_cm_repro,repro_branch_repro ,notes 
+﻿date,block ,row ,col ,pop ,mf ,rep ,pheno ,diam_mm ,height_cm ,total_branch ,herb_dam ,wilt_status ,longest_leaf_cm ,flowers ,fruits ,longest_fruit_cm ,repro_ branch ,notes 
 6/26/23,D1 ,1,A ,buffer ,,,,,,,,,,,,,,
 6/26/23,D1 ,1,B ,buffer ,,,,,,,,,,,,,,
 6/26/23,D1 ,2,A ,buffer ,,,,,,,,,,,,,,
@@ -619,7 +619,7 @@
 6/26/23,J1 ,11,D ,CP2 ,7,12,X ,,,,,,,,,,,
 6/26/23,J1 ,12,C ,BH ,7,23,X ,,,,,,,,,,,
 6/26/23,J1 ,12,D ,SQ2 ,7,7,X ,,,,,,,,,,,
-6/26/23,J1 ,13,C ,TM2 ,6,7,S ,12.47,56.9,1,N ,SW ,,3,10.3,263,1,
+6/26/23,J1 ,13,C ,TM2 ,6,7,S ,12.47,56.9,1,N ,SW ,,3,263,10.3,1,
 6/26/23,J1 ,13,D ,WR ,1,6,X,,,,,,,,,,,
 6/26/23,J1 ,14,C ,WL1 ,6,10,X,,,,,,,,,,,
 6/26/23,J1 ,14,D ,BH ,4,8,X,,,,,,,,,,,

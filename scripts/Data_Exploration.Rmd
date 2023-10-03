@@ -32,7 +32,7 @@ elev_order <- c("high", "mid", "low")
 
 ##Figuring out what the different data are 
 #Annual Censuses of Germination and Transplant Beds
-Purpose: match native populations annual demog. censuses? 
+Purpose: get more thorough data at peak fruiting
 ```{r}
 #Note: BQC edited the csvs prior to importing to R b/c of issues with the naming of columns and the first row of the transplants sheets not being the heading row (veg, repo info and not block, mf etc...) 
 pop_elev <- read_csv("../input/Pops_for_2022_UCD.csv")
@@ -92,14 +92,17 @@ head(germsurvey_0508)
 
 
 #Mortality Survey?
+See the later mort_pheno surveys
 ```{r}
 mortsurvey <- read_csv("../input/Mortality_survey_20230217_corrected.csv")
 summary(mortsurvey) #859 rows so proably only transplant beds?
 head(mortsurvey)
+
 ```
 
 
 #Phenology Survey of Germination Bed?
+See the later mort-pheno surveys 
 ```{r}
 pheno_germs <- read_csv("../input/Phenology_survey_germination_20230515_corrected.csv")
 summary(pheno_germs)
@@ -107,7 +110,8 @@ head(pheno_germs)
 ```
 
 
-#Size Surveys of Germination and Transplant Beds?
+#Weekly Size Surveys of Germination and Transplant Beds
+- weekly except Yos trip or flooded (some in google sheets format/not verified yet)
 ```{r}
 size_germs_0303
 size_germs_0317
