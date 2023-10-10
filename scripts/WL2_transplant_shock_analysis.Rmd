@@ -1,0 +1,237 @@
+---
+title: "TransplantShock_Stats"
+author: "Brandie Quarles"
+date: "2023-08-04"
+output: 
+  html_document: 
+    keep_md: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+##Load Libraries 
+```{r warning=FALSE}
+library(tidyverse)
+sem <- function(x, na.rm=FALSE) {
+  sd(x,na.rm=na.rm)/sqrt(length(na.omit(x)))
+} #standard error function 
+
+elev_three_palette <- c("#0043F0", "#C9727F", "#F5A540") #colors from Gremer et al 2019
+elev_order <- c("high", "mid", "low")
+
+```
+
+##Input the data and merge
+```{r results='hide'}
+size_0726 <- read_csv("../input/WL2 Data/WL2_size_survey_20230726_corrected.csv")
+summary(size_0726)
+head(size_0726)
+size_0726_namecorrection <- size_0726 %>% select(block, bed ,bed.row=`bed.r ow`, bed.col=`bed.c ol`, pop:height.cm, longleaf.cm=`long.leaf. cm`, herbiv=`herbiv.y. n`)
+
+mort_0726 <- read_csv("../input/WL2 Data/WL2_Mort_pheno_survey_20230726_corrected.csv")
+summary(mort_0726)
+head(mort_0726)
+mort_0726_names <- mort_0726 %>% select(block:bud.date, death.date)
+
+size_preplant_1 <- read_csv("../input/WL2 Data/WL2_DNA_Collection_Size_survey_combined20230703_corrected.csv")
+summary(size_preplant_1)
+names(size_preplant_1)
+
+size_preplant_extras <- read_csv("../input/WL2 Data/WL2_Extras_DNA_collection_size_survey_combined20230706_corrected.csv")
+summary(size_preplant_extras)
+names(size_preplant_extras)
+
+allpreplant_size <- rbind(size_preplant_1, size_preplant_extras)
+summary(allpreplant_size)
+head(allpreplant_size)
+allpreplant_size_names <- allpreplant_size %>% select(pop=Pop, mf, rep, height=`height (cm)`, longleaf=`longest leaf (cm)`)
+
+#merge pre-planting size with transplant mortality 
+names(allpreplant_size_names)
+names(mort_0726_names)
+trans_shock_size <- merge(mort_0726_names, allpreplant_size_names)
+summary(trans_shock_size) #1575 plants
+head(trans_shock_size)
+
+#MERGE pop elevation info 
+pop_elev <- read_csv("../input/WL2 Data/Pops for 2023 WL2 - pops for WL2.csv")
+summary(pop_elev)
+pop_elev_nonotes <- pop_elev %>% select(-notes)
+pop_elev_nonotes
+trans_shock_size_elev <- left_join(trans_shock_size, pop_elev_nonotes, by=c("pop"="parent.pop"))
+head(trans_shock_size_elev)
+
+```
+
+##Preliminary figures/summary stats 
+```{r}
+#Convert dates to 0s and 1s (for yes or no)
+trans_shock_size_yn <- trans_shock_size_elev %>% mutate(Shock=ifelse(is.na(death.date), 0, ifelse(death.date=="7/26/23", 1, NA)), Repo=ifelse(is.na(bud.date), 0, 1))
+#head(trans_shock_size_yn)
+summary(trans_shock_size_yn)
+#trans_shock_size_yn %>% filter(Shock==1) #514 dead, 2 plants died before planting --> NAs, total planted = 1573
+#trans_shock_size_yn %>% filter(Repo==1) #6 reproductive, all TM2
+
+#means by pop, pop-mf, block, bed
+shock_popmeans <- trans_shock_size_yn %>% group_by(pop, elevation.group) %>% summarise(meanMort=mean(Shock, na.rm = TRUE), sem.mort=sem(Shock, na.rm=TRUE))
+shock_popmeans
+
+shock_popmeans$elevation.group <- factor(shock_popmeans$elevation.group, levels=elev_order)
+#alternative: fill=factor(elevation.group, level=elev_order))
+shock_popmeans$pop <- factor(shock_popmeans$pop)
+
+shock_popmeans %>% 
+  ggplot(aes(x=fct_reorder(pop, meanMort), y=meanMort, fill=elevation.group)) + 
+  geom_col(width = 0.7,position = position_dodge(0.75)) + 
+  geom_errorbar(aes(ymin=meanMort-sem.mort,ymax=meanMort+sem.mort),width=.2, position = 
+                  position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_manual(values=elev_three_palette) + 
+  labs(fill="Elevation") +
+   theme_classic() +
+  xlab("Population") +
+  geom_hline(yintercept=0.5, linetype="dashed", color="red") +
+  theme(axis.text.x = element_text(angle = 45,  hjust = 1))
+ 
+
+shock_popmfmeans <- trans_shock_size_yn %>% group_by(pop, mf, elevation.group) %>% summarise(meanMort=mean(Shock, na.rm = TRUE), sem.mort=sem(Shock, na.rm=TRUE))
+shock_popmfmeans
+
+shock_popmfmeans$elevation.group <- factor(shock_popmfmeans$elevation.group, levels=elev_order)
+shock_popmfmeans$mf <- factor(shock_popmfmeans$mf)
+
+shock_popmfmeans %>% 
+  ggplot(aes(x=mf, y=meanMort, fill=elevation.group)) + 
+  geom_col(width = 0.7,position = position_dodge(0.75)) + 
+  geom_errorbar(aes(ymin=meanMort-sem.mort,ymax=meanMort+sem.mort),width=.2, position = 
+                  position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_manual(values=elev_three_palette) + 
+  labs(fill="Elevation") +
+   theme_classic() +
+  theme(axis.text.x = element_text(angle = 45,  hjust = 1)) +
+  facet_wrap(~pop)
+
+shock_blockmeans <- trans_shock_size_yn %>% group_by(block) %>% summarise(meanMort=mean(Shock, na.rm = TRUE), sem.mort=sem(Shock, na.rm=TRUE))
+shock_blockmeans #2 plants have mistake in block ([ or NA])
+
+shock_blockmeans %>% 
+  ggplot(aes(x=block, y=meanMort)) + 
+  geom_col(width = 0.7,position = position_dodge(0.75)) + 
+  geom_errorbar(aes(ymin=meanMort-sem.mort,ymax=meanMort+sem.mort),width=.2, position = 
+                  position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+   theme_classic() 
+
+
+shock_bedmeans <- trans_shock_size_yn %>% group_by(bed) %>% summarise(meanMort=mean(Shock, na.rm = TRUE), sem.mort=sem(Shock, na.rm=TRUE))
+shock_bedmeans #2 plants have mistake in bed (1 or x k)
+
+shock_bedmeans %>% 
+  ggplot(aes(x=fct_reorder(bed, meanMort), y=meanMort)) + 
+  geom_col(width = 0.7,position = position_dodge(0.75)) + 
+  geom_errorbar(aes(ymin=meanMort-sem.mort,ymax=meanMort+sem.mort),width=.2, position = 
+                  position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  xlab("Bed") +
+   theme_classic() 
+#bed b had the highest mortality 
+```
+
+#Plot size and mortality
+```{r}
+#names(trans_shock_size_yn)
+trans_shock_size_yn %>% ggplot(aes(x=height, y=Shock)) + geom_point()
+#height by pop to see if matches mortality 
+height_popmeans <- trans_shock_size_yn %>% group_by(pop, elevation.group) %>% summarise(meanheight=mean(height, na.rm = TRUE), sem.height=sem(height, na.rm=TRUE), meanMort=mean(Shock, na.rm = TRUE), sem.mort=sem(Shock, na.rm=TRUE))
+height_popmeans
+
+height_popmeans$elevation.group <- factor(height_popmeans$elevation.group, levels=elev_order)
+height_popmeans$pop <- factor(height_popmeans$pop)
+
+height_popmeans %>% 
+  ggplot(aes(x=fct_reorder(pop, meanheight), y=meanheight, fill=elevation.group)) + 
+  geom_col(width = 0.7,position = position_dodge(0.75)) + 
+  geom_errorbar(aes(ymin=meanheight-sem.height,ymax=meanheight+sem.height),width=.2, position = 
+                  position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_manual(values=elev_three_palette) + 
+  labs(fill="Elevation") +
+   theme_classic() +
+  xlab("Population") +
+  ylab("Avg Height") +
+  theme(axis.text.x = element_text(angle = 45,  hjust = 1))
+#not an exact match, but WV was the smallest (and died the most)
+height_popmeans %>% ggplot(aes(x=meanheight, y=meanMort)) + geom_point()
+
+#longest leaf by shock 
+trans_shock_size_yn %>% ggplot(aes(x=longleaf, y=Shock)) + geom_point()
+#longest leaf by pop to see if matches mortality 
+longleaf_popmeans <- trans_shock_size_yn %>% group_by(pop, elevation.group) %>% summarise(meanlongleaf=mean(longleaf, na.rm = TRUE), sem.longleaf=sem(longleaf, na.rm=TRUE), meanMort=mean(Shock, na.rm = TRUE), sem.mort=sem(Shock, na.rm=TRUE))
+longleaf_popmeans
+
+longleaf_popmeans$elevation.group <- factor(longleaf_popmeans$elevation.group, levels=elev_order)
+longleaf_popmeans$pop <- factor(longleaf_popmeans$pop)
+
+longleaf_popmeans %>% 
+  ggplot(aes(x=fct_reorder(pop, meanlongleaf), y=meanlongleaf, fill=elevation.group)) + 
+  geom_col(width = 0.7,position = position_dodge(0.75)) + 
+  geom_errorbar(aes(ymin=meanlongleaf-sem.longleaf,ymax=meanlongleaf+sem.longleaf),width=.2, position = 
+                  position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_manual(values=elev_three_palette) + 
+  labs(fill="Elevation") +
+   theme_classic() +
+  xlab("Population") +
+  ylab("Avg Longest Leaf") +
+  theme(axis.text.x = element_text(angle = 45,  hjust = 1))
+#again WV the smallest
+
+longleaf_popmeans %>% ggplot(aes(x=meanlongleaf, y=meanMort)) + geom_point()
+```
+
+
+##Logistic Regresion 
+```{r}
+xtabs(~Shock + height, data = trans_shock_size_yn) #contingency table 
+
+mylogit_height = glm(Shock ~ height, data = trans_shock_size_yn, family = binomial())
+summary(mylogit_height) #P<0.0001, int= -0.112, height= -0.424
+#signficant negative relationship between height and survival 
+
+xtabs(~Shock + longleaf, data = trans_shock_size_yn)
+mylogit_longleaf = glm(Shock ~ longleaf, data = trans_shock_size_yn, family = binomial())
+summary(mylogit_longleaf) #P<0.0001, int=0.4806, longleaf= -0.79
+#significant negative relationship between longest leaf and survival 
+
+#joint log reg
+mylogit_size = glm(Shock ~ height+longleaf, data=trans_shock_size_yn, family=binomial())
+summary(mylogit_size)
+#when both in the model, only longest leaf is significant (-0.686, P<0.0001)
+```
+
+#Potential plot of interest: size(t) vs size(t+1)
+```{r}
+head(size_0726_namecorrection)
+size_0726_namecorrection_mergeprep <- size_0726_namecorrection %>% rename(height.field=height.cm, longleaf.field=longleaf.cm)
+
+#merge pre-planting size with transplant mortality 
+names(allpreplant_size_names)
+names(size_0726_namecorrection_mergeprep)
+trans_shock_sizechange <- merge(size_0726_namecorrection_mergeprep, allpreplant_size_names)
+summary(trans_shock_sizechange) #1572 plants
+head(trans_shock_sizechange)
+
+#MERGE pop elevation info 
+trans_shock_sizechange_elev <- left_join(trans_shock_sizechange, pop_elev_nonotes, by=c("pop"="parent.pop"))
+#trans_shock_sizechange_elev
+
+trans_shock_sizechange_elev %>% ggplot(aes(height, height.field)) + geom_point()
+trans_shock_sizechange_elev %>% filter(height>7.5)
+
+trans_shock_sizechange_elev %>% ggplot(aes(longleaf, longleaf.field)) + geom_point() #likely typo: one plant in field with 500 cm leaf?
+trans_shock_sizechange_elev %>% filter(longleaf>15)
+```
+
