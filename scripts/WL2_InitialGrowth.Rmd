@@ -25,34 +25,34 @@ elev_order <- c("high", "mid", "low")
 
 ##Upload Data
 ```{r}
-size_0726 <- read_csv("../input/WL2 Data/WL2_size_survey_20230726_corrected.csv") %>% select(Date="7/26/23", block:bed, bed.row="bed.r ow", bed.col="bed.c ol", pop:height.cm, long.leaf.cm="long.leaf. cm", herbiv.y.n="herbiv.y. n", survey.notes:planting.note)
+size_0726 <- read_csv("../input/WL2_Data/WL2_size_survey_20230726_corrected.csv") %>% select(Date="7/26/23", block:bed, bed.row="bed.r ow", bed.col="bed.c ol", pop:height.cm, long.leaf.cm="long.leaf. cm", herbiv.y.n="herbiv.y. n", survey.notes:planting.note)
 names(size_0726)
 size_0726$Date <- as.Date(size_0726$Date, format="%m/%d/%y")
 head(size_0726)
 
-size_0802 <- read_csv("../input/WL2 Data/WL2_Size_survey_20230802_corrected.csv") %>% select(Date="8/2/23", block:bed, bed.row="bed. row", bed.col="bed. col", pop:height.cm, long.leaf.cm="long.leaf.c m", herbiv.y.n:survey.notes, planting.note="planting.no te")
+size_0802 <- read_csv("../input/WL2_Data/WL2_Size_survey_20230802_corrected.csv") %>% select(Date="8/2/23", block:bed, bed.row="bed. row", bed.col="bed. col", pop:height.cm, long.leaf.cm="long.leaf.c m", herbiv.y.n:survey.notes, planting.note="planting.no te")
 names(size_0802)
 size_0802$Date <- as.Date(size_0802$Date, format="%m/%d/%y")
 head(size_0802) #height and longest leaf are characters
 
-size_0816 <- read_csv("../input/WL2 Data/WL2_size_survey_20230816_corrected.csv") %>% select(Date:bed, bed.row="bed. row", bed.col="bed. col", pop:height.cm, long.leaf.cm="long.leaf.c m", herbiv.y.n:planting.note) #Note: this is two weeks after previous census
+size_0816 <- read_csv("../input/WL2_Data/WL2_size_survey_20230816_corrected.csv") %>% select(Date:bed, bed.row="bed. row", bed.col="bed. col", pop:height.cm, long.leaf.cm="long.leaf.c m", herbiv.y.n:planting.note) #Note: this is two weeks after previous census
 names(size_0816)
 size_0816$Date <- as.Date(size_0816$Date, format="%m/%d/%y")
 head(size_0816) #height and longest leaf are characters
 
-size_0823 <- read_csv("../input/WL2 Data/WL2_size_survey_20230823_corrected.csv")  %>% select(Date:bed, bed.row="bed. row", bed.col="bed. col", pop:planting.note)
+size_0823 <- read_csv("../input/WL2_Data/WL2_size_survey_20230823_corrected.csv")  %>% select(Date:bed, bed.row="bed. row", bed.col="bed. col", pop:planting.note)
 problems(size_0823)
 names(size_0823)
 size_0823$Date <- as.Date(size_0823$Date, format="%m/%d/%y")
 head(size_0823) #height is a chr
 
-size_0830 <- read_csv("../input/WL2 Data/WL2_size_survey_20230830_corrected.csv") %>% select(Date:bed, bed.row="bed. row", bed.col="bed. col", pop:height.cm, long.leaf.cm="long.leaf.c m", herbiv.y.n:planting.note)
+size_0830 <- read_csv("../input/WL2_Data/WL2_size_survey_20230830_corrected.csv") %>% select(Date:bed, bed.row="bed. row", bed.col="bed. col", pop:height.cm, long.leaf.cm="long.leaf.c m", herbiv.y.n:planting.note)
 problems(size_0830)
 names(size_0830)
 size_0830$Date <- as.Date(size_0830$Date, format="%m/%d/%y")
 head(size_0830) #height and longest leaf are characters
 
-size_0906 <- read_csv("../input/WL2 Data/WL2_size_survey_20230906_corrected.csv")  #Note: this is not the most recent census
+size_0906 <- read_csv("../input/WL2_Data/WL2_size_survey_20230906_corrected.csv")  #Note: this is not the most recent census
 names(size_0906)
 size_0906 %>% filter(!is.na(...14)) #R seems to be picking up an additional column with no data in it
 size_0906 <- size_0906 %>% select(Date:bed, bed.row="bed. row", bed.col="bed. col", pop:planting.note)
@@ -60,7 +60,7 @@ names(size_0906)
 size_0906$Date <- as.Date(size_0906$Date, format="%m/%d/%y")
 head(size_0906) #longest leaf is a character
 
-size_0913 <- read_csv("../input/WL2 Data/WL2_size_survey_20230913_corrected.csv") %>% mutate(Date="9/13/2023", planting.note=NA)
+size_0913 <- read_csv("../input/WL2_Data/WL2_size_survey_20230913_corrected.csv") %>% mutate(Date="9/13/2023", planting.note=NA)
 names(size_0913)
 size_0913$Date <- as.Date(size_0913$Date, format="%m/%d/%Y")
 head(size_0913)

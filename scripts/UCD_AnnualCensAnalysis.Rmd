@@ -38,13 +38,13 @@ library("factoextra")
 #Load the data 
 ```{r}
 #Note: BQC edited the csvs prior to importing to R b/c of issues with the naming of columns and the first row of the transplants sheets not being the heading row (veg, repo info and not block, mf etc...) 
-pop_elev <- read_csv("../input/UCD Data/Pops_for_2022_UCD.csv") #elevation info for each population 
+pop_elev <- read_csv("../input/UCD_Data/Pops_for_2022_UCD.csv") #elevation info for each population 
 summary(pop_elev)
 pop_elev_nonotes <- pop_elev %>% select(-notes, -JGI.DNA)
 pop_elev_nonotes
 pop_elev_nonotes$elevation.group <- str_to_title(pop_elev_nonotes$elevation.group)
 
-anncensustrans.0522 <- read_csv("../input/UCD Data/Annual_Census_Transplants_All_May_2023_corrected.csv")
+anncensustrans.0522 <- read_csv("../input/UCD_Data/Annual_Census_Transplants_All_May_2023_corrected.csv")
 head(anncensustrans.0522)
 names(anncensustrans.0522) <- gsub(" ", "", colnames(anncensustrans.0522))
 summary(anncensustrans.0522)
@@ -54,9 +54,8 @@ anncensustrans.0522_numcorrected <- anncensustrans.0522 %>% mutate_at(c("diam_mm
 summary(anncensustrans.0522_numcorrected) #correct number of NAs
 anncensustrans.0522_numcorrected %>% filter(pheno !="X" & is.na(diam_mm)) #all alive plants have a diam
 anncensustrans.0522_alive <- anncensustrans.0522_numcorrected %>% filter(!is.na(diam_mm))
-summary(anncensustrans.0522_alive) #64 plants alive - includes early measured plants (marked as dead)
 
-anncensustrans.0626 <- read_csv("../input/UCD Data/Annual_Census_transplants_20230626_corrected.csv")
+anncensustrans.0626 <- read_csv("../input/UCD_Data/Annual_Census_transplants_20230626_corrected.csv")
 head(anncensustrans.0626)
 names(anncensustrans.0626) <- gsub(" ", "", colnames(anncensustrans.0626))
 anncensustrans.0626 %>% filter(diam_mm=="X") 

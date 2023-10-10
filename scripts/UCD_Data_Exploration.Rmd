@@ -35,12 +35,12 @@ elev_order <- c("high", "mid", "low")
 Purpose: get more thorough data at peak fruiting
 ```{r}
 #Note: BQC edited the csvs prior to importing to R b/c of issues with the naming of columns and the first row of the transplants sheets not being the heading row (veg, repo info and not block, mf etc...) 
-pop_elev <- read_csv("../input/Pops_for_2022_UCD.csv")
+pop_elev <- read_csv("../input/UCD_Data/Pops_for_2022_UCD.csv")
 summary(pop_elev)
 pop_elev_nonotes <- pop_elev %>% select(-notes)
 pop_elev_nonotes
 
-anncensusgerm <- read_csv("../input/Annual_census_germination_20230626_corrected.csv")
+anncensusgerm <- read_csv("../input/UCD_Data/Annual_census_germination_20230626_corrected.csv")
 head(anncensusgerm)
 summary(anncensusgerm)
 #convert "n/a" to NA
@@ -50,7 +50,7 @@ summary(anncensusgerm_nacorrected) #only block:mf, pheno, herb_dam, wilt_status,
 anncensusgerm_nanumcorrected <- anncensusgerm_nacorrected %>% mutate_at(c("diam_mm", "height_cm", "total_branch", "longest_leaf_cm", "flowers", "fruits", "longest_fruit_cm", "repro_branch"), as.double)
 summary(anncensusgerm_nanumcorrected)
 
-anncensustrans_0522 <- read_csv("../input/Annual_Census_Transplants_20230522_corrected.csv")
+anncensustrans_0522 <- read_csv("../input/UCD_Data/Annual_Census_Transplants_20230522_corrected.csv")
 head(anncensustrans_0522)
 summary(anncensustrans_0522)
 anncensustrans_0522 %>% filter(diam_mm=="X") #747 rows 
@@ -58,7 +58,7 @@ anncensustrans_0522 %>% filter(is.na(diam_mm)) #53 rows
 anncensustrans_0522_numcorrected <- anncensustrans_0522 %>% mutate_at(c("diam_mm", "height_cm", "total_branch", "longest_leaf_cm_veg", "flowers_repro", "fruits_repro", "longest_fruit_cm_repro", "repro_branch"), as.double)
 summary(anncensustrans_0522_numcorrected) #correct number of NAs
 
-anncensustrans_0626 <- read_csv("../input/Annual_Census_transplants_20230626_corrected.csv")
+anncensustrans_0626 <- read_csv("../input/UCD_Data/Annual_Census_transplants_20230626_corrected.csv")
 head(anncensustrans_0626)
 summary(anncensustrans_0626)
 
@@ -77,15 +77,15 @@ summary(anncensustrans_0522_elev)
 #Germination Surveys
 Purpose: monitor germination of planted seeds in germ beds (plants that didn't germinate in the lab)
 ```{r}
-germsurvey_0127 = read_csv("../input/Germination_survey_20230127_corrected.csv")
+germsurvey_0127 = read_csv("../input/UCD_Data/Germination_survey_20230127_corrected.csv")
 summary(germsurvey_0127)
 head(germsurvey_0127)
 
-germsurvey_0210 = read_csv("../input/Germination_survey_20230210_corrected.csv")
+germsurvey_0210 = read_csv("../input/UCD_Data/Germination_survey_20230210_corrected.csv")
 summary(germsurvey_0210)
 head(germsurvey_0210)
 
-germsurvey_0508 = read_csv("../input/Germination_survey_20230508_corrected.csv")
+germsurvey_0508 = read_csv("../input/UCD_Data/Germination_survey_20230508_corrected.csv")
 summary(germsurvey_0508)
 head(germsurvey_0508)
 ```
@@ -94,7 +94,7 @@ head(germsurvey_0508)
 #Mortality Survey?
 See the later mort_pheno surveys
 ```{r}
-mortsurvey <- read_csv("../input/Mortality_survey_20230217_corrected.csv")
+mortsurvey <- read_csv("../input/UCD_Data/Mortality_survey_20230217_corrected.csv")
 summary(mortsurvey) #859 rows so proably only transplant beds?
 head(mortsurvey)
 
@@ -104,7 +104,7 @@ head(mortsurvey)
 #Phenology Survey of Germination Bed?
 See the later mort-pheno surveys 
 ```{r}
-pheno_germs <- read_csv("../input/Phenology_survey_germination_20230515_corrected.csv")
+pheno_germs <- read_csv("../input/UCD_Data/Phenology_survey_germination_20230515_corrected.csv")
 summary(pheno_germs)
 head(pheno_germs)
 ```
@@ -134,7 +134,7 @@ sie_trans_0401
 sie_trans_0508
 sie_trans_0605
 
-ucd_garden_size_1128 <- read_csv("../input/UCD_garden_size_measurements_20221128_corrected.csv")
+ucd_garden_size_1128 <- read_csv("../input/UCD_Data/UCD_garden_size_measurements_20221128_corrected.csv")
 summary(ucd_garden_size_1128) #2264 rows... maybe germs and trans combined?
 head (ucd_garden_size_1128)
 ```
