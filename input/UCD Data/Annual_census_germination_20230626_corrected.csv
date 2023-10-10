@@ -1,4 +1,4 @@
-block ,row ,col ,pop ,mf ,rep ,pheno ,diam_mm ,height_cm ,total_branch ,herb_dam ,wilt_status ,longest_leaf_cm ,flowers ,fruits ,longest_fruit_cm ,repro_branch ,notes 
+block ,row ,col ,pop ,mf ,rep ,pheno ,diam mm ,height cm ,total branch ,herb_ dam ,wilt status ,longest leaf cm ,flowers ,fruits ,longest fruit cm ,repro_ branch ,notes 
 B1 ,1,A ,LVTR1 ,7,10,n/a ,n/a ,n/a ,n/a ,n/a ,n/a ,n/a ,n/a ,n/a ,n/a ,n/a ,
 B1 ,1,B ,YO11 ,3,7,n/a ,n/a ,n/a ,n/a ,n/a ,n/a ,n/a ,n/a ,n/a ,n/a ,n/a ,
 B1 ,2,A ,YO11 ,4,13,n/a ,n/a ,n/a ,n/a ,n/a ,n/a ,n/a ,n/a ,n/a ,n/a ,n/a ,

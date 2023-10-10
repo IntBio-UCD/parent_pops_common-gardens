@@ -1,14 +1,15 @@
 ---
 title: "Data Checking"
-output: html_notebook
+output: html_notebook:
+  keep_md: yes
 ---
 
-Annual Census - Transplants 
+Size Data
 ```{r}
 #load the libraries
 library(tidyverse)
 #tutorial at https://bookdown.org/ansellbr/WEHI_tidyR_course_book/week-4-part-3.html
-data_files <- list.files('~/Google Drive/Shared drives/IntBioTeam/Common Gardens/UCD2022_2023/CorrectedCSVs',pattern='Annual_Census_Transplants',ignore.case=TRUE)  #edit this to be correct path 
+data_files <- list.files('~/Google Drive/Shared drives/IntBioTeam/Common Gardens/WL2_2023/CorrectedCSVs',pattern='WL2_size',ignore.case=TRUE)  #edit this to be correct path 
 data_files #make this specific to mortality or size
 
 data_names <- str_remove(data_files, pattern = ".csv")
@@ -16,44 +17,7 @@ data_names
 
 for (i in data_names) {
   #set up variable file names
-  in_file <- paste("~/Google Drive/Shared drives/IntBioTeam/Common Gardens/UCD2022_2023/CorrectedCSVs/", i, '.csv', sep = "")   #edit this to be correct path 
-  out_table <- paste("../output/", i, '_dataprobs.csv', sep="")
-  
-  #data checking code
-  data <- read_csv(in_file)
-  
-  #remove spaces in column names
-  names(data) <- gsub(" ", "", colnames(data))
-  
-  #check for spaces in numbers
-  data2 <- data %>% filter(grepl(" ", diam_mm) | grepl(" ", height_cm) | grepl(" ", total_branch) | grepl(" ", longest_leaf_cm) | grepl(" ", flowers) | grepl(" ", fruits) | grepl(" ", longest_fruit_cm) | grepl(" ", repro_branch)) %>% mutate(problem="spaces")
-  
-  #check for extreme values
-  data3 <- data
-  data3 <- data3 %>% filter(diam_mm > 50, height_cm > 140 | longest_leaf_cm > 12, longest_fruit_cm > 15) %>% mutate(problem="extreme value")
-  
-  #combine into one problems list
-  data_probs <- rbind(data2, data3)
-  print(nrow(data_probs))
-  write_csv(data_probs, path=out_table)
-}
-```
-
-
-Size Data - fix this
-```{r}
-#load the libraries
-library(tidyverse)
-#tutorial at https://bookdown.org/ansellbr/WEHI_tidyR_course_book/week-4-part-3.html
-data_files <- list.files('~/Google Drive/Shared drives/IntBioTeam/Common Gardens/UCD2022_2023/CorrectedCSVs',pattern='Size_survey_transplants',ignore.case=TRUE)  #edit this to be correct path 
-data_files #make this specific to mortality or size
-
-data_names <- str_remove(data_files, pattern = ".csv")
-data_names
-
-for (i in data_names) {
-  #set up variable file names
-  in_file <- paste("~/Google Drive/Shared drives/IntBioTeam/Common Gardens/UCD2022_2023/CorrectedCSVs/", i, '.csv', sep = "")   #edit this to be correct path 
+  in_file <- paste("~/Google Drive/Shared drives/IntBioTeam/Common Gardens/WL2_2023/CorrectedCSVs/", i, '.csv', sep = "")   #edit this to be correct path 
   out_table <- paste("../output/", i, '_dataprobs.csv', sep="")
   
   #data checking code
@@ -82,14 +46,21 @@ for (i in data_names) {
   print(nrow(data_probs))
   write_csv(data_probs, path=out_table)
 }
+
+#practice_0830 <- read_csv("../input/WL2_size_survey_20230830_corrected.csv")
+#names(practice_0830) 
+#names(practice_0830) <- gsub(" ","", colnames(practice_0830))
+#head(practice_0830)
+#practice_0830 %>% filter(herbiv.y.n != "Y" & herbiv.y.n != "N")
+#practice_0830$herbiv.y.n <- str_to_upper(practice_0830$herbiv.y.n)
 ```
 
-Mortality - fix this 
+Mortality
 ```{r}
 #load the libraries
 library(tidyverse)
 #tutorial at https://bookdown.org/ansellbr/WEHI_tidyR_course_book/week-4-part-3.html
-data_files <- list.files('~/Google Drive/Shared drives/IntBioTeam/Common Gardens/UCD2022_2023/CorrectedCSVs',pattern='mort',ignore.case=TRUE)  #edit this to be correct path 
+data_files <- list.files('~/Google Drive/Shared drives/IntBioTeam/Common Gardens/WL2_2023/CorrectedCSVs',pattern='mort',ignore.case=TRUE)  #edit this to be correct path 
 data_files #make this specific to mortality or size
 
 data_names <- str_remove(data_files, pattern = ".csv")
@@ -97,7 +68,7 @@ data_names
 
 for (i in data_names) {
   #set up variable file names
-  in_file <- paste("~/Google Drive/Shared drives/IntBioTeam/Common Gardens/UCD2022_2023/CorrectedCSVs/", i, '.csv', sep = "")   #edit this to be correct path 
+  in_file <- paste("~/Google Drive/Shared drives/IntBioTeam/Common Gardens/WL2_2023/CorrectedCSVs/", i, '.csv', sep = "")   #edit this to be correct path 
   out_table <- paste("../output/", i, '_dataprobs.csv', sep="")
   
   #data checking code

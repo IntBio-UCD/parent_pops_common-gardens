@@ -1755,8 +1755,17 @@ display: none;
 <p>Annual Census - Transplants</p>
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuZm9yIChpIGluIGRhdGFfbmFtZXMpIHtcbiAgI3NldCB1cCB2YXJpYWJsZSBmaWxlIG5hbWVzXG4gIGluX2ZpbGUgPC0gcGFzdGUoXCJ+L0dvb2dsZSBEcml2ZS9TaGFyZWQgZHJpdmVzL0ludEJpb1RlYW0vQ29tbW9uIEdhcmRlbnMvVUNEMjAyMl8yMDIzL0NvcnJlY3RlZENTVnMvXCIsIGksICcuY3N2Jywgc2VwID0gXCJcIikgICAjZWRpdCB0aGlzIHRvIGJlIGNvcnJlY3QgcGF0aCBcbiAgb3V0X3RhYmxlIDwtIHBhc3RlKFwiLi4vb3V0cHV0L1wiLCBpLCAnX2RhdGFwcm9icy5jc3YnLCBzZXA9XCJcIilcbiAgXG4gICNkYXRhIGNoZWNraW5nIGNvZGVcbiAgZGF0YSA8LSByZWFkX2Nzdihpbl9maWxlKVxuICBcbiAgI3JlbW92ZSBzcGFjZXMgaW4gY29sdW1uIG5hbWVzXG4gIG5hbWVzKGRhdGEpIDwtIGdzdWIoXCIgXCIsIFwiXCIsIGNvbG5hbWVzKGRhdGEpKVxuICBcbiAgI2NoZWNrIGZvciBzcGFjZXMgaW4gbnVtYmVyc1xuICBkYXRhMiA8LSBkYXRhICU+JSBmaWx0ZXIoZ3JlcGwoXCIgXCIsIGRpYW1fbW0pIHwgZ3JlcGwoXCIgXCIsIGhlaWdodF9jbSkgfCBncmVwbChcIiBcIiwgdG90YWxfYnJhbmNoKSB8IGdyZXBsKFwiIFwiLCBsb25nZXN0X2xlYWZfY20pIHwgZ3JlcGwoXCIgXCIsIGZsb3dlcnMpIHwgZ3JlcGwoXCIgXCIsIGZydWl0cykgfCBncmVwbChcIiBcIiwgbG9uZ2VzdF9mcnVpdF9jbSkgfCBncmVwbChcIiBcIiwgcmVwcm9fYnJhbmNoKSkgJT4lIG11dGF0ZShwcm9ibGVtPVwic3BhY2VzXCIpXG4gIFxuICAjY2hlY2sgZm9yIGV4dHJlbWUgdmFsdWVzXG4gIGRhdGEzIDwtIGRhdGFcbiAgZGF0YTMgPC0gZGF0YTMgJT4lIGZpbHRlcihkaWFtX21tID4gNTAsIGhlaWdodF9jbSA+IDE0MCB8IGxvbmdlc3RfbGVhZl9jbSA+IDEyLCBsb25nZXN0X2ZydWl0X2NtID4gMTUpICU+JSBtdXRhdGUocHJvYmxlbT1cImV4dHJlbWUgdmFsdWVcIilcbiAgXG4gICNjb21iaW5lIGludG8gb25lIHByb2JsZW1zIGxpc3RcbiAgZGF0YV9wcm9icyA8LSByYmluZChkYXRhMiwgZGF0YTMpXG4gIHByaW50KG5yb3coZGF0YV9wcm9icykpXG4gIHdyaXRlX2NzdihkYXRhX3Byb2JzLCBwYXRoPW91dF90YWJsZSlcbn1cblxuYGBgIn0= -->
-<pre class="r"><code>for (i in data_names) {
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuI2xvYWQgdGhlIGxpYnJhcmllc1xubGlicmFyeSh0aWR5dmVyc2UpXG4jdHV0b3JpYWwgYXQgaHR0cHM6Ly9ib29rZG93bi5vcmcvYW5zZWxsYnIvV0VISV90aWR5Ul9jb3Vyc2VfYm9vay93ZWVrLTQtcGFydC0zLmh0bWxcbmRhdGFfZmlsZXMgPC0gbGlzdC5maWxlcygnfi9Hb29nbGUgRHJpdmUvU2hhcmVkIGRyaXZlcy9JbnRCaW9UZWFtL0NvbW1vbiBHYXJkZW5zL1VDRDIwMjJfMjAyMy9Db3JyZWN0ZWRDU1ZzJyxwYXR0ZXJuPSdBbm51YWxfQ2Vuc3VzX1RyYW5zcGxhbnRzJyxpZ25vcmUuY2FzZT1UUlVFKSAgI2VkaXQgdGhpcyB0byBiZSBjb3JyZWN0IHBhdGggXG5kYXRhX2ZpbGVzICNtYWtlIHRoaXMgc3BlY2lmaWMgdG8gbW9ydGFsaXR5IG9yIHNpemVcblxuZGF0YV9uYW1lcyA8LSBzdHJfcmVtb3ZlKGRhdGFfZmlsZXMsIHBhdHRlcm4gPSBcIi5jc3ZcIilcbmRhdGFfbmFtZXNcblxuZm9yIChpIGluIGRhdGFfbmFtZXMpIHtcbiAgI3NldCB1cCB2YXJpYWJsZSBmaWxlIG5hbWVzXG4gIGluX2ZpbGUgPC0gcGFzdGUoXCJ+L0dvb2dsZSBEcml2ZS9TaGFyZWQgZHJpdmVzL0ludEJpb1RlYW0vQ29tbW9uIEdhcmRlbnMvVUNEMjAyMl8yMDIzL0NvcnJlY3RlZENTVnMvXCIsIGksICcuY3N2Jywgc2VwID0gXCJcIikgICAjZWRpdCB0aGlzIHRvIGJlIGNvcnJlY3QgcGF0aCBcbiAgb3V0X3RhYmxlIDwtIHBhc3RlKFwiLi4vb3V0cHV0L1wiLCBpLCAnX2RhdGFwcm9icy5jc3YnLCBzZXA9XCJcIilcbiAgXG4gICNkYXRhIGNoZWNraW5nIGNvZGVcbiAgZGF0YSA8LSByZWFkX2Nzdihpbl9maWxlKVxuICBcbiAgI3JlbW92ZSBzcGFjZXMgaW4gY29sdW1uIG5hbWVzXG4gIG5hbWVzKGRhdGEpIDwtIGdzdWIoXCIgXCIsIFwiXCIsIGNvbG5hbWVzKGRhdGEpKVxuICBcbiAgI2NoZWNrIGZvciBzcGFjZXMgaW4gbnVtYmVyc1xuICBkYXRhMiA8LSBkYXRhICU+JSBmaWx0ZXIoZ3JlcGwoXCIgXCIsIGRpYW1fbW0pIHwgZ3JlcGwoXCIgXCIsIGhlaWdodF9jbSkgfCBncmVwbChcIiBcIiwgdG90YWxfYnJhbmNoKSB8IGdyZXBsKFwiIFwiLCBsb25nZXN0X2xlYWZfY20pIHwgZ3JlcGwoXCIgXCIsIGZsb3dlcnMpIHwgZ3JlcGwoXCIgXCIsIGZydWl0cykgfCBncmVwbChcIiBcIiwgbG9uZ2VzdF9mcnVpdF9jbSkgfCBncmVwbChcIiBcIiwgcmVwcm9fYnJhbmNoKSkgJT4lIG11dGF0ZShwcm9ibGVtPVwic3BhY2VzXCIpXG4gIFxuICAjY2hlY2sgZm9yIGV4dHJlbWUgdmFsdWVzXG4gIGRhdGEzIDwtIGRhdGFcbiAgZGF0YTMgPC0gZGF0YTMgJT4lIGZpbHRlcihkaWFtX21tID4gNTAsIGhlaWdodF9jbSA+IDE0MCB8IGxvbmdlc3RfbGVhZl9jbSA+IDEyLCBsb25nZXN0X2ZydWl0X2NtID4gMTUpICU+JSBtdXRhdGUocHJvYmxlbT1cImV4dHJlbWUgdmFsdWVcIilcbiAgXG4gICNjb21iaW5lIGludG8gb25lIHByb2JsZW1zIGxpc3RcbiAgZGF0YV9wcm9icyA8LSByYmluZChkYXRhMiwgZGF0YTMpXG4gIHByaW50KG5yb3coZGF0YV9wcm9icykpXG4gIHdyaXRlX2NzdihkYXRhX3Byb2JzLCBwYXRoPW91dF90YWJsZSlcbn1cbmBgYCJ9 -->
+<pre class="r"><code>#load the libraries
+library(tidyverse)
+#tutorial at https://bookdown.org/ansellbr/WEHI_tidyR_course_book/week-4-part-3.html
+data_files &lt;- list.files(&#39;~/Google Drive/Shared drives/IntBioTeam/Common Gardens/UCD2022_2023/CorrectedCSVs&#39;,pattern=&#39;Annual_Census_Transplants&#39;,ignore.case=TRUE)  #edit this to be correct path 
+data_files #make this specific to mortality or size
+
+data_names &lt;- str_remove(data_files, pattern = &quot;.csv&quot;)
+data_names
+
+for (i in data_names) {
   #set up variable file names
   in_file &lt;- paste(&quot;~/Google Drive/Shared drives/IntBioTeam/Common Gardens/UCD2022_2023/CorrectedCSVs/&quot;, i, &#39;.csv&#39;, sep = &quot;&quot;)   #edit this to be correct path 
   out_table &lt;- paste(&quot;../output/&quot;, i, &#39;_dataprobs.csv&#39;, sep=&quot;&quot;)
@@ -1778,43 +1787,8 @@ display: none;
   data_probs &lt;- rbind(data2, data3)
   print(nrow(data_probs))
   write_csv(data_probs, path=out_table)
-}
-</code></pre>
+}</code></pre>
 <!-- rnb-source-end -->
-<!-- rnb-output-begin eyJkYXRhIjoiUm93czogODU4IENvbHVtbnM6IDE54pSA4pSAIENvbHVtbiBzcGVjaWZpY2F0aW9uIOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgFxuRGVsaW1pdGVyOiBcIixcIlxuY2hyICgxMSk6IGRhdGUsIGJsb2NrLCBjb2wsIHBvcCwgbWYsIHJlcCwgcGhlbm8sIHRvdGFsX2JyYW5jaCwgaGVyYl9kYW0sIHdpbHRfc3RhdHVzLCBuLi4uXG5kYmwgICg4KTogcm93LCBkaWFtX21tLCBoZWlnaHRfY20sIGxvbmdlc3RfbGVhZl9jbSwgZmxvd2VycywgZnJ1aXRzLCBsb25nZXN0XyBmcnVpdF9jbSwuLi5cbuKEuSBVc2UgYHNwZWMoKWAgdG8gcmV0cmlldmUgdGhlIGZ1bGwgY29sdW1uIHNwZWNpZmljYXRpb24gZm9yIHRoaXMgZGF0YS5cbuKEuSBTcGVjaWZ5IHRoZSBjb2x1bW4gdHlwZXMgb3Igc2V0IGBzaG93X2NvbF90eXBlcyA9IEZBTFNFYCB0byBxdWlldCB0aGlzIG1lc3NhZ2UuXG4ifQ== -->
-<pre><code>Rows: 858 Columns: 19── Column specification ───────────────────────────────────────────────────────────────────
-Delimiter: &quot;,&quot;
-chr (11): date, block, col, pop, mf, rep, pheno, total_branch, herb_dam, wilt_status, n...
-dbl  (8): row, diam_mm, height_cm, longest_leaf_cm, flowers, fruits, longest_ fruit_cm,...
-ℹ Use `spec()` to retrieve the full column specification for this data.
-ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
-<!-- rnb-output-end -->
-<!-- rnb-output-begin eyJkYXRhIjoiWzFdIDBcbiJ9 -->
-<pre><code>[1] 0</code></pre>
-<!-- rnb-output-end -->
-<!-- rnb-output-begin eyJkYXRhIjoiTmV3IG5hbWVzOlJvd3M6IDg1OCBDb2x1bW5zOiAyMeKUgOKUgCBDb2x1bW4gc3BlY2lmaWNhdGlvbiDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIBcbkRlbGltaXRlcjogXCIsXCJcbmNociAoMTEpOiBkYXRlLCBibG9jaywgY29sLCBwb3AsIG1mLCByZXAsIHBoZW5vLCB0b3RhbF9icmFuY2gsIGhlcmJfZGFtLCB3aWx0X3N0YXR1cywgbi4uLlxuZGJsICAoOCk6IHJvdywgZGlhbV9tbSwgaGVpZ2h0X2NtLCBsb25nZXN0X2xlYWZfY20sIGZsb3dlcnMsIGZydWl0cywgbG9uZ2VzdF8gZnJ1aXRfY20sLi4uXG5sZ2wgICgyKTogLi4uMjAsIC4uLjIxXG7ihLkgVXNlIGBzcGVjKClgIHRvIHJldHJpZXZlIHRoZSBmdWxsIGNvbHVtbiBzcGVjaWZpY2F0aW9uIGZvciB0aGlzIGRhdGEuXG7ihLkgU3BlY2lmeSB0aGUgY29sdW1uIHR5cGVzIG9yIHNldCBgc2hvd19jb2xfdHlwZXMgPSBGQUxTRWAgdG8gcXVpZXQgdGhpcyBtZXNzYWdlLlxuIn0= -->
-<pre><code>New names:Rows: 858 Columns: 21── Column specification ───────────────────────────────────────────────────────────────────
-Delimiter: &quot;,&quot;
-chr (11): date, block, col, pop, mf, rep, pheno, total_branch, herb_dam, wilt_status, n...
-dbl  (8): row, diam_mm, height_cm, longest_leaf_cm, flowers, fruits, longest_ fruit_cm,...
-lgl  (2): ...20, ...21
-ℹ Use `spec()` to retrieve the full column specification for this data.
-ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
-<!-- rnb-output-end -->
-<!-- rnb-output-begin eyJkYXRhIjoiWzFdIDBcbiJ9 -->
-<pre><code>[1] 0</code></pre>
-<!-- rnb-output-end -->
-<!-- rnb-output-begin eyJkYXRhIjoiUm93czogODU4IENvbHVtbnM6IDE54pSA4pSAIENvbHVtbiBzcGVjaWZpY2F0aW9uIOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgFxuRGVsaW1pdGVyOiBcIixcIlxuY2hyICAoOCk6IGRhdGUsIGJsb2NrLCBjb2wsIHBvcCwgcGhlbm8sIGhlcmJfZGFtLCB3aWx0X3N0YXR1cywgbm90ZXNcbmRibCAoMTEpOiByb3csIG1mLCByZXAsIGRpYW1fbW0sIGhlaWdodF9jbSwgdG90YWxfYnJhbmNoLCBsb25nZXN0X2xlYWZfY20sIGZsb3dlcnMsIGZydS4uLlxu4oS5IFVzZSBgc3BlYygpYCB0byByZXRyaWV2ZSB0aGUgZnVsbCBjb2x1bW4gc3BlY2lmaWNhdGlvbiBmb3IgdGhpcyBkYXRhLlxu4oS5IFNwZWNpZnkgdGhlIGNvbHVtbiB0eXBlcyBvciBzZXQgYHNob3dfY29sX3R5cGVzID0gRkFMU0VgIHRvIHF1aWV0IHRoaXMgbWVzc2FnZS5cbiJ9 -->
-<pre><code>Rows: 858 Columns: 19── Column specification ───────────────────────────────────────────────────────────────────
-Delimiter: &quot;,&quot;
-chr  (8): date, block, col, pop, pheno, herb_dam, wilt_status, notes
-dbl (11): row, mf, rep, diam_mm, height_cm, total_branch, longest_leaf_cm, flowers, fru...
-ℹ Use `spec()` to retrieve the full column specification for this data.
-ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
-<!-- rnb-output-end -->
-<!-- rnb-output-begin eyJkYXRhIjoiWzFdIDBcbiJ9 -->
-<pre><code>[1] 0</code></pre>
-<!-- rnb-output-end -->
 <!-- rnb-chunk-end -->
 <!-- rnb-text-begin -->
 <p>Size Data - fix this</p>

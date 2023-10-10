@@ -1,0 +1,192 @@
+---
+title: "Initial Growth"
+author: "Brandie Quarles"
+date: "2023-09-21"
+output: html_document:
+  keep_md: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+##Relevant Libraries and Functions
+```{r}
+library(tidyverse)
+library(naniar) #replaces values with NA
+library(lubridate)
+sem <- function(x, na.rm=FALSE) {
+  sd(x,na.rm=na.rm)/sqrt(length(na.omit(x)))
+} #standard error function 
+
+elev_three_palette <- c("#0043F0", "#C9727F", "#F5A540") #colors from Gremer et al 2019
+elev_order <- c("high", "mid", "low")
+```
+
+##Upload Data
+```{r}
+size_0726 <- read_csv("../input/WL2 Data/WL2_size_survey_20230726_corrected.csv") %>% select(Date="7/26/23", block:bed, bed.row="bed.r ow", bed.col="bed.c ol", pop:height.cm, long.leaf.cm="long.leaf. cm", herbiv.y.n="herbiv.y. n", survey.notes:planting.note)
+names(size_0726)
+size_0726$Date <- as.Date(size_0726$Date, format="%m/%d/%y")
+head(size_0726)
+
+size_0802 <- read_csv("../input/WL2 Data/WL2_Size_survey_20230802_corrected.csv") %>% select(Date="8/2/23", block:bed, bed.row="bed. row", bed.col="bed. col", pop:height.cm, long.leaf.cm="long.leaf.c m", herbiv.y.n:survey.notes, planting.note="planting.no te")
+names(size_0802)
+size_0802$Date <- as.Date(size_0802$Date, format="%m/%d/%y")
+head(size_0802) #height and longest leaf are characters
+
+size_0816 <- read_csv("../input/WL2 Data/WL2_size_survey_20230816_corrected.csv") %>% select(Date:bed, bed.row="bed. row", bed.col="bed. col", pop:height.cm, long.leaf.cm="long.leaf.c m", herbiv.y.n:planting.note) #Note: this is two weeks after previous census
+names(size_0816)
+size_0816$Date <- as.Date(size_0816$Date, format="%m/%d/%y")
+head(size_0816) #height and longest leaf are characters
+
+size_0823 <- read_csv("../input/WL2 Data/WL2_size_survey_20230823_corrected.csv")  %>% select(Date:bed, bed.row="bed. row", bed.col="bed. col", pop:planting.note)
+problems(size_0823)
+names(size_0823)
+size_0823$Date <- as.Date(size_0823$Date, format="%m/%d/%y")
+head(size_0823) #height is a chr
+
+size_0830 <- read_csv("../input/WL2 Data/WL2_size_survey_20230830_corrected.csv") %>% select(Date:bed, bed.row="bed. row", bed.col="bed. col", pop:height.cm, long.leaf.cm="long.leaf.c m", herbiv.y.n:planting.note)
+problems(size_0830)
+names(size_0830)
+size_0830$Date <- as.Date(size_0830$Date, format="%m/%d/%y")
+head(size_0830) #height and longest leaf are characters
+
+size_0906 <- read_csv("../input/WL2 Data/WL2_size_survey_20230906_corrected.csv")  #Note: this is not the most recent census
+names(size_0906)
+size_0906 %>% filter(!is.na(...14)) #R seems to be picking up an additional column with no data in it
+size_0906 <- size_0906 %>% select(Date:bed, bed.row="bed. row", bed.col="bed. col", pop:planting.note)
+names(size_0906)
+size_0906$Date <- as.Date(size_0906$Date, format="%m/%d/%y")
+head(size_0906) #longest leaf is a character
+
+size_0913 <- read_csv("../input/WL2 Data/WL2_size_survey_20230913_corrected.csv") %>% mutate(Date="9/13/2023", planting.note=NA)
+names(size_0913)
+size_0913$Date <- as.Date(size_0913$Date, format="%m/%d/%Y")
+head(size_0913)
+```
+
+##Merge the data
+```{r}
+initial_size <- rbind(size_0726, size_0802, size_0816, size_0823, size_0830,size_0906, size_0913) %>% filter(!is.na(pop)) %>% filter(rep != "buffer") %>% filter(rep !="5* buffer") %>% filter(rep !="6* buffer") %>% filter(rep != "bufferbuffer") %>%  filter(rep != "7* buffer")  %>%  filter(rep != "2* buffer")  %>%  filter(rep != "4* buffer")  %>%  filter(rep != "8* buffer")  %>%  filter(rep != "9* buffer")
+head(initial_size)
+tail(initial_size)
+names(initial_size)
+summary(initial_size)
+
+
+initial_size_nonas <- initial_size %>% mutate(height.cm = na_if(height.cm, "N/A"), long.leaf.cm=na_if(long.leaf.cm, "N/A")) %>% mutate(height.cm = na_if(height.cm, "-"), long.leaf.cm=na_if(long.leaf.cm, "-"))
+summary(initial_size_nonas)
+
+initial_size_nonas$height.cm <- as.double(initial_size_nonas$height.cm)
+initial_size_nonas$long.leaf.cm <- as.double(initial_size_nonas$long.leaf.cm)
+head(initial_size_nonas)
+summary(initial_size_nonas)
+##There were misplaced decimals for length - BQC fixed those in CorrectedCSVs
+###8/2/23 SIZE DATA: Found one example when fixing missing decimals where TM2 height was in sheet as 3.5 instead of 13.5, Also, one horizontal frame shift 
+###There are spaces (these get converted to NA) - BQC fixed those in CorrectedCSVs
+#8/30/2023 C B 36 D TM2 1 4 22. 6 
+#8/30/2023 C B 41 C YO7 7 1 2. I
+```
+
+
+##Plot Size over time - very preliminary - still lots of mistakes 
+```{r}
+initial_size_nonas %>% ggplot(aes(x=height.cm)) + geom_histogram()
+initial_size_nonas %>% ggplot(aes(x=long.leaf.cm)) + geom_histogram()
+
+initial_size_summary <- initial_size_nonas %>% group_by(pop, Date) %>% summarise(meanHeight=mean(height.cm, na.rm=TRUE), semHeihgt=sem(height.cm, na.rm=TRUE), meanLength=mean(long.leaf.cm, na.rm=TRUE), semLength=sem(long.leaf.cm, na.rm=TRUE))
+initial_size_summary
+
+initial_size_summary %>% ggplot(aes(x=Date, y=meanHeight, group=pop, color=pop)) + geom_point(position = position_dodge(0.75)) +
+  geom_line() +
+  geom_errorbar(aes(ymin=meanHeight-semHeihgt,ymax=meanHeight+semHeihgt),width=.2, position = 
+                  position_dodge(0.75)) 
+  
+initial_size_summary %>% ggplot(aes(x=Date, y=meanLength, group=pop, color=pop)) + geom_point(position = position_dodge(0.75)) +
+  geom_line() +
+  geom_errorbar(aes(ymin=meanLength-semLength,ymax=meanLength+semLength),width=.2, position = 
+                  position_dodge(0.75)) 
+```
+
+
+##Use the lag/lead function to compute growth increments
+```{r}
+#right <- mutate(scrambled, previous_year_value = lag(value, order_by = year)) - example 
+# markedindivs_popid <-  unite(markedindivs, "PopId", c(Col,Row)) - example
+initial_size_nonas_indivdate <- unite(initial_size_nonas, Indiv.Date, c(pop, mf, rep, Date), remove = FALSE)
+head(initial_size_nonas_indivdate)
+initial_size_nonas_indivdate %>% arrange(Indiv.Date)
+
+size_increments <- initial_size_nonas %>% group_by(pop, mf, rep) %>% mutate(previous_census_height=lag(height.cm, order_by = Date), previous_census_length=lag(long.leaf.cm, order_by = Date), height_inc=abs(height.cm-previous_census_height), length_inc=abs(long.leaf.cm-previous_census_length)) %>% select(block, Date, pop:height.cm, previous_census_height,height_inc, long.leaf.cm, previous_census_length, length_inc) 
+tail(size_increments)
+size_increments %>% arrange(pop, mf, rep, Date)
+summary(size_increments)
+
+size_increments %>% ggplot(aes(x=Date, y=height_inc, group=pop, color=pop)) + geom_point()
+
+size_increments_summary <- size_increments %>% filter(Date !="2023-07-26") %>% group_by(pop, Date) %>% summarise(meanHeightinc=mean(height_inc, na.rm=TRUE),semHeihgt=sem(height_inc, na.rm=TRUE), meanLengthinc=mean(length_inc, na.rm=TRUE), semLength=sem(length_inc, na.rm=TRUE))
+size_increments_summary
+
+size_increments_summary %>% ggplot(aes(x=Date, y=meanHeightinc, group=pop, color=pop)) +
+  geom_point(position = position_dodge(0.75)) + geom_line() +
+  geom_errorbar(aes(ymin=meanHeightinc-semHeihgt,ymax=meanHeightinc+semHeihgt),width=.2, position = 
+                  position_dodge(0.75)) 
+
+size_increments_summary %>% ggplot(aes(x=Date, y=meanLengthinc, group=pop, color=pop)) +
+  geom_point(position = position_dodge(0.75)) + geom_line() +
+  geom_errorbar(aes(ymin=meanLengthinc-semLength,ymax=meanLengthinc+semLength),width=.2, position = 
+                  position_dodge(0.75)) 
+
+
+#by date only 
+size_increments_summary2 <- size_increments %>% filter(Date !="2023-07-26") %>% group_by(Date) %>% summarise(meanHeightinc=mean(height_inc, na.rm=TRUE), semHeihgt=sem(height_inc, na.rm=TRUE), meanLengthinc=mean(length_inc, na.rm=TRUE), semLength=sem(length_inc, na.rm=TRUE))
+size_increments_summary2
+
+size_increments_summary2 %>% ggplot(aes(x=Date, y=meanHeightinc)) + 
+  geom_point(position = position_dodge(0.75)) + geom_line() +
+  geom_errorbar(aes(ymin=meanHeightinc-semHeihgt,ymax=meanHeightinc+semHeihgt),width=.2, position = 
+                  position_dodge(0.75)) + ggtitle("Absolute Value")
+size_increments_summary2 %>% ggplot(aes(x=Date, y=meanLengthinc)) + 
+  geom_point(position = position_dodge(0.75)) + geom_line() +
+  geom_errorbar(aes(ymin=meanLengthinc-semLength,ymax=meanLengthinc+semLength),width=.2, position = 
+                  position_dodge(0.75)) + ggtitle("Absolute Value")
+```
+
+#Non absolute value (note lazy coding)
+```{r}
+size_increments <- initial_size_nonas %>% group_by(pop, mf, rep) %>% mutate(previous_census_height=lag(height.cm, order_by = Date), previous_census_length=lag(long.leaf.cm, order_by = Date), height_inc=(height.cm-previous_census_height), length_inc=(long.leaf.cm-previous_census_length)) %>% select(block, Date, pop:height.cm, previous_census_height,height_inc, long.leaf.cm, previous_census_length, length_inc) 
+tail(size_increments)
+size_increments %>% arrange(pop, mf, rep, Date)
+summary(size_increments)
+
+size_increments %>% ggplot(aes(x=Date, y=height_inc, group=pop, color=pop)) + geom_point()
+
+size_increments_summary <- size_increments %>% filter(Date !="2023-07-26") %>% group_by(pop, Date) %>% summarise(meanHeightinc=mean(height_inc, na.rm=TRUE),semHeihgt=sem(height_inc, na.rm=TRUE), meanLengthinc=mean(length_inc, na.rm=TRUE), semLength=sem(length_inc, na.rm=TRUE))
+size_increments_summary
+
+size_increments_summary %>% ggplot(aes(x=Date, y=meanHeightinc, group=pop, color=pop)) +
+  geom_point(position = position_dodge(0.75)) + geom_line() +
+  geom_errorbar(aes(ymin=meanHeightinc-semHeihgt,ymax=meanHeightinc+semHeihgt),width=.2, position = 
+                  position_dodge(0.75)) 
+
+size_increments_summary %>% ggplot(aes(x=Date, y=meanLengthinc, group=pop, color=pop)) +
+  geom_point(position = position_dodge(0.75)) + geom_line() +
+  geom_errorbar(aes(ymin=meanLengthinc-semLength,ymax=meanLengthinc+semLength),width=.2, position = 
+                  position_dodge(0.75)) 
+
+
+#by date only 
+size_increments_summary2 <- size_increments %>% filter(Date !="2023-07-26") %>% group_by(Date) %>% summarise(meanHeightinc=mean(height_inc, na.rm=TRUE), semHeihgt=sem(height_inc, na.rm=TRUE), meanLengthinc=mean(length_inc, na.rm=TRUE), semLength=sem(length_inc, na.rm=TRUE))
+size_increments_summary2
+
+size_increments_summary2 %>% ggplot(aes(x=Date, y=meanHeightinc)) + 
+  geom_point(position = position_dodge(0.75)) + geom_line() +
+  geom_errorbar(aes(ymin=meanHeightinc-semHeihgt,ymax=meanHeightinc+semHeihgt),width=.2, position = 
+                  position_dodge(0.75)) 
+size_increments_summary2 %>% ggplot(aes(x=Date, y=meanLengthinc)) + 
+  geom_point(position = position_dodge(0.75)) + geom_line() +
+  geom_errorbar(aes(ymin=meanLengthinc-semLength,ymax=meanLengthinc+semLength),width=.2, position = 
+                  position_dodge(0.75))
+```
+

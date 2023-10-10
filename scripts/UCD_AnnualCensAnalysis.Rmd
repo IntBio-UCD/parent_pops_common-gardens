@@ -2,7 +2,8 @@
 title: "Annual Census Analysis"
 author: "Brandie Quarles"
 date: "2023-09-14"
-output: html_document
+output: html_document:
+  keep_md: yes
 ---
 
 ##Note: this is for transplant beds only 
@@ -17,6 +18,8 @@ knitr::opts_chunk$set(echo = TRUE)
 ##Relevant Libraries and Functions
 ```{r}
 library(tidyverse)
+library(corrplot) #plotting correlations 
+library(rstatix) #performing cor_test
 library(lmerTest)
 library(naniar) #replaces values with NA
 sem <- function(x, na.rm=FALSE) {
@@ -25,18 +28,23 @@ sem <- function(x, na.rm=FALSE) {
 
 elev_three_palette <- c("#0043F0", "#C9727F", "#F5A540") #colors from Gremer et al 2019
 elev_order <- c("High", "Mid", "Low")
+
+#For scree plots 
+#library("devtools") #The package devtools is required for the installation as factoextra is hosted on github.
+#1install_github("kassambara/factoextra")
+library("factoextra")
 ```
 
 #Load the data 
 ```{r}
 #Note: BQC edited the csvs prior to importing to R b/c of issues with the naming of columns and the first row of the transplants sheets not being the heading row (veg, repo info and not block, mf etc...) 
-pop_elev <- read_csv("../input/Pops_for_2022_UCD.csv") #elevation info for each population 
+pop_elev <- read_csv("../input/UCD Data/Pops_for_2022_UCD.csv") #elevation info for each population 
 summary(pop_elev)
 pop_elev_nonotes <- pop_elev %>% select(-notes, -JGI.DNA)
 pop_elev_nonotes
 pop_elev_nonotes$elevation.group <- str_to_title(pop_elev_nonotes$elevation.group)
 
-anncensustrans.0522 <- read_csv("../input/Annual_Census_Transplants_All_May_2023_corrected.csv")
+anncensustrans.0522 <- read_csv("../input/UCD Data/Annual_Census_Transplants_All_May_2023_corrected.csv")
 head(anncensustrans.0522)
 names(anncensustrans.0522) <- gsub(" ", "", colnames(anncensustrans.0522))
 summary(anncensustrans.0522)
@@ -48,7 +56,7 @@ anncensustrans.0522_numcorrected %>% filter(pheno !="X" & is.na(diam_mm)) #all a
 anncensustrans.0522_alive <- anncensustrans.0522_numcorrected %>% filter(!is.na(diam_mm))
 summary(anncensustrans.0522_alive) #64 plants alive - includes early measured plants (marked as dead)
 
-anncensustrans.0626 <- read_csv("../input/Annual_Census_transplants_20230626_corrected.csv")
+anncensustrans.0626 <- read_csv("../input/UCD Data/Annual_Census_transplants_20230626_corrected.csv")
 head(anncensustrans.0626)
 names(anncensustrans.0626) <- gsub(" ", "", colnames(anncensustrans.0626))
 anncensustrans.0626 %>% filter(diam_mm=="X") 
@@ -97,7 +105,12 @@ all above are totals/sums per month
 - tmn (deg C) = min air temp (for a given month)
 - tmx (deg C) = max air temp (for a given month)
 127 years
-##Note that Yosemite pops are coded differently in climate date vs. pops info
+
+*Notes:
+- temperature highly correlated within pops w/in years - could just take avg temp for the 3 months when we think germination is occurring (Oct-Jan & April-June)
+--try having separate columns for both and see how they load on the PCA or just pick the months based on elevation - base times on AJB paper 
+
+
 To do:
 - do some lit review to see what variables other people have focused on or found to be significant 
 -Sam said CWD or snow-related variables - if all correlated could pick the one that makes teh most sense
@@ -110,13 +123,25 @@ unique(climate_data$pop)
 climate_data$year = as.character(climate_data$year)
 head(climate_data)
 
+climate_data_yo <- climate_data %>% mutate(pop = str_replace(pop, "YOSE(\\d+)", "YO\\1")) #changing YOSE to YO 
+#`(\\d+)`: This part contains a regular expression within parentheses: 
+#`\\d`: Matches a digit (equivalent to `[0-9]`). 
+#The double backslash `\\` is used to escape the `\` #character in R strings, so `\\d` is interpreted as `\d` in the regex, denoting a digit.
+#`+`: This qualifier means "one or more of the preceding element," so `\\d+` will match one or more digits.
+#`()`: Parentheses are used to define a capturing group, which means that the part of the regex within the parentheses `(\\d+)` is captured to be used in back-references or for extracting matched parts.
+#\\1 references the first capturing group
+unique(climate_data_yo$pop)
+
 #names(pop_elev_nonotes)
-pop_elev_climate <- left_join(pop_elev_nonotes, climate_data, by=c("parent.pop"="pop")) %>% select(parent.pop, elevation.group, year:tmx)
+pop_elev_climate <- left_join(pop_elev_nonotes, climate_data_yo, by=c("parent.pop"="pop")) %>% select(parent.pop, elevation.group, year:tmx)
 unique(pop_elev_climate$parent.pop)
 #unique(pop_elev_nonotes$parent.pop)
 head(pop_elev_climate, 30)
 names(pop_elev_climate)
+```
 
+#Climate traits across pops
+```{r}
 pop_elev_climate_yearlytot <- pop_elev_climate %>% group_by(parent.pop, year, elevation.group) %>% summarise_at(c("pck", "ppt"), sum, na.rm = TRUE)
 names(pop_elev_climate_yearlytot)
 pop_elev_climate_yearlytot %>% filter(year>1992) %>% ggplot(aes(x=year, y=pck, group=parent.pop, color=elevation.group)) + geom_point() + geom_line() + scale_colour_manual(values=elev_three_palette)
@@ -196,7 +221,8 @@ pop_elev_climate_avgs %>% ggplot(aes(x=fct_reorder(parent.pop, str), y=str, fill
   labs(fill="Elevation") +
    theme_classic() +
   xlab("Population") +
-  theme(axis.text.x = element_text(angle = 45,  hjust = 1))
+  theme(axis.text.x = element_text(angle = 45,  hjust = 1)) #this could be a better metric of available water (compared to ppt)
+#TM2 may be higher b/c of clay in the area that was being mapped (off the outcrops)
 
 pop_elev_climate_avgs %>% ggplot(aes(x=fct_reorder(parent.pop, tmn), y=tmn, fill=elevation.group)) + 
   geom_col(width = 0.7,position = position_dodge(0.75)) +
@@ -215,9 +241,46 @@ pop_elev_climate_avgs %>% ggplot(aes(x=fct_reorder(parent.pop, tmx), y=tmx, fill
    theme_classic() +
   xlab("Population") +
   theme(axis.text.x = element_text(angle = 45,  hjust = 1))
-
 ```
 
+#Climate trait correlations
+```{r}
+names(pop_elev_climate)
+pop_elev_climate %>% cor_test(aet, cwd, pck, pet, ppt, rch, run, str, tmn, tmx, method="pearson")
+
+cor.mat <- pop_elev_climate %>% select(aet, cwd, pck, pet, ppt, rch, run, str, tmn, tmx) %>% cor_mat()
+cor.mat
+	
+mydata.cor = pop_elev_climate %>% select(aet, cwd, pck, pet, ppt, rch, run, str, tmn, tmx) %>% cor()
+mydata.cor
+corrplot(mydata.cor)
+
+#PCA
+#normalize the data
+climate_normalized <- pop_elev_climate %>% select(aet, cwd, pck, pet, ppt, rch, run, str, tmn, tmx) %>% scale() #normalize the data so they're all on the same scale
+head(climate_normalized)
+cor.norm = cor(climate_normalized) #test correlations among the traits
+corrplot(cor.norm)
+
+climate.pca <- princomp(cor.norm) 
+summary(climate.pca) #PC1 explains 80% of the variation, PC2 explains 7.9%, together they explain 88%
+climate.pca$loadings[, 1:2] #PC1 has high positive loading values for tmn, tmx, pet, cwd, aet
+fviz_eig(climate.pca) #scree plot 
+fviz_pca_var(climate.pca, col.var = "black") #biplot
+
+#The goal of the third visualization is to determine how much each variable is represented in a given component. Such a quality of representation is called the Cos2 and corresponds to the square cosine, and it is computed using the fviz_cos2 function. (https://www.datacamp.com/tutorial/pca-analysis-r)
+#A low value means that the variable is not perfectly represented by that component. 
+#A high value, on the other hand, means a good representation of the variable on that component.
+fviz_cos2(climate.pca, choice = "var", axes = 1:2) #axes says which PCs to use 
+#biplot combined wiht cos2
+fviz_pca_var(climate.pca, col.var = "cos2", 
+            gradient.cols = c("black", "orange", "green"),
+            repel = TRUE)
+
+#Should use this code to check the significance of the PCA: https://github.com/StatQuest/pca_demo/blob/master/pca_demo.R
+#Remember this paper: Björklund, M. 2019. Be careful with your principal components. Evolution 73: 2151–2158.
+
+```
 
 
 #Merge dataframes
@@ -226,7 +289,7 @@ pop_elev_climate_avgs %>% ggplot(aes(x=fct_reorder(parent.pop, tmx), y=tmx, fill
 - add in pop elevation info 
 ```{r}
 anncensustrans_all_alive <- full_join(anncensustrans_0522_alive_tomerge, anncensustrans_0626_alive_tomerge)
-dim(anncensustrans_all_alive) #58 rows , 28 cols
+dim(anncensustrans_all_alive) #64 rows , 28 cols
 head(anncensustrans_all_alive)
 names(anncensustrans_all_alive)
 
@@ -288,6 +351,14 @@ anncensustrans_all_alive_max_elev %>% ggplot(aes(x=parent.pop, y=repro_branch)) 
 names(anncensustrans_all_alive_max_elev)
 ggplot(anncensustrans_all_alive_max_elev, aes(x = tmx, y = diam))+
   geom_point()
+
+ggplot(anncensustrans_all_alive_max_elev, aes(x = ppt, y = diam))+
+  geom_point()
+
+
+ggplot(anncensustrans_all_alive_max_elev, aes(x = pck, y = diam))+
+  geom_point()
+
 ggplot(anncensustrans_all_alive_max_elev, aes(x = tmn, y = height))+
   geom_point()
 ggplot(anncensustrans_all_alive_max_elev, aes(x = tmn, y = longest_leaf))+
@@ -320,6 +391,7 @@ anncensustrans_all_alive_summary
 
 
 Mixed Effects Models 
+#Figure out PCRs as part of mixed effects models?
 ```{r}
 #Diam
 anncensustrans_all_alive_summary %>% ggplot(aes(x=fct_reorder(parent.pop, meanDiam), y=meanDiam, fill=elevation.group)) +
@@ -334,17 +406,19 @@ anncensustrans_all_alive_summary %>% ggplot(aes(x=fct_reorder(parent.pop, meanDi
   theme(axis.text.x = element_text(angle = 45,  hjust = 1))
 
 
-lmediam = lmer(diam ~ elevation.group + (1|parent.pop/mf), data=anncensustrans_all_alive_max_elev_noinf)
-summary(lmediam)
-ranova(lmediam)
-
 lmediam2 = lmer(diam ~ (1|parent.pop/mf), data=anncensustrans_all_alive_max_elev_noinf)
 summary(lmediam2)
-ranova(lmediam2)
+ranova(lmediam2) #no maternal family effect b/c maybe not enough individuals 
+#could try assinging unique names and "un-nesting" them 
 
-lmediam3 = lmer(diam ~ rch + (1|parent.pop/mf), data=anncensustrans_all_alive_max_elev_noinf)
+lmediam3 = lmer(diam ~ ppt + (1|parent.pop/mf), data=anncensustrans_all_alive_max_elev_noinf)
 summary(lmediam3)
-ranova(lmediam3)
+ranova(lmediam3) 
+#singular warning b/c we only have one value for each pop (multiple maternal families have one value)
+
+lmediam4 = lmer(diam ~ ppt + (1|parent.pop), data=anncensustrans_all_alive_max_elev_noinf)
+summary(lmediam4)
+ranova(lmediam4) 
 ```
 
 
@@ -360,6 +434,10 @@ anncensustrans_all_alive_summary %>% ggplot(aes(x=fct_reorder(parent.pop, meanHe
    theme_classic() +
   xlab("Population") +
   theme(axis.text.x = element_text(angle = 45,  hjust = 1))
+
+lmeheight = lmer(height ~ ppt + (1|parent.pop/mf), data=anncensustrans_all_alive_max_elev_noinf)
+summary(lmeheight)
+ranova(lmeheight)
 ```
 
 
@@ -375,6 +453,10 @@ anncensustrans_all_alive_summary %>% ggplot(aes(x=parent.pop, y=meanLongestLeaf,
    theme_classic() +
   xlab("Population") +
   theme(axis.text.x = element_text(angle = 45,  hjust = 1))
+
+lmelongest_leaf = lmer(longest_leaf ~ ppt + (1|parent.pop/mf), data=anncensustrans_all_alive_max_elev_noinf)
+summary(lmelongest_leaf)
+ranova(lmelongest_leaf)
 ```
 
 
