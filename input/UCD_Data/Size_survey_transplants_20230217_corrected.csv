@@ -833,7 +833,7 @@ survey date,block,row,col,pop,mf,rep,height (cm),longest leaf (cm),herbivory (Y 
 2/17/23,L2,31,D,LV3,5,9,1.7,2.1,N,
 2/17/23,L2,32,C,CP2,1,1,0.5,2.6,N,
 2/17/23,L2,32,D,CC,2,7,-,-,-,Dead
-2/17/23,L2,33,C,DPR,2,2,5.7,3.8,2,Detatched
+2/17/23,L2,33,C,DPR,2,2,5.7,3.8,N,Detatched
 2/17/23,L2,33,D,WL2,4,10,-,-,-,Possible new germ
 2/17/23,L2,34,C,BH,5,8,4.1,5,N,
 2/17/23,L2,34,D,WL1,7,14,-,-,-,Dead

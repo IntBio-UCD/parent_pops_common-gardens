@@ -3,13 +3,14 @@ title: "Data Checking"
 output: html_notebook:
   keep_md: yes
 ---
+#Need to run all the below for germination beds too
 
-Annual Census - Transplants 
+#Annual Census - Transplants 
 ```{r}
 #load the libraries
 library(tidyverse)
 #tutorial at https://bookdown.org/ansellbr/WEHI_tidyR_course_book/week-4-part-3.html
-data_files <- list.files('~/Google Drive/Shared drives/IntBioTeam/Common Gardens/UCD2022_2023/CorrectedCSVs',pattern='Annual_Census_Transplants',ignore.case=TRUE)  #edit this to be correct path 
+data_files <- list.files('~/Google Drive/Shared drives/IntBioTeam/Common Gardens/UCD2022_2023/CorrectedCSVs',pattern='Annual_Census_Transplants',ignore.case=TRUE)
 data_files #make this specific to mortality or size
 
 data_names <- str_remove(data_files, pattern = ".csv")
@@ -41,27 +42,33 @@ for (i in data_names) {
 ```
 
 
-Size Data - fix this
+#Size Data - Transplants
 ```{r}
 #load the libraries
 library(tidyverse)
 #tutorial at https://bookdown.org/ansellbr/WEHI_tidyR_course_book/week-4-part-3.html
-data_files <- list.files('~/Google Drive/Shared drives/IntBioTeam/Common Gardens/UCD2022_2023/CorrectedCSVs',pattern='Size_survey_transplants',ignore.case=TRUE)  #edit this to be correct path 
-data_files #make this specific to mortality or size
+data_files <- list.files('~/Google Drive/Shared drives/IntBioTeam/Common Gardens/UCD2022_2023/CorrectedCSVs',pattern='Size_survey_transplants.*csv',ignore.case=FALSE) 
+data_files
 
 data_names <- str_remove(data_files, pattern = ".csv")
 data_names
+data_names2 <- data_names[-c(1,2)]
+data_names2
 
-for (i in data_names) {
+for (i in data_names2) {
   #set up variable file names
   in_file <- paste("~/Google Drive/Shared drives/IntBioTeam/Common Gardens/UCD2022_2023/CorrectedCSVs/", i, '.csv', sep = "")   #edit this to be correct path 
   out_table <- paste("../output/", i, '_dataprobs.csv', sep="")
-  
+ 
   #data checking code
   data <- read_csv(in_file)
   
   #remove spaces in column names
-  names(data) <- gsub(" ", "", colnames(data))
+  names(data) <- gsub(" ", "", colnames(data)) 
+  names(data)
+  
+  #data <- data %>% rename(height.cm= `height(cm)`, long.leaf.cm=`longestleaf(cm)`)
+  data <- data %>% rename(height.cm= `height(cm)`, long.leaf.cm=`longestleaf(cm)`, herbiv.y.n=`herbivory(YorN)`)
   
   #check for spaces in numbers
   data2 <- data %>% filter(grepl(" ", height.cm) | grepl(" ", long.leaf.cm)) %>% mutate(problem="spaces")
@@ -70,9 +77,14 @@ for (i in data_names) {
   data3 <- data
   data3$height.cm <- as.double(data3$height.cm)
   data3$long.leaf.cm <- as.double(data3$long.leaf.cm)
-  data3 <- data3 %>% filter(height.cm > 60 | long.leaf.cm > 12) %>% mutate(problem="extreme value")
+  data3 <- data3 %>% filter(height.cm > 140 | long.leaf.cm > 15) %>% mutate(problem="extreme value")
   
   #check for spread out data 
+  #data4 <- data
+  #data4 <- data4 %>% mutate(Notes = na_if(Notes, "N/A")) %>% mutate(Notes = na_if(Notes, "-"))
+  #data4$Notes <- str_to_upper(data4$Notes)
+  #data4 <- data4 %>% filter(!is.character(Notes)) %>% mutate(problem="notes col")
+  
   data4 <- data
   data4 <- data4 %>% mutate(herbiv.y.n = na_if(herbiv.y.n, "N/A")) %>% mutate(herbiv.y.n = na_if(herbiv.y.n, "-"))
   data4$herbiv.y.n <- str_to_upper(data4$herbiv.y.n)
@@ -85,13 +97,89 @@ for (i in data_names) {
 }
 ```
 
-Mortality - fix this 
+#Mortality/Phenology - Transplants
 ```{r}
 #load the libraries
 library(tidyverse)
 #tutorial at https://bookdown.org/ansellbr/WEHI_tidyR_course_book/week-4-part-3.html
-data_files <- list.files('~/Google Drive/Shared drives/IntBioTeam/Common Gardens/UCD2022_2023/CorrectedCSVs',pattern='mort',ignore.case=TRUE)  #edit this to be correct path 
+data_files <- list.files('~/Google Drive/Shared drives/IntBioTeam/Common Gardens/UCD2022_2023/CorrectedCSVs',pattern='transplants.*mort.*csv',ignore.case=TRUE)
 data_files #make this specific to mortality or size
+
+data_names <- str_remove(data_files, pattern = ".csv")
+data_names
+
+for (i in data_names) {
+  #set up variable file names
+  in_file <- paste("~/Google Drive/Shared drives/IntBioTeam/Common Gardens/UCD2022_2023/CorrectedCSVs/", i, '.csv', sep = "") 
+  out_table <- paste("../output/", i, '_dataprobs.csv', sep="")
+  
+  #data checking code
+  data <- read_csv(in_file)
+  
+  #remove spaces in column names
+  names(data) <- gsub(" ", "", colnames(data))
+  names(data)
+  
+  #check for spaces in numbers
+  data2 <- data %>% filter(grepl(" ", DateFirstBud) | grepl(" ", DateFirstFlower) | grepl(" ", DateFirstFruit) | grepl(" ", DateLastFlower) | grepl(" ", DateLastFruit) | grepl(" ", DeathDate)) %>% mutate(problem="spaces")
+  
+  #combine into one problems list
+  data_probs <- data2
+  print(nrow(data_probs))
+  write_csv(data_probs, path=out_table)
+}
+```
+
+
+#Annual Census - Germination Beds 
+```{r}
+#load the libraries
+library(tidyverse)
+#tutorial at https://bookdown.org/ansellbr/WEHI_tidyR_course_book/week-4-part-3.html
+data_files <- list.files('~/Google Drive/Shared drives/IntBioTeam/Common Gardens/UCD2022_2023/CorrectedCSVs',pattern='Annual_Census_Germination',ignore.case=TRUE)
+data_files #make this specific to mortality or size
+
+data_names <- str_remove(data_files, pattern = ".csv")
+data_names
+
+for (i in data_names) {
+  #set up variable file names
+  in_file <- paste("~/Google Drive/Shared drives/IntBioTeam/Common Gardens/UCD2022_2023/CorrectedCSVs/", i, '.csv', sep = "")  
+  out_table <- paste("../output/", i, '_dataprobs.csv', sep="")
+  
+  #data checking code
+  data <- read_csv(in_file)
+  
+  #remove spaces in column names
+  names(data) <- gsub(" ", "_", colnames(data))
+  names(data)
+  
+  #check for spaces in numbers
+  data2 <- data %>% filter(grepl(" ", diam_mm) | grepl(" ", height_cm) | grepl(" ", total_branch) | grepl(" ", longest_leaf_cm) | grepl(" ", flowers) | grepl(" ", fruits) | grepl(" ", longest_fruit_cm) | grepl(" ", repro__branch)) %>% mutate(problem="spaces")
+  
+  #check for extreme values
+  data3 <- data
+  data3$diam_mm <- as.double(data3$diam_mm)
+  data3$height_cm <- as.double(data3$height_cm)
+  data3$longest_leaf_cm <- as.double(data3$longest_leaf_cm)
+  data3$longest_fruit_cm <- as.double(data3$longest_fruit_cm)
+  data3 <- data3 %>% filter(diam_mm > 50, height_cm > 140 | longest_leaf_cm > 12, longest_fruit_cm > 15) %>% mutate(problem="extreme value")
+  
+  #combine into one problems list
+  data_probs <- rbind(data2, data3)
+  print(nrow(data_probs))
+  write_csv(data_probs, path=out_table)
+}
+```
+
+
+#Size Data - Germination Beds 
+```{r}
+#load the libraries
+library(tidyverse)
+#tutorial at https://bookdown.org/ansellbr/WEHI_tidyR_course_book/week-4-part-3.html
+data_files <- list.files('~/Google Drive/Shared drives/IntBioTeam/Common Gardens/UCD2022_2023/CorrectedCSVs',pattern='Size_survey_germination.*csv',ignore.case=FALSE) 
+data_files
 
 data_names <- str_remove(data_files, pattern = ".csv")
 data_names
@@ -105,10 +193,74 @@ for (i in data_names) {
   data <- read_csv(in_file)
   
   #remove spaces in column names
-  names(data) <- gsub(" ", "", colnames(data))
+  names(data) <- gsub(" ", "", colnames(data)) 
+  names(data)
+  
+  #data <- data %>% rename(height.cm= `height(cm)`, long.leaf.cm=`longestleaf(cm)`)
+  data <- data %>% rename(height.cm= `height(cm)`, long.leaf.cm=`longestleaf(cm)`, herbiv.y.n=`herbivory(YorN)`)
   
   #check for spaces in numbers
-  data2 <- data %>% filter(grepl(" ", bud.date) | grepl(" ", flower.date) | grepl(" ", fruit.date) | grepl(" ", last.flower.date) | grepl(" ", last.fruit.date) | grepl(" ", death.date)) %>% mutate(problem="spaces")
+  data2 <- data %>% filter(grepl(" ", height.cm) | grepl(" ", long.leaf.cm)) %>% mutate(problem="spaces")
+  
+  #check for extreme values
+  data3 <- data
+  data3$height.cm <- as.double(data3$height.cm)
+  data3$long.leaf.cm <- as.double(data3$long.leaf.cm)
+  data3 <- data3 %>% filter(height.cm > 140 | long.leaf.cm > 15) %>% mutate(problem="extreme value")
+  
+  #check for spread out data 
+  #data4 <- data
+  #data4 <- data4 %>% mutate(Notes = na_if(Notes, "N/A")) %>% mutate(Notes = na_if(Notes, "-"))
+  #data4$Notes <- str_to_upper(data4$Notes)
+  #data4 <- data4 %>% filter(!is.character(Notes)) %>% mutate(problem="notes col")
+  
+  data4 <- data
+  data4 <- data4 %>% mutate(herbiv.y.n = na_if(herbiv.y.n, "N/A")) %>% mutate(herbiv.y.n = na_if(herbiv.y.n, "-"))
+  data4$herbiv.y.n <- str_to_upper(data4$herbiv.y.n)
+  data4 <- data4 %>% filter(herbiv.y.n != "Y" & herbiv.y.n != "N") %>% mutate(problem="herbiv col")
+  
+  #combine into one problems list
+  data_probs <- rbind(data2, data3, data4)
+  print(nrow(data_probs))
+  write_csv(data_probs, path=out_table)
+}
+```
+
+#Mortality/Phenology - Germination Beds
+```{r}
+#load the libraries
+library(tidyverse)
+#tutorial at https://bookdown.org/ansellbr/WEHI_tidyR_course_book/week-4-part-3.html
+data_files <- list.files('~/Google Drive/Shared drives/IntBioTeam/Common Gardens/UCD2022_2023/CorrectedCSVs',pattern='Germination_survey.*csv',ignore.case=TRUE)
+data_files #make this specific to mortality or size
+
+data_files_phen <- list.files('~/Google Drive/Shared drives/IntBioTeam/Common Gardens/UCD2022_2023/CorrectedCSVs',pattern='phenology.*germination.*csv',ignore.case=TRUE)
+data_files_phen #make this specific to mortality or size
+
+data_names <- str_remove(data_files, pattern = ".csv")
+data_names
+data_names2 <- data_names[-1]
+data_names2
+
+data_names_phen <- str_remove(data_files_phen, pattern = ".csv")
+data_names_phen
+
+for (i in data_names_phen) {
+  #set up variable file names
+  in_file <- paste("~/Google Drive/Shared drives/IntBioTeam/Common Gardens/UCD2022_2023/CorrectedCSVs/", i, '.csv', sep = "") 
+  out_table <- paste("../output/", i, '_dataprobs.csv', sep="")
+  in_file
+  #data checking code
+  data <- read_csv(in_file)
+  
+  #remove spaces in column names
+  names(data) <- gsub(" ", "", colnames(data))
+  names(data)
+  
+  #check for spaces in numbers
+  #data2 <- data %>% filter(grepl(" ", deathdate)) %>% mutate(problem="spaces")
+  #data2 <- data %>% filter(grepl(" ", deathdate1) | grepl(" ", deathdate2) | grepl(" ", deathdate3)) %>% mutate(problem="spaces")
+  data2 <- data %>% filter(grepl(" ", DateFirstBud) | grepl(" ", DateFirstFlower) | grepl(" ", DateFirstFruit) | grepl(" ", DateLastFlower) | grepl(" ", DateLastFruit)) %>% mutate(problem="spaces")
   
   #combine into one problems list
   data_probs <- data2
@@ -116,5 +268,3 @@ for (i in data_names) {
   write_csv(data_probs, path=out_table)
 }
 ```
-
-
