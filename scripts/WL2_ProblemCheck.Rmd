@@ -4,7 +4,7 @@ output: html_notebook:
   keep_md: yes
 ---
 
-Size Data
+#Size Data
 ```{r}
 #load the libraries
 library(tidyverse)
@@ -41,21 +41,18 @@ for (i in data_names) {
   data4$herbiv.y.n <- str_to_upper(data4$herbiv.y.n)
   data4 <- data4 %>% filter(herbiv.y.n != "Y" & herbiv.y.n != "N") %>% mutate(problem="herbiv col")
   
+  #check for letters in number columns 
+  data5 <- data %>% rowwise() %>% filter(!is.na(height.cm) & height.cm !="-" & height.cm != "N/A") %>% filter(is.na(as.numeric(height.cm))) %>% mutate(problem="character")
+  data6 <- data %>% rowwise() %>% filter(!is.na(long.leaf.cm) & long.leaf.cm!="-" & long.leaf.cm !="N/A") %>% filter(is.na(as.numeric(long.leaf.cm))) %>% mutate(problem="character")
+  
   #combine into one problems list
-  data_probs <- rbind(data2, data3, data4)
+  data_probs <- rbind(data2, data3, data4, data5, data6)
   print(nrow(data_probs))
   write_csv(data_probs, path=out_table)
 }
-
-#practice_0830 <- read_csv("../input/WL2_size_survey_20230830_corrected.csv")
-#names(practice_0830) 
-#names(practice_0830) <- gsub(" ","", colnames(practice_0830))
-#head(practice_0830)
-#practice_0830 %>% filter(herbiv.y.n != "Y" & herbiv.y.n != "N")
-#practice_0830$herbiv.y.n <- str_to_upper(practice_0830$herbiv.y.n)
 ```
 
-Mortality
+#Mortality
 ```{r}
 #load the libraries
 library(tidyverse)

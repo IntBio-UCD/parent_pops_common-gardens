@@ -3,7 +3,7 @@ title: "Data Checking"
 output: html_notebook:
   keep_md: yes
 ---
-#Need to run all the below for germination beds too
+#!Add something to check for letters in a numbers column!#
 
 #Annual Census - Transplants 
 ```{r}
@@ -34,8 +34,18 @@ for (i in data_names) {
   data3 <- data
   data3 <- data3 %>% filter(diam_mm > 50, height_cm > 140 | longest_leaf_cm > 12, longest_fruit_cm > 15) %>% mutate(problem="extreme value")
   
+  #check for letters in number columns 
+  data4 <- data %>% rowwise() %>% filter(!is.na(diam_mm)) %>% filter(is.na(as.numeric(diam_mm))) %>% mutate(problem="character")
+  data5 <- data %>% rowwise() %>% filter(!is.na(height_cm)) %>% filter(is.na(as.numeric(height_cm))) %>% mutate(problem="character")
+  data6 <- data %>% rowwise() %>% filter(!is.na(total_branch)) %>% filter(is.na(as.numeric(total_branch))) %>% mutate(problem="character")
+  data7 <- data %>% rowwise() %>% filter(!is.na(longest_leaf_cm)) %>% filter(is.na(as.numeric(longest_leaf_cm))) %>% mutate(problem="character")
+  data8 <- data %>% rowwise() %>% filter(!is.na(flowers)) %>% filter(is.na(as.numeric(flowers))) %>% mutate(problem="character")
+  data9 <- data %>% rowwise() %>% filter(!is.na(fruits)) %>% filter(is.na(as.numeric(fruits))) %>% mutate(problem="character")
+  data10 <- data %>% rowwise() %>% filter(!is.na(longest_fruit_cm)) %>% filter(is.na(as.numeric(longest_fruit_cm))) %>% mutate(problem="character")
+  data11 <- data %>% rowwise() %>% filter(!is.na(repro_branch)) %>% filter(is.na(as.numeric(repro_branch))) %>% mutate(problem="character")
+  
   #combine into one problems list
-  data_probs <- rbind(data2, data3)
+  data_probs <- rbind(data2, data3, data4, data5, data6, data7, data8, data9, data10, data11)
   print(nrow(data_probs))
   write_csv(data_probs, path=out_table)
 }
@@ -48,12 +58,11 @@ for (i in data_names) {
 library(tidyverse)
 #tutorial at https://bookdown.org/ansellbr/WEHI_tidyR_course_book/week-4-part-3.html
 data_files <- list.files('~/Google Drive/Shared drives/IntBioTeam/Common Gardens/UCD2022_2023/CorrectedCSVs',pattern='Size_survey_transplants.*csv',ignore.case=FALSE) 
-data_files
 
 data_names <- str_remove(data_files, pattern = ".csv")
 data_names
 data_names2 <- data_names[-c(1,2)]
-data_names2
+data_names2 #the first two censuses don't have a herbivory column 
 
 for (i in data_names2) {
   #set up variable file names
@@ -84,14 +93,17 @@ for (i in data_names2) {
   #data4 <- data4 %>% mutate(Notes = na_if(Notes, "N/A")) %>% mutate(Notes = na_if(Notes, "-"))
   #data4$Notes <- str_to_upper(data4$Notes)
   #data4 <- data4 %>% filter(!is.character(Notes)) %>% mutate(problem="notes col")
-  
   data4 <- data
   data4 <- data4 %>% mutate(herbiv.y.n = na_if(herbiv.y.n, "N/A")) %>% mutate(herbiv.y.n = na_if(herbiv.y.n, "-"))
   data4$herbiv.y.n <- str_to_upper(data4$herbiv.y.n)
   data4 <- data4 %>% filter(herbiv.y.n != "Y" & herbiv.y.n != "N") %>% mutate(problem="herbiv col")
   
+  #check for letters in number columns 
+  data5 <- data %>% rowwise() %>% filter(!is.na(height.cm) & height.cm !="-") %>% filter(is.na(as.numeric(height.cm))) %>% mutate(problem="character")
+  data6 <- data %>% rowwise() %>% filter(!is.na(long.leaf.cm) & long.leaf.cm!="-") %>% filter(is.na(as.numeric(long.leaf.cm))) %>% mutate(problem="character")
+  
   #combine into one problems list
-  data_probs <- rbind(data2, data3, data4)
+  data_probs <- rbind(data2, data3, data4, data5, data6)
   print(nrow(data_probs))
   write_csv(data_probs, path=out_table)
 }
@@ -165,8 +177,18 @@ for (i in data_names) {
   data3$longest_fruit_cm <- as.double(data3$longest_fruit_cm)
   data3 <- data3 %>% filter(diam_mm > 50, height_cm > 140 | longest_leaf_cm > 12, longest_fruit_cm > 15) %>% mutate(problem="extreme value")
   
+  #check for letters in number columns 
+  data4 <- data %>% rowwise() %>% filter(!is.na(diam_mm) & diam_mm!="n/a") %>% filter(is.na(as.numeric(diam_mm))) %>% mutate(problem="character")
+  data5 <- data %>% rowwise() %>% filter(!is.na(height_cm) & height_cm !="n/a") %>% filter(is.na(as.numeric(height_cm))) %>% mutate(problem="character")
+  data6 <- data %>% rowwise() %>% filter(!is.na(total_branch) & total_branch != "n/a") %>% filter(is.na(as.numeric(total_branch))) %>% mutate(problem="character")
+  data7 <- data %>% rowwise() %>% filter(!is.na(longest_leaf_cm) & longest_leaf_cm != "n/a") %>% filter(is.na(as.numeric(longest_leaf_cm))) %>% mutate(problem="character")
+  data8 <- data %>% rowwise() %>% filter(!is.na(flowers) & flowers != "n/a") %>% filter(is.na(as.numeric(flowers))) %>% mutate(problem="character")
+  data9 <- data %>% rowwise() %>% filter(!is.na(fruits) & fruits != "n/a") %>% filter(is.na(as.numeric(fruits))) %>% mutate(problem="character")
+  data10 <- data %>% rowwise() %>% filter(!is.na(longest_fruit_cm) & longest_fruit_cm != "n/a") %>% filter(is.na(as.numeric(longest_fruit_cm))) %>% mutate(problem="character")
+  data11 <- data %>% rowwise() %>% filter(!is.na(repro__branch) & repro__branch != "n/a") %>% filter(is.na(as.numeric(repro__branch))) %>% mutate(problem="character")
+  
   #combine into one problems list
-  data_probs <- rbind(data2, data3)
+  data_probs <- rbind(data2, data3, data4, data5, data6, data7, data8, data9, data10, data11)
   print(nrow(data_probs))
   write_csv(data_probs, path=out_table)
 }
@@ -196,7 +218,6 @@ for (i in data_names) {
   names(data) <- gsub(" ", "", colnames(data)) 
   names(data)
   
-  #data <- data %>% rename(height.cm= `height(cm)`, long.leaf.cm=`longestleaf(cm)`)
   data <- data %>% rename(height.cm= `height(cm)`, long.leaf.cm=`longestleaf(cm)`, herbiv.y.n=`herbivory(YorN)`)
   
   #check for spaces in numbers
@@ -209,18 +230,17 @@ for (i in data_names) {
   data3 <- data3 %>% filter(height.cm > 140 | long.leaf.cm > 15) %>% mutate(problem="extreme value")
   
   #check for spread out data 
-  #data4 <- data
-  #data4 <- data4 %>% mutate(Notes = na_if(Notes, "N/A")) %>% mutate(Notes = na_if(Notes, "-"))
-  #data4$Notes <- str_to_upper(data4$Notes)
-  #data4 <- data4 %>% filter(!is.character(Notes)) %>% mutate(problem="notes col")
-  
   data4 <- data
   data4 <- data4 %>% mutate(herbiv.y.n = na_if(herbiv.y.n, "N/A")) %>% mutate(herbiv.y.n = na_if(herbiv.y.n, "-"))
   data4$herbiv.y.n <- str_to_upper(data4$herbiv.y.n)
   data4 <- data4 %>% filter(herbiv.y.n != "Y" & herbiv.y.n != "N") %>% mutate(problem="herbiv col")
   
+   #check for letters in number columns 
+  data5 <- data %>% rowwise() %>% filter(!is.na(height.cm) & height.cm !="-") %>% filter(is.na(as.numeric(height.cm))) %>% mutate(problem="character")
+  data6 <- data %>% rowwise() %>% filter(!is.na(long.leaf.cm) & long.leaf.cm!="-") %>% filter(is.na(as.numeric(long.leaf.cm))) %>% mutate(problem="character")
+  
   #combine into one problems list
-  data_probs <- rbind(data2, data3, data4)
+  data_probs <- rbind(data2, data3, data4, data5, data6)
   print(nrow(data_probs))
   write_csv(data_probs, path=out_table)
 }

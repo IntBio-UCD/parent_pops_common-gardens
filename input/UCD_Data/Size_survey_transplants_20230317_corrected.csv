@@ -633,7 +633,7 @@ survey date,block ,row ,col ,pop ,mf ,rep ,height (cm) ,longest leaf (cm) ,herbi
 3/17/23,J1 ,18,D ,LV3 ,7,8,,,,Dead 
 3/17/23,J1 ,19,C ,BH ,5,20,7.1,8.9,N ,
 3/17/23,J1 ,19,D ,LVTR1,7,4,,,,Dead 
-3/17/23,J1 ,20,C ,CP2 ,3,12,I.l ,1,N ,
+3/17/23,J1 ,20,C ,CP2 ,3,12,1.1,1,N ,
 3/17/23,J1 ,20,D ,WL1 ,2,6,,,,Dead 
 3/17/23,J1 ,21,C ,buffer ,,,,,,
 3/17/23,J1 ,21,D ,DPR ,4,8,,,,Dead 
