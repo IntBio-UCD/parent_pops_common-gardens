@@ -3,9 +3,7 @@ title: "Data Checking"
 output: html_notebook:
   keep_md: yes
 ---
-#!Add something to check for letters in a numbers column!#
-
-#Annual Census - Transplants 
+# Annual Census - Transplants 
 ```{r}
 #load the libraries
 library(tidyverse)
@@ -52,7 +50,7 @@ for (i in data_names) {
 ```
 
 
-#Size Data - Transplants
+# Size Data - Transplants
 ```{r}
 #load the libraries
 library(tidyverse)
@@ -109,7 +107,7 @@ for (i in data_names2) {
 }
 ```
 
-#Mortality/Phenology - Transplants
+# Mortality/Phenology - Transplants
 ```{r}
 #load the libraries
 library(tidyverse)
@@ -143,7 +141,7 @@ for (i in data_names) {
 ```
 
 
-#Annual Census - Germination Beds 
+# Annual Census - Germination Beds 
 ```{r}
 #load the libraries
 library(tidyverse)
@@ -195,7 +193,7 @@ for (i in data_names) {
 ```
 
 
-#Size Data - Germination Beds 
+# Size Data - Germination Beds 
 ```{r}
 #load the libraries
 library(tidyverse)
@@ -246,7 +244,7 @@ for (i in data_names) {
 }
 ```
 
-#Mortality/Phenology - Germination Beds
+# Mortality/Phenology - Germination Beds
 ```{r}
 #load the libraries
 library(tidyverse)
