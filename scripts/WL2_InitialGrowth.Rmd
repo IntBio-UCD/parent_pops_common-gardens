@@ -10,7 +10,7 @@ output: html_document:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-##Relevant Libraries and Functions
+## Relevant Libraries and Functions
 ```{r}
 library(tidyverse)
 library(naniar) #replaces values with NA
@@ -23,36 +23,36 @@ elev_three_palette <- c("#0043F0", "#C9727F", "#F5A540") #colors from Gremer et 
 elev_order <- c("high", "mid", "low")
 ```
 
-##Upload Data
+## Upload Data
 ```{r}
-size_0726 <- read_csv("../input/WL2_Data/WL2_size_survey_20230726_corrected.csv") %>% select(Date="7/26/23", block:bed, bed.row="bed.r ow", bed.col="bed.c ol", pop:height.cm, long.leaf.cm="long.leaf. cm", herbiv.y.n="herbiv.y. n", survey.notes:planting.note)
+size_0726 <- read_csv("../input/WL2_Data/CorrectedCSVs/WL2_size_survey_20230726_corrected.csv") %>% select(Date="7/26/23", block:bed, bed.row="bed.r ow", bed.col="bed.c ol", pop:height.cm, long.leaf.cm="long.leaf. cm", herbiv.y.n="herbiv.y. n", survey.notes:planting.note)
 names(size_0726)
 size_0726$Date <- as.Date(size_0726$Date, format="%m/%d/%y")
 head(size_0726)
 
-size_0802 <- read_csv("../input/WL2_Data/WL2_Size_survey_20230802_corrected.csv") %>% select(Date="8/2/23", block:bed, bed.row="bed. row", bed.col="bed. col", pop:height.cm, long.leaf.cm="long.leaf.c m", herbiv.y.n:survey.notes, planting.note="planting.no te")
+size_0802 <- read_csv("../input/WL2_Data/CorrectedCSVs/WL2_Size_survey_20230802_corrected.csv") %>% select(Date="8/2/23", block:bed, bed.row="bed. row", bed.col="bed. col", pop:height.cm, long.leaf.cm="long.leaf.c m", herbiv.y.n:survey.notes, planting.note="planting.no te")
 names(size_0802)
 size_0802$Date <- as.Date(size_0802$Date, format="%m/%d/%y")
 head(size_0802) #height and longest leaf are characters
 
-size_0816 <- read_csv("../input/WL2_Data/WL2_size_survey_20230816_corrected.csv") %>% select(Date:bed, bed.row="bed. row", bed.col="bed. col", pop:height.cm, long.leaf.cm="long.leaf.c m", herbiv.y.n:planting.note) #Note: this is two weeks after previous census
+size_0816 <- read_csv("../input/WL2_Data/CorrectedCSVs/WL2_size_survey_20230816_corrected.csv") %>% select(Date:bed, bed.row="bed. row", bed.col="bed. col", pop:height.cm, long.leaf.cm="long.leaf.c m", herbiv.y.n:planting.note) #Note: this is two weeks after previous census
 names(size_0816)
 size_0816$Date <- as.Date(size_0816$Date, format="%m/%d/%y")
 head(size_0816) #height and longest leaf are characters
 
-size_0823 <- read_csv("../input/WL2_Data/WL2_size_survey_20230823_corrected.csv")  %>% select(Date:bed, bed.row="bed. row", bed.col="bed. col", pop:planting.note)
+size_0823 <- read_csv("../input/WL2_Data/CorrectedCSVs/WL2_size_survey_20230823_corrected.csv")  %>% select(Date:bed, bed.row="bed. row", bed.col="bed. col", pop:planting.note)
 problems(size_0823)
 names(size_0823)
 size_0823$Date <- as.Date(size_0823$Date, format="%m/%d/%y")
 head(size_0823) #height is a chr
 
-size_0830 <- read_csv("../input/WL2_Data/WL2_size_survey_20230830_corrected.csv") %>% select(Date:bed, bed.row="bed. row", bed.col="bed. col", pop:height.cm, long.leaf.cm="long.leaf.c m", herbiv.y.n:planting.note)
+size_0830 <- read_csv("../input/WL2_Data/CorrectedCSVs/WL2_size_survey_20230830_corrected.csv") %>% select(Date:bed, bed.row="bed. row", bed.col="bed. col", pop:height.cm, long.leaf.cm="long.leaf.c m", herbiv.y.n:planting.note)
 problems(size_0830)
 names(size_0830)
 size_0830$Date <- as.Date(size_0830$Date, format="%m/%d/%y")
 head(size_0830) #height and longest leaf are characters
 
-size_0906 <- read_csv("../input/WL2_Data/WL2_size_survey_20230906_corrected.csv")  #Note: this is not the most recent census
+size_0906 <- read_csv("../input/WL2_Data/CorrectedCSVs/WL2_size_survey_20230906_corrected.csv")  #Note: this is not the most recent census
 names(size_0906)
 size_0906 %>% filter(!is.na(...14)) #R seems to be picking up an additional column with no data in it
 size_0906 <- size_0906 %>% select(Date:bed, bed.row="bed. row", bed.col="bed. col", pop:planting.note)
@@ -60,13 +60,13 @@ names(size_0906)
 size_0906$Date <- as.Date(size_0906$Date, format="%m/%d/%y")
 head(size_0906) #longest leaf is a character
 
-size_0913 <- read_csv("../input/WL2_Data/WL2_size_survey_20230913_corrected.csv") %>% mutate(Date="9/13/2023", planting.note=NA)
+size_0913 <- read_csv("../input/WL2_Data/CorrectedCSVs/WL2_size_survey_20230913_corrected.csv") %>% mutate(Date="9/13/2023", planting.note=NA)
 names(size_0913)
 size_0913$Date <- as.Date(size_0913$Date, format="%m/%d/%Y")
 head(size_0913)
 ```
 
-##Merge the data
+## Merge the data
 ```{r}
 initial_size <- rbind(size_0726, size_0802, size_0816, size_0823, size_0830,size_0906, size_0913) %>% filter(!is.na(pop)) %>% filter(rep != "buffer") %>% filter(rep !="5* buffer") %>% filter(rep !="6* buffer") %>% filter(rep != "bufferbuffer") %>%  filter(rep != "7* buffer")  %>%  filter(rep != "2* buffer")  %>%  filter(rep != "4* buffer")  %>%  filter(rep != "8* buffer")  %>%  filter(rep != "9* buffer")
 head(initial_size)
@@ -90,7 +90,7 @@ summary(initial_size_nonas)
 ```
 
 
-##Plot Size over time - very preliminary - still lots of mistakes 
+## Plot Size over time - very preliminary - still lots of mistakes 
 ```{r}
 initial_size_nonas %>% ggplot(aes(x=height.cm)) + geom_histogram()
 initial_size_nonas %>% ggplot(aes(x=long.leaf.cm)) + geom_histogram()
@@ -110,7 +110,7 @@ initial_size_summary %>% ggplot(aes(x=Date, y=meanLength, group=pop, color=pop))
 ```
 
 
-##Use the lag/lead function to compute growth increments
+## Use the lag/lead function to compute growth increments
 ```{r}
 #right <- mutate(scrambled, previous_year_value = lag(value, order_by = year)) - example 
 # markedindivs_popid <-  unite(markedindivs, "PopId", c(Col,Row)) - example
@@ -153,7 +153,7 @@ size_increments_summary2 %>% ggplot(aes(x=Date, y=meanLengthinc)) +
                   position_dodge(0.75)) + ggtitle("Absolute Value")
 ```
 
-#Non absolute value (note lazy coding)
+## Non absolute value (note lazy coding)
 ```{r}
 size_increments <- initial_size_nonas %>% group_by(pop, mf, rep) %>% mutate(previous_census_height=lag(height.cm, order_by = Date), previous_census_length=lag(long.leaf.cm, order_by = Date), height_inc=(height.cm-previous_census_height), length_inc=(long.leaf.cm-previous_census_length)) %>% select(block, Date, pop:height.cm, previous_census_height,height_inc, long.leaf.cm, previous_census_length, length_inc) 
 tail(size_increments)

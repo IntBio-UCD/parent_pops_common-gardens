@@ -11,7 +11,7 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-##Load Libraries 
+## Load Libraries 
 ```{r warning=FALSE}
 library(tidyverse)
 sem <- function(x, na.rm=FALSE) {
@@ -23,23 +23,23 @@ elev_order <- c("high", "mid", "low")
 
 ```
 
-##Input the data and merge
+## Input the data and merge
 ```{r results='hide'}
-size_0726 <- read_csv("../input/WL2_Data/WL2_size_survey_20230726_corrected.csv")
+size_0726 <- read_csv("../input/WL2_Data/CorrectedCSVs/WL2_size_survey_20230726_corrected.csv")
 summary(size_0726)
 head(size_0726)
 size_0726_namecorrection <- size_0726 %>% select(block, bed ,bed.row=`bed.r ow`, bed.col=`bed.c ol`, pop:height.cm, longleaf.cm=`long.leaf. cm`, herbiv=`herbiv.y. n`)
 
-mort_0726 <- read_csv("../input/WL2_Data/WL2_Mort_pheno_survey_20230726_corrected.csv")
+mort_0726 <- read_csv("../input/WL2_Data/CorrectedCSVs/WL2_mort_pheno_20230726_corrected.csv")
 summary(mort_0726)
 head(mort_0726)
 mort_0726_names <- mort_0726 %>% select(block:bud.date, death.date)
 
-size_preplant_1 <- read_csv("../input/WL2_Data/WL2_DNA_Collection_Size_survey_combined20230703_corrected.csv")
+size_preplant_1 <- read_csv("../input/WL2_Data/CorrectedCSVs/WL2_DNA_Collection_Size_survey_combined20230703_corrected.csv")
 summary(size_preplant_1)
 names(size_preplant_1)
 
-size_preplant_extras <- read_csv("../input/WL2_Data/WL2_Extras_DNA_collection_size_survey_combined20230706_corrected.csv")
+size_preplant_extras <- read_csv("../input/WL2_Data/CorrectedCSVs/WL2_Extras_DNA_collection_size_survey_combined20230706_corrected.csv")
 summary(size_preplant_extras)
 names(size_preplant_extras)
 
@@ -65,7 +65,7 @@ head(trans_shock_size_elev)
 
 ```
 
-##Preliminary figures/summary stats 
+## Preliminary figures/summary stats 
 ```{r}
 #Convert dates to 0s and 1s (for yes or no)
 trans_shock_size_yn <- trans_shock_size_elev %>% mutate(Shock=ifelse(is.na(death.date), 0, ifelse(death.date=="7/26/23", 1, NA)), Repo=ifelse(is.na(bud.date), 0, 1))
@@ -140,7 +140,7 @@ shock_bedmeans %>%
 #bed b had the highest mortality 
 ```
 
-#Plot size and mortality
+## Plot size and mortality
 ```{r}
 #names(trans_shock_size_yn)
 trans_shock_size_yn %>% ggplot(aes(x=height, y=Shock)) + geom_point()
@@ -193,7 +193,7 @@ longleaf_popmeans %>% ggplot(aes(x=meanlongleaf, y=meanMort)) + geom_point()
 ```
 
 
-##Logistic Regresion 
+## Logistic Regresion 
 ```{r}
 xtabs(~Shock + height, data = trans_shock_size_yn) #contingency table 
 
@@ -212,7 +212,7 @@ summary(mylogit_size)
 #when both in the model, only longest leaf is significant (-0.686, P<0.0001)
 ```
 
-#Potential plot of interest: size(t) vs size(t+1)
+## Potential plot of interest: size(t) vs size(t+1)
 ```{r}
 head(size_0726_namecorrection)
 size_0726_namecorrection_mergeprep <- size_0726_namecorrection %>% rename(height.field=height.cm, longleaf.field=longleaf.cm)
