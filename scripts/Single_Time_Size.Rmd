@@ -1,0 +1,180 @@
+---
+title: "Single_Time_Size"
+author: "Brandie Quarles"
+date: "2023-11-07"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Relevant Libraries and Functions
+
+```{r}
+library(tidyverse)
+library(lmerTest)
+library(naniar) #replaces values with NA
+sem <- function(x, na.rm=FALSE) {
+  sd(x,na.rm=na.rm)/sqrt(length(na.omit(x)))
+} #standard error function 
+
+elev_three_palette <- c("#0043F0", "#C9727F", "#F5A540") #colors from Gremer et al 2019
+elev_order <- c("High", "Mid", "Low")
+```
+
+## Load the pop and location data
+
+```{r}
+#pop info
+pops_common_garden <- read_csv("../input/UCD_Data/Pops_for_2022_UCD.csv") #pops included in common garden 
+summary(pops_common_garden)
+pops_common_garden_nonotes <- pops_common_garden %>% select(parent.pop:elevation.group, UCD.seed.year)
+pops_common_garden_nonotes$elevation.group <- str_to_title(pops_common_garden_nonotes$elevation.group)
+
+#extra location info 
+pop_loc <- read_csv("../input/Strep_tort_locs.csv")
+
+unique(pop_loc$`Site code`)
+unique(pops_common_garden_nonotes$parent.pop)
+#need to change YOSE to YO
+pop_loc_yo <- pop_loc %>% mutate(parent.pop = str_replace(`Site code`, "YOSE(\\d+)", "YO\\1")) %>% select(Lat, Long, elev_m=`Elevation (m)`, parent.pop)
+unique(pop_loc_yo$parent.pop)
+
+#merge in location info
+pop_elev <- left_join(pops_common_garden_nonotes, pop_loc_yo)
+head(pop_elev)
+```
+
+## Load size data
+
+```{r}
+dec_size <- read_csv("../input/UCD_Data/CorrectedCSVs/Size_survey_transplants_20221213_corrected.csv") %>% rename(height=`height (cm)`, longest_leaf=`longest leaf (cm)`) %>%  mutate(height=na_if(height, "N/A"), longest_leaf=na_if(longest_leaf, "N/A")) %>% mutate_at(c("height", "longest_leaf"), as.double) %>% filter(parent.pop != "buffer")
+head(dec_size)
+unique(dec_size$parent.pop)
+
+jan_size <- read_csv("../input/UCD_Data/CorrectedCSVs/Size_survey_transplants_20230127_corrected.csv") %>%  rename(height=`height (cm)`, longest_leaf=`longest leaf (cm)`, parent.pop=pop) %>%  mutate(height=na_if(height, "-"), longest_leaf=na_if(longest_leaf, "-")) %>% mutate_at(c("height", "longest_leaf"), as.double) %>% filter(parent.pop != "buffer")
+head(jan_size)
+unique(jan_size$parent.pop)
+
+feb_size <- read_csv("../input/UCD_Data/CorrectedCSVs/Size_survey_transplants_20230217_corrected.csv") %>%  rename(height=`height (cm)`, longest_leaf=`longest leaf (cm)`, parent.pop=pop) %>%  mutate(height=na_if(height, "-"), longest_leaf=na_if(longest_leaf, "-")) %>% mutate_at(c("height", "longest_leaf"), as.double) %>% filter(parent.pop != "buffer") %>% mutate(parent.pop= str_replace(parent.pop, ".*VTR.*", "LVTR1"))
+head(feb_size)
+unique(feb_size$parent.pop)
+
+feb_size_alive <- feb_size %>% filter(!is.na(height))
+head(feb_size_alive)
+unique(feb_size_alive$parent.pop)
+feb_size_alive %>% group_by(parent.pop) %>% summarise(samplesize=n())
+```
+
+## Merge the data
+
+```{r}
+dec_size_elev <- left_join(dec_size, pop_elev)
+head(dec_size_elev)
+
+jan_size_elev <- left_join(jan_size, pop_elev) %>% filter(parent.pop != "LV1") %>% filter(parent.pop != "WV") #remove LV1 and WV b/c only 1 indiv alive 
+head(jan_size_elev)
+jan_size_elev %>% filter(!is.na(longest_leaf))
+
+feb_size_elev <- left_join(feb_size, pop_elev)
+head(feb_size_elev)
+```
+
+## Summary plots
+
+```{r}
+dec_size_elev %>% ggplot(aes(x=height)) + geom_histogram()
+qqnorm(dec_size_elev$height)
+qqline(dec_size_elev$height)
+
+dec_size_elev %>% ggplot(aes(x=longest_leaf)) + geom_histogram()
+qqnorm(dec_size_elev$longest_leaf)
+qqline(dec_size_elev$longest_leaf)
+
+
+jan_size_elev %>% ggplot(aes(x=height)) + geom_histogram()
+qqnorm(jan_size_elev$height)
+qqline(jan_size_elev$height) #a little right skewed 
+jan_size_elev_transf <- jan_size_elev %>% mutate(sheight=sqrt(height)) 
+jan_size_elev_transf%>% ggplot(aes(x=sheight)) + geom_histogram()
+qqnorm(jan_size_elev_transf$sheight)
+qqline(jan_size_elev_transf$sheight) #looks better 
+
+jan_size_elev %>% ggplot(aes(x=longest_leaf)) + geom_histogram()
+qqnorm(jan_size_elev$longest_leaf) 
+qqline(jan_size_elev$longest_leaf) #normal!
+
+
+feb_size_elev %>% ggplot(aes(x=height)) + geom_histogram()
+qqnorm(feb_size_elev$height)
+qqline(feb_size_elev$height)
+
+feb_size_elev %>% ggplot(aes(x=longest_leaf)) + geom_histogram()
+qqnorm(feb_size_elev$longest_leaf)
+qqline(feb_size_elev$longest_leaf) 
+```
+
+## Calculating means by pop (and elev)
+
+```{r}
+jan_size_elev_summary <- jan_size_elev_transf %>% group_by(parent.pop, elevation.group, elev_m) %>% summarise(meanHeight = mean(height,na.rm=(TRUE)), sem_height=sem(height, na.rm=(TRUE)), meanLongestLeaf=mean(longest_leaf, na.rm=(TRUE)), sem_leaf=sem(longest_leaf, na.rm=TRUE))
+jan_size_elev_summary
+```
+
+## Mixed Effects Models (and figures of trait means) 
+
+### Height
+
+```{r}
+jan_size_elev_summary %>% ggplot(aes(x=fct_reorder(parent.pop, meanHeight), y=meanHeight, fill=elev_m)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) + 
+  geom_errorbar(aes(ymin=meanHeight-sem_height,ymax=meanHeight+sem_height),width=.2, position = 
+                  position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  #scale_fill_manual(values=elev_three_palette) + 
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  labs(fill="Elevation (m)", y="Avg Height (cm)", x="Population") +
+   theme_classic() +
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+ggsave("../output/Jan_Height.png", width = 12, height = 6, units = "in")
+
+lmeheight = lmer(sheight ~ (1|parent.pop/mf), data=jan_size_elev_transf)
+summary(lmeheight)
+ranova(lmeheight)
+VarCorr(lmeheight) %>% 
+  as.data.frame() %>% 
+  mutate(var.pct = vcov/sum(vcov)*100)
+
+names(jan_size_elev_transf)
+lmeheight2 = lmer(sheight ~ elev_m + (1|parent.pop/mf), data=jan_size_elev_transf)
+summary(lmeheight2)
+ranova(lmeheight2)
+```
+
+### Longest_leaf
+
+```{r}
+jan_size_elev_summary %>% ggplot(aes(x=fct_reorder(parent.pop, meanLongestLeaf), y=meanLongestLeaf, fill=elev_m)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) + 
+  geom_errorbar(aes(ymin=meanLongestLeaf-sem_leaf,ymax=meanLongestLeaf+sem_leaf),width=.2, position = 
+                  position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  #scale_fill_manual(values=elev_three_palette) + 
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  labs(fill="Elevation (m)", y="Avg Longest Leaf (cm)", x="Population") +
+   theme_classic() +
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+ggsave("../output/Jan_Length.png", width = 12, height = 6, units = "in")
+
+lmelength = lmer(longest_leaf ~ (1|parent.pop/mf), data=jan_size_elev_transf)
+summary(lmelength)
+ranova(lmelength) 
+VarCorr(lmelength) %>% 
+  as.data.frame() %>% 
+  mutate(var.pct = vcov/sum(vcov)*100)
+
+lmelength2 = lmer(longest_leaf ~ elev_m + (1|parent.pop/mf), data=jan_size_elev_transf)
+summary(lmelength2)
+ranova(lmelength2) 
+```
