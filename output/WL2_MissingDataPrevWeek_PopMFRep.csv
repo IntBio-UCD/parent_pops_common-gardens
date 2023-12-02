@@ -1,0 +1,22 @@
+"loc","survey_date","censusN","pop","mf","rep","previous_census_height","height.cm","previous_census_length","long.leaf.cm","survey.notes"
+"G_25_B",2023-08-23,4,"BH",2,12,NA,6.9,NA,3.8,NA
+"H_20_D",2023-10-13,9,"CP2",2,11,NA,7,NA,NA,"no alive leaves"
+"C_43_D",2023-09-27,9,"CP2",3,5,NA,2.7,NA,NA,"bare stem"
+"D_34_C",2023-09-06,6,"CP3",1,1,NA,0.5,NA,NA,"no leaves"
+"D_5_A",2023-08-23,4,"CP3",4,2,NA,3.8,NA,1.6,NA
+"D_11_C",2023-08-23,4,"CP3",5,2,NA,1.2,NA,2.6,"rotting"
+"D_34_D",2023-09-20,8,"DPR",4,1,NA,0.4,NA,NA,"no leaves"
+"G_27_A",2023-08-16,3,"DPR",4,5,NA,6.7,NA,3.6,NA
+"D_56_A",2023-09-27,9,"FR",7,8,NA,2.7,NA,NA,"bare stem w/ small sprout"
+"F_46_C",2023-10-20,10,"LV3",5,7,NA,0.4,NA,NA,"no leaves"
+"E_44_C",2023-10-20,10,"LVTR1",2,8,NA,3,NA,NA,"no alive leaves"
+"C_41_C",2023-08-16,3,"LVTR1",8,8,NA,3.5,NA,0.6,NA
+"K_4_A",2023-08-23,4,"LVTR1",8,15,NA,2.5,NA,0.6,NA
+"K_4_A",2023-10-20,10,"LVTR1",8,15,NA,0.9,NA,NA,"bare stem"
+"C_13_B",2023-08-16,3,"SC",8,6,NA,3.6,NA,3.1,NA
+"D_58_A",2023-10-20,10,"SQ2",6,1,NA,0.5,NA,NA,"no leaves"
+"B_12_C",2023-08-23,4,"WL2",3,12,NA,1.2,NA,0.5,NA
+"B_12_C",2023-10-20,10,"WL2",3,12,NA,1.6,NA,0.4,"resprouting"
+"F_4_D",2023-10-20,10,"YO11",4,1,NA,0.4,NA,NA,"no leaves"
+"K_5_B",2023-10-20,10,"YO11",8,8,NA,0.9,NA,NA,"bare stem"
+"K_2_C",2023-08-30,5,"YO7",5,13,NA,2,NA,2.1,NA

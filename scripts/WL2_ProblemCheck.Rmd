@@ -3,8 +3,182 @@ title: "Data Checking"
 output: html_notebook:
   keep_md: yes
 ---
+# Size Data - Transplants (temporal check)
+Check for data when there is no data in previous week 
+* Reason: found a case where someone wrote the data in the wrong row (in the row of a dead plant) 
 
-#Size Data
+```{r}
+files <- dir("../input/WL2_Data/CorrectedCSVs/",
+             pattern="WL2_size",
+             full.names=TRUE)
+files #list of files 
+
+dat <- tibble(path=files, filename=basename(path)) #storing data in tibble
+dat
+
+# create a new column, "date"
+dat2 <- dat %>%
+  mutate(survey_date=str_extract(filename, "_2[0-9]*"), 
+         survey_date=str_remove(survey_date, "_"), 
+         survey_date=lubridate::ymd(survey_date))
+dat2
+
+#read in the files 
+dat3 <- dat2 %>% 
+  mutate(sheets=map(path, 
+                    read_csv, 
+                    col_types=cols(.default=col_character()), # forces all columns to be character
+    # this is needed because of data sheet problems that cause some numerics to be imported as character  
+                    na = c("", "NA", "-", "N/A") # sets NA strings.
+                    )) %>%
+  select(-path)
+
+dat3
+
+dat3$sheets[[1]] # extract the first imported sheet to check that the above worked
+
+map(dat3$sheets, colnames) %>% #check column names before merging 
+  unlist() %>%
+  unique() %>%
+  sort()
+#have some extra columns ("...12" and "...13", "...14"), double check these after unnest 
+#have some weird date columns, but not important b/c we have survey_date from the file name 
+#have lots of versions of bed.col and bed.row - should fix 
+#have 2 versions of herbiv.y.n, not important for now 
+#have multiple versions of long.leaf.cm - should fix 
+#have 2 versions of survey.notes - should fix  
+
+map(dat3$sheets, head,10) #see which ones have different names
+dat3$sheets[[1]] <- dat3$sheets[[1]] %>% rename(bed.row=`bed.r ow`, bed.col=`bed.c ol`, long.leaf.cm=`long.leaf. cm`) 
+dat3$sheets[[1]]
+
+dat3$sheets[[2]] <- dat3$sheets[[2]] %>% rename(bed.row=`bed. row`, bed.col=`bed. col`, long.leaf.cm=`long.leaf.c m`) 
+dat3$sheets[[2]]
+
+dat3$sheets[[3]] <- dat3$sheets[[3]] %>% rename(bed.row=`bed. row`, bed.col=`bed. col`, long.leaf.cm=`long.leaf.c m`) 
+dat3$sheets[[3]]
+
+dat3$sheets[[4]] <- dat3$sheets[[4]] %>% rename(bed.row=`bed. row`, bed.col=`bed. col`) 
+dat3$sheets[[4]]
+
+dat3$sheets[[5]] <- dat3$sheets[[5]] %>% rename(bed.row=`bed. row`, bed.col=`bed. col`, long.leaf.cm=`long.leaf.c m`) 
+dat3$sheets[[5]]
+
+dat3$sheets[[6]] <- dat3$sheets[[6]] %>% rename(bed.row=`bed. row`, bed.col=`bed. col`) 
+dat3$sheets[[6]]
+
+dat3$sheets[[9]] <- dat3$sheets[[9]] %>% rename(bed.row=`bed-row`, bed.col=`bed-col`, survey.notes=`survey-notes`) 
+dat3$sheets[[9]]
+
+dat3$sheets[[10]] <- dat3$sheets[[10]] %>% rename(bed.row=`bed row`, bed.col=`bed col`) 
+dat3$sheets[[10]]
+#there's probably an easier way to do this
+
+
+#unnest
+dat4 <- dat3 %>% unnest(sheets) %>% 
+  mutate(mf=str_replace(mf, ".*buff.*", "buffer"), rep=str_replace(rep, ".*buff.*", "buffer")) %>% 
+  select(filename, survey_date, block:long.leaf.cm, survey.notes)
+head(dat4)
+names(dat4)
+#dat4 %>% filter(!is.na(...12)) #an additional note for one plant, supposed to say powdery mildew/no leaves, fixed it on CSV
+#dat4 %>% filter(!is.na(...13)) #all NA
+#dat4 %>% filter(!is.na(...14)) #extra note for one plant (new location)
+
+#check for data issues
+dat4 %>% rowwise() %>% filter(!is.na(bed.row)) %>% filter(is.na(as.numeric(bed.row))) #end of bed note, no plant, fixed on csv 
+dat4 %>% rowwise() %>% filter(!is.na(mf)) %>% filter(mf!="buffer") %>% filter(is.na(as.numeric(mf))) #wrong for 2 cases, fixed in CSV
+dat4 %>% rowwise() %>% filter(!is.na(rep)) %>% filter(rep!="buffer") %>%  filter(is.na(as.numeric(rep))) #wrong for 1 case, fixed in CSV
+dat4 %>% rowwise() %>% filter(!is.na(height.cm)) %>% filter(is.na(as.numeric(height.cm))) #none
+dat4 %>% rowwise() %>% filter(!is.na(long.leaf.cm)) %>% filter(is.na(as.numeric(long.leaf.cm))) #none
+
+unique(dat4$bed) 
+#dat4 %>% filter(bed=="DB") fixed on CSV
+
+unique(dat4$block)
+dat4 %>% filter(block=="i") #C 55 C has block as "i" which is incorrect, should be block F, fixed it on the CSV
+dat4 %>% filter(block=="X K") #amazon error, fixed it on CSV
+dat4 %>% filter(block=="[") #printing error, fixed it on CSV
+dat4 %>% filter(is.na(block)) #amazon errors, fixed on CSV
+
+unique(dat4$bed.row)
+dat4 %>% filter(is.na(bed.row)) #amazon error, fixed on CSV
+
+unique(dat4$bed.col)
+dat4 %>% filter(bed.col=="I C") #amazon error, fixed on CSV
+dat4 %>% filter(is.na(bed.col)) #amazon errors, fixed on CSV
+
+unique(dat4$pop) #extra pops with * for buffers
+dat4 %>% filter(is.na(pop), !is.na(height.cm))
+
+unique(dat4$mf)
+dat4 %>% filter(is.na(mf),  !is.na(height.cm)) #no issues
+
+unique(dat4$rep) 
+dat4 %>% filter(is.na(rep),  !is.na(height.cm)) #no issues 
+
+
+#lag lead function
+#note: on 9/27 we only did half the size survey (blocks A-F), so 10/13 = blocks G-M, need to add a census number 
+#note: there are multiple CC 1 2s on size sheets, the correct position is K 13 A, need to remove K 5 C
+#note: there are multiple CC 9 6s on size sheets, the correct position is C 2 D, need to remove C 4 D
+#note: there are multiple SC 5 6s on size sheets, the correct position is C 2 C, need to remove C 5 D
+unique(dat4$survey_date)
+
+dat5 <- dat4 %>% 
+  filter(mf!="buffer") %>% 
+  unite(loc, bed:bed.col, remove = FALSE) %>% 
+  filter(loc != "K_5_C") %>% 
+  filter(loc != "C_4_D") %>% 
+  filter(loc != "C_5_D") %>% 
+  mutate(across(c(bed.row, mf, rep,long.leaf.cm, height.cm), as.numeric)) %>% 
+  mutate(censusN=ifelse(survey_date=="2023-07-26", 1,
+                        ifelse(survey_date=="2023-08-02", 2,
+                        ifelse(survey_date=="2023-08-16", 3, 
+                        ifelse(survey_date=="2023-08-23", 4, 
+                        ifelse(survey_date=="2023-08-30", 5, 
+                        ifelse(survey_date=="2023-09-06", 6,
+                        ifelse(survey_date=="2023-09-13", 7, 
+                        ifelse(survey_date=="2023-09-20", 8,
+                        ifelse(survey_date=="2023-10-20", 10,
+                        ifelse(survey_date=="2023-09-27" & str_detect(block, "A|B|C|D|E|F"), 9,
+                        ifelse(survey_date=="2023-10-13" & str_detect(block, "G|H|I|J|K|L|M"), 9, NA))))))))))))
+dat5 %>% filter(censusN==9, block=="G") #looks like the above worked!
+dat5 %>% filter(is.na(censusN))
+
+dat6 <- dat5 %>%  #by bed, row, col
+  filter(!is.na(censusN)) %>% 
+  group_by(bed, bed.row, bed.col) %>% 
+  mutate(previous_census_height=lag(height.cm, order_by = censusN), previous_census_length=lag(long.leaf.cm, order_by = censusN)) %>% 
+  select(censusN, bed, bed.row, bed.col, previous_census_height, height.cm, previous_census_length, long.leaf.cm, survey.notes) %>% 
+  arrange(bed, bed.row, bed.col, censusN)
+head(dat6)
+#Check for data when there is no data in previous week 
+dat8 <- dat6 %>% filter(censusN!=1) %>% filter(is.na(previous_census_height), !is.na(height.cm)) #27 rows 
+#write.csv(dat8, "../output/WL2_MissingDataPrevWeek_BedRowCol.csv", row.names = FALSE)
+dat8
+#NOTE: THERE ARE ISSUES IN BED A COL D ROW NUMBERS FOR FIRST FEW DATA SHEETS 
+
+
+dat7 <- dat5 %>% #by pop, mf, rep 
+  filter(!is.na(censusN)) %>% 
+  group_by(pop, mf, rep) %>% 
+  mutate(previous_census_height=lag(height.cm, order_by = censusN), previous_census_length=lag(long.leaf.cm, order_by = censusN)) %>% 
+  select(loc, survey_date,censusN, pop, mf, rep, previous_census_height, height.cm, previous_census_length, long.leaf.cm, survey.notes) %>% 
+  arrange(pop, mf, rep, censusN)
+head(dat7)
+#Check for data when there is no data in previous week 
+dat9 <- dat7 %>% filter(censusN!=1) %>% filter(is.na(previous_census_height), !is.na(height.cm)) #21 rows, why more than dat6?
+#write.csv(dat9, "../output/WL2_MissingDataPrevWeek_PopMFRep.csv", row.names = FALSE)
+dat9
+#BH 2 12 (G 25 B) - not measured on 8/16, no notes, still alive on mortality census, so likely accidentally skipped
+#CP2 2 11 - size measurer thought it was dead, but it was just a turgid stem on 9/20 (per the mortality notes)
+#CP2 3 5 - size measurer thought it was dead, but it was just a turgid stem on 9/20 (per the mortality notes)
+#CP3 1 1 CN6
+#CP3 4 2 CN4
+```
+
+# Size Data - basic check 
 ```{r}
 #load the libraries
 library(tidyverse)
@@ -52,7 +226,7 @@ for (i in data_names) {
 }
 ```
 
-#Mortality
+# Mortality
 ```{r}
 #load the libraries
 library(tidyverse)
