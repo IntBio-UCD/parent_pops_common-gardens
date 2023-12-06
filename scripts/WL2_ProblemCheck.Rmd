@@ -1,13 +1,63 @@
 ---
 title: "Data Checking"
-output: html_notebook:
-  keep_md: yes
+output: html_notebook
 ---
+
+# Size Data - basic check 
+```{r}
+#load the libraries
+library(tidyverse)
+#tutorial at https://bookdown.org/ansellbr/WEHI_tidyR_course_book/week-4-part-3.html
+data_files <- list.files('~/Google Drive/Shared drives/IntBioTeam/Common Gardens/WL2_2023/CorrectedCSVs',pattern='WL2_size',ignore.case=TRUE)  #edit this to be correct path 
+data_files #make this specific to mortality or size
+
+data_names <- str_remove(data_files, pattern = ".csv")
+data_names
+
+for (i in data_names) {
+  #set up variable file names
+  in_file <- paste("~/Google Drive/Shared drives/IntBioTeam/Common Gardens/WL2_2023/CorrectedCSVs/", i, '.csv', sep = "")   #edit this to be correct path 
+  out_table <- paste("../output/", i, '_dataprobs.csv', sep="")
+  
+  #data checking code
+  data <- read_csv(in_file)
+  
+  #remove spaces in column names
+  names(data) <- gsub(" ", "", colnames(data))
+  
+  #check for spaces in numbers
+  data2 <- data %>% filter(grepl(" ", height.cm) | grepl(" ", long.leaf.cm)) %>% mutate(problem="spaces")
+  
+  #check for extreme values
+  data3 <- data
+  data3$height.cm <- as.double(data3$height.cm)
+  data3$long.leaf.cm <- as.double(data3$long.leaf.cm)
+  data3 <- data3 %>% filter(height.cm > 60 | long.leaf.cm > 12) %>% mutate(problem="extreme value")
+  
+  #check for spread out data 
+  data4 <- data
+  data4 <- data4 %>% mutate(herbiv.y.n = na_if(herbiv.y.n, "N/A")) %>% mutate(herbiv.y.n = na_if(herbiv.y.n, "-"))
+  data4$herbiv.y.n <- str_to_upper(data4$herbiv.y.n)
+  data4 <- data4 %>% filter(herbiv.y.n != "Y" & herbiv.y.n != "N") %>% mutate(problem="herbiv col")
+  
+  #check for letters in number columns 
+  data5 <- data %>% rowwise() %>% filter(!is.na(height.cm) & height.cm !="-" & height.cm != "N/A") %>% filter(is.na(as.numeric(height.cm))) %>% mutate(problem="character")
+  data6 <- data %>% rowwise() %>% filter(!is.na(long.leaf.cm) & long.leaf.cm!="-" & long.leaf.cm !="N/A") %>% filter(is.na(as.numeric(long.leaf.cm))) %>% mutate(problem="character")
+  
+  #combine into one problems list
+  data_probs <- rbind(data2, data3, data4, data5, data6)
+  print(nrow(data_probs))
+  write_csv(data_probs, path=out_table)
+}
+```
+
 # Size Data - Transplants (temporal check)
 Check for data when there is no data in previous week 
 * Reason: found a case where someone wrote the data in the wrong row (in the row of a dead plant) 
 
 ```{r}
+library(tidyverse)
+
 files <- dir("../input/WL2_Data/CorrectedCSVs/",
              pattern="WL2_size",
              full.names=TRUE)
@@ -154,10 +204,10 @@ dat6 <- dat5 %>%  #by bed, row, col
   arrange(bed, bed.row, bed.col, censusN)
 head(dat6)
 #Check for data when there is no data in previous week 
-dat8 <- dat6 %>% filter(censusN!=1) %>% filter(is.na(previous_census_height), !is.na(height.cm)) #27 rows 
+dat8 <- dat6 %>% filter(censusN!=1) %>% filter(is.na(previous_census_height), !is.na(height.cm)) #18 rows 
 #write.csv(dat8, "../output/WL2_MissingDataPrevWeek_BedRowCol.csv", row.names = FALSE)
 dat8
-#NOTE: THERE ARE ISSUES IN BED A COL D ROW NUMBERS FOR FIRST FEW DATA SHEETS 
+#NOTE: There was a frameshift during planting in Bed A cols B and D. This affected the first 4 censuses. BQC fixed the row numbers for those cols in the corrected CSVs. 
 
 
 dat7 <- dat5 %>% #by pop, mf, rep 
@@ -168,62 +218,9 @@ dat7 <- dat5 %>% #by pop, mf, rep
   arrange(pop, mf, rep, censusN)
 head(dat7)
 #Check for data when there is no data in previous week 
-dat9 <- dat7 %>% filter(censusN!=1) %>% filter(is.na(previous_census_height), !is.na(height.cm)) #21 rows, why more than dat6?
+dat9 <- dat7 %>% filter(censusN!=1) %>% filter(is.na(previous_census_height), !is.na(height.cm)) #matches dat 8
 #write.csv(dat9, "../output/WL2_MissingDataPrevWeek_PopMFRep.csv", row.names = FALSE)
 dat9
-#BH 2 12 (G 25 B) - not measured on 8/16, no notes, still alive on mortality census, so likely accidentally skipped
-#CP2 2 11 - size measurer thought it was dead, but it was just a turgid stem on 9/20 (per the mortality notes)
-#CP2 3 5 - size measurer thought it was dead, but it was just a turgid stem on 9/20 (per the mortality notes)
-#CP3 1 1 CN6
-#CP3 4 2 CN4
-```
-
-# Size Data - basic check 
-```{r}
-#load the libraries
-library(tidyverse)
-#tutorial at https://bookdown.org/ansellbr/WEHI_tidyR_course_book/week-4-part-3.html
-data_files <- list.files('~/Google Drive/Shared drives/IntBioTeam/Common Gardens/WL2_2023/CorrectedCSVs',pattern='WL2_size',ignore.case=TRUE)  #edit this to be correct path 
-data_files #make this specific to mortality or size
-
-data_names <- str_remove(data_files, pattern = ".csv")
-data_names
-
-for (i in data_names) {
-  #set up variable file names
-  in_file <- paste("~/Google Drive/Shared drives/IntBioTeam/Common Gardens/WL2_2023/CorrectedCSVs/", i, '.csv', sep = "")   #edit this to be correct path 
-  out_table <- paste("../output/", i, '_dataprobs.csv', sep="")
-  
-  #data checking code
-  data <- read_csv(in_file)
-  
-  #remove spaces in column names
-  names(data) <- gsub(" ", "", colnames(data))
-  
-  #check for spaces in numbers
-  data2 <- data %>% filter(grepl(" ", height.cm) | grepl(" ", long.leaf.cm)) %>% mutate(problem="spaces")
-  
-  #check for extreme values
-  data3 <- data
-  data3$height.cm <- as.double(data3$height.cm)
-  data3$long.leaf.cm <- as.double(data3$long.leaf.cm)
-  data3 <- data3 %>% filter(height.cm > 60 | long.leaf.cm > 12) %>% mutate(problem="extreme value")
-  
-  #check for spread out data 
-  data4 <- data
-  data4 <- data4 %>% mutate(herbiv.y.n = na_if(herbiv.y.n, "N/A")) %>% mutate(herbiv.y.n = na_if(herbiv.y.n, "-"))
-  data4$herbiv.y.n <- str_to_upper(data4$herbiv.y.n)
-  data4 <- data4 %>% filter(herbiv.y.n != "Y" & herbiv.y.n != "N") %>% mutate(problem="herbiv col")
-  
-  #check for letters in number columns 
-  data5 <- data %>% rowwise() %>% filter(!is.na(height.cm) & height.cm !="-" & height.cm != "N/A") %>% filter(is.na(as.numeric(height.cm))) %>% mutate(problem="character")
-  data6 <- data %>% rowwise() %>% filter(!is.na(long.leaf.cm) & long.leaf.cm!="-" & long.leaf.cm !="N/A") %>% filter(is.na(as.numeric(long.leaf.cm))) %>% mutate(problem="character")
-  
-  #combine into one problems list
-  data_probs <- rbind(data2, data3, data4, data5, data6)
-  print(nrow(data_probs))
-  write_csv(data_probs, path=out_table)
-}
 ```
 
 # Mortality

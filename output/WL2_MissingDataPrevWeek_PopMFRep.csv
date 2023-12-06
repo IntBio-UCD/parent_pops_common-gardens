@@ -1,22 +1,22 @@
-"loc","survey_date","censusN","pop","mf","rep","previous_census_height","height.cm","previous_census_length","long.leaf.cm","survey.notes"
-"G_25_B",2023-08-23,4,"BH",2,12,NA,6.9,NA,3.8,NA
-"H_20_D",2023-10-13,9,"CP2",2,11,NA,7,NA,NA,"no alive leaves"
-"C_43_D",2023-09-27,9,"CP2",3,5,NA,2.7,NA,NA,"bare stem"
-"D_34_C",2023-09-06,6,"CP3",1,1,NA,0.5,NA,NA,"no leaves"
-"D_5_A",2023-08-23,4,"CP3",4,2,NA,3.8,NA,1.6,NA
-"D_11_C",2023-08-23,4,"CP3",5,2,NA,1.2,NA,2.6,"rotting"
-"D_34_D",2023-09-20,8,"DPR",4,1,NA,0.4,NA,NA,"no leaves"
-"G_27_A",2023-08-16,3,"DPR",4,5,NA,6.7,NA,3.6,NA
-"D_56_A",2023-09-27,9,"FR",7,8,NA,2.7,NA,NA,"bare stem w/ small sprout"
-"F_46_C",2023-10-20,10,"LV3",5,7,NA,0.4,NA,NA,"no leaves"
-"E_44_C",2023-10-20,10,"LVTR1",2,8,NA,3,NA,NA,"no alive leaves"
-"C_41_C",2023-08-16,3,"LVTR1",8,8,NA,3.5,NA,0.6,NA
-"K_4_A",2023-08-23,4,"LVTR1",8,15,NA,2.5,NA,0.6,NA
-"K_4_A",2023-10-20,10,"LVTR1",8,15,NA,0.9,NA,NA,"bare stem"
-"C_13_B",2023-08-16,3,"SC",8,6,NA,3.6,NA,3.1,NA
-"D_58_A",2023-10-20,10,"SQ2",6,1,NA,0.5,NA,NA,"no leaves"
-"B_12_C",2023-08-23,4,"WL2",3,12,NA,1.2,NA,0.5,NA
-"B_12_C",2023-10-20,10,"WL2",3,12,NA,1.6,NA,0.4,"resprouting"
-"F_4_D",2023-10-20,10,"YO11",4,1,NA,0.4,NA,NA,"no leaves"
-"K_5_B",2023-10-20,10,"YO11",8,8,NA,0.9,NA,NA,"bare stem"
-"K_2_C",2023-08-30,5,"YO7",5,13,NA,2,NA,2.1,NA
+loc,survey_date,censusN,pop,mf,rep,previous_census_height,height.cm,previous_census_length,long.leaf.cm,survey.notes,BQC Investigation Notes
+B_12_C,8/23/23,4,WL2,3,12,NA,1.2,NA,0.5,NA,resprouted on 8/23
+B_12_C,10/20/23,10,WL2,3,12,NA,1.6,NA,0.4,resprouting,resprouted on 10/13
+C_13_B,8/16/23,3,SC,8,6,NA,3.6,NA,3.1,NA,size team mistakenly thought it was dead 8/2
+C_41_C,8/16/23,3,LVTR1,8,8,NA,3.5,NA,0.6,NA,size team mistakenly thought it was dead 8/2
+C_43_D,9/27/23,9,CP2,3,5,NA,2.7,NA,NA,bare stem,size team mistakenly thought it was dead 8/2
+D_11_C,8/23/23,4,CP3,5,2,NA,1.2,NA,2.6,rotting,"This one is questionable b/c mortality sheet has it dead on 8/23, no size data 8/16 or 8/30, but no other nearby alive plants…; discard the size data for this week"
+D_34_C,9/6/23,6,CP3,1,1,NA,0.5,NA,NA,no leaves,size team mistakenly thought it was dead 8/30
+D_34_D,9/20/23,8,DPR,4,1,NA,0.4,NA,NA,no leaves,size team mistakenly thought it was dead 9/13
+D_5_A,8/23/23,4,CP3,4,2,NA,3.8,NA,1.6,NA,"no notes on mort/pheno survey, but dead on size sheets 0802 and 0816, size team prob was mistaken (it was pretty small on 0726)"
+D_56_A,9/27/23,9,FR,7,8,NA,2.7,NA,NA,bare stem w/ small sprout,"looks like it resprouted on 9/27 after being dead since 8/2, but then didn't make it to the next week, check with Pis"
+D_58_A,10/20/23,10,SQ2,6,1,NA,0.5,NA,NA,no leaves,size team mistakenly thought it was dead on 9/27 (height was 0.5 the following week)
+E_44_C,10/20/23,10,LVTR1,2,8,NA,3,NA,NA,no alive leaves,size team mistakenly thought it was dead on 10/13 
+F_4_D,10/20/23,10,YO11,4,1,NA,0.4,NA,NA,no leaves,"size team couldn't fiind the plant on 10/13, but the mortality person did see it"
+F_46_C,10/20/23,10,LV3,5,7,NA,0.4,NA,NA,no leaves,"was a stem only, so size team probably missed it"
+G_25_B,8/23/23,4,BH,2,12,NA,6.9,NA,3.8,NA,"looks like size team wrote it on the wrong line on 8/16, they wrote it in G27A which was dead the week before and weeks after"
+G_27_A,8/16/23,3,DPR,4,5,NA,6.7,NA,3.6,NA,see G-25-B note
+H_20_D,10/13/23,9,CP2,2,11,NA,7,NA,NA,no alive leaves,"was a stem only, so size team probably missed it"
+K_2_C,8/30/23,5,YO7,5,13,NA,2,NA,2.1,NA,looks like size team forgot to measure it on 8/23 (at beginning of bed surrounded by buffers)
+K_4_A,8/23/23,4,LVTR1,8,15,NA,2.5,NA,0.6,NA,looks like it died off and resprouted (mortality sheet says 8/23 resprouted)
+K_4_A,10/20/23,10,LVTR1,8,15,NA,0.9,NA,NA,bare stem,"was a stem only, so size team probably missed it"
+K_5_B,10/20/23,10,YO11,8,8,NA,0.9,NA,NA,bare stem,"whole team mistakenly thought it was dead on 10/13, notes say this on the mortality sheet"
