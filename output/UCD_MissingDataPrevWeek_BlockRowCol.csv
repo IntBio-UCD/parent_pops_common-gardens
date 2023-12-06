@@ -1,17 +1,17 @@
-"survey_date","block","row","col","previous_census_height","height_cm","previous_census_length","longest_leaf_cm","death_date","Notes"
-2023-02-10,"J2",28,"A",NA,3.8,NA,0.3,NA,NA
-2023-02-10,"L1",5,"A",NA,0.3,NA,0.4,NA,"New plant WL2 3-100"
-2023-03-03,"H1",19,"B",NA,1.6,NA,1.7,NA,NA
-2023-03-03,"H2",28,"A",NA,1.6,NA,1,NA,NA
-2023-03-03,"L2",37,"C",NA,0.4,NA,0.3,NA,NA
-2023-03-17,"D1",5,"D",NA,4.2,NA,NA,NA,"no leaves"
-2023-03-17,"L2",33,"D",NA,0.2,NA,0.6,NA,NA
-2023-03-24,"J2",31,"D",NA,8.3,NA,9,NA,NA
-2023-03-24,"L1",3,"C",NA,0.6,NA,5.8,NA,NA
-2023-03-24,"L1",3,"D",NA,3.2,NA,6.3,NA,NA
-2023-04-03,"J1",6,"A",NA,16.2,NA,5.8,NA,NA
-2023-04-10,"D1",9,"A",NA,0.7,NA,0.8,NA,"4/10-new germ, species ID unconfirmed"
-2023-04-10,"J1",6,"B",NA,23.6,NA,5.8,NA,NA
-2023-04-10,"L1",3,"C",NA,0.1,NA,6.8,NA,NA
-2023-04-17,"J2",23,"D",NA,6.1,NA,5.8,NA,NA
-2023-04-24,"L1",3,"C",NA,9.6,NA,8.7,NA,NA
+survey_date,block,row,col,previous_census_height,height_cm,previous_census_length,longest_leaf_cm,death_date,Notes,Investigation Notes
+2/10/23,J2,28,A,NA,3.8,NA,0.3,NA,NA,Size collectors mistakenly thought it was dead 0127
+2/10/23,L1,5,A,NA,0.3,NA,0.4,NA,New plant WL2 3-100,"original died (0127 = transplant death), new one germinated, so rep changed to 100, maybe should be in germination dataset?"
+3/3/23,H1,19,B,NA,1.6,NA,1.7,NA,NA,"likely a mistake, maybe someone mistakenly measured a weed, don't use this data"
+3/3/23,H2,28,A,NA,1.6,NA,1,NA,NA,"make 0127 size NA (dead on mortality sheet), prob resprouted which is why we have size on 0303 and then died again"
+3/3/23,L2,37,C,NA,0.4,NA,0.3,NA,NA,"original died and new one germinated later, so rep changed to 100"
+3/17/23,D1,5,D,NA,4.2,NA,NA,NA,no leaves,"dead on 0210, can discard the 0317 measurement"
+3/17/23,L2,33,D,NA,0.2,NA,0.6,NA,NA,"original died, new one germinated, so rep changed to 100"
+3/24/23,J2,31,D,NA,8.3,NA,9,NA,NA,"31C is dead on 0310, mis-wrote the data on 0317 on line 31C, should be on line 31D"
+3/24/23,L1,3,C,NA,0.6,NA,5.8,NA,NA,"not dead until July, 0317 mistakenly recorded as dead"
+3/24/23,L1,3,D,NA,3.2,NA,6.3,NA,NA,"on 0317 size surveyers made a mistake by thinking it was dead, not dead on mortality sheet, good until 0331, then it was dead"
+4/3/23,J1,6,A,NA,16.2,NA,5.8,NA,NA,"6A died on 0217, mis-wrote the data for 6B on the 6A line on hardcopy"
+4/10/23,D1,9,A,NA,0.7,NA,0.8,NA,"4/10-new germ, species ID unconfirmed","likely not Strep, should probably throw this data out"
+4/10/23,J1,6,B,NA,23.6,NA,5.8,NA,NA,see j1 6A above
+4/10/23,L1,3,C,NA,0.1,NA,6.8,NA,NA,size team likely made a mistake by not measuring this one because it was next to dead L1-3-D and it was really small 
+4/17/23,J2,23,D,NA,6.1,NA,5.8,NA,NA,written on buffer line on 0410
+4/24/23,L1,3,C,NA,9.6,NA,8.7,NA,NA,size team likely made a mistake by not measuring this one because it was next to dead L1-3-D and it was really small 
