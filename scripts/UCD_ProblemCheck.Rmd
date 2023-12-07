@@ -3,6 +3,9 @@ title: "Data Checking"
 output: html_notebook:
   keep_md: yes
 ---
+To Do:
+* Add the temporal size check for germ beds
+
 # Annual Census - Transplants 
 ```{r}
 #load the libraries
@@ -48,130 +51,6 @@ for (i in data_names) {
   write_csv(data_probs, path=out_table)
 }
 ```
-
-# Size Data - Transplants (temporal check)
-Check for data when there is no data in previous week 
-* Reason: found a case where someone wrote the data in the wrong row (in the row of a dead plant) 
-
-```{r}
-files <- dir("../input/UCD_Data/CorrectedCSVs/",
-             pattern="Size_survey_transplants.*corrected.*csv",
-             full.names=TRUE)
-files #list of files 
-
-dat <- tibble(path=files, filename=basename(path)) #storing data in tibble
-dat
-
-# create a new column, "date"
-dat2 <- dat %>%
-  mutate(survey_date=str_extract(filename, "2[0-9]*"),
-         survey_date=lubridate::ymd(survey_date))
-dat2
-
-#read in the files 
-dat3 <- dat2 %>% 
-  mutate(sheets=map(path, 
-                    read_csv, 
-                    col_types=cols(.default=col_character()), # forces all columns to be character
-    # this is needed because of data sheet problems that cause some numerics to be imported as character  
-                    na = c("", "NA", "-", "N/A") # sets NA strings.
-                    )) %>%
-  select(-path)
-
-dat3
-
-dat3$sheets[[1]] # extract the first imported sheet to check that the above worked
-
-map(dat3$sheets, colnames) %>% #check column names before merging 
-  unlist() %>%
-  unique() %>%
-  sort()
-#have some extra columns ("...10" and "...12"), double check these after unnest 
-#have some weird date columns, but not important b/c we have survey_date from the file name 
-#have "col" and "column", maybe important 
-#have both "parent.pop" and "pop", might be important depending how I code the rest
-
-map(dat3$sheets, head,10) #see which ones have different names
-dat3$sheets[[1]] <- dat3$sheets[[1]] %>% rename(pop=parent.pop, col = column) #fix the name in the first sheet
-dat3$sheets[[1]]
-
-#unnest
-dat4 <- dat3 %>% unnest(sheets) %>%
-  rename(height_cm = `height (cm)`, longest_leaf_cm = `longest leaf (cm)`, death_date=`death date`)
-head(dat4)
-names(dat4)
-dat4 %>% filter(!is.na(...10)) #an additional note for one plant 
-dat4 %>% filter(!is.na(...12)) #all NA
-
-#check for data issues
-dat4 %>% rowwise() %>% filter(!is.na(row)) %>% filter(is.na(as.numeric(row))) #none
-dat4 %>% rowwise() %>% filter(!is.na(mf)) %>% filter(is.na(as.numeric(mf))) #only weird for a buffer
-dat4 %>% rowwise() %>% filter(!is.na(rep)) %>% filter(is.na(as.numeric(rep))) #none
-dat4 %>% rowwise() %>% filter(!is.na(height_cm)) %>% filter(is.na(as.numeric(height_cm))) #only weird for a dead plant 
-dat4 %>% rowwise() %>% filter(!is.na(longest_leaf_cm)) %>% filter(is.na(as.numeric(longest_leaf_cm))) #none
-unique(dat4$pop) #many versions of LVTR1 
-dat4 %>% filter(is.na(pop), !is.na(height_cm))
-
-unique(dat4$mf)
-dat4 %>% filter(mf==".") #on a buffer
-dat4 %>% filter(is.na(mf), !is.na(height_cm)) #on a buffer
-dat4 %>% filter(mf < 0) #H1 12 B, mf = -2, fixed it in the Corrected CSV
-
-unique(dat4$rep) #some rep numbers = 100 
-dat4 %>% filter(is.na(rep), !is.na(height_cm)) #on a buffer
-dat4 %>% filter(as.numeric(rep)==100) 
-#L1 5 A - original died, new one germinated, so rep changed to 100
-#L2 37 C, should be SQ2 6 1 NOT 100 (from 03-03 to 07-24) - original died and new one germinated later
-#L2 33 D, should be WL2 4 10 NOT 100 (from 03-17 to 07-24) - original died and new one germinated later
-
-unique(dat4$block)
-dat4 %>% filter(is.na(block), !is.na(height_cm))
-unique(dat4$row)
-dat4 %>% filter(is.na(row), !is.na(height_cm))
-unique(dat4$col) #some cols named "A." and "&"  SHOULD FIX!!*******
-dat4 %>% filter(col=="A.")
-dat4 %>% filter(col=="&")
-dat4 %>% filter(is.na(col), !is.na(height_cm))
-
-#lag lead function
-dat5 <- dat4 %>% filter(pop!="buffer") %>% mutate(across(c(row, mf, rep,longest_leaf_cm, height_cm), as.numeric)) %>% mutate(pop=str_replace(pop, ".*VTR.*", "LVTR1")) %>%  group_by(block, row, col) %>% mutate(previous_census_height=lag(height_cm, order_by = survey_date), previous_census_length=lag(longest_leaf_cm, order_by = survey_date)) %>% select(survey_date, block, row, col, previous_census_height, height_cm, previous_census_length, longest_leaf_cm, death_date, Notes)
-dat5
-
-#Check for data when there is no data in previous week 
-dat6 <- dat5 %>% filter(survey_date!="2022-12-13") %>% filter(is.na(previous_census_height), !is.na(height_cm))
-#write.csv(dat6, "../output/UCD_MissingDataPrevWeek_BlockRowCol.csv", row.names = FALSE)
-dat6
-#J1 12 C on 12/13, the block, row, column, didn't show on the scan so it was NA, fixed it on the CorrectedCSV
-#F2 31 D was dead, Amazon had turned a "-" into a "1" for height, fixed it  
-#H2 28 C on 0217 had a column name of ": C" - amazon error - fixed it on the corrected csv
-
-#16 other cases to check:
-#J2 28 A was marked dead on 0127, but was measured on 0210 w/ no note and prob too big to be a new germ 
-#L1 05 A 0210 - original died 0127, new one germinated, so rep changed to 100
-#H1 19 B 0303
-#H2 28 A 0303
-#L2 37 C 0303 - original died and new one germinated later
-#D1 05 D 0317
-#L2 33 D 0317 - original died and new one germinated later
-#J2 31 D 0324
-#L1 03 C 0324
-#L1 03 D 0324
-#J1 06 A 0403
-#D1 09 A 0410 - note says new germ, species ID unconfirmed 
-#J1 06 B 0410
-#L1 03 C 0410
-#J2 23 D 0417
-#L1 03 C 0424
-
-dat7 <- dat4 %>% filter(pop!="buffer") %>% mutate(across(c(row, mf, rep,longest_leaf_cm, height_cm), as.numeric)) %>% mutate(pop=str_replace(pop, ".*VTR.*", "LVTR1")) %>%  group_by(pop, mf, rep) %>% mutate(previous_census_height=lag(height_cm, order_by = survey_date), previous_census_length=lag(longest_leaf_cm, order_by = survey_date)) %>% select(survey_date, block, row, col, pop, mf, rep, previous_census_height, height_cm, previous_census_length, longest_leaf_cm, death_date, Notes)
-dat7
-
-#Check for data when there is no data in previous week 
-dat8 <- dat7 %>% filter(survey_date!="2022-12-13") %>% filter(is.na(previous_census_height), !is.na(height_cm)) #same number rows as the above 
-#write.csv(dat8, "../output/UCD_MissingDataPrevWeek_PopMFREp.csv", row.names = FALSE)
-dat8
-```
-
 
 # Size Data - Transplants (basic check)
 ```{r}
@@ -228,6 +107,112 @@ for (i in data_names2) {
   print(nrow(data_probs))
   write_csv(data_probs, path=out_table)
 }
+```
+
+# Size Data - Transplants (temporal check)
+Check for data when there is no data in previous week 
+* Reason: found a case where someone wrote the data in the wrong row (in the row of a dead plant) 
+
+```{r}
+files <- dir("../input/UCD_Data/CorrectedCSVs/",
+             pattern="Size_survey_transplants.*corrected.*csv",
+             full.names=TRUE)
+files #list of files 
+
+dat <- tibble(path=files, filename=basename(path)) #storing data in tibble
+head(dat)
+
+# create a new column, "date"
+dat2 <- dat %>%
+  mutate(survey_date=str_extract(filename, "2[0-9]*"),
+         survey_date=lubridate::ymd(survey_date))
+head(dat2)
+
+#read in the files 
+dat3 <- dat2 %>% 
+  mutate(sheets=map(path, 
+                    read_csv, 
+                    col_types=cols(.default=col_character()), # forces all columns to be character
+    # this is needed because of data sheet problems that cause some numerics to be imported as character  
+                    na = c("", "NA", "-", "N/A") # sets NA strings.
+                    )) %>%
+  select(-path)
+
+head(dat3)
+
+dat3$sheets[[1]] # extract the first imported sheet to check that the above worked
+
+map(dat3$sheets, colnames) %>% #check column names before merging 
+  unlist() %>%
+  unique() %>%
+  sort()
+#have some extra columns ("...10" and "...12"), double check these after unnest 
+#have some weird date columns, but not important b/c we have survey_date from the file name 
+#have "col" and "column", maybe important 
+#have both "parent.pop" and "pop", might be important depending how I code the rest
+
+map(dat3$sheets, head,10) #see which ones have different names
+dat3$sheets[[1]] <- dat3$sheets[[1]] %>% rename(pop=parent.pop, col = column) #fix the name in the first sheet
+dat3$sheets[[1]]
+
+#unnest
+dat4 <- dat3 %>% unnest(sheets) %>%
+  rename(height_cm = `height (cm)`, longest_leaf_cm = `longest leaf (cm)`, death_date=`death date`)
+head(dat4)
+names(dat4)
+dat4 %>% filter(!is.na(...10)) #an additional note for one plant 
+dat4 %>% filter(!is.na(...12)) #all NA
+
+#check for data issues
+dat4 %>% rowwise() %>% filter(!is.na(row)) %>% filter(is.na(as.numeric(row))) #none
+dat4 %>% rowwise() %>% filter(!is.na(mf)) %>% filter(is.na(as.numeric(mf))) #only weird for a buffer
+dat4 %>% rowwise() %>% filter(!is.na(rep)) %>% filter(is.na(as.numeric(rep))) #none
+dat4 %>% rowwise() %>% filter(!is.na(height_cm)) %>% filter(is.na(as.numeric(height_cm))) #only weird for a dead plant 
+dat4 %>% rowwise() %>% filter(!is.na(longest_leaf_cm)) %>% filter(is.na(as.numeric(longest_leaf_cm))) #none
+unique(dat4$pop) #many versions of LVTR1 
+dat4 %>% filter(is.na(pop), !is.na(height_cm))
+
+unique(dat4$mf)
+dat4 %>% filter(mf==".") #on a buffer
+dat4 %>% filter(is.na(mf), !is.na(height_cm)) #on a buffer
+dat4 %>% filter(mf < 0) #H1 12 B, mf = -2, fixed it in the Corrected CSV
+
+unique(dat4$rep) #some rep numbers = 100 
+dat4 %>% filter(is.na(rep), !is.na(height_cm)) #on a buffer
+dat4 %>% filter(as.numeric(rep)==100) 
+#L1 5 A - original died, new one germinated, so rep changed to 100
+#L2 37 C, should be SQ2 6 1 NOT 100 (from 03-03 to 07-24) - original died and new one germinated later
+#L2 33 D, should be WL2 4 10 NOT 100 (from 03-17 to 07-24) - original died and new one germinated later
+#these should probably go with the germination bed data, since they germinated in the field
+
+unique(dat4$block)
+dat4 %>% filter(is.na(block), !is.na(height_cm))
+unique(dat4$row)
+dat4 %>% filter(is.na(row), !is.na(height_cm))
+unique(dat4$col) #some cols named "A." and "&"  fixed on CorrectedCSVs
+dat4 %>% filter(col=="A.")
+dat4 %>% filter(col=="&")
+dat4 %>% filter(is.na(col), !is.na(height_cm))
+
+#lag lead function
+dat5 <- dat4 %>% filter(pop!="buffer") %>% mutate(across(c(row, mf, rep,longest_leaf_cm, height_cm), as.numeric)) %>% mutate(pop=str_replace(pop, ".*VTR.*", "LVTR1")) %>%  group_by(block, row, col) %>% mutate(previous_census_height=lag(height_cm, order_by = survey_date), previous_census_length=lag(longest_leaf_cm, order_by = survey_date)) %>% select(survey_date, block, row, col, previous_census_height, height_cm, previous_census_length, longest_leaf_cm, death_date, Notes)
+head(dat5)
+
+#Check for data when there is no data in previous week 
+dat6 <- dat5 %>% filter(survey_date!="2022-12-13") %>% filter(is.na(previous_census_height), !is.na(height_cm))
+#write.csv(dat6, "../output/UCD_MissingDataPrevWeek_BlockRowCol.csv", row.names = FALSE)
+dat6
+#J1 12 C on 12/13, the block, row, column, didn't show on the scan so it was NA, fixed it on the CorrectedCSV
+#F2 31 D was dead, Amazon had turned a "-" into a "1" for height, fixed it  
+#H2 28 C on 0217 had a column name of ": C" - amazon error - fixed it on the corrected csv
+
+dat7 <- dat4 %>% filter(pop!="buffer") %>% mutate(across(c(row, mf, rep,longest_leaf_cm, height_cm), as.numeric)) %>% mutate(pop=str_replace(pop, ".*VTR.*", "LVTR1")) %>%  group_by(pop, mf, rep) %>% mutate(previous_census_height=lag(height_cm, order_by = survey_date), previous_census_length=lag(longest_leaf_cm, order_by = survey_date)) %>% select(survey_date, block, row, col, pop, mf, rep, previous_census_height, height_cm, previous_census_length, longest_leaf_cm, death_date, Notes) #add in pop, mf, rep info and check if grouping it by pop, mf, rep matched the results for grouping it by block, row, col
+head(dat7)
+
+#Check for data when there is no data in previous week 
+dat8 <- dat7 %>% filter(survey_date!="2022-12-13") %>% filter(is.na(previous_census_height), !is.na(height_cm)) #same number rows as the above 
+#write.csv(dat8, "../output/UCD_MissingDataPrevWeek_PopMFREp.csv", row.names = FALSE)
+dat8 #matches dat6
 ```
 
 # Mortality/Phenology - Transplants
@@ -318,7 +303,7 @@ for (i in data_names) {
 ```
 
 
-# Size Data - Germination Beds 
+# Size Data - Germination Beds (basic check)
 ```{r}
 #load the libraries
 library(tidyverse)
@@ -367,6 +352,127 @@ for (i in data_names) {
   print(nrow(data_probs))
   write_csv(data_probs, path=out_table)
 }
+```
+
+# Size Data - Transplants (temporal check)
+Check for data when there is no data in previous week 
+* Reason: found a case where someone wrote the data in the wrong row (in the row of a dead plant) 
+
+```{r}
+files <- dir("../input/UCD_Data/CorrectedCSVs/",
+             pattern="Size_survey_germination.*csv",
+             full.names=TRUE)
+files #list of files 
+dat <- tibble(path=files, filename=basename(path)) #storing data in tibble
+head(dat)
+
+# create a new column, "date"
+dat2 <- dat %>%
+  mutate(survey_date=str_extract(filename, "2[0-9]*"),
+         survey_date=lubridate::ymd(survey_date))
+head(dat2)
+
+#read in the files 
+dat3 <- dat2 %>% 
+  mutate(sheets=map(path, 
+                    read_csv, 
+                    col_types=cols(.default=col_character()), # forces all columns to be character
+    # this is needed because of data sheet problems that cause some numerics to be imported as character  
+                    na = c("", "NA", "-", "N/A") # sets NA strings.
+                    )) %>%
+  select(-path)
+
+head(dat3)
+
+dat3$sheets[[1]] # extract the first imported sheet to check that the above worked
+
+map(dat3$sheets, colnames) %>% #check column names before merging 
+  unlist() %>%
+  unique() %>%
+  sort()
+#have some weird date columns, but not important b/c we have survey_date from the file name 
+#have "col" and "column", should fix
+
+map(dat3$sheets, head,10) #see which ones have different names
+dat3$sheets[[1]] <- dat3$sheets[[1]] %>% rename(col = column) #fix the name in the first sheet
+dat3$sheets[[1]]
+dat3$sheets[[2]] <- dat3$sheets[[2]] %>% rename(col = column) #fix the name in the first sheet
+dat3$sheets[[2]]
+dat3$sheets[[3]] <- dat3$sheets[[3]] %>% rename(col = column) #fix the name in the first sheet
+dat3$sheets[[3]]
+
+#unnest
+dat4 <- dat3 %>% unnest(sheets) %>%
+  rename(height_cm = `height (cm)`, longest_leaf_cm = `longest leaf (cm)`)
+head(dat4)
+names(dat4)
+
+#check for data issues
+dat4 %>% rowwise() %>% filter(!is.na(row)) %>% filter(is.na(as.numeric(row))) #wrong for two rows on 0710, AMAZON mistake, BQC fixed it on correctedCSV
+dat4 %>% rowwise() %>% filter(!is.na(mf)) %>% filter(is.na(as.numeric(mf))) #none
+dat4 %>% rowwise() %>% filter(!is.na(rep)) %>% filter(is.na(as.numeric(rep))) #none
+dat4 %>% rowwise() %>% filter(!is.na(height_cm)) %>% filter(is.na(as.numeric(height_cm))) #wrong for M1-6-B on 0403, AMAZON mistake, BQC fixed it on correctedCSV
+dat4 %>% rowwise() %>% filter(!is.na(longest_leaf_cm)) %>% filter(is.na(as.numeric(longest_leaf_cm))) #none
+
+unique(dat4$pop) #two versions of WL1 
+dat4 %>% filter(is.na(pop), !is.na(height_cm))
+dat4 %>% filter(is.na(pop))
+dat4 %>% filter(survey_date=="2023-05-01") #NA pops = amazon picking up on date at the top of each datasheet. 
+
+unique(dat4$mf)
+dat4 %>% filter(is.na(mf), !is.na(height_cm))
+dat4 %>% filter(mf < 0)
+
+unique(dat4$rep)
+dat4 %>% filter(is.na(rep), !is.na(height_cm)) 
+
+unique(dat4$block)
+dat4 %>% filter(is.na(block), !is.na(height_cm))
+dat4 %>% filter(block=="AK1") #wrong on 0324, AMAZON error, fixed it on the CorrectedCSV
+dat4 %>% filter(block=="l1") #wrong on 0217, 0303, 0317, 0324, 0403, 0410, 0417, 0424, 0501, 0508, 0515, 0703, 0710, 0717, 0724
+dat4 %>% filter(block=="|1") #wrong on 0710
+dat4 %>% filter(block=="I!") #wrong on 0710
+dat4 %>% filter(block=="12") #wrong on 0710, 0724
+#Block I was consistently misread by Amazon as l or something else, block L was a transplant bed
+
+unique(dat4$row)
+dat4 %>% filter(is.na(row), !is.na(height_cm))
+
+unique(dat4$col) 
+dat4 %>% filter(is.na(col), !is.na(height_cm))
+dat4 %>% filter(col=="38 A") #wrong on 0710, goes with previously fixed mistake 
+
+#lag lead function
+dat5 <- dat4 %>% mutate(across(c(row, mf, rep,longest_leaf_cm, height_cm), as.numeric)) %>%
+  mutate(pop=str_replace(pop, "WL.1", "WL1")) %>% 
+  mutate(block=str_replace_all(block, "l1|\\|1|I!", "I1")) %>% 
+  mutate(block=str_replace(block, "12", "I2")) %>% 
+  group_by(block, row, col) %>% 
+  mutate(previous_census_height=lag(height_cm, order_by = survey_date), previous_census_length=lag(longest_leaf_cm, order_by = survey_date)) %>% 
+  select(survey_date, block, row, col, previous_census_height, height_cm, previous_census_length, longest_leaf_cm, notes)
+head(dat5)
+unique(dat5$block)
+
+#Check for data when there is no data in previous week 
+dat6 <- dat5 %>% filter(survey_date!="2023-02-17") %>% filter(is.na(previous_census_height), !is.na(height_cm))
+#write.csv(dat6, "../output/UCDGermBeds_MissingDataPrevWeek_BlockRowCol.csv", row.names = FALSE)
+dat6 #71 rows!
+
+dat7 <- dat4 %>% mutate(across(c(row, mf, rep,longest_leaf_cm, height_cm), as.numeric)) %>%
+  mutate(pop=str_replace(pop, "WL.1", "WL1")) %>%
+  mutate(block=str_replace_all(block, "l1|\\|1|I!", "I1")) %>% 
+   mutate(block=str_replace(block, "12", "I2")) %>% 
+  group_by(pop, mf, rep) %>% 
+  mutate(previous_census_height=lag(height_cm, order_by = survey_date), previous_census_length=lag(longest_leaf_cm, order_by = survey_date)) %>% 
+  select(survey_date, block, row, col, pop, mf, rep, previous_census_height, height_cm, previous_census_length, longest_leaf_cm, notes) #add in pop, mf, rep info and check if grouping it by pop, mf, rep matched the results for grouping it by block, row, col
+head(dat7)
+unique(dat7$pop)
+
+#Check for data when there is no data in previous week 
+dat8 <- dat7 %>% filter(survey_date!="2023-02-17") %>% filter(is.na(previous_census_height), !is.na(height_cm)) 
+#write.csv(dat8, "../output/UCDGermBeds_MissingDataPrevWeek_PopMFREp.csv", row.names = FALSE)
+dat8 #matches dat6
+#This might be a bit more complicated, because size will be NA until a seedling germinates...
 ```
 
 # Mortality/Phenology - Germination Beds
