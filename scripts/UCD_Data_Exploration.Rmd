@@ -8,6 +8,8 @@ output: html_document:
 
 # Note: Not all data has been added to the corrected csvs folder, some are still in raw csvs
 
+## Note: There are 3 individuals with rep \# 100 in transplant data sheets that should be analyzed with germination bed data instead!!
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
@@ -72,6 +74,8 @@ head(mortsurvey)
 ```
 
 ## Phenology Survey of Germination Bed? See the later mort-pheno surveys
+
+**If a plant didn\'t fruit, did flowers fail, or did it flower too late?**
 
 ```{r}
 pheno_germs <- read_csv("../input/UCD_Data/CorrectedCSVs/Phenology_survey_germination_20230515_corrected.csv")
