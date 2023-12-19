@@ -2,8 +2,32 @@
 title: "Single_Time_Size"
 author: "Brandie Quarles"
 date: "2023-11-07"
-output: html_document
+output: 
+  html_document: 
+    keep_md: yes
 ---
+
+To Do:
+
+-   Figure out how to get Ranova output with map syntax 
+
+-   ASK JULIN AND JENNY HOW WE FEEL ABOUT A SAMPLE SIZE OF 2
+
+-   Calculate regression b/t height and longest leaf?
+
+-   Analyze Pre-transplant size
+
+    -   How predictive is this of survival in the field?
+
+-   emmeans package for post-hoc pairwise comparisons
+
+-   Analyze growth (remove rep# 100)
+
+    -   Include pre-transplant size
+
+    -   Get growth curve code from Julin
+
+    -   Is the growth rate lower for high elev b/c drier and biennial?
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -13,8 +37,11 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r}
 library(tidyverse)
-library(lmerTest)
+library(lmerTest) #for mixed effect models
+library(emmeans) #for post-hoc pairwise comparisons 
 library(naniar) #replaces values with NA
+library(corrplot) #plotting correlations 
+library(rstatix) #performing cor_test
 sem <- function(x, na.rm=FALSE) {
   sd(x,na.rm=na.rm)/sqrt(length(na.omit(x)))
 } #standard error function 
@@ -46,135 +73,226 @@ pop_elev <- left_join(pops_common_garden_nonotes, pop_loc_yo)
 head(pop_elev)
 ```
 
-## Load size data
+## Load size data using map
 
 ```{r}
-dec_size <- read_csv("../input/UCD_Data/CorrectedCSVs/Size_survey_transplants_20221213_corrected.csv") %>% rename(height=`height (cm)`, longest_leaf=`longest leaf (cm)`) %>%  mutate(height=na_if(height, "N/A"), longest_leaf=na_if(longest_leaf, "N/A")) %>% mutate_at(c("height", "longest_leaf"), as.double) %>% filter(parent.pop != "buffer")
-head(dec_size)
-unique(dec_size$parent.pop)
+files <- dir("../input/UCD_Data/CorrectedCSVs/",
+             pattern="Size_survey_transplants_2022.*csv|Size_survey_transplants.*0127.*csv|Size_survey_transplants.*0217.*csv",
+             full.names = TRUE)
+files
+single_time_all <- tibble(path=files, filename=basename(path)) %>%
+  mutate(survey_date=str_extract(filename, "2[0-9]*"),
+         survey_date=lubridate::ymd(survey_date),
+         survey_month=c("dec_size", "jan_size", "feb_size"))
+single_time_all
 
-jan_size <- read_csv("../input/UCD_Data/CorrectedCSVs/Size_survey_transplants_20230127_corrected.csv") %>%  rename(height=`height (cm)`, longest_leaf=`longest leaf (cm)`, parent.pop=pop) %>%  mutate(height=na_if(height, "-"), longest_leaf=na_if(longest_leaf, "-")) %>% mutate_at(c("height", "longest_leaf"), as.double) %>% filter(parent.pop != "buffer")
-head(jan_size)
-unique(jan_size$parent.pop)
+single_time_all <- single_time_all %>% 
+  mutate(sheets=map(path, 
+                    read_csv,
+                    na = c("", "NA", "-", "N/A"))) %>% 
+  select(-path)
+single_time_all
 
-feb_size <- read_csv("../input/UCD_Data/CorrectedCSVs/Size_survey_transplants_20230217_corrected.csv") %>%  rename(height=`height (cm)`, longest_leaf=`longest leaf (cm)`, parent.pop=pop) %>%  mutate(height=na_if(height, "-"), longest_leaf=na_if(longest_leaf, "-")) %>% mutate_at(c("height", "longest_leaf"), as.double) %>% filter(parent.pop != "buffer") %>% mutate(parent.pop= str_replace(parent.pop, ".*VTR.*", "LVTR1"))
-head(feb_size)
-unique(feb_size$parent.pop)
+map(single_time_all$sheets, head, 10) #check to make sure the datasheets look good 
+single_time_all$sheets[[3]] %>%  rowwise() %>% filter(!is.na(mf)) %>%  filter(is.na(as.numeric(mf))) #. for a buffer --> safe to convert to double
+single_time_all$sheets[[3]] <- single_time_all$sheets[[3]] %>% mutate(mf=as.double(mf)) #fix mf in third sheet
 
-feb_size_alive <- feb_size %>% filter(!is.na(height))
-head(feb_size_alive)
-unique(feb_size_alive$parent.pop)
-feb_size_alive %>% group_by(parent.pop) %>% summarise(samplesize=n())
+map(single_time_all$sheets, colnames) %>% #check the column names 
+  unlist() %>%
+  unique() %>%
+  sort()
+single_time_all$sheets[[1]] <- single_time_all$sheets[[1]] %>% rename(pop=parent.pop, col=column) #fix names in first sheet
+
+#unnest to perform tidyverse functions 
+single_time_all2 <- single_time_all %>% unnest(sheets) %>%
+  rename(height_cm = `height (cm)`, longest_leaf_cm = `longest leaf (cm)`, parent.pop=pop) %>% 
+  filter(parent.pop != "buffer") %>% 
+  mutate(parent.pop= str_replace(parent.pop, ".*VTR.*", "LVTR1")) %>% 
+  filter(rep != 100)
+head(single_time_all2)
+unique(single_time_all2$parent.pop)
+
+#merge in pop loc info
+single_time_all2_elev <- left_join(single_time_all2, pop_elev) %>% select(survey_date:Notes, `herbivory (Y or N)`, elevation.group,Lat, Long, elev_m)
+head(single_time_all2_elev)
+names(single_time_all2_elev)
 ```
 
-## Merge the data
+## Check Sample sizes at each survey
+If any pops only have 1 individual, filter those pops out 
 
 ```{r}
-dec_size_elev <- left_join(dec_size, pop_elev)
-head(dec_size_elev)
+sample_sizes <- single_time_all2_elev %>% 
+  filter(!is.na(height_cm)) %>% 
+  group_by(survey_month, parent.pop) %>% 
+  summarise(samplesize=n()) %>% 
+  arrange(survey_month, samplesize)
+sample_sizes
 
-jan_size_elev <- left_join(jan_size, pop_elev) %>% filter(parent.pop != "LV1") %>% filter(parent.pop != "WV") #remove LV1 and WV b/c only 1 indiv alive 
-head(jan_size_elev)
-jan_size_elev %>% filter(!is.na(longest_leaf))
+#Dec WV has only 2 individuals 
+#Jan LV1 and WV only have 1 indiv
+#Feb LV1, YO4 have 1 individual, YO11 has only 2 individuals 
 
-feb_size_elev <- left_join(feb_size, pop_elev)
-head(feb_size_elev)
+single_time_all_sample_sizes <- left_join(single_time_all2_elev, sample_sizes)
+single_time_all_sample_sizes %>% filter(samplesize == 1)
+
+single_time_all_GTONE <- single_time_all_sample_sizes %>% filter(samplesize > 1) #only pops with greater than one individual alive at a given survey 
 ```
 
 ## Summary plots
 
 ```{r}
-dec_size_elev %>% ggplot(aes(x=height)) + geom_histogram()
-qqnorm(dec_size_elev$height)
-qqline(dec_size_elev$height)
+single_time_all_GTONE$survey_month <- factor(single_time_all_GTONE$survey_month, levels = c("dec_size","jan_size","feb_size"))
+#Histograms
+single_time_all_GTONE %>% select(height_cm, longest_leaf_cm) %>% 
+  names() %>% 
+  map(~ggplot(single_time_all_GTONE, aes_string(x = .)) + 
+        geom_histogram() + 
+        facet_grid(survey_month ~ ., scales = "free"))
 
-dec_size_elev %>% ggplot(aes(x=longest_leaf)) + geom_histogram()
-qqnorm(dec_size_elev$longest_leaf)
-qqline(dec_size_elev$longest_leaf)
+#qq plots 
+single_time_all_GTONE %>% select(height_cm, longest_leaf_cm) %>% 
+  names() %>% 
+  map(~ggplot(single_time_all_GTONE, aes_string(sample = .)) + 
+       stat_qq() +
+        stat_qq_line() +
+        facet_grid(survey_month ~ ., scales="free"))
 
-
-jan_size_elev %>% ggplot(aes(x=height)) + geom_histogram()
-qqnorm(jan_size_elev$height)
-qqline(jan_size_elev$height) #a little right skewed 
-jan_size_elev_transf <- jan_size_elev %>% mutate(sheight=sqrt(height)) 
-jan_size_elev_transf%>% ggplot(aes(x=sheight)) + geom_histogram()
-qqnorm(jan_size_elev_transf$sheight)
-qqline(jan_size_elev_transf$sheight) #looks better 
-
-jan_size_elev %>% ggplot(aes(x=longest_leaf)) + geom_histogram()
-qqnorm(jan_size_elev$longest_leaf) 
-qqline(jan_size_elev$longest_leaf) #normal!
+#all months height is right skewed
+#feb longest leaf very slightly right skewed
 
 
-feb_size_elev %>% ggplot(aes(x=height)) + geom_histogram()
-qqnorm(feb_size_elev$height)
-qqline(feb_size_elev$height)
+#Transformations:
+single_time_all_GTONE_transf <- single_time_all_GTONE %>% 
+  mutate(sheight_cm=sqrt(height_cm), logheight_cm=log(height_cm),log10height_cm=log10(height_cm),
+         slongest_leaf_cm=sqrt(longest_leaf_cm), loglongest_leaf_cm=log(longest_leaf_cm),
+         log10longest_leaf_cm=log10(longest_leaf_cm))
 
-feb_size_elev %>% ggplot(aes(x=longest_leaf)) + geom_histogram()
-qqnorm(feb_size_elev$longest_leaf)
-qqline(feb_size_elev$longest_leaf) 
+single_time_all_GTONE_transf$survey_month <- factor(single_time_all_GTONE_transf$survey_month, levels = c("dec_size","jan_size","feb_size"))
+
+single_time_all_GTONE_transf %>% select(ends_with("cm")) %>% 
+  names() %>% 
+  map(~ggplot(single_time_all_GTONE_transf, aes_string(x = .)) + 
+        geom_histogram() + 
+        facet_grid(survey_month ~ ., scales = "free"))
+
+single_time_all_GTONE_transf %>% select(ends_with("cm")) %>% 
+  names() %>% 
+  map(~ggplot(single_time_all_GTONE_transf, aes_string(sample = .)) + 
+       stat_qq() +
+        stat_qq_line() +
+        facet_grid(survey_month ~ ., scales="free"))
+
+#square root transformation is the best for height (all months)
+#no transformations greatly improve Feb distribution 
 ```
 
-## Calculating means by pop (and elev)
+## Relationship between heigh and longest leaf 
 
+### Plotting Height and Length Together
 ```{r}
-jan_size_elev_summary <- jan_size_elev_transf %>% group_by(parent.pop, elevation.group, elev_m) %>% summarise(meanHeight = mean(height,na.rm=(TRUE)), sem_height=sem(height, na.rm=(TRUE)), meanLongestLeaf=mean(longest_leaf, na.rm=(TRUE)), sem_leaf=sem(longest_leaf, na.rm=TRUE))
-jan_size_elev_summary
+single_time_all_GTONE_transf %>% ggplot(aes(x=height_cm, y=longest_leaf_cm)) +
+  geom_point() +
+  geom_smooth() +
+  facet_grid(survey_month ~ ., scales="free")
+
+#generally positive relationship, but a lot more variability at lower heights 
+#maybe a more logarithmic scale than linear 
+
+single_time_all_GTONE_transf %>% ggplot(aes(x=longest_leaf_cm, y=height_cm)) +
+  geom_point() +
+  geom_smooth() +
+  facet_grid(survey_month ~ ., scales="free") #opposite direction
 ```
 
-## Mixed Effects Models (and figures of trait means) 
+### Calculating correlation b/t the two
+```{r}
+single_time_all_GTONE_transf %>% cor_test(height_cm, longest_leaf_cm, method = "pearson") #all months 
+#r=0.52, P <0.0001
 
-### Height
+single_time_all_GTONE_transf %>% group_by(survey_month) %>% 
+  cor_test(height_cm, longest_leaf_cm, method = "pearson")
+#Dec r=0.51, P <0.0001
+#Jan r=0.47, P <0.0001
+#Feb r=0.51, P <0.0001
+```
+
+## Calculating means by pop (and elev) 
 
 ```{r}
-jan_size_elev_summary %>% ggplot(aes(x=fct_reorder(parent.pop, meanHeight), y=meanHeight, fill=elev_m)) +
+single_time_all_GTONE_transf_summary <- single_time_all_GTONE_transf %>% 
+  group_by(survey_month, parent.pop, elev_m) %>% 
+  summarise(mean_height_cm = mean(height_cm,na.rm=(TRUE)), 
+            sem_height_cm=sem(height_cm, na.rm=(TRUE)),
+            mean_longest_leaf_cm=mean(longest_leaf_cm, na.rm=(TRUE)), 
+            sem_longest_leaf_cm=sem(longest_leaf_cm, na.rm=TRUE))
+single_time_all_GTONE_transf_summary
+```
+
+## Figures of averages 
+
+### Avg Height Figure
+```{r}
+single_time_all_GTONE_transf_summary$survey_month <- factor(single_time_all_GTONE_transf_summary$survey_month, levels = c("dec_size","jan_size","feb_size"))
+
+single_time_all_GTONE_transf_summary %>% 
+  ggplot(aes(x=fct_reorder(parent.pop, mean_height_cm), y=mean_height_cm, fill=elev_m)) +
   geom_col(width = 0.7,position = position_dodge(0.75)) + 
-  geom_errorbar(aes(ymin=meanHeight-sem_height,ymax=meanHeight+sem_height),width=.2, position = 
+  geom_errorbar(aes(ymin=mean_height_cm-sem_height_cm,ymax=mean_height_cm+sem_height_cm),width=.2, position = 
                   position_dodge(0.75)) +
   scale_y_continuous(expand = c(0, 0)) +
-  #scale_fill_manual(values=elev_three_palette) + 
   scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
   labs(fill="Elevation (m)", y="Avg Height (cm)", x="Population") +
    theme_classic() +
-  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/Jan_Height.png", width = 12, height = 6, units = "in")
-
-lmeheight = lmer(sheight ~ (1|parent.pop/mf), data=jan_size_elev_transf)
-summary(lmeheight)
-ranova(lmeheight)
-VarCorr(lmeheight) %>% 
-  as.data.frame() %>% 
-  mutate(var.pct = vcov/sum(vcov)*100)
-
-names(jan_size_elev_transf)
-lmeheight2 = lmer(sheight ~ elev_m + (1|parent.pop/mf), data=jan_size_elev_transf)
-summary(lmeheight2)
-ranova(lmeheight2)
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1)) +
+  facet_grid(survey_month ~ .)
+ggsave("../output/UCD_Traits/Single_Time_Height.png", width = 14, height = 18, units = "in")
 ```
 
-### Longest_leaf
 
+### Avg Longest Leaf Figure
 ```{r}
-jan_size_elev_summary %>% ggplot(aes(x=fct_reorder(parent.pop, meanLongestLeaf), y=meanLongestLeaf, fill=elev_m)) +
+single_time_all_GTONE_transf_summary %>% 
+  ggplot(aes(x=fct_reorder(parent.pop, mean_longest_leaf_cm), y=mean_longest_leaf_cm, fill=elev_m)) +
   geom_col(width = 0.7,position = position_dodge(0.75)) + 
-  geom_errorbar(aes(ymin=meanLongestLeaf-sem_leaf,ymax=meanLongestLeaf+sem_leaf),width=.2, position = 
+  geom_errorbar(aes(ymin=mean_longest_leaf_cm-sem_longest_leaf_cm,ymax=mean_longest_leaf_cm+sem_longest_leaf_cm),width=.2, position = 
                   position_dodge(0.75)) +
   scale_y_continuous(expand = c(0, 0)) +
-  #scale_fill_manual(values=elev_three_palette) + 
   scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
   labs(fill="Elevation (m)", y="Avg Longest Leaf (cm)", x="Population") +
    theme_classic() +
-  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/Jan_Length.png", width = 12, height = 6, units = "in")
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1)) +
+  facet_grid(survey_month ~ .)
+ggsave("../output/UCD_Traits/Single_Time_Longest_Leaf.png", width = 14, height = 18, units = "in")
+```
 
-lmelength = lmer(longest_leaf ~ (1|parent.pop/mf), data=jan_size_elev_transf)
-summary(lmelength)
-ranova(lmelength) 
-VarCorr(lmelength) %>% 
-  as.data.frame() %>% 
-  mutate(var.pct = vcov/sum(vcov)*100)
+## Mixed Effects Models
+```{r}
+#prep data for model
+single_time_split_by_month <- single_time_all_GTONE_transf %>% 
+  select(survey_month, elev_m, parent.pop, mf, sheight_cm, longest_leaf_cm) %>% 
+  group_nest(survey_month)
+single_time_split_by_month
 
-lmelength2 = lmer(longest_leaf ~ elev_m + (1|parent.pop/mf), data=jan_size_elev_transf)
-summary(lmelength2)
-ranova(lmelength2) 
+model_by_month <- 
+  single_time_split_by_month %>% 
+  mutate(height_model_1 = map(data, ~ lmer(sheight_cm ~ (1|parent.pop/mf), data = .x)),
+         height_model_2 = map(data, ~ lmer(sheight_cm ~ elev_m + (1|parent.pop/mf), data = .x)),
+         leaf_model_1 = map(data, ~ lmer(longest_leaf_cm ~ (1|parent.pop/mf), data = .x)), 
+         leaf_model_2 = map(data, ~ lmer(longest_leaf_cm ~ elev_m + (1|parent.pop/mf), data = .x)),)
+model_by_month
+
+library(broom.mixed)
+model_by_month %>% 
+  mutate(coef = map(height_model_1, tidy)) %>% 
+  select(survey_month, coef) %>% 
+  unnest(cols = c(coef))
+
+#get Julin's code for comparing models 
+
+#figure out how to get the below output:
+#ranova(lmeheight)
+#VarCorr(lmeheight) %>% 
+ # as.data.frame() %>% 
+  #mutate(var.pct = vcov/sum(vcov)*100)
 ```
