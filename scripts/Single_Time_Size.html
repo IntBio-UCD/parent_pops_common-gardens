@@ -359,14 +359,22 @@ display: none;
 
 <p>To Do:</p>
 <ul>
-<li><p>Figure out how to get Ranova output with map syntax</p></li>
-<li><p>ASK JULIN AND JENNY HOW WE FEEL ABOUT A SAMPLE SIZE OF 2</p></li>
+<li><p>emmeans package for post-hoc pairwise comparisons</p>
+<ul>
+<li>Not sure how to use emmeans for random effects. Tried it on the diam
+model in annual census analysis and got this warning: “Warning: Model
+has 61 prior weights, but we recovered 2 rows of data. So prior weights
+were ignored.Error in emmeans(lmediam2,”parent.pop”) : No variable named
+parent.pop in the reference grid”</li>
+</ul></li>
+<li><p>Compare results to dataset with sample size greater than
+2</p></li>
+<li><p>Re: Sample size of 2: Try analysis with and without</p></li>
 <li><p>Calculate regression b/t height and longest leaf?</p></li>
 <li><p>Analyze Pre-transplant size</p>
 <ul>
 <li>How predictive is this of survival in the field?</li>
 </ul></li>
-<li><p>emmeans package for post-hoc pairwise comparisons</p></li>
 <li><p>Analyze growth (remove rep# 100)</p>
 <ul>
 <li><p>Include pre-transplant size</p></li>
@@ -388,7 +396,25 @@ biennial?</p></li>
 ## ✖ dplyr::filter() masks stats::filter()
 ## ✖ dplyr::lag()    masks stats::lag()
 ## ℹ Use the conflicted package (&lt;http://conflicted.r-lib.org/&gt;) to force all conflicts to become errors</code></pre>
-<pre class="r"><code>library(lmerTest) #for mixed effect models</code></pre>
+<pre class="r"><code>library(tidymodels)</code></pre>
+<pre><code>## ── Attaching packages ────────────────────────────────────── tidymodels 1.1.1 ──
+## ✔ broom        1.0.5     ✔ rsample      1.2.0
+## ✔ dials        1.2.0     ✔ tune         1.1.2
+## ✔ infer        1.0.5     ✔ workflows    1.1.3
+## ✔ modeldata    1.2.0     ✔ workflowsets 1.0.1
+## ✔ parsnip      1.1.1     ✔ yardstick    1.2.0
+## ✔ recipes      1.0.8     
+## ── Conflicts ───────────────────────────────────────── tidymodels_conflicts() ──
+## ✖ scales::discard() masks purrr::discard()
+## ✖ dplyr::filter()   masks stats::filter()
+## ✖ recipes::fixed()  masks stringr::fixed()
+## ✖ dplyr::lag()      masks stats::lag()
+## ✖ yardstick::spec() masks readr::spec()
+## ✖ recipes::step()   masks stats::step()
+## • Search for functions across packages at https://www.tidymodels.org/find/</code></pre>
+<pre class="r"><code>tidymodels_prefer()
+library(broom.mixed) #tidy method for lmerTest
+library(lmerTest) #for mixed effect models</code></pre>
 <pre><code>## Loading required package: lme4
 ## Loading required package: Matrix
 ## 
@@ -396,35 +422,20 @@ biennial?</p></li>
 ## 
 ## The following objects are masked from &#39;package:tidyr&#39;:
 ## 
-##     expand, pack, unpack
-## 
-## 
-## Attaching package: &#39;lmerTest&#39;
-## 
-## The following object is masked from &#39;package:lme4&#39;:
-## 
-##     lmer
-## 
-## The following object is masked from &#39;package:stats&#39;:
-## 
-##     step</code></pre>
+##     expand, pack, unpack</code></pre>
+<pre class="r"><code>conflicted::conflicts_prefer(lmerTest::lmer)</code></pre>
+<pre><code>## [conflicted] Will prefer lmerTest::lmer over any other package.</code></pre>
 <pre class="r"><code>library(emmeans) #for post-hoc pairwise comparisons 
 library(naniar) #replaces values with NA
 library(corrplot) #plotting correlations </code></pre>
 <pre><code>## corrplot 0.92 loaded</code></pre>
-<pre class="r"><code>library(rstatix) #performing cor_test</code></pre>
-<pre><code>## 
-## Attaching package: &#39;rstatix&#39;
-## 
-## The following object is masked from &#39;package:stats&#39;:
-## 
-##     filter</code></pre>
-<pre class="r"><code>sem &lt;- function(x, na.rm=FALSE) {
+<pre class="r"><code>library(rstatix) #performing cor_test
+sem &lt;- function(x, na.rm=FALSE) {           #for caclulating standard error
   sd(x,na.rm=na.rm)/sqrt(length(na.omit(x)))
-} #standard error function 
+} 
 
 elev_three_palette &lt;- c(&quot;#0043F0&quot;, &quot;#C9727F&quot;, &quot;#F5A540&quot;) #colors from Gremer et al 2019
-elev_order &lt;- c(&quot;High&quot;, &quot;Mid&quot;, &quot;Low&quot;)</code></pre>
+elev_order &lt;- c(&quot;High&quot;, &quot;Mid&quot;, &quot;Low&quot;) #for proper arrangement in figures </code></pre>
 </div>
 <div id="load-the-pop-and-location-data" class="section level2">
 <h2>Load the pop and location data</h2>
@@ -512,15 +523,15 @@ pop_elev &lt;- left_join(pops_common_garden_nonotes, pop_loc_yo)</code></pre>
 <h2>Load size data using map</h2>
 <pre class="r"><code>files &lt;- dir(&quot;../input/UCD_Data/CorrectedCSVs/&quot;,
              pattern=&quot;Size_survey_transplants_2022.*csv|Size_survey_transplants.*0127.*csv|Size_survey_transplants.*0217.*csv&quot;,
-             full.names = TRUE)
+             full.names = TRUE)   #get list of desired files 
 files</code></pre>
 <pre><code>## [1] &quot;../input/UCD_Data/CorrectedCSVs//Size_survey_transplants_20221213_corrected.csv&quot;
 ## [2] &quot;../input/UCD_Data/CorrectedCSVs//Size_survey_transplants_20230127_corrected.csv&quot;
 ## [3] &quot;../input/UCD_Data/CorrectedCSVs//Size_survey_transplants_20230217_corrected.csv&quot;</code></pre>
-<pre class="r"><code>single_time_all &lt;- tibble(path=files, filename=basename(path)) %&gt;%
-  mutate(survey_date=str_extract(filename, &quot;2[0-9]*&quot;),
-         survey_date=lubridate::ymd(survey_date),
-         survey_month=c(&quot;dec_size&quot;, &quot;jan_size&quot;, &quot;feb_size&quot;))
+<pre class="r"><code>single_time_all &lt;- tibble(path=files, filename=basename(path)) %&gt;%  #make a tibble with the filenames and paths 
+  mutate(survey_date=str_extract(filename, &quot;2[0-9]*&quot;),              #extract survey date from filenames
+         survey_date=lubridate::ymd(survey_date),                   #format the date column 
+         survey_month=c(&quot;dec_size&quot;, &quot;jan_size&quot;, &quot;feb_size&quot;))        #make a column for month
 single_time_all</code></pre>
 <pre><code>## # A tibble: 3 × 4
 ##   path                                         filename survey_date survey_month
@@ -528,10 +539,10 @@ single_time_all</code></pre>
 ## 1 ../input/UCD_Data/CorrectedCSVs//Size_surve… Size_su… 2022-12-13  dec_size    
 ## 2 ../input/UCD_Data/CorrectedCSVs//Size_surve… Size_su… 2023-01-27  jan_size    
 ## 3 ../input/UCD_Data/CorrectedCSVs//Size_surve… Size_su… 2023-02-17  feb_size</code></pre>
-<pre class="r"><code>single_time_all &lt;- single_time_all %&gt;% 
+<pre class="r"><code>single_time_all &lt;- single_time_all %&gt;%                              #read in the data to &quot;sheets&quot; column
   mutate(sheets=map(path, 
                     read_csv,
-                    na = c(&quot;&quot;, &quot;NA&quot;, &quot;-&quot;, &quot;N/A&quot;))) %&gt;% 
+                    na = c(&quot;&quot;, &quot;NA&quot;, &quot;-&quot;, &quot;N/A&quot;))) %&gt;%              #set NA strings 
   select(-path)</code></pre>
 <pre><code>## Rows: 858 Columns: 10
 ## ── Column specification ────────────────────────────────────────────────────────
@@ -565,7 +576,7 @@ single_time_all</code></pre>
 ## 1 Size_survey_transplants_20221213_correcte… 2022-12-13  dec_size     &lt;spc_tbl_&gt;
 ## 2 Size_survey_transplants_20230127_correcte… 2023-01-27  jan_size     &lt;spc_tbl_&gt;
 ## 3 Size_survey_transplants_20230217_correcte… 2023-02-17  feb_size     &lt;spc_tbl_&gt;</code></pre>
-<pre class="r"><code>map(single_time_all$sheets, head, 10) #check to make sure the datasheets look good </code></pre>
+<pre class="r"><code>map(single_time_all$sheets, head, 10)          #check to make sure the datasheets look good </code></pre>
 <pre><code>## [[1]]
 ## # A tibble: 10 × 10
 ##    block   row column parent.pop    mf   rep `height (cm)` `longest leaf (cm)`
@@ -614,7 +625,7 @@ single_time_all</code></pre>
 ## 10 2/17/23       D1        5 B     BH     5        24           4.3
 ## # ℹ 3 more variables: `longest leaf (cm)` &lt;dbl&gt;, `herbivory (Y or N)` &lt;chr&gt;,
 ## #   Notes &lt;chr&gt;</code></pre>
-<pre class="r"><code>single_time_all$sheets[[3]] %&gt;%  rowwise() %&gt;% filter(!is.na(mf)) %&gt;%  filter(is.na(as.numeric(mf))) #. for a buffer --&gt; safe to convert to double</code></pre>
+<pre class="r"><code>single_time_all$sheets[[3]] %&gt;%  rowwise() %&gt;% filter(!is.na(mf)) %&gt;%  filter(is.na(as.numeric(mf)))  #&quot;.&quot; for a buffer --&gt; safe to convert to double</code></pre>
 <pre><code>## Warning: There was 1 warning in `filter()`.
 ## ℹ In argument: `is.na(as.numeric(mf))`.
 ## ℹ In row 528.
@@ -648,7 +659,7 @@ single_time_all2 &lt;- single_time_all %&gt;% unnest(sheets) %&gt;%
   rename(height_cm = `height (cm)`, longest_leaf_cm = `longest leaf (cm)`, parent.pop=pop) %&gt;% 
   filter(parent.pop != &quot;buffer&quot;) %&gt;% 
   mutate(parent.pop= str_replace(parent.pop, &quot;.*VTR.*&quot;, &quot;LVTR1&quot;)) %&gt;% 
-  filter(rep != 100)
+  filter(rep != 100) #get rid of individuals that germinated in the field 
 head(single_time_all2)</code></pre>
 <pre><code>## # A tibble: 6 × 16
 ##   filename     survey_date survey_month block   row col   parent.pop    mf   rep
@@ -697,24 +708,25 @@ single_time_all2_elev &lt;- left_join(single_time_all2, pop_elev) %&gt;% select(
   filter(!is.na(height_cm)) %&gt;% 
   group_by(survey_month, parent.pop) %&gt;% 
   summarise(samplesize=n()) %&gt;% 
-  arrange(survey_month, samplesize)</code></pre>
+  arrange(samplesize)</code></pre>
 <pre><code>## `summarise()` has grouped output by &#39;survey_month&#39;. You can override using the
 ## `.groups` argument.</code></pre>
-<pre class="r"><code>sample_sizes</code></pre>
+<pre class="r"><code>  #arrange(survey_month, samplesize)
+sample_sizes</code></pre>
 <pre><code>## # A tibble: 67 × 3
 ## # Groups:   survey_month [3]
 ##    survey_month parent.pop samplesize
 ##    &lt;chr&gt;        &lt;chr&gt;           &lt;int&gt;
-##  1 dec_size     WV                  2
-##  2 dec_size     LV1                 3
-##  3 dec_size     CP3                 6
-##  4 dec_size     YO4                 6
-##  5 dec_size     WR                  9
-##  6 dec_size     SQ3                10
-##  7 dec_size     LVTR1              13
-##  8 dec_size     YO11               13
-##  9 dec_size     YO8                13
-## 10 dec_size     YO7                16
+##  1 feb_size     LV1                 1
+##  2 feb_size     YO4                 1
+##  3 jan_size     LV1                 1
+##  4 jan_size     WV                  1
+##  5 dec_size     WV                  2
+##  6 feb_size     YO11                2
+##  7 dec_size     LV1                 3
+##  8 feb_size     LVTR1               4
+##  9 feb_size     SQ2                 4
+## 10 feb_size     WR                  4
 ## # ℹ 57 more rows</code></pre>
 <pre class="r"><code>#Dec WV has only 2 individuals 
 #Jan LV1 and WV only have 1 indiv
@@ -743,7 +755,9 @@ single_time_all_sample_sizes &lt;- left_join(single_time_all2_elev, sample_sizes
 ## # ℹ 9 more variables: longest_leaf_cm &lt;dbl&gt;, `death date` &lt;chr&gt;, Notes &lt;chr&gt;,
 ## #   `herbivory (Y or N)` &lt;chr&gt;, elevation.group &lt;chr&gt;, Lat &lt;chr&gt;, Long &lt;chr&gt;,
 ## #   elev_m &lt;dbl&gt;, samplesize &lt;int&gt;</code></pre>
-<pre class="r"><code>single_time_all_GTONE &lt;- single_time_all_sample_sizes %&gt;% filter(samplesize &gt; 1) #only pops with greater than one individual alive at a given survey </code></pre>
+<pre class="r"><code>single_time_all_GTONE &lt;- single_time_all_sample_sizes %&gt;% filter(samplesize &gt; 1) #only pops with greater than one individual alive at a given survey 
+
+single_time_all_GTTWO &lt;- single_time_all_sample_sizes %&gt;% filter(samplesize &gt; 2) #only pops with greater than two individuals alive at a given survey </code></pre>
 </div>
 <div id="summary-plots" class="section level2">
 <h2>Summary plots</h2>
@@ -939,29 +953,31 @@ single_time_all_GTONE_transf %&gt;% group_by(survey_month) %&gt;%
 <h2>Calculating means by pop (and elev)</h2>
 <pre class="r"><code>single_time_all_GTONE_transf_summary &lt;- single_time_all_GTONE_transf %&gt;% 
   group_by(survey_month, parent.pop, elev_m) %&gt;% 
-  summarise(mean_height_cm = mean(height_cm,na.rm=(TRUE)), 
-            sem_height_cm=sem(height_cm, na.rm=(TRUE)),
+  summarise(N_height = sum(!is.na(height_cm)), mean_height_cm = mean(height_cm,na.rm=(TRUE)), 
+            sem_height_cm=sem(height_cm, na.rm=(TRUE)), N_length = sum(!is.na(longest_leaf_cm)),
             mean_longest_leaf_cm=mean(longest_leaf_cm, na.rm=(TRUE)), 
-            sem_longest_leaf_cm=sem(longest_leaf_cm, na.rm=TRUE))</code></pre>
+            sem_longest_leaf_cm=sem(longest_leaf_cm, na.rm=TRUE)) %&gt;% 
+  arrange(survey_month, elev_m)</code></pre>
 <pre><code>## `summarise()` has grouped output by &#39;survey_month&#39;, &#39;parent.pop&#39;. You can
 ## override using the `.groups` argument.</code></pre>
 <pre class="r"><code>single_time_all_GTONE_transf_summary</code></pre>
-<pre><code>## # A tibble: 63 × 7
+<pre><code>## # A tibble: 63 × 9
 ## # Groups:   survey_month, parent.pop [63]
-##    survey_month parent.pop elev_m mean_height_cm sem_height_cm
-##    &lt;fct&gt;        &lt;chr&gt;       &lt;dbl&gt;          &lt;dbl&gt;         &lt;dbl&gt;
-##  1 dec_size     BH           511.           2.45        0.0779
-##  2 dec_size     CC           313            3.86        0.198 
-##  3 dec_size     CP2         2244.           1.64        0.139 
-##  4 dec_size     CP3         2266.           0.9         0.193 
-##  5 dec_size     DPR         1019.           4.18        0.352 
-##  6 dec_size     FR           787            3.06        0.186 
-##  7 dec_size     IH           454.           2.70        0.108 
-##  8 dec_size     LV1         2593.           1.3         0.493 
-##  9 dec_size     LV3         2354.           1.84        0.0994
-## 10 dec_size     LVTR1       2741.           1.85        0.251 
+##    survey_month parent.pop elev_m N_height mean_height_cm sem_height_cm N_length
+##    &lt;fct&gt;        &lt;chr&gt;       &lt;dbl&gt;    &lt;int&gt;          &lt;dbl&gt;         &lt;dbl&gt;    &lt;int&gt;
+##  1 dec_size     CC           313        43           3.86        0.198        43
+##  2 dec_size     TM2          379.       37           5.10        0.314        37
+##  3 dec_size     SC           422.       36           2.54        0.141        36
+##  4 dec_size     IH           454.       48           2.70        0.108        48
+##  5 dec_size     BH           511.      110           2.45        0.0779      110
+##  6 dec_size     WV           749.        2           1.5         1.2           2
+##  7 dec_size     FR           787        36           3.06        0.186        36
+##  8 dec_size     DPR         1019.       22           4.18        0.352        22
+##  9 dec_size     WR          1158         9           1.94        0.378         9
+## 10 dec_size     WL1         1614.      124           2.39        0.0726      124
 ## # ℹ 53 more rows
 ## # ℹ 2 more variables: mean_longest_leaf_cm &lt;dbl&gt;, sem_longest_leaf_cm &lt;dbl&gt;</code></pre>
+<pre class="r"><code>write_csv(single_time_all_GTONE_transf_summary, file =&quot;../output/UCD_Traits/single_time_size_summary.csv&quot;)</code></pre>
 </div>
 <div id="figures-of-averages" class="section level2">
 <h2>Figures of averages</h2>
@@ -1002,34 +1018,36 @@ single_time_all_GTONE_transf_summary %&gt;%
 </div>
 <div id="mixed-effects-models" class="section level2">
 <h2>Mixed Effects Models</h2>
+<div id="with-a-sample-size-of-greater-than-1-per-pop" class="section level3">
+<h3>With a sample size of greater than 1 per pop</h3>
 <pre class="r"><code>#prep data for model
-single_time_split_by_month &lt;- single_time_all_GTONE_transf %&gt;% 
+single_time_split_by_month_GTONE &lt;- single_time_all_GTONE_transf %&gt;% 
   select(survey_month, elev_m, parent.pop, mf, sheight_cm, longest_leaf_cm) %&gt;% 
   group_nest(survey_month)
-single_time_split_by_month</code></pre>
+single_time_split_by_month_GTONE #the data column contains the parameters in the model </code></pre>
 <pre><code>## # A tibble: 3 × 2
 ##   survey_month               data
 ##   &lt;fct&gt;        &lt;list&lt;tibble[,5]&gt;&gt;
 ## 1 dec_size              [757 × 5]
 ## 2 jan_size              [752 × 5]
 ## 3 feb_size              [737 × 5]</code></pre>
-<pre class="r"><code>model_by_month &lt;- 
-  single_time_split_by_month %&gt;% 
+<pre class="r"><code>model_by_month_GTONE &lt;- 
+  single_time_split_by_month_GTONE %&gt;% 
   mutate(height_model_1 = map(data, ~ lmer(sheight_cm ~ (1|parent.pop/mf), data = .x)),
          height_model_2 = map(data, ~ lmer(sheight_cm ~ elev_m + (1|parent.pop/mf), data = .x)),
          leaf_model_1 = map(data, ~ lmer(longest_leaf_cm ~ (1|parent.pop/mf), data = .x)), 
          leaf_model_2 = map(data, ~ lmer(longest_leaf_cm ~ elev_m + (1|parent.pop/mf), data = .x)),)</code></pre>
 <pre><code>## boundary (singular) fit: see help(&#39;isSingular&#39;)
 ## boundary (singular) fit: see help(&#39;isSingular&#39;)</code></pre>
-<pre class="r"><code>model_by_month</code></pre>
+<pre class="r"><code>model_by_month_GTONE</code></pre>
 <pre><code>## # A tibble: 3 × 6
 ##   survey_month      data height_model_1 height_model_2 leaf_model_1 leaf_model_2
 ##   &lt;fct&gt;        &lt;list&lt;ti&gt; &lt;list&gt;         &lt;list&gt;         &lt;list&gt;       &lt;list&gt;      
 ## 1 dec_size     [757 × 5] &lt;lmrMdLmT&gt;     &lt;lmrMdLmT&gt;     &lt;lmrMdLmT&gt;   &lt;lmrMdLmT&gt;  
 ## 2 jan_size     [752 × 5] &lt;lmrMdLmT&gt;     &lt;lmrMdLmT&gt;     &lt;lmrMdLmT&gt;   &lt;lmrMdLmT&gt;  
 ## 3 feb_size     [737 × 5] &lt;lmrMdLmT&gt;     &lt;lmrMdLmT&gt;     &lt;lmrMdLmT&gt;   &lt;lmrMdLmT&gt;</code></pre>
-<pre class="r"><code>library(broom.mixed)
-model_by_month %&gt;% 
+<pre class="r"><code>#summary output for one model across survey_months 
+model_by_month_GTONE %&gt;% 
   mutate(coef = map(height_model_1, tidy)) %&gt;% 
   select(survey_month, coef) %&gt;% 
   unnest(cols = c(coef))</code></pre>
@@ -1048,13 +1066,309 @@ model_by_month %&gt;%
 ## 10 feb_size     ran_pa… mf:p… sd__…    0.155   NA           NA    NA   NA       
 ## 11 feb_size     ran_pa… pare… sd__…    0.452   NA           NA    NA   NA       
 ## 12 feb_size     ran_pa… Resi… sd__…    0.356   NA           NA    NA   NA</code></pre>
-<pre class="r"><code>#get Julin&#39;s code for comparing models 
+<pre class="r"><code>#Ranova, nested predictor first and then predictor that nest was in 
+model_by_month_GTONE %&gt;% 
+  mutate(ranova = map(height_model_1, ranova)) %&gt;% 
+  select(survey_month, ranova) %&gt;% 
+  unnest(cols = c(ranova))</code></pre>
+<pre><code>## # A tibble: 9 × 7
+##   survey_month  npar logLik   AIC   LRT    Df `Pr(&gt;Chisq)`
+##   &lt;fct&gt;        &lt;int&gt;  &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;        &lt;dbl&gt;
+## 1 dec_size         4  -228.  463.  NA      NA    NA       
+## 2 dec_size         3  -240.  486.  24.8     1     6.27e- 7
+## 3 dec_size         3  -276.  558.  96.1     1     1.11e-22
+## 4 jan_size         4  -240.  488.  NA      NA    NA       
+## 5 jan_size         3  -249.  505.  18.5     1     1.69e- 5
+## 6 jan_size         3  -292.  590. 104.      1     2.05e-24
+## 7 feb_size         4  -208.  425.  NA      NA    NA       
+## 8 feb_size         3  -215.  435.  12.7     1     3.57e- 4
+## 9 feb_size         3  -250.  506.  83.5     1     6.48e-20</code></pre>
+<pre class="r"><code>model_by_month_GTONE %&gt;% 
+  mutate(ranova = map(height_model_2, ranova)) %&gt;% 
+  select(survey_month, ranova) %&gt;% 
+  unnest(cols = c(ranova))</code></pre>
+<pre><code>## # A tibble: 9 × 7
+##   survey_month  npar logLik   AIC   LRT    Df `Pr(&gt;Chisq)`
+##   &lt;fct&gt;        &lt;int&gt;  &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;        &lt;dbl&gt;
+## 1 dec_size         5  -231.  472.  NA      NA    NA       
+## 2 dec_size         4  -244.  495.  24.9     1     6.13e- 7
+## 3 dec_size         4  -256.  519.  49.3     1     2.23e-12
+## 4 jan_size         5  -240.  489.  NA      NA    NA       
+## 5 jan_size         4  -249.  506.  18.4     1     1.81e- 5
+## 6 jan_size         4  -261.  530.  42.1     1     8.50e-11
+## 7 feb_size         5  -210.  430.  NA      NA    NA       
+## 8 feb_size         4  -216.  440.  12.4     1     4.30e- 4
+## 9 feb_size         4  -227.  462.  33.9     1     5.68e- 9</code></pre>
+<pre class="r"><code>model_by_month_GTONE %&gt;% 
+  mutate(ranova = map(leaf_model_1, ranova)) %&gt;% 
+  select(survey_month, ranova) %&gt;% 
+  unnest(cols = c(ranova))</code></pre>
+<pre><code>## # A tibble: 9 × 7
+##   survey_month  npar logLik   AIC       LRT    Df `Pr(&gt;Chisq)`
+##   &lt;fct&gt;        &lt;int&gt;  &lt;dbl&gt; &lt;dbl&gt;     &lt;dbl&gt; &lt;dbl&gt;        &lt;dbl&gt;
+## 1 dec_size         4  -749. 1506. NA           NA    NA       
+## 2 dec_size         3  -750. 1507.  2.85e+ 0     1     9.13e- 2
+## 3 dec_size         3  -780. 1565.  6.11e+ 1     1     5.37e-15
+## 4 jan_size         4  -706. 1420. NA           NA    NA       
+## 5 jan_size         3  -707. 1420.  2.23e+ 0     1     1.35e- 1
+## 6 jan_size         3  -734. 1473.  5.51e+ 1     1     1.12e-13
+## 7 feb_size         4  -686. 1381. NA           NA    NA       
+## 8 feb_size         3  -686. 1379.  1.14e-12     1     1.00e+ 0
+## 9 feb_size         3  -712. 1429.  5.06e+ 1     1     1.12e-12</code></pre>
+<pre class="r"><code>model_by_month_GTONE %&gt;% 
+  mutate(ranova = map(leaf_model_2, ranova)) %&gt;% 
+  select(survey_month, ranova) %&gt;% 
+  unnest(cols = c(ranova))</code></pre>
+<pre><code>## # A tibble: 9 × 7
+##   survey_month  npar logLik   AIC       LRT    Df `Pr(&gt;Chisq)`
+##   &lt;fct&gt;        &lt;int&gt;  &lt;dbl&gt; &lt;dbl&gt;     &lt;dbl&gt; &lt;dbl&gt;        &lt;dbl&gt;
+## 1 dec_size         5  -752. 1513. NA           NA   NA        
+## 2 dec_size         4  -753. 1514.  2.89e+ 0     1    0.0893   
+## 3 dec_size         4  -760. 1529.  1.75e+ 1     1    0.0000289
+## 4 jan_size         5  -702. 1415. NA           NA   NA        
+## 5 jan_size         4  -704. 1415.  2.32e+ 0     1    0.128    
+## 6 jan_size         4  -709. 1426.  1.35e+ 1     1    0.000240 
+## 7 feb_size         5  -685. 1381. NA           NA   NA        
+## 8 feb_size         4  -685. 1379. -6.75e-11     1    1        
+## 9 feb_size         4  -693. 1393.  1.44e+ 1     1    0.000147</code></pre>
+<pre class="r"><code>#summary for all models one survey month 
 
-#figure out how to get the below output:
-#ranova(lmeheight)
+tidy_models_GTONE &lt;- model_by_month_GTONE %&gt;% #get tidy summary of each model 
+  mutate(coef_1 = map(height_model_1, tidy),
+            coef_2 = map(height_model_2, tidy),
+            coef_3 = map(leaf_model_1, tidy),
+            coef_4 = map(leaf_model_2, tidy)) %&gt;% 
+  select(survey_month, coef_1:coef_4)
+tidy_models_GTONE</code></pre>
+<pre><code>## # A tibble: 3 × 5
+##   survey_month coef_1           coef_2           coef_3           coef_4  
+##   &lt;fct&gt;        &lt;list&gt;           &lt;list&gt;           &lt;list&gt;           &lt;list&gt;  
+## 1 dec_size     &lt;tibble [4 × 8]&gt; &lt;tibble [5 × 8]&gt; &lt;tibble [4 × 8]&gt; &lt;tibble&gt;
+## 2 jan_size     &lt;tibble [4 × 8]&gt; &lt;tibble [5 × 8]&gt; &lt;tibble [4 × 8]&gt; &lt;tibble&gt;
+## 3 feb_size     &lt;tibble [4 × 8]&gt; &lt;tibble [5 × 8]&gt; &lt;tibble [4 × 8]&gt; &lt;tibble&gt;</code></pre>
+<pre class="r"><code>tidy_models_GTONE_dec &lt;- tidy_models_GTONE %&gt;% filter(survey_month == &quot;dec_size&quot;)
+tidy_models_GTONE_jan &lt;- tidy_models_GTONE %&gt;% filter(survey_month == &quot;jan_size&quot;)
+tidy_models_GTONE_feb &lt;- tidy_models_GTONE %&gt;% filter(survey_month == &quot;feb_size&quot;)
+
+#convert to long 
+models_long_GTONEdec &lt;- reshape(tidy_models_GTONE_dec, direction = &quot;long&quot;, sep = &quot;_&quot;,
+                           idvar = &quot;survey_month&quot;, 
+                            varying = c(&quot;coef_1&quot;, &quot;coef_2&quot;, &quot;coef_3&quot;, &quot;coef_4&quot;)) %&gt;% 
+                unnest(coef) %&gt;% 
+  rename(&quot;model&quot;=&quot;time&quot;) %&gt;% 
+  mutate(model = if_else(model==1, &quot;height_model_1&quot;, 
+                         if_else(model==2, &quot;height_model_2&quot;,
+                                 if_else(model==3, &quot;leaf_model_1&quot;,
+                                         &quot;leaf_model_2&quot;))))
+models_long_GTONEdec</code></pre>
+<pre><code>## # A tibble: 18 × 10
+##    survey_month model      effect group term  estimate std.error statistic    df
+##    &lt;fct&gt;        &lt;chr&gt;      &lt;chr&gt;  &lt;chr&gt; &lt;chr&gt;    &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt; &lt;dbl&gt;
+##  1 dec_size     height_mo… fixed  &lt;NA&gt;  (Int…  1.44e+0   6.95e-2     20.8   21.8
+##  2 dec_size     height_mo… ran_p… mf:p… sd__…  1.24e-1  NA           NA     NA  
+##  3 dec_size     height_mo… ran_p… pare… sd__…  3.17e-1  NA           NA     NA  
+##  4 dec_size     height_mo… ran_p… Resi… sd__…  3.00e-1  NA           NA     NA  
+##  5 dec_size     height_mo… fixed  &lt;NA&gt;  (Int…  1.83e+0   1.14e-1     16.0   17.6
+##  6 dec_size     height_mo… fixed  &lt;NA&gt;  elev… -2.33e-4   6.18e-5     -3.78  18.3
+##  7 dec_size     height_mo… ran_p… mf:p… sd__…  1.25e-1  NA           NA     NA  
+##  8 dec_size     height_mo… ran_p… pare… sd__…  2.37e-1  NA           NA     NA  
+##  9 dec_size     height_mo… ran_p… Resi… sd__…  3.00e-1  NA           NA     NA  
+## 10 dec_size     leaf_mode… fixed  &lt;NA&gt;  (Int…  1.90e+0   9.72e-2     19.6   20.9
+## 11 dec_size     leaf_mode… ran_p… mf:p… sd__…  1.26e-1  NA           NA     NA  
+## 12 dec_size     leaf_mode… ran_p… pare… sd__…  4.30e-1  NA           NA     NA  
+## 13 dec_size     leaf_mode… ran_p… Resi… sd__…  6.33e-1  NA           NA     NA  
+## 14 dec_size     leaf_mode… fixed  &lt;NA&gt;  (Int…  2.45e+0   1.42e-1     17.2   12.5
+## 15 dec_size     leaf_mode… fixed  &lt;NA&gt;  elev… -3.35e-4   7.85e-5     -4.27  14.0
+## 16 dec_size     leaf_mode… ran_p… mf:p… sd__…  1.28e-1  NA           NA     NA  
+## 17 dec_size     leaf_mode… ran_p… pare… sd__…  2.81e-1  NA           NA     NA  
+## 18 dec_size     leaf_mode… ran_p… Resi… sd__…  6.35e-1  NA           NA     NA  
+## # ℹ 1 more variable: p.value &lt;dbl&gt;</code></pre>
+<pre class="r"><code>write_csv(models_long_GTONEdec, &quot;../output/UCD_Traits/12132022_Size_Models_GTONE.csv&quot;)
+
+models_long_GTONEjan &lt;- reshape(tidy_models_GTONE_jan, direction = &quot;long&quot;, sep = &quot;_&quot;,
+                           idvar = &quot;survey_month&quot;, 
+                            varying = c(&quot;coef_1&quot;, &quot;coef_2&quot;, &quot;coef_3&quot;, &quot;coef_4&quot;)) %&gt;% 
+                unnest(coef) %&gt;% 
+  rename(&quot;model&quot;=&quot;time&quot;) %&gt;% 
+  mutate(model = if_else(model==1, &quot;height_model_1&quot;, 
+                         if_else(model==2, &quot;height_model_2&quot;,
+                                 if_else(model==3, &quot;leaf_model_1&quot;,
+                                         &quot;leaf_model_2&quot;))))
+models_long_GTONEjan</code></pre>
+<pre><code>## # A tibble: 18 × 10
+##    survey_month model      effect group term  estimate std.error statistic    df
+##    &lt;fct&gt;        &lt;chr&gt;      &lt;chr&gt;  &lt;chr&gt; &lt;chr&gt;    &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt; &lt;dbl&gt;
+##  1 jan_size     height_mo… fixed  &lt;NA&gt;  (Int…  1.57e+0   8.72e-2     18.0   20.2
+##  2 jan_size     height_mo… ran_p… mf:p… sd__…  1.29e-1  NA           NA     NA  
+##  3 jan_size     height_mo… ran_p… pare… sd__…  3.86e-1  NA           NA     NA  
+##  4 jan_size     height_mo… ran_p… Resi… sd__…  3.24e-1  NA           NA     NA  
+##  5 jan_size     height_mo… fixed  &lt;NA&gt;  (Int…  2.14e+0   1.18e-1     18.1   16.6
+##  6 jan_size     height_mo… fixed  &lt;NA&gt;  elev… -3.49e-4   6.48e-5     -5.38  17.9
+##  7 jan_size     height_mo… ran_p… mf:p… sd__…  1.29e-1  NA           NA     NA  
+##  8 jan_size     height_mo… ran_p… pare… sd__…  2.36e-1  NA           NA     NA  
+##  9 jan_size     height_mo… ran_p… Resi… sd__…  3.24e-1  NA           NA     NA  
+## 10 jan_size     leaf_mode… fixed  &lt;NA&gt;  (Int…  2.29e+0   1.16e-1     19.9   19.9
+## 11 jan_size     leaf_mode… ran_p… mf:p… sd__…  1.47e-1  NA           NA     NA  
+## 12 jan_size     leaf_mode… ran_p… pare… sd__…  4.91e-1  NA           NA     NA  
+## 13 jan_size     leaf_mode… ran_p… Resi… sd__…  7.27e-1  NA           NA     NA  
+## 14 jan_size     leaf_mode… fixed  &lt;NA&gt;  (Int…  3.09e+0   1.30e-1     23.8   15.1
+## 15 jan_size     leaf_mode… fixed  &lt;NA&gt;  elev… -4.95e-4   7.44e-5     -6.65  18.6
+## 16 jan_size     leaf_mode… ran_p… mf:p… sd__…  1.45e-1  NA           NA     NA  
+## 17 jan_size     leaf_mode… ran_p… pare… sd__…  2.31e-1  NA           NA     NA  
+## 18 jan_size     leaf_mode… ran_p… Resi… sd__…  7.26e-1  NA           NA     NA  
+## # ℹ 1 more variable: p.value &lt;dbl&gt;</code></pre>
+<pre class="r"><code>write_csv(models_long_GTONEdec, &quot;../output/UCD_Traits/01272023_Size_Models_GTONE.csv&quot;)
+
+models_long_GTONEfeb &lt;-  reshape(tidy_models_GTONE_feb, direction = &quot;long&quot;, sep = &quot;_&quot;,
+                           idvar = &quot;survey_month&quot;, 
+                            varying = c(&quot;coef_1&quot;, &quot;coef_2&quot;, &quot;coef_3&quot;, &quot;coef_4&quot;)) %&gt;% 
+                unnest(coef) %&gt;% 
+  rename(&quot;model&quot;=&quot;time&quot;) %&gt;% 
+  mutate(model = if_else(model==1, &quot;height_model_1&quot;, 
+                         if_else(model==2, &quot;height_model_2&quot;,
+                                 if_else(model==3, &quot;leaf_model_1&quot;,
+                                         &quot;leaf_model_2&quot;))))
+models_long_GTONEfeb</code></pre>
+<pre><code>## # A tibble: 18 × 10
+##    survey_month model      effect group term  estimate std.error statistic    df
+##    &lt;fct&gt;        &lt;chr&gt;      &lt;chr&gt;  &lt;chr&gt; &lt;chr&gt;    &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt; &lt;dbl&gt;
+##  1 feb_size     height_mo… fixed  &lt;NA&gt;  (Int…  1.59e+0   1.09e-1     14.6   18.6
+##  2 feb_size     height_mo… ran_p… mf:p… sd__…  1.55e-1  NA           NA     NA  
+##  3 feb_size     height_mo… ran_p… pare… sd__…  4.52e-1  NA           NA     NA  
+##  4 feb_size     height_mo… ran_p… Resi… sd__…  3.56e-1  NA           NA     NA  
+##  5 feb_size     height_mo… fixed  &lt;NA&gt;  (Int…  2.19e+0   1.46e-1     15.0   13.7
+##  6 feb_size     height_mo… fixed  &lt;NA&gt;  elev… -3.88e-4   8.36e-5     -4.63  15.7
+##  7 feb_size     height_mo… ran_p… mf:p… sd__…  1.55e-1  NA           NA     NA  
+##  8 feb_size     height_mo… ran_p… pare… sd__…  2.88e-1  NA           NA     NA  
+##  9 feb_size     height_mo… ran_p… Resi… sd__…  3.57e-1  NA           NA     NA  
+## 10 feb_size     leaf_mode… fixed  &lt;NA&gt;  (Int…  2.68e+0   1.86e-1     14.4   19.5
+## 11 feb_size     leaf_mode… ran_p… mf:p… sd__…  0        NA           NA     NA  
+## 12 feb_size     leaf_mode… ran_p… pare… sd__…  7.12e-1  NA           NA     NA  
+## 13 feb_size     leaf_mode… ran_p… Resi… sd__…  1.26e+0  NA           NA     NA  
+## 14 feb_size     leaf_mode… fixed  &lt;NA&gt;  (Int…  3.77e+0   2.19e-1     17.3   13.8
+## 15 feb_size     leaf_mode… fixed  &lt;NA&gt;  elev… -7.41e-4   1.35e-4     -5.48  18.8
+## 16 feb_size     leaf_mode… ran_p… mf:p… sd__…  0        NA           NA     NA  
+## 17 feb_size     leaf_mode… ran_p… pare… sd__…  3.73e-1  NA           NA     NA  
+## 18 feb_size     leaf_mode… ran_p… Resi… sd__…  1.26e+0  NA           NA     NA  
+## # ℹ 1 more variable: p.value &lt;dbl&gt;</code></pre>
+<pre class="r"><code>write_csv(models_long_GTONEdec, &quot;../output/UCD_Traits/02172023_Size_Models_GTONE.csv&quot;)
+
+#figure out how to get the below output?
 #VarCorr(lmeheight) %&gt;% 
  # as.data.frame() %&gt;% 
   #mutate(var.pct = vcov/sum(vcov)*100)</code></pre>
+</div>
+<div id="with-a-sample-size-of-greater-than-2-per-pop" class="section level3">
+<h3>With a sample size of greater than 2 per pop</h3>
+<pre class="r"><code>#prep data for model
+single_time_split_by_month_GTTWO &lt;- single_time_all_GTTWO %&gt;% 
+  select(survey_month, elev_m, parent.pop, mf, sheight_cm, longest_leaf_cm) %&gt;% 
+  group_nest(survey_month)
+single_time_split_by_month_GTTWO #the data column contains the parameters in the model 
+
+model_by_month_GTTWO &lt;- 
+  single_time_split_by_month_GTTWO %&gt;% 
+  mutate(height_model_1 = map(data, ~ lmer(sheight_cm ~ (1|parent.pop/mf), data = .x)),
+         height_model_2 = map(data, ~ lmer(sheight_cm ~ elev_m + (1|parent.pop/mf), data = .x)),
+         leaf_model_1 = map(data, ~ lmer(longest_leaf_cm ~ (1|parent.pop/mf), data = .x)), 
+         leaf_model_2 = map(data, ~ lmer(longest_leaf_cm ~ elev_m + (1|parent.pop/mf), data = .x)),)
+model_by_month_GTTWO
+
+#summary output for one model across survey_months 
+model_by_month_GTTWO %&gt;% 
+  mutate(coef = map(height_model_1, tidy)) %&gt;% 
+  select(survey_month, coef) %&gt;% 
+  unnest(cols = c(coef))
+
+#Ranova, nested predictor first and then predictor that nest was in 
+model_by_month_GTTWO %&gt;% 
+  mutate(ranova = map(height_model_1, ranova)) %&gt;% 
+  select(survey_month, ranova) %&gt;% 
+  unnest(cols = c(ranova))
+
+model_by_month_GTTWO %&gt;% 
+  mutate(ranova = map(height_model_2, ranova)) %&gt;% 
+  select(survey_month, ranova) %&gt;% 
+  unnest(cols = c(ranova))
+
+model_by_month_GTTWO %&gt;% 
+  mutate(ranova = map(leaf_model_1, ranova)) %&gt;% 
+  select(survey_month, ranova) %&gt;% 
+  unnest(cols = c(ranova))
+
+model_by_month_GTTWO %&gt;% 
+  mutate(ranova = map(leaf_model_2, ranova)) %&gt;% 
+  select(survey_month, ranova) %&gt;% 
+  unnest(cols = c(ranova))
+
+#summary for all models one survey month 
+
+tidy_models_GTTWO &lt;- model_by_month_GTTWO %&gt;% #get tidy summary of each model 
+  mutate(coef_1 = map(height_model_1, tidy),
+            coef_2 = map(height_model_2, tidy),
+            coef_3 = map(leaf_model_1, tidy),
+            coef_4 = map(leaf_model_2, tidy)) %&gt;% 
+  select(survey_month, coef_1:coef_4)
+tidy_models_GTTWO
+
+tidy_models_GTTWO_dec &lt;- tidy_models_GTTWO %&gt;% filter(survey_month == &quot;dec_size&quot;)
+tidy_models_GTTWO_jan &lt;- tidy_models_GTTWO %&gt;% filter(survey_month == &quot;jan_size&quot;)
+tidy_models_GTTWO_feb &lt;- tidy_models_GTTWO %&gt;% filter(survey_month == &quot;feb_size&quot;)
+
+#convert to long 
+models_long_GTTWOdec &lt;- reshape(tidy_models_GTTWO_dec, direction = &quot;long&quot;, sep = &quot;_&quot;,
+                           idvar = &quot;survey_month&quot;, 
+                            varying = c(&quot;coef_1&quot;, &quot;coef_2&quot;, &quot;coef_3&quot;, &quot;coef_4&quot;)) %&gt;% 
+                unnest(coef) %&gt;% 
+  rename(&quot;model&quot;=&quot;time&quot;) %&gt;% 
+  mutate(model = if_else(model==1, &quot;height_model_1&quot;, 
+                         if_else(model==2, &quot;height_model_2&quot;,
+                                 if_else(model==3, &quot;leaf_model_1&quot;,
+                                         &quot;leaf_model_2&quot;))))
+models_long_GTTWOdec
+write_csv(models_long_GTTWOdec, &quot;../output/UCD_Traits/12132022_Size_Models_GTTWO.csv&quot;)
+
+models_long_GTTWOjan &lt;- reshape(tidy_models_GTTWO_jan, direction = &quot;long&quot;, sep = &quot;_&quot;,
+                           idvar = &quot;survey_month&quot;, 
+                            varying = c(&quot;coef_1&quot;, &quot;coef_2&quot;, &quot;coef_3&quot;, &quot;coef_4&quot;)) %&gt;% 
+                unnest(coef) %&gt;% 
+  rename(&quot;model&quot;=&quot;time&quot;) %&gt;% 
+  mutate(model = if_else(model==1, &quot;height_model_1&quot;, 
+                         if_else(model==2, &quot;height_model_2&quot;,
+                                 if_else(model==3, &quot;leaf_model_1&quot;,
+                                         &quot;leaf_model_2&quot;))))
+models_long_GTTWOjan
+write_csv(models_long_GTTWOdec, &quot;../output/UCD_Traits/01272023_Size_Models_GTTWO.csv&quot;)
+
+models_long_GTTWOfeb &lt;-  reshape(tidy_models_GTTWO_feb, direction = &quot;long&quot;, sep = &quot;_&quot;,
+                           idvar = &quot;survey_month&quot;, 
+                            varying = c(&quot;coef_1&quot;, &quot;coef_2&quot;, &quot;coef_3&quot;, &quot;coef_4&quot;)) %&gt;% 
+                unnest(coef) %&gt;% 
+  rename(&quot;model&quot;=&quot;time&quot;) %&gt;% 
+  mutate(model = if_else(model==1, &quot;height_model_1&quot;, 
+                         if_else(model==2, &quot;height_model_2&quot;,
+                                 if_else(model==3, &quot;leaf_model_1&quot;,
+                                         &quot;leaf_model_2&quot;))))
+models_long_GTTWOfeb
+write_csv(models_long_GTTWOdec, &quot;../output/UCD_Traits/02172023_Size_Models_GTTWO.csv&quot;)</code></pre>
+</div>
+<div id="emmeans" class="section level3">
+<h3>emmeans</h3>
+<p>Quick start guide: <a href="https://cran.r-project.org/web/packages/emmeans/vignettes/AQuickStart.html" class="uri">https://cran.r-project.org/web/packages/emmeans/vignettes/AQuickStart.html</a>
+Full guide: <a href="https://cran.r-project.org/web/packages/emmeans/emmeans.pdf" class="uri">https://cran.r-project.org/web/packages/emmeans/emmeans.pdf</a>
+I don’t think this works for random effects</p>
+<pre class="r"><code>#If one-factor model fits well and the factor is named treatment, do
+#EMM &lt;- emmeans(model, &quot;treatment&quot;)   # or emmeans(model, ~ treatment)
+#EMM    # display the means
+
+### pairwise comparisons
+#contrast(EMM, &quot;pairwise&quot;)    # or pairs(EMM)
+
+#model_by_month %&gt;%  #how to use emmeans with nesting structure?
+ # mutate(EMM = map(leaf_model_2, emmeans)) %&gt;% 
+#  select(survey_month, EMM) %&gt;% 
+#  unnest(cols = c(EMM))</code></pre>
+</div>
 </div>
 
 

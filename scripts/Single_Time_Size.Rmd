@@ -9,17 +9,20 @@ output:
 
 To Do:
 
--   Figure out how to get Ranova output with map syntax 
+-   emmeans package for post-hoc pairwise comparisons
+    -   Not sure how to use emmeans for random effects. Tried it on the diam model in annual census analysis and got this warning: "Warning: Model has 61 prior weights, but we recovered 2 rows of data.
+So prior weights were ignored.Error in emmeans(lmediam2, "parent.pop") : 
+  No variable named parent.pop in the reference grid"
+  
+-   Compare results to dataset with sample size greater than 2
 
--   ASK JULIN AND JENNY HOW WE FEEL ABOUT A SAMPLE SIZE OF 2
+-   Re: Sample size of 2: Try analysis with and without
 
 -   Calculate regression b/t height and longest leaf?
 
 -   Analyze Pre-transplant size
 
     -   How predictive is this of survival in the field?
-
--   emmeans package for post-hoc pairwise comparisons
 
 -   Analyze growth (remove rep# 100)
 
@@ -37,17 +40,21 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r}
 library(tidyverse)
+library(tidymodels)
+tidymodels_prefer()
+library(broom.mixed) #tidy method for lmerTest
 library(lmerTest) #for mixed effect models
+conflicted::conflicts_prefer(lmerTest::lmer)
 library(emmeans) #for post-hoc pairwise comparisons 
 library(naniar) #replaces values with NA
 library(corrplot) #plotting correlations 
 library(rstatix) #performing cor_test
-sem <- function(x, na.rm=FALSE) {
+sem <- function(x, na.rm=FALSE) {           #for caclulating standard error
   sd(x,na.rm=na.rm)/sqrt(length(na.omit(x)))
-} #standard error function 
+} 
 
 elev_three_palette <- c("#0043F0", "#C9727F", "#F5A540") #colors from Gremer et al 2019
-elev_order <- c("High", "Mid", "Low")
+elev_order <- c("High", "Mid", "Low") #for proper arrangement in figures 
 ```
 
 ## Load the pop and location data
@@ -78,23 +85,24 @@ head(pop_elev)
 ```{r}
 files <- dir("../input/UCD_Data/CorrectedCSVs/",
              pattern="Size_survey_transplants_2022.*csv|Size_survey_transplants.*0127.*csv|Size_survey_transplants.*0217.*csv",
-             full.names = TRUE)
+             full.names = TRUE)   #get list of desired files 
 files
-single_time_all <- tibble(path=files, filename=basename(path)) %>%
-  mutate(survey_date=str_extract(filename, "2[0-9]*"),
-         survey_date=lubridate::ymd(survey_date),
-         survey_month=c("dec_size", "jan_size", "feb_size"))
+
+single_time_all <- tibble(path=files, filename=basename(path)) %>%  #make a tibble with the filenames and paths 
+  mutate(survey_date=str_extract(filename, "2[0-9]*"),              #extract survey date from filenames
+         survey_date=lubridate::ymd(survey_date),                   #format the date column 
+         survey_month=c("dec_size", "jan_size", "feb_size"))        #make a column for month
 single_time_all
 
-single_time_all <- single_time_all %>% 
+single_time_all <- single_time_all %>%                              #read in the data to "sheets" column
   mutate(sheets=map(path, 
                     read_csv,
-                    na = c("", "NA", "-", "N/A"))) %>% 
+                    na = c("", "NA", "-", "N/A"))) %>%              #set NA strings 
   select(-path)
 single_time_all
 
-map(single_time_all$sheets, head, 10) #check to make sure the datasheets look good 
-single_time_all$sheets[[3]] %>%  rowwise() %>% filter(!is.na(mf)) %>%  filter(is.na(as.numeric(mf))) #. for a buffer --> safe to convert to double
+map(single_time_all$sheets, head, 10)          #check to make sure the datasheets look good 
+single_time_all$sheets[[3]] %>%  rowwise() %>% filter(!is.na(mf)) %>%  filter(is.na(as.numeric(mf)))  #"." for a buffer --> safe to convert to double
 single_time_all$sheets[[3]] <- single_time_all$sheets[[3]] %>% mutate(mf=as.double(mf)) #fix mf in third sheet
 
 map(single_time_all$sheets, colnames) %>% #check the column names 
@@ -108,7 +116,7 @@ single_time_all2 <- single_time_all %>% unnest(sheets) %>%
   rename(height_cm = `height (cm)`, longest_leaf_cm = `longest leaf (cm)`, parent.pop=pop) %>% 
   filter(parent.pop != "buffer") %>% 
   mutate(parent.pop= str_replace(parent.pop, ".*VTR.*", "LVTR1")) %>% 
-  filter(rep != 100)
+  filter(rep != 100) #get rid of individuals that germinated in the field 
 head(single_time_all2)
 unique(single_time_all2$parent.pop)
 
@@ -126,7 +134,8 @@ sample_sizes <- single_time_all2_elev %>%
   filter(!is.na(height_cm)) %>% 
   group_by(survey_month, parent.pop) %>% 
   summarise(samplesize=n()) %>% 
-  arrange(survey_month, samplesize)
+  arrange(samplesize)
+  #arrange(survey_month, samplesize)
 sample_sizes
 
 #Dec WV has only 2 individuals 
@@ -137,6 +146,8 @@ single_time_all_sample_sizes <- left_join(single_time_all2_elev, sample_sizes)
 single_time_all_sample_sizes %>% filter(samplesize == 1)
 
 single_time_all_GTONE <- single_time_all_sample_sizes %>% filter(samplesize > 1) #only pops with greater than one individual alive at a given survey 
+
+single_time_all_GTTWO <- single_time_all_sample_sizes %>% filter(samplesize > 2) #only pops with greater than two individuals alive at a given survey 
 ```
 
 ## Summary plots
@@ -222,11 +233,13 @@ single_time_all_GTONE_transf %>% group_by(survey_month) %>%
 ```{r}
 single_time_all_GTONE_transf_summary <- single_time_all_GTONE_transf %>% 
   group_by(survey_month, parent.pop, elev_m) %>% 
-  summarise(mean_height_cm = mean(height_cm,na.rm=(TRUE)), 
-            sem_height_cm=sem(height_cm, na.rm=(TRUE)),
+  summarise(N_height = sum(!is.na(height_cm)), mean_height_cm = mean(height_cm,na.rm=(TRUE)), 
+            sem_height_cm=sem(height_cm, na.rm=(TRUE)), N_length = sum(!is.na(longest_leaf_cm)),
             mean_longest_leaf_cm=mean(longest_leaf_cm, na.rm=(TRUE)), 
-            sem_longest_leaf_cm=sem(longest_leaf_cm, na.rm=TRUE))
+            sem_longest_leaf_cm=sem(longest_leaf_cm, na.rm=TRUE)) %>% 
+  arrange(survey_month, elev_m)
 single_time_all_GTONE_transf_summary
+write_csv(single_time_all_GTONE_transf_summary, file ="../output/UCD_Traits/single_time_size_summary.csv")
 ```
 
 ## Figures of averages 
@@ -267,32 +280,217 @@ ggsave("../output/UCD_Traits/Single_Time_Longest_Leaf.png", width = 14, height =
 ```
 
 ## Mixed Effects Models
+### With a sample size of greater than 1 per pop
 ```{r}
 #prep data for model
-single_time_split_by_month <- single_time_all_GTONE_transf %>% 
+single_time_split_by_month_GTONE <- single_time_all_GTONE_transf %>% 
   select(survey_month, elev_m, parent.pop, mf, sheight_cm, longest_leaf_cm) %>% 
   group_nest(survey_month)
-single_time_split_by_month
+single_time_split_by_month_GTONE #the data column contains the parameters in the model 
 
-model_by_month <- 
-  single_time_split_by_month %>% 
+model_by_month_GTONE <- 
+  single_time_split_by_month_GTONE %>% 
   mutate(height_model_1 = map(data, ~ lmer(sheight_cm ~ (1|parent.pop/mf), data = .x)),
          height_model_2 = map(data, ~ lmer(sheight_cm ~ elev_m + (1|parent.pop/mf), data = .x)),
          leaf_model_1 = map(data, ~ lmer(longest_leaf_cm ~ (1|parent.pop/mf), data = .x)), 
          leaf_model_2 = map(data, ~ lmer(longest_leaf_cm ~ elev_m + (1|parent.pop/mf), data = .x)),)
-model_by_month
+model_by_month_GTONE
 
-library(broom.mixed)
-model_by_month %>% 
+#summary output for one model across survey_months 
+model_by_month_GTONE %>% 
   mutate(coef = map(height_model_1, tidy)) %>% 
   select(survey_month, coef) %>% 
   unnest(cols = c(coef))
 
-#get Julin's code for comparing models 
+#Ranova, nested predictor first and then predictor that nest was in 
+model_by_month_GTONE %>% 
+  mutate(ranova = map(height_model_1, ranova)) %>% 
+  select(survey_month, ranova) %>% 
+  unnest(cols = c(ranova))
 
-#figure out how to get the below output:
-#ranova(lmeheight)
+model_by_month_GTONE %>% 
+  mutate(ranova = map(height_model_2, ranova)) %>% 
+  select(survey_month, ranova) %>% 
+  unnest(cols = c(ranova))
+
+model_by_month_GTONE %>% 
+  mutate(ranova = map(leaf_model_1, ranova)) %>% 
+  select(survey_month, ranova) %>% 
+  unnest(cols = c(ranova))
+
+model_by_month_GTONE %>% 
+  mutate(ranova = map(leaf_model_2, ranova)) %>% 
+  select(survey_month, ranova) %>% 
+  unnest(cols = c(ranova))
+
+#summary for all models one survey month 
+
+tidy_models_GTONE <- model_by_month_GTONE %>% #get tidy summary of each model 
+  mutate(coef_1 = map(height_model_1, tidy),
+            coef_2 = map(height_model_2, tidy),
+            coef_3 = map(leaf_model_1, tidy),
+            coef_4 = map(leaf_model_2, tidy)) %>% 
+  select(survey_month, coef_1:coef_4)
+tidy_models_GTONE
+
+tidy_models_GTONE_dec <- tidy_models_GTONE %>% filter(survey_month == "dec_size")
+tidy_models_GTONE_jan <- tidy_models_GTONE %>% filter(survey_month == "jan_size")
+tidy_models_GTONE_feb <- tidy_models_GTONE %>% filter(survey_month == "feb_size")
+
+#convert to long 
+models_long_GTONEdec <- reshape(tidy_models_GTONE_dec, direction = "long", sep = "_",
+                           idvar = "survey_month", 
+                            varying = c("coef_1", "coef_2", "coef_3", "coef_4")) %>% 
+                unnest(coef) %>% 
+  rename("model"="time") %>% 
+  mutate(model = if_else(model==1, "height_model_1", 
+                         if_else(model==2, "height_model_2",
+                                 if_else(model==3, "leaf_model_1",
+                                         "leaf_model_2"))))
+models_long_GTONEdec
+write_csv(models_long_GTONEdec, "../output/UCD_Traits/12132022_Size_Models_GTONE.csv")
+
+models_long_GTONEjan <- reshape(tidy_models_GTONE_jan, direction = "long", sep = "_",
+                           idvar = "survey_month", 
+                            varying = c("coef_1", "coef_2", "coef_3", "coef_4")) %>% 
+                unnest(coef) %>% 
+  rename("model"="time") %>% 
+  mutate(model = if_else(model==1, "height_model_1", 
+                         if_else(model==2, "height_model_2",
+                                 if_else(model==3, "leaf_model_1",
+                                         "leaf_model_2"))))
+models_long_GTONEjan
+write_csv(models_long_GTONEdec, "../output/UCD_Traits/01272023_Size_Models_GTONE.csv")
+
+models_long_GTONEfeb <-  reshape(tidy_models_GTONE_feb, direction = "long", sep = "_",
+                           idvar = "survey_month", 
+                            varying = c("coef_1", "coef_2", "coef_3", "coef_4")) %>% 
+                unnest(coef) %>% 
+  rename("model"="time") %>% 
+  mutate(model = if_else(model==1, "height_model_1", 
+                         if_else(model==2, "height_model_2",
+                                 if_else(model==3, "leaf_model_1",
+                                         "leaf_model_2"))))
+models_long_GTONEfeb
+write_csv(models_long_GTONEdec, "../output/UCD_Traits/02172023_Size_Models_GTONE.csv")
+
+#figure out how to get the below output?
 #VarCorr(lmeheight) %>% 
  # as.data.frame() %>% 
   #mutate(var.pct = vcov/sum(vcov)*100)
 ```
+
+### With a sample size of greater than 2 per pop
+```{r, eval=FALSE}
+#prep data for model
+single_time_split_by_month_GTTWO <- single_time_all_GTTWO %>% 
+  select(survey_month, elev_m, parent.pop, mf, sheight_cm, longest_leaf_cm) %>% 
+  group_nest(survey_month)
+single_time_split_by_month_GTTWO #the data column contains the parameters in the model 
+
+model_by_month_GTTWO <- 
+  single_time_split_by_month_GTTWO %>% 
+  mutate(height_model_1 = map(data, ~ lmer(sheight_cm ~ (1|parent.pop/mf), data = .x)),
+         height_model_2 = map(data, ~ lmer(sheight_cm ~ elev_m + (1|parent.pop/mf), data = .x)),
+         leaf_model_1 = map(data, ~ lmer(longest_leaf_cm ~ (1|parent.pop/mf), data = .x)), 
+         leaf_model_2 = map(data, ~ lmer(longest_leaf_cm ~ elev_m + (1|parent.pop/mf), data = .x)),)
+model_by_month_GTTWO
+
+#summary output for one model across survey_months 
+model_by_month_GTTWO %>% 
+  mutate(coef = map(height_model_1, tidy)) %>% 
+  select(survey_month, coef) %>% 
+  unnest(cols = c(coef))
+
+#Ranova, nested predictor first and then predictor that nest was in 
+model_by_month_GTTWO %>% 
+  mutate(ranova = map(height_model_1, ranova)) %>% 
+  select(survey_month, ranova) %>% 
+  unnest(cols = c(ranova))
+
+model_by_month_GTTWO %>% 
+  mutate(ranova = map(height_model_2, ranova)) %>% 
+  select(survey_month, ranova) %>% 
+  unnest(cols = c(ranova))
+
+model_by_month_GTTWO %>% 
+  mutate(ranova = map(leaf_model_1, ranova)) %>% 
+  select(survey_month, ranova) %>% 
+  unnest(cols = c(ranova))
+
+model_by_month_GTTWO %>% 
+  mutate(ranova = map(leaf_model_2, ranova)) %>% 
+  select(survey_month, ranova) %>% 
+  unnest(cols = c(ranova))
+
+#summary for all models one survey month 
+
+tidy_models_GTTWO <- model_by_month_GTTWO %>% #get tidy summary of each model 
+  mutate(coef_1 = map(height_model_1, tidy),
+            coef_2 = map(height_model_2, tidy),
+            coef_3 = map(leaf_model_1, tidy),
+            coef_4 = map(leaf_model_2, tidy)) %>% 
+  select(survey_month, coef_1:coef_4)
+tidy_models_GTTWO
+
+tidy_models_GTTWO_dec <- tidy_models_GTTWO %>% filter(survey_month == "dec_size")
+tidy_models_GTTWO_jan <- tidy_models_GTTWO %>% filter(survey_month == "jan_size")
+tidy_models_GTTWO_feb <- tidy_models_GTTWO %>% filter(survey_month == "feb_size")
+
+#convert to long 
+models_long_GTTWOdec <- reshape(tidy_models_GTTWO_dec, direction = "long", sep = "_",
+                           idvar = "survey_month", 
+                            varying = c("coef_1", "coef_2", "coef_3", "coef_4")) %>% 
+                unnest(coef) %>% 
+  rename("model"="time") %>% 
+  mutate(model = if_else(model==1, "height_model_1", 
+                         if_else(model==2, "height_model_2",
+                                 if_else(model==3, "leaf_model_1",
+                                         "leaf_model_2"))))
+models_long_GTTWOdec
+write_csv(models_long_GTTWOdec, "../output/UCD_Traits/12132022_Size_Models_GTTWO.csv")
+
+models_long_GTTWOjan <- reshape(tidy_models_GTTWO_jan, direction = "long", sep = "_",
+                           idvar = "survey_month", 
+                            varying = c("coef_1", "coef_2", "coef_3", "coef_4")) %>% 
+                unnest(coef) %>% 
+  rename("model"="time") %>% 
+  mutate(model = if_else(model==1, "height_model_1", 
+                         if_else(model==2, "height_model_2",
+                                 if_else(model==3, "leaf_model_1",
+                                         "leaf_model_2"))))
+models_long_GTTWOjan
+write_csv(models_long_GTTWOdec, "../output/UCD_Traits/01272023_Size_Models_GTTWO.csv")
+
+models_long_GTTWOfeb <-  reshape(tidy_models_GTTWO_feb, direction = "long", sep = "_",
+                           idvar = "survey_month", 
+                            varying = c("coef_1", "coef_2", "coef_3", "coef_4")) %>% 
+                unnest(coef) %>% 
+  rename("model"="time") %>% 
+  mutate(model = if_else(model==1, "height_model_1", 
+                         if_else(model==2, "height_model_2",
+                                 if_else(model==3, "leaf_model_1",
+                                         "leaf_model_2"))))
+models_long_GTTWOfeb
+write_csv(models_long_GTTWOdec, "../output/UCD_Traits/02172023_Size_Models_GTTWO.csv")
+```
+
+
+### emmeans
+Quick start guide: https://cran.r-project.org/web/packages/emmeans/vignettes/AQuickStart.html
+Full guide: https://cran.r-project.org/web/packages/emmeans/emmeans.pdf
+I don't think this works for random effects 
+```{r}
+#If one-factor model fits well and the factor is named treatment, do
+#EMM <- emmeans(model, "treatment")   # or emmeans(model, ~ treatment)
+#EMM    # display the means
+
+### pairwise comparisons
+#contrast(EMM, "pairwise")    # or pairs(EMM)
+
+#model_by_month %>%  #how to use emmeans with nesting structure?
+ # mutate(EMM = map(leaf_model_2, emmeans)) %>% 
+#  select(survey_month, EMM) %>% 
+#  unnest(cols = c(EMM))
+```
+
