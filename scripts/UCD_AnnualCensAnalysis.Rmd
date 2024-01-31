@@ -3,11 +3,16 @@ title: "Annual Census Analysis"
 author: "Brandie Quarles"
 date: "2023-09-14"
 output: 
-  html_document
+  html_document: 
+    keep_md: yes
 editor_options: 
   markdown: 
     wrap: 72
 ---
+
+To Do:
+
+-   Add climate to the models!
 
 Original Design - 23 pops, 7 mfs, 13 reps
 
@@ -29,9 +34,13 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r}
 library(tidyverse)
+library(tidymodels)
+tidymodels_prefer()
+library(lmerTest) #for mixed effect models
+conflicted::conflicts_prefer(lmerTest::lmer)
+library(broom.mixed) #tidy method for lmerTest and glmer
 library(corrplot) #plotting correlations 
 library(rstatix) #performing cor_test
-library(lmerTest)
 library(naniar) #replaces values with NA
 sem <- function(x, na.rm=FALSE) {
   sd(x,na.rm=na.rm)/sqrt(length(na.omit(x)))
@@ -72,7 +81,7 @@ head(pop_elev)
 ## Load the annual census data
 
 ```{r}
-#Note: BQC edited the csvs prior to importing to R b/c the first row of the transplants sheets not being the heading row (veg, repo info and not block, mf etc...) 
+#Note: BQC edited the csvs prior to importing to R b/c the first row of the transplants sheets was not the heading row (veg, repo info and not block, mf etc...) 
 anncensustrans.0522 <- read_csv("../input/UCD_Data/CorrectedCSVs/Annual_Census_Transplants_All_May_2023_corrected.csv")
 names(anncensustrans.0522) <- gsub(" ", "", colnames(anncensustrans.0522)) 
 anncensustrans.0522 %>% rowwise() %>% filter(!is.na(mf)) %>% filter(is.na(as.numeric(mf))) #mf = X when pop = buffer
@@ -88,7 +97,7 @@ anncensustrans.0626_alive <- anncensustrans.0626 %>% filter(pheno != "X")
 summary(anncensustrans.0626_alive) #56 plants alive 
 
 
-#prep for merge 
+#quick summary info
 levels(as.factor(anncensustrans.0522_alive$pop)) #out of 23 pops, only 10 alive still (BH, CP2, DPR, IH, SC, SQ3, TM2, WL1, WL2, YO7)
 levels(as.factor(anncensustrans.0626_alive$pop)) #only 9 pops alive (no DPR)
 
@@ -99,8 +108,11 @@ levels(as.factor(anncensustrans.0626_alive$pop)) #only 9 pops alive (no DPR)
 #V = vegetative 
 xtabs(~pheno+pop, data = anncensustrans.0522_alive) 
 xtabs(~pheno+pop, data = anncensustrans.0626_alive) #vegetative decreases for BH & CP2 --> may have reproductive data for some new individuals 
+```
 
+## Prep for Merge
 
+```{r}
 anncensustrans_0522_alive_tomerge <- anncensustrans.0522_alive %>% select(block:col, parent.pop=pop, mf:rep, pheno.0522=pheno, diam.0522=diam_mm, height.0522=height_cm, total_branch.0522=total_branch, herb_dam.0522=herb_dam, wilt_status.0522=wilt_status, longest_leaf.0522=longest_leaf_cm, flowers.0522=flowers, fruits.0522=fruits, longest_fruit.0522=longest_fruit_cm, repro_branch.0522=repro_branch)
 names(anncensustrans_0522_alive_tomerge)
 
@@ -124,7 +136,10 @@ anncensustrans_all_alive_long <- reshape(anncensustrans_all_alive, direction = "
                                       varying =c("pheno.0522", "diam.0522", "height.0522", "total_branch.0522", "herb_dam.0522", "wilt_status.0522", "longest_leaf.0522", "flowers.0522", "fruits.0522", "longest_fruit.0522", "repro_branch.0522", "pheno.0626", "diam.0626", "height.0626", "total_branch.0626", "herb_dam.0626", "wilt_status.0626", "longest_leaf.0626", "flowers.0626", "fruits.0626", "longest_fruit.0626", "repro_branch.0626"))
 dim(anncensustrans_all_alive_long)
 
-anncensustrans_all_alive_max <- anncensustrans_all_alive_long %>% group_by(block, row, col, parent.pop, mf, rep) %>% summarise_if(is.double, max, na.rm=TRUE) %>% select(-time)
+anncensustrans_all_alive_max <- anncensustrans_all_alive_long %>% 
+  group_by(block, row, col, parent.pop, mf, rep) %>% 
+  summarise_if(is.double, max, na.rm=TRUE) %>% 
+  select(-time)
 head(anncensustrans_all_alive_max) #some cases where max of different variables comes from different dates 
 summary(anncensustrans_all_alive_max) #getting -Inf for longest_leaf and repro_branch b/c N/A at both times
 #anncensustrans_all_alive_max %>% filter(longest_leaf==-Inf)
@@ -135,9 +150,16 @@ summary(anncensustrans_all_alive_max) #getting -Inf for longest_leaf and repro_b
 anncensustrans_all_alive_max_elev <- left_join(anncensustrans_all_alive_max, pop_elev)
 names(anncensustrans_all_alive_max_elev)
 
-anncensustrans_all_alive_max_elev %>% group_by(parent.pop, mf) %>% filter(!is.na(diam)) %>% summarise(n=n()) #low replication at maternal family level 
+anncensustrans_all_alive_max_elev %>% group_by(parent.pop, mf) %>% 
+  filter(!is.na(diam)) %>% 
+  summarise(n=n()) #low replication at maternal family level 
 
-anncensustrans_all_alive_max_elev_noinf <- anncensustrans_all_alive_max_elev %>% mutate_if(is.double, list(~na_if(., -Inf))) %>% filter(parent.pop != "WL1") %>% filter(parent.pop != "SQ3") %>% mutate(longest_fruit = na_if(longest_fruit, 0)) #replace -INf with NAs and take out pops with only 1 individual alive and change 0 branches to NA
+anncensustrans_all_alive_max_elev_noinf <- anncensustrans_all_alive_max_elev %>% 
+  mutate_if(is.double, list(~na_if(., -Inf))) %>%  #replace -INf with NAs
+  filter(parent.pop != "WL1") %>%                  #take out pops with only 1 individual alive 
+  filter(parent.pop != "SQ3") %>% 
+  mutate(longest_fruit = na_if(longest_fruit, 0)) %>%  #change 0 branches to NA
+  filter(rep != 100) #get rid of individuals that germinated in the field 
 summary(anncensustrans_all_alive_max_elev_noinf)
 ```
 
@@ -153,36 +175,39 @@ summary(anncensustrans_all_alive_max_elev_noinf)
 -   repro_branch
 
 ```{r}
-anncensustrans_all_alive_max_elev_noinf %>% ggplot(aes(x=diam)) + geom_histogram()
-qqnorm(anncensustrans_all_alive_max_elev_noinf$diam)
-qqline(anncensustrans_all_alive_max_elev_noinf$diam) #close to normal 
+anncensustrans_all_alive_max_elev_noinf <- as_tibble(anncensustrans_all_alive_max_elev_noinf) #convert to tibble so that the map function can use it 
 
-anncensustrans_all_alive_max_elev_noinf %>% ggplot(aes(x=height)) + geom_histogram()
+#Histograms
+anncensustrans_all_alive_max_elev_noinf %>% 
+  select(diam, height, total_branch, longest_leaf, flowers, fruits, longest_fruit, repro_branch) %>% 
+  names() %>% 
+  map(~ggplot(anncensustrans_all_alive_max_elev_noinf, aes_string(x = .)) + 
+        geom_histogram())
 
-anncensustrans_all_alive_max_elev_noinf %>% ggplot(aes(x=total_branch)) + geom_histogram()
-qqnorm(anncensustrans_all_alive_max_elev_noinf$total_branch)
-qqline(anncensustrans_all_alive_max_elev_noinf$total_branch) #heavily right skewed 
+#qq plots 
+anncensustrans_all_alive_max_elev_noinf %>% 
+  select(diam, height, total_branch, longest_leaf, flowers, fruits, longest_fruit, repro_branch) %>% 
+  names() %>% 
+  map(~ggplot(anncensustrans_all_alive_max_elev_noinf, aes_string(sample = .)) + 
+       stat_qq() +
+        stat_qq_line())
+
+
+# diam close to normal 
+# height close to normal 
+# total_branch heavily right skewed 
+# longest_leaf close to normal 
+# flowers heavily right skewed (0 inflated)
+# fruits heavily right skewed (0 inflated)
+# longest_fruit roughly normal, but low replication --> no stats
+# repro_branch right skewed 
+
+#Transformations:
 #anncensustrans_all_alive_max_elev_noinf %>% mutate(stbr = sqrt(total_branch)) %>% ggplot(aes(x=stbr)) + geom_histogram() #log, 1og10, and sqrt transformation didn't work 
 
-anncensustrans_all_alive_max_elev_noinf %>% ggplot(aes(x=longest_leaf)) + geom_histogram()
-
-anncensustrans_all_alive_max_elev_noinf %>% ggplot(aes(x=flowers)) + geom_histogram()
-qqnorm(anncensustrans_all_alive_max_elev_noinf$flowers)
-qqline(anncensustrans_all_alive_max_elev_noinf$flowers) #heavily right skewed (0 inflated)
-
-anncensustrans_all_alive_max_elev_noinf %>% ggplot(aes(x=fruits)) + geom_histogram()
-qqnorm(anncensustrans_all_alive_max_elev_noinf$fruits)
-qqline(anncensustrans_all_alive_max_elev_noinf$fruits) #heavily right skewed (0 inflated)
-
-anncensustrans_all_alive_max_elev_noinf %>% ggplot(aes(x=longest_fruit)) + geom_histogram()
-qqnorm(anncensustrans_all_alive_max_elev_noinf$longest_fruit)
-qqline(anncensustrans_all_alive_max_elev_noinf$longest_fruit) #roughly normal, but low replication --> no stats 
-
-anncensustrans_all_alive_max_elev_noinf %>% ggplot(aes(x=repro_branch)) + geom_histogram()
-qqnorm(anncensustrans_all_alive_max_elev_noinf$repro_branch)
-qqline(anncensustrans_all_alive_max_elev_noinf$repro_branch) #right skewed 
 #anncensustrans_all_alive_max_elev_noinf %>% mutate(lrbr = log10(repro_branch)) %>% ggplot(aes(x=lrbr)) + geom_histogram() #log, 1og10, and sqrt transformation didn't work 
 
+#Box Plots 
 anncensustrans_all_alive_max_elev_noinf %>% ggplot(aes(x=parent.pop, y=diam)) + geom_boxplot()
 anncensustrans_all_alive_max_elev_noinf %>% ggplot(aes(x=parent.pop, y=height)) + geom_boxplot()
 anncensustrans_all_alive_max_elev_noinf %>% ggplot(aes(x=parent.pop, y=total_branch)) + geom_boxplot()
@@ -194,9 +219,63 @@ anncensustrans_all_alive_max_elev_noinf %>% ggplot(aes(x=parent.pop, y=repro_bra
 #variation across populations for diam, height, and longest leaf (maybe total_branch & repro_branch, not # flowers, prob not # fruits (all low except TM2), not longest_fruit)
 ```
 
-## Relationships between Climate and Traits (fix this after figuring out climate data)
+## Relationships between traits
+
+-   Plot branching pattern with other size metrics for idea of shape
 
 ```{r}
+anncensustrans_all_alive_max_elev_noinf %>% ggplot(aes(x=total_branch, y=repro_branch)) +
+  geom_point()  #repro_branches is so 0 skewed it's hard to tell if there's a relationship 
+
+anncensustrans_all_alive_max_elev_noinf %>% ggplot(aes(x=total_branch, y=diam)) +
+  geom_point() +
+  geom_smooth()
+
+anncensustrans_all_alive_max_elev_noinf %>% ggplot(aes(x=total_branch, y=height)) +
+  geom_point() +
+  geom_smooth()
+
+anncensustrans_all_alive_max_elev_noinf %>% ggplot(aes(x=total_branch, y=longest_leaf)) +
+  geom_point() +
+  geom_smooth()
+```
+
+No clear relationships between branching and other size traits.
+
+What about diameter and height?
+
+```{r}
+anncensustrans_all_alive_max_elev_noinf %>% ggplot(aes(x=diam, y=height)) +
+  geom_point() +
+  geom_smooth()
+```
+
+There seems to be a positive relationship between height and diameter.
+
+What about diameter and longest leaf?
+
+```{r}
+anncensustrans_all_alive_max_elev_noinf %>% ggplot(aes(x=diam, y=longest_leaf)) +
+  geom_point() +
+  geom_smooth()
+```
+
+There seems to be a positive relationship between height and length of
+the longest leaf.
+
+What about height and longest leaf?
+
+```{r}
+anncensustrans_all_alive_max_elev_noinf %>% ggplot(aes(x=height, y=longest_leaf)) +
+  geom_point() +
+  geom_smooth()
+```
+
+Positive relationship between height and longest leaf seems to plateau.
+
+## Relationships between Climate and Traits (fix this after figuring out climate data)
+
+```{r, eval=FALSE}
 names(anncensustrans_all_alive_max_elev)
 ggplot(anncensustrans_all_alive_max_elev, aes(x = tmx, y = diam))+
   geom_point()
@@ -217,14 +296,34 @@ ggplot(anncensustrans_all_alive_max_elev, aes(x = tmn, y = longest_leaf))+
 ## Calculating means by pop (and elev)
 
 ```{r}
-anncensustrans_all_alive_summary <- anncensustrans_all_alive_max_elev_noinf %>% group_by(parent.pop, elevation.group, elev_m) %>% summarise(meanDiam=mean(diam, na.rm = TRUE), sem_diam=sem(diam, na.rm=TRUE), meanHeight = mean(height,na.rm=(TRUE)), sem_height=sem(height, na.rm=(TRUE)), meanLongestLeaf=mean(longest_leaf, na.rm=(TRUE)), sem_leaf=sem(longest_leaf, na.rm=TRUE), meanTotBr=mean(total_branch, na.rm = TRUE), sem_totbr=sem(total_branch, na.rm=TRUE), meanRepBr=mean(repro_branch, na.rm=TRUE), semRepBr=sem(repro_branch, na.rm=TRUE), meanFruits=mean(fruits, na.rm = TRUE), semFruits=sem(fruits, na.rm=TRUE), meanLongFruit=mean(longest_fruit, na.rm = TRUE), semLongFruit=sem(longest_fruit, na.rm = TRUE), meanFl=mean(flowers, na.rm=TRUE), semFl=sem(flowers, na.rm=TRUE))
+anncensustrans_all_alive_summary <- anncensustrans_all_alive_max_elev_noinf %>% 
+  group_by(parent.pop, elevation.group, elev_m) %>% 
+  summarise(meanDiam=mean(diam, na.rm = TRUE), sem_diam=sem(diam, na.rm=TRUE), 
+            meanHeight = mean(height,na.rm=(TRUE)), sem_height=sem(height, na.rm=(TRUE)), 
+            meanLongestLeaf=mean(longest_leaf, na.rm=(TRUE)), sem_leaf=sem(longest_leaf, na.rm=TRUE), 
+            meanTotBr=mean(total_branch, na.rm = TRUE), sem_totbr=sem(total_branch, na.rm=TRUE), 
+            meanRepBr=mean(repro_branch, na.rm=TRUE), semRepBr=sem(repro_branch, na.rm=TRUE), 
+            meanFruits=mean(fruits, na.rm = TRUE), semFruits=sem(fruits, na.rm=TRUE), 
+            meanLongFruit=mean(longest_fruit, na.rm = TRUE), semLongFruit=sem(longest_fruit, na.rm = TRUE), 
+            meanFl=mean(flowers, na.rm=TRUE), semFl=sem(flowers, na.rm=TRUE))
 anncensustrans_all_alive_summary 
-anncensustrans_all_alive_max_elev_noinf %>% filter(parent.pop=="DPR") %>% select(flowers) #%>% group_by(parent.pop) %>%  summarise(sddiam=sd(flowers))
+#write_csv(anncensustrans_all_alive_summary, file ="../output/UCD_Traits/anncensus_traitavgs.csv")
+anncensustrans_all_alive_max_elev_noinf %>% filter(parent.pop=="DPR") %>% select(flowers) #one DPR plant had 1 flower and the other had 116 (massive variation)
 
-anncensustrans_all_alive_max_elev_logregs <- anncensustrans_all_alive_max_elev_noinf %>% mutate(bTotBr=ifelse(total_branch==1, 0, 1), bRepBr=ifelse(repro_branch==0, 0, 1), bFruits=ifelse(fruits==0, 0, 1), bFlowers=ifelse(flowers==0, 0, 1)) 
+anncensustrans_all_alive_max_elev_logregs <- anncensustrans_all_alive_max_elev_noinf %>% 
+  mutate(bTotBr=ifelse(total_branch==1, 0, 1), 
+         bRepBr=ifelse(repro_branch==0, 0, 1), 
+         bFruits=ifelse(fruits==0, 0, 1), 
+         bFlowers=ifelse(flowers==0, 0, 1)) 
 
-anncensustrans_all_alive_summary_logregs <- anncensustrans_all_alive_max_elev_logregs %>% group_by(parent.pop, elevation.group, elev_m) %>% summarise(probTotBr = mean(bTotBr, na.rm = TRUE), sem_totbr=sem(bTotBr, na.rm = TRUE), probRepBr=mean(bRepBr, na.rm = TRUE), semRepBr=sem(bRepBr,na.rm = TRUE), probFruits=mean(bFruits, na.rm = TRUE), semFruits=sem(bFruits, na.rm = TRUE), probFlowers=mean(bFlowers, na.rm = TRUE), semFl=sem(bFlowers, na.rm = TRUE))
+anncensustrans_all_alive_summary_logregs <- anncensustrans_all_alive_max_elev_logregs %>% 
+  group_by(parent.pop, elevation.group, elev_m) %>% 
+  summarise(probTotBr = mean(bTotBr, na.rm = TRUE), sem_totbr=sem(bTotBr, na.rm = TRUE),
+            probRepBr=mean(bRepBr, na.rm = TRUE), semRepBr=sem(bRepBr,na.rm = TRUE), 
+            probFruits=mean(bFruits, na.rm = TRUE), semFruits=sem(bFruits, na.rm = TRUE), 
+            probFlowers=mean(bFlowers, na.rm = TRUE), semFl=sem(bFlowers, na.rm = TRUE))
 anncensustrans_all_alive_summary_logregs 
+#write_csv(anncensustrans_all_alive_summary_logregs, file ="../output/UCD_Traits/anncensus_traitprobs.csv")
 ```
 
 ## Mixed Effects Models (and figures of trait means)
@@ -242,15 +341,18 @@ anncensustrans_all_alive_summary %>% ggplot(aes(x=fct_reorder(parent.pop, meanDi
   labs(fill="Elevation (m)", y="Avg Diam (mm)", x="Population") +
    theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/AvgDiam.png", width = 8, height = 6, units = "in")
+#ggsave("../output/UCD_Traits/AvgDiam.png", width = 8, height = 6, units = "in")
 
-lmediam2 = lmer(diam ~ (1|parent.pop/mf), data=anncensustrans_all_alive_max_elev_noinf)
+lmediam2 = lmerTest::lmer(diam ~ (1|parent.pop/mf), data=anncensustrans_all_alive_max_elev_noinf)
 summary(lmediam2)
 ranova(lmediam2) #no maternal family effect b/c maybe not enough individuals 
 #could try assigning unique names and "un-nesting" them 
 VarCorr(lmediam2) %>% 
   as.data.frame() %>% 
   mutate(var.pct = vcov/sum(vcov)*100)
+
+#EMM_diam=emmeans(lmediam2,pairwise~parent.pop)
+#EMM_diam
 
 #COME BACK TO THE BELOW WHEN CLIMATE DATA FIGURED OUT 
 #lmediam3 = lmer(diam ~ ppt + (1|parent.pop/mf), #data=anncensustrans_all_alive_max_elev_noinf)
@@ -265,6 +367,22 @@ VarCorr(lmediam2) %>%
 
 ### Total_branch
 
+-   Tried code for poisson regression or logistic regression with mixed
+    effects
+
+    -   Had to use glmer for this
+
+        -   Used family = poisson for traits with poisson distribution
+
+            -   Couldn't use ranova so used a loglikihood test to test
+                for the significance of the random effects
+
+        -   Use family = binomial(logit) for logit link
+
+            -   Tried family = binomial for Prob_Total_Branch (1 or
+                greater than 1). Couldn't include random effects so
+                parent.pop is in the model as a fixed effect.
+
 ```{r}
 anncensustrans_all_alive_summary %>% ggplot(aes(x=fct_reorder(parent.pop, meanTotBr), y=meanTotBr, fill=elev_m)) +
   geom_col(width = 0.7,position = position_dodge(0.75)) + 
@@ -276,15 +394,21 @@ anncensustrans_all_alive_summary %>% ggplot(aes(x=fct_reorder(parent.pop, meanTo
   labs(fill="Elevation (m)", x="Population", y="Avg # Total Branches") +
    theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1)) #large standard error bars 
-ggsave("../output/AvgTotBsBr.png", width = 8, height = 6, units = "in")
+#ggsave("../output/UCD_Traits/AvgTotBsBr.png", width = 8, height = 6, units = "in")
 
-#figure out poisson regression 
-#lmetotal_branch = lmer(total_branch ~ (1|parent.pop/mf), data=anncensustrans_all_alive_max_elev_noinf)
-#summary(lmetotal_branch)
-#ranova(lmetotal_branch)
-#VarCorr(lmetotal_branch) %>% 
-#  as.data.frame() %>% 
-#  mutate(var.pct = vcov/sum(vcov)*100)
+#Poisson regression 
+lmetotal_branch <- glmer(total_branch ~ (1|parent.pop/mf), data = anncensustrans_all_alive_max_elev_noinf, family = poisson(link = "log")) 
+summary(lmetotal_branch)
+VarCorr(lmetotal_branch) %>% 
+  as.data.frame() %>% 
+  mutate(var.pct = vcov/sum(vcov)*100)
+glance(lmetotal_branch)
+#ranova(lmetotal_branch) doesn't work for lme4
+#to test for significance of random effect: https://bbolker.github.io/mixedmodels-misc/glmmFAQ.html#testing-significance-of-random-effects
+#the most common way to do this is to use a likelihood ratio test, i.e. fit the full and reduced models (the reduced model is the model with the focal variance(s) set to zero). 
+m0 <- glmer(total_branch ~ (1|parent.pop), data = anncensustrans_all_alive_max_elev_noinf, family = poisson(link = "log")) 
+m00 <- lm(total_branch~1, anncensustrans_all_alive_max_elev_noinf)
+anova(lmetotal_branch,m0, m00) #model with both random effects has a higher likelihood (better fit)
 
 
 anncensustrans_all_alive_summary_logregs %>% ggplot(aes(x=fct_reorder(parent.pop, probTotBr), y=probTotBr, fill=elev_m)) +
@@ -297,10 +421,10 @@ anncensustrans_all_alive_summary_logregs %>% ggplot(aes(x=fct_reorder(parent.pop
   labs(fill="Elevation (m)", x="Population", y="Prob. of Total Branches > 1") +
    theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1)) 
-ggsave("../output/ProbTotBsBr.png", width = 8, height = 6, units = "in")
+#ggsave("../output/UCD_Traits/ProbTotBsBr.png", width = 8, height = 6, units = "in")
 
-totbr_logreg=glm(bTotBr ~parent.pop, data=anncensustrans_all_alive_max_elev_logregs, family = binomial())
-summary(totbr_logreg) #need to use emmeans to interpret results 
+totbr_logreg=glm(bTotBr ~ parent.pop, data=anncensustrans_all_alive_max_elev_logregs, family = binomial())
+summary(totbr_logreg) #this is not the correct model b/c it treats parent pop as a fixed effect and doesn't take into account maternal families 
 ```
 
 ### Repro_branch
@@ -316,15 +440,19 @@ anncensustrans_all_alive_summary %>% ggplot(aes(x=fct_reorder(parent.pop, meanRe
   labs(fill="Elevation (m)", x="Population", y="Avg # Reproductive Branches") +
    theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1)) #mostly the same except 1 SQ3 plant with a lot
-ggsave("../output/AvgRepBsBr.png", width = 8, height = 6, units = "in")
+#ggsave("../output/UCD_Traits/AvgRepBsBr.png", width = 8, height = 6, units = "in")
 
-#figure out poisson regression 
-#lmerepro_branch = lmer(repro_branch ~ (1|parent.pop/mf), data=anncensustrans_all_alive_max_elev_noinf)
-#summary(lmerepro_branch)
-#ranova(lmerepro_branch)
-#VarCorr(lmerepro_branch) %>% 
-#  as.data.frame() %>% 
-#  mutate(var.pct = vcov/sum(vcov)*100)
+#poisson regression 
+lmerepro_branch <- glmer(repro_branch ~ (1|parent.pop/mf), data = anncensustrans_all_alive_max_elev_noinf, family = poisson(link = "log")) 
+summary(lmerepro_branch)
+VarCorr(lmerepro_branch) %>% 
+  as.data.frame() %>% 
+  mutate(var.pct = vcov/sum(vcov)*100)
+glance(lmerepro_branch)
+m0 <- glmer(repro_branch ~ (1|parent.pop), data = anncensustrans_all_alive_max_elev_noinf, family = poisson(link = "log")) 
+m00 <- lm(repro_branch~1, anncensustrans_all_alive_max_elev_noinf)
+anova(lmerepro_branch,m0, m00) #model with both random effects has a higher likelihood (better fit)
+
 
 anncensustrans_all_alive_summary_logregs %>% ggplot(aes(x=fct_reorder(parent.pop, probRepBr), y=probRepBr, fill=elev_m)) +
   geom_col(width = 0.7,position = position_dodge(0.75)) + 
@@ -336,7 +464,7 @@ anncensustrans_all_alive_summary_logregs %>% ggplot(aes(x=fct_reorder(parent.pop
   labs(fill="Elevation (m)", x="Population", y="Prob. Repro. Branches > 0") +
    theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/ProbRepBsBr.png", width = 8, height = 6, units = "in")
+#ggsave("../output/UCD_Traits/ProbRepBsBr.png", width = 8, height = 6, units = "in")
 ```
 
 ### Fruits
@@ -352,15 +480,18 @@ anncensustrans_all_alive_summary %>% ggplot(aes(x=fct_reorder(parent.pop, meanFr
   labs(fill="Elevation (m)", x="Population", y="Avg # Fruits") +
    theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1)) #mostly the same (low), except TM2 had way more fruits than the other populations 
-ggsave("../output/AvgFruits.png", width = 8, height = 6, units = "in")
+#ggsave("../output/UCD_Traits/AvgFruits.png", width = 8, height = 6, units = "in")
 
-#figure out poisson regression 
-#lmefruits = lmer(fruits ~ (1|parent.pop/mf), data=anncensustrans_all_alive_max_elev_noinf)
-#summary(lmefruits)
-#ranova(lmefruits)
-#VarCorr(lmefruits) %>% 
-#  as.data.frame() %>% 
-#  mutate(var.pct = vcov/sum(vcov)*100)
+#poisson regression 
+lmefruits <- glmer(fruits ~ (1|parent.pop/mf), data = anncensustrans_all_alive_max_elev_noinf, family = poisson(link = "log")) 
+summary(lmefruits)
+VarCorr(lmefruits) %>% 
+  as.data.frame() %>% 
+  mutate(var.pct = vcov/sum(vcov)*100)
+glance(lmefruits)
+m0 <- glmer(fruits ~ (1|parent.pop), data = anncensustrans_all_alive_max_elev_noinf, family = poisson(link = "log")) 
+m00 <- lm(fruits~1, anncensustrans_all_alive_max_elev_noinf)
+anova(lmefruits,m0, m00) #model without random effects has a higher likelihood
 
 anncensustrans_all_alive_summary_logregs %>% ggplot(aes(x=fct_reorder(parent.pop, probFruits), y=probFruits, fill=elev_m)) +
   geom_col(width = 0.7,position = position_dodge(0.75)) + 
@@ -372,10 +503,10 @@ anncensustrans_all_alive_summary_logregs %>% ggplot(aes(x=fct_reorder(parent.pop
   labs(fill="Elevation (m)", x="Population", y="Prob. of Fruits") +
    theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1)) 
-ggsave("../output/ProbFruits.png", width = 8, height = 6, units = "in")
+#ggsave("../output/UCD_Traits/ProbFruits.png", width = 8, height = 6, units = "in")
 ```
 
-### longest_fruit
+### Longest_fruit
 
 ```{r}
 #only 2 populations with multiple fruits to calculate a mean from 
@@ -389,7 +520,7 @@ anncensustrans_all_alive_summary %>% ggplot(aes(x=parent.pop, y=meanLongFruit, f
   labs(fill="Elevation (m)", x="Population", y="Avg Longest Fruit (cm)") +
    theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1)) #mostly the same (low), except TM2 had way more fruits than the other populations 
-ggsave("../output/AvgLongestFruits.png", width = 8, height = 6, units = "in")
+#ggsave("../output/UCD_Traits/AvgLongestFruits.png", width = 8, height = 6, units = "in")
 
 #stats not necessary 
 #lmelongest_fruit = lmer(longest_fruit ~ (1|parent.pop/mf), data=anncensustrans_all_alive_max_elev_noinf)
@@ -400,7 +531,7 @@ ggsave("../output/AvgLongestFruits.png", width = 8, height = 6, units = "in")
 #  mutate(var.pct = vcov/sum(vcov)*100)
 ```
 
-### flowers
+### Flowers
 
 ```{r}
 anncensustrans_all_alive_summary %>% ggplot(aes(x=fct_reorder(parent.pop, meanFl), y=meanFl, fill=elev_m)) +
@@ -413,15 +544,18 @@ anncensustrans_all_alive_summary %>% ggplot(aes(x=fct_reorder(parent.pop, meanFl
   labs(fill="Elevation (m)", x="Population", y="Avg # Flowers") +
    theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1)) #mostly the same (low), except TM2 had way more fruits than the other populations 
-ggsave("../output/AvgFlowers.png", width = 8, height = 6, units = "in")
+#ggsave("../output/UCD_Traits/AvgFlowers.png", width = 8, height = 6, units = "in")
 
-#figure out poisson regression 
-#lmeflowers = lmer(flowers ~ (1|parent.pop/mf), data=anncensustrans_all_alive_max_elev_noinf)
-#summary(lmeflowers)
-#ranova(lmeflowers)
-#VarCorr(lmeflowers) %>% 
-#  as.data.frame() %>% 
-#  mutate(var.pct = vcov/sum(vcov)*100)
+#poisson regression 
+lmeflowers <- glmer(flowers ~ (1|parent.pop/mf), data = anncensustrans_all_alive_max_elev_noinf, family = poisson(link = "log")) 
+summary(lmeflowers)
+VarCorr(lmeflowers) %>% 
+  as.data.frame() %>% 
+  mutate(var.pct = vcov/sum(vcov)*100)
+glance(lmeflowers)
+m0 <- glmer(flowers ~ (1|parent.pop), data = anncensustrans_all_alive_max_elev_noinf, family = poisson(link = "log")) 
+m00 <- lm(flowers~1, anncensustrans_all_alive_max_elev_noinf)
+anova(lmeflowers,m0, m00) #model without random effects has a higher likelihood
 
 anncensustrans_all_alive_summary_logregs %>% ggplot(aes(x=fct_reorder(parent.pop, probFlowers), y=probFlowers, fill=elev_m)) +
   geom_col(width = 0.7,position = position_dodge(0.75)) + 
@@ -433,7 +567,7 @@ anncensustrans_all_alive_summary_logregs %>% ggplot(aes(x=fct_reorder(parent.pop
   labs(fill="Elevation (m)", x="Population", y="Prob. of Flowers") +
    theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1)) 
-ggsave("../output/ProbFlowers.png", width = 8, height = 6, units = "in")
+#ggsave("../output/UCD_Traits/ProbFlowers.png", width = 8, height = 6, units = "in")
 ```
 
 ### Height
@@ -449,9 +583,9 @@ anncensustrans_all_alive_summary %>% ggplot(aes(x=fct_reorder(parent.pop, meanHe
   labs(fill="Elevation", x="Population") +
    theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-#ggsave("../output/AvgHeight_AnnCensus.png", width = 8, height = 6, units = "in")
+#ggsave("../output/UCD_Traits/AvgHeight_AnnCensus.png", width = 8, height = 6, units = "in")
 
-lmeheight = lmer(height ~ ppt + (1|parent.pop/mf), data=anncensustrans_all_alive_max_elev_noinf)
+lmeheight = lmer(height ~ (1|parent.pop/mf), data=anncensustrans_all_alive_max_elev_noinf)
 summary(lmeheight)
 ranova(lmeheight)
 ```
@@ -470,9 +604,9 @@ anncensustrans_all_alive_summary %>% ggplot(aes(x=parent.pop, y=meanLongestLeaf,
    theme_classic() +
   xlab("Population") +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-#ggsave("../output/AvgLongLeaf_AnnCensus.png", width = 8, height = 6, units = "in")
+#ggsave("../output/UCD_Traits/AvgLongLeaf_AnnCensus.png", width = 8, height = 6, units = "in")
 
-lmelongest_leaf = lmer(longest_leaf ~ ppt + (1|parent.pop/mf), data=anncensustrans_all_alive_max_elev_noinf)
+lmelongest_leaf = lmer(longest_leaf ~ (1|parent.pop/mf), data=anncensustrans_all_alive_max_elev_noinf)
 summary(lmelongest_leaf)
 ranova(lmelongest_leaf)
 ```
