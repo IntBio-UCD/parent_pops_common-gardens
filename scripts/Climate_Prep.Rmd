@@ -2,7 +2,9 @@
 title: "Climate Data Prep"
 author: "Brandie Quarles"
 date: "2023-10-18"
-output: html_document
+output: 
+  html_document: 
+    keep_md: yes
 editor_options: 
   markdown: 
     wrap: 72
@@ -10,23 +12,34 @@ editor_options:
 
 To Do:
 
--   Double check elevation classifications
+-   Decide between elevation classifications vs. some climate metric to
+    define growth seasons
+
+    -   Categorical Growth Seasons:
+        -   Low: Oct-July
+
+        -   Mid: Nov-Aug
+
+        -   High: April-Sept
+    -   Based on climate metrics: no snowpack and/or significant rain/lower CWD
+    -   Could also compare avg snowpack across entire year between
+        groups I determine as mid vs. high
+    -   K means clustering to see if it splits into the 3 groups (Can
+        give it the 30 year vector. Probably need to turn off scaling)
 
 -   Create PCAs for recent and historical climate
 
     -   Color monthly PCA by month relative to growth season?
+    -   Make PCAs for historical climate too
+    -   Try PCA with bioclim variables 
+        -   Calculate the bioclim variables I sent to Julin and Jenny from the data we already ahve
+        -   Then add them to the PCA
 
--   Edit consistency of snow cover code
+-   Distance from home climate
 
--   Calculate historical climate avgs
+    -   Get UCD climate data
 
-Growth Seasons:
-
--   Low: Oct-July
-
--   Mid: Nov-Aug
-
--   High: April-Sept
+    -   Calculate CWD
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -43,6 +56,7 @@ library(corrplot) #plotting correlations
 library(rstatix) #performing cor_test
 library(lmerTest)
 library(naniar) #replaces values with NA
+library(QBMS) #for function calc_biovars to calculate bioclim variables
 sem <- function(x, na.rm=FALSE) {
   sd(x,na.rm=na.rm)/sqrt(length(na.omit(x)))
 } #standard error function 
@@ -110,7 +124,7 @@ ggplot() +
   scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
   theme_classic() +
   theme(text=element_text(size=25))
-ggsave("../output/Pop_Map_NoLabels.png", width = 6, height = 4, units = "in")
+#ggsave("../output/Pop_Map_NoLabels.png", width = 6, height = 4, units = "in")
 
 #with labels 
 ggplot() +
@@ -131,12 +145,12 @@ ggplot() +
   scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
   theme_classic() +
   theme(text=element_text(size=25))
-ggsave("../output/Pop_Map_Labels.png", width = 6, height = 4, units = "in")
+#ggsave("../output/Pop_Map_Labels.png", width = 12, height = 8, units = "in")
 ```
 
 ## Elevation group changes
 
-```{r}
+```{r, eval=FALSE}
 names(pop_elev)
 unique(pop_elev$parent.pop)
 xtabs(~parent.pop+elevation.group, data = pop_elev)
@@ -218,6 +232,7 @@ names(pop_elev_climate)
 pop_elev_climate_recent <- pop_elev_climate %>% filter(year>1992) %>% select(parent.pop:month, cwd, pck, ppt, tmn, tmx)
 head(pop_elev_climate_recent)
 summary(pop_elev_climate_recent)
+xtabs(~parent.pop+month, data=pop_elev_climate_recent)
 
 pop_elev_climate_historical <- pop_elev_climate %>% filter(year<=1992 & year>1962) %>% select(parent.pop:month, cwd, pck, ppt, tmn, tmx)
 head(pop_elev_climate_historical, 13)
@@ -248,7 +263,7 @@ recent_snwpck <- recent_climate_avgs %>% ggplot(aes(x=fct_reorder(parent.pop, pc
    theme_classic() +
   theme(text=element_text(size=20), axis.text.x = element_text(angle = 45,  hjust = 1))
 recent_snwpck
-ggsave("../output/All_Year_Avg_PCK_RecentClim.png", width = 12, height = 6, units = "in")
+#ggsave("../output/Climate/All_Year_Avg_PCK_RecentClim.png", width = 12, height = 6, units = "in")
 
 historical_climate_avgs <- pop_elev_climate_historical %>% group_by(parent.pop, elevation.group ,elev_m) %>% summarise_at(c("cwd", "pck", "ppt", "tmn", "tmx"), c(mean, sem), na.rm = TRUE) 
 names(historical_climate_avgs) <- gsub("fn2", "sem", colnames(historical_climate_avgs))
@@ -267,7 +282,7 @@ hist_snwpck <- historical_climate_avgs %>% ggplot(aes(x=fct_reorder(parent.pop, 
    theme_classic() +
   theme(text=element_text(size=20), axis.text.x = element_text(angle = 45,  hjust = 1))
 hist_snwpck
-#ggsave("../output/All_Year_Avg_PCK_HistoricalClim.png", width = 8, height = 4, units = "in")
+#ggsave("../output/Climate/All_Year_Avg_PCK_HistoricalClim.png", width = 8, height = 4, units = "in")
 
 legend <- get_legend(hist_snwpck)
 hist_snwpck <- hist_snwpck + theme(legend.position="none")
@@ -275,16 +290,19 @@ recent_snwpck <- recent_snwpck + theme(legend.position="none")
 grid.arrange(hist_snwpck, recent_snwpck, legend, ncol=3, widths=c(3.12, 3.12, 1.09))
 ```
 
-## Consistency of winter snow cover - come back to this !
+## Consistency of winter snow cover
 
 ```{r}
 #monthly_pck <- pop_elev_climate_recent %>% filter(parent.pop==c("DPR","WR","WL1", "SQ1", "SQ2", "WL2", "YO4")) %>% group_by(parent.pop, elev_m, month) %>%
-  summarise(pck_mean=mean(pck), pck_sem=sem(pck))
+ # summarise(pck_mean=mean(pck), pck_sem=sem(pck))
 #monthly_pck$parent.pop <- factor(monthly_pck$parent.pop, levels=c("DPR","WR","WL1", "SQ1", "SQ2", "WL2", "YO4"))
 
-monthly_pck <- pop_elev_climate_recent %>% filter(parent.pop==c("WL1", "SQ1", "SQ2", "WL2", "YO4")) %>% group_by(parent.pop, elev_m, month) %>%
+monthly_pck <- pop_elev_climate_recent %>% 
+  filter(parent.pop==c("WL1", "SQ1", "SQ2", "WL2", "YO4")) %>% 
+  group_by(parent.pop, elev_m, month) %>%
   summarise(pck_mean=mean(pck), pck_sem=sem(pck))
 monthly_pck$parent.pop <- factor(monthly_pck$parent.pop, levels=c("WL1", "SQ1", "SQ2", "WL2", "YO4"))
+monthly_pck
 
 monthly_pck %>% ggplot(aes(x=month, y=pck_mean, group=parent.pop, fill=parent.pop)) + 
   geom_col(width = 0.7,position = position_dodge(0.75)) +
@@ -294,14 +312,16 @@ monthly_pck %>% ggplot(aes(x=month, y=pck_mean, group=parent.pop, fill=parent.po
   scale_x_continuous(breaks=c(1, 2, 3, 4, 5,6,7,8,9,10, 11, 12)) +
   theme_classic() + 
   theme(text=element_text(size=30))
-ggsave("../output/Monthly_Avg_PCK_RecnetClim.png", width = 14, height = 6, units = "in")
+#ggsave("../output/Climate/Monthly_Avg_PCK_RecnetClim.png", width = 14, height = 6, units = "in")
 
-#NEED TO EDIT THE BELOW
-monthly_pck <- pop_elev_climate_recent %>% filter(parent.pop==c("CP2", "CP3", "LV3")) %>% group_by(parent.pop, elev_m, month) %>%
+#check even higher elevation
+monthly_pck_high_elev <- pop_elev_climate_recent %>% 
+  filter(elev_m>2200) %>%
+  group_by(parent.pop, elev_m, month) %>%
   summarise(pck_mean=mean(pck), pck_sem=sem(pck))
-monthly_pck$parent.pop <- factor(monthly_pck$parent.pop, levels=c("CP2", "CP3", "LV3", "SQ3", "YO7","YO8", "LV1", "LVTR1", "YO11"))
+monthly_pck_high_elev$parent.pop <- factor(monthly_pck_high_elev$parent.pop, levels=c("CP2", "CP3", "LV3", "SQ3", "YO7","YO8", "LV1", "LVTR1", "YO11"))
 
-monthly_pck %>% ggplot(aes(x=month, y=pck_mean, group=parent.pop, fill=parent.pop)) + 
+monthly_pck_high_elev %>% ggplot(aes(x=month, y=pck_mean, group=parent.pop, fill=parent.pop)) + 
   geom_col(width = 0.7,position = position_dodge(0.75)) +
   geom_errorbar(aes(ymin=pck_mean-pck_sem,ymax=pck_mean+pck_sem),width=.2, position=position_dodge(0.75)) +
   labs(title="Recent Climate", y="Avg SnwPck (mm)")  + 
@@ -309,104 +329,260 @@ monthly_pck %>% ggplot(aes(x=month, y=pck_mean, group=parent.pop, fill=parent.po
   scale_x_continuous(breaks=c(1, 2, 3, 4, 5,6,7,8,9,10, 11, 12)) +
   theme_classic() + 
   theme(text=element_text(size=30))
-ggsave("../output/Monthly_Avg_PCK_HIGHELEV_RecnetClim.png", width = 14, height = 6, units = "in")
+#ggsave("../output/Climate/Monthly_Avg_PCK_HIGHELEV_RecnetClim.png", width = 14, height = 6, units = "in")
 ```
 
-## Climate during growth season (Low: Oct-July, Mid: Nov-Aug, High: April-Sept)
+## CWD Across the Year
 
 ```{r}
-recent_climate_low <- pop_elev_climate_recent %>% filter(elevation.group=="Low") %>% filter(month<=7 | month>9)
-head(recent_climate_low, 30)
-tail(recent_climate_low, 30)
-summary(recent_climate_low)
+names(pop_elev_climate_recent)
 
-recent_climate_mid <- pop_elev_climate_recent %>% filter(elevation.group=="Mid") %>% filter(month<=8 | month>10)
-head(recent_climate_mid, 30)
-tail(recent_climate_mid, 30)
-summary(recent_climate_mid)
+monthly_cwd <- pop_elev_climate_recent %>% 
+  group_by(parent.pop, elev_m, month) %>%
+  summarise(cwd_mean=mean(cwd), pck_sem=sem(cwd))
+monthly_cwd
 
-recent_climate_high <- pop_elev_climate_recent %>% filter(elevation.group=="High") %>% filter(month>3 & month<=9)
-head(recent_climate_high, 30)
-tail(recent_climate_high, 30)
-summary(recent_climate_high)
+monthly_cwd %>% #low elev
+  filter(elev_m<520) %>% 
+  ggplot(aes(x=month, y=cwd_mean)) +
+  geom_line() +
+  scale_x_continuous(breaks=c(1, 2, 3, 4, 5,6,7,8,9,10, 11, 12)) +
+  theme_classic() +
+  facet_wrap(~parent.pop)
 
-recent_climate_growthseason <- rbind(recent_climate_low, recent_climate_mid, recent_climate_high)
-summary(recent_climate_growthseason)
+monthly_cwd %>% #mid elev
+  filter(elev_m>520, elev_m<1940) %>% 
+  ggplot(aes(x=month, y=cwd_mean)) +
+  geom_line() +
+  scale_x_continuous(breaks=c(1, 2, 3, 4, 5,6,7,8,9,10, 11, 12)) +
+  theme_classic() +
+  facet_wrap(~parent.pop)
 
-historical_climate_low <- pop_elev_climate_historical %>% filter(elevation.group=="Low") %>% filter(month<=7 | month>9)
-head(historical_climate_low, 30)
-tail(historical_climate_low, 30)
-summary(historical_climate_low)
-unique(historical_climate_low$parent.pop) #low elevation pops = BH, CC, IH, SC, TM2
-
-historical_climate_mid <- pop_elev_climate_historical %>% filter(elevation.group=="Mid") %>% filter(month<=8 | month>10)
-head(historical_climate_mid, 30)
-tail(historical_climate_mid, 30)
-summary(historical_climate_mid)
-unique(historical_climate_mid$parent.pop) #mid elevation pops = DPR, FR, SQ1, SQ2, WL1, WR, WV
-
-historical_climate_high <- pop_elev_climate_historical %>% filter(elevation.group=="High") %>% filter(month>3 & month<=9)
-head(historical_climate_high, 30)
-tail(historical_climate_high, 30)
-summary(historical_climate_high) 
-unique(historical_climate_high$parent.pop) #high elevation pops =  CP2, CP3, LV1, LV3, LVTR1, SQ3, WL2, Y011, Y04, Y07, Y08
-
-historical_climate_growthseason <- rbind(historical_climate_low, historical_climate_mid, historical_climate_high)
-summary(historical_climate_growthseason)
+monthly_cwd %>% #high elev
+  filter(elev_m>1940) %>% 
+  ggplot(aes(x=month, y=cwd_mean)) +
+  geom_line() +
+  scale_x_continuous(breaks=c(1, 2, 3, 4, 5,6,7,8,9,10, 11, 12)) +
+  theme_classic() +
+  facet_wrap(~parent.pop)
 ```
+
+
+## Growth Season by snow/rain 
+First month with no snow pack or w/ significant rain as start of growth season
+First month with snow pack or w/ significant CWD as end of growth season 
+
+### Averages and Preliminary Calcs
+Recent climate 
+```{r}
+head(pop_elev_climate_recent)
+pop_elev_climate_recent %>% filter(ppt == 0) #months 7-10 usually have ppt = 0 for low elev 
+pop_elev_climate_recent %>% filter(pck >0, ppt == 0) #in sequoia pops, 2022, ppt=0, but there was still snowpack in January 
+pop_elev_climate_recent %>% filter(ppt > 0, tmx<1.5) %>% arrange(pck) #if the temp is less than 1.5 (Flint's criteria for snowfall) and there is precipitation then pck > 0
+#first calculate 30 year monthly averages for pck and ppt 
+#if snowpack = 0 all year, then use rain as metric 
+
+pop_elev_climate_recent_avgs <- pop_elev_climate_recent %>% group_by(parent.pop, elevation.group, elev_m, month) %>% summarise_at(c("cwd", "pck", "ppt", "tmn", "tmx"), c(mean, sem), na.rm = TRUE)
+names(pop_elev_climate_recent_avgs) <- gsub("fn2", "sem", colnames(pop_elev_climate_recent_avgs))
+names(pop_elev_climate_recent_avgs) <-gsub("fn1", "mean", colnames(pop_elev_climate_recent_avgs))
+pop_elev_climate_recent_avgs #30 year averages per month for each pop
+
+pop_elev_climate_recent_avgs <- pop_elev_climate_recent_avgs %>% mutate(PckSum=sum(pck_mean)) #estimate of average total snowpack in a year 
+pop_elev_climate_recent_avgs %>% arrange(PckSum)
+
+#Exploratory filters
+pop_elev_climate_recent %>% filter(parent.pop=="SC") %>% filter(year==2016 | year==2017) #snow pack in Jan 2017
+pop_elev_climate_recent %>% filter(parent.pop=="IH") %>% filter(pck >0) #snow pack in Jan 1993 & 2017 and Feb 2019
+pop_elev_climate_recent %>% filter(parent.pop=="SQ3") %>% filter(pck==0, ppt < 10) #high elev pops get very little rain and high cwd during growth season ...
+```
+
+Historical climate 
+```{r}
+pop_elev_climate_historical_avgs <- pop_elev_climate_historical %>% group_by(parent.pop, elevation.group, elev_m, month) %>% summarise_at(c("cwd", "pck", "ppt", "tmn", "tmx"), c(mean, sem), na.rm = TRUE)
+names(pop_elev_climate_historical_avgs) <- gsub("fn2", "sem", colnames(pop_elev_climate_historical_avgs))
+names(pop_elev_climate_historical_avgs) <-gsub("fn1", "mean", colnames(pop_elev_climate_historical_avgs))
+pop_elev_climate_historical_avgs #30 year averages per month for each pop
+
+pop_elev_climate_historical_avgs <- pop_elev_climate_historical_avgs %>% mutate(PckSum=sum(pck_mean)) #estimate of average total snowpack in a year 
+pop_elev_climate_historical_avgs %>% arrange(PckSum) #IH PckSum = 17...
+
+#Exploratory filters
+pop_elev_climate_historical %>% filter(parent.pop=="BH") %>% filter(pck >0) #snow pack in Jan 1982
+pop_elev_climate_historical %>% filter(parent.pop=="SC") %>% filter(pck >0) #snow pack in Jan 1973 and 1982
+pop_elev_climate_historical %>% filter(parent.pop=="CC") %>% filter(pck >0) #snow pack in Jan 1969 and 1973
+pop_elev_climate_historical %>% filter(parent.pop=="TM2") %>% filter(pck >0) #snow pack in Dec '68, Jan-Feb '69, Dec '71, Dec '72, Jan '73, Jan '82
+pop_elev_climate_historical %>% filter(parent.pop=="IH") %>% filter(pck >0) #snow pack in Dec '68, Jan-Feb '69, Dec '70, Dec '71, Jan & Dec '72, Jan-Feb '73, Jan '79
+
+#could just say that the cut offs for snowpack and cwd are based on recent climate 
+#but in years when snowpack was in Dec and Jan, does that mean that anything that germinated in the Fall died?
+```
+
+
+### For each year separately
+
+-   Populations that get less than 10 mm of snow pack in a year (on average): growth season = when there is no snowpack + significant rain event (> 10 mm) or lower cwd (< 88). CWD = 88 = 3rd quartile of the cwd_mean for these pops.
+  -   Note: for historical climate, I had to change it to less than 20 mm of snow pack in a year (on average) to maintain the population classifications (low vs. mid/high). But maybe I should leave it the same and say that IH behaved more like a mid elevation population in the past?
+  -   Note: the 3rd quartile of the cwd_mean for the historical climate is 86, should I change the CWD cut off criteria for the historical climate calcs?
+
+Recent Climate
+```{r}
+nosnow_pops_recent <- pop_elev_climate_recent_avgs %>% filter(PckSum < 10)
+unique(nosnow_pops_recent$parent.pop)
+summary(nosnow_pops_recent)
+
+nosnow_pops_recent_tojoin <- nosnow_pops_recent %>% select(parent.pop:elev_m, PckSum) %>% distinct()
+
+nosnow_pops_recent_years <- left_join(nosnow_pops_recent_tojoin, pop_elev_climate_recent) 
+nosnow_pops_recent_years
+nosnow_grwseason_recent <- nosnow_pops_recent_years %>% 
+  group_by(parent.pop, elevation.group, elev_m, year) %>% 
+  filter(pck==0) %>%  #snowpack == 0
+  filter(ifelse(ppt>=10, ppt>=10, cwd<88)) %>%  #ppt >=10, cwd < 88 (3rd quartile of cwd_mean for low elev pops)
+   #heavy ppt day = day with at least 10mm of rain 
+  filter(ppt >0) #take out months with no ppt
+summary(nosnow_grwseason_recent)
+unique(nosnow_grwseason_recent$parent.pop)
+nosnow_grwseason_recent %>% filter(cwd > 88) #some cases when ppt > 10 when cwd is high 
+xtabs(~parent.pop+month, data=nosnow_grwseason_recent)
+xtabs(~year+month, data=nosnow_grwseason_recent)
+
+nosnow_grwseason_recent %>% ggplot(aes(x=month)) + geom_histogram() +
+  scale_x_continuous(breaks=c(1, 2, 3, 4, 5,6,7,8,9,10, 11, 12)) +
+  facet_wrap(~parent.pop)
+```
+From means (monts where ppt <10)
+BH - 87/137/154/130; June-Sept
+CC - 105/108/101; July-Sept
+IH - 62/98; July-Aug
+SC - 75/148/163/128; June-Sept
+TM2 - 90/167/91; July-Sept
+Apriori Assumption for growth season: Low: Oct-July, Mid: Nov-Aug, High: April-Sept
+
+Historical Climate
+```{r}
+nosnow_pops_historical <- pop_elev_climate_historical_avgs %>% filter(PckSum < 20)
+unique(nosnow_pops_historical$parent.pop)
+summary(nosnow_pops_historical)
+
+nosnow_pops_historical_tojoin <- nosnow_pops_historical %>% select(parent.pop:elev_m, PckSum) %>% distinct()
+
+nosnow_pops_historical_years <- left_join(nosnow_pops_historical_tojoin, pop_elev_climate_historical) 
+nosnow_pops_historical_years
+nosnow_grwseason_historical <- nosnow_pops_historical_years %>% 
+  group_by(parent.pop, elevation.group, elev_m, year) %>% 
+  filter(pck==0) %>%  #snowpack == 0
+  filter(ifelse(ppt>=10, ppt>=10, cwd<88)) %>%  #ppt >=10, cwd < 88
+   #heavy ppt day = day with at least 10mm of rain 
+  filter(ppt >0) #take out months with no ppt
+summary(nosnow_grwseason_historical)
+unique(nosnow_grwseason_historical$parent.pop)
+nosnow_grwseason_historical %>% filter(cwd > 88) #some cases when ppt > 10 when cwd is high 
+xtabs(~parent.pop+month, data=nosnow_grwseason_historical)
+xtabs(~year+month, data=nosnow_grwseason_historical)
+
+nosnow_grwseason_historical %>% ggplot(aes(x=month)) + geom_histogram() +
+  scale_x_continuous(breaks=c(1, 2, 3, 4, 5,6,7,8,9,10, 11, 12)) +
+  facet_wrap(~parent.pop)
+```
+
+-   Populations that get more than 10 mm of snow pack in a year (on average): growth season = when there is no snowpack
+  -   Note: for historical climate, I had to change it to greater than 20 mm of snow pack in a yar (on average)
+
+Recent climate
+```{r}
+snow_pops_recent <- pop_elev_climate_recent_avgs %>% filter(PckSum >= 10)
+unique(snow_pops_recent$parent.pop) #18 pops get some significant snowpack per year 
+summary(snow_pops_recent)
+
+snow_pops_recent_tojoin <- snow_pops_recent %>% select(parent.pop:elev_m, PckSum) %>% distinct()
+
+snow_pops_recent_years <- left_join(snow_pops_recent_tojoin, pop_elev_climate_recent) 
+summary(snow_pops_recent_years)
+snow_pops_recent_years %>% filter(pck < 2, pck >0) %>% arrange(parent.pop, pck) #What about when snowpack is 1 mm? This mostly occurs in December
+
+snow_grwseason_recent <- snow_pops_recent_years %>% 
+  group_by(parent.pop, elevation.group, elev_m, year) %>% 
+  filter(pck==0) #snowpack == 0 to grow 
+summary(snow_grwseason_recent)
+unique(snow_grwseason_recent$parent.pop)
+
+xtabs(~parent.pop+month, data=snow_grwseason_recent)
+xtabs(~elevation.group+month, data=snow_grwseason_recent) #11 "high" and 7 "mid" pops
+xtabs(~year+month, data=snow_grwseason_recent)
+
+snow_grwseason_recent %>% ggplot(aes(x=month)) + geom_histogram() +
+  scale_x_continuous(breaks=c(1, 2, 3, 4, 5,6,7,8,9,10, 11, 12)) +
+  facet_wrap(~parent.pop)
+```
+
+Historical climate
+```{r}
+snow_pops_historical <- pop_elev_climate_historical_avgs %>% filter(PckSum >= 20)
+unique(snow_pops_historical$parent.pop) #18 pops get some significant snowpack per year 
+summary(snow_pops_historical)
+
+snow_pops_historical_tojoin <- snow_pops_historical %>% select(parent.pop:elev_m, PckSum) %>% distinct()
+
+snow_pops_historical_years <- left_join(snow_pops_historical_tojoin, pop_elev_climate_historical) 
+summary(snow_pops_historical_years)
+snow_pops_historical_years %>% filter(pck < 2, pck >0) %>% arrange(parent.pop, pck) #What about when snowpack is 1 mm? This mostly occurs Nov-Jan, one case in Feb and one case in July
+
+snow_grwseason_historical <- snow_pops_historical_years %>% 
+  group_by(parent.pop, elevation.group, elev_m, year) %>% 
+  filter(pck==0) #snowpack == 0 to grow 
+summary(snow_grwseason_historical)
+unique(snow_grwseason_historical$parent.pop)
+
+xtabs(~parent.pop+month, data=snow_grwseason_historical)
+xtabs(~elevation.group+month, data=snow_grwseason_historical) #11 "high" and 7 "mid" pops
+xtabs(~year+month, data=snow_grwseason_historical)
+
+snow_grwseason_historical %>% ggplot(aes(x=month)) + geom_histogram() +
+  scale_x_continuous(breaks=c(1, 2, 3, 4, 5,6,7,8,9,10, 11, 12)) +
+  facet_wrap(~parent.pop)
+```
+
+Bind snow and no_snow pops together
+```{r}
+allpops_recent_grwseason <- rbind(nosnow_grwseason_recent, snow_grwseason_recent)
+summary(allpops_recent_grwseason)
+unique(allpops_recent_grwseason$parent.pop)
+
+allpops_historical_grwseason <- rbind(nosnow_grwseason_historical, snow_grwseason_historical)
+summary(allpops_historical_grwseason)
+unique(allpops_historical_grwseason$parent.pop)
+```
+
 
 ## Climate traits across pops
 
 ### Totals
 
 ```{r}
-names(recent_climate_growthseason)
-recent_climate_growthseason_yearlytot <- recent_climate_growthseason %>%  group_by(parent.pop, year, elevation.group) %>% summarise_at(c("pck", "ppt"), sum, na.rm = TRUE)
-recent_climate_growthseason_yearlytot$elevation.group <- factor(recent_climate_growthseason_yearlytot$elevation.group, levels = elev_order)
+names(allpops_recent_grwseason)
+allpops_recent_grwseason_yearlytot <- allpops_recent_grwseason %>%  group_by(parent.pop, year, elevation.group) %>% summarise_at(c("pck", "ppt"), sum, na.rm = TRUE)
+allpops_recent_grwseason_yearlytot$elevation.group <- factor(allpops_recent_grwseason_yearlytot$elevation.group, levels = elev_order)
 
-recent_pck_total <- recent_climate_growthseason_yearlytot %>% ggplot(aes(x=year, y=pck, group=parent.pop, color=elevation.group)) + 
-  geom_point() + geom_line() + 
-  scale_colour_manual(values=elev_three_palette) + 
-  ggtitle("Recent Climate") + 
-  theme_classic() + 
-  theme(text=element_text(size=30), axis.text.x = element_text(angle = 45, hjust = 1))
-#ggsave("../output/growthseasonTot_SnwPck_RecentClim.png", width = 12, height = 6, units = "in")
-
-recent_ppt_total <- recent_climate_growthseason_yearlytot %>% ggplot(aes(x=year, y=ppt, group=parent.pop, color=elevation.group)) + 
+recent_ppt_total <- allpops_recent_grwseason_yearlytot %>% ggplot(aes(x=year, y=ppt, group=parent.pop, color=elevation.group)) + 
   geom_point() + geom_line() + 
   scale_colour_manual(values=elev_three_palette) + 
   ggtitle("Recent Climate")  + 
   theme_classic() + 
   theme(text=element_text(size=30), axis.text.x = element_text(angle = 45, hjust = 1))
-#ggsave("../output/growthseasonTot_Precip_RecentClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/growthseasonTot_Precip_RecentClim.png", width = 12, height = 6, units = "in")
 
-historical_climate_growthseason_yearlytot <- historical_climate_growthseason %>% group_by(parent.pop, year, elevation.group) %>% summarise_at(c("pck", "ppt"), sum, na.rm = TRUE)
-historical_climate_growthseason_yearlytot$elevation.group <- factor(historical_climate_growthseason_yearlytot$elevation.group, levels = elev_order)
+allpops_historical_grwseason_yearlytot <- allpops_historical_grwseason %>% group_by(parent.pop, year, elevation.group) %>% summarise_at(c("pck", "ppt"), sum, na.rm = TRUE)
+allpops_historical_grwseason_yearlytot$elevation.group <- factor(allpops_historical_grwseason_yearlytot$elevation.group, levels = elev_order)
 
-hist_pck_total <- historical_climate_growthseason_yearlytot %>% ggplot(aes(x=year, y=pck, group=parent.pop, color=elevation.group)) + 
+hist_ppt_total <- allpops_historical_grwseason_yearlytot %>% ggplot(aes(x=year, y=ppt, group=parent.pop, color=elevation.group)) + 
   geom_point() + geom_line() + 
   scale_colour_manual(values=elev_three_palette) + 
   ggtitle("Historical Climate") + 
   theme_classic() + 
   theme(text=element_text(size=30), axis.text.x = element_text(angle = 45, hjust = 1))
-#ggsave("../output/growthseasonTot_SnwPck_HistoricalClim.png", width = 12, height = 6, units = "in")
-
-hist_ppt_total <- historical_climate_growthseason_yearlytot %>% ggplot(aes(x=year, y=ppt, group=parent.pop, color=elevation.group)) + 
-  geom_point() + geom_line() + 
-  scale_colour_manual(values=elev_three_palette) + 
-  ggtitle("Historical Climate") + 
-  theme_classic() + 
-  theme(text=element_text(size=30), axis.text.x = element_text(angle = 45, hjust = 1))
-#ggsave("../output/growthseasonTot_Precip_HistoricalClim.png", width = 12, height = 6, units = "in")
-
+ggsave("../output/Climate/growthseasonTot_Precip_HistoricalClim.png", width = 12, height = 6, units = "in")
 
 #should combine these into one figure and save that instead
-legend <- get_legend(hist_pck_total)
-hist_pck_total <- hist_pck_total + theme(legend.position="none")
-recent_pck_total <- recent_pck_total + theme(legend.position="none")
-grid.arrange(hist_pck_total, recent_pck_total, legend, ncol=3, widths=c(3.12, 3.12, 1.09))
- #2400 x 800
-
 legend <- get_legend(hist_ppt_total)
 hist_ppt_total <- hist_ppt_total + theme(legend.position="none")
 recent_ppt_total <- recent_ppt_total + theme(legend.position="none")
@@ -427,103 +603,140 @@ pop_elev_climate_avgs$elevation.group <- factor(pop_elev_climate_avgs$elevation.
 #### Recent Years - Growth Season
 
 ```{r}
-recent_climate_growthseason_avgs <- recent_climate_growthseason %>% group_by(parent.pop, elevation.group) %>% summarise_at(c("cwd", "pck", "ppt", "tmn", "tmx"), c(mean, sem), na.rm = TRUE) 
-names(recent_climate_growthseason_avgs) <- gsub("fn2", "sem", colnames(recent_climate_growthseason_avgs))
-names(recent_climate_growthseason_avgs) <-gsub("fn1", "mean", colnames(recent_climate_growthseason_avgs))
-recent_climate_growthseason_avgs #30 year averages during growth season months 
-recent_climate_growthseason_avgs$elevation.group <- factor(recent_climate_growthseason_avgs$elevation.group, levels=elev_order)       
+allpops_recent_grwseason_avgs <- allpops_recent_grwseason %>% group_by(parent.pop, elevation.group, elev_m) %>% summarise_at(c("cwd", "pck", "ppt", "tmn", "tmx"), c(mean, sem), na.rm = TRUE) 
+names(allpops_recent_grwseason_avgs) <- gsub("fn2", "sem", colnames(allpops_recent_grwseason_avgs))
+names(allpops_recent_grwseason_avgs) <-gsub("fn1", "mean", colnames(allpops_recent_grwseason_avgs))
+allpops_recent_grwseason_avgs #30 year averages during growth season months 
+allpops_recent_grwseason_avgs$elevation.group <- factor(allpops_recent_grwseason_avgs$elevation.group, levels=elev_order)       
 
-recent_climate_growthseason_avgs %>% ggplot(aes(x=fct_reorder(parent.pop, cwd_mean), y=cwd_mean, fill=elevation.group)) + 
+allpops_recent_grwseason_avgs %>% ggplot(aes(x=fct_reorder(parent.pop, cwd_mean), y=cwd_mean, fill=elev_m)) + 
   geom_col(width = 0.7,position = position_dodge(0.75)) +
   geom_errorbar(aes(ymin=cwd_mean-cwd_sem,ymax=cwd_mean+cwd_sem),width=.2, position = 
                   position_dodge(0.75)) +
   scale_y_continuous(expand = c(0, 0)) +
-  scale_fill_manual(values=elev_three_palette) + 
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0")+ 
   labs(fill="Elevation",x="Population", y="Avg CWD" ,title = "Average CWD during Growth Season - Recent Climate") +
    theme_classic() +
   theme(text=element_text(size=20), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/growthseasonAvg_CWD_RecentClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/growthseasonAvg_CWD_RecentClim.png", width = 12, height = 6, units = "in")
 
-recent_climate_growthseason_avgs %>% ggplot(aes(x=fct_reorder(parent.pop, ppt_mean), y=ppt_mean, fill=elevation.group)) + 
+allpops_recent_grwseason_avgs %>% ggplot(aes(x=fct_reorder(parent.pop, ppt_mean), y=ppt_mean, fill=elev_m)) + 
   geom_col(width = 0.7,position = position_dodge(0.75)) +
   geom_errorbar(aes(ymin=ppt_mean-ppt_sem,ymax=ppt_mean+ppt_sem),width=.2, position = 
                   position_dodge(0.75)) +
   scale_y_continuous(expand = c(0, 0)) +
-  scale_fill_manual(values=elev_three_palette) + 
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") + 
   labs(fill="Elevation",x="Population", y="Avg Precip" ,title = "Average Precip during Growth Season - Recent Climate") +
    theme_classic() +
   theme(text=element_text(size=20), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/growthseasonAvg_Precip_RecentClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/growthseasonAvg_Precip_RecentClim.png", width = 12, height = 6, units = "in")
 
-recent_climate_growthseason_avgs %>% ggplot(aes(x=fct_reorder(parent.pop, pck_mean), y=pck_mean, fill=elevation.group)) + 
-  geom_col(width = 0.7,position = position_dodge(0.75)) +
-  geom_errorbar(aes(ymin=pck_mean-pck_sem,ymax=pck_mean+pck_sem),width=.2, position = 
-                  position_dodge(0.75)) +
-  scale_y_continuous(expand = c(0, 0)) +
-  scale_fill_manual(values=elev_three_palette) + 
-  labs(fill="Elevation",x="Population", y="Avg SnwPck" ,title = "Average SnwPck during Growth Season - Recent Climate") +
-   theme_classic() +
-  theme(text=element_text(size=20), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/growthseasonAvg_SnwPck_RecentClim.png", width = 12, height = 6, units = "in")
-
-recent_climate_growthseason_avgs %>% ggplot(aes(x=fct_reorder(parent.pop, tmn_mean), y=tmn_mean, fill=elevation.group)) + 
+allpops_recent_grwseason_avgs %>% ggplot(aes(x=fct_reorder(parent.pop, tmn_mean), y=tmn_mean, fill=elev_m)) + 
   geom_col(width = 0.7,position = position_dodge(0.75)) +
   geom_errorbar(aes(ymin=tmn_mean-tmn_sem,ymax=tmn_mean+tmn_sem),width=.2, position = 
                   position_dodge(0.75)) +
   scale_y_continuous(expand = c(0, 0)) +
-  scale_fill_manual(values=elev_three_palette) + 
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") + 
   labs(fill="Elevation",x="Population", y="Avg MinTemp" ,title = "Average MinTemp during Growth Season - Recent Climate") +
    theme_classic() +
   theme(text=element_text(size=20), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/growthseasonAvg_MinTemp_RecentClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/growthseasonAvg_MinTemp_RecentClim.png", width = 12, height = 6, units = "in")
 
-recent_climate_growthseason_avgs %>% ggplot(aes(x=fct_reorder(parent.pop, tmx_mean), y=tmx_mean, fill=elevation.group)) + 
+allpops_recent_grwseason_avgs %>% ggplot(aes(x=fct_reorder(parent.pop, tmx_mean), y=tmx_mean, fill=elev_m)) + 
   geom_col(width = 0.7,position = position_dodge(0.75)) +
   geom_errorbar(aes(ymin=tmx_mean-tmx_sem,ymax=tmx_mean+tmx_sem),width=.2, position = 
                   position_dodge(0.75)) +
   scale_y_continuous(expand = c(0, 0)) +
-  scale_fill_manual(values=elev_three_palette) + 
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") + 
   labs(fill="Elevation",x="Population", y="Avg MaxTemp" ,title = "Average MaxTemp during Growth Season - Recent Climate") +
    theme_classic() +
   theme(text=element_text(size=20), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/growthseasonAvg_MaxTemp_RecentClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/growthseasonAvg_MaxTemp_RecentClim.png", width = 12, height = 6, units = "in")
 ```
 
 #### Historical Years - Growth Season
 
-Need to edit this
-
 ```{r}
-#Historical climate
-#historical_climate_growthseason_avgs
+allpops_historical_grwseason_avgs <- allpops_historical_grwseason %>% group_by(parent.pop, elevation.group, elev_m) %>% summarise_at(c("cwd", "pck", "ppt", "tmn", "tmx"), c(mean, sem), na.rm = TRUE) 
+names(allpops_historical_grwseason_avgs) <- gsub("fn2", "sem", colnames(allpops_historical_grwseason_avgs))
+names(allpops_historical_grwseason_avgs) <-gsub("fn1", "mean", colnames(allpops_historical_grwseason_avgs))
+allpops_historical_grwseason_avgs #30 year averages during growth season months 
+allpops_historical_grwseason_avgs$elevation.group <- factor(allpops_historical_grwseason_avgs$elevation.group, levels=elev_order)       
+
+allpops_historical_grwseason_avgs %>% ggplot(aes(x=fct_reorder(parent.pop, cwd_mean), y=cwd_mean, fill=elev_m)) + 
+  geom_col(width = 0.7,position = position_dodge(0.75)) +
+  geom_errorbar(aes(ymin=cwd_mean-cwd_sem,ymax=cwd_mean+cwd_sem),width=.2, position = 
+                  position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0")+ 
+  labs(fill="Elevation",x="Population", y="Avg CWD" ,title = "Average CWD during Growth Season - Historical Climate") +
+   theme_classic() +
+  theme(text=element_text(size=20), axis.text.x = element_text(angle = 45,  hjust = 1))
+ggsave("../output/Climate/growthseasonAvg_CWD_HistoricalClim.png", width = 12, height = 6, units = "in")
+
+allpops_historical_grwseason_avgs %>% ggplot(aes(x=fct_reorder(parent.pop, ppt_mean), y=ppt_mean, fill=elev_m)) + 
+  geom_col(width = 0.7,position = position_dodge(0.75)) +
+  geom_errorbar(aes(ymin=ppt_mean-ppt_sem,ymax=ppt_mean+ppt_sem),width=.2, position = 
+                  position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") + 
+  labs(fill="Elevation",x="Population", y="Avg Precip" ,title = "Average Precip during Growth Season - Historical Climate") +
+   theme_classic() +
+  theme(text=element_text(size=20), axis.text.x = element_text(angle = 45,  hjust = 1))
+ggsave("../output/Climate/growthseasonAvg_Precip_HistoricalClim.png", width = 12, height = 6, units = "in")
+
+allpops_historical_grwseason_avgs %>% ggplot(aes(x=fct_reorder(parent.pop, tmn_mean), y=tmn_mean, fill=elev_m)) + 
+  geom_col(width = 0.7,position = position_dodge(0.75)) +
+  geom_errorbar(aes(ymin=tmn_mean-tmn_sem,ymax=tmn_mean+tmn_sem),width=.2, position = 
+                  position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") + 
+  labs(fill="Elevation",x="Population", y="Avg MinTemp" ,title = "Average MinTemp during Growth Season - Historical Climate") +
+   theme_classic() +
+  theme(text=element_text(size=20), axis.text.x = element_text(angle = 45,  hjust = 1))
+ggsave("../output/Climate/growthseasonAvg_MinTemp_HistoricalClim.png", width = 12, height = 6, units = "in")
+
+allpops_historical_grwseason_avgs %>% ggplot(aes(x=fct_reorder(parent.pop, tmx_mean), y=tmx_mean, fill=elev_m)) + 
+  geom_col(width = 0.7,position = position_dodge(0.75)) +
+  geom_errorbar(aes(ymin=tmx_mean-tmx_sem,ymax=tmx_mean+tmx_sem),width=.2, position = 
+                  position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") + 
+  labs(fill="Elevation",x="Population", y="Avg MaxTemp" ,title = "Average MaxTemp during Growth Season - Historical Climate") +
+   theme_classic() +
+  theme(text=element_text(size=20), axis.text.x = element_text(angle = 45,  hjust = 1))
+ggsave("../output/Climate/growthseasonAvg_MaxTemp_HistoricalClim.png", width = 12, height = 6, units = "in")
 ```
 
 ## Climate trait correlations
 
 ```{r}
-recent_climate_growthseason %>% cor_test(cwd, pck, ppt, tmn, tmx, method = "pearson")
-recent_cor_mat <- recent_climate_growthseason %>% select(cwd, pck, ppt, tmn, tmx) %>% cor_mat()
+head(allpops_recent_grwseason)
+allpops_recent_grwseason <- tibble(allpops_recent_grwseason)
+allpops_recent_grwseason %>% cor_test(cwd, ppt, tmn, tmx, method = "pearson")
+recent_cor_mat <- allpops_recent_grwseason %>% select(cwd, tmn, tmx) %>% cor_mat()
 recent_cor_mat
 
-recent_cor = recent_climate_growthseason %>% select(cwd, pck, ppt, tmn, tmx) %>% cor()
-file_path= "../output/GrowthSeason_RecentClim_Cors.png"
+recent_cor = allpops_recent_grwseason %>% select(cwd, ppt, tmn, tmx) %>% cor()
+file_path= "../output/Climate/GrowthSeason_RecentClim_Cors.png"
 png(width = 12, height = 6, res= 300, units = "in", file=file_path, type = "cairo")
 corrplot(recent_cor)
 dev.off()
 
-historical_climate_growthseason %>% cor_test(cwd, pck, ppt, tmn, tmx, method = "pearson")
-historical_cor_mat <- historical_climate_growthseason %>% select(cwd, pck, ppt, tmn, tmx) %>% cor_mat()
+allpops_historical_grwseason <- tibble(allpops_historical_grwseason)
+allpops_historical_grwseason %>% cor_test(cwd, ppt, tmn, tmx, method = "pearson")
+historical_cor_mat <- allpops_historical_grwseason %>% select(cwd, ppt, tmn, tmx) %>% cor_mat()
 historical_cor_mat
 
-historical_cor = historical_climate_growthseason %>% select(cwd, pck, ppt, tmn, tmx) %>% cor()
-file_path= "../output/GrowthSeason_HistoricalClim_Cors.png"
+historical_cor = allpops_historical_grwseason %>% select(cwd, ppt, tmn, tmx) %>% cor()
+file_path= "../output/Climate/GrowthSeason_HistoricalClim_Cors.png"
 png(width = 12, height = 6, res= 300, units = "in", file=file_path, type = "cairo")
 corrplot(historical_cor)
 dev.off()
 ```
 
 Trait correlations are the same across recent and historical time
-periods (during the germination season)
+periods (during the growth season)
 
 ## Climate PCAs
 
@@ -538,13 +751,13 @@ Produce basic PCA plots
 
 ```{r}
 #normalize the data
-climate_normalized <- recent_climate_growthseason %>% select(cwd, pck, ppt, tmn, tmx) %>% scale() #normalize the data so they're all on the same scale
+climate_normalized <- allpops_recent_grwseason %>% select(cwd, ppt, tmn, tmx) %>% scale() #normalize the data so they're all on the same scale
 head(climate_normalized)
 cor.norm = cor(climate_normalized) #test correlations among the traits
 corrplot(cor.norm)
 
 climate.pca <- princomp(cor.norm) 
-summary(climate.pca) #PC1 explains 90% of the variation, PC2 explains 8.1%, together they explain 98%
+summary(climate.pca) #PC1 explains 91% of the variation, PC2 explains 9.3%, together they explain 99%
 climate.pca$loadings[, 1:2] #PC1 has high positive loading values for tmn, tmx, cwd
 fviz_eig(climate.pca) #scree plot 
 fviz_pca_var(climate.pca, col.var = "black") #biplot
@@ -554,9 +767,13 @@ fviz_pca_var(climate.pca, col.var = "black") #biplot
 #A high value, on the other hand, means a good representation of the variable on that component.
 fviz_cos2(climate.pca, choice = "var", axes = 1:2) #axes says which PCs to use 
 #biplot combined wiht cos2
+
+file_path= "../output/Climate/RecentClim_GrowthSeason_PCA.png"
+png(width = 5.5, height = 5, res= 300, units = "in", file=file_path, type = "cairo")
 fviz_pca_var(climate.pca, col.var = "cos2", 
             gradient.cols = c("black", "orange", "green"),
             repel = TRUE)
+dev.off()
 ```
 
 Overlay populations on PCA plot
@@ -566,7 +783,7 @@ pc = prcomp(climate_normalized, scale = TRUE)
 
 pc_data = data.frame(pc$x)
 
-locs_pc = cbind(recent_climate_growthseason, pc_data)
+locs_pc = cbind(allpops_recent_grwseason, pc_data)
 
 loadings = data.frame(varnames=rownames(pc$rotation), pc$rotation)
 
@@ -576,19 +793,23 @@ ggplot() +
   geom_point(data = filter(locs_pc, elevation.group == "Low"), aes(x = PC1, y = PC2), color = "#F5A540", alpha = 0.6) +
   geom_vline(xintercept = 0, linetype="dashed") + geom_hline(yintercept = 0, linetype="dashed") +
   theme_classic()
-ggsave("../output/RecentClim_PCA_Elev.png", width = 6, height = 4, units = "in")
+ggsave("../output/Climate/RecentClim_PCA_Elev.png", width = 6, height = 4, units = "in")
 ```
 
-### Average across al years and months (1 datapoint per pop)
+### Average across all years and months (1 datapoint per pop)
 
 Produce basic PCA plots
 
 ```{r}
 #normalize the data
-climate_normalized_avgs <- recent_climate_growthseason_avgs %>% ungroup() %>% select(cwd_mean, pck_mean, ppt_mean, tmn_mean, tmx_mean) %>% scale() #normalize the data so they're all on the same scale
+climate_normalized_avgs <- allpops_recent_grwseason_avgs %>% ungroup() %>% select(cwd_mean,  ppt_mean, tmn_mean, tmx_mean) %>% scale() #normalize the data so they're all on the same scale
 head(climate_normalized_avgs)
 cor.norm_avgs = cor(climate_normalized_avgs) #test correlations among the traits
+
+file_path= "../output/Climate/GrowthSeason_RecentClim_Cors_Avgs.png"
+png(width = 12, height = 6, res= 300, units = "in", file=file_path, type = "cairo")
 corrplot(cor.norm_avgs)
+dev.off()
 
 climate.pca_avgs <- princomp(cor.norm_avgs) 
 summary(climate.pca_avgs) #PC1 explains 90% of the variation, PC2 explains 8.1%, together they explain 98%
@@ -601,11 +822,13 @@ fviz_pca_var(climate.pca_avgs, col.var = "black") #biplot
 #A high value, on the other hand, means a good representation of the variable on that component.
 fviz_cos2(climate.pca_avgs, choice = "var", axes = 1:2) #axes says which PCs to use 
 #biplot combined wiht cos2
+
+file_path= "../output/Climate/RecentClim_GrowthSeason_PCA_Avgs.png"
+png(width = 5.5, height = 5, res= 300, units = "in", file=file_path, type = "cairo")
 fviz_pca_var(climate.pca_avgs, col.var = "cos2", 
             gradient.cols = c("black", "orange", "green"),
             repel = TRUE)
-
-#RecentClim_GrowthSeason_PCA_Avgs 5.5 x 5
+dev.off()
 ```
 
 Overlay populations on PCA plot
@@ -615,7 +838,7 @@ pc_avgs = prcomp(climate_normalized_avgs, scale = TRUE)
 
 pc_data = data.frame(pc_avgs$x)
 
-locs_pc = cbind(recent_climate_growthseason_avgs, pc_data)
+locs_pc = cbind(allpops_recent_grwseason_avgs, pc_data)
 names(locs_pc)
 
 loadings = data.frame(varnames=rownames(pc_avgs$rotation), pc_avgs$rotation)
@@ -628,7 +851,7 @@ ggplot() +
                   min.segment.length = 0, box.padding = 0.5) +
   geom_vline(xintercept = 0, linetype="dashed") + geom_hline(yintercept = 0, linetype="dashed") +
   theme_classic()
-ggsave("../output/RecentClim_PCA_Elev_Avgs.png", width = 6, height = 4, units = "in")
+ggsave("../output/Climate/RecentClim_PCA_Elev_Avgs.png", width = 6, height = 4, units = "in")
 ```
 
 ### Average across years per month
@@ -636,25 +859,29 @@ ggsave("../output/RecentClim_PCA_Elev_Avgs.png", width = 6, height = 4, units = 
 Calculate monthly averages
 
 ```{r}
-names(recent_climate_growthseason)
-recent_climate_growthseason_mosavgs <- recent_climate_growthseason %>% group_by(parent.pop, elevation.group, month) %>% summarise_at(c("cwd", "pck", "ppt", "tmn", "tmx"), c(mean, sem), na.rm = TRUE) 
-names(recent_climate_growthseason_mosavgs) <- gsub("fn2", "sem", colnames(recent_climate_growthseason_mosavgs))
-names(recent_climate_growthseason_mosavgs) <-gsub("fn1", "mean", colnames(recent_climate_growthseason_mosavgs))
-recent_climate_growthseason_mosavgs #30 year averages per growth season month 
-recent_climate_growthseason_mosavgs$elevation.group <- factor(recent_climate_growthseason_mosavgs$elevation.group, levels=elev_order) 
+names(allpops_recent_grwseason)
+allpops_recent_grwseason_mosavgs <- allpops_recent_grwseason %>% group_by(parent.pop, elevation.group, month) %>% summarise_at(c("cwd",  "ppt", "tmn", "tmx"), c(mean, sem), na.rm = TRUE) 
+names(allpops_recent_grwseason_mosavgs) <- gsub("fn2", "sem", colnames(allpops_recent_grwseason_mosavgs))
+names(allpops_recent_grwseason_mosavgs) <-gsub("fn1", "mean", colnames(allpops_recent_grwseason_mosavgs))
+allpops_recent_grwseason_mosavgs #30 year averages per growth season month 
+allpops_recent_grwseason_mosavgs$elevation.group <- factor(allpops_recent_grwseason_mosavgs$elevation.group, levels=elev_order) 
 ```
 
 Produce basic PCA plots
 
-*Color by growth month relative to germination season?*
+*Color by growth month relative to growth season?*
 
 ```{r}
-names(recent_climate_growthseason_mosavgs)
+names(allpops_recent_grwseason_mosavgs)
 #normalize the data
-climate_normalized_mosavgs <- recent_climate_growthseason_mosavgs %>% ungroup() %>% select(cwd_mean, pck_mean, ppt_mean, tmn_mean, tmx_mean) %>% scale() #normalize the data so they're all on the same scale
+climate_normalized_mosavgs <- allpops_recent_grwseason_mosavgs %>% ungroup() %>% select(cwd_mean,  ppt_mean, tmn_mean, tmx_mean) %>% scale() #normalize the data so they're all on the same scale
 head(climate_normalized_mosavgs)
 cor.norm_mosavgs = cor(climate_normalized_mosavgs) #test correlations among the traits
+
+file_path= "../output/Climate/GrowthSeason_RecentClim_Cors_MonthlyAvgs.png"
+png(width = 12, height = 6, res= 300, units = "in", file=file_path, type = "cairo")
 corrplot(cor.norm_mosavgs)
+dev.off()
 
 climate.pca_mosavgs <- princomp(cor.norm_mosavgs) 
 summary(climate.pca_mosavgs) #PC1 explains 90% of the variation, PC2 explains 8.1%, together they explain 98%
@@ -667,10 +894,13 @@ fviz_pca_var(climate.pca_mosavgs, col.var = "black") #biplot
 #A high value, on the other hand, means a good representation of the variable on that component.
 fviz_cos2(climate.pca_mosavgs, choice = "var", axes = 1:2) #axes says which PCs to use 
 #biplot combined wiht cos2
+
+file_path= "../output/Climate/RecentClim_GrowthSeason_PCA_MonthlyAvgs.png"
+png(width = 5.5, height = 5, res= 300, units = "in", file=file_path, type = "cairo")
 fviz_pca_var(climate.pca_mosavgs, col.var = "cos2", 
             gradient.cols = c("black", "orange", "green"),
             repel = TRUE)
-#RecentClim_GrowthSeason_PCA_MonthlyAvgs 5.5 x 5
+dev.off()
 ```
 
 Overlay populations on PCA plot
@@ -680,7 +910,7 @@ pc_mosavgs = prcomp(climate_normalized_mosavgs, scale = TRUE)
 
 pc_data = data.frame(pc_mosavgs$x)
 
-locs_pc = cbind(recent_climate_growthseason_mosavgs, pc_data)
+locs_pc = cbind(allpops_recent_grwseason_mosavgs, pc_data)
 
 loadings = data.frame(varnames=rownames(pc_mosavgs$rotation), pc_mosavgs$rotation)
 
@@ -692,7 +922,7 @@ ggplot() +
              min.segment.length = 0) +
   geom_vline(xintercept = 0, linetype="dashed") + geom_hline(yintercept = 0, linetype="dashed") +
   theme_classic()
-ggsave("../output/RecentClim_PCA_Elev_MonthlyAvgs_Pops.png", width = 6, height = 4, units = "in")
+ggsave("../output/Climate/RecentClim_PCA_Elev_MonthlyAvgs_Pops.png", width = 6, height = 4, units = "in")
 
 ggplot() +
   geom_point(data = filter(locs_pc, elevation.group == "High"), size=2, aes(x = PC1, y = PC2), color = "#0043F0") +
@@ -702,5 +932,5 @@ ggplot() +
                   min.segment.length = 0) +
   geom_vline(xintercept = 0, linetype="dashed") + geom_hline(yintercept = 0, linetype="dashed") +
   theme_classic()
-ggsave("../output/RecentClim_PCA_Elev_MonthlyAvgs_Months.png", width = 6, height = 4, units = "in")
+ggsave("../output/Climate/RecentClim_PCA_Elev_MonthlyAvgs_Months.png", width = 6, height = 4, units = "in")
 ```
