@@ -11,6 +11,10 @@ output:
 
 Question: - Should we calculate a regression b/t height and longest leaf?
 
+To Do:
+
+Add climate to the models!
+
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)

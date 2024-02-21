@@ -11,6 +11,10 @@ output:
 
 Question: - Should we calculate a regression b/t height and longest leaf?
 
+To Do:
+
+Add climate to the models!
+
 
 
 
@@ -53,7 +57,7 @@ library(tidymodels)
 ## ✖ dplyr::lag()      masks stats::lag()
 ## ✖ yardstick::spec() masks readr::spec()
 ## ✖ recipes::step()   masks stats::step()
-## • Use tidymodels_prefer() to resolve common conflicts.
+## • Learn how to get started at https://www.tidymodels.org/start/
 ```
 
 ```r
@@ -619,7 +623,7 @@ single_time_all_GTONE %>% select(height_cm, longest_leaf_cm) %>%
 ## Warning: Removed 488 rows containing non-finite values (`stat_bin()`).
 ```
 
-![](Single_Time_Size_files/figure-html/unnamed-chunk-5-1.png)<!-- -->
+![](UCD_Single_Time_Size_files/figure-html/unnamed-chunk-5-1.png)<!-- -->
 
 ```
 ## 
@@ -634,7 +638,7 @@ single_time_all_GTONE %>% select(height_cm, longest_leaf_cm) %>%
 ## Warning: Removed 490 rows containing non-finite values (`stat_bin()`).
 ```
 
-![](Single_Time_Size_files/figure-html/unnamed-chunk-5-2.png)<!-- -->
+![](UCD_Single_Time_Size_files/figure-html/unnamed-chunk-5-2.png)<!-- -->
 
 ```r
 #prints height first then longest leaf 
@@ -660,7 +664,7 @@ single_time_all_GTONE %>% select(height_cm, longest_leaf_cm) %>%
 ## Warning: Removed 488 rows containing non-finite values (`stat_qq_line()`).
 ```
 
-![](Single_Time_Size_files/figure-html/unnamed-chunk-5-3.png)<!-- -->
+![](UCD_Single_Time_Size_files/figure-html/unnamed-chunk-5-3.png)<!-- -->
 
 ```
 ## 
@@ -675,7 +679,7 @@ single_time_all_GTONE %>% select(height_cm, longest_leaf_cm) %>%
 ## Warning: Removed 490 rows containing non-finite values (`stat_qq_line()`).
 ```
 
-![](Single_Time_Size_files/figure-html/unnamed-chunk-5-4.png)<!-- -->
+![](UCD_Single_Time_Size_files/figure-html/unnamed-chunk-5-4.png)<!-- -->
 
 ```r
 #all months height is right skewed
@@ -709,7 +713,7 @@ single_time_all_GTONE_transf %>% select(ends_with("cm")) %>%
 ## Warning: Removed 488 rows containing non-finite values (`stat_bin()`).
 ```
 
-![](Single_Time_Size_files/figure-html/unnamed-chunk-5-5.png)<!-- -->
+![](UCD_Single_Time_Size_files/figure-html/unnamed-chunk-5-5.png)<!-- -->
 
 ```
 ## 
@@ -724,7 +728,7 @@ single_time_all_GTONE_transf %>% select(ends_with("cm")) %>%
 ## Warning: Removed 490 rows containing non-finite values (`stat_bin()`).
 ```
 
-![](Single_Time_Size_files/figure-html/unnamed-chunk-5-6.png)<!-- -->
+![](UCD_Single_Time_Size_files/figure-html/unnamed-chunk-5-6.png)<!-- -->
 
 ```
 ## 
@@ -739,7 +743,7 @@ single_time_all_GTONE_transf %>% select(ends_with("cm")) %>%
 ## Warning: Removed 488 rows containing non-finite values (`stat_bin()`).
 ```
 
-![](Single_Time_Size_files/figure-html/unnamed-chunk-5-7.png)<!-- -->
+![](UCD_Single_Time_Size_files/figure-html/unnamed-chunk-5-7.png)<!-- -->
 
 ```
 ## 
@@ -754,7 +758,7 @@ single_time_all_GTONE_transf %>% select(ends_with("cm")) %>%
 ## Warning: Removed 488 rows containing non-finite values (`stat_bin()`).
 ```
 
-![](Single_Time_Size_files/figure-html/unnamed-chunk-5-8.png)<!-- -->
+![](UCD_Single_Time_Size_files/figure-html/unnamed-chunk-5-8.png)<!-- -->
 
 ```
 ## 
@@ -769,7 +773,7 @@ single_time_all_GTONE_transf %>% select(ends_with("cm")) %>%
 ## Warning: Removed 488 rows containing non-finite values (`stat_bin()`).
 ```
 
-![](Single_Time_Size_files/figure-html/unnamed-chunk-5-9.png)<!-- -->
+![](UCD_Single_Time_Size_files/figure-html/unnamed-chunk-5-9.png)<!-- -->
 
 ```
 ## 
@@ -784,7 +788,7 @@ single_time_all_GTONE_transf %>% select(ends_with("cm")) %>%
 ## Warning: Removed 490 rows containing non-finite values (`stat_bin()`).
 ```
 
-![](Single_Time_Size_files/figure-html/unnamed-chunk-5-10.png)<!-- -->
+![](UCD_Single_Time_Size_files/figure-html/unnamed-chunk-5-10.png)<!-- -->
 
 ```
 ## 
@@ -799,7 +803,7 @@ single_time_all_GTONE_transf %>% select(ends_with("cm")) %>%
 ## Warning: Removed 490 rows containing non-finite values (`stat_bin()`).
 ```
 
-![](Single_Time_Size_files/figure-html/unnamed-chunk-5-11.png)<!-- -->
+![](UCD_Single_Time_Size_files/figure-html/unnamed-chunk-5-11.png)<!-- -->
 
 ```
 ## 
@@ -814,7 +818,7 @@ single_time_all_GTONE_transf %>% select(ends_with("cm")) %>%
 ## Warning: Removed 490 rows containing non-finite values (`stat_bin()`).
 ```
 
-![](Single_Time_Size_files/figure-html/unnamed-chunk-5-12.png)<!-- -->
+![](UCD_Single_Time_Size_files/figure-html/unnamed-chunk-5-12.png)<!-- -->
 
 ```r
 #prints in the following order: height, longest leaf, sheight, logheight, log10height, slongest_leaf_cm, loglongest_leaf_cm, log10longest_leaf_cm
@@ -839,7 +843,7 @@ single_time_all_GTONE_transf %>% select(ends_with("cm")) %>%
 ## Warning: Removed 488 rows containing non-finite values (`stat_qq_line()`).
 ```
 
-![](Single_Time_Size_files/figure-html/unnamed-chunk-5-13.png)<!-- -->
+![](UCD_Single_Time_Size_files/figure-html/unnamed-chunk-5-13.png)<!-- -->
 
 ```
 ## 
@@ -854,7 +858,7 @@ single_time_all_GTONE_transf %>% select(ends_with("cm")) %>%
 ## Warning: Removed 490 rows containing non-finite values (`stat_qq_line()`).
 ```
 
-![](Single_Time_Size_files/figure-html/unnamed-chunk-5-14.png)<!-- -->
+![](UCD_Single_Time_Size_files/figure-html/unnamed-chunk-5-14.png)<!-- -->
 
 ```
 ## 
@@ -869,7 +873,7 @@ single_time_all_GTONE_transf %>% select(ends_with("cm")) %>%
 ## Warning: Removed 488 rows containing non-finite values (`stat_qq_line()`).
 ```
 
-![](Single_Time_Size_files/figure-html/unnamed-chunk-5-15.png)<!-- -->
+![](UCD_Single_Time_Size_files/figure-html/unnamed-chunk-5-15.png)<!-- -->
 
 ```
 ## 
@@ -881,7 +885,7 @@ single_time_all_GTONE_transf %>% select(ends_with("cm")) %>%
 ## Removed 488 rows containing non-finite values (`stat_qq_line()`).
 ```
 
-![](Single_Time_Size_files/figure-html/unnamed-chunk-5-16.png)<!-- -->
+![](UCD_Single_Time_Size_files/figure-html/unnamed-chunk-5-16.png)<!-- -->
 
 ```
 ## 
@@ -893,7 +897,7 @@ single_time_all_GTONE_transf %>% select(ends_with("cm")) %>%
 ## Removed 488 rows containing non-finite values (`stat_qq_line()`).
 ```
 
-![](Single_Time_Size_files/figure-html/unnamed-chunk-5-17.png)<!-- -->
+![](UCD_Single_Time_Size_files/figure-html/unnamed-chunk-5-17.png)<!-- -->
 
 ```
 ## 
@@ -908,7 +912,7 @@ single_time_all_GTONE_transf %>% select(ends_with("cm")) %>%
 ## Warning: Removed 490 rows containing non-finite values (`stat_qq_line()`).
 ```
 
-![](Single_Time_Size_files/figure-html/unnamed-chunk-5-18.png)<!-- -->
+![](UCD_Single_Time_Size_files/figure-html/unnamed-chunk-5-18.png)<!-- -->
 
 ```
 ## 
@@ -920,7 +924,7 @@ single_time_all_GTONE_transf %>% select(ends_with("cm")) %>%
 ## Removed 490 rows containing non-finite values (`stat_qq_line()`).
 ```
 
-![](Single_Time_Size_files/figure-html/unnamed-chunk-5-19.png)<!-- -->
+![](UCD_Single_Time_Size_files/figure-html/unnamed-chunk-5-19.png)<!-- -->
 
 ```
 ## 
@@ -932,7 +936,7 @@ single_time_all_GTONE_transf %>% select(ends_with("cm")) %>%
 ## Removed 490 rows containing non-finite values (`stat_qq_line()`).
 ```
 
-![](Single_Time_Size_files/figure-html/unnamed-chunk-5-20.png)<!-- -->
+![](UCD_Single_Time_Size_files/figure-html/unnamed-chunk-5-20.png)<!-- -->
 
 ```r
 #square root transformation is the best for height (all months)
@@ -965,7 +969,7 @@ single_time_all_GTTWO %>% select(height_cm, longest_leaf_cm) %>%
 ## Warning: Removed 476 rows containing non-finite values (`stat_bin()`).
 ```
 
-![](Single_Time_Size_files/figure-html/unnamed-chunk-6-1.png)<!-- -->
+![](UCD_Single_Time_Size_files/figure-html/unnamed-chunk-6-1.png)<!-- -->
 
 ```
 ## 
@@ -980,7 +984,7 @@ single_time_all_GTTWO %>% select(height_cm, longest_leaf_cm) %>%
 ## Warning: Removed 478 rows containing non-finite values (`stat_bin()`).
 ```
 
-![](Single_Time_Size_files/figure-html/unnamed-chunk-6-2.png)<!-- -->
+![](UCD_Single_Time_Size_files/figure-html/unnamed-chunk-6-2.png)<!-- -->
 
 ```r
 #prints height first then longest leaf 
@@ -1006,7 +1010,7 @@ single_time_all_GTTWO %>% select(height_cm, longest_leaf_cm) %>%
 ## Warning: Removed 476 rows containing non-finite values (`stat_qq_line()`).
 ```
 
-![](Single_Time_Size_files/figure-html/unnamed-chunk-6-3.png)<!-- -->
+![](UCD_Single_Time_Size_files/figure-html/unnamed-chunk-6-3.png)<!-- -->
 
 ```
 ## 
@@ -1021,7 +1025,7 @@ single_time_all_GTTWO %>% select(height_cm, longest_leaf_cm) %>%
 ## Warning: Removed 478 rows containing non-finite values (`stat_qq_line()`).
 ```
 
-![](Single_Time_Size_files/figure-html/unnamed-chunk-6-4.png)<!-- -->
+![](UCD_Single_Time_Size_files/figure-html/unnamed-chunk-6-4.png)<!-- -->
 
 ```r
 #all months height is right skewed, similar to GTONE results 
@@ -1055,7 +1059,7 @@ single_time_all_GTTWO_transf %>% select(ends_with("cm")) %>%
 ## Warning: Removed 476 rows containing non-finite values (`stat_bin()`).
 ```
 
-![](Single_Time_Size_files/figure-html/unnamed-chunk-6-5.png)<!-- -->
+![](UCD_Single_Time_Size_files/figure-html/unnamed-chunk-6-5.png)<!-- -->
 
 ```
 ## 
@@ -1070,7 +1074,7 @@ single_time_all_GTTWO_transf %>% select(ends_with("cm")) %>%
 ## Warning: Removed 478 rows containing non-finite values (`stat_bin()`).
 ```
 
-![](Single_Time_Size_files/figure-html/unnamed-chunk-6-6.png)<!-- -->
+![](UCD_Single_Time_Size_files/figure-html/unnamed-chunk-6-6.png)<!-- -->
 
 ```
 ## 
@@ -1085,7 +1089,7 @@ single_time_all_GTTWO_transf %>% select(ends_with("cm")) %>%
 ## Warning: Removed 476 rows containing non-finite values (`stat_bin()`).
 ```
 
-![](Single_Time_Size_files/figure-html/unnamed-chunk-6-7.png)<!-- -->
+![](UCD_Single_Time_Size_files/figure-html/unnamed-chunk-6-7.png)<!-- -->
 
 ```
 ## 
@@ -1100,7 +1104,7 @@ single_time_all_GTTWO_transf %>% select(ends_with("cm")) %>%
 ## Warning: Removed 476 rows containing non-finite values (`stat_bin()`).
 ```
 
-![](Single_Time_Size_files/figure-html/unnamed-chunk-6-8.png)<!-- -->
+![](UCD_Single_Time_Size_files/figure-html/unnamed-chunk-6-8.png)<!-- -->
 
 ```
 ## 
@@ -1115,7 +1119,7 @@ single_time_all_GTTWO_transf %>% select(ends_with("cm")) %>%
 ## Warning: Removed 476 rows containing non-finite values (`stat_bin()`).
 ```
 
-![](Single_Time_Size_files/figure-html/unnamed-chunk-6-9.png)<!-- -->
+![](UCD_Single_Time_Size_files/figure-html/unnamed-chunk-6-9.png)<!-- -->
 
 ```
 ## 
@@ -1130,7 +1134,7 @@ single_time_all_GTTWO_transf %>% select(ends_with("cm")) %>%
 ## Warning: Removed 478 rows containing non-finite values (`stat_bin()`).
 ```
 
-![](Single_Time_Size_files/figure-html/unnamed-chunk-6-10.png)<!-- -->
+![](UCD_Single_Time_Size_files/figure-html/unnamed-chunk-6-10.png)<!-- -->
 
 ```
 ## 
@@ -1145,7 +1149,7 @@ single_time_all_GTTWO_transf %>% select(ends_with("cm")) %>%
 ## Warning: Removed 478 rows containing non-finite values (`stat_bin()`).
 ```
 
-![](Single_Time_Size_files/figure-html/unnamed-chunk-6-11.png)<!-- -->
+![](UCD_Single_Time_Size_files/figure-html/unnamed-chunk-6-11.png)<!-- -->
 
 ```
 ## 
@@ -1160,7 +1164,7 @@ single_time_all_GTTWO_transf %>% select(ends_with("cm")) %>%
 ## Warning: Removed 478 rows containing non-finite values (`stat_bin()`).
 ```
 
-![](Single_Time_Size_files/figure-html/unnamed-chunk-6-12.png)<!-- -->
+![](UCD_Single_Time_Size_files/figure-html/unnamed-chunk-6-12.png)<!-- -->
 
 ```r
 #prints in the following order: height, longest leaf, sheight, logheight, log10height, slongest_leaf_cm, loglongest_leaf_cm, log10longest_leaf_cm
@@ -1185,7 +1189,7 @@ single_time_all_GTTWO_transf %>% select(ends_with("cm")) %>%
 ## Warning: Removed 476 rows containing non-finite values (`stat_qq_line()`).
 ```
 
-![](Single_Time_Size_files/figure-html/unnamed-chunk-6-13.png)<!-- -->
+![](UCD_Single_Time_Size_files/figure-html/unnamed-chunk-6-13.png)<!-- -->
 
 ```
 ## 
@@ -1200,7 +1204,7 @@ single_time_all_GTTWO_transf %>% select(ends_with("cm")) %>%
 ## Warning: Removed 478 rows containing non-finite values (`stat_qq_line()`).
 ```
 
-![](Single_Time_Size_files/figure-html/unnamed-chunk-6-14.png)<!-- -->
+![](UCD_Single_Time_Size_files/figure-html/unnamed-chunk-6-14.png)<!-- -->
 
 ```
 ## 
@@ -1215,7 +1219,7 @@ single_time_all_GTTWO_transf %>% select(ends_with("cm")) %>%
 ## Warning: Removed 476 rows containing non-finite values (`stat_qq_line()`).
 ```
 
-![](Single_Time_Size_files/figure-html/unnamed-chunk-6-15.png)<!-- -->
+![](UCD_Single_Time_Size_files/figure-html/unnamed-chunk-6-15.png)<!-- -->
 
 ```
 ## 
@@ -1227,7 +1231,7 @@ single_time_all_GTTWO_transf %>% select(ends_with("cm")) %>%
 ## Removed 476 rows containing non-finite values (`stat_qq_line()`).
 ```
 
-![](Single_Time_Size_files/figure-html/unnamed-chunk-6-16.png)<!-- -->
+![](UCD_Single_Time_Size_files/figure-html/unnamed-chunk-6-16.png)<!-- -->
 
 ```
 ## 
@@ -1239,7 +1243,7 @@ single_time_all_GTTWO_transf %>% select(ends_with("cm")) %>%
 ## Removed 476 rows containing non-finite values (`stat_qq_line()`).
 ```
 
-![](Single_Time_Size_files/figure-html/unnamed-chunk-6-17.png)<!-- -->
+![](UCD_Single_Time_Size_files/figure-html/unnamed-chunk-6-17.png)<!-- -->
 
 ```
 ## 
@@ -1254,7 +1258,7 @@ single_time_all_GTTWO_transf %>% select(ends_with("cm")) %>%
 ## Warning: Removed 478 rows containing non-finite values (`stat_qq_line()`).
 ```
 
-![](Single_Time_Size_files/figure-html/unnamed-chunk-6-18.png)<!-- -->
+![](UCD_Single_Time_Size_files/figure-html/unnamed-chunk-6-18.png)<!-- -->
 
 ```
 ## 
@@ -1266,7 +1270,7 @@ single_time_all_GTTWO_transf %>% select(ends_with("cm")) %>%
 ## Removed 478 rows containing non-finite values (`stat_qq_line()`).
 ```
 
-![](Single_Time_Size_files/figure-html/unnamed-chunk-6-19.png)<!-- -->
+![](UCD_Single_Time_Size_files/figure-html/unnamed-chunk-6-19.png)<!-- -->
 
 ```
 ## 
@@ -1278,7 +1282,7 @@ single_time_all_GTTWO_transf %>% select(ends_with("cm")) %>%
 ## Removed 478 rows containing non-finite values (`stat_qq_line()`).
 ```
 
-![](Single_Time_Size_files/figure-html/unnamed-chunk-6-20.png)<!-- -->
+![](UCD_Single_Time_Size_files/figure-html/unnamed-chunk-6-20.png)<!-- -->
 
 ```r
 #square root transformation is the best for height (all months), similar to GTONE results 
@@ -1309,7 +1313,7 @@ single_time_all_GTONE_transf %>% ggplot(aes(x=height_cm, y=longest_leaf_cm)) +
 ## Warning: Removed 490 rows containing missing values (`geom_point()`).
 ```
 
-![](Single_Time_Size_files/figure-html/unnamed-chunk-7-1.png)<!-- -->
+![](UCD_Single_Time_Size_files/figure-html/unnamed-chunk-7-1.png)<!-- -->
 
 ```r
 #generally positive relationship, but a lot more variability at lower heights 
@@ -1330,7 +1334,7 @@ single_time_all_GTONE_transf %>% ggplot(aes(x=longest_leaf_cm, y=height_cm)) +
 ## Removed 490 rows containing missing values (`geom_point()`).
 ```
 
-![](Single_Time_Size_files/figure-html/unnamed-chunk-7-2.png)<!-- -->
+![](UCD_Single_Time_Size_files/figure-html/unnamed-chunk-7-2.png)<!-- -->
 
 ```r
 #lots of variability across lengths 
@@ -1465,7 +1469,7 @@ single_time_all_GTONE_transf_summary %>%
   facet_grid(survey_month ~ .)
 ```
 
-![](Single_Time_Size_files/figure-html/unnamed-chunk-10-1.png)<!-- -->
+![](UCD_Single_Time_Size_files/figure-html/unnamed-chunk-10-1.png)<!-- -->
 
 ```r
 #ggsave("../output/UCD_Traits/Single_Time_Height.png", width = 14, height = 18, units = "in")
@@ -1488,7 +1492,7 @@ single_time_all_GTONE_transf_summary %>%
   facet_grid(survey_month ~ .)
 ```
 
-![](Single_Time_Size_files/figure-html/unnamed-chunk-11-1.png)<!-- -->
+![](UCD_Single_Time_Size_files/figure-html/unnamed-chunk-11-1.png)<!-- -->
 
 ```r
 #ggsave("../output/UCD_Traits/Single_Time_Longest_Leaf.png", width = 14, height = 18, units = "in")
