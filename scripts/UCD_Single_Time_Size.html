@@ -1374,7 +1374,7 @@ models_long_GTONEjan</code></pre>
 ## 17 jan_size     leaf_mode… ran_p… pare… sd__…  2.31e-1  NA           NA     NA  
 ## 18 jan_size     leaf_mode… ran_p… Resi… sd__…  7.26e-1  NA           NA     NA  
 ## # ℹ 1 more variable: p.value &lt;dbl&gt;</code></pre>
-<pre class="r"><code>#write_csv(models_long_GTONEdec, &quot;../output/UCD_Traits/01272023_Size_Models_GTONE.csv&quot;)
+<pre class="r"><code>write_csv(models_long_GTONEjan, &quot;../output/UCD_Traits/01272023_Size_Models_GTONE.csv&quot;)
 
 models_long_GTONEfeb &lt;-  reshape(tidy_models_GTONE_feb, direction = &quot;long&quot;, sep = &quot;_&quot;,
                            idvar = &quot;survey_month&quot;, 
@@ -1408,7 +1408,7 @@ models_long_GTONEfeb</code></pre>
 ## 17 feb_size     leaf_mode… ran_p… pare… sd__…  3.73e-1  NA           NA     NA  
 ## 18 feb_size     leaf_mode… ran_p… Resi… sd__…  1.26e+0  NA           NA     NA  
 ## # ℹ 1 more variable: p.value &lt;dbl&gt;</code></pre>
-<pre class="r"><code>#write_csv(models_long_GTONEdec, &quot;../output/UCD_Traits/02172023_Size_Models_GTONE.csv&quot;)</code></pre>
+<pre class="r"><code>write_csv(models_long_GTONEfeb, &quot;../output/UCD_Traits/02172023_Size_Models_GTONE.csv&quot;)</code></pre>
 </div>
 <div id="with-a-sample-size-of-greater-than-2-per-pop" class="section level3">
 <h3>With a sample size of greater than 2 per pop</h3>
@@ -1611,7 +1611,7 @@ models_long_GTTWOjan</code></pre>
 ## 17 jan_size     leaf_mode… ran_p… pare… sd__…  2.31e-1  NA           NA     NA  
 ## 18 jan_size     leaf_mode… ran_p… Resi… sd__…  7.26e-1  NA           NA     NA  
 ## # ℹ 1 more variable: p.value &lt;dbl&gt;</code></pre>
-<pre class="r"><code>#write_csv(models_long_GTTWOdec, &quot;../output/UCD_Traits/01272023_Size_Models_GTTWO.csv&quot;)
+<pre class="r"><code>write_csv(models_long_GTTWOjan, &quot;../output/UCD_Traits/01272023_Size_Models_GTTWO.csv&quot;)
 
 models_long_GTTWOfeb &lt;-  reshape(tidy_models_GTTWO_feb, direction = &quot;long&quot;, sep = &quot;_&quot;,
                            idvar = &quot;survey_month&quot;, 
@@ -1645,7 +1645,7 @@ models_long_GTTWOfeb</code></pre>
 ## 17 feb_size     leaf_mode… ran_p… pare… sd__…  3.76e-1  NA           NA     NA  
 ## 18 feb_size     leaf_mode… ran_p… Resi… sd__…  1.26e+0  NA           NA     NA  
 ## # ℹ 1 more variable: p.value &lt;dbl&gt;</code></pre>
-<pre class="r"><code>#write_csv(models_long_GTTWOdec, &quot;../output/UCD_Traits/02172023_Size_Models_GTTWO.csv&quot;)</code></pre>
+<pre class="r"><code>write_csv(models_long_GTTWOfeb, &quot;../output/UCD_Traits/02172023_Size_Models_GTTWO.csv&quot;)</code></pre>
 <p>Results similar to GTONE case for ranova and elev_m as a fixed
 effect.</p>
 </div>

@@ -1774,7 +1774,7 @@ models_long_GTONEjan
 ```
 
 ```r
-#write_csv(models_long_GTONEdec, "../output/UCD_Traits/01272023_Size_Models_GTONE.csv")
+write_csv(models_long_GTONEjan, "../output/UCD_Traits/01272023_Size_Models_GTONE.csv")
 
 models_long_GTONEfeb <-  reshape(tidy_models_GTONE_feb, direction = "long", sep = "_",
                            idvar = "survey_month", 
@@ -1814,7 +1814,7 @@ models_long_GTONEfeb
 ```
 
 ```r
-#write_csv(models_long_GTONEdec, "../output/UCD_Traits/02172023_Size_Models_GTONE.csv")
+write_csv(models_long_GTONEfeb, "../output/UCD_Traits/02172023_Size_Models_GTONE.csv")
 ```
 
 ### With a sample size of greater than 2 per pop
@@ -2092,7 +2092,7 @@ models_long_GTTWOjan
 ```
 
 ```r
-#write_csv(models_long_GTTWOdec, "../output/UCD_Traits/01272023_Size_Models_GTTWO.csv")
+write_csv(models_long_GTTWOjan, "../output/UCD_Traits/01272023_Size_Models_GTTWO.csv")
 
 models_long_GTTWOfeb <-  reshape(tidy_models_GTTWO_feb, direction = "long", sep = "_",
                            idvar = "survey_month", 
@@ -2132,6 +2132,6 @@ models_long_GTTWOfeb
 ```
 
 ```r
-#write_csv(models_long_GTTWOdec, "../output/UCD_Traits/02172023_Size_Models_GTTWO.csv")
+write_csv(models_long_GTTWOfeb, "../output/UCD_Traits/02172023_Size_Models_GTTWO.csv")
 ```
 Results similar to GTONE case for ranova and elev_m as a fixed effect. 
