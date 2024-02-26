@@ -10,10 +10,7 @@ output:
 # Analysis of Pre-transplant size
 
 To Do:
-
--   How predictive is this of survival in the field?
-  -   How to do this? Convert death to 0 vs. 1?
-  -   Somehow keep the dates and do some sort of survival analysis?
+-   Since such low survival to bud and fruit might be good to have an earlier time point too, like survival through winter?
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -32,6 +29,7 @@ library(emmeans) #for post-hoc pairwise comparisons
 library(naniar) #replaces values with NA
 library(corrplot) #plotting correlations 
 library(rstatix) #performing cor_test
+library(lubridate) #formatting dates
 sem <- function(x, na.rm=FALSE) {           #for caclulating standard error
   sd(x,na.rm=na.rm)/sqrt(length(na.omit(x)))
 } 
@@ -209,7 +207,128 @@ ranova(lmelength2) #both pop and mf still significant
 
 ## Load mort/pheno data 
 ```{r}
-ucdmort <- read_csv("../input/UCD_Data/CorrectedCSVs/Mortality_survey_20230508_corrected.csv")
-head(ucdmort)
+ucdmort.pheno <- read_csv("../input/UCD_Data/CorrectedCSVs/UCD_transplants_pheno_mort_20231016_corrected.csv")
+head(ucdmort.pheno)
+
+ucdmort.pheno2 <- ucdmort.pheno %>% 
+  rename(parent.pop=pop, date.first.bud=`Date First Bud`, date.first.fl=`Date First Flower`, date.first.fruit=`Date First Fruit`, date.last.fl=`Date Last Flower`, date.last.fruit=`Date Last Fruit`, death.date=`Death Date`) %>% 
+  filter(parent.pop!="buffer") #remove buffers
+head(ucdmort.pheno2,60)
+unique(ucdmort.pheno2$parent.pop)
+unique(ucdmort.pheno2$date.first.bud)
+
+ucdmort.pheno2 %>% filter(is.na(date.first.bud), !is.na(date.last.fruit)) #no cases where there is later rep info and not a bud date 
+
+ucdmort.pheno2 %>% filter(is.na(date.first.fruit), !is.na(date.last.fruit)) #no cases with last fruit, but not first fruit
+
+ucdmort.pheno2 %>% filter(is.na(date.first.bud), is.na(death.date)) #5 cases where there is no death date and no bud date (so a plant did not reproduce or die)
+
+ucdmort.pheno2 %>% filter(is.na(date.first.fruit), is.na(death.date)) #5 cases where there is no death date and no fruit date (same as above)
+
+ucdmort.pheno2 %>% filter(!is.na(date.first.bud), is.na(date.first.fruit), !is.na(death.date)) #18 cases where a plant started to bud and didn't survive to mature fruits 
+
+ucdmort.pheno2 %>% filter(!is.na(date.first.fruit), !is.na(death.date)) #28 cases with fruit date and death date 
+
+#convert dates to 0s (mortality) or 1s (survival)
+#Surv to Bud = survival to bud.date or until other plants were budding (for non-rep, potentially perennial plants)
+ucd.survtobud <- ucdmort.pheno2 %>% mutate(SurvtoBud=ifelse(!is.na(date.first.bud), 1,
+                                                            ifelse(!is.na(death.date), 0, 1))) %>% 
+  select(block:rep, date.first.bud, death.date, SurvtoBud)
+head(ucd.survtobud, 60)
+summary(ucd.survtobud) #avg = 7.3% surv 
+
+ucd.survtobud %>% filter(is.na(date.first.bud), SurvtoBud==1) #correct!
+ucd.survtobud %>% filter(!is.na(death.date), SurvtoBud==1) #46 cases with survival to bud, but later death date 
+
+#Surv to Fruit = survival to fruit date or until other plants were fruiting 
+ucd.survtofruit <- ucdmort.pheno2 %>% mutate(SurvtoFruit=ifelse(!is.na(date.first.fruit), 1,
+                                                            ifelse(!is.na(death.date), 0, 1))) %>% 
+  select(block:rep, date.first.fruit, death.date, SurvtoFruit)
+head(ucd.survtofruit, 60)
+summary(ucd.survtofruit) #avg = 4.9% survival 
+
+ucd.survtofruit %>% filter(is.na(date.first.fruit), SurvtoFruit==1) #5 potential perennials (all BH)
 ```
 
+## Merge survival with size
+```{r}
+head(ucd.survtobud)
+head(ucd.survtofruit)
+head(ucd_pretransplant_size_elev_transf)
+
+names(ucd.survtobud)
+names(ucd.survtofruit)
+names(ucd_pretransplant_size_elev_transf)
+
+ucd.all.surv <- full_join(ucd.survtobud, ucd.survtofruit) %>% select(block:rep, death.date, SurvtoBud, SurvtoFruit)
+ucd.all.surv
+
+ucd_pretransplant_size_surv <- left_join(ucd_pretransplant_size_elev_transf, ucd.all.surv) %>%
+  select(parent.pop:germ, UCD.seed.year, Lat, Long, elev_m, block, row, col, height_cm, longest_leaf_cm, sheight_cm, death.date, SurvtoBud, SurvtoFruit) %>% filter(!is.na(SurvtoBud)) %>% filter(!is.na(height_cm))
+dim(ucd_pretransplant_size_surv) #3 plants with pre-transplant size, but no death info, 7 plants with no size measurements
+head(ucd_pretransplant_size_surv)
+```
+
+## Mean survival by pop
+```{r}
+ucd_surv_mean <- ucd_pretransplant_size_surv %>% group_by(parent.pop, elev_m) %>% 
+  summarise(meanSurvtoBud=mean(SurvtoBud, na.rm = TRUE), sem.SurvtoBud=sem(SurvtoBud, na.rm=TRUE),
+            meanSurvtoFruit=mean(SurvtoFruit, na.rm = TRUE), sem.SurvtoFruit=sem(SurvtoFruit, na.rm=TRUE),
+            mean_height_cm = mean(height_cm,na.rm=(TRUE)), sem_height_cm=sem(height_cm, na.rm=(TRUE)), 
+            mean_longest_leaf_cm=mean(longest_leaf_cm, na.rm=(TRUE)), sem_longest_leaf_cm=sem(longest_leaf_cm, na.rm=TRUE))
+ucd_surv_mean
+
+ucd_surv_mean %>% 
+  ggplot(aes(x=fct_reorder(parent.pop, meanSurvtoBud), y=meanSurvtoBud, fill=elev_m)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) + 
+  geom_errorbar(aes(ymin=meanSurvtoBud-sem.SurvtoBud,ymax=meanSurvtoBud+sem.SurvtoBud),width=.2, position = 
+                  position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  labs(fill="Elevation (m)", y="Avg Surv to Bud", x="Population") +
+   theme_classic() +
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1)) 
+ggsave("../output/UCD_Traits/SurvtoBud.png", width = 14, height = 9, units = "in")
+
+ucd_surv_mean %>% 
+  ggplot(aes(x=fct_reorder(parent.pop, meanSurvtoFruit), y=meanSurvtoFruit, fill=elev_m)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) + 
+  geom_errorbar(aes(ymin=meanSurvtoFruit-sem.SurvtoFruit,ymax=meanSurvtoFruit+sem.SurvtoFruit),width=.2, position = 
+                  position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  labs(fill="Elevation (m)", y="Avg Surv to Bud", x="Population") +
+   theme_classic() +
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1)) 
+ggsave("../output/UCD_Traits/SurvtoFruit.png", width = 14, height = 9, units = "in")
+```
+
+## Plot size and survival
+```{r}
+ucd_pretransplant_size_surv %>% ggplot(aes(x=height_cm, y=SurvtoBud)) + geom_point()
+ucd_pretransplant_size_surv %>% ggplot(aes(x=height_cm, y=SurvtoFruit)) + geom_point()
+
+ucd_pretransplant_size_surv %>% ggplot(aes(x=longest_leaf_cm, y=SurvtoBud)) + geom_point()
+ucd_pretransplant_size_surv %>% ggplot(aes(x=longest_leaf_cm, y=SurvtoFruit)) + geom_point()
+
+#plot w/ population averages 
+ucd_surv_mean %>% ggplot(aes(x=mean_height_cm, y=meanSurvtoBud)) + geom_point()
+ucd_surv_mean %>% ggplot(aes(x=mean_height_cm, y=meanSurvtoFruit)) + geom_point()
+
+ucd_surv_mean %>% ggplot(aes(x=mean_longest_leaf_cm, y=meanSurvtoBud)) + geom_point()
+ucd_surv_mean %>% ggplot(aes(x=mean_longest_leaf_cm, y=meanSurvtoFruit)) + geom_point()
+```
+
+## Logistic Regresion 
+```{r}
+xtabs(~SurvtoBud + height_cm, data = ucd_pretransplant_size_surv) #contingency table 
+mylogit_height = glm(SurvtoBud ~ height_cm, data = ucd_pretransplant_size_surv, family = binomial())
+summary(mylogit_height) #P<0.0001, int= -4.2632, height= 0.6953
+#signficant positive relationship between height and survival 
+
+xtabs(~SurvtoBud + longest_leaf_cm, data = ucd_pretransplant_size_surv)
+mylogit_longleaf = glm(SurvtoBud ~ longest_leaf_cm, data = ucd_pretransplant_size_surv, family = binomial())
+summary(mylogit_longleaf) #P<0.0001, int=-4.4529, longleaf= 0.8777
+#significant positive relationship between longest leaf and survival 
+```
+The bigger you are pre-transplant, the more likely you are to survive 
