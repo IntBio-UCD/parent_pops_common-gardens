@@ -1,0 +1,359 @@
+---
+title: "UCD Climate Distance"
+author: "Brandie Quarles"
+date: "`r Sys.Date()`"
+output: 
+  html_document: 
+    keep_md: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Climate Distance at the Davis Garden
+Options:
+-   Basic subtraction as in Moran et al 2017 (garden site - home site)
+-   Gower’s environmental distance metric as in Rutter and Fenster 2007
+-   From PCAs "We calculated an overall environmental distance using PCA, with EDij correspond- ing to the Euclidian distance between i and j based on PCA1 & PCA2." as in Moran et al 2017
+
+## Relevant Libraries and Functions
+
+```{r}
+library(tidyverse)
+library(ggrepel)
+library(cowplot)
+library(gridExtra)
+library(corrplot) #plotting correlations 
+library(rstatix) #performing cor_test
+library(naniar) #replaces values with NA
+library(QBMS) #for function calc_biovars to calculate bioclim variables
+sem <- function(x, na.rm=FALSE) {
+  sd(x,na.rm=na.rm)/sqrt(length(na.omit(x)))
+} #standard error function 
+
+get_legend<-function(myggplot){
+  tmp <- ggplot_gtable(ggplot_build(myggplot))
+  leg <- which(sapply(tmp$grobs, function(x) x$name) == "guide-box")
+  legend <- tmp$grobs[[leg]]
+  return(legend)
+} #legend function for grid_arrange
+
+elev_three_palette <- c("#0043F0", "#C9727F", "#F5A540") #colors from Gremer et al 2019
+elev_order <- c("High", "Mid", "Low")
+
+#For scree plots 
+#library("devtools") #The package devtools is required for the installation as factoextra is hosted on github.
+#1install_github("kassambara/factoextra")
+library("factoextra")
+```
+
+## Home Climates (Flint Data)
+```{r}
+
+```
+
+
+## Davis Climate Data (Nov 2022-Oct 2023)
+Paltineanu et al 2012 calcualted climate water deficit as ppt (as a sum) - ref evaopotranspiration (refet). But I don't think this is correct b/c I got negative numbers for that calcualtion and minimum CWD is supposed to be 0...
+```{r}
+davis_climate <- read_csv("../input/CIMS_Davis_monthly.csv")
+head(davis_climate)
+
+davis_climate_short <- davis_climate %>% 
+  select(month_year=`Month Year`, refet=`Total ETo (mm)`, ppt=`Total Precip (mm)`,
+         avg_sol_rad=`Avg Sol Rad (W/sq.m)`, avg_vapor_pres=`Avg Vap Pres (kPa)`,
+         tmx=`Avg Max Air Temp (C)`, tmn=`Avg Min Air Temp (C)`, tavg=`Avg Air Temp (C)`,
+         avg_max_rel_hum=`Avg Max Rel Hum (%)`, avg_min_rel_hum=`Avg Min Rel Hum (%)`,
+         avg_rel_hum=`Avg Rel Hum (%)`, avg_dew_pt=`Avg Dew Point (C)`,
+         avg_wind_spd=`Avg Wind Speed (m/s)`, avg_soil_temp=`Avg Soil Temp (C)`) %>% 
+  separate(month_year, c("month", "year"), " ", remove = FALSE) %>% 
+  mutate(month=match(month, month.abb), cwd=ppt-refet)
+davis_climate_short
+summary(davis_climate_short)
+```
+
+## BioClim Variables (https://www.worldclim.org/data/bioclim.html#google_vignette)
+-   annual mean temperature (BIO1)
+-   mean diurnal range (BIO2)
+-   temperature seasonality (BIO4) (standard deviation *100)
+-   temperature annual range (BIO7) (Max Temperature of Warmest Month - Min Temperature of Coldest Month)
+-   mean temp of wettest quarter (BIO8)
+-   mean temp of driest quarter (BIO9)
+-   annual precipitation (BIO12) - sum of ppt for the entire year (not the avg)
+-   precipitation seasonality (BIO15)  (Coefficient of Variation)
+-   precip of warmest quarter (BIO18)
+-   precip of coldest quarter (BIO19)
+
+Use library QBMS, calc_biovars function: https://search.r-project.org/CRAN/refmans/QBMS/html/calc_biovars.html 
+Data.frame has 4 mandatory columns (year, ppt, tmin, and tmax), and 12 rows (months) for each year sorted from Jan to Dec.
+
+For home climate 
+```{r}
+pops_bioclim_recent_avgs <- read_csv("../output/Climate/Pops_BioClimAvgs_Recent.csv") %>% 
+  select(parent.pop:ppt_coldest_quarter_avg)
+head(pops_bioclim_recent_avgs)
+
+pops_bioclim_historical_avgs <- read_csv("../output/Climate/Pops_BioClimAvgs_Historical.csv")  %>% 
+  select(parent.pop:ppt_coldest_quarter_avg)
+head(pops_bioclim_historical_avgs)
+```
+
+For Davis Climate
+Had to exclude 2022
+```{r}
+davis_bioclim <- davis_climate_short %>% 
+  filter(year=="2023") %>% 
+  rename(tmin=tmn, tmax=tmx) %>% 
+  calc_biovars()
+davis_bioclim
+
+davis_bioclim_final <- davis_bioclim %>% 
+  mutate(across(c(bio1, bio2, bio4, bio7, bio8, bio9, bio12, bio15, bio18, bio19), as.numeric)) %>% 
+  select(ann_tmean_Davis=bio1, mean_diurnal_range_Davis=bio2,
+         temp_seasonality_Davis=bio4, temp_ann_range_Davis=bio7,
+         tmean_wettest_quarter_Davis=bio8, tmean_driest_quarter_Davis=bio9,
+         ann_ppt_Davis=bio12, ppt_seasonality_Davis=bio15, 
+         ppt_warmest_quarter_Davis=bio18, ppt_coldest_quarter_Davis=bio19) 
+davis_bioclim_final
+```
+
+
+## Davis Climate Trends
+```{r}
+davis_climate_short$month_year <- factor(davis_climate_short$month_year, levels = c("Nov 2022","Dec 2022","Jan 2023", "Feb 2023", "Mar 2023", "Apr 2023", "May 2023", "Jun 2023", "Jul 2023", "Aug 2023", "Sep 2023", "Oct 2023"))
+davis_climate_short %>% ggplot(aes(x=month_year, y=tavg)) + geom_point() + theme_classic()
+davis_climate_short %>% ggplot(aes(x=month_year, y=ppt)) + geom_point() + theme_classic()
+davis_climate_short %>% ggplot(aes(x=month_year, y=tmx)) + geom_point() + theme_classic()
+davis_climate_short %>% ggplot(aes(x=month_year, y=avg_rel_hum)) + geom_point() + theme_classic()
+davis_climate_short %>% ggplot(aes(x=month_year, y=avg_wind_spd)) + geom_point() + theme_classic()
+davis_climate_short %>% ggplot(aes(x=month_year, y=avg_sol_rad)) + geom_point() + theme_classic()
+```
+
+
+## Bioclim Climate Distance
+
+### Subtraction
+```{r}
+#Recent
+names(pops_bioclim_recent_avgs)
+recent_bioclim_dist <- bind_cols(davis_bioclim_final, pops_bioclim_recent_avgs)
+recent_bioclim_dist <- recent_bioclim_dist %>% 
+  mutate(ann_tmean_dist=ann_tmean_Davis - ann_tmean_avg,
+         mean_diurnal_range_dist=mean_diurnal_range_Davis - mean_diurnal_range_avg,
+         temp_seasonality_dist=temp_seasonality_Davis - temp_seasonality_avg,
+         temp_ann_range_dist=temp_ann_range_Davis - temp_ann_range_avg,
+         tmean_wettest_quarter_dist=tmean_wettest_quarter_Davis - tmean_wettest_quarter_avg,
+         tmean_driest_quarter_dist=tmean_driest_quarter_Davis - tmean_driest_quarter_avg,
+         ann_ppt_dist=ann_ppt_Davis - ann_ppt_avg,
+         ppt_seasonality_dist=ppt_seasonality_Davis - ppt_seasonality_avg, 
+         ppt_warmest_quarter_dist=ppt_warmest_quarter_Davis - ppt_warmest_quarter_avg,
+         ppt_coldest_quarter_dist=ppt_coldest_quarter_Davis - ppt_coldest_quarter_avg) %>% 
+  select(parent.pop, elevation.group, elev_m, ends_with("_dist"))
+recent_bioclim_dist
+
+#Historical
+names(pops_bioclim_historical_avgs)
+historical_bioclim_dist <- bind_cols(davis_bioclim_final, pops_bioclim_historical_avgs)
+historical_bioclim_dist <- historical_bioclim_dist %>% 
+  mutate(ann_tmean_dist=ann_tmean_Davis - ann_tmean_avg,
+         mean_diurnal_range_dist=mean_diurnal_range_Davis - mean_diurnal_range_avg,
+         temp_seasonality_dist=temp_seasonality_Davis - temp_seasonality_avg,
+         temp_ann_range_dist=temp_ann_range_Davis - temp_ann_range_avg,
+         tmean_wettest_quarter_dist=tmean_wettest_quarter_Davis - tmean_wettest_quarter_avg,
+         tmean_driest_quarter_dist=tmean_driest_quarter_Davis - tmean_driest_quarter_avg,
+         ann_ppt_dist=ann_ppt_Davis - ann_ppt_avg,
+         ppt_seasonality_dist=ppt_seasonality_Davis - ppt_seasonality_avg, 
+         ppt_warmest_quarter_dist=ppt_warmest_quarter_Davis - ppt_warmest_quarter_avg,
+         ppt_coldest_quarter_dist=ppt_coldest_quarter_Davis - ppt_coldest_quarter_avg) %>% 
+  select(parent.pop, elevation.group, elev_m, ends_with("_dist"))
+historical_bioclim_dist
+```
+
+Figures
+Recent (subtraction distance)
+```{r}
+recent_bioclim_dist %>% 
+  ggplot(aes(x=fct_reorder(parent.pop, ann_tmean_dist), y=ann_tmean_dist, group=parent.pop, fill=elev_m)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  labs(fill="Elevation (m)",x="Population") +
+  theme_classic() +
+  theme(text=element_text(size=14), axis.text.x = element_text(angle = 45,  hjust = 1))
+
+recent_bioclim_dist %>% 
+  ggplot(aes(x=fct_reorder(parent.pop, mean_diurnal_range_dist), y=mean_diurnal_range_dist, group=parent.pop, fill=elev_m)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  labs(fill="Elevation (m)",x="Population") +
+  theme_classic() +
+  theme(text=element_text(size=14), axis.text.x = element_text(angle = 45,  hjust = 1))
+
+recent_bioclim_dist %>% 
+  ggplot(aes(x=fct_reorder(parent.pop, temp_seasonality_dist), y=temp_seasonality_dist, group=parent.pop, fill=elev_m)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  labs(fill="Elevation (m)",x="Population") +
+  theme_classic() +
+  theme(text=element_text(size=14), axis.text.x = element_text(angle = 45,  hjust = 1))
+
+recent_bioclim_dist %>% 
+  ggplot(aes(x=fct_reorder(parent.pop, temp_ann_range_dist), y=temp_ann_range_dist, group=parent.pop, fill=elev_m)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  labs(fill="Elevation (m)",x="Population") +
+  theme_classic() +
+  theme(text=element_text(size=14), axis.text.x = element_text(angle = 45,  hjust = 1))
+
+recent_bioclim_dist %>% 
+  ggplot(aes(x=fct_reorder(parent.pop, tmean_wettest_quarter_dist), y=tmean_wettest_quarter_dist, group=parent.pop, fill=elev_m)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  labs(fill="Elevation (m)",x="Population") +
+  theme_classic() +
+  theme(text=element_text(size=14), axis.text.x = element_text(angle = 45,  hjust = 1))
+
+recent_bioclim_dist %>% 
+  ggplot(aes(x=fct_reorder(parent.pop, tmean_driest_quarter_dist), y=tmean_driest_quarter_dist, group=parent.pop, fill=elev_m)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  labs(fill="Elevation (m)",x="Population") +
+  theme_classic() +
+  theme(text=element_text(size=14), axis.text.x = element_text(angle = 45,  hjust = 1))
+
+recent_bioclim_dist %>% 
+  ggplot(aes(x=fct_reorder(parent.pop, ann_ppt_dist), y=ann_ppt_dist, group=parent.pop, fill=elev_m)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  labs(fill="Elevation (m)",x="Population") +
+  theme_classic() +
+  theme(text=element_text(size=14), axis.text.x = element_text(angle = 45,  hjust = 1))
+
+recent_bioclim_dist %>% 
+  ggplot(aes(x=fct_reorder(parent.pop, ppt_seasonality_dist), y=ppt_seasonality_dist, group=parent.pop, fill=elev_m)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  labs(fill="Elevation (m)",x="Population") +
+  theme_classic() +
+  theme(text=element_text(size=14), axis.text.x = element_text(angle = 45,  hjust = 1))
+
+recent_bioclim_dist %>% 
+  ggplot(aes(x=fct_reorder(parent.pop, ppt_warmest_quarter_dist), y=ppt_warmest_quarter_dist, group=parent.pop, fill=elev_m)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  labs(fill="Elevation (m)",x="Population") +
+  theme_classic() +
+  theme(text=element_text(size=14), axis.text.x = element_text(angle = 45,  hjust = 1))
+
+recent_bioclim_dist %>% 
+  ggplot(aes(x=fct_reorder(parent.pop, ppt_coldest_quarter_dist), y=ppt_coldest_quarter_dist, group=parent.pop, fill=elev_m)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  labs(fill="Elevation (m)",x="Population") +
+  theme_classic() +
+  theme(text=element_text(size=14), axis.text.x = element_text(angle = 45,  hjust = 1))
+```
+
+Historical (subtraction distance)
+```{r}
+historical_bioclim_dist %>% 
+  ggplot(aes(x=fct_reorder(parent.pop, ann_tmean_dist), y=ann_tmean_dist, group=parent.pop, fill=elev_m)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  labs(fill="Elevation (m)",x="Population") +
+  theme_classic() +
+  theme(text=element_text(size=14), axis.text.x = element_text(angle = 45,  hjust = 1))
+
+historical_bioclim_dist %>% 
+  ggplot(aes(x=fct_reorder(parent.pop, mean_diurnal_range_dist), y=mean_diurnal_range_dist, group=parent.pop, fill=elev_m)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  labs(fill="Elevation (m)",x="Population") +
+  theme_classic() +
+  theme(text=element_text(size=14), axis.text.x = element_text(angle = 45,  hjust = 1))
+
+historical_bioclim_dist %>% 
+  ggplot(aes(x=fct_reorder(parent.pop, temp_seasonality_dist), y=temp_seasonality_dist, group=parent.pop, fill=elev_m)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  labs(fill="Elevation (m)",x="Population") +
+  theme_classic() +
+  theme(text=element_text(size=14), axis.text.x = element_text(angle = 45,  hjust = 1))
+
+historical_bioclim_dist %>% 
+  ggplot(aes(x=fct_reorder(parent.pop, temp_ann_range_dist), y=temp_ann_range_dist, group=parent.pop, fill=elev_m)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  labs(fill="Elevation (m)",x="Population") +
+  theme_classic() +
+  theme(text=element_text(size=14), axis.text.x = element_text(angle = 45,  hjust = 1))
+
+historical_bioclim_dist %>% 
+  ggplot(aes(x=fct_reorder(parent.pop, tmean_wettest_quarter_dist), y=tmean_wettest_quarter_dist, group=parent.pop, fill=elev_m)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  labs(fill="Elevation (m)",x="Population") +
+  theme_classic() +
+  theme(text=element_text(size=14), axis.text.x = element_text(angle = 45,  hjust = 1))
+
+historical_bioclim_dist %>% 
+  ggplot(aes(x=fct_reorder(parent.pop, tmean_driest_quarter_dist), y=tmean_driest_quarter_dist, group=parent.pop, fill=elev_m)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  labs(fill="Elevation (m)",x="Population") +
+  theme_classic() +
+  theme(text=element_text(size=14), axis.text.x = element_text(angle = 45,  hjust = 1))
+
+historical_bioclim_dist %>% 
+  ggplot(aes(x=fct_reorder(parent.pop, ann_ppt_dist), y=ann_ppt_dist, group=parent.pop, fill=elev_m)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  labs(fill="Elevation (m)",x="Population") +
+  theme_classic() +
+  theme(text=element_text(size=14), axis.text.x = element_text(angle = 45,  hjust = 1))
+
+historical_bioclim_dist %>% 
+  ggplot(aes(x=fct_reorder(parent.pop, ppt_seasonality_dist), y=ppt_seasonality_dist, group=parent.pop, fill=elev_m)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  labs(fill="Elevation (m)",x="Population") +
+  theme_classic() +
+  theme(text=element_text(size=14), axis.text.x = element_text(angle = 45,  hjust = 1))
+
+historical_bioclim_dist %>% 
+  ggplot(aes(x=fct_reorder(parent.pop, ppt_warmest_quarter_dist), y=ppt_warmest_quarter_dist, group=parent.pop, fill=elev_m)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  labs(fill="Elevation (m)",x="Population") +
+  theme_classic() +
+  theme(text=element_text(size=14), axis.text.x = element_text(angle = 45,  hjust = 1))
+
+historical_bioclim_dist %>% 
+  ggplot(aes(x=fct_reorder(parent.pop, ppt_coldest_quarter_dist), y=ppt_coldest_quarter_dist, group=parent.pop, fill=elev_m)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  labs(fill="Elevation (m)",x="Population") +
+  theme_classic() +
+  theme(text=element_text(size=14), axis.text.x = element_text(angle = 45,  hjust = 1))
+```
+
