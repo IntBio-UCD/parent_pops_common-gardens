@@ -22,7 +22,8 @@ To Do:
 
         -   High: April-Sept
     -   Based on climate metrics: no snowpack and/or significant rain/lower CWD
-        -   Question: Should we keep the snowpack = 0 requirement for low elevation pops? or change to < 70mm?
+        -   Some pops grow all all year per the criteria below, is that possible? Also, some have really short growth season (1 or 2 months), is that possible?
+        -   John and Sam have code for daily data, with "first day to x event" - Ask Sam if she's calculated this for STTO pops 
     -   K means clustering to see if it splits into the 3 groups (Can
         give it the 30 year vector. Probably need to turn off scaling)
 
@@ -30,14 +31,7 @@ To Do:
 
     -   Color monthly PCA by month relative to growth season?
     -   Make PCAs for historical climate too
-    -   Try PCA with bioclim variables 
-        -   Bioclim vars only PCA? or combine with other Flint variables? Hard to combine b/c Flint data is for each month within a year and Bioclim variables are yearly summaries. Could do one with just Flint with all months in each year included and one with Flint growth season yearly averages combined with Bioclim variables 
-
--   Distance from home climate
-
-    -   Get UCD climate data
-
-    -   Calculate CWD
+    -   Bioclim vars only PCA okay? or combine with other Flint variables? Hard to combine b/c Flint data is for each month within a year and Bioclim variables are yearly summaries. Could do one with just Flint with all months in each year included and one with Flint growth season yearly averages combined with Bioclim variables 
 
 
 
@@ -888,23 +882,24 @@ pop_elev_climate_bioclim_prep %>% filter(parent.pop=="BH") %>% filter(year=="189
 
 
 ## Calculation of recent (last 30 years) and historical climate (prior 30 years)
+Took out 2022 b/c only 9 months for that year 
 Flint variables
 
 ```r
-pop_elev_climate_recent <- pop_elev_climate %>% filter(year>1992) %>% select(parent.pop:month, cwd, pck, ppt, tmn, tmx)
+pop_elev_climate_recent <- pop_elev_climate %>% filter(year>1991 & year<2022) %>% select(parent.pop:month, cwd, pck, ppt, tmn, tmx)
 head(pop_elev_climate_recent)
 ```
 
 ```
 ## # A tibble: 6 × 10
-##   parent.pop elevation.group elev_m year  month   cwd   pck   ppt   tmn   tmx
-##   <chr>      <chr>            <dbl> <chr> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl>
-## 1 BH         Low               511. 1993      1  25.6     0 289.   1.82  12.1
-## 2 BH         Low               511. 1993      2  37.0     0 140.   3.29  13.8
-## 3 BH         Low               511. 1993      3  46.0     0  89.9  7.11  18.3
-## 4 BH         Low               511. 1993      4  71.2     0  12.8  6.01  19.8
-## 5 BH         Low               511. 1993      5  73.7     0  12.9  9.38  25.7
-## 6 BH         Low               511. 1993      6  35.7     0  33.6 11.2   29.2
+##   parent.pop elevation.group elev_m year  month   cwd   pck      ppt   tmn   tmx
+##   <chr>      <chr>            <dbl> <chr> <dbl> <dbl> <dbl>    <dbl> <dbl> <dbl>
+## 1 BH         Low               511. 1992      1  28.3     0  42.7     1.22  10.6
+## 2 BH         Low               511. 1992      2  40.1     0 175.      5.26  16.0
+## 3 BH         Low               511. 1992      3  52.0     0  76.3     6.21  17.4
+## 4 BH         Low               511. 1992      4  75.9     0   2.19    8.31  23.6
+## 5 BH         Low               511. 1992      5  78.6     0   0.0800 12.7   29.4
+## 6 BH         Low               511. 1992      6  99.1     0   1.77   13.6   30.2
 ```
 
 ```r
@@ -913,14 +908,14 @@ tail(pop_elev_climate_recent)
 
 ```
 ## # A tibble: 6 × 10
-##   parent.pop elevation.group elev_m year  month   cwd   pck   ppt   tmn   tmx
-##   <chr>      <chr>            <dbl> <chr> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl>
-## 1 YO8        High             2591. 2022      4  70.2  258. 89.6  -3.48  7.81
-## 2 YO8        High             2591. 2022      5  89.5    0   2.67 -1.04 12.1 
-## 3 YO8        High             2591. 2022      6 121.     0   4.53  4.67 17.5 
-## 4 YO8        High             2591. 2022      7 135.     0   1.55  9.69 22.5 
-## 5 YO8        High             2591. 2022      8 115.     0  22.8   9.39 22.4 
-## 6 YO8        High             2591. 2022      9 101.     0  49.6   7.23 19.4
+##   parent.pop elevation.group elev_m year  month   cwd   pck    ppt    tmn   tmx
+##   <chr>      <chr>            <dbl> <chr> <dbl> <dbl> <dbl>  <dbl>  <dbl> <dbl>
+## 1 YO8        High             2591. 2021      7 114.     0   30.0  10.8   24.1 
+## 2 YO8        High             2591. 2021      8 127.     0    3.33  9.11  22.7 
+## 3 YO8        High             2591. 2021      9 107.     0    3.39  5.92  20.4 
+## 4 YO8        High             2591. 2021     10  68.4    0  202.   -0.660 10.6 
+## 5 YO8        High             2591. 2021     11  41.0    0   30.0  -0.820 10.8 
+## 6 YO8        High             2591. 2021     12  23.3  400. 408.   -5.79   2.32
 ```
 
 ```r
@@ -929,26 +924,26 @@ summary(pop_elev_climate_recent)
 
 ```
 ##   parent.pop        elevation.group        elev_m           year          
-##  Length:8211        Length:8211        Min.   : 313.0   Length:8211       
+##  Length:8280        Length:8280        Min.   : 313.0   Length:8280       
 ##  Class :character   Class :character   1st Qu.: 748.9   Class :character  
 ##  Mode  :character   Mode  :character   Median :1934.5   Mode  :character  
 ##                                        Mean   :1649.7                     
 ##                                        3rd Qu.:2373.2                     
 ##                                        Max.   :2872.3                     
-##      month             cwd              pck               ppt        
-##  Min.   : 1.000   Min.   :  0.00   Min.   :   0.00   Min.   :  0.00  
-##  1st Qu.: 3.000   1st Qu.: 25.52   1st Qu.:   0.00   1st Qu.:  7.13  
-##  Median : 6.000   Median : 46.34   Median :   0.00   Median : 47.09  
-##  Mean   : 6.462   Mean   : 56.08   Mean   : 132.07   Mean   : 97.82  
-##  3rd Qu.: 9.000   3rd Qu.: 83.50   3rd Qu.:  87.27   3rd Qu.:141.94  
-##  Max.   :12.000   Max.   :194.73   Max.   :2183.62   Max.   :981.42  
-##       tmn               tmx       
-##  Min.   :-13.180   Min.   :-3.22  
-##  1st Qu.: -1.855   1st Qu.: 9.42  
-##  Median :  3.530   Median :15.70  
-##  Mean   :  3.585   Mean   :16.55  
-##  3rd Qu.:  8.725   3rd Qu.:23.07  
-##  Max.   : 21.350   Max.   :37.38
+##      month            cwd              pck               ppt        
+##  Min.   : 1.00   Min.   :  0.00   Min.   :   0.00   Min.   :  0.00  
+##  1st Qu.: 3.75   1st Qu.: 25.38   1st Qu.:   0.00   1st Qu.:  7.48  
+##  Median : 6.50   Median : 46.28   Median :   0.00   Median : 48.34  
+##  Mean   : 6.50   Mean   : 55.83   Mean   : 131.07   Mean   : 99.06  
+##  3rd Qu.: 9.25   3rd Qu.: 82.86   3rd Qu.:  84.82   3rd Qu.:143.49  
+##  Max.   :12.00   Max.   :194.73   Max.   :2183.62   Max.   :981.42  
+##       tmn               tmx        
+##  Min.   :-13.180   Min.   :-3.220  
+##  1st Qu.: -1.863   1st Qu.: 9.398  
+##  Median :  3.490   Median :15.680  
+##  Mean   :  3.531   Mean   :16.506  
+##  3rd Qu.:  8.650   3rd Qu.:23.020  
+##  Max.   : 21.350   Max.   :37.380
 ```
 
 ```r
@@ -958,59 +953,91 @@ xtabs(~parent.pop+month, data=pop_elev_climate_recent)
 ```
 ##           month
 ## parent.pop  1  2  3  4  5  6  7  8  9 10 11 12
-##      BH    30 30 30 30 30 30 30 30 30 29 29 29
-##      CC    30 30 30 30 30 30 30 30 30 29 29 29
-##      CP2   30 30 30 30 30 30 30 30 30 29 29 29
-##      CP3   30 30 30 30 30 30 30 30 30 29 29 29
-##      DPR   30 30 30 30 30 30 30 30 30 29 29 29
-##      FR    30 30 30 30 30 30 30 30 30 29 29 29
-##      IH    30 30 30 30 30 30 30 30 30 29 29 29
-##      LV1   30 30 30 30 30 30 30 30 30 29 29 29
-##      LV3   30 30 30 30 30 30 30 30 30 29 29 29
-##      LVTR1 30 30 30 30 30 30 30 30 30 29 29 29
-##      SC    30 30 30 30 30 30 30 30 30 29 29 29
-##      SQ1   30 30 30 30 30 30 30 30 30 29 29 29
-##      SQ2   30 30 30 30 30 30 30 30 30 29 29 29
-##      SQ3   30 30 30 30 30 30 30 30 30 29 29 29
-##      TM2   30 30 30 30 30 30 30 30 30 29 29 29
-##      WL1   30 30 30 30 30 30 30 30 30 29 29 29
-##      WL2   30 30 30 30 30 30 30 30 30 29 29 29
-##      WR    30 30 30 30 30 30 30 30 30 29 29 29
-##      WV    30 30 30 30 30 30 30 30 30 29 29 29
-##      YO11  30 30 30 30 30 30 30 30 30 29 29 29
-##      YO4   30 30 30 30 30 30 30 30 30 29 29 29
-##      YO7   30 30 30 30 30 30 30 30 30 29 29 29
-##      YO8   30 30 30 30 30 30 30 30 30 29 29 29
+##      BH    30 30 30 30 30 30 30 30 30 30 30 30
+##      CC    30 30 30 30 30 30 30 30 30 30 30 30
+##      CP2   30 30 30 30 30 30 30 30 30 30 30 30
+##      CP3   30 30 30 30 30 30 30 30 30 30 30 30
+##      DPR   30 30 30 30 30 30 30 30 30 30 30 30
+##      FR    30 30 30 30 30 30 30 30 30 30 30 30
+##      IH    30 30 30 30 30 30 30 30 30 30 30 30
+##      LV1   30 30 30 30 30 30 30 30 30 30 30 30
+##      LV3   30 30 30 30 30 30 30 30 30 30 30 30
+##      LVTR1 30 30 30 30 30 30 30 30 30 30 30 30
+##      SC    30 30 30 30 30 30 30 30 30 30 30 30
+##      SQ1   30 30 30 30 30 30 30 30 30 30 30 30
+##      SQ2   30 30 30 30 30 30 30 30 30 30 30 30
+##      SQ3   30 30 30 30 30 30 30 30 30 30 30 30
+##      TM2   30 30 30 30 30 30 30 30 30 30 30 30
+##      WL1   30 30 30 30 30 30 30 30 30 30 30 30
+##      WL2   30 30 30 30 30 30 30 30 30 30 30 30
+##      WR    30 30 30 30 30 30 30 30 30 30 30 30
+##      WV    30 30 30 30 30 30 30 30 30 30 30 30
+##      YO11  30 30 30 30 30 30 30 30 30 30 30 30
+##      YO4   30 30 30 30 30 30 30 30 30 30 30 30
+##      YO7   30 30 30 30 30 30 30 30 30 30 30 30
+##      YO8   30 30 30 30 30 30 30 30 30 30 30 30
 ```
 
 ```r
-pop_elev_climate_historical <- pop_elev_climate %>% filter(year<=1992 & year>1962) %>% select(parent.pop:month, cwd, pck, ppt, tmn, tmx)
+pop_elev_climate_historical <- pop_elev_climate %>% filter(year<=1991 & year>1961) %>% select(parent.pop:month, cwd, pck, ppt, tmn, tmx)
 head(pop_elev_climate_historical, 13)
 ```
 
 ```
 ## # A tibble: 13 × 10
-##    parent.pop elevation.group elev_m year  month   cwd   pck    ppt    tmn   tmx
-##    <chr>      <chr>            <dbl> <chr> <dbl> <dbl> <dbl>  <dbl>  <dbl> <dbl>
-##  1 BH         Low               511. 1963      1  28.1     0 109.   -1.85   12.3
-##  2 BH         Low               511. 1963      2  43.8     0 139.    6.42   18.3
-##  3 BH         Low               511. 1963      3  44.8     0 108.    2.5    15.9
-##  4 BH         Low               511. 1963      4  37.1     0 144.    4.29   16.1
-##  5 BH         Low               511. 1963      5  12.3     0  23.3   9.68   24.0
-##  6 BH         Low               511. 1963      6  92.3     0   3.93 10.8    28.4
-##  7 BH         Low               511. 1963      7 122.      0   0    12.6    33.2
-##  8 BH         Low               511. 1963      8 139.      0   0    13.6    33.7
-##  9 BH         Low               511. 1963      9 126.      0   6.82 13.9    31.8
-## 10 BH         Low               511. 1963     10  86.9     0  42.1   9.44   24.8
-## 11 BH         Low               511. 1963     11  40.8     0 133.    4.5    15.7
-## 12 BH         Low               511. 1963     12  26.9     0   8.93 -0.160  10.1
-## 13 BH         Low               511. 1964      1  28.1     0  65.8   0.520  11.4
+##    parent.pop elevation.group elev_m year  month   cwd   pck     ppt   tmn   tmx
+##    <chr>      <chr>            <dbl> <chr> <dbl> <dbl> <dbl>   <dbl> <dbl> <dbl>
+##  1 BH         Low               511. 1962      1  28.5     0  59.8   -1.44  11.9
+##  2 BH         Low               511. 1962      2  37.4     0 289.     2.55  12.5
+##  3 BH         Low               511. 1962      3  45.3     0  80.6    2.15  15.0
+##  4 BH         Low               511. 1962      4  74.5     0   8.19   6.16  23.9
+##  5 BH         Low               511. 1962      5  70.6     0   3.08   6.72  23.8
+##  6 BH         Low               511. 1962      6  97.2     0   0.820 11.6   31.5
+##  7 BH         Low               511. 1962      7 127.      0   1.31  14.5   35.3
+##  8 BH         Low               511. 1962      8 141.      0   0     13.9   34.4
+##  9 BH         Low               511. 1962      9 125.      0   1.44  11.9   32.1
+## 10 BH         Low               511. 1962     10  86.2     0  48.8    8.47  24.1
+## 11 BH         Low               511. 1962     11  44.6     0   9.85   4.13  19.4
+## 12 BH         Low               511. 1962     12  31.2     0  57.8    2.20  15.4
+## 13 BH         Low               511. 1963      1  28.1     0 109.    -1.85  12.3
+```
+
+```r
+xtabs(~parent.pop+month, data=pop_elev_climate_historical)
+```
+
+```
+##           month
+## parent.pop  1  2  3  4  5  6  7  8  9 10 11 12
+##      BH    30 30 30 30 30 30 30 30 30 30 30 30
+##      CC    30 30 30 30 30 30 30 30 30 30 30 30
+##      CP2   30 30 30 30 30 30 30 30 30 30 30 30
+##      CP3   30 30 30 30 30 30 30 30 30 30 30 30
+##      DPR   30 30 30 30 30 30 30 30 30 30 30 30
+##      FR    30 30 30 30 30 30 30 30 30 30 30 30
+##      IH    30 30 30 30 30 30 30 30 30 30 30 30
+##      LV1   30 30 30 30 30 30 30 30 30 30 30 30
+##      LV3   30 30 30 30 30 30 30 30 30 30 30 30
+##      LVTR1 30 30 30 30 30 30 30 30 30 30 30 30
+##      SC    30 30 30 30 30 30 30 30 30 30 30 30
+##      SQ1   30 30 30 30 30 30 30 30 30 30 30 30
+##      SQ2   30 30 30 30 30 30 30 30 30 30 30 30
+##      SQ3   30 30 30 30 30 30 30 30 30 30 30 30
+##      TM2   30 30 30 30 30 30 30 30 30 30 30 30
+##      WL1   30 30 30 30 30 30 30 30 30 30 30 30
+##      WL2   30 30 30 30 30 30 30 30 30 30 30 30
+##      WR    30 30 30 30 30 30 30 30 30 30 30 30
+##      WV    30 30 30 30 30 30 30 30 30 30 30 30
+##      YO11  30 30 30 30 30 30 30 30 30 30 30 30
+##      YO4   30 30 30 30 30 30 30 30 30 30 30 30
+##      YO7   30 30 30 30 30 30 30 30 30 30 30 30
+##      YO8   30 30 30 30 30 30 30 30 30 30 30 30
 ```
 
 Bioclim variables
 
 ```r
-bioclim_recent <- pop_elev_climate_bioclim_elev %>% filter(year>1992) %>% #note this does not include 2022 b/c there were only 9 months of data available
+bioclim_recent <- pop_elev_climate_bioclim_elev %>% filter(year>1991 & year<2022) %>% #note this does not include 2022 b/c there were only 9 months of data available
    select(parent.pop, elevation.group, elev_m, year, ann_tmean:ppt_coldest_quarter)
 head(bioclim_recent)
 ```
@@ -1019,12 +1046,12 @@ head(bioclim_recent)
 ## # A tibble: 6 × 14
 ##   parent.pop elevation.group elev_m year  ann_tmean mean_diurnal_range
 ##   <chr>      <chr>            <dbl> <chr>     <dbl>              <dbl>
-## 1 BH         Low               511. 1993       15.5               14.8
-## 2 BH         Low               511. 1994       15.6               15.0
-## 3 BH         Low               511. 1995       16.1               14.3
-## 4 BH         Low               511. 1996       16.4               14.7
-## 5 BH         Low               511. 1997       16.4               14.8
-## 6 BH         Low               511. 1998       14.7               13.5
+## 1 BH         Low               511. 1992       16.3               14.5
+## 2 BH         Low               511. 1993       15.5               14.8
+## 3 BH         Low               511. 1994       15.6               15.0
+## 4 BH         Low               511. 1995       16.1               14.3
+## 5 BH         Low               511. 1996       16.4               14.7
+## 6 BH         Low               511. 1997       16.4               14.8
 ## # ℹ 8 more variables: temp_seasonality <dbl>, temp_ann_range <dbl>,
 ## #   tmean_wettest_quarter <dbl>, tmean_driest_quarter <dbl>, ann_ppt <dbl>,
 ## #   ppt_seasonality <dbl>, ppt_warmest_quarter <dbl>, ppt_coldest_quarter <dbl>
@@ -1055,7 +1082,7 @@ summary(bioclim_recent)
 
 ```
 ##   parent.pop        elevation.group        elev_m           year          
-##  Length:667         Length:667         Min.   : 313.0   Length:667        
+##  Length:690         Length:690         Min.   : 313.0   Length:690        
 ##  Class :character   Class :character   1st Qu.: 748.9   Class :character  
 ##  Mode  :character   Mode  :character   Median :1934.5   Mode  :character  
 ##                                        Mean   :1649.7                     
@@ -1063,29 +1090,29 @@ summary(bioclim_recent)
 ##                                        Max.   :2872.3                     
 ##    ann_tmean      mean_diurnal_range temp_seasonality temp_ann_range 
 ##  Min.   : 2.112   Min.   :10.76      Min.   :542.2    Min.   :27.43  
-##  1st Qu.: 6.181   1st Qu.:12.21      1st Qu.:642.5    1st Qu.:30.73  
-##  Median : 9.396   Median :12.80      Median :678.8    Median :31.98  
-##  Mean   :10.014   Mean   :12.96      Mean   :678.4    Mean   :31.96  
-##  3rd Qu.:13.802   3rd Qu.:13.60      3rd Qu.:710.1    3rd Qu.:33.03  
+##  1st Qu.: 6.178   1st Qu.:12.21      1st Qu.:644.1    1st Qu.:30.76  
+##  Median : 9.397   Median :12.82      Median :677.1    Median :32.03  
+##  Mean   :10.019   Mean   :12.97      Mean   :678.1    Mean   :32.00  
+##  3rd Qu.:13.808   3rd Qu.:13.64      3rd Qu.:708.9    3rd Qu.:33.14  
 ##  Max.   :17.967   Max.   :15.84      Max.   :802.2    Max.   :37.72  
 ##  tmean_wettest_quarter tmean_driest_quarter    ann_ppt       ppt_seasonality 
-##  Min.   :-5.650        Min.   : 6.582       Min.   : 150.4   Min.   : 51.39  
-##  1st Qu.:-0.160        1st Qu.:14.455       1st Qu.: 854.2   1st Qu.:104.63  
-##  Median : 3.037        Median :17.737       Median :1104.8   Median :115.25  
-##  Mean   : 3.526        Mean   :18.301       Mean   :1194.2   Mean   :117.03  
-##  3rd Qu.: 7.116        3rd Qu.:22.501       3rd Qu.:1467.4   3rd Qu.:129.03  
-##  Max.   :15.013        Max.   :26.672       Max.   :2903.9   Max.   :224.86  
+##  Min.   :-5.6500       Min.   : 6.582       Min.   : 150.4   Min.   : 51.39  
+##  1st Qu.:-0.2267       1st Qu.:14.363       1st Qu.: 855.4   1st Qu.:104.96  
+##  Median : 3.0092       Median :17.719       Median :1096.3   Median :115.55  
+##  Mean   : 3.4767       Mean   :18.228       Mean   :1188.8   Mean   :117.14  
+##  3rd Qu.: 7.1037       3rd Qu.:22.481       3rd Qu.:1449.2   3rd Qu.:128.99  
+##  Max.   :15.0133       Max.   :26.672       Max.   :2903.9   Max.   :224.86  
 ##  ppt_warmest_quarter ppt_coldest_quarter
 ##  Min.   :  0.000     Min.   :  56.12    
-##  1st Qu.:  4.365     1st Qu.: 436.26    
-##  Median : 14.910     Median : 614.17    
-##  Mean   : 22.634     Mean   : 646.84    
-##  3rd Qu.: 32.315     3rd Qu.: 810.00    
+##  1st Qu.:  4.362     1st Qu.: 440.76    
+##  Median : 15.030     Median : 615.12    
+##  Mean   : 23.654     Mean   : 646.30    
+##  3rd Qu.: 33.700     3rd Qu.: 807.90    
 ##  Max.   :131.590     Max.   :1747.63
 ```
 
 ```r
-bioclim_historical <- pop_elev_climate_bioclim_elev %>% filter(year<=1992 & year>1962) %>% 
+bioclim_historical <- pop_elev_climate_bioclim_elev %>% filter(year<=1991 & year>1961) %>% 
   select(parent.pop, elevation.group, elev_m, year, ann_tmean:ppt_coldest_quarter)
 head(bioclim_historical)
 ```
@@ -1094,12 +1121,12 @@ head(bioclim_historical)
 ## # A tibble: 6 × 14
 ##   parent.pop elevation.group elev_m year  ann_tmean mean_diurnal_range
 ##   <chr>      <chr>            <dbl> <chr>     <dbl>              <dbl>
-## 1 BH         Low               511. 1963       14.6               14.9
-## 2 BH         Low               511. 1964       14.8               15.8
-## 3 BH         Low               511. 1965       14.6               15.3
-## 4 BH         Low               511. 1966       15.7               16.1
-## 5 BH         Low               511. 1967       15.2               15.6
-## 6 BH         Low               511. 1968       15.4               15.8
+## 1 BH         Low               511. 1962       15.1               16.4
+## 2 BH         Low               511. 1963       14.6               14.9
+## 3 BH         Low               511. 1964       14.8               15.8
+## 4 BH         Low               511. 1965       14.6               15.3
+## 5 BH         Low               511. 1966       15.7               16.1
+## 6 BH         Low               511. 1967       15.2               15.6
 ## # ℹ 8 more variables: temp_seasonality <dbl>, temp_ann_range <dbl>,
 ## #   tmean_wettest_quarter <dbl>, tmean_driest_quarter <dbl>, ann_ppt <dbl>,
 ## #   ppt_seasonality <dbl>, ppt_warmest_quarter <dbl>, ppt_coldest_quarter <dbl>
@@ -1113,12 +1140,12 @@ tail(bioclim_historical)
 ## # A tibble: 6 × 14
 ##   parent.pop elevation.group elev_m year  ann_tmean mean_diurnal_range
 ##   <chr>      <chr>            <dbl> <chr>     <dbl>              <dbl>
-## 1 YO8        High             2591. 1987       4.67               14.2
-## 2 YO8        High             2591. 1988       5.24               14.6
-## 3 YO8        High             2591. 1989       4.74               13.7
-## 4 YO8        High             2591. 1990       4.58               13.9
-## 5 YO8        High             2591. 1991       4.97               13.9
-## 6 YO8        High             2591. 1992       5.63               13.5
+## 1 YO8        High             2591. 1986       4.96               13.4
+## 2 YO8        High             2591. 1987       4.67               14.2
+## 3 YO8        High             2591. 1988       5.24               14.6
+## 4 YO8        High             2591. 1989       4.74               13.7
+## 5 YO8        High             2591. 1990       4.58               13.9
+## 6 YO8        High             2591. 1991       4.97               13.9
 ## # ℹ 8 more variables: temp_seasonality <dbl>, temp_ann_range <dbl>,
 ## #   tmean_wettest_quarter <dbl>, tmean_driest_quarter <dbl>, ann_ppt <dbl>,
 ## #   ppt_seasonality <dbl>, ppt_warmest_quarter <dbl>, ppt_coldest_quarter <dbl>
@@ -1138,24 +1165,24 @@ summary(bioclim_historical)
 ##                                        Max.   :2872.3                     
 ##    ann_tmean      mean_diurnal_range temp_seasonality temp_ann_range 
 ##  Min.   : 1.302   Min.   :10.53      Min.   :487.5    Min.   :25.76  
-##  1st Qu.: 5.026   1st Qu.:12.79      1st Qu.:636.3    1st Qu.:31.22  
-##  Median : 8.140   Median :13.64      Median :668.5    Median :32.70  
-##  Mean   : 8.921   Mean   :13.65      Mean   :662.7    Mean   :32.66  
-##  3rd Qu.:12.923   3rd Qu.:14.37      3rd Qu.:697.0    3rd Qu.:34.10  
-##  Max.   :16.855   Max.   :17.01      Max.   :835.8    Max.   :39.20  
+##  1st Qu.: 4.995   1st Qu.:12.84      1st Qu.:635.8    1st Qu.:31.27  
+##  Median : 8.011   Median :13.67      Median :668.3    Median :32.66  
+##  Mean   : 8.878   Mean   :13.69      Mean   :662.5    Mean   :32.66  
+##  3rd Qu.:12.831   3rd Qu.:14.39      3rd Qu.:696.9    3rd Qu.:34.15  
+##  Max.   :16.660   Max.   :17.01      Max.   :835.8    Max.   :39.20  
 ##  tmean_wettest_quarter tmean_driest_quarter    ann_ppt       ppt_seasonality 
 ##  Min.   :-6.640        Min.   : 1.482       Min.   : 271.0   Min.   : 60.47  
-##  1st Qu.:-1.073        1st Qu.:12.367       1st Qu.: 838.2   1st Qu.: 97.94  
-##  Median : 1.824        Median :15.991       Median :1097.0   Median :110.25  
-##  Mean   : 2.522        Mean   :16.550       Mean   :1199.3   Mean   :113.28  
-##  3rd Qu.: 6.390        3rd Qu.:21.174       3rd Qu.:1479.1   3rd Qu.:126.36  
-##  Max.   :11.588        Max.   :26.722       Max.   :3422.3   Max.   :203.24  
+##  1st Qu.:-1.052        1st Qu.:12.398       1st Qu.: 841.7   1st Qu.: 97.94  
+##  Median : 1.838        Median :15.991       Median :1110.9   Median :110.46  
+##  Mean   : 2.526        Mean   :16.572       Mean   :1208.4   Mean   :113.99  
+##  3rd Qu.: 6.408        3rd Qu.:21.167       3rd Qu.:1488.5   3rd Qu.:127.10  
+##  Max.   :12.760        Max.   :26.722       Max.   :3422.3   Max.   :203.24  
 ##  ppt_warmest_quarter ppt_coldest_quarter
 ##  Min.   :  0.00      Min.   :  77.49    
-##  1st Qu.: 11.60      1st Qu.: 379.74    
-##  Median : 28.95      Median : 557.46    
-##  Mean   : 44.32      Mean   : 591.97    
-##  3rd Qu.: 59.42      3rd Qu.: 778.25    
+##  1st Qu.: 11.46      1st Qu.: 379.35    
+##  Median : 28.16      Median : 559.21    
+##  Mean   : 43.39      Mean   : 594.48    
+##  3rd Qu.: 57.34      3rd Qu.: 786.36    
 ##  Max.   :295.97      Max.   :1559.57
 ```
 
@@ -1248,16 +1275,16 @@ recent_climate_avgs #30 year averages
 ## # Groups:   parent.pop, elevation.group [23]
 ##    parent.pop elevation.group elev_m cwd_mean pck_mean ppt_mean tmn_mean
 ##    <chr>      <chr>            <dbl>    <dbl>    <dbl>    <dbl>    <dbl>
-##  1 BH         Low               511.     75.9    0         47.8    8.88 
-##  2 CC         Low               313      59.7    0         84.5   10.0  
-##  3 CP2        High             2244.     63.1  206.       105.     1.17 
-##  4 CP3        High             2266.     46.4  224.       100.     0.521
-##  5 DPR        Mid              1019.     27.4    8.70     121.     7.86 
-##  6 FR         Mid               787      56.0   19.0       82.3    5.36 
-##  7 IH         Low               454.     49.1    0.184     88.7    8.67 
-##  8 LV1        High             2593.     49.8  440.       147.    -1.38 
-##  9 LV3        High             2354.     57.6  426.       146.    -1.36 
-## 10 LVTR1      High             2741.     52.0  453.       152.    -1.58 
+##  1 BH         Low               511.     75.5    0         48.6    8.81 
+##  2 CC         Low               313      59.6    0         85.7    9.97 
+##  3 CP2        High             2244.     62.7  203.       106.     1.12 
+##  4 CP3        High             2266.     46.2  221.       102.     0.475
+##  5 DPR        Mid              1019.     27.5    8.95     122.     7.80 
+##  6 FR         Mid               787      55.8   19.0       83.1    5.33 
+##  7 IH         Low               454.     49.1    0.194     89.9    8.63 
+##  8 LV1        High             2593.     49.4  438.       148.    -1.44 
+##  9 LV3        High             2354.     57.2  423.       147.    -1.42 
+## 10 LVTR1      High             2741.     51.6  451.       153.    -1.63 
 ## # ℹ 13 more rows
 ## # ℹ 6 more variables: tmx_mean <dbl>, cwd_sem <dbl>, pck_sem <dbl>,
 ## #   ppt_sem <dbl>, tmn_sem <dbl>, tmx_sem <dbl>
@@ -1294,16 +1321,16 @@ historical_climate_avgs #30 year averages
 ## # Groups:   parent.pop, elevation.group [23]
 ##    parent.pop elevation.group elev_m cwd_mean pck_mean ppt_mean tmn_mean
 ##    <chr>      <chr>            <dbl>    <dbl>    <dbl>    <dbl>    <dbl>
-##  1 BH         Low               511.     74.4   0.0195     48.4    7.70 
-##  2 CC         Low               313      59.9   0.0793     81.2    8.89 
-##  3 CP2        High             2244.     60.2 258.        111.    -0.323
-##  4 CP3        High             2266.     43.6 277.        107.    -0.866
-##  5 DPR        Mid              1019.     26.5  18.6       120.     6.21 
-##  6 FR         Mid               787      54.8  20.9        81.5    4.16 
-##  7 IH         Low               454.     50.3   1.46       87.9    7.66 
-##  8 LV1        High             2593.     46.6 504.        149.    -3.46 
-##  9 LV3        High             2354.     54.6 487.        148.    -3.47 
-## 10 LVTR1      High             2741.     49.3 523.        154.    -3.61 
+##  1 BH         Low               511.     74.4   0.0195     48.4    7.63 
+##  2 CC         Low               313      59.9   0.0793     82.1    8.85 
+##  3 CP2        High             2244.     60.3 263.        112.    -0.396
+##  4 CP3        High             2266.     43.7 281.        108.    -0.938
+##  5 DPR        Mid              1019.     26.3  19.0       122.     6.15 
+##  6 FR         Mid               787      54.7  21.7        82.8    4.08 
+##  7 IH         Low               454.     50.2   1.45       88.9    7.61 
+##  8 LV1        High             2593.     46.7 510.        151.    -3.51 
+##  9 LV3        High             2354.     54.6 494.        149.    -3.52 
+## 10 LVTR1      High             2741.     49.3 530.        156.    -3.66 
 ## # ℹ 13 more rows
 ## # ℹ 6 more variables: tmx_mean <dbl>, cwd_sem <dbl>, pck_sem <dbl>,
 ## #   ppt_sem <dbl>, tmn_sem <dbl>, tmx_sem <dbl>
@@ -1352,13 +1379,6 @@ monthly_pck <- pop_elev_climate_recent %>%
 ```
 
 ```
-## Warning: There was 1 warning in `filter()`.
-## ℹ In argument: `parent.pop == c("WL1", "SQ1", "SQ2", "WL2", "YO4")`.
-## Caused by warning in `parent.pop == c("WL1", "SQ1", "SQ2", "WL2", "YO4")`:
-## ! longer object length is not a multiple of shorter object length
-```
-
-```
 ## `summarise()` has grouped output by 'parent.pop', 'elev_m'. You can override
 ## using the `.groups` argument.
 ```
@@ -1374,7 +1394,7 @@ monthly_pck
 ##    parent.pop elev_m month pck_mean pck_sem
 ##    <fct>       <dbl> <dbl>    <dbl>   <dbl>
 ##  1 SQ1         1921.     1    128.     51.0
-##  2 SQ1         1921.     2    208.    102. 
+##  2 SQ1         1921.     2    211.    101. 
 ##  3 SQ1         1921.     3     96.3    66.8
 ##  4 SQ1         1921.     4     62.5    35.3
 ##  5 SQ1         1921.     5     23.2    23.2
@@ -1466,16 +1486,16 @@ monthly_cwd
 ## # Groups:   parent.pop, elev_m [23]
 ##    parent.pop elev_m month cwd_mean pck_sem
 ##    <chr>       <dbl> <dbl>    <dbl>   <dbl>
-##  1 BH           511.     1     29.4   0.431
-##  2 BH           511.     2     41.0   0.497
-##  3 BH           511.     3     54.2   1.55 
-##  4 BH           511.     4     59.0   2.91 
-##  5 BH           511.     5     51.4   5.36 
-##  6 BH           511.     6     87.3   5.47 
-##  7 BH           511.     7    138.    3.94 
+##  1 BH           511.     1     29.3   0.430
+##  2 BH           511.     2     40.9   0.492
+##  3 BH           511.     3     53.8   1.52 
+##  4 BH           511.     4     59.0   2.92 
+##  5 BH           511.     5     51.5   5.37 
+##  6 BH           511.     6     87.1   5.45 
+##  7 BH           511.     7    136.    4.35 
 ##  8 BH           511.     8    154.    3.31 
-##  9 BH           511.     9    130.    1.09 
-## 10 BH           511.    10     88.9   0.551
+##  9 BH           511.     9    130.    1.03 
+## 10 BH           511.    10     88.9   0.537
 ## # ℹ 266 more rows
 ```
 
@@ -1532,16 +1552,16 @@ pop_elev_climate_recent %>% filter(ppt == 0) #months 7-10 usually have ppt = 0 f
 ## # A tibble: 553 × 10
 ##    parent.pop elevation.group elev_m year  month   cwd   pck   ppt   tmn   tmx
 ##    <chr>      <chr>            <dbl> <chr> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl>
-##  1 BH         Low               511. 1993      7 128.      0     0 15.0   32.9
-##  2 BH         Low               511. 1993      8 145.      0     0 14.8   33.2
-##  3 BH         Low               511. 1993      9 128.      0     0 12.7   31.9
-##  4 BH         Low               511. 1994      7 174.      0     0 17.3   35.8
-##  5 BH         Low               511. 1994      8 180.      0     0 16.3   35.5
-##  6 BH         Low               511. 1995     10  92.1     0     0  9.55  27.6
-##  7 BH         Low               511. 1996      9 132.      0     0 12.2   31.0
-##  8 BH         Low               511. 1997      8 155.      0     0 16.3   33.7
-##  9 BH         Low               511. 1998      8 137       0     0 17.0   35.7
-## 10 BH         Low               511. 1999      7 120.      0     0 15     33.8
+##  1 BH         Low               511. 1992      8 160.      0     0 17.1   35.4
+##  2 BH         Low               511. 1992      9 132.      0     0 13.6   31.7
+##  3 BH         Low               511. 1993      7 128.      0     0 15.0   32.9
+##  4 BH         Low               511. 1993      8 145.      0     0 14.8   33.2
+##  5 BH         Low               511. 1993      9 128.      0     0 12.7   31.9
+##  6 BH         Low               511. 1994      7 174.      0     0 17.3   35.8
+##  7 BH         Low               511. 1994      8 180.      0     0 16.3   35.5
+##  8 BH         Low               511. 1995     10  92.1     0     0  9.55  27.6
+##  9 BH         Low               511. 1996      9 132.      0     0 12.2   31.0
+## 10 BH         Low               511. 1997      8 155.      0     0 16.3   33.7
 ## # ℹ 543 more rows
 ```
 
@@ -1550,12 +1570,10 @@ pop_elev_climate_recent %>% filter(pck >0, ppt == 0) #in sequoia pops, 2022, ppt
 ```
 
 ```
-## # A tibble: 3 × 10
-##   parent.pop elevation.group elev_m year  month   cwd   pck   ppt    tmn   tmx
-##   <chr>      <chr>            <dbl> <chr> <dbl> <dbl> <dbl> <dbl>  <dbl> <dbl>
-## 1 SQ1        Mid              1921. 2022      1  32.1  71.3     0  0.290  9.51
-## 2 SQ2        Mid              1934. 2022      1  27.6  98.0     0 -0.150  9.66
-## 3 SQ3        High             2373. 2022      1  32.5 236.      0 -2.07   8.38
+## # A tibble: 0 × 10
+## # ℹ 10 variables: parent.pop <chr>, elevation.group <chr>, elev_m <dbl>,
+## #   year <chr>, month <dbl>, cwd <dbl>, pck <dbl>, ppt <dbl>, tmn <dbl>,
+## #   tmx <dbl>
 ```
 
 ```r
@@ -1563,7 +1581,7 @@ pop_elev_climate_recent %>% filter(ppt > 0, tmx<1.5) %>% arrange(pck) #if the te
 ```
 
 ```
-## # A tibble: 163 × 10
+## # A tibble: 168 × 10
 ##    parent.pop elevation.group elev_m year  month   cwd   pck   ppt    tmn   tmx
 ##    <chr>      <chr>            <dbl> <chr> <dbl> <dbl> <dbl> <dbl>  <dbl> <dbl>
 ##  1 YO11       High             2872. 2001      1  19.0  98.1  91.4 -11.6  1.08 
@@ -1576,7 +1594,7 @@ pop_elev_climate_recent %>% filter(ppt > 0, tmx<1.5) %>% arrange(pck) #if the te
 ##  8 LV1        High             2593. 2007     12  12.2 198.  204.   -8.54 0.340
 ##  9 LVTR1      High             2741. 2007     12  13.5 205.  211.   -8.72 0.25 
 ## 10 LV3        High             2354. 2009     12  15.6 210.  186.   -9.76 1.30 
-## # ℹ 153 more rows
+## # ℹ 158 more rows
 ```
 
 ```r
@@ -1592,16 +1610,16 @@ pop_elev_climate_recent_avgs #30 year averages per month for each pop
 ## # Groups:   parent.pop, elevation.group, elev_m [23]
 ##    parent.pop elevation.group elev_m month cwd_mean pck_mean ppt_mean tmn_mean
 ##    <chr>      <chr>            <dbl> <dbl>    <dbl>    <dbl>    <dbl>    <dbl>
-##  1 BH         Low               511.     1     29.4        0  124.        2.75
-##  2 BH         Low               511.     2     41.0        0   94.7       3.38
-##  3 BH         Low               511.     3     54.2        0   84.0       4.92
-##  4 BH         Low               511.     4     59.0        0   48.6       6.35
-##  5 BH         Low               511.     5     51.4        0   23.1       9.70
-##  6 BH         Low               511.     6     87.3        0    7.37     13.5 
-##  7 BH         Low               511.     7    138.         0    0.280    17.3 
-##  8 BH         Low               511.     8    154.         0    0.616    16.9 
-##  9 BH         Low               511.     9    130.         0    3.69     14.3 
-## 10 BH         Low               511.    10     88.9        0   29.1       9.46
+##  1 BH         Low               511.     1     29.3        0  125.        2.68
+##  2 BH         Low               511.     2     40.9        0  100.        3.43
+##  3 BH         Low               511.     3     53.8        0   85.4       4.90
+##  4 BH         Low               511.     4     59.0        0   47.2       6.37
+##  5 BH         Low               511.     5     51.5        0   23.1       9.76
+##  6 BH         Low               511.     6     87.1        0    7.43     13.4 
+##  7 BH         Low               511.     7    136.         0    1.40     17.2 
+##  8 BH         Low               511.     8    154.         0    0.507    16.8 
+##  9 BH         Low               511.     9    130.         0    2.89     14.1 
+## 10 BH         Low               511.    10     88.9        0   29.9       9.48
 ## # ℹ 266 more rows
 ## # ℹ 6 more variables: tmx_mean <dbl>, cwd_sem <dbl>, pck_sem <dbl>,
 ## #   ppt_sem <dbl>, tmn_sem <dbl>, tmx_sem <dbl>
@@ -1617,16 +1635,16 @@ pop_elev_climate_recent_avgs %>% arrange(PckSum)
 ## # Groups:   parent.pop, elevation.group, elev_m [23]
 ##    parent.pop elevation.group elev_m month cwd_mean pck_mean ppt_mean tmn_mean
 ##    <chr>      <chr>            <dbl> <dbl>    <dbl>    <dbl>    <dbl>    <dbl>
-##  1 BH         Low               511.     1     29.4        0  124.        2.75
-##  2 BH         Low               511.     2     41.0        0   94.7       3.38
-##  3 BH         Low               511.     3     54.2        0   84.0       4.92
-##  4 BH         Low               511.     4     59.0        0   48.6       6.35
-##  5 BH         Low               511.     5     51.4        0   23.1       9.70
-##  6 BH         Low               511.     6     87.3        0    7.37     13.5 
-##  7 BH         Low               511.     7    138.         0    0.280    17.3 
-##  8 BH         Low               511.     8    154.         0    0.616    16.9 
-##  9 BH         Low               511.     9    130.         0    3.69     14.3 
-## 10 BH         Low               511.    10     88.9        0   29.1       9.46
+##  1 BH         Low               511.     1     29.3        0  125.        2.68
+##  2 BH         Low               511.     2     40.9        0  100.        3.43
+##  3 BH         Low               511.     3     53.8        0   85.4       4.90
+##  4 BH         Low               511.     4     59.0        0   47.2       6.37
+##  5 BH         Low               511.     5     51.5        0   23.1       9.76
+##  6 BH         Low               511.     6     87.1        0    7.43     13.4 
+##  7 BH         Low               511.     7    136.         0    1.40     17.2 
+##  8 BH         Low               511.     8    154.         0    0.507    16.8 
+##  9 BH         Low               511.     9    130.         0    2.89     14.1 
+## 10 BH         Low               511.    10     88.9        0   29.9       9.48
 ## # ℹ 266 more rows
 ## # ℹ 7 more variables: tmx_mean <dbl>, cwd_sem <dbl>, pck_sem <dbl>,
 ## #   ppt_sem <dbl>, tmn_sem <dbl>, tmx_sem <dbl>, PckSum <dbl>
@@ -1659,12 +1677,13 @@ pop_elev_climate_recent %>% filter(parent.pop=="IH") %>% filter(pck >0) #snow pa
 ```
 
 ```
-## # A tibble: 3 × 10
+## # A tibble: 4 × 10
 ##   parent.pop elevation.group elev_m year  month   cwd   pck   ppt   tmn   tmx
 ##   <chr>      <chr>            <dbl> <chr> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl>
-## 1 IH         Low               454. 1993      1  15.6  5.34  364.  1.72 11.2 
-## 2 IH         Low               454. 2017      1  15.6 18.0   495.  2.31 10.2 
-## 3 IH         Low               454. 2019      2  19.9 42.3   429.  1.60  9.46
+## 1 IH         Low               454. 1992     12  18.8  4.13  301. 0.860 11.0 
+## 2 IH         Low               454. 1993      1  15.6  5.34  364. 1.72  11.2 
+## 3 IH         Low               454. 2017      1  15.6 18.0   495. 2.31  10.2 
+## 4 IH         Low               454. 2019      2  19.9 42.3   429. 1.60   9.46
 ```
 
 ```r
@@ -1672,20 +1691,20 @@ pop_elev_climate_recent %>% filter(parent.pop=="SQ3") %>% filter(pck==0, ppt < 1
 ```
 
 ```
-## # A tibble: 105 × 10
+## # A tibble: 106 × 10
 ##    parent.pop elevation.group elev_m year  month   cwd   pck    ppt   tmn   tmx
 ##    <chr>      <chr>            <dbl> <chr> <dbl> <dbl> <dbl>  <dbl> <dbl> <dbl>
-##  1 SQ3        High             2373. 1993      7  88.3     0 0.0200  7.11  20.9
-##  2 SQ3        High             2373. 1993      8  89.4     0 3.48    8.38  22.2
-##  3 SQ3        High             2373. 1993      9  91.6     0 0.100   7.45  20.3
-##  4 SQ3        High             2373. 1994      6  95.1     0 0.0100  6.79  19.9
-##  5 SQ3        High             2373. 1994      7 114.      0 6.24   10.3   23.9
-##  6 SQ3        High             2373. 1994      8 126.      0 0.300  11.8   24.4
-##  7 SQ3        High             2373. 1995      7  90.6     0 5.44    8.69  21.7
-##  8 SQ3        High             2373. 1995      8  85.1     0 0.200   9.25  22.9
-##  9 SQ3        High             2373. 1995      9  84.2     0 0.340   4.96  20.6
-## 10 SQ3        High             2373. 1995     10  77.1     0 0       5.18  17.2
-## # ℹ 95 more rows
+##  1 SQ3        High             2373. 1992      6  95.0     0 7.54    4.84 17.6 
+##  2 SQ3        High             2373. 1992      8  82.0     0 7.80   10.7  23.8 
+##  3 SQ3        High             2373. 1992      9 103.      0 4.26    7.52 19.9 
+##  4 SQ3        High             2373. 1992     11  39.7     0 3.78   -1.58  8.87
+##  5 SQ3        High             2373. 1993      7  88.3     0 0.0200  7.11 20.9 
+##  6 SQ3        High             2373. 1993      8  89.4     0 3.48    8.38 22.2 
+##  7 SQ3        High             2373. 1993      9  91.6     0 0.100   7.45 20.3 
+##  8 SQ3        High             2373. 1994      6  95.1     0 0.0100  6.79 19.9 
+##  9 SQ3        High             2373. 1994      7 114.      0 6.24   10.3  23.9 
+## 10 SQ3        High             2373. 1994      8 126.      0 0.300  11.8  24.4 
+## # ℹ 96 more rows
 ```
 
 Historical climate 
@@ -1702,16 +1721,16 @@ pop_elev_climate_historical_avgs #30 year averages per month for each pop
 ## # Groups:   parent.pop, elevation.group, elev_m [23]
 ##    parent.pop elevation.group elev_m month cwd_mean pck_mean ppt_mean tmn_mean
 ##    <chr>      <chr>            <dbl> <dbl>    <dbl>    <dbl>    <dbl>    <dbl>
-##  1 BH         Low               511.     1     28.1    0.234    97.8      1.34
-##  2 BH         Low               511.     2     40.6    0        92.1      2.86
-##  3 BH         Low               511.     3     51.2    0       102.       3.89
-##  4 BH         Low               511.     4     61.1    0        50.8      5.52
-##  5 BH         Low               511.     5     61.4    0        12.9      8.84
-##  6 BH         Low               511.     6     89.4    0         4.74    12.4 
-##  7 BH         Low               511.     7    126.     0         2.09    15.5 
-##  8 BH         Low               511.     8    149.     0         1.82    15.2 
-##  9 BH         Low               511.     9    127.     0        10.4     12.7 
-## 10 BH         Low               511.    10     87.2    0        32.8      8.45
+##  1 BH         Low               511.     1     28.1    0.234    98.4      1.25
+##  2 BH         Low               511.     2     40.6    0        95.9      2.77
+##  3 BH         Low               511.     3     50.9    0       102.       3.76
+##  4 BH         Low               511.     4     61.0    0        51.0      5.44
+##  5 BH         Low               511.     5     61.1    0        13.0      8.64
+##  6 BH         Low               511.     6     89.3    0         4.71    12.3 
+##  7 BH         Low               511.     7    127.     0         1.01    15.5 
+##  8 BH         Low               511.     8    148.     0         1.82    15.1 
+##  9 BH         Low               511.     9    127.     0        10.4     12.6 
+## 10 BH         Low               511.    10     87.1    0        32.6      8.40
 ## # ℹ 266 more rows
 ## # ℹ 6 more variables: tmx_mean <dbl>, cwd_sem <dbl>, pck_sem <dbl>,
 ## #   ppt_sem <dbl>, tmn_sem <dbl>, tmx_sem <dbl>
@@ -1727,16 +1746,16 @@ pop_elev_climate_historical_avgs %>% arrange(PckSum) #IH PckSum = 17...
 ## # Groups:   parent.pop, elevation.group, elev_m [23]
 ##    parent.pop elevation.group elev_m month cwd_mean pck_mean ppt_mean tmn_mean
 ##    <chr>      <chr>            <dbl> <dbl>    <dbl>    <dbl>    <dbl>    <dbl>
-##  1 BH         Low               511.     1     28.1    0.234    97.8      1.34
-##  2 BH         Low               511.     2     40.6    0        92.1      2.86
-##  3 BH         Low               511.     3     51.2    0       102.       3.89
-##  4 BH         Low               511.     4     61.1    0        50.8      5.52
-##  5 BH         Low               511.     5     61.4    0        12.9      8.84
-##  6 BH         Low               511.     6     89.4    0         4.74    12.4 
-##  7 BH         Low               511.     7    126.     0         2.09    15.5 
-##  8 BH         Low               511.     8    149.     0         1.82    15.2 
-##  9 BH         Low               511.     9    127.     0        10.4     12.7 
-## 10 BH         Low               511.    10     87.2    0        32.8      8.45
+##  1 BH         Low               511.     1     28.1    0.234    98.4      1.25
+##  2 BH         Low               511.     2     40.6    0        95.9      2.77
+##  3 BH         Low               511.     3     50.9    0       102.       3.76
+##  4 BH         Low               511.     4     61.0    0        51.0      5.44
+##  5 BH         Low               511.     5     61.1    0        13.0      8.64
+##  6 BH         Low               511.     6     89.3    0         4.71    12.3 
+##  7 BH         Low               511.     7    127.     0         1.01    15.5 
+##  8 BH         Low               511.     8    148.     0         1.82    15.1 
+##  9 BH         Low               511.     9    127.     0        10.4     12.6 
+## 10 BH         Low               511.    10     87.1    0        32.6      8.40
 ## # ℹ 266 more rows
 ## # ℹ 7 more variables: tmx_mean <dbl>, cwd_sem <dbl>, pck_sem <dbl>,
 ## #   ppt_sem <dbl>, tmn_sem <dbl>, tmx_sem <dbl>, PckSum <dbl>
@@ -1800,7 +1819,7 @@ pop_elev_climate_historical %>% filter(parent.pop=="IH") %>% filter(pck >0) #sno
 ```
 
 ```
-## # A tibble: 12 × 10
+## # A tibble: 11 × 10
 ##    parent.pop elevation.group elev_m year  month   cwd     pck   ppt     tmn
 ##    <chr>      <chr>            <dbl> <chr> <dbl> <dbl>   <dbl> <dbl>   <dbl>
 ##  1 IH         Low               454. 1968     12  16.5  17.8   230.  -0.0800
@@ -1814,7 +1833,6 @@ pop_elev_climate_historical %>% filter(parent.pop=="IH") %>% filter(pck >0) #sno
 ##  9 IH         Low               454. 1973      2  21.6   0.480 247.   3.5   
 ## 10 IH         Low               454. 1979      1  17.4   4.82  227.   0.5   
 ## 11 IH         Low               454. 1982      1  14.9  29.3   229.  -0.220 
-## 12 IH         Low               454. 1992     12  18.8   4.13  301.   0.860 
 ## # ℹ 1 more variable: tmx <dbl>
 ```
 
@@ -1857,12 +1875,12 @@ pop_elev_climate_recent_sums_avgs
 ##  2 CC         Low               313       0         0    
 ##  3 TM2        Low               379.      0         0    
 ##  4 SC         Low               422.      0.252     0.252
-##  5 IH         Low               454.      2.19      1.52 
-##  6 DPR        Mid              1019.    103.       29.5  
-##  7 FR         Mid               787     226.       46.0  
-##  8 WV         Mid               749.    318.       52.4  
-##  9 WR         Mid              1158     385.       72.5  
-## 10 SQ1        Mid              1921.    609.       98.1  
+##  5 IH         Low               454.      2.32      1.51 
+##  6 DPR        Mid              1019.    107.       29.3  
+##  7 FR         Mid               787     229.       45.8  
+##  8 WV         Mid               749.    322.       51.7  
+##  9 WR         Mid              1158     391.       71.7  
+## 10 SQ1        Mid              1921.    613.       97.5  
 ## # ℹ 13 more rows
 ```
 
@@ -1903,18 +1921,22 @@ pop_elev_climate_historical_sums_avgs
 ##  2 SC         Low               422.      0.597     0.506
 ##  3 CC         Low               313       0.951     0.745
 ##  4 TM2        Low               379.      5.47      3.40 
-##  5 IH         Low               454.     17.5       8.63 
-##  6 DPR        Mid              1019.    223.       60.9  
-##  7 FR         Mid               787     251.       62.0  
-##  8 WV         Mid               749.    405.       83.3  
-##  9 WR         Mid              1158     545.      111.   
-## 10 WL1        Mid              1614.    871.      136.   
+##  5 IH         Low               454.     17.3       8.64 
+##  6 DPR        Mid              1019.    228.       60.8  
+##  7 FR         Mid               787     261.       62.3  
+##  8 WV         Mid               749.    404.       83.5  
+##  9 WR         Mid              1158     561.      110.   
+## 10 WL1        Mid              1614.    892.      134.   
 ## # ℹ 13 more rows
 ```
 
 ### For each year separately
 
 -   Populations that get less than 70 mm (b/c that's the avg height in Oct at WL2 garden) of snow pack in a year (on average): growth season = when there is no snowpack + significant rain event (> 10 mm) or lower cwd (< 88 or 86). CWD = 88 = 3rd quartile of the cwd_mean for these pops (recent climate). CWD = 86 = 3rd quartile of cwd_mean for historical climate
+
+Jenny has used 25 mm as germinating inducing rain, 10 mm would probably be fine for sustaining (esp b/c it's a sum of ppt for the whole month) 
+Raise rain for germination and leave CWD is for just growing 
+-   John and Sam have code for daily data, with "first day to x event" - Ask Sam if she's calculated this for STTO pops 
 
 Recent Climate
 
@@ -1939,27 +1961,27 @@ summary(nosnow_pops_recent) #3rd quartile of CWD = 88
 ##                                        Mean   :415.8   Mean   : 6.50  
 ##                                        3rd Qu.:454.1   3rd Qu.: 9.25  
 ##                                        Max.   :511.4   Max.   :12.00  
-##     cwd_mean         pck_mean          ppt_mean          tmn_mean     
-##  Min.   : 13.25   Min.   :0.00000   Min.   :  0.091   Min.   : 2.422  
-##  1st Qu.: 30.90   1st Qu.:0.00000   1st Qu.:  9.261   1st Qu.: 4.840  
-##  Median : 49.60   Median :0.00000   Median : 58.586   Median : 8.589  
-##  Mean   : 62.05   Mean   :0.04065   Mean   : 76.323   Mean   : 9.200  
-##  3rd Qu.: 87.68   3rd Qu.:0.00000   3rd Qu.:125.271   3rd Qu.:13.960  
-##  Max.   :167.46   Max.   :1.41000   Max.   :230.121   Max.   :17.574  
-##     tmx_mean        cwd_sem           pck_sem           ppt_sem        
-##  Min.   :12.42   Min.   : 0.1749   Min.   :0.00000   Min.   : 0.04235  
-##  1st Qu.:16.36   1st Qu.: 0.5581   1st Qu.:0.00000   1st Qu.: 2.53748  
-##  Median :22.31   Median : 1.6302   Median :0.00000   Median :10.15320  
-##  Mean   :22.93   Mean   : 2.4580   Mean   :0.03802   Mean   :11.05515  
-##  3rd Qu.:30.64   3rd Qu.: 3.9602   3rd Qu.:0.00000   3rd Qu.:17.37562  
-##  Max.   :35.16   Max.   :10.0435   Max.   :1.41000   Max.   :28.92747  
+##     cwd_mean         pck_mean          ppt_mean           tmn_mean     
+##  Min.   : 12.95   Min.   :0.00000   Min.   :  0.1587   Min.   : 2.366  
+##  1st Qu.: 31.01   1st Qu.:0.00000   1st Qu.:  8.9782   1st Qu.: 4.874  
+##  Median : 49.74   Median :0.00000   Median : 59.4208   Median : 8.649  
+##  Mean   : 62.04   Mean   :0.04294   Mean   : 77.1655   Mean   : 9.172  
+##  3rd Qu.: 87.57   3rd Qu.:0.00000   3rd Qu.:127.8994   3rd Qu.:13.809  
+##  Max.   :167.33   Max.   :1.41000   Max.   :231.6770   Max.   :17.510  
+##     tmx_mean        cwd_sem          pck_sem           ppt_sem        
+##  Min.   :12.37   Min.   :0.1709   Min.   :0.00000   Min.   : 0.07712  
+##  1st Qu.:16.29   1st Qu.:0.5503   1st Qu.:0.00000   1st Qu.: 2.49284  
+##  Median :22.41   Median :1.6062   Median :0.00000   Median :10.03852  
+##  Mean   :22.91   Mean   :2.4735   Mean   :0.04031   Mean   :10.89493  
+##  3rd Qu.:30.58   3rd Qu.:4.0240   3rd Qu.:0.00000   3rd Qu.:17.03939  
+##  Max.   :35.05   Max.   :9.9766   Max.   :1.41000   Max.   :27.98985  
 ##     tmn_sem          tmx_sem           PckSum      
-##  Min.   :0.1791   Min.   :0.1799   Min.   :0.0000  
-##  1st Qu.:0.2273   1st Qu.:0.2594   1st Qu.:0.0000  
-##  Median :0.2402   Median :0.3425   Median :0.0000  
-##  Mean   :0.2442   Mean   :0.3291   Mean   :0.4878  
-##  3rd Qu.:0.2632   3rd Qu.:0.3730   3rd Qu.:0.2523  
-##  Max.   :0.2849   Max.   :0.4670   Max.   :2.1867
+##  Min.   :0.1835   Min.   :0.1742   Min.   :0.0000  
+##  1st Qu.:0.2267   1st Qu.:0.2637   1st Qu.:0.0000  
+##  Median :0.2440   Median :0.3399   Median :0.0000  
+##  Mean   :0.2416   Mean   :0.3280   Mean   :0.5153  
+##  3rd Qu.:0.2660   3rd Qu.:0.3717   3rd Qu.:0.2523  
+##  Max.   :0.2791   Max.   :0.4856   Max.   :2.3243
 ```
 
 ```r
@@ -1973,92 +1995,320 @@ nosnow_pops_recent_years <- left_join(nosnow_pops_recent_tojoin, pop_elev_climat
 ```
 
 ```r
-nosnow_pops_recent_years
+nosnow_pops_recent_years %>% filter(month=="7", ppt>=25) #never get >=25mm of ppt in July so can start with Aug
 ```
 
 ```
-## # A tibble: 1,785 × 11
-## # Groups:   parent.pop, elevation.group, elev_m [5]
-##    parent.pop elevation.group elev_m PckSum year  month   cwd   pck   ppt   tmn
-##    <chr>      <chr>            <dbl>  <dbl> <chr> <dbl> <dbl> <dbl> <dbl> <dbl>
-##  1 BH         Low               511.      0 1993      1  25.6     0 289.   1.82
-##  2 BH         Low               511.      0 1993      2  37.0     0 140.   3.29
-##  3 BH         Low               511.      0 1993      3  46.0     0  89.9  7.11
-##  4 BH         Low               511.      0 1993      4  71.2     0  12.8  6.01
-##  5 BH         Low               511.      0 1993      5  73.7     0  12.9  9.38
-##  6 BH         Low               511.      0 1993      6  35.7     0  33.6 11.2 
-##  7 BH         Low               511.      0 1993      7 128.      0   0   15.0 
-##  8 BH         Low               511.      0 1993      8 145.      0   0   14.8 
-##  9 BH         Low               511.      0 1993      9 128.      0   0   12.7 
-## 10 BH         Low               511.      0 1993     10  90.4     0  15.6 10.3 
-## # ℹ 1,775 more rows
+## # A tibble: 1 × 11
+## # Groups:   parent.pop, elevation.group, elev_m [1]
+##   parent.pop elevation.group elev_m PckSum year  month   cwd   pck   ppt   tmn
+##   <chr>      <chr>            <dbl>  <dbl> <chr> <dbl> <dbl> <dbl> <dbl> <dbl>
+## 1 BH         Low               511.      0 1992      7  82.4     0  33.7  16.0
 ## # ℹ 1 more variable: tmx <dbl>
 ```
 
 ```r
-nosnow_grwseason_recent <- nosnow_pops_recent_years %>% 
+nosnow_pops_recent_years %>% filter(month=="8", ppt>=25)
+```
+
+```
+## # A tibble: 3 × 11
+## # Groups:   parent.pop, elevation.group, elev_m [3]
+##   parent.pop elevation.group elev_m PckSum year  month   cwd   pck   ppt   tmn
+##   <chr>      <chr>            <dbl>  <dbl> <chr> <dbl> <dbl> <dbl> <dbl> <dbl>
+## 1 CC         Low               313    0    2003      8  71.8     0  25.1  16.2
+## 2 IH         Low               454.   2.32 2003      8  54.7     0  28.8  15.0
+## 3 TM2        Low               379.   0    1997      8 139.      0  25.8  15.5
+## # ℹ 1 more variable: tmx <dbl>
+```
+
+```r
+growyear_months <- tibble(month=c(1:12), growmonth=c(6, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5))
+
+nosnow_recent_growyear_months <- full_join(growyear_months, nosnow_pops_recent_years)
+```
+
+```
+## Joining with `by = join_by(month)`
+```
+
+```r
+dim(nosnow_recent_growyear_months)
+```
+
+```
+## [1] 1800   12
+```
+
+```r
+#nosnow_recent_growyear_months %>% filter(ppt==0, cwd<88)
+
+nosnow_first_month <- nosnow_recent_growyear_months %>%
   group_by(parent.pop, elevation.group, elev_m, year) %>% 
- filter(pck==0) %>%  #snowpack == 0
-  filter(ifelse(ppt>=10, ppt>=10, cwd<88)) %>%
-  #heavy ppt day = day with at least 10mm of rain (Climate Atlas of Candada and Sala and Lauenroth 1982)
-  #cwd < 88 (3rd quartile of cwd_mean for low elev pops)
-  filter(ppt >0) #take out months with no ppt
-summary(nosnow_grwseason_recent)
+  filter(ppt>=25) %>% 
+  arrange(growmonth) %>% 
+  filter(row_number()==1) #get first month for each pop and year with germinating inducing rain 
+
+#nosnow_first_month %>% filter(parent.pop=="IH") %>% arrange(year)
+
+nosnow_first_month_tomerge <- nosnow_first_month %>% 
+  select(parent.pop:elev_m, year, firstmonth=growmonth)
+
+nosnow_first_month_col <- full_join(nosnow_recent_growyear_months, nosnow_first_month_tomerge)
 ```
 
 ```
-##   parent.pop        elevation.group        elev_m          PckSum      
-##  Length:1304        Length:1304        Min.   :313.0   Min.   :0.0000  
-##  Class :character   Class :character   1st Qu.:379.2   1st Qu.:0.0000  
-##  Mode  :character   Mode  :character   Median :421.5   Median :0.0000  
-##                                        Mean   :414.1   Mean   :0.5136  
-##                                        3rd Qu.:454.1   3rd Qu.:0.2523  
-##                                        Max.   :511.4   Max.   :2.1867  
-##      year               month             cwd              pck   
-##  Length:1304        Min.   : 1.000   Min.   :  0.00   Min.   :0  
-##  Class :character   1st Qu.: 3.000   1st Qu.: 21.50   1st Qu.:0  
-##  Mode  :character   Median : 5.000   Median : 33.50   Median :0  
-##                     Mean   : 6.057   Mean   : 41.52   Mean   :0  
-##                     3rd Qu.:10.000   3rd Qu.: 58.40   3rd Qu.:0  
-##                     Max.   :12.000   Max.   :166.80   Max.   :0  
-##       ppt              tmn              tmx       
-##  Min.   :  0.01   Min.   :-1.050   Min.   : 9.38  
-##  1st Qu.: 23.69   1st Qu.: 4.080   1st Qu.:14.51  
-##  Median : 66.22   Median : 6.175   Median :18.27  
-##  Mean   :102.49   Mean   : 6.981   Mean   :19.45  
-##  3rd Qu.:143.95   3rd Qu.: 9.457   3rd Qu.:23.89  
-##  Max.   :614.04   Max.   :18.410   Max.   :35.45
+## Joining with `by = join_by(parent.pop, elevation.group, elev_m, year)`
 ```
 
 ```r
-unique(nosnow_grwseason_recent$parent.pop)
+dim(nosnow_first_month_col)
 ```
 
 ```
-## [1] "BH"  "CC"  "IH"  "SC"  "TM2"
+## [1] 1800   13
 ```
 
 ```r
-nosnow_grwseason_recent %>% filter(cwd > 88) #some cases when ppt > 10 when cwd is high 
+nosnow_last_month <- nosnow_recent_growyear_months %>%
+  group_by(parent.pop, elevation.group, elev_m, year) %>% 
+  filter(cwd>88) %>% 
+  arrange(month) %>% 
+  filter(row_number()==1)
+
+nosnow_last_month_tomerge <- nosnow_last_month %>% 
+  select(parent.pop:elev_m, year, lastmonth=growmonth) #last month is in grow month not calendar month format
+
+nosnow_last_month_col <- full_join(nosnow_first_month_col, nosnow_last_month_tomerge)
 ```
 
 ```
-## # A tibble: 60 × 11
-## # Groups:   parent.pop, elevation.group, elev_m, year [55]
-##    parent.pop elevation.group elev_m PckSum year  month   cwd   pck   ppt   tmn
-##    <chr>      <chr>            <dbl>  <dbl> <chr> <dbl> <dbl> <dbl> <dbl> <dbl>
-##  1 BH         Low               511.      0 1993     10  90.4     0  15.6 10.3 
-##  2 BH         Low               511.      0 1996     10  88.5     0  54.7  8.09
-##  3 BH         Low               511.      0 2001     10  91.9     0  17.0 11.1 
-##  4 BH         Low               511.      0 2003      8 117.      0  10.8 16.2 
-##  5 BH         Low               511.      0 2006      9 123.      0  12.5 13.4 
-##  6 BH         Low               511.      0 2008     10  90.6     0  16.1  9.73
-##  7 BH         Low               511.      0 2011     10  89.2     0  39.0 10.3 
-##  8 BH         Low               511.      0 2012     10  90.8     0  14.4 10.3 
-##  9 BH         Low               511.      0 2014      9 136.      0  16.3 15.4 
-## 10 BH         Low               511.      0 2021     10  89.1     0  77.1 10.3 
-## # ℹ 50 more rows
-## # ℹ 1 more variable: tmx <dbl>
+## Joining with `by = join_by(parent.pop, elevation.group, elev_m, year)`
+```
+
+```r
+dim(nosnow_last_month_col)
+```
+
+```
+## [1] 1800   14
+```
+
+```r
+#Checking for weird cases 
+nosnow_last_month_col %>% filter(is.na(lastmonth)) %>% arrange(year) #3 years when IH doesn't have a last month based on these criteria (cwd never goes above 88 in those years)
+```
+
+```
+## # A tibble: 36 × 14
+##    month growmonth parent.pop elevation.group elev_m PckSum year    cwd   pck
+##    <dbl>     <dbl> <chr>      <chr>            <dbl>  <dbl> <chr> <dbl> <dbl>
+##  1     1         6 IH         Low               454.   2.32 1998   16.3     0
+##  2     2         7 IH         Low               454.   2.32 1998   21.0     0
+##  3     3         8 IH         Low               454.   2.32 1998   30.3     0
+##  4     4         9 IH         Low               454.   2.32 1998   21.1     0
+##  5     5        10 IH         Low               454.   2.32 1998    0       0
+##  6     6        11 IH         Low               454.   2.32 1998    0       0
+##  7     7        12 IH         Low               454.   2.32 1998   42.5     0
+##  8     8         1 IH         Low               454.   2.32 1998   83.1     0
+##  9     9         2 IH         Low               454.   2.32 1998   87.6     0
+## 10    10         3 IH         Low               454.   2.32 1998   68.9     0
+## # ℹ 26 more rows
+## # ℹ 5 more variables: ppt <dbl>, tmn <dbl>, tmx <dbl>, firstmonth <dbl>,
+## #   lastmonth <dbl>
+```
+
+```r
+nosnow_last_month_col %>% filter(is.na(firstmonth)) %>% arrange(year) #1 year when BH doesn't have a first month based on these criteria (ppt never above 25)
+```
+
+```
+## # A tibble: 12 × 14
+##    month growmonth parent.pop elevation.group elev_m PckSum year    cwd   pck
+##    <dbl>     <dbl> <chr>      <chr>            <dbl>  <dbl> <chr> <dbl> <dbl>
+##  1     1         6 BH         Low               511.      0 2013   28.4     0
+##  2     2         7 BH         Low               511.      0 2013   40.4     0
+##  3     3         8 BH         Low               511.      0 2013   61.2     0
+##  4     4         9 BH         Low               511.      0 2013   74.9     0
+##  5     5        10 BH         Low               511.      0 2013   75.7     0
+##  6     6        11 BH         Low               511.      0 2013  101.      0
+##  7     7        12 BH         Low               511.      0 2013  136.      0
+##  8     8         1 BH         Low               511.      0 2013  150.      0
+##  9     9         2 BH         Low               511.      0 2013  129.      0
+## 10    10         3 BH         Low               511.      0 2013   86.8     0
+## 11    11         4 BH         Low               511.      0 2013   47.2     0
+## 12    12         5 BH         Low               511.      0 2013   31.3     0
+## # ℹ 5 more variables: ppt <dbl>, tmn <dbl>, tmx <dbl>, firstmonth <dbl>,
+## #   lastmonth <dbl>
+```
+
+```r
+nosnow_last_month_col %>% filter(lastmonth<5) %>% arrange(parent.pop, year) #some cases where last month is less than 5 (earlier than December)
+```
+
+```
+## # A tibble: 444 × 14
+##    month growmonth parent.pop elevation.group elev_m PckSum year    cwd   pck
+##    <dbl>     <dbl> <chr>      <chr>            <dbl>  <dbl> <chr> <dbl> <dbl>
+##  1     1         6 BH         Low               511.      0 1995   27.9     0
+##  2     2         7 BH         Low               511.      0 1995   43.9     0
+##  3     3         8 BH         Low               511.      0 1995   41.1     0
+##  4     4         9 BH         Low               511.      0 1995   38.9     0
+##  5     5        10 BH         Low               511.      0 1995   12.3     0
+##  6     6        11 BH         Low               511.      0 1995   34.4     0
+##  7     7        12 BH         Low               511.      0 1995   80.9     0
+##  8     8         1 BH         Low               511.      0 1995  180.      0
+##  9     9         2 BH         Low               511.      0 1995  134.      0
+## 10    10         3 BH         Low               511.      0 1995   92.1     0
+## # ℹ 434 more rows
+## # ℹ 5 more variables: ppt <dbl>, tmn <dbl>, tmx <dbl>, firstmonth <dbl>,
+## #   lastmonth <dbl>
+```
+
+```r
+nosnow_last_month_col %>% filter(lastmonth<firstmonth, lastmonth<5) %>% arrange(parent.pop, year) #most of the above are when the last month is before the first month (in growyear, not calendar year)
+```
+
+```
+## # A tibble: 432 × 14
+##    month growmonth parent.pop elevation.group elev_m PckSum year    cwd   pck
+##    <dbl>     <dbl> <chr>      <chr>            <dbl>  <dbl> <chr> <dbl> <dbl>
+##  1     1         6 BH         Low               511.      0 1995   27.9     0
+##  2     2         7 BH         Low               511.      0 1995   43.9     0
+##  3     3         8 BH         Low               511.      0 1995   41.1     0
+##  4     4         9 BH         Low               511.      0 1995   38.9     0
+##  5     5        10 BH         Low               511.      0 1995   12.3     0
+##  6     6        11 BH         Low               511.      0 1995   34.4     0
+##  7     7        12 BH         Low               511.      0 1995   80.9     0
+##  8     8         1 BH         Low               511.      0 1995  180.      0
+##  9     9         2 BH         Low               511.      0 1995  134.      0
+## 10    10         3 BH         Low               511.      0 1995   92.1     0
+## # ℹ 422 more rows
+## # ℹ 5 more variables: ppt <dbl>, tmn <dbl>, tmx <dbl>, firstmonth <dbl>,
+## #   lastmonth <dbl>
+```
+
+```r
+nosnow_last_month_col %>% filter(lastmonth>firstmonth & lastmonth<5) %>% arrange(parent.pop, year) #IH 2003, first month = 1 (Aug) & last month = 2 (Sept). Seems like there was a fluke rain event in Aug, but rain picked up again in November - CONSIDER MANUALLY ADJUSTING THE GROWTH SEASON FOR THIS CASE
+```
+
+```
+## # A tibble: 12 × 14
+##    month growmonth parent.pop elevation.group elev_m PckSum year    cwd   pck
+##    <dbl>     <dbl> <chr>      <chr>            <dbl>  <dbl> <chr> <dbl> <dbl>
+##  1     1         6 IH         Low               454.   2.32 2003   20.9     0
+##  2     2         7 IH         Low               454.   2.32 2003   28.0     0
+##  3     3         8 IH         Low               454.   2.32 2003   41.6     0
+##  4     4         9 IH         Low               454.   2.32 2003   20.4     0
+##  5     5        10 IH         Low               454.   2.32 2003    0       0
+##  6     6        11 IH         Low               454.   2.32 2003   57.2     0
+##  7     7        12 IH         Low               454.   2.32 2003   74.5     0
+##  8     8         1 IH         Low               454.   2.32 2003   54.7     0
+##  9     9         2 IH         Low               454.   2.32 2003  130.      0
+## 10    10         3 IH         Low               454.   2.32 2003   83.1     0
+## 11    11         4 IH         Low               454.   2.32 2003   33.7     0
+## 12    12         5 IH         Low               454.   2.32 2003   19.8     0
+## # ℹ 5 more variables: ppt <dbl>, tmn <dbl>, tmx <dbl>, firstmonth <dbl>,
+## #   lastmonth <dbl>
+```
+
+```r
+nosnow_last_month_col %>% filter(lastmonth==5) %>% arrange(parent.pop, year) #0 cases where 5 is the last month 
+```
+
+```
+## # A tibble: 0 × 14
+## # ℹ 14 variables: month <dbl>, growmonth <dbl>, parent.pop <chr>,
+## #   elevation.group <chr>, elev_m <dbl>, PckSum <dbl>, year <chr>, cwd <dbl>,
+## #   pck <dbl>, ppt <dbl>, tmn <dbl>, tmx <dbl>, firstmonth <dbl>,
+## #   lastmonth <dbl>
+```
+
+```r
+nosnow_last_month_col %>% filter(lastmonth==firstmonth) %>% arrange(parent.pop, year) #first month and last month are never the same 
+```
+
+```
+## # A tibble: 0 × 14
+## # ℹ 14 variables: month <dbl>, growmonth <dbl>, parent.pop <chr>,
+## #   elevation.group <chr>, elev_m <dbl>, PckSum <dbl>, year <chr>, cwd <dbl>,
+## #   pck <dbl>, ppt <dbl>, tmn <dbl>, tmx <dbl>, firstmonth <dbl>,
+## #   lastmonth <dbl>
+```
+
+```r
+nosnow_last_month_col %>% filter(growmonth==firstmonth+1, cwd>88) %>% arrange(parent.pop, year) #2 cases where cwd is high in the second growth month 
+```
+
+```
+## # A tibble: 2 × 14
+##   month growmonth parent.pop elevation.group elev_m PckSum year    cwd   pck
+##   <dbl>     <dbl> <chr>      <chr>            <dbl>  <dbl> <chr> <dbl> <dbl>
+## 1     9         2 CC         Low               313    0    2003   107.     0
+## 2     9         2 IH         Low               454.   2.32 2003   130.     0
+## # ℹ 5 more variables: ppt <dbl>, tmn <dbl>, tmx <dbl>, firstmonth <dbl>,
+## #   lastmonth <dbl>
+```
+
+```r
+nosnow_grwseason_recent <- nosnow_last_month_col %>% #fill in all the months b/t the first and last for the full growth season 
+  group_by(parent.pop, elevation.group, elev_m, year) %>% 
+  filter(growmonth>=firstmonth) %>% #first and last month are in grow month format not calendar year 
+  filter(ifelse(lastmonth<5, growmonth<=12, growmonth<lastmonth)) 
+summary(nosnow_grwseason_recent) 
+```
+
+```
+##      month         growmonth       parent.pop        elevation.group   
+##  Min.   : 1.00   Min.   : 1.000   Length:1215        Length:1215       
+##  1st Qu.: 3.00   1st Qu.: 5.000   Class :character   Class :character  
+##  Median : 5.00   Median : 7.000   Mode  :character   Mode  :character  
+##  Mean   : 5.86   Mean   : 7.018                                        
+##  3rd Qu.:10.00   3rd Qu.: 9.000                                        
+##  Max.   :12.00   Max.   :12.000                                        
+##      elev_m          PckSum           year                cwd        
+##  Min.   :313.0   Min.   :0.0000   Length:1215        Min.   :  0.00  
+##  1st Qu.:379.2   1st Qu.:0.0000   Class :character   1st Qu.: 21.06  
+##  Median :421.5   Median :0.0000   Mode  :character   Median : 32.59  
+##  Mean   :414.2   Mean   :0.5621                      Mean   : 38.14  
+##  3rd Qu.:454.1   3rd Qu.:0.2523                      3rd Qu.: 52.62  
+##  Max.   :511.4   Max.   :2.3243                      Max.   :139.30  
+##       pck                ppt              tmn              tmx       
+##  Min.   : 0.00000   Min.   :  0.00   Min.   :-1.050   Min.   : 9.38  
+##  1st Qu.: 0.00000   1st Qu.: 29.30   1st Qu.: 3.935   1st Qu.:14.16  
+##  Median : 0.00000   Median : 74.92   Median : 5.890   Median :17.82  
+##  Mean   : 0.02881   Mean   :109.07   Mean   : 6.722   Mean   :19.03  
+##  3rd Qu.: 0.00000   3rd Qu.:152.41   3rd Qu.: 9.005   3rd Qu.:22.96  
+##  Max.   :17.96000   Max.   :614.04   Max.   :19.740   Max.   :35.97  
+##    firstmonth      lastmonth     
+##  Min.   :1.000   Min.   : 1.000  
+##  1st Qu.:3.000   1st Qu.: 2.000  
+##  Median :3.000   Median :11.000  
+##  Mean   :3.267   Mean   : 8.278  
+##  3rd Qu.:4.000   3rd Qu.:12.000  
+##  Max.   :5.000   Max.   :12.000
+```
+
+```r
+nosnow_grwseason_recent %>% filter(cwd > 88) %>% filter(growmonth==firstmonth) #some cases when cwd is high in the first month (when ppt >25)
+```
+
+```
+## # A tibble: 9 × 14
+## # Groups:   parent.pop, elevation.group, elev_m, year [9]
+##   month growmonth parent.pop elevation.group elev_m PckSum year    cwd   pck
+##   <dbl>     <dbl> <chr>      <chr>            <dbl>  <dbl> <chr> <dbl> <dbl>
+## 1     8         1 TM2        Low               379.  0     1997  139.      0
+## 2     9         2 IH         Low               454.  2.32  2000  115.      0
+## 3     9         2 IH         Low               454.  2.32  2013  121.      0
+## 4     9         2 IH         Low               454.  2.32  2014  112.      0
+## 5     9         2 SC         Low               422.  0.252 2019  119.      0
+## 6    10         3 BH         Low               511.  0     1992   91.0     0
+## 7    10         3 BH         Low               511.  0     1996   88.5     0
+## 8    10         3 BH         Low               511.  0     2011   89.2     0
+## 9    10         3 BH         Low               511.  0     2021   89.1     0
+## # ℹ 5 more variables: ppt <dbl>, tmn <dbl>, tmx <dbl>, firstmonth <dbl>,
+## #   lastmonth <dbl>
 ```
 
 ```r
@@ -2068,14 +2318,15 @@ xtabs(~parent.pop+month, data=nosnow_grwseason_recent)
 ```
 ##           month
 ## parent.pop  1  2  3  4  5  6  7  8  9 10 11 12
-##        BH  30 30 30 30 28  8  1  1  3 20 29 29
-##        CC  30 29 30 30 30 13  4  4 11 26 29 29
-##        IH  28 29 30 30 29 22  7  6 12 26 29 29
-##        SC  29 30 30 30 29 12  0  1  8 27 29 29
-##        TM2 30 29 30 30 25 18  6  4 11 28 29 29
+##        BH  29 29 29 29 29  8  1  0  0 10 26 29
+##        CC  30 30 30 30 30 12  2  1  3 23 29 30
+##        IH  27 27 27 27 27 27 27  1  4 21 26 27
+##        SC  30 30 30 30 30 13  0  0  1 15 29 30
+##        TM2 30 30 30 30 17 12  7  1  3 21 29 30
 ```
 
 ```r
+options(max.print=1000000)
 xtabs(~year+month+parent.pop, data=nosnow_grwseason_recent)
 ```
 
@@ -2084,176 +2335,176 @@ xtabs(~year+month+parent.pop, data=nosnow_grwseason_recent)
 ## 
 ##       month
 ## year   1 2 3 4 5 6 7 8 9 10 11 12
-##   1993 1 1 1 1 1 1 0 0 0  1  1  1
+##   1992 1 1 1 1 1 0 0 0 0  1  1  1
+##   1993 1 1 1 1 1 1 0 0 0  0  1  1
 ##   1994 1 1 1 1 1 0 0 0 0  1  1  1
-##   1995 1 1 1 1 1 1 1 0 0  0  1  1
+##   1995 1 1 1 1 1 1 1 0 0  0  0  1
 ##   1996 1 1 1 1 1 1 0 0 0  1  1  1
-##   1997 1 1 1 1 1 0 0 0 0  1  1  1
-##   1998 1 1 1 1 1 1 0 0 0  1  1  1
+##   1997 1 1 1 1 1 0 0 0 0  0  1  1
+##   1998 1 1 1 1 1 1 0 0 0  0  1  1
 ##   1999 1 1 1 1 1 0 0 0 0  0  1  1
 ##   2000 1 1 1 1 1 1 0 0 0  1  1  1
-##   2001 1 1 1 1 1 0 0 0 0  1  1  1
-##   2002 1 1 1 1 1 0 0 0 0  1  1  1
-##   2003 1 1 1 1 1 0 0 1 0  0  1  1
+##   2001 1 1 1 1 1 0 0 0 0  0  1  1
+##   2002 1 1 1 1 1 0 0 0 0  0  1  1
+##   2003 1 1 1 1 1 0 0 0 0  0  1  1
 ##   2004 1 1 1 1 1 0 0 0 0  1  1  1
-##   2005 1 1 1 1 1 0 0 0 0  1  1  1
-##   2006 1 1 1 1 1 0 0 0 1  1  1  1
-##   2007 1 1 1 1 1 0 0 0 0  1  1  1
-##   2008 1 1 1 1 1 0 0 0 0  1  1  1
+##   2005 1 1 1 1 1 0 0 0 0  0  0  1
+##   2006 1 1 1 1 1 0 0 0 0  0  1  1
+##   2007 1 1 1 1 1 0 0 0 0  0  0  1
+##   2008 1 1 1 1 1 0 0 0 0  0  1  1
 ##   2009 1 1 1 1 1 1 0 0 0  1  1  1
 ##   2010 1 1 1 1 1 0 0 0 0  1  1  1
 ##   2011 1 1 1 1 1 1 0 0 0  1  1  1
-##   2012 1 1 1 1 0 0 0 0 0  1  1  1
-##   2013 1 1 1 1 1 0 0 0 0  1  1  1
-##   2014 1 1 1 1 1 0 0 0 1  0  1  1
+##   2012 1 1 1 1 1 0 0 0 0  0  1  1
+##   2013 0 0 0 0 0 0 0 0 0  0  0  0
+##   2014 1 1 1 1 1 0 0 0 0  0  1  1
 ##   2015 1 1 1 1 1 0 0 0 0  0  1  1
 ##   2016 1 1 1 1 1 0 0 0 0  1  1  1
 ##   2017 1 1 1 1 1 1 0 0 0  0  1  1
 ##   2018 1 1 1 1 1 0 0 0 0  0  1  1
 ##   2019 1 1 1 1 1 0 0 0 0  0  1  1
 ##   2020 1 1 1 1 1 0 0 0 0  0  1  1
-##   2021 1 1 1 1 0 0 0 0 0  1  1  1
-##   2022 1 1 1 1 1 0 0 0 1  0  0  0
+##   2021 1 1 1 1 1 0 0 0 0  1  1  1
 ## 
 ## , , parent.pop = CC
 ## 
 ##       month
 ## year   1 2 3 4 5 6 7 8 9 10 11 12
-##   1993 1 1 1 1 1 1 0 1 0  1  1  1
+##   1992 1 1 1 1 1 1 0 0 0  1  1  1
+##   1993 1 1 1 1 1 1 0 0 0  1  1  1
 ##   1994 1 1 1 1 1 0 0 0 0  1  1  1
-##   1995 1 1 1 1 1 1 1 0 0  0  1  1
-##   1996 1 1 1 1 1 0 0 0 1  1  1  1
-##   1997 1 1 1 1 1 1 1 1 1  1  1  1
-##   1998 1 1 1 1 1 1 0 0 1  1  1  1
+##   1995 1 1 1 1 1 1 1 0 0  0  0  1
+##   1996 1 1 1 1 1 0 0 0 0  1  1  1
+##   1997 1 1 1 1 1 1 1 0 0  1  1  1
+##   1998 1 1 1 1 1 1 0 0 0  1  1  1
 ##   1999 1 1 1 1 1 1 0 0 0  1  1  1
-##   2000 1 1 1 1 1 1 0 0 1  1  1  1
-##   2001 1 1 1 1 1 0 0 0 1  1  1  1
+##   2000 1 1 1 1 1 0 0 0 0  1  1  1
+##   2001 1 1 1 1 1 0 0 0 0  1  1  1
 ##   2002 1 1 1 1 1 0 0 0 0  0  1  1
-##   2003 1 1 1 1 1 0 0 1 0  1  1  1
+##   2003 1 1 1 1 1 0 0 1 1  1  1  1
 ##   2004 1 1 1 1 1 0 0 0 0  1  1  1
 ##   2005 1 1 1 1 1 1 0 0 0  1  1  1
-##   2006 1 1 1 1 1 0 0 0 0  1  1  1
-##   2007 1 1 1 1 1 0 1 0 1  1  1  1
+##   2006 1 1 1 1 1 0 0 0 0  0  1  1
+##   2007 1 1 1 1 1 0 0 0 0  1  1  1
 ##   2008 1 1 1 1 1 0 0 0 0  1  1  1
-##   2009 1 1 1 1 1 1 0 0 1  1  1  1
+##   2009 1 1 1 1 1 1 0 0 0  1  1  1
 ##   2010 1 1 1 1 1 0 0 0 0  1  1  1
 ##   2011 1 1 1 1 1 1 0 0 0  1  1  1
 ##   2012 1 1 1 1 1 1 0 0 0  1  1  1
 ##   2013 1 1 1 1 1 1 0 0 1  1  1  1
-##   2014 1 1 1 1 1 0 0 1 1  1  1  1
-##   2015 1 1 1 1 1 0 1 0 0  1  1  1
+##   2014 1 1 1 1 1 0 0 0 0  1  1  1
+##   2015 1 1 1 1 1 0 0 0 0  0  1  1
 ##   2016 1 1 1 1 1 0 0 0 0  1  1  1
-##   2017 1 1 1 1 1 1 0 0 0  1  1  1
-##   2018 1 1 1 1 1 0 0 0 0  1  1  1
+##   2017 1 1 1 1 1 1 0 0 0  0  1  1
+##   2018 1 1 1 1 1 0 0 0 0  0  1  1
 ##   2019 1 1 1 1 1 0 0 0 1  1  1  1
-##   2020 1 0 1 1 1 0 0 0 0  0  1  1
+##   2020 1 1 1 1 1 0 0 0 0  0  1  1
 ##   2021 1 1 1 1 1 0 0 0 0  1  1  1
-##   2022 1 1 1 1 1 1 0 0 1  0  0  0
 ## 
 ## , , parent.pop = IH
 ## 
 ##       month
 ## year   1 2 3 4 5 6 7 8 9 10 11 12
-##   1993 0 1 1 1 1 1 1 1 0  1  1  1
-##   1994 1 1 1 1 1 1 0 0 1  1  1  1
-##   1995 1 1 1 1 1 1 0 1 0  0  1  1
+##   1992 1 1 1 1 1 1 1 0 0  1  1  1
+##   1993 1 1 1 1 1 1 1 0 0  1  1  1
+##   1994 1 1 1 1 1 1 1 0 0  1  1  1
+##   1995 1 1 1 1 1 1 1 0 0  0  0  1
 ##   1996 1 1 1 1 1 1 1 0 0  1  1  1
-##   1997 1 1 1 1 1 1 1 1 1  1  1  1
-##   1998 1 1 1 1 1 1 1 0 1  1  1  1
-##   1999 1 1 1 1 1 1 0 1 0  1  1  1
-##   2000 1 1 1 1 1 1 0 0 1  1  1  1
-##   2001 1 1 1 1 0 1 0 0 1  1  1  1
-##   2002 1 1 1 1 1 0 0 0 0  0  1  1
-##   2003 1 1 1 1 1 0 0 1 0  1  1  1
-##   2004 1 1 1 1 1 0 0 0 0  1  1  1
-##   2005 1 1 1 1 1 1 0 0 1  1  1  1
-##   2006 1 1 1 1 1 0 0 0 0  1  1  1
-##   2007 1 1 1 1 1 1 0 0 1  1  1  1
-##   2008 1 1 1 1 1 0 0 0 0  1  1  1
-##   2009 1 1 1 1 1 1 0 0 0  1  1  1
-##   2010 1 1 1 1 1 1 0 1 0  1  1  1
-##   2011 1 1 1 1 1 1 0 0 0  1  1  1
+##   1997 1 1 1 1 1 1 1 0 0  1  1  1
+##   1998 0 0 0 0 0 0 0 0 0  0  0  0
+##   1999 1 1 1 1 1 1 1 0 0  1  1  1
+##   2000 1 1 1 1 1 1 1 0 1  1  1  1
+##   2001 1 1 1 1 1 1 1 0 0  1  1  1
+##   2002 1 1 1 1 1 1 1 0 0  0  1  1
+##   2003 1 1 1 1 1 1 1 1 1  1  1  1
+##   2004 1 1 1 1 1 1 1 0 0  1  1  1
+##   2005 0 0 0 0 0 0 0 0 0  0  0  0
+##   2006 1 1 1 1 1 1 1 0 0  0  1  1
+##   2007 1 1 1 1 1 1 1 0 0  1  1  1
+##   2008 1 1 1 1 1 1 1 0 0  1  1  1
+##   2009 1 1 1 1 1 1 1 0 0  1  1  1
+##   2010 1 1 1 1 1 1 1 0 0  1  1  1
+##   2011 1 1 1 1 1 1 1 0 0  1  1  1
 ##   2012 1 1 1 1 1 1 1 0 0  1  1  1
-##   2013 1 1 1 1 1 1 0 0 1  1  1  1
-##   2014 1 1 1 1 1 0 1 0 1  1  1  1
-##   2015 1 1 1 1 1 1 1 0 0  1  1  1
-##   2016 1 1 1 1 1 0 0 0 0  1  1  1
-##   2017 0 1 1 1 1 1 0 0 0  1  1  1
-##   2018 1 1 1 1 1 0 0 0 0  1  1  1
-##   2019 1 0 1 1 1 1 0 0 1  1  1  1
-##   2020 1 1 1 1 1 1 0 0 0  0  1  1
-##   2021 1 1 1 1 1 1 0 0 1  1  1  1
-##   2022 1 1 1 1 1 1 0 0 1  0  0  0
+##   2013 1 1 1 1 1 1 1 0 1  1  1  1
+##   2014 1 1 1 1 1 1 1 0 1  1  1  1
+##   2015 1 1 1 1 1 1 1 0 0  0  1  1
+##   2016 1 1 1 1 1 1 1 0 0  1  1  1
+##   2017 1 1 1 1 1 1 1 0 0  0  1  1
+##   2018 1 1 1 1 1 1 1 0 0  1  1  1
+##   2019 0 0 0 0 0 0 0 0 0  0  0  0
+##   2020 1 1 1 1 1 1 1 0 0  0  1  1
+##   2021 1 1 1 1 1 1 1 0 0  1  1  1
 ## 
 ## , , parent.pop = SC
 ## 
 ##       month
 ## year   1 2 3 4 5 6 7 8 9 10 11 12
-##   1993 1 1 1 1 1 1 0 0 0  1  1  1
-##   1994 1 1 1 1 1 0 0 0 1  1  1  1
-##   1995 1 1 1 1 1 1 0 0 0  0  1  1
+##   1992 1 1 1 1 1 1 0 0 0  1  1  1
+##   1993 1 1 1 1 1 1 0 0 0  0  1  1
+##   1994 1 1 1 1 1 0 0 0 0  1  1  1
+##   1995 1 1 1 1 1 1 0 0 0  0  0  1
 ##   1996 1 1 1 1 1 1 0 0 0  1  1  1
 ##   1997 1 1 1 1 1 1 0 0 0  1  1  1
-##   1998 1 1 1 1 1 1 0 0 1  1  1  1
-##   1999 1 1 1 1 1 0 0 0 0  1  1  1
-##   2000 1 1 1 1 1 1 0 0 1  1  1  1
-##   2001 1 1 1 1 0 0 0 0 0  1  1  1
-##   2002 1 1 1 1 1 0 0 0 0  1  1  1
-##   2003 1 1 1 1 1 0 0 1 0  1  1  1
+##   1998 1 1 1 1 1 1 0 0 0  0  1  1
+##   1999 1 1 1 1 1 0 0 0 0  0  1  1
+##   2000 1 1 1 1 1 1 0 0 0  1  1  1
+##   2001 1 1 1 1 1 0 0 0 0  0  1  1
+##   2002 1 1 1 1 1 0 0 0 0  0  1  1
+##   2003 1 1 1 1 1 0 0 0 0  0  1  1
 ##   2004 1 1 1 1 1 0 0 0 0  1  1  1
-##   2005 1 1 1 1 1 1 0 0 1  1  1  1
-##   2006 1 1 1 1 1 0 0 0 0  1  1  1
+##   2005 1 1 1 1 1 1 0 0 0  0  1  1
+##   2006 1 1 1 1 1 0 0 0 0  0  1  1
 ##   2007 1 1 1 1 1 0 0 0 0  1  1  1
-##   2008 1 1 1 1 1 0 0 0 0  1  1  1
+##   2008 1 1 1 1 1 0 0 0 0  0  1  1
 ##   2009 1 1 1 1 1 0 0 0 0  1  1  1
 ##   2010 1 1 1 1 1 0 0 0 0  1  1  1
 ##   2011 1 1 1 1 1 1 0 0 0  1  1  1
 ##   2012 1 1 1 1 1 1 0 0 0  1  1  1
-##   2013 1 1 1 1 1 1 0 0 1  1  1  1
-##   2014 1 1 1 1 1 0 0 0 1  1  1  1
+##   2013 1 1 1 1 1 1 0 0 0  0  1  1
+##   2014 1 1 1 1 1 0 0 0 0  0  1  1
 ##   2015 1 1 1 1 1 0 0 0 0  1  1  1
 ##   2016 1 1 1 1 1 0 0 0 0  1  1  1
-##   2017 0 1 1 1 1 1 0 0 0  1  1  1
-##   2018 1 1 1 1 1 0 0 0 0  1  1  1
+##   2017 1 1 1 1 1 1 0 0 0  0  1  1
+##   2018 1 1 1 1 1 0 0 0 0  0  1  1
 ##   2019 1 1 1 1 1 1 0 0 1  1  1  1
 ##   2020 1 1 1 1 1 0 0 0 0  0  1  1
 ##   2021 1 1 1 1 1 0 0 0 0  1  1  1
-##   2022 1 1 1 1 1 0 0 0 1  0  0  0
 ## 
 ## , , parent.pop = TM2
 ## 
 ##       month
 ## year   1 2 3 4 5 6 7 8 9 10 11 12
-##   1993 1 1 1 1 1 1 0 1 0  1  1  1
-##   1994 1 1 1 1 1 0 0 0 0  1  1  1
-##   1995 1 1 1 1 1 1 1 0 0  1  1  1
-##   1996 1 1 1 1 1 1 1 0 1  1  1  1
-##   1997 1 1 1 1 1 1 1 1 1  1  1  1
-##   1998 1 1 1 1 1 1 1 0 1  1  1  1
-##   1999 1 1 1 1 0 1 0 0 0  1  1  1
-##   2000 1 1 1 1 1 1 0 0 1  1  1  1
-##   2001 1 1 1 1 0 0 0 0 1  1  1  1
-##   2002 1 1 1 1 1 0 0 0 0  1  1  1
-##   2003 1 1 1 1 1 1 0 1 0  1  1  1
-##   2004 1 1 1 1 1 0 0 0 0  1  1  1
-##   2005 1 1 1 1 1 1 0 0 0  1  1  1
-##   2006 1 1 1 1 1 1 0 0 0  1  1  1
-##   2007 1 1 1 1 1 0 1 0 1  1  1  1
+##   1992 1 1 1 1 0 0 0 0 0  1  1  1
+##   1993 1 1 1 1 1 1 1 0 0  1  1  1
+##   1994 1 1 1 1 1 0 0 0 0  0  1  1
+##   1995 1 1 1 1 1 1 1 0 0  0  0  1
+##   1996 1 1 1 1 1 1 1 0 0  1  1  1
+##   1997 1 1 1 1 0 0 0 1 1  1  1  1
+##   1998 1 1 1 1 1 1 1 0 0  1  1  1
+##   1999 1 1 1 1 0 0 0 0 0  1  1  1
+##   2000 1 1 1 1 1 0 0 0 0  1  1  1
+##   2001 1 1 1 1 0 0 0 0 0  1  1  1
+##   2002 1 1 1 1 0 0 0 0 0  0  1  1
+##   2003 1 1 1 1 1 1 0 0 0  0  1  1
+##   2004 1 1 1 1 0 0 0 0 0  1  1  1
+##   2005 1 1 1 1 1 1 1 0 0  1  1  1
+##   2006 1 1 1 1 1 1 0 0 0  0  1  1
+##   2007 1 1 1 1 0 0 0 0 0  1  1  1
 ##   2008 1 1 1 1 0 0 0 0 0  1  1  1
-##   2009 1 1 1 1 1 1 0 0 1  1  1  1
+##   2009 1 1 1 1 1 1 0 0 0  1  1  1
 ##   2010 1 1 1 1 1 1 0 0 0  1  1  1
-##   2011 1 1 1 1 1 1 0 0 0  1  1  1
-##   2012 1 1 1 1 1 1 0 0 0  1  1  1
-##   2013 1 1 1 1 1 1 0 0 1  1  1  1
-##   2014 1 1 1 1 1 0 0 1 1  1  1  1
-##   2015 1 1 1 1 0 0 1 0 0  1  1  1
-##   2016 1 1 1 1 1 0 0 0 0  1  1  1
-##   2017 1 1 1 1 1 1 0 0 0  1  1  1
-##   2018 1 1 1 1 1 0 0 0 0  1  1  1
+##   2011 1 1 1 1 1 1 1 0 0  1  1  1
+##   2012 1 1 1 1 1 0 0 0 0  1  1  1
+##   2013 1 1 1 1 0 0 0 0 1  1  1  1
+##   2014 1 1 1 1 0 0 0 0 0  1  1  1
+##   2015 1 1 1 1 0 0 0 0 0  0  1  1
+##   2016 1 1 1 1 0 0 0 0 0  1  1  1
+##   2017 1 1 1 1 1 1 1 0 0  0  1  1
+##   2018 1 1 1 1 1 0 0 0 0  0  1  1
 ##   2019 1 1 1 1 1 1 0 0 1  1  1  1
-##   2020 1 0 1 1 1 0 0 0 0  0  1  1
+##   2020 1 1 1 1 1 0 0 0 0  0  1  1
 ##   2021 1 1 1 1 0 0 0 0 0  1  1  1
-##   2022 1 1 1 1 1 1 0 0 1  0  0  0
 ```
 
 ```r
@@ -2267,21 +2518,7 @@ nosnow_grwseason_recent %>% ggplot(aes(x=month)) + geom_histogram() +
 ```
 
 ![](Climate_Prep_files/figure-html/unnamed-chunk-16-1.png)<!-- -->
-
-```r
-#nosnow_grwseason_recent %>% filter(year>2000) %>% 
- # ggplot(aes(x=month,group=year, color=year)) + 
-  #geom_line(aes(fill=..count..),stat="bin",binwidth=1, position = position_dodge()) +
-  #scale_x_continuous(breaks=c(1, 2, 3, 4, 5,6,7,8,9,10, 11, 12)) +
-  #facet_wrap(~parent.pop)
-```
-From means (months where ppt <10)
-BH - 87/137/154/130; June-Sept
-CC - 105/108/101; July-Sept
-IH - 62/98; July-Aug
-SC - 75/148/163/128; June-Sept
-TM2 - 90/167/91; July-Sept
-Apriori Assumption for growth season: Low: Oct-July, Mid: Nov-Aug, High: April-Sept
+Apriori Assumption for growth season: Low: Oct-July
 
 Historical Climate
 
@@ -2295,7 +2532,7 @@ unique(nosnow_pops_historical$parent.pop)
 ```
 
 ```r
-summary(nosnow_pops_historical)
+summary(nosnow_pops_historical) #3rd quartile of CWD = 87 
 ```
 
 ```
@@ -2307,26 +2544,26 @@ summary(nosnow_pops_historical)
 ##                                        3rd Qu.:454.1   3rd Qu.: 9.25  
 ##                                        Max.   :511.4   Max.   :12.00  
 ##     cwd_mean         pck_mean         ppt_mean          tmn_mean     
-##  Min.   : 12.42   Min.   :0.0000   Min.   :  1.819   Min.   : 1.289  
-##  1st Qu.: 29.30   1st Qu.:0.0000   1st Qu.: 12.628   1st Qu.: 3.860  
-##  Median : 56.24   Median :0.0000   Median : 59.672   Median : 7.729  
-##  Mean   : 62.15   Mean   :0.4122   Mean   : 74.021   Mean   : 8.111  
-##  3rd Qu.: 85.71   3rd Qu.:0.0000   3rd Qu.:132.070   3rd Qu.:12.590  
-##  Max.   :163.81   Max.   :8.8330   Max.   :201.323   Max.   :16.337  
+##  Min.   : 12.15   Min.   :0.0000   Min.   :  1.012   Min.   : 1.218  
+##  1st Qu.: 29.27   1st Qu.:0.0000   1st Qu.: 11.992   1st Qu.: 3.735  
+##  Median : 55.90   Median :0.0000   Median : 67.216   Median : 7.683  
+##  Mean   : 62.17   Mean   :0.4099   Mean   : 74.659   Mean   : 8.061  
+##  3rd Qu.: 86.85   3rd Qu.:0.0000   3rd Qu.:133.044   3rd Qu.:12.579  
+##  Max.   :163.60   Max.   :8.8330   Max.   :201.882   Max.   :16.356  
 ##     tmx_mean        cwd_sem           pck_sem          ppt_sem       
-##  Min.   :12.19   Min.   : 0.1806   Min.   :0.0000   Min.   : 0.9454  
-##  1st Qu.:15.76   1st Qu.: 0.6574   1st Qu.:0.0000   1st Qu.: 2.7977  
-##  Median :22.22   Median : 1.7046   Median :0.0000   Median : 9.4104  
-##  Mean   :22.57   Mean   : 2.5225   Mean   :0.2835   Mean   :10.4812  
-##  3rd Qu.:30.26   3rd Qu.: 3.8760   3rd Qu.:0.0000   3rd Qu.:17.5874  
-##  Max.   :34.61   Max.   :10.5892   Max.   :4.9412   Max.   :24.6405  
+##  Min.   :12.27   Min.   : 0.1859   Min.   :0.0000   Min.   : 0.5719  
+##  1st Qu.:15.66   1st Qu.: 0.6581   1st Qu.:0.0000   1st Qu.: 2.7875  
+##  Median :22.19   Median : 1.7177   Median :0.0000   Median :10.5243  
+##  Mean   :22.56   Mean   : 2.4974   Mean   :0.2836   Mean   :10.8379  
+##  3rd Qu.:30.34   3rd Qu.: 3.8894   3rd Qu.:0.0000   3rd Qu.:17.4984  
+##  Max.   :34.69   Max.   :10.6738   Max.   :4.9412   Max.   :24.5578  
 ##     tmn_sem          tmx_sem           PckSum       
-##  Min.   :0.1723   Min.   :0.2106   Min.   : 0.2340  
-##  1st Qu.:0.2087   1st Qu.:0.3018   1st Qu.: 0.5973  
-##  Median :0.2423   Median :0.3484   Median : 0.9510  
-##  Mean   :0.2486   Mean   :0.3493   Mean   : 4.9463  
-##  3rd Qu.:0.2850   3rd Qu.:0.3835   3rd Qu.: 5.4673  
-##  Max.   :0.3254   Max.   :0.5487   Max.   :17.4817
+##  Min.   :0.1724   Min.   :0.2166   Min.   : 0.2340  
+##  1st Qu.:0.2110   1st Qu.:0.2944   1st Qu.: 0.5973  
+##  Median :0.2372   Median :0.3474   Median : 0.9510  
+##  Mean   :0.2447   Mean   :0.3499   Mean   : 4.9187  
+##  3rd Qu.:0.2866   3rd Qu.:0.3745   3rd Qu.: 5.4673  
+##  Max.   :0.3384   Max.   :0.5565   Max.   :17.3440
 ```
 
 ```r
@@ -2340,90 +2577,428 @@ nosnow_pops_historical_years <- left_join(nosnow_pops_historical_tojoin, pop_ele
 ```
 
 ```r
-nosnow_pops_historical_years
+nosnow_pops_historical_years %>% filter(month=="7", ppt>=25) #in 1974, ppt>25 for 4 pops in July...
 ```
 
 ```
-## # A tibble: 1,800 × 11
-## # Groups:   parent.pop, elevation.group, elev_m [5]
-##    parent.pop elevation.group elev_m PckSum year  month   cwd   pck    ppt   tmn
-##    <chr>      <chr>            <dbl>  <dbl> <chr> <dbl> <dbl> <dbl>  <dbl> <dbl>
-##  1 BH         Low               511.  0.234 1963      1  28.1     0 109.   -1.85
-##  2 BH         Low               511.  0.234 1963      2  43.8     0 139.    6.42
-##  3 BH         Low               511.  0.234 1963      3  44.8     0 108.    2.5 
-##  4 BH         Low               511.  0.234 1963      4  37.1     0 144.    4.29
-##  5 BH         Low               511.  0.234 1963      5  12.3     0  23.3   9.68
-##  6 BH         Low               511.  0.234 1963      6  92.3     0   3.93 10.8 
-##  7 BH         Low               511.  0.234 1963      7 122.      0   0    12.6 
-##  8 BH         Low               511.  0.234 1963      8 139.      0   0    13.6 
-##  9 BH         Low               511.  0.234 1963      9 126.      0   6.82 13.9 
-## 10 BH         Low               511.  0.234 1963     10  86.9     0  42.1   9.44
-## # ℹ 1,790 more rows
+## # A tibble: 4 × 11
+## # Groups:   parent.pop, elevation.group, elev_m [4]
+##   parent.pop elevation.group elev_m PckSum year  month   cwd   pck   ppt   tmn
+##   <chr>      <chr>            <dbl>  <dbl> <chr> <dbl> <dbl> <dbl> <dbl> <dbl>
+## 1 CC         Low               313   0.951 1974      7  52.4     0  58.2  16.3
+## 2 IH         Low               454. 17.3   1974      7   0       0  79.3  15.4
+## 3 SC         Low               422.  0.597 1974      7 127.      0  61.4  14.8
+## 4 TM2        Low               379.  5.47  1974      7   0       0  59.1  15.9
 ## # ℹ 1 more variable: tmx <dbl>
 ```
 
 ```r
-nosnow_grwseason_historical <- nosnow_pops_historical_years %>% 
-  group_by(parent.pop, elevation.group, elev_m, year) %>% 
-  filter(pck==0) %>%  #snowpack == 0
-  filter(ifelse(ppt>=10, ppt>=10, cwd<86)) %>% 
-  filter(ppt >0) #take out months with no ppt
-summary(nosnow_grwseason_historical)
+nosnow_pops_historical_years %>% filter(year==1974) %>% arrange(parent.pop) #cwd high and ppt low in following months 
 ```
 
 ```
-##   parent.pop        elevation.group        elev_m          PckSum       
-##  Length:1338        Length:1338        Min.   :313.0   Min.   : 0.2340  
-##  Class :character   Class :character   1st Qu.:379.2   1st Qu.: 0.5973  
-##  Mode  :character   Mode  :character   Median :421.5   Median : 0.9510  
-##                                        Mean   :414.1   Mean   : 5.1642  
-##                                        3rd Qu.:454.1   3rd Qu.: 5.4673  
-##                                        Max.   :511.4   Max.   :17.4817  
-##      year               month             cwd              pck   
-##  Length:1338        Min.   : 1.000   Min.   :  0.00   Min.   :0  
-##  Class :character   1st Qu.: 3.000   1st Qu.: 22.77   1st Qu.:0  
-##  Mode  :character   Median : 5.000   Median : 35.98   Median :0  
-##                     Mean   : 6.186   Mean   : 44.26   Mean   :0  
-##                     3rd Qu.:10.000   3rd Qu.: 66.61   3rd Qu.:0  
-##                     Max.   :12.000   Max.   :168.60   Max.   :0  
-##       ppt              tmn              tmx       
-##  Min.   :  0.01   Min.   :-1.850   Min.   : 8.90  
-##  1st Qu.: 23.79   1st Qu.: 3.042   1st Qu.:14.31  
-##  Median : 61.38   Median : 5.360   Median :18.12  
-##  Mean   : 94.15   Mean   : 6.284   Mean   :19.59  
-##  3rd Qu.:134.72   3rd Qu.: 9.290   3rd Qu.:24.98  
-##  Max.   :559.96   Max.   :17.920   Max.   :35.34
+## # A tibble: 60 × 11
+## # Groups:   parent.pop, elevation.group, elev_m [5]
+##    parent.pop elevation.group elev_m PckSum year  month   cwd   pck      ppt
+##    <chr>      <chr>            <dbl>  <dbl> <chr> <dbl> <dbl> <dbl>    <dbl>
+##  1 BH         Low               511.  0.234 1974      1  27.6     0  91.6   
+##  2 BH         Low               511.  0.234 1974      2  40.5     0  28.2   
+##  3 BH         Low               511.  0.234 1974      3  49.0     0 129.    
+##  4 BH         Low               511.  0.234 1974      4  38.6     0  74.2   
+##  5 BH         Low               511.  0.234 1974      5  73.0     0   0     
+##  6 BH         Low               511.  0.234 1974      6  97.2     0   0.0300
+##  7 BH         Low               511.  0.234 1974      7  68.5     0  17.0   
+##  8 BH         Low               511.  0.234 1974      8 150.      0   0     
+##  9 BH         Low               511.  0.234 1974      9 132.      0   0     
+## 10 BH         Low               511.  0.234 1974     10  89.7     0  57.4   
+## # ℹ 50 more rows
+## # ℹ 2 more variables: tmn <dbl>, tmx <dbl>
 ```
 
 ```r
-unique(nosnow_grwseason_historical$parent.pop)
+nosnow_pops_historical_years %>% filter(month=="8", ppt>=25) %>% arrange(year, parent.pop) #11 cases of ppt>25 in Aug 
 ```
 
 ```
-## [1] "BH"  "CC"  "IH"  "SC"  "TM2"
-```
-
-```r
-nosnow_grwseason_historical %>% filter(cwd > 86) #some cases when ppt > 10 when cwd is high 
-```
-
-```
-## # A tibble: 87 × 11
-## # Groups:   parent.pop, elevation.group, elev_m, year [73]
+## # A tibble: 11 × 11
+## # Groups:   parent.pop, elevation.group, elev_m [5]
 ##    parent.pop elevation.group elev_m PckSum year  month   cwd   pck   ppt   tmn
 ##    <chr>      <chr>            <dbl>  <dbl> <chr> <dbl> <dbl> <dbl> <dbl> <dbl>
-##  1 BH         Low               511.  0.234 1963     10  86.9     0  42.1  9.44
-##  2 BH         Low               511.  0.234 1964     10  92       0  46.8 10.2 
-##  3 BH         Low               511.  0.234 1965     10  90.1     0  10.5  8.44
-##  4 BH         Low               511.  0.234 1968     10  87.5     0  42.3  8.06
-##  5 BH         Low               511.  0.234 1972      9 130.      0  11.2 12.1 
-##  6 BH         Low               511.  0.234 1974     10  89.7     0  57.4  9.74
-##  7 BH         Low               511.  0.234 1976      8 168.      0  26.4 13.2 
-##  8 BH         Low               511.  0.234 1976      9 115.      0  32.0 13.4 
-##  9 BH         Low               511.  0.234 1977      6 125.      0  21.2 13.9 
-## 10 BH         Low               511.  0.234 1978      9 107.      0  43.8 11.6 
-## # ℹ 77 more rows
+##  1 CC         Low               313   0.951 1965      8  70.3     0  38.7  16.6
+##  2 TM2        Low               379.  5.47  1965      8 156.      0  39.8  16.3
+##  3 CC         Low               313   0.951 1968      8  69.3     0  28.1  14.2
+##  4 TM2        Low               379.  5.47  1968      8 151.      0  28.9  13.8
+##  5 IH         Low               454. 17.3   1975      8  94.4     0  28.8  14.0
+##  6 SC         Low               422.  0.597 1975      8 169.      0  26.9  13.4
+##  7 BH         Low               511.  0.234 1976      8 168.      0  26.4  13.2
+##  8 CC         Low               313   0.951 1976      8  78.0     0  37.8  13.8
+##  9 IH         Low               454. 17.3   1976      8 152.      0  50.7  12.5
+## 10 SC         Low               422.  0.597 1976      8 148.      0  40.5  12.7
+## 11 TM2        Low               379.  5.47  1976      8 150.      0  38.3  13.4
 ## # ℹ 1 more variable: tmx <dbl>
+```
+
+```r
+nosnow_pops_historical_years %>% filter(year==1965) %>% arrange(parent.pop)
+```
+
+```
+## # A tibble: 60 × 11
+## # Groups:   parent.pop, elevation.group, elev_m [5]
+##    parent.pop elevation.group elev_m PckSum year  month   cwd   pck      ppt
+##    <chr>      <chr>            <dbl>  <dbl> <chr> <dbl> <dbl> <dbl>    <dbl>
+##  1 BH         Low               511.  0.234 1965      1  27.4     0  88.1   
+##  2 BH         Low               511.  0.234 1965      2  41.0     0  25.9   
+##  3 BH         Low               511.  0.234 1965      3  57.2     0  50.6   
+##  4 BH         Low               511.  0.234 1965      4  39.2     0 104.    
+##  5 BH         Low               511.  0.234 1965      5  70.8     0   0.0500
+##  6 BH         Low               511.  0.234 1965      6  91.2     0   0     
+##  7 BH         Low               511.  0.234 1965      7 119.      0   0     
+##  8 BH         Low               511.  0.234 1965      8  99.9     0   8.87  
+##  9 BH         Low               511.  0.234 1965      9 119.      0   0     
+## 10 BH         Low               511.  0.234 1965     10  90.1     0  10.5   
+## # ℹ 50 more rows
+## # ℹ 2 more variables: tmn <dbl>, tmx <dbl>
+```
+
+```r
+nosnow_pops_historical_years %>% filter(year==1968) %>% arrange(parent.pop) 
+```
+
+```
+## # A tibble: 60 × 11
+## # Groups:   parent.pop, elevation.group, elev_m [5]
+##    parent.pop elevation.group elev_m PckSum year  month   cwd   pck   ppt    tmn
+##    <chr>      <chr>            <dbl>  <dbl> <chr> <dbl> <dbl> <dbl> <dbl>  <dbl>
+##  1 BH         Low               511.  0.234 1968      1  28.7     0  58.5 -0.350
+##  2 BH         Low               511.  0.234 1968      2  44.7     0  68.2  5.55 
+##  3 BH         Low               511.  0.234 1968      3  59.1     0  62.1  4.02 
+##  4 BH         Low               511.  0.234 1968      4  72.2     0  19.2  4.45 
+##  5 BH         Low               511.  0.234 1968      5  73.7     0  20.7  7.90 
+##  6 BH         Low               511.  0.234 1968      6 101.      0   0   13.1  
+##  7 BH         Low               511.  0.234 1968      7 135.      0   0   16.4  
+##  8 BH         Low               511.  0.234 1968      8 149.      0   0   13.8  
+##  9 BH         Low               511.  0.234 1968      9 129.      0   0   12.1  
+## 10 BH         Low               511.  0.234 1968     10  87.5     0  42.3  8.06 
+## # ℹ 50 more rows
+## # ℹ 1 more variable: tmx <dbl>
+```
+
+```r
+nosnow_pops_historical_years %>% filter(year==1975) %>% arrange(parent.pop) 
+```
+
+```
+## # A tibble: 60 × 11
+## # Groups:   parent.pop, elevation.group, elev_m [5]
+##    parent.pop elevation.group elev_m PckSum year  month   cwd   pck      ppt
+##    <chr>      <chr>            <dbl>  <dbl> <chr> <dbl> <dbl> <dbl>    <dbl>
+##  1 BH         Low               511.  0.234 1975      1  28.3     0  43.9   
+##  2 BH         Low               511.  0.234 1975      2  37.2     0 169.    
+##  3 BH         Low               511.  0.234 1975      3  39.2     0 145.    
+##  4 BH         Low               511.  0.234 1975      4  35.9     0  67.9   
+##  5 BH         Low               511.  0.234 1975      5  72.4     0   2.73  
+##  6 BH         Low               511.  0.234 1975      6  95.4     0   0.770 
+##  7 BH         Low               511.  0.234 1975      7 121.      0   0.0300
+##  8 BH         Low               511.  0.234 1975      8 103.      0   8.65  
+##  9 BH         Low               511.  0.234 1975      9 130.      0   3.14  
+## 10 BH         Low               511.  0.234 1975     10  84.1     0  67.7   
+## # ℹ 50 more rows
+## # ℹ 2 more variables: tmn <dbl>, tmx <dbl>
+```
+
+```r
+nosnow_pops_historical_years %>% filter(year==1976) %>% arrange(parent.pop)
+```
+
+```
+## # A tibble: 60 × 11
+## # Groups:   parent.pop, elevation.group, elev_m [5]
+##    parent.pop elevation.group elev_m PckSum year  month   cwd   pck    ppt
+##    <chr>      <chr>            <dbl>  <dbl> <chr> <dbl> <dbl> <dbl>  <dbl>
+##  1 BH         Low               511.  0.234 1976      1  29.4     0  7.71 
+##  2 BH         Low               511.  0.234 1976      2  42.6     0 92.6  
+##  3 BH         Low               511.  0.234 1976      3  57.1     0 39.8  
+##  4 BH         Low               511.  0.234 1976      4  70.1     0 40.5  
+##  5 BH         Low               511.  0.234 1976      5  79.7     0  0.240
+##  6 BH         Low               511.  0.234 1976      6 112.      0  0.210
+##  7 BH         Low               511.  0.234 1976      7 166.      0  0.790
+##  8 BH         Low               511.  0.234 1976      8 168.      0 26.4  
+##  9 BH         Low               511.  0.234 1976      9 115.      0 32.0  
+## 10 BH         Low               511.  0.234 1976     10  85.0     0 23    
+## # ℹ 50 more rows
+## # ℹ 2 more variables: tmn <dbl>, tmx <dbl>
+```
+
+```r
+#some cases where ppt remains high in following month 
+
+growyear_months <- tibble(month=c(1:12), growmonth=c(6, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5))
+
+nosnow_historical_growyear_months <- full_join(growyear_months, nosnow_pops_historical_years)
+```
+
+```
+## Joining with `by = join_by(month)`
+```
+
+```r
+dim(nosnow_historical_growyear_months)
+```
+
+```
+## [1] 1800   12
+```
+
+```r
+nosnow_first_month <- nosnow_historical_growyear_months %>%
+  group_by(parent.pop, elevation.group, elev_m, year) %>% 
+  filter(ppt>=25) %>% 
+  arrange(growmonth) %>% 
+  filter(row_number()==1) #get first month for each pop and year with germinating inducing rain 
+
+nosnow_first_month_tomerge <- nosnow_first_month %>% 
+  select(parent.pop:elev_m, year, firstmonth=growmonth)
+
+nosnow_first_month_col <- full_join(nosnow_historical_growyear_months, nosnow_first_month_tomerge)
+```
+
+```
+## Joining with `by = join_by(parent.pop, elevation.group, elev_m, year)`
+```
+
+```r
+dim(nosnow_first_month_col)
+```
+
+```
+## [1] 1800   13
+```
+
+```r
+nosnow_last_month <- nosnow_historical_growyear_months %>%
+  group_by(parent.pop, elevation.group, elev_m, year) %>% 
+  filter(cwd>87) %>% #adjusted for the historical 3rd quartile of cwd
+  arrange(month) %>% 
+  filter(row_number()==1)
+
+nosnow_last_month_tomerge <- nosnow_last_month %>% 
+  select(parent.pop:elev_m, year, lastmonth=growmonth) #last month is in grow month not calendar month format
+
+nosnow_last_month_col <- full_join(nosnow_first_month_col, nosnow_last_month_tomerge)
+```
+
+```
+## Joining with `by = join_by(parent.pop, elevation.group, elev_m, year)`
+```
+
+```r
+dim(nosnow_last_month_col)
+```
+
+```
+## [1] 1800   14
+```
+
+```r
+#Checking for weird cases 
+nosnow_last_month_col %>% filter(is.na(lastmonth)) %>% arrange(year) #0 years where there isn't a last month
+```
+
+```
+## # A tibble: 0 × 14
+## # ℹ 14 variables: month <dbl>, growmonth <dbl>, parent.pop <chr>,
+## #   elevation.group <chr>, elev_m <dbl>, PckSum <dbl>, year <chr>, cwd <dbl>,
+## #   pck <dbl>, ppt <dbl>, tmn <dbl>, tmx <dbl>, firstmonth <dbl>,
+## #   lastmonth <dbl>
+```
+
+```r
+nosnow_last_month_col %>% filter(is.na(firstmonth)) %>% arrange(year) #0 years wehre there isn't a first month
+```
+
+```
+## # A tibble: 0 × 14
+## # ℹ 14 variables: month <dbl>, growmonth <dbl>, parent.pop <chr>,
+## #   elevation.group <chr>, elev_m <dbl>, PckSum <dbl>, year <chr>, cwd <dbl>,
+## #   pck <dbl>, ppt <dbl>, tmn <dbl>, tmx <dbl>, firstmonth <dbl>,
+## #   lastmonth <dbl>
+```
+
+```r
+nosnow_last_month_col %>% filter(lastmonth<5) %>% arrange(parent.pop, year) #some cases where last month is less than 5 (earlier than December)
+```
+
+```
+## # A tibble: 420 × 14
+##    month growmonth parent.pop elevation.group elev_m PckSum year    cwd   pck
+##    <dbl>     <dbl> <chr>      <chr>            <dbl>  <dbl> <chr> <dbl> <dbl>
+##  1     1         6 BH         Low               511.  0.234 1982   24.3  7.02
+##  2     2         7 BH         Low               511.  0.234 1982   37.8  0   
+##  3     3         8 BH         Low               511.  0.234 1982   39.6  0   
+##  4     4         9 BH         Low               511.  0.234 1982   38.8  0   
+##  5     5        10 BH         Low               511.  0.234 1982   74.0  0   
+##  6     6        11 BH         Low               511.  0.234 1982   33.9  0   
+##  7     7        12 BH         Low               511.  0.234 1982   79.9  0   
+##  8     8         1 BH         Low               511.  0.234 1982  177.   0   
+##  9     9         2 BH         Low               511.  0.234 1982  129.   0   
+## 10    10         3 BH         Low               511.  0.234 1982   79.7  0   
+## # ℹ 410 more rows
+## # ℹ 5 more variables: ppt <dbl>, tmn <dbl>, tmx <dbl>, firstmonth <dbl>,
+## #   lastmonth <dbl>
+```
+
+```r
+nosnow_last_month_col %>% filter(lastmonth<firstmonth, lastmonth<5) %>% arrange(parent.pop, year) #most of the above are when the last month is before the first month (in growyear, not calendar year)
+```
+
+```
+## # A tibble: 384 × 14
+##    month growmonth parent.pop elevation.group elev_m PckSum year    cwd   pck
+##    <dbl>     <dbl> <chr>      <chr>            <dbl>  <dbl> <chr> <dbl> <dbl>
+##  1     1         6 BH         Low               511.  0.234 1982   24.3  7.02
+##  2     2         7 BH         Low               511.  0.234 1982   37.8  0   
+##  3     3         8 BH         Low               511.  0.234 1982   39.6  0   
+##  4     4         9 BH         Low               511.  0.234 1982   38.8  0   
+##  5     5        10 BH         Low               511.  0.234 1982   74.0  0   
+##  6     6        11 BH         Low               511.  0.234 1982   33.9  0   
+##  7     7        12 BH         Low               511.  0.234 1982   79.9  0   
+##  8     8         1 BH         Low               511.  0.234 1982  177.   0   
+##  9     9         2 BH         Low               511.  0.234 1982  129.   0   
+## 10    10         3 BH         Low               511.  0.234 1982   79.7  0   
+## # ℹ 374 more rows
+## # ℹ 5 more variables: ppt <dbl>, tmn <dbl>, tmx <dbl>, firstmonth <dbl>,
+## #   lastmonth <dbl>
+```
+
+```r
+nosnow_last_month_col %>% filter(lastmonth>firstmonth & lastmonth<5) %>% arrange(parent.pop, year) #0 cases wehre the last month is after the first month before Dec 
+```
+
+```
+## # A tibble: 0 × 14
+## # ℹ 14 variables: month <dbl>, growmonth <dbl>, parent.pop <chr>,
+## #   elevation.group <chr>, elev_m <dbl>, PckSum <dbl>, year <chr>, cwd <dbl>,
+## #   pck <dbl>, ppt <dbl>, tmn <dbl>, tmx <dbl>, firstmonth <dbl>,
+## #   lastmonth <dbl>
+```
+
+```r
+nosnow_last_month_col %>% filter(lastmonth==5) %>% arrange(parent.pop, year) #0 cases where 5 is the last month 
+```
+
+```
+## # A tibble: 0 × 14
+## # ℹ 14 variables: month <dbl>, growmonth <dbl>, parent.pop <chr>,
+## #   elevation.group <chr>, elev_m <dbl>, PckSum <dbl>, year <chr>, cwd <dbl>,
+## #   pck <dbl>, ppt <dbl>, tmn <dbl>, tmx <dbl>, firstmonth <dbl>,
+## #   lastmonth <dbl>
+```
+
+```r
+nosnow_last_month_col %>% filter(lastmonth==firstmonth) %>% arrange(parent.pop, year) #first month and last month are the same for IH in 3 years ('72, '85, '89)
+```
+
+```
+## # A tibble: 36 × 14
+##    month growmonth parent.pop elevation.group elev_m PckSum year    cwd   pck
+##    <dbl>     <dbl> <chr>      <chr>            <dbl>  <dbl> <chr> <dbl> <dbl>
+##  1     1         6 IH         Low               454.   17.3 1972   18.3  19.6
+##  2     2         7 IH         Low               454.   17.3 1972   28.4   0  
+##  3     3         8 IH         Low               454.   17.3 1972   43.9   0  
+##  4     4         9 IH         Low               454.   17.3 1972   48.9   0  
+##  5     5        10 IH         Low               454.   17.3 1972   51.8   0  
+##  6     6        11 IH         Low               454.   17.3 1972   56.7   0  
+##  7     7        12 IH         Low               454.   17.3 1972   70.3   0  
+##  8     8         1 IH         Low               454.   17.3 1972   86.0   0  
+##  9     9         2 IH         Low               454.   17.3 1972   88.3   0  
+## 10    10         3 IH         Low               454.   17.3 1972   58.9   0  
+## # ℹ 26 more rows
+## # ℹ 5 more variables: ppt <dbl>, tmn <dbl>, tmx <dbl>, firstmonth <dbl>,
+## #   lastmonth <dbl>
+```
+
+```r
+nosnow_last_month_col %>% filter(growmonth==firstmonth+1, cwd>88) %>% arrange(parent.pop, year) #8 cases where cwd is high in the second growth month 
+```
+
+```
+## # A tibble: 8 × 14
+##   month growmonth parent.pop elevation.group elev_m PckSum year    cwd   pck
+##   <dbl>     <dbl> <chr>      <chr>            <dbl>  <dbl> <chr> <dbl> <dbl>
+## 1     9         2 BH         Low               511.  0.234 1976  115.      0
+## 2     9         2 CC         Low               313   0.951 1965   97.5     0
+## 3     9         2 CC         Low               313   0.951 1968  104.      0
+## 4     9         2 CC         Low               313   0.951 1976   93.7     0
+## 5     9         2 IH         Low               454. 17.3   1975  130.      0
+## 6     9         2 SC         Low               422.  0.597 1975  123.      0
+## 7     9         2 SC         Low               422.  0.597 1976  105       0
+## 8     9         2 TM2        Low               379.  5.47  1968   89.6     0
+## # ℹ 5 more variables: ppt <dbl>, tmn <dbl>, tmx <dbl>, firstmonth <dbl>,
+## #   lastmonth <dbl>
+```
+
+```r
+nosnow_grwseason_historical <- nosnow_last_month_col %>% #fill in all the months b/t the first and last for the full growth season 
+  group_by(parent.pop, elevation.group, elev_m, year) %>% 
+  filter(growmonth>=firstmonth) %>% #first and last month are in grow month format not calendar year 
+  filter(ifelse(lastmonth<5, growmonth<=12, growmonth<lastmonth)) 
+summary(nosnow_grwseason_historical) 
+```
+
+```
+##      month          growmonth       parent.pop        elevation.group   
+##  Min.   : 1.000   Min.   : 1.000   Length:1310        Length:1310       
+##  1st Qu.: 3.000   1st Qu.: 5.000   Class :character   Class :character  
+##  Median : 5.000   Median : 7.000   Mode  :character   Mode  :character  
+##  Mean   : 6.048   Mean   : 6.724                                        
+##  3rd Qu.:10.000   3rd Qu.: 9.000                                        
+##  Max.   :12.000   Max.   :12.000                                        
+##      elev_m          PckSum            year                cwd        
+##  Min.   :313.0   Min.   : 0.2340   Length:1310        Min.   :  0.00  
+##  1st Qu.:379.2   1st Qu.: 0.5973   Class :character   1st Qu.: 21.76  
+##  Median :421.5   Median : 0.9510   Mode  :character   Median : 34.30  
+##  Mean   :415.4   Mean   : 5.4384                      Mean   : 41.94  
+##  3rd Qu.:454.1   3rd Qu.: 5.4673                      3rd Qu.: 62.44  
+##  Max.   :511.4   Max.   :17.3440                      Max.   :168.60  
+##       pck                ppt              tmn              tmx       
+##  Min.   :  0.0000   Min.   :  0.00   Min.   :-1.850   Min.   : 8.63  
+##  1st Qu.:  0.0000   1st Qu.: 26.93   1st Qu.: 2.800   1st Qu.:13.98  
+##  Median :  0.0000   Median : 66.74   Median : 5.125   Median :17.50  
+##  Mean   :  0.5632   Mean   :101.04   Mean   : 5.889   Mean   :19.03  
+##  3rd Qu.:  0.0000   3rd Qu.:146.22   3rd Qu.: 8.695   3rd Qu.:23.99  
+##  Max.   :129.4600   Max.   :559.96   Max.   :17.920   Max.   :35.85  
+##    firstmonth      lastmonth     
+##  Min.   :1.000   Min.   : 1.000  
+##  1st Qu.:2.000   1st Qu.: 2.000  
+##  Median :3.000   Median :11.000  
+##  Mean   :2.768   Mean   : 8.463  
+##  3rd Qu.:3.000   3rd Qu.:11.000  
+##  Max.   :5.000   Max.   :12.000
+```
+
+```r
+nosnow_grwseason_historical %>% filter(cwd > 88) %>% filter(growmonth==firstmonth) #some cases when cwd is high in the first month (when ppt >25)
+```
+
+```
+## # A tibble: 33 × 14
+## # Groups:   parent.pop, elevation.group, elev_m, year [33]
+##    month growmonth parent.pop elevation.group elev_m PckSum year    cwd   pck
+##    <dbl>     <dbl> <chr>      <chr>            <dbl>  <dbl> <chr> <dbl> <dbl>
+##  1     8         1 BH         Low               511.  0.234 1976  168.      0
+##  2     8         1 IH         Low               454. 17.3   1975   94.4     0
+##  3     8         1 IH         Low               454. 17.3   1976  152.      0
+##  4     8         1 SC         Low               422.  0.597 1975  169.      0
+##  5     8         1 SC         Low               422.  0.597 1976  148.      0
+##  6     8         1 TM2        Low               379.  5.47  1965  156.      0
+##  7     8         1 TM2        Low               379.  5.47  1968  151.      0
+##  8     8         1 TM2        Low               379.  5.47  1976  150.      0
+##  9     9         2 BH         Low               511.  0.234 1978  107.      0
+## 10     9         2 BH         Low               511.  0.234 1982  129.      0
+## # ℹ 23 more rows
+## # ℹ 5 more variables: ppt <dbl>, tmn <dbl>, tmx <dbl>, firstmonth <dbl>,
+## #   lastmonth <dbl>
 ```
 
 ```r
@@ -2433,53 +3008,198 @@ xtabs(~parent.pop+month, data=nosnow_grwseason_historical)
 ```
 ##           month
 ## parent.pop  1  2  3  4  5  6  7  8  9 10 11 12
-##        BH  29 30 30 30 27  6  5  1  8 23 30 30
-##        CC  28 30 30 30 27 16  8  6 14 28 30 30
-##        IH  25 28 30 30 28 26 14  7 13 28 30 24
-##        SC  28 30 30 30 26 10  2  4  9 28 30 30
-##        TM2 27 29 30 30 24 16  8  6 17 28 30 27
+##        BH  30 30 30 30 30  5  1  1  5 19 28 30
+##        CC  30 30 30 30 30 13  2  3 12 26 29 30
+##        IH  30 30 30 30 30 30 28  2 11 24 30 30
+##        SC  30 30 30 30 30  9  0  2  7 22 29 30
+##        TM2 30 30 30 30 17  9  4  3 12 27 30 30
 ```
 
 ```r
-xtabs(~year+month, data=nosnow_grwseason_historical)
+options(max.print=1000000)
+xtabs(~year+month+parent.pop, data=nosnow_grwseason_historical)
 ```
 
 ```
+## , , parent.pop = BH
+## 
 ##       month
 ## year   1 2 3 4 5 6 7 8 9 10 11 12
-##   1963 5 5 5 5 5 4 0 0 3  5  5  5
-##   1964 5 5 5 5 5 5 1 0 2  5  5  5
-##   1965 5 5 5 5 5 2 1 4 1  5  5  5
-##   1966 5 5 5 5 4 1 1 0 0  0  5  5
-##   1967 5 5 5 5 5 5 0 0 0  4  5  5
-##   1968 5 5 5 5 5 1 0 4 0  5  5  3
-##   1969 2 3 5 5 4 3 1 0 0  5  5  5
-##   1970 5 5 5 5 2 5 0 0 0  4  5  4
-##   1971 5 5 5 5 5 4 0 0 3  5  5  3
-##   1972 4 5 5 5 5 3 0 0 5  5  5  3
-##   1973 1 4 5 5 5 1 0 0 4  5  5  5
-##   1974 5 5 5 5 3 2 5 0 0  5  5  5
-##   1975 5 5 5 5 5 1 3 4 1  5  5  5
-##   1976 5 5 5 5 2 1 0 5 5  5  5  5
-##   1977 5 5 5 5 5 1 0 0 3  4  5  5
-##   1978 5 5 5 5 4 1 2 0 5  0  5  5
-##   1979 4 5 5 5 5 0 4 2 1  5  5  5
-##   1980 5 5 5 5 5 4 5 0 0  5  5  5
-##   1981 5 5 5 5 5 0 0 0 3  5  5  5
-##   1982 1 5 5 5 5 4 4 0 5  5  5  5
-##   1983 5 5 5 5 5 3 3 0 5  5  5  5
-##   1984 5 5 5 5 5 5 0 3 0  5  5  5
-##   1985 5 5 5 5 1 1 1 0 5  5  5  5
-##   1986 5 5 5 5 5 1 0 0 5  5  5  5
-##   1987 5 5 5 5 4 1 2 0 0  5  5  5
-##   1988 5 5 5 5 5 3 1 0 0  4  5  5
-##   1989 5 5 5 5 5 3 1 1 5  5  5  4
-##   1990 5 5 5 5 5 1 0 0 0  4  5  5
-##   1991 5 5 5 5 5 4 0 1 0  5  5  5
-##   1992 5 5 5 5 3 4 2 0 0  5  5  4
+##   1962 1 1 1 1 1 0 0 0 0  1  1  1
+##   1963 1 1 1 1 1 0 0 0 0  1  1  1
+##   1964 1 1 1 1 1 1 0 0 0  1  1  1
+##   1965 1 1 1 1 1 0 0 0 0  0  1  1
+##   1966 1 1 1 1 1 0 0 0 0  0  1  1
+##   1967 1 1 1 1 1 1 0 0 0  0  1  1
+##   1968 1 1 1 1 1 0 0 0 0  1  1  1
+##   1969 1 1 1 1 1 0 0 0 0  1  1  1
+##   1970 1 1 1 1 1 1 0 0 0  0  1  1
+##   1971 1 1 1 1 1 0 0 0 0  0  1  1
+##   1972 1 1 1 1 1 0 0 0 0  0  1  1
+##   1973 1 1 1 1 1 0 0 0 0  1  1  1
+##   1974 1 1 1 1 1 0 0 0 0  1  1  1
+##   1975 1 1 1 1 1 0 0 0 0  1  1  1
+##   1976 1 1 1 1 1 0 0 1 1  1  1  1
+##   1977 1 1 1 1 1 0 0 0 0  0  1  1
+##   1978 1 1 1 1 1 0 0 0 1  1  1  1
+##   1979 1 1 1 1 1 0 0 0 0  1  1  1
+##   1980 1 1 1 1 1 0 0 0 0  0  0  1
+##   1981 1 1 1 1 1 0 0 0 0  1  1  1
+##   1982 1 1 1 1 1 1 1 0 1  1  1  1
+##   1983 1 1 1 1 1 0 0 0 0  0  1  1
+##   1984 1 1 1 1 1 1 0 0 0  1  1  1
+##   1985 1 1 1 1 1 0 0 0 0  1  1  1
+##   1986 1 1 1 1 1 0 0 0 1  1  1  1
+##   1987 1 1 1 1 1 0 0 0 0  1  1  1
+##   1988 1 1 1 1 1 0 0 0 0  0  1  1
+##   1989 1 1 1 1 1 0 0 0 1  1  1  1
+##   1990 1 1 1 1 1 0 0 0 0  0  0  1
+##   1991 1 1 1 1 1 0 0 0 0  1  1  1
+## 
+## , , parent.pop = CC
+## 
+##       month
+## year   1 2 3 4 5 6 7 8 9 10 11 12
+##   1962 1 1 1 1 1 0 0 0 0  1  1  1
+##   1963 1 1 1 1 1 1 0 0 0  1  1  1
+##   1964 1 1 1 1 1 1 0 0 0  1  1  1
+##   1965 1 1 1 1 1 1 0 1 1  1  1  1
+##   1966 1 1 1 1 1 0 0 0 0  0  1  1
+##   1967 1 1 1 1 1 1 0 0 0  1  1  1
+##   1968 1 1 1 1 1 0 0 1 1  1  1  1
+##   1969 1 1 1 1 1 1 0 0 0  1  1  1
+##   1970 1 1 1 1 1 1 0 0 0  1  1  1
+##   1971 1 1 1 1 1 1 0 0 0  0  1  1
+##   1972 1 1 1 1 1 0 0 0 1  1  1  1
+##   1973 1 1 1 1 1 0 0 0 0  1  1  1
+##   1974 1 1 1 1 1 0 0 0 0  1  1  1
+##   1975 1 1 1 1 1 0 0 0 0  1  1  1
+##   1976 1 1 1 1 1 0 0 1 1  1  1  1
+##   1977 1 1 1 1 1 0 0 0 1  1  1  1
+##   1978 1 1 1 1 1 0 0 0 1  1  1  1
+##   1979 1 1 1 1 1 0 0 0 0  1  1  1
+##   1980 1 1 1 1 1 1 1 0 0  0  0  1
+##   1981 1 1 1 1 1 0 0 0 1  1  1  1
+##   1982 1 1 1 1 1 1 1 0 1  1  1  1
+##   1983 1 1 1 1 1 0 0 0 1  1  1  1
+##   1984 1 1 1 1 1 1 0 0 0  1  1  1
+##   1985 1 1 1 1 1 0 0 0 1  1  1  1
+##   1986 1 1 1 1 1 0 0 0 1  1  1  1
+##   1987 1 1 1 1 1 0 0 0 0  1  1  1
+##   1988 1 1 1 1 1 1 0 0 0  0  1  1
+##   1989 1 1 1 1 1 0 0 0 1  1  1  1
+##   1990 1 1 1 1 1 1 0 0 0  1  1  1
+##   1991 1 1 1 1 1 1 0 0 0  1  1  1
+## 
+## , , parent.pop = IH
+## 
+##       month
+## year   1 2 3 4 5 6 7 8 9 10 11 12
+##   1962 1 1 1 1 1 1 1 0 0  1  1  1
+##   1963 1 1 1 1 1 1 1 0 0  1  1  1
+##   1964 1 1 1 1 1 1 1 0 0  1  1  1
+##   1965 1 1 1 1 1 1 1 0 0  0  1  1
+##   1966 1 1 1 1 1 1 1 0 0  0  1  1
+##   1967 1 1 1 1 1 1 1 0 0  1  1  1
+##   1968 1 1 1 1 1 1 1 0 0  1  1  1
+##   1969 1 1 1 1 1 1 1 0 0  1  1  1
+##   1970 1 1 1 1 1 1 1 0 0  1  1  1
+##   1971 1 1 1 1 1 1 1 0 0  1  1  1
+##   1972 1 1 1 1 1 1 1 0 1  1  1  1
+##   1973 1 1 1 1 1 1 1 0 1  1  1  1
+##   1974 1 1 1 1 1 1 1 0 0  1  1  1
+##   1975 1 1 1 1 1 1 1 1 1  1  1  1
+##   1976 1 1 1 1 1 1 0 1 1  1  1  1
+##   1977 1 1 1 1 1 1 0 0 0  0  1  1
+##   1978 1 1 1 1 1 1 1 0 1  1  1  1
+##   1979 1 1 1 1 1 1 1 0 0  1  1  1
+##   1980 1 1 1 1 1 1 1 0 0  0  1  1
+##   1981 1 1 1 1 1 1 1 0 1  1  1  1
+##   1982 1 1 1 1 1 1 1 0 1  1  1  1
+##   1983 1 1 1 1 1 1 1 0 1  1  1  1
+##   1984 1 1 1 1 1 1 1 0 0  1  1  1
+##   1985 1 1 1 1 1 1 1 0 1  1  1  1
+##   1986 1 1 1 1 1 1 1 0 1  1  1  1
+##   1987 1 1 1 1 1 1 1 0 0  1  1  1
+##   1988 1 1 1 1 1 1 1 0 0  0  1  1
+##   1989 1 1 1 1 1 1 1 0 1  1  1  1
+##   1990 1 1 1 1 1 1 1 0 0  0  1  1
+##   1991 1 1 1 1 1 1 1 0 0  1  1  1
+## 
+## , , parent.pop = SC
+## 
+##       month
+## year   1 2 3 4 5 6 7 8 9 10 11 12
+##   1962 1 1 1 1 1 0 0 0 0  1  1  1
+##   1963 1 1 1 1 1 1 0 0 0  1  1  1
+##   1964 1 1 1 1 1 1 0 0 0  1  1  1
+##   1965 1 1 1 1 1 0 0 0 0  0  1  1
+##   1966 1 1 1 1 1 0 0 0 0  0  1  1
+##   1967 1 1 1 1 1 1 0 0 0  1  1  1
+##   1968 1 1 1 1 1 0 0 0 0  1  1  1
+##   1969 1 1 1 1 1 0 0 0 0  1  1  1
+##   1970 1 1 1 1 1 1 0 0 0  1  1  1
+##   1971 1 1 1 1 1 1 0 0 0  0  1  1
+##   1972 1 1 1 1 1 0 0 0 1  1  1  1
+##   1973 1 1 1 1 1 0 0 0 0  1  1  1
+##   1974 1 1 1 1 1 1 0 0 0  1  1  1
+##   1975 1 1 1 1 1 0 0 1 1  1  1  1
+##   1976 1 1 1 1 1 0 0 1 1  1  1  1
+##   1977 1 1 1 1 1 0 0 0 0  0  1  1
+##   1978 1 1 1 1 1 0 0 0 1  1  1  1
+##   1979 1 1 1 1 1 0 0 0 0  1  1  1
+##   1980 1 1 1 1 1 1 0 0 0  0  0  1
+##   1981 1 1 1 1 1 0 0 0 0  1  1  1
+##   1982 1 1 1 1 1 0 0 0 1  1  1  1
+##   1983 1 1 1 1 1 0 0 0 0  1  1  1
+##   1984 1 1 1 1 1 1 0 0 0  1  1  1
+##   1985 1 1 1 1 1 0 0 0 0  1  1  1
+##   1986 1 1 1 1 1 0 0 0 1  1  1  1
+##   1987 1 1 1 1 1 0 0 0 0  0  1  1
+##   1988 1 1 1 1 1 0 0 0 0  0  1  1
+##   1989 1 1 1 1 1 0 0 0 1  1  1  1
+##   1990 1 1 1 1 1 0 0 0 0  0  1  1
+##   1991 1 1 1 1 1 1 0 0 0  1  1  1
+## 
+## , , parent.pop = TM2
+## 
+##       month
+## year   1 2 3 4 5 6 7 8 9 10 11 12
+##   1962 1 1 1 1 1 0 0 0 0  1  1  1
+##   1963 1 1 1 1 1 1 0 0 0  1  1  1
+##   1964 1 1 1 1 0 0 0 0 0  1  1  1
+##   1965 1 1 1 1 1 0 0 1 1  1  1  1
+##   1966 1 1 1 1 0 0 0 0 0  0  1  1
+##   1967 1 1 1 1 1 1 1 0 0  1  1  1
+##   1968 1 1 1 1 0 0 0 1 1  1  1  1
+##   1969 1 1 1 1 1 1 0 0 0  1  1  1
+##   1970 1 1 1 1 0 0 0 0 0  1  1  1
+##   1971 1 1 1 1 1 0 0 0 0  0  1  1
+##   1972 1 1 1 1 0 0 0 0 1  1  1  1
+##   1973 1 1 1 1 0 0 0 0 0  1  1  1
+##   1974 1 1 1 1 1 0 0 0 0  1  1  1
+##   1975 1 1 1 1 1 0 0 0 0  1  1  1
+##   1976 1 1 1 1 0 0 0 1 1  1  1  1
+##   1977 1 1 1 1 1 0 0 0 1  1  1  1
+##   1978 1 1 1 1 1 0 0 0 1  1  1  1
+##   1979 1 1 1 1 0 0 0 0 0  1  1  1
+##   1980 1 1 1 1 1 1 1 0 0  1  1  1
+##   1981 1 1 1 1 0 0 0 0 1  1  1  1
+##   1982 1 1 1 1 1 1 1 0 1  1  1  1
+##   1983 1 1 1 1 1 1 1 0 1  1  1  1
+##   1984 1 1 1 1 0 0 0 0 0  1  1  1
+##   1985 1 1 1 1 0 0 0 0 1  1  1  1
+##   1986 1 1 1 1 1 0 0 0 1  1  1  1
+##   1987 1 1 1 1 0 0 0 0 0  1  1  1
+##   1988 1 1 1 1 1 1 0 0 0  0  1  1
+##   1989 1 1 1 1 0 0 0 0 1  1  1  1
+##   1990 1 1 1 1 1 1 0 0 0  1  1  1
+##   1991 1 1 1 1 1 1 0 0 0  1  1  1
 ```
 
 ```r
+#IH grows all year in 1975
+
 nosnow_grwseason_historical %>% ggplot(aes(x=month)) + geom_histogram() +
   scale_x_continuous(breaks=c(1, 2, 3, 4, 5,6,7,8,9,10, 11, 12)) +
   facet_wrap(~parent.pop)
@@ -2491,7 +3211,8 @@ nosnow_grwseason_historical %>% ggplot(aes(x=month)) + geom_histogram() +
 
 ![](Climate_Prep_files/figure-html/unnamed-chunk-17-1.png)<!-- -->
 
--   Populations that get more than 70 mm of snow pack in a year (on average): growth season = when there is no snowpack
+-   Populations that get more than 70 mm of snow pack in a year (on average): growth season = when snowpack < 70 mm
+With <70 mm as the only criteria, a lot of pops grow all year and months aren't consecutive. Need to try first month as pck==0 and following months as pck <70mm
 
 Recent climate
 
@@ -2518,26 +3239,26 @@ summary(snow_pops_recent)
 ##                                        3rd Qu.:2470.0   3rd Qu.: 9.25  
 ##                                        Max.   :2872.3   Max.   :12.00  
 ##     cwd_mean          pck_mean          ppt_mean           tmn_mean     
-##  Min.   :  9.307   Min.   :   0.00   Min.   :  0.1547   Min.   :-9.581  
-##  1st Qu.: 26.922   1st Qu.:   0.00   1st Qu.: 17.1638   1st Qu.:-3.248  
-##  Median : 44.925   Median :  27.47   Median : 86.9938   Median : 1.303  
-##  Mean   : 54.239   Mean   : 167.91   Mean   :104.1939   Mean   : 1.996  
-##  3rd Qu.: 81.059   3rd Qu.: 241.39   3rd Qu.:173.3283   3rd Qu.: 6.961  
-##  Max.   :149.714   Max.   :1107.82   Max.   :352.8045   Max.   :16.330  
+##  Min.   :  9.286   Min.   :   0.00   Min.   :  0.1547   Min.   :-9.566  
+##  1st Qu.: 27.299   1st Qu.:   0.00   1st Qu.: 16.7425   1st Qu.:-3.289  
+##  Median : 44.967   Median :  27.01   Median : 85.8398   Median : 1.360  
+##  Mean   : 54.108   Mean   : 167.47   Mean   :105.1475   Mean   : 1.965  
+##  3rd Qu.: 80.545   3rd Qu.: 237.79   3rd Qu.:175.5006   3rd Qu.: 6.873  
+##  Max.   :147.992   Max.   :1112.78   Max.   :355.7843   Max.   :16.219  
 ##     tmx_mean         cwd_sem          pck_sem          ppt_sem        
-##  Min.   : 1.836   Min.   :0.1418   Min.   :  0.00   Min.   : 0.07985  
-##  1st Qu.: 8.231   1st Qu.:0.5847   1st Qu.:  0.00   1st Qu.: 3.66804  
-##  Median :13.326   Median :1.2555   Median : 11.30   Median :13.51574  
-##  Mean   :14.730   Mean   :1.7143   Mean   : 23.38   Mean   :15.11890  
-##  3rd Qu.:21.445   3rd Qu.:2.5488   3rd Qu.: 43.30   3rd Qu.:24.15367  
-##  Max.   :32.710   Max.   :8.6511   Max.   :106.13   Max.   :49.56038  
+##  Min.   : 1.758   Min.   :0.1430   Min.   :  0.00   Min.   : 0.07985  
+##  1st Qu.: 8.172   1st Qu.:0.5688   1st Qu.:  0.00   1st Qu.: 3.65977  
+##  Median :13.369   Median :1.2517   Median : 11.36   Median :13.34647  
+##  Mean   :14.729   Mean   :1.7305   Mean   : 23.43   Mean   :14.96105  
+##  3rd Qu.:21.431   3rd Qu.:2.6690   3rd Qu.: 43.69   3rd Qu.:23.82075  
+##  Max.   :32.650   Max.   :8.9076   Max.   :106.86   Max.   :47.97252  
 ##     tmn_sem          tmx_sem           PckSum      
-##  Min.   :0.1811   Min.   :0.1805   Min.   : 104.0  
-##  1st Qu.:0.2667   1st Qu.:0.2925   1st Qu.: 611.3  
-##  Median :0.2885   Median :0.3848   Median :1594.4  
-##  Mean   :0.2924   Mean   :0.3624   Mean   :2014.9  
-##  3rd Qu.:0.3191   3rd Qu.:0.4225   3rd Qu.:2677.0  
-##  Max.   :0.4252   Max.   :0.5202   Max.   :5412.2
+##  Min.   :0.1900   Min.   :0.1804   Min.   : 107.5  
+##  1st Qu.:0.2602   1st Qu.:0.3041   1st Qu.: 613.4  
+##  Median :0.2912   Median :0.3836   Median :1587.7  
+##  Mean   :0.2906   Mean   :0.3643   Mean   :2009.6  
+##  3rd Qu.:0.3181   3rd Qu.:0.4157   3rd Qu.:2655.8  
+##  Max.   :0.4145   Max.   :0.5143   Max.   :5408.1
 ```
 
 ```r
@@ -2556,89 +3277,203 @@ summary(snow_pops_recent_years)
 
 ```
 ##   parent.pop        elevation.group        elev_m           PckSum      
-##  Length:6426        Length:6426        Min.   : 748.9   Min.   : 104.0  
-##  Class :character   Class :character   1st Qu.:1613.8   1st Qu.: 611.3  
-##  Mode  :character   Mode  :character   Median :2200.9   Median :1594.4  
-##                                        Mean   :1992.5   Mean   :2014.9  
-##                                        3rd Qu.:2470.0   3rd Qu.:2677.0  
-##                                        Max.   :2872.3   Max.   :5412.2  
-##      year               month             cwd              pck        
-##  Length:6426        Min.   : 1.000   Min.   :  0.00   Min.   :   0.0  
-##  Class :character   1st Qu.: 3.000   1st Qu.: 25.26   1st Qu.:   0.0  
-##  Mode  :character   Median : 6.000   Median : 45.64   Median :   0.0  
-##                     Mean   : 6.462   Mean   : 54.38   Mean   : 168.7  
-##                     3rd Qu.: 9.000   3rd Qu.: 81.73   3rd Qu.: 201.2  
-##                     Max.   :12.000   Max.   :182.70   Max.   :2183.6  
-##       ppt              tmn               tmx       
-##  Min.   :  0.00   Min.   :-13.180   Min.   :-3.22  
-##  1st Qu.:  9.09   1st Qu.: -3.170   1st Qu.: 8.07  
-##  Median : 50.25   Median :  1.490   Median :13.61  
-##  Mean   :103.86   Mean   :  2.018   Mean   :14.76  
-##  3rd Qu.:151.65   3rd Qu.:  6.980   3rd Qu.:21.49  
-##  Max.   :981.42   Max.   : 19.730   Max.   :35.13
+##  Length:6480        Length:6480        Min.   : 748.9   Min.   : 107.5  
+##  Class :character   Class :character   1st Qu.:1613.8   1st Qu.: 613.4  
+##  Mode  :character   Mode  :character   Median :2200.9   Median :1587.7  
+##                                        Mean   :1992.5   Mean   :2009.6  
+##                                        3rd Qu.:2470.0   3rd Qu.:2655.8  
+##                                        Max.   :2872.3   Max.   :5408.1  
+##      year               month            cwd              pck        
+##  Length:6480        Min.   : 1.00   Min.   :  0.00   Min.   :   0.0  
+##  Class :character   1st Qu.: 3.75   1st Qu.: 25.14   1st Qu.:   0.0  
+##  Mode  :character   Median : 6.50   Median : 45.47   Median :   0.0  
+##                     Mean   : 6.50   Mean   : 54.11   Mean   : 167.5  
+##                     3rd Qu.: 9.25   3rd Qu.: 81.18   3rd Qu.: 197.0  
+##                     Max.   :12.00   Max.   :182.70   Max.   :2183.6  
+##       ppt               tmn               tmx       
+##  Min.   :  0.000   Min.   :-13.180   Min.   :-3.22  
+##  1st Qu.:  9.678   1st Qu.: -3.190   1st Qu.: 8.05  
+##  Median : 52.040   Median :  1.480   Median :13.61  
+##  Mean   :105.147   Mean   :  1.965   Mean   :14.73  
+##  3rd Qu.:153.838   3rd Qu.:  6.902   3rd Qu.:21.44  
+##  Max.   :981.420   Max.   : 19.730   Max.   :35.13
 ```
 
 ```r
-snow_pops_recent_years %>% filter(pck < 2, pck >0) %>% arrange(parent.pop, pck) #What about when snowpack is 1 mm? This mostly occurs in December
-```
-
-```
-## # A tibble: 11 × 11
-## # Groups:   parent.pop, elevation.group, elev_m [9]
-##    parent.pop elevation.group elev_m PckSum year  month   cwd    pck    ppt
-##    <chr>      <chr>            <dbl>  <dbl> <chr> <dbl> <dbl>  <dbl>  <dbl>
-##  1 CP3        High             2266.  2677. 2000      5  13.3 1.64   107.  
-##  2 DPR        Mid              1019.   104. 1998     12  12.4 0.0300 151.  
-##  3 FR         Mid               787    227. 1997     12  13.0 0.220  112.  
-##  4 SQ3        High             2373.  1466. 2018      2  40.6 1.37    23.7 
-##  5 SQ3        High             2373.  1466. 2010     11  35.2 1.52   124.  
-##  6 WL1        Mid              1614.   705. 2010      3  43.4 0.940  154.  
-##  7 WL1        Mid              1614.   705. 1994      1  19.7 1.09    80.4 
-##  8 WL2        High             2020.  1703. 2020     12  17.8 0.520   89.7 
-##  9 YO11       High             2872.  2179. 2017     12  22.8 0.0300   6.53
-## 10 YO7        High             2470.  2665. 2000     12  28.6 1.61    29.4 
-## 11 YO8        High             2591.  2837. 2015      3  56.2 1.96    16.2 
-## # ℹ 2 more variables: tmn <dbl>, tmx <dbl>
-```
-
-```r
-snow_grwseason_recent <- snow_pops_recent_years %>% 
+snow_first_month <- snow_pops_recent_years %>%
   group_by(parent.pop, elevation.group, elev_m, year) %>% 
-  filter(pck==0) #snowpack == 0 to grow 
-summary(snow_grwseason_recent)
+  filter(pck==0) %>% 
+  arrange(month) %>% 
+  filter(row_number()==1) #get first month for each pop and year with no snowpack for germ
+
+snow_first_month_tomerge <- snow_first_month %>% 
+  select(parent.pop:elev_m, year, firstmonth=month)
+
+snow_first_month_col <- full_join(snow_pops_recent_years, snow_first_month_tomerge)
+```
+
+```
+## Joining with `by = join_by(parent.pop, elevation.group, elev_m, year)`
+```
+
+```r
+dim(snow_first_month_col)
+```
+
+```
+## [1] 6480   12
+```
+
+```r
+snow_last_month <- snow_first_month_col %>%
+  group_by(parent.pop, elevation.group, elev_m, year) %>% 
+  filter(month>firstmonth) %>% 
+  filter(pck>70) %>% 
+  arrange(month) %>% 
+  filter(row_number()==1) #get first month after growstart for each pop and year with pck >70 
+
+snow_last_month_tomerge <- snow_last_month %>% 
+  select(parent.pop:elev_m, year, firstmonth,lastmonth=month)
+
+snow_last_month_col <- full_join(snow_first_month_col, snow_last_month_tomerge)
+```
+
+```
+## Joining with `by = join_by(parent.pop, elevation.group, elev_m, year,
+## firstmonth)`
+```
+
+```r
+dim(snow_last_month_col)
+```
+
+```
+## [1] 6480   13
+```
+
+```r
+#check weird cases
+snow_last_month_col %>% filter(is.na(firstmonth)) #no cases where there isn't a firstmonth
+```
+
+```
+## # A tibble: 0 × 13
+## # Groups:   parent.pop, elevation.group, elev_m [0]
+## # ℹ 13 variables: parent.pop <chr>, elevation.group <chr>, elev_m <dbl>,
+## #   PckSum <dbl>, year <chr>, month <dbl>, cwd <dbl>, pck <dbl>, ppt <dbl>,
+## #   tmn <dbl>, tmx <dbl>, firstmonth <dbl>, lastmonth <dbl>
+```
+
+```r
+snow_last_month_col %>% filter(is.na(lastmonth)) #198 cases where there isn't a lastmonth 
+```
+
+```
+## # A tibble: 2,376 × 13
+## # Groups:   parent.pop, elevation.group, elev_m [18]
+##    parent.pop elevation.group elev_m PckSum year  month   cwd   pck    ppt
+##    <chr>      <chr>            <dbl>  <dbl> <chr> <dbl> <dbl> <dbl>  <dbl>
+##  1 CP2        High             2244.  2440. 1999      1  21.9  421. 299.  
+##  2 CP2        High             2244.  2440. 1999      2  22.4  757. 388.  
+##  3 CP2        High             2244.  2440. 1999      3  33.3  779. 110.  
+##  4 CP2        High             2244.  2440. 1999      4  32.9  769. 139.  
+##  5 CP2        High             2244.  2440. 1999      5  84.1  343.  26.1 
+##  6 CP2        High             2244.  2440. 1999      6 111.     0   20.4 
+##  7 CP2        High             2244.  2440. 1999      7 127.     0    7.67
+##  8 CP2        High             2244.  2440. 1999      8  89.8    0   28.3 
+##  9 CP2        High             2244.  2440. 1999      9 101.     0    7.94
+## 10 CP2        High             2244.  2440. 1999     10  70.0    0   53.8 
+## # ℹ 2,366 more rows
+## # ℹ 4 more variables: tmn <dbl>, tmx <dbl>, firstmonth <dbl>, lastmonth <dbl>
+```
+
+```r
+snow_last_month_col %>% filter(lastmonth==firstmonth+1) #12 cases where there was sig snowpack in the month after the first month of 0 snowpack 
+```
+
+```
+## # A tibble: 144 × 13
+## # Groups:   parent.pop, elevation.group, elev_m [9]
+##    parent.pop elevation.group elev_m PckSum year  month   cwd   pck    ppt   tmn
+##    <chr>      <chr>            <dbl>  <dbl> <chr> <dbl> <dbl> <dbl>  <dbl> <dbl>
+##  1 CP2        High             2244.  2440. 2014      1  26.1    0   72.1  -1.45
+##  2 CP2        High             2244.  2440. 2014      2  30.3  150. 267.   -3.69
+##  3 CP2        High             2244.  2440. 2014      3  42.7  129. 160.   -2.43
+##  4 CP2        High             2244.  2440. 2014      4  61.6    0   87.3  -1.54
+##  5 CP2        High             2244.  2440. 2014      5  88.3    0   38.3   2.53
+##  6 CP2        High             2244.  2440. 2014      6 118.     0    2.77  6.62
+##  7 CP2        High             2244.  2440. 2014      7  90.1    0   30.3  12.3 
+##  8 CP2        High             2244.  2440. 2014      8  94.7    0   14.9  10.0 
+##  9 CP2        High             2244.  2440. 2014      9  91.7    0   41.0   8.24
+## 10 CP2        High             2244.  2440. 2014     10  69.0    0   19.6   3.91
+## # ℹ 134 more rows
+## # ℹ 3 more variables: tmx <dbl>, firstmonth <dbl>, lastmonth <dbl>
+```
+
+```r
+snow_last_month_col %>% filter(lastmonth==firstmonth+2) #3 cases where there was sig snowpack in the second month after the first month of 0 snowpack 
+```
+
+```
+## # A tibble: 36 × 13
+## # Groups:   parent.pop, elevation.group, elev_m [3]
+##    parent.pop elevation.group elev_m PckSum year  month   cwd   pck      ppt
+##    <chr>      <chr>            <dbl>  <dbl> <chr> <dbl> <dbl> <dbl>    <dbl>
+##  1 SQ1        Mid              1921.   613. 2018      1  32.8   0    90.7   
+##  2 SQ1        Mid              1921.   613. 2018      2  37.8   0    24.2   
+##  3 SQ1        Mid              1921.   613. 2018      3  28.9  84.9 343.    
+##  4 SQ1        Mid              1921.   613. 2018      4  52.1   0    86.1   
+##  5 SQ1        Mid              1921.   613. 2018      5  76.0   0    14.4   
+##  6 SQ1        Mid              1921.   613. 2018      6  95.7   0     0.0600
+##  7 SQ1        Mid              1921.   613. 2018      7 150.    0    10.8   
+##  8 SQ1        Mid              1921.   613. 2018      8 158.    0     0.180 
+##  9 SQ1        Mid              1921.   613. 2018      9 127.    0     0.870 
+## 10 SQ1        Mid              1921.   613. 2018     10  86.1   0    58.0   
+## # ℹ 26 more rows
+## # ℹ 4 more variables: tmn <dbl>, tmx <dbl>, firstmonth <dbl>, lastmonth <dbl>
+```
+
+```r
+snow_grwseason_recent <- snow_last_month_col %>% #fill in months b/t start and stop 
+  group_by(parent.pop, elevation.group, elev_m, year) %>% 
+  filter(month>=firstmonth) %>% 
+  filter(ifelse(is.na(lastmonth), pck<70, month<lastmonth))
+summary(snow_grwseason_recent) 
 ```
 
 ```
 ##   parent.pop        elevation.group        elev_m           PckSum      
-##  Length:3900        Length:3900        Min.   : 748.9   Min.   : 104.0  
-##  Class :character   Class :character   1st Qu.:1158.0   1st Qu.: 386.7  
-##  Mode  :character   Mode  :character   Median :2020.1   Median :1465.8  
-##                                        Mean   :1843.3   Mean   :1623.5  
-##                                        3rd Qu.:2373.2   3rd Qu.:2455.1  
-##                                        Max.   :2872.3   Max.   :5412.2  
-##      year               month             cwd              pck   
-##  Length:3900        Min.   : 1.000   Min.   :  0.00   Min.   :0  
-##  Class :character   1st Qu.: 6.000   1st Qu.: 42.45   1st Qu.:0  
-##  Mode  :character   Median : 8.000   Median : 69.55   Median :0  
-##                     Mean   : 7.553   Mean   : 70.01   Mean   :0  
-##                     3rd Qu.:10.000   3rd Qu.: 94.97   3rd Qu.:0  
-##                     Max.   :12.000   Max.   :182.70   Max.   :0  
-##       ppt              tmn              tmx       
-##  Min.   :  0.00   Min.   :-7.020   Min.   : 5.31  
-##  1st Qu.:  2.51   1st Qu.: 2.127   1st Qu.:14.36  
-##  Median : 18.20   Median : 5.625   Median :19.96  
-##  Mean   : 46.04   Mean   : 5.892   Mean   :19.66  
-##  3rd Qu.: 58.43   3rd Qu.: 9.535   3rd Qu.:23.96  
-##  Max.   :791.57   Max.   :19.730   Max.   :35.13
-```
-
-```r
-unique(snow_grwseason_recent$parent.pop)
-```
-
-```
-##  [1] "CP2"   "CP3"   "DPR"   "FR"    "LV1"   "LV3"   "LVTR1" "SQ1"   "SQ2"  
-## [10] "SQ3"   "WL1"   "WL2"   "WR"    "WV"    "YO11"  "YO4"   "YO7"   "YO8"
+##  Length:4000        Length:4000        Min.   : 748.9   Min.   : 107.5  
+##  Class :character   Class :character   1st Qu.:1158.0   1st Qu.: 391.1  
+##  Mode  :character   Mode  :character   Median :2020.1   Median :1461.6  
+##                                        Mean   :1853.7   Mean   :1653.4  
+##                                        3rd Qu.:2373.2   3rd Qu.:2649.6  
+##                                        Max.   :2872.3   Max.   :5408.1  
+##                                                                         
+##      year               month             cwd              pck        
+##  Length:4000        Min.   : 1.000   Min.   :  0.00   Min.   : 0.000  
+##  Class :character   1st Qu.: 6.000   1st Qu.: 39.01   1st Qu.: 0.000  
+##  Mode  :character   Median : 8.000   Median : 66.81   Median : 0.000  
+##                     Mean   : 7.707   Mean   : 67.51   Mean   : 1.413  
+##                     3rd Qu.:10.000   3rd Qu.: 93.33   3rd Qu.: 0.000  
+##                     Max.   :12.000   Max.   :182.70   Max.   :69.930  
+##                                                                       
+##       ppt               tmn               tmx          firstmonth   
+##  Min.   :  0.000   Min.   :-10.440   Min.   : 2.09   Min.   :1.000  
+##  1st Qu.:  3.138   1st Qu.:  1.490   1st Qu.:13.55   1st Qu.:3.000  
+##  Median : 20.455   Median :  5.140   Median :19.36   Median :5.000  
+##  Mean   : 51.358   Mean   :  5.346   Mean   :19.01   Mean   :4.123  
+##  3rd Qu.: 66.570   3rd Qu.:  9.240   3rd Qu.:23.72   3rd Qu.:6.000  
+##  Max.   :803.250   Max.   : 19.730   Max.   :35.13   Max.   :8.000  
+##                                                                     
+##    lastmonth    
+##  Min.   : 2.00  
+##  1st Qu.:12.00  
+##  Median :12.00  
+##  Mean   :11.72  
+##  3rd Qu.:12.00  
+##  Max.   :12.00  
+##  NA's   :1780
 ```
 
 ```r
@@ -2648,74 +3483,661 @@ xtabs(~parent.pop+month, data=snow_grwseason_recent)
 ```
 ##           month
 ## parent.pop  1  2  3  4  5  6  7  8  9 10 11 12
-##      CP2    1  0  1  2 17 27 30 30 30 29 20  2
-##      CP3    0  0  0  1 14 26 30 30 30 29 18  2
-##      DPR   17 20 27 30 30 30 30 30 30 29 29 20
-##      FR    10 11 23 30 30 30 30 30 30 29 28  9
-##      LV1    0  0  0  0  2 17 28 30 30 29  5  0
-##      LV3    0  0  0  0  3 17 28 30 30 29  5  0
-##      LVTR1  0  0  0  0  2 17 28 30 30 29  5  0
-##      SQ1    5  6  8 20 29 30 30 30 30 29 28  9
-##      SQ2    4  5  6 19 28 30 30 30 30 29 28  8
-##      SQ3    1  0  2  8 22 28 30 30 30 29 24  7
-##      WL1    6  4 10 22 30 30 30 30 30 29 28  7
-##      WL2    1  0  1  9 22 29 30 30 30 29 24  5
-##      WR    11  8 20 27 30 30 30 30 30 29 28 12
-##      WV     6 12 21 30 30 30 30 30 30 29 28  9
-##      YO11   0  0  0  0 12 26 30 30 30 29 11  0
-##      YO4    1  2  2  9 23 30 30 30 30 29 24  6
-##      YO7    1  0  1  2 13 26 30 30 30 29 19  3
-##      YO8    0  0  0  2 12 25 30 30 30 29 18  3
+##      CP2    1  0  1  2 16 26 29 29 29 29 24  7
+##      CP3    0  0  0  1 14 26 30 30 30 30 24  7
+##      DPR   17 22 27 28 28 28 28 28 28 28 28 24
+##      FR    11 14 23 30 30 30 30 30 30 30 30 22
+##      LV1    0  0  0  0  3 17 28 30 30 30 11  1
+##      LV3    0  0  0  0  4 17 28 30 30 30 14  1
+##      LVTR1  0  0  0  0  3 17 28 30 30 30 11  1
+##      SQ1    6  7  8 18 27 28 28 28 28 28 28 16
+##      SQ2    5  6  7 17 26 28 28 28 28 28 28 16
+##      SQ3    1  1  2  8 22 28 30 30 30 30 29 12
+##      WL1    7  6  9 19 27 27 27 27 27 27 26 14
+##      WL2    1  0  1  8 21 28 29 29 29 29 28  9
+##      WR    12 11 19 25 28 28 28 28 28 28 28 18
+##      WV     7 13 21 30 30 30 30 30 30 30 30 18
+##      YO11   0  0  0  0 13 26 30 30 30 30 23  8
+##      YO4    1  3  2  9 22 29 29 29 29 29 28 10
+##      YO7    1  0  1  1 12 25 29 29 29 29 22  7
+##      YO8    0  0  0  2 12 25 30 30 30 30 23  7
 ```
 
 ```r
-xtabs(~elevation.group+month, data=snow_grwseason_recent) #11 "high" and 7 "mid" pops
+options(max.print=1000000)
+xtabs(~year+month+parent.pop, data=snow_grwseason_recent)
 ```
 
 ```
-##                month
-## elevation.group   1   2   3   4   5   6   7   8   9  10  11  12
-##            High   5   2   7  33 142 268 324 330 330 319 173  28
-##            Mid   59  66 115 178 207 210 210 210 210 203 197  74
-```
-
-```r
-xtabs(~year+month, data=snow_grwseason_recent)
-```
-
-```
+## , , parent.pop = CP2
+## 
 ##       month
-## year    1  2  3  4  5  6  7  8  9 10 11 12
-##   1993  0  0  0  3  7 14 18 18 18 18 14  1
-##   1994  5  1  5  9 15 18 18 18 18 18  1  0
-##   1995  0  1  1  3  6  8 15 18 18 18 18  2
-##   1996  0  1  4  5 10 15 18 18 18 18  8  1
-##   1997  0  1  4  6 10 15 18 18 18 18 13  3
-##   1998  0  0  1  3  5  9 15 18 18 18  9  0
-##   1999  1  0  2  6  9 15 18 18 18 18 15 12
-##   2000  0  0  4  7 12 18 18 18 18 18 10 10
-##   2001  3  0  5  5 15 18 18 18 18 18 10  0
-##   2002  0  1  3  7 11 18 18 18 18 18 11  0
-##   2003  1  3  5  7 10 15 18 18 18 18  7  0
-##   2004  0  0  4  7 13 18 18 18 18 18 10  3
-##   2005  1  4  4  7 10 18 18 18 18 18 15  3
-##   2006  0  1  0  4  7 15 18 18 18 18 15  2
-##   2007  5  3  7 10 15 18 18 18 18 18 18  0
-##   2008  0  0  2  7 12 18 18 18 18 18 14  1
-##   2009  5  1  4  7 15 18 18 18 18 18 15  1
-##   2010  1  2  4  5  9 15 18 18 18 18  7  1
-##   2011  2  2  2  4  7 11 18 18 18 18 14 14
-##   2012  5  7  7 10 15 18 18 18 18 18 14  0
-##   2013  0  1  5 10 15 18 18 18 18 18 18 10
-##   2014 12  6  9 13 18 18 18 18 18 18 15  4
-##   2015  7  8 12 14 16 18 18 18 18 18  7  0
-##   2016  0  1  3  7 11 15 18 18 18 18 15  1
-##   2017  0  0  1  4  7 10 18 18 18 18 13 14
-##   2018  7  8  4  7 15 18 18 18 18 18 14  8
-##   2019  2  0  0  4  7 15 18 18 18 18 18  2
-##   2020  3  7  6 10 15 18 18 18 18 18 14  9
-##   2021  3  5  7 10 18 18 18 18 18 18 18  0
-##   2022  1  4  7 10 14 18 18 18 18  0  0  0
+## year   1 2 3 4 5 6 7 8 9 10 11 12
+##   1992 0 0 0 1 1 1 1 1 1  1  1  0
+##   1993 0 0 0 0 0 1 1 1 1  1  1  0
+##   1994 0 0 0 0 1 1 1 1 1  1  0  0
+##   1995 0 0 0 0 0 0 1 1 1  1  1  0
+##   1996 0 0 0 0 0 1 1 1 1  1  1  0
+##   1997 0 0 0 0 0 1 1 1 1  1  1  0
+##   1998 0 0 0 0 0 0 1 1 1  1  0  0
+##   1999 0 0 0 0 0 1 1 1 1  1  1  1
+##   2000 0 0 0 0 1 1 1 1 1  1  1  1
+##   2001 0 0 0 0 1 1 1 1 1  1  1  0
+##   2002 0 0 0 0 1 1 1 1 1  1  1  0
+##   2003 0 0 0 0 0 1 1 1 1  1  0  0
+##   2004 0 0 0 0 1 1 1 1 1  1  1  0
+##   2005 0 0 0 0 0 1 1 1 1  1  1  0
+##   2006 0 0 0 0 0 1 1 1 1  1  1  0
+##   2007 0 0 0 0 1 1 1 1 1  1  1  0
+##   2008 0 0 0 0 1 1 1 1 1  1  1  0
+##   2009 0 0 0 0 1 1 1 1 1  1  1  0
+##   2010 0 0 0 0 0 1 1 1 1  1  0  0
+##   2011 0 0 0 0 0 1 1 1 1  1  1  1
+##   2012 0 0 0 0 1 1 1 1 1  1  1  0
+##   2013 0 0 0 0 1 1 1 1 1  1  1  1
+##   2014 1 0 0 0 0 0 0 0 0  0  0  0
+##   2015 0 0 1 1 1 1 1 1 1  1  0  0
+##   2016 0 0 0 0 1 1 1 1 1  1  1  0
+##   2017 0 0 0 0 0 0 1 1 1  1  1  1
+##   2018 0 0 0 0 1 1 1 1 1  1  1  1
+##   2019 0 0 0 0 0 1 1 1 1  1  1  0
+##   2020 0 0 0 0 1 1 1 1 1  1  1  1
+##   2021 0 0 0 0 1 1 1 1 1  1  1  0
+## 
+## , , parent.pop = CP3
+## 
+##       month
+## year   1 2 3 4 5 6 7 8 9 10 11 12
+##   1992 0 0 0 0 1 1 1 1 1  1  1  0
+##   1993 0 0 0 0 0 1 1 1 1  1  1  0
+##   1994 0 0 0 0 1 1 1 1 1  1  0  0
+##   1995 0 0 0 0 0 0 1 1 1  1  1  0
+##   1996 0 0 0 0 0 1 1 1 1  1  0  0
+##   1997 0 0 0 0 0 1 1 1 1  1  1  0
+##   1998 0 0 0 0 0 0 1 1 1  1  0  0
+##   1999 0 0 0 0 0 1 1 1 1  1  1  1
+##   2000 0 0 0 0 0 1 1 1 1  1  1  1
+##   2001 0 0 0 0 1 1 1 1 1  1  1  0
+##   2002 0 0 0 0 0 1 1 1 1  1  1  0
+##   2003 0 0 0 0 0 1 1 1 1  1  0  0
+##   2004 0 0 0 0 1 1 1 1 1  1  1  0
+##   2005 0 0 0 0 0 1 1 1 1  1  1  0
+##   2006 0 0 0 0 0 1 1 1 1  1  1  0
+##   2007 0 0 0 0 1 1 1 1 1  1  1  0
+##   2008 0 0 0 0 1 1 1 1 1  1  1  0
+##   2009 0 0 0 0 1 1 1 1 1  1  1  0
+##   2010 0 0 0 0 0 1 1 1 1  1  0  0
+##   2011 0 0 0 0 0 0 1 1 1  1  1  1
+##   2012 0 0 0 0 1 1 1 1 1  1  1  0
+##   2013 0 0 0 0 1 1 1 1 1  1  1  1
+##   2014 0 0 0 0 1 1 1 1 1  1  1  0
+##   2015 0 0 0 1 1 1 1 1 1  1  0  0
+##   2016 0 0 0 0 0 1 1 1 1  1  1  0
+##   2017 0 0 0 0 0 0 1 1 1  1  1  1
+##   2018 0 0 0 0 1 1 1 1 1  1  1  1
+##   2019 0 0 0 0 0 1 1 1 1  1  1  0
+##   2020 0 0 0 0 1 1 1 1 1  1  1  1
+##   2021 0 0 0 0 1 1 1 1 1  1  1  0
+## 
+## , , parent.pop = DPR
+## 
+##       month
+## year   1 2 3 4 5 6 7 8 9 10 11 12
+##   1992 1 1 1 1 1 1 1 1 1  1  1  0
+##   1993 0 0 0 1 1 1 1 1 1  1  1  1
+##   1994 1 1 1 1 1 1 1 1 1  1  1  1
+##   1995 0 1 1 1 1 1 1 1 1  1  1  1
+##   1996 0 1 1 1 1 1 1 1 1  1  1  1
+##   1997 0 1 1 1 1 1 1 1 1  1  1  1
+##   1998 0 0 1 1 1 1 1 1 1  1  1  1
+##   1999 1 0 0 0 0 0 0 0 0  0  0  0
+##   2000 0 0 1 1 1 1 1 1 1  1  1  1
+##   2001 1 1 1 1 1 1 1 1 1  1  1  0
+##   2002 0 1 1 1 1 1 1 1 1  1  1  1
+##   2003 1 1 1 1 1 1 1 1 1  1  1  1
+##   2004 0 0 1 1 1 1 1 1 1  1  1  1
+##   2005 1 1 1 1 1 1 1 1 1  1  1  1
+##   2006 0 1 1 1 1 1 1 1 1  1  1  1
+##   2007 1 1 1 1 1 1 1 1 1  1  1  1
+##   2008 0 0 1 1 1 1 1 1 1  1  1  1
+##   2009 1 1 1 1 1 1 1 1 1  1  1  1
+##   2010 1 1 1 1 1 1 1 1 1  1  1  1
+##   2011 1 1 1 1 1 1 1 1 1  1  1  1
+##   2012 1 1 1 1 1 1 1 1 1  1  1  0
+##   2013 0 1 1 1 1 1 1 1 1  1  1  1
+##   2014 1 1 1 1 1 1 1 1 1  1  1  1
+##   2015 1 1 1 1 1 1 1 1 1  1  1  0
+##   2016 0 1 1 1 1 1 1 1 1  1  1  1
+##   2017 0 0 1 1 1 1 1 1 1  1  1  1
+##   2018 1 1 1 1 1 1 1 1 1  1  1  1
+##   2019 1 0 0 0 0 0 0 0 0  0  0  0
+##   2020 1 1 1 1 1 1 1 1 1  1  1  1
+##   2021 1 1 1 1 1 1 1 1 1  1  1  1
+## 
+## , , parent.pop = FR
+## 
+##       month
+## year   1 2 3 4 5 6 7 8 9 10 11 12
+##   1992 1 1 1 1 1 1 1 1 1  1  1  0
+##   1993 0 0 0 1 1 1 1 1 1  1  1  1
+##   1994 1 1 1 1 1 1 1 1 1  1  1  1
+##   1995 0 0 0 1 1 1 1 1 1  1  1  1
+##   1996 0 0 1 1 1 1 1 1 1  1  1  0
+##   1997 0 0 1 1 1 1 1 1 1  1  1  1
+##   1998 0 0 0 1 1 1 1 1 1  1  1  1
+##   1999 0 0 1 1 1 1 1 1 1  1  1  1
+##   2000 0 0 1 1 1 1 1 1 1  1  1  1
+##   2001 1 1 1 1 1 1 1 1 1  1  1  0
+##   2002 0 0 1 1 1 1 1 1 1  1  1  0
+##   2003 0 1 1 1 1 1 1 1 1  1  1  0
+##   2004 0 0 1 1 1 1 1 1 1  1  1  1
+##   2005 0 1 1 1 1 1 1 1 1  1  1  0
+##   2006 0 0 0 1 1 1 1 1 1  1  1  1
+##   2007 1 1 1 1 1 1 1 1 1  1  1  1
+##   2008 0 0 1 1 1 1 1 1 1  1  1  1
+##   2009 1 1 1 1 1 1 1 1 1  1  1  1
+##   2010 0 1 1 1 1 1 1 1 1  1  1  1
+##   2011 0 0 0 1 1 1 1 1 1  1  1  1
+##   2012 1 1 1 1 1 1 1 1 1  1  1  0
+##   2013 0 0 1 1 1 1 1 1 1  1  1  1
+##   2014 1 1 1 1 1 1 1 1 1  1  1  1
+##   2015 1 1 1 1 1 1 1 1 1  1  1  1
+##   2016 0 0 1 1 1 1 1 1 1  1  1  1
+##   2017 0 0 0 1 1 1 1 1 1  1  1  1
+##   2018 1 1 1 1 1 1 1 1 1  1  1  1
+##   2019 0 0 0 1 1 1 1 1 1  1  1  1
+##   2020 1 1 1 1 1 1 1 1 1  1  1  1
+##   2021 1 1 1 1 1 1 1 1 1  1  1  0
+## 
+## , , parent.pop = LV1
+## 
+##       month
+## year   1 2 3 4 5 6 7 8 9 10 11 12
+##   1992 0 0 0 0 1 1 1 1 1  1  1  0
+##   1993 0 0 0 0 0 0 1 1 1  1  0  0
+##   1994 0 0 0 0 0 1 1 1 1  1  0  0
+##   1995 0 0 0 0 0 0 0 1 1  1  1  0
+##   1996 0 0 0 0 0 0 1 1 1  1  0  0
+##   1997 0 0 0 0 0 0 1 1 1  1  0  0
+##   1998 0 0 0 0 0 0 0 1 1  1  0  0
+##   1999 0 0 0 0 0 0 1 1 1  1  0  0
+##   2000 0 0 0 0 0 1 1 1 1  1  0  0
+##   2001 0 0 0 0 0 1 1 1 1  1  0  0
+##   2002 0 0 0 0 0 1 1 1 1  1  0  0
+##   2003 0 0 0 0 0 0 1 1 1  1  0  0
+##   2004 0 0 0 0 0 1 1 1 1  1  1  0
+##   2005 0 0 0 0 0 1 1 1 1  1  0  0
+##   2006 0 0 0 0 0 0 1 1 1  1  0  0
+##   2007 0 0 0 0 0 1 1 1 1  1  1  0
+##   2008 0 0 0 0 0 1 1 1 1  1  1  0
+##   2009 0 0 0 0 0 1 1 1 1  1  1  0
+##   2010 0 0 0 0 0 0 1 1 1  1  0  0
+##   2011 0 0 0 0 0 0 1 1 1  1  0  0
+##   2012 0 0 0 0 0 1 1 1 1  1  0  0
+##   2013 0 0 0 0 0 1 1 1 1  1  1  1
+##   2014 0 0 0 0 1 1 1 1 1  1  0  0
+##   2015 0 0 0 0 0 1 1 1 1  1  0  0
+##   2016 0 0 0 0 0 0 1 1 1  1  0  0
+##   2017 0 0 0 0 0 0 1 1 1  1  0  0
+##   2018 0 0 0 0 0 1 1 1 1  1  1  0
+##   2019 0 0 0 0 0 0 1 1 1  1  1  0
+##   2020 0 0 0 0 0 1 1 1 1  1  1  0
+##   2021 0 0 0 0 1 1 1 1 1  1  1  0
+## 
+## , , parent.pop = LV3
+## 
+##       month
+## year   1 2 3 4 5 6 7 8 9 10 11 12
+##   1992 0 0 0 0 1 1 1 1 1  1  1  0
+##   1993 0 0 0 0 0 0 1 1 1  1  0  0
+##   1994 0 0 0 0 0 1 1 1 1  1  0  0
+##   1995 0 0 0 0 0 0 0 1 1  1  1  0
+##   1996 0 0 0 0 0 0 1 1 1  1  0  0
+##   1997 0 0 0 0 0 0 1 1 1  1  0  0
+##   1998 0 0 0 0 0 0 0 1 1  1  0  0
+##   1999 0 0 0 0 0 0 1 1 1  1  1  0
+##   2000 0 0 0 0 0 1 1 1 1  1  0  0
+##   2001 0 0 0 0 0 1 1 1 1  1  0  0
+##   2002 0 0 0 0 0 1 1 1 1  1  0  0
+##   2003 0 0 0 0 0 0 1 1 1  1  0  0
+##   2004 0 0 0 0 0 1 1 1 1  1  1  0
+##   2005 0 0 0 0 0 1 1 1 1  1  0  0
+##   2006 0 0 0 0 0 0 1 1 1  1  0  0
+##   2007 0 0 0 0 0 1 1 1 1  1  1  0
+##   2008 0 0 0 0 0 1 1 1 1  1  1  0
+##   2009 0 0 0 0 0 1 1 1 1  1  1  0
+##   2010 0 0 0 0 0 0 1 1 1  1  0  0
+##   2011 0 0 0 0 0 0 1 1 1  1  1  0
+##   2012 0 0 0 0 0 1 1 1 1  1  0  0
+##   2013 0 0 0 0 0 1 1 1 1  1  1  1
+##   2014 0 0 0 0 1 1 1 1 1  1  1  0
+##   2015 0 0 0 0 1 1 1 1 1  1  0  0
+##   2016 0 0 0 0 0 0 1 1 1  1  0  0
+##   2017 0 0 0 0 0 0 1 1 1  1  0  0
+##   2018 0 0 0 0 0 1 1 1 1  1  1  0
+##   2019 0 0 0 0 0 0 1 1 1  1  1  0
+##   2020 0 0 0 0 0 1 1 1 1  1  1  0
+##   2021 0 0 0 0 1 1 1 1 1  1  1  0
+## 
+## , , parent.pop = LVTR1
+## 
+##       month
+## year   1 2 3 4 5 6 7 8 9 10 11 12
+##   1992 0 0 0 0 1 1 1 1 1  1  1  0
+##   1993 0 0 0 0 0 0 1 1 1  1  0  0
+##   1994 0 0 0 0 0 1 1 1 1  1  0  0
+##   1995 0 0 0 0 0 0 0 1 1  1  1  0
+##   1996 0 0 0 0 0 0 1 1 1  1  0  0
+##   1997 0 0 0 0 0 0 1 1 1  1  0  0
+##   1998 0 0 0 0 0 0 0 1 1  1  0  0
+##   1999 0 0 0 0 0 0 1 1 1  1  0  0
+##   2000 0 0 0 0 0 1 1 1 1  1  0  0
+##   2001 0 0 0 0 0 1 1 1 1  1  0  0
+##   2002 0 0 0 0 0 1 1 1 1  1  0  0
+##   2003 0 0 0 0 0 0 1 1 1  1  0  0
+##   2004 0 0 0 0 0 1 1 1 1  1  1  0
+##   2005 0 0 0 0 0 1 1 1 1  1  0  0
+##   2006 0 0 0 0 0 0 1 1 1  1  0  0
+##   2007 0 0 0 0 0 1 1 1 1  1  1  0
+##   2008 0 0 0 0 0 1 1 1 1  1  1  0
+##   2009 0 0 0 0 0 1 1 1 1  1  1  0
+##   2010 0 0 0 0 0 0 1 1 1  1  0  0
+##   2011 0 0 0 0 0 0 1 1 1  1  1  0
+##   2012 0 0 0 0 0 1 1 1 1  1  0  0
+##   2013 0 0 0 0 0 1 1 1 1  1  1  1
+##   2014 0 0 0 0 1 1 1 1 1  1  0  0
+##   2015 0 0 0 0 0 1 1 1 1  1  0  0
+##   2016 0 0 0 0 0 0 1 1 1  1  0  0
+##   2017 0 0 0 0 0 0 1 1 1  1  0  0
+##   2018 0 0 0 0 0 1 1 1 1  1  0  0
+##   2019 0 0 0 0 0 0 1 1 1  1  1  0
+##   2020 0 0 0 0 0 1 1 1 1  1  1  0
+##   2021 0 0 0 0 1 1 1 1 1  1  1  0
+## 
+## , , parent.pop = SQ1
+## 
+##       month
+## year   1 2 3 4 5 6 7 8 9 10 11 12
+##   1992 1 1 1 1 1 1 1 1 1  1  1  0
+##   1993 0 0 0 0 1 1 1 1 1  1  1  1
+##   1994 1 0 0 0 0 0 0 0 0  0  0  0
+##   1995 0 0 0 0 1 1 1 1 1  1  1  1
+##   1996 0 0 0 0 1 1 1 1 1  1  1  0
+##   1997 0 0 0 1 1 1 1 1 1  1  1  0
+##   1998 0 0 0 0 0 1 1 1 1  1  1  1
+##   1999 0 0 0 1 1 1 1 1 1  1  1  1
+##   2000 0 0 0 1 1 1 1 1 1  1  1  1
+##   2001 0 0 0 0 1 1 1 1 1  1  1  0
+##   2002 0 0 0 1 1 1 1 1 1  1  1  0
+##   2003 0 0 0 1 1 1 1 1 1  1  1  0
+##   2004 0 0 0 1 1 1 1 1 1  1  1  1
+##   2005 0 0 0 1 1 1 1 1 1  1  1  1
+##   2006 0 0 0 0 1 1 1 1 1  1  1  1
+##   2007 0 0 1 1 1 1 1 1 1  1  1  0
+##   2008 0 0 0 1 1 1 1 1 1  1  1  1
+##   2009 0 0 0 1 1 1 1 1 1  1  1  0
+##   2010 0 0 0 0 1 1 1 1 1  1  1  0
+##   2011 0 0 0 0 1 1 1 1 1  1  1  1
+##   2012 1 1 1 1 1 1 1 1 1  1  1  0
+##   2013 0 0 1 1 1 1 1 1 1  1  1  1
+##   2014 1 1 1 1 1 1 1 1 1  1  1  1
+##   2015 1 1 1 1 1 1 1 1 1  1  1  0
+##   2016 0 0 0 1 1 1 1 1 1  1  1  1
+##   2017 0 0 0 0 1 1 1 1 1  1  1  1
+##   2018 1 1 0 0 0 0 0 0 0  0  0  0
+##   2019 0 0 0 0 1 1 1 1 1  1  1  1
+##   2020 0 1 1 1 1 1 1 1 1  1  1  1
+##   2021 0 1 1 1 1 1 1 1 1  1  1  0
+## 
+## , , parent.pop = SQ2
+## 
+##       month
+## year   1 2 3 4 5 6 7 8 9 10 11 12
+##   1992 1 1 1 1 1 1 1 1 1  1  1  0
+##   1993 0 0 0 0 1 1 1 1 1  1  1  1
+##   1994 1 0 0 0 0 0 0 0 0  0  0  0
+##   1995 0 0 0 0 0 1 1 1 1  1  1  1
+##   1996 0 0 0 0 1 1 1 1 1  1  1  0
+##   1997 0 0 0 0 1 1 1 1 1  1  1  0
+##   1998 0 0 0 0 0 1 1 1 1  1  1  1
+##   1999 0 0 0 1 1 1 1 1 1  1  1  1
+##   2000 0 0 0 1 1 1 1 1 1  1  1  1
+##   2001 0 0 0 0 1 1 1 1 1  1  1  0
+##   2002 0 0 0 1 1 1 1 1 1  1  1  0
+##   2003 0 0 0 1 1 1 1 1 1  1  1  0
+##   2004 0 0 0 1 1 1 1 1 1  1  1  1
+##   2005 0 0 0 1 1 1 1 1 1  1  1  1
+##   2006 0 0 0 0 1 1 1 1 1  1  1  1
+##   2007 0 0 1 1 1 1 1 1 1  1  1  0
+##   2008 0 0 0 1 1 1 1 1 1  1  1  1
+##   2009 0 0 0 1 1 1 1 1 1  1  1  0
+##   2010 0 0 0 0 1 1 1 1 1  1  1  0
+##   2011 0 0 0 0 1 1 1 1 1  1  1  1
+##   2012 0 1 1 1 1 1 1 1 1  1  1  0
+##   2013 0 0 0 1 1 1 1 1 1  1  1  1
+##   2014 1 1 1 1 1 1 1 1 1  1  1  1
+##   2015 1 1 1 1 1 1 1 1 1  1  1  0
+##   2016 0 0 0 1 1 1 1 1 1  1  1  1
+##   2017 0 0 0 0 1 1 1 1 1  1  1  1
+##   2018 1 1 0 0 0 0 0 0 0  0  0  0
+##   2019 0 0 0 0 1 1 1 1 1  1  1  1
+##   2020 0 1 1 1 1 1 1 1 1  1  1  1
+##   2021 0 0 1 1 1 1 1 1 1  1  1  0
+## 
+## , , parent.pop = SQ3
+## 
+##       month
+## year   1 2 3 4 5 6 7 8 9 10 11 12
+##   1992 0 0 0 1 1 1 1 1 1  1  1  0
+##   1993 0 0 0 0 0 1 1 1 1  1  1  1
+##   1994 0 0 0 0 1 1 1 1 1  1  0  0
+##   1995 0 0 0 0 0 0 1 1 1  1  1  0
+##   1996 0 0 0 0 1 1 1 1 1  1  1  0
+##   1997 0 0 0 0 1 1 1 1 1  1  1  0
+##   1998 0 0 0 0 0 0 1 1 1  1  1  1
+##   1999 0 0 0 0 1 1 1 1 1  1  1  1
+##   2000 0 0 0 0 1 1 1 1 1  1  1  1
+##   2001 0 0 0 0 1 1 1 1 1  1  1  0
+##   2002 0 0 0 0 1 1 1 1 1  1  1  0
+##   2003 0 0 0 0 1 1 1 1 1  1  1  0
+##   2004 0 0 0 0 1 1 1 1 1  1  1  1
+##   2005 0 0 0 0 1 1 1 1 1  1  1  1
+##   2006 0 0 0 0 0 1 1 1 1  1  1  1
+##   2007 0 0 0 1 1 1 1 1 1  1  1  0
+##   2008 0 0 0 0 1 1 1 1 1  1  1  0
+##   2009 0 0 0 0 1 1 1 1 1  1  1  0
+##   2010 0 0 0 0 0 1 1 1 1  1  1  0
+##   2011 0 0 0 0 0 1 1 1 1  1  1  1
+##   2012 0 0 0 1 1 1 1 1 1  1  1  0
+##   2013 0 0 0 1 1 1 1 1 1  1  1  1
+##   2014 1 1 1 1 1 1 1 1 1  1  1  0
+##   2015 0 0 1 1 1 1 1 1 1  1  1  0
+##   2016 0 0 0 0 1 1 1 1 1  1  1  0
+##   2017 0 0 0 0 0 1 1 1 1  1  1  1
+##   2018 0 0 0 0 1 1 1 1 1  1  1  1
+##   2019 0 0 0 0 0 1 1 1 1  1  1  0
+##   2020 0 0 0 1 1 1 1 1 1  1  1  1
+##   2021 0 0 0 1 1 1 1 1 1  1  1  0
+## 
+## , , parent.pop = WL1
+## 
+##       month
+## year   1 2 3 4 5 6 7 8 9 10 11 12
+##   1992 1 1 1 1 1 1 1 1 1  1  1  0
+##   1993 0 0 0 0 1 1 1 1 1  1  1  1
+##   1994 0 0 1 1 1 1 1 1 1  1  0  0
+##   1995 0 0 0 0 1 1 1 1 1  1  1  1
+##   1996 0 0 0 1 1 1 1 1 1  1  1  0
+##   1997 0 0 0 1 1 1 1 1 1  1  1  1
+##   1998 0 0 0 0 1 1 1 1 1  1  1  1
+##   1999 0 0 0 0 1 1 1 1 1  1  1  1
+##   2000 0 0 0 1 1 1 1 1 1  1  1  1
+##   2001 0 0 1 1 1 1 1 1 1  1  1  0
+##   2002 0 0 0 1 1 1 1 1 1  1  1  0
+##   2003 0 0 1 1 1 1 1 1 1  1  1  0
+##   2004 0 0 0 1 1 1 1 1 1  1  1  1
+##   2005 0 0 0 1 1 1 1 1 1  1  1  0
+##   2006 0 0 0 0 1 1 1 1 1  1  1  1
+##   2007 1 0 0 0 0 0 0 0 0  0  0  0
+##   2008 0 0 0 1 1 1 1 1 1  1  1  1
+##   2009 1 0 0 0 0 0 0 0 0  0  0  0
+##   2010 0 0 0 1 1 1 1 1 1  1  1  0
+##   2011 0 0 0 0 1 1 1 1 1  1  1  1
+##   2012 1 1 1 1 1 1 1 1 1  1  1  0
+##   2013 0 0 0 1 1 1 1 1 1  1  1  1
+##   2014 1 1 1 1 1 1 1 1 1  1  1  1
+##   2015 1 1 1 1 1 1 1 1 1  1  1  0
+##   2016 0 0 0 1 1 1 1 1 1  1  1  0
+##   2017 0 0 0 0 1 1 1 1 1  1  1  1
+##   2018 1 1 0 0 0 0 0 0 0  0  0  0
+##   2019 0 0 0 0 1 1 1 1 1  1  1  0
+##   2020 0 1 1 1 1 1 1 1 1  1  1  1
+##   2021 0 0 1 1 1 1 1 1 1  1  1  0
+## 
+## , , parent.pop = WL2
+## 
+##       month
+## year   1 2 3 4 5 6 7 8 9 10 11 12
+##   1992 0 0 0 1 1 1 1 1 1  1  1  0
+##   1993 0 0 0 0 0 1 1 1 1  1  1  1
+##   1994 0 0 0 1 1 1 1 1 1  1  0  0
+##   1995 0 0 0 0 0 0 1 1 1  1  1  0
+##   1996 0 0 0 0 1 1 1 1 1  1  1  0
+##   1997 0 0 0 0 1 1 1 1 1  1  1  0
+##   1998 0 0 0 0 0 1 1 1 1  1  1  0
+##   1999 0 0 0 0 0 1 1 1 1  1  1  1
+##   2000 0 0 0 0 1 1 1 1 1  1  1  1
+##   2001 0 0 0 0 1 1 1 1 1  1  1  0
+##   2002 0 0 0 0 1 1 1 1 1  1  1  0
+##   2003 0 0 0 0 1 1 1 1 1  1  1  0
+##   2004 0 0 0 0 1 1 1 1 1  1  1  0
+##   2005 0 0 0 0 1 1 1 1 1  1  1  0
+##   2006 0 0 0 0 0 1 1 1 1  1  1  1
+##   2007 0 0 0 1 1 1 1 1 1  1  1  0
+##   2008 0 0 0 0 1 1 1 1 1  1  1  0
+##   2009 0 0 0 0 1 1 1 1 1  1  1  0
+##   2010 0 0 0 0 1 1 1 1 1  1  1  0
+##   2011 0 0 0 0 0 1 1 1 1  1  1  1
+##   2012 0 0 0 1 1 1 1 1 1  1  1  0
+##   2013 0 0 0 1 1 1 1 1 1  1  1  1
+##   2014 1 0 0 0 0 0 0 0 0  0  0  0
+##   2015 0 0 1 1 1 1 1 1 1  1  1  0
+##   2016 0 0 0 0 1 1 1 1 1  1  1  0
+##   2017 0 0 0 0 0 1 1 1 1  1  1  1
+##   2018 0 0 0 0 1 1 1 1 1  1  1  1
+##   2019 0 0 0 0 0 1 1 1 1  1  1  0
+##   2020 0 0 0 1 1 1 1 1 1  1  1  1
+##   2021 0 0 0 1 1 1 1 1 1  1  1  0
+## 
+## , , parent.pop = WR
+## 
+##       month
+## year   1 2 3 4 5 6 7 8 9 10 11 12
+##   1992 1 1 1 1 1 1 1 1 1  1  1  0
+##   1993 0 0 0 0 1 1 1 1 1  1  1  1
+##   1994 1 0 0 0 0 0 0 0 0  0  0  0
+##   1995 0 0 0 0 1 1 1 1 1  1  1  1
+##   1996 0 0 1 1 1 1 1 1 1  1  1  0
+##   1997 0 0 1 1 1 1 1 1 1  1  1  1
+##   1998 0 0 0 0 1 1 1 1 1  1  1  1
+##   1999 0 0 0 1 1 1 1 1 1  1  1  1
+##   2000 0 0 1 1 1 1 1 1 1  1  1  1
+##   2001 1 1 1 1 1 1 1 1 1  1  1  0
+##   2002 0 0 0 1 1 1 1 1 1  1  1  0
+##   2003 0 0 1 1 1 1 1 1 1  1  1  0
+##   2004 0 0 1 1 1 1 1 1 1  1  1  1
+##   2005 0 1 1 1 1 1 1 1 1  1  1  1
+##   2006 0 0 0 1 1 1 1 1 1  1  1  1
+##   2007 1 1 1 1 1 1 1 1 1  1  1  0
+##   2008 0 0 0 1 1 1 1 1 1  1  1  1
+##   2009 1 1 1 1 1 1 1 1 1  1  1  1
+##   2010 0 0 1 1 1 1 1 1 1  1  1  0
+##   2011 0 0 0 1 1 1 1 1 1  1  1  1
+##   2012 1 1 1 1 1 1 1 1 1  1  1  0
+##   2013 0 0 1 1 1 1 1 1 1  1  1  1
+##   2014 1 1 1 1 1 1 1 1 1  1  1  1
+##   2015 1 1 1 1 1 1 1 1 1  1  1  0
+##   2016 0 0 1 1 1 1 1 1 1  1  1  1
+##   2017 0 0 0 1 1 1 1 1 1  1  1  1
+##   2018 1 1 1 1 1 1 1 1 1  1  1  1
+##   2019 1 0 0 0 0 0 0 0 0  0  0  0
+##   2020 1 1 1 1 1 1 1 1 1  1  1  1
+##   2021 1 1 1 1 1 1 1 1 1  1  1  0
+## 
+## , , parent.pop = WV
+## 
+##       month
+## year   1 2 3 4 5 6 7 8 9 10 11 12
+##   1992 1 1 1 1 1 1 1 1 1  1  1  0
+##   1993 0 0 0 1 1 1 1 1 1  1  1  1
+##   1994 0 1 1 1 1 1 1 1 1  1  1  0
+##   1995 0 0 0 1 1 1 1 1 1  1  1  1
+##   1996 0 0 1 1 1 1 1 1 1  1  1  0
+##   1997 0 0 1 1 1 1 1 1 1  1  1  1
+##   1998 0 0 0 1 1 1 1 1 1  1  1  1
+##   1999 0 0 0 1 1 1 1 1 1  1  1  1
+##   2000 0 0 1 1 1 1 1 1 1  1  1  1
+##   2001 0 0 1 1 1 1 1 1 1  1  1  0
+##   2002 0 0 1 1 1 1 1 1 1  1  1  0
+##   2003 0 1 1 1 1 1 1 1 1  1  1  0
+##   2004 0 0 1 1 1 1 1 1 1  1  1  1
+##   2005 0 1 1 1 1 1 1 1 1  1  1  0
+##   2006 0 0 0 1 1 1 1 1 1  1  1  1
+##   2007 1 1 1 1 1 1 1 1 1  1  1  0
+##   2008 0 0 0 1 1 1 1 1 1  1  1  1
+##   2009 1 1 1 1 1 1 1 1 1  1  1  1
+##   2010 0 0 1 1 1 1 1 1 1  1  1  1
+##   2011 1 1 1 1 1 1 1 1 1  1  1  1
+##   2012 0 1 1 1 1 1 1 1 1  1  1  0
+##   2013 0 0 1 1 1 1 1 1 1  1  1  1
+##   2014 1 1 1 1 1 1 1 1 1  1  1  1
+##   2015 1 1 1 1 1 1 1 1 1  1  1  0
+##   2016 0 0 0 1 1 1 1 1 1  1  1  0
+##   2017 0 0 0 1 1 1 1 1 1  1  1  1
+##   2018 1 1 1 1 1 1 1 1 1  1  1  1
+##   2019 0 0 0 1 1 1 1 1 1  1  1  1
+##   2020 0 1 1 1 1 1 1 1 1  1  1  1
+##   2021 0 1 1 1 1 1 1 1 1  1  1  0
+## 
+## , , parent.pop = YO11
+## 
+##       month
+## year   1 2 3 4 5 6 7 8 9 10 11 12
+##   1992 0 0 0 0 1 1 1 1 1  1  1  0
+##   1993 0 0 0 0 0 1 1 1 1  1  1  1
+##   1994 0 0 0 0 1 1 1 1 1  1  0  0
+##   1995 0 0 0 0 0 0 1 1 1  1  1  0
+##   1996 0 0 0 0 0 1 1 1 1  1  0  0
+##   1997 0 0 0 0 0 1 1 1 1  1  1  0
+##   1998 0 0 0 0 0 0 1 1 1  1  1  0
+##   1999 0 0 0 0 0 1 1 1 1  1  1  1
+##   2000 0 0 0 0 1 1 1 1 1  1  1  1
+##   2001 0 0 0 0 1 1 1 1 1  1  0  0
+##   2002 0 0 0 0 0 1 1 1 1  1  0  0
+##   2003 0 0 0 0 0 1 1 1 1  1  1  0
+##   2004 0 0 0 0 0 1 1 1 1  1  0  0
+##   2005 0 0 0 0 0 1 1 1 1  1  1  0
+##   2006 0 0 0 0 0 1 1 1 1  1  1  0
+##   2007 0 0 0 0 1 1 1 1 1  1  1  0
+##   2008 0 0 0 0 0 1 1 1 1  1  1  0
+##   2009 0 0 0 0 1 1 1 1 1  1  1  0
+##   2010 0 0 0 0 0 1 1 1 1  1  0  0
+##   2011 0 0 0 0 0 0 1 1 1  1  1  1
+##   2012 0 0 0 0 1 1 1 1 1  1  1  0
+##   2013 0 0 0 0 1 1 1 1 1  1  1  1
+##   2014 0 0 0 0 1 1 1 1 1  1  1  0
+##   2015 0 0 0 0 1 1 1 1 1  1  0  0
+##   2016 0 0 0 0 0 1 1 1 1  1  1  0
+##   2017 0 0 0 0 0 0 1 1 1  1  1  1
+##   2018 0 0 0 0 1 1 1 1 1  1  1  1
+##   2019 0 0 0 0 0 1 1 1 1  1  1  0
+##   2020 0 0 0 0 1 1 1 1 1  1  1  1
+##   2021 0 0 0 0 1 1 1 1 1  1  1  0
+## 
+## , , parent.pop = YO4
+## 
+##       month
+## year   1 2 3 4 5 6 7 8 9 10 11 12
+##   1992 0 0 0 1 1 1 1 1 1  1  1  0
+##   1993 0 0 0 0 0 1 1 1 1  1  1  1
+##   1994 0 0 0 1 1 1 1 1 1  1  0  0
+##   1995 0 0 0 0 0 1 1 1 1  1  1  0
+##   1996 0 0 0 0 1 1 1 1 1  1  1  0
+##   1997 0 0 0 0 1 1 1 1 1  1  1  0
+##   1998 0 0 0 0 0 1 1 1 1  1  1  1
+##   1999 0 0 0 0 1 1 1 1 1  1  1  1
+##   2000 0 0 0 0 1 1 1 1 1  1  1  1
+##   2001 0 0 0 0 1 1 1 1 1  1  1  0
+##   2002 0 0 0 0 1 1 1 1 1  1  1  0
+##   2003 0 0 0 0 1 1 1 1 1  1  1  0
+##   2004 0 0 0 0 1 1 1 1 1  1  1  1
+##   2005 0 0 0 0 1 1 1 1 1  1  1  0
+##   2006 0 0 0 0 0 1 1 1 1  1  1  1
+##   2007 0 0 0 1 1 1 1 1 1  1  1  0
+##   2008 0 0 0 0 1 1 1 1 1  1  1  0
+##   2009 0 0 0 0 1 1 1 1 1  1  1  0
+##   2010 0 0 0 0 1 1 1 1 1  1  1  0
+##   2011 0 0 0 0 0 1 1 1 1  1  1  1
+##   2012 0 0 0 1 1 1 1 1 1  1  1  0
+##   2013 0 0 0 1 1 1 1 1 1  1  1  1
+##   2014 1 1 1 1 1 1 1 1 1  1  1  0
+##   2015 0 1 1 1 1 1 1 1 1  1  1  0
+##   2016 0 0 0 0 1 1 1 1 1  1  1  0
+##   2017 0 0 0 0 0 1 1 1 1  1  1  1
+##   2018 0 1 0 0 0 0 0 0 0  0  0  0
+##   2019 0 0 0 0 0 1 1 1 1  1  1  0
+##   2020 0 0 0 1 1 1 1 1 1  1  1  1
+##   2021 0 0 0 1 1 1 1 1 1  1  1  0
+## 
+## , , parent.pop = YO7
+## 
+##       month
+## year   1 2 3 4 5 6 7 8 9 10 11 12
+##   1992 0 0 0 0 1 1 1 1 1  1  1  0
+##   1993 0 0 0 0 0 1 1 1 1  1  1  0
+##   1994 0 0 0 0 1 1 1 1 1  1  0  0
+##   1995 0 0 0 0 0 0 1 1 1  1  1  0
+##   1996 0 0 0 0 0 1 1 1 1  1  0  0
+##   1997 0 0 0 0 0 1 1 1 1  1  1  0
+##   1998 0 0 0 0 0 0 1 1 1  1  0  0
+##   1999 0 0 0 0 0 1 1 1 1  1  1  1
+##   2000 0 0 0 0 0 1 1 1 1  1  1  1
+##   2001 0 0 0 0 1 1 1 1 1  1  0  0
+##   2002 0 0 0 0 0 1 1 1 1  1  1  0
+##   2003 0 0 0 0 0 1 1 1 1  1  0  0
+##   2004 0 0 0 0 1 1 1 1 1  1  1  0
+##   2005 0 0 0 0 0 1 1 1 1  1  1  0
+##   2006 0 0 0 0 0 1 1 1 1  1  1  0
+##   2007 0 0 0 0 1 1 1 1 1  1  1  0
+##   2008 0 0 0 0 0 1 1 1 1  1  1  0
+##   2009 0 0 0 0 1 1 1 1 1  1  1  0
+##   2010 0 0 0 0 0 1 1 1 1  1  0  0
+##   2011 0 0 0 0 0 0 1 1 1  1  1  1
+##   2012 0 0 0 0 1 1 1 1 1  1  1  0
+##   2013 0 0 0 0 1 1 1 1 1  1  1  1
+##   2014 1 0 0 0 0 0 0 0 0  0  0  0
+##   2015 0 0 1 1 1 1 1 1 1  1  0  0
+##   2016 0 0 0 0 0 1 1 1 1  1  1  0
+##   2017 0 0 0 0 0 0 1 1 1  1  1  1
+##   2018 0 0 0 0 1 1 1 1 1  1  1  1
+##   2019 0 0 0 0 0 1 1 1 1  1  1  0
+##   2020 0 0 0 0 1 1 1 1 1  1  1  1
+##   2021 0 0 0 0 1 1 1 1 1  1  1  0
+## 
+## , , parent.pop = YO8
+## 
+##       month
+## year   1 2 3 4 5 6 7 8 9 10 11 12
+##   1992 0 0 0 0 1 1 1 1 1  1  1  0
+##   1993 0 0 0 0 0 0 1 1 1  1  1  0
+##   1994 0 0 0 0 1 1 1 1 1  1  0  0
+##   1995 0 0 0 0 0 0 1 1 1  1  1  0
+##   1996 0 0 0 0 0 1 1 1 1  1  0  0
+##   1997 0 0 0 0 0 1 1 1 1  1  1  0
+##   1998 0 0 0 0 0 0 1 1 1  1  0  0
+##   1999 0 0 0 0 0 1 1 1 1  1  1  1
+##   2000 0 0 0 0 0 1 1 1 1  1  1  1
+##   2001 0 0 0 0 1 1 1 1 1  1  0  0
+##   2002 0 0 0 0 0 1 1 1 1  1  1  0
+##   2003 0 0 0 0 0 1 1 1 1  1  0  0
+##   2004 0 0 0 0 0 1 1 1 1  1  1  0
+##   2005 0 0 0 0 0 1 1 1 1  1  1  0
+##   2006 0 0 0 0 0 1 1 1 1  1  1  0
+##   2007 0 0 0 0 1 1 1 1 1  1  1  0
+##   2008 0 0 0 0 0 1 1 1 1  1  1  0
+##   2009 0 0 0 0 1 1 1 1 1  1  1  0
+##   2010 0 0 0 0 0 1 1 1 1  1  0  0
+##   2011 0 0 0 0 0 0 1 1 1  1  1  1
+##   2012 0 0 0 0 1 1 1 1 1  1  1  0
+##   2013 0 0 0 0 1 1 1 1 1  1  1  1
+##   2014 0 0 0 1 1 1 1 1 1  1  1  0
+##   2015 0 0 0 1 1 1 1 1 1  1  0  0
+##   2016 0 0 0 0 0 1 1 1 1  1  1  0
+##   2017 0 0 0 0 0 0 1 1 1  1  1  1
+##   2018 0 0 0 0 1 1 1 1 1  1  1  1
+##   2019 0 0 0 0 0 1 1 1 1  1  1  0
+##   2020 0 0 0 0 1 1 1 1 1  1  1  1
+##   2021 0 0 0 0 1 1 1 1 1  1  1  0
 ```
 
 ```r
@@ -2755,26 +4177,26 @@ summary(snow_pops_historical)
 ##                                        3rd Qu.:2470.0   3rd Qu.: 9.25  
 ##                                        Max.   :2872.3   Max.   :12.00  
 ##     cwd_mean          pck_mean          ppt_mean          tmn_mean       
-##  Min.   :  8.897   Min.   :   0.00   Min.   :  3.457   Min.   :-11.4393  
-##  1st Qu.: 25.998   1st Qu.:   0.00   1st Qu.: 28.658   1st Qu.: -4.5092  
-##  Median : 43.295   Median :  58.06   Median : 92.601   Median :  0.1412  
-##  Mean   : 51.416   Mean   : 201.44   Mean   :107.140   Mean   :  0.4229  
-##  3rd Qu.: 75.074   3rd Qu.: 311.87   3rd Qu.:178.682   3rd Qu.:  4.9017  
-##  Max.   :138.177   Max.   :1190.70   Max.   :295.427   Max.   : 14.2743  
+##  Min.   :  8.883   Min.   :   0.00   Min.   :  3.345   Min.   :-11.4587  
+##  1st Qu.: 25.637   1st Qu.:   0.00   1st Qu.: 29.058   1st Qu.: -4.6368  
+##  Median : 43.329   Median :  58.06   Median : 95.651   Median :  0.0515  
+##  Mean   : 51.405   Mean   : 205.17   Mean   :107.936   Mean   :  0.3620  
+##  3rd Qu.: 75.666   3rd Qu.: 320.55   3rd Qu.:181.983   3rd Qu.:  4.7810  
+##  Max.   :139.478   Max.   :1210.37   Max.   :299.498   Max.   : 14.3370  
 ##     tmx_mean         cwd_sem          pck_sem          ppt_sem      
-##  Min.   : 0.956   Min.   :0.1570   Min.   :  0.00   Min.   : 1.187  
-##  1st Qu.: 7.227   1st Qu.:0.5775   1st Qu.:  0.00   1st Qu.: 5.685  
-##  Median :12.588   Median :1.4044   Median : 17.56   Median :13.544  
-##  Mean   :13.851   Mean   :1.7257   Mean   : 27.73   Mean   :15.534  
-##  3rd Qu.:20.784   3rd Qu.:2.6314   3rd Qu.: 46.20   3rd Qu.:24.399  
-##  Max.   :32.254   Max.   :7.6902   Max.   :115.48   Max.   :43.817  
+##  Min.   : 1.071   Min.   :0.1581   Min.   :  0.00   Min.   : 1.194  
+##  1st Qu.: 7.264   1st Qu.:0.5935   1st Qu.:  0.00   1st Qu.: 5.664  
+##  Median :12.359   Median :1.4092   Median : 17.62   Median :14.549  
+##  Mean   :13.822   Mean   :1.7050   Mean   : 27.37   Mean   :15.804  
+##  3rd Qu.:20.631   3rd Qu.:2.5888   3rd Qu.: 46.21   3rd Qu.:26.063  
+##  Max.   :32.312   Max.   :7.3270   Max.   :112.26   Max.   :43.279  
 ##     tmn_sem          tmx_sem           PckSum      
-##  Min.   :0.1773   Min.   :0.1980   Min.   : 222.8  
-##  1st Qu.:0.2499   1st Qu.:0.3284   1st Qu.: 871.3  
-##  Median :0.2922   Median :0.3826   Median :2015.6  
-##  Mean   :0.2980   Mean   :0.3862   Mean   :2417.2  
-##  3rd Qu.:0.3293   3rd Qu.:0.4290   3rd Qu.:3320.9  
-##  Max.   :0.4578   Max.   :0.6130   Max.   :6273.5
+##  Min.   :0.1642   Min.   :0.1957   Min.   : 228.4  
+##  1st Qu.:0.2477   1st Qu.:0.3291   1st Qu.: 891.5  
+##  Median :0.2929   Median :0.3840   Median :2072.4  
+##  Mean   :0.2943   Mean   :0.3860   Mean   :2462.0  
+##  3rd Qu.:0.3254   3rd Qu.:0.4330   3rd Qu.:3377.5  
+##  Max.   :0.4556   Max.   :0.6157   Max.   :6363.1
 ```
 
 ```r
@@ -2793,26 +4215,26 @@ summary(snow_pops_historical_years)
 
 ```
 ##   parent.pop        elevation.group        elev_m           PckSum      
-##  Length:6480        Length:6480        Min.   : 748.9   Min.   : 222.8  
-##  Class :character   Class :character   1st Qu.:1613.8   1st Qu.: 871.3  
-##  Mode  :character   Mode  :character   Median :2200.9   Median :2015.6  
-##                                        Mean   :1992.5   Mean   :2417.2  
-##                                        3rd Qu.:2470.0   3rd Qu.:3320.9  
-##                                        Max.   :2872.3   Max.   :6273.5  
+##  Length:6480        Length:6480        Min.   : 748.9   Min.   : 228.4  
+##  Class :character   Class :character   1st Qu.:1613.8   1st Qu.: 891.5  
+##  Mode  :character   Mode  :character   Median :2200.9   Median :2072.4  
+##                                        Mean   :1992.5   Mean   :2462.0  
+##                                        3rd Qu.:2470.0   3rd Qu.:3377.5  
+##                                        Max.   :2872.3   Max.   :6363.1  
 ##      year               month            cwd              pck        
 ##  Length:6480        Min.   : 1.00   Min.   :  0.00   Min.   :   0.0  
-##  Class :character   1st Qu.: 3.75   1st Qu.: 24.13   1st Qu.:   0.0  
-##  Mode  :character   Median : 6.50   Median : 44.90   Median :   0.0  
-##                     Mean   : 6.50   Mean   : 51.42   Mean   : 201.4  
-##                     3rd Qu.: 9.25   3rd Qu.: 75.17   3rd Qu.: 266.2  
-##                     Max.   :12.00   Max.   :164.00   Max.   :2594.7  
-##       ppt              tmn                tmx       
-##  Min.   :  0.00   Min.   :-14.9700   Min.   :-2.65  
-##  1st Qu.: 14.19   1st Qu.: -4.4600   1st Qu.: 7.09  
-##  Median : 57.20   Median :  0.1600   Median :12.96  
-##  Mean   :107.14   Mean   :  0.4229   Mean   :13.85  
-##  3rd Qu.:148.88   3rd Qu.:  5.2400   3rd Qu.:20.35  
-##  Max.   :951.79   Max.   : 16.8400   Max.   :35.12
+##  Class :character   1st Qu.: 3.75   1st Qu.: 24.02   1st Qu.:   0.0  
+##  Mode  :character   Median : 6.50   Median : 44.88   Median :   0.0  
+##                     Mean   : 6.50   Mean   : 51.40   Mean   : 205.2  
+##                     3rd Qu.: 9.25   3rd Qu.: 75.35   3rd Qu.: 275.0  
+##                     Max.   :12.00   Max.   :159.40   Max.   :2594.7  
+##       ppt              tmn               tmx        
+##  Min.   :  0.00   Min.   :-14.970   Min.   :-2.650  
+##  1st Qu.: 14.03   1st Qu.: -4.480   1st Qu.: 7.107  
+##  Median : 57.01   Median :  0.070   Median :12.885  
+##  Mean   :107.94   Mean   :  0.362   Mean   :13.822  
+##  3rd Qu.:149.83   3rd Qu.:  5.152   3rd Qu.:20.343  
+##  Max.   :951.79   Max.   : 16.840   Max.   :35.120
 ```
 
 ```r
@@ -2824,60 +4246,205 @@ snow_pops_historical_years %>% filter(pck < 2, pck >0) %>% arrange(parent.pop, p
 ## # Groups:   parent.pop, elevation.group, elev_m [9]
 ##    parent.pop elevation.group elev_m PckSum year  month   cwd    pck    ppt
 ##    <chr>      <chr>            <dbl>  <dbl> <chr> <dbl> <dbl>  <dbl>  <dbl>
-##  1 CP2        High             2244.  3102. 1976      1  22.8 0.0300  25.1 
-##  2 FR         Mid               787    251. 1977      1  14.1 0.0800  67   
-##  3 FR         Mid               787    251. 1981      1  13.8 0.480  215.  
-##  4 FR         Mid               787    251. 1964      2  22.7 1.60    11.1 
-##  5 LV1        High             2593.  6045. 1978      7  76.7 1.61    14.2 
-##  6 LV1        High             2593.  6045. 1976     12  13.3 1.66     9.28
-##  7 LV3        High             2354.  5845. 1976     12  17.1 1.42     9.34
-##  8 SQ3        High             2373.  1985. 1991      2  47.0 1.78    31.2 
-##  9 WL1        Mid              1614.   871. 1979     12  20.8 1.84   162.  
-## 10 WL2        High             2020.  2047. 1979     11  25.7 0.890  129.  
-## 11 WL2        High             2020.  2047. 1978     11  24.8 1.36    96.8 
-## 12 YO11       High             2872.  2409. 1980     11  26.0 0.0500  23.8 
-## 13 YO8        High             2591.  3332. 1975     11  33.6 1.56    50.4 
+##  1 CP2        High             2244.  3158. 1976      1  22.8 0.0300  25.1 
+##  2 FR         Mid               787    261. 1977      1  14.1 0.0800  67   
+##  3 FR         Mid               787    261. 1981      1  13.8 0.480  215.  
+##  4 FR         Mid               787    261. 1964      2  22.7 1.60    11.1 
+##  5 LV1        High             2593.  6124. 1978      7  76.7 1.61    14.2 
+##  6 LV1        High             2593.  6124. 1976     12  13.3 1.66     9.28
+##  7 LV3        High             2354.  5923. 1976     12  17.1 1.42     9.34
+##  8 SQ3        High             2373.  2052. 1991      2  47.0 1.78    31.2 
+##  9 WL1        Mid              1614.   892. 1979     12  20.8 1.84   162.  
+## 10 WL2        High             2020.  2093. 1979     11  25.7 0.890  129.  
+## 11 WL2        High             2020.  2093. 1978     11  24.8 1.36    96.8 
+## 12 YO11       High             2872.  2452. 1980     11  26.0 0.0500  23.8 
+## 13 YO8        High             2591.  3391. 1975     11  33.6 1.56    50.4 
 ## # ℹ 2 more variables: tmn <dbl>, tmx <dbl>
 ```
 
 ```r
-snow_grwseason_historical <- snow_pops_historical_years %>% 
+snow_first_month <- snow_pops_historical_years %>%
   group_by(parent.pop, elevation.group, elev_m, year) %>% 
-  filter(pck==0) #snowpack == 0 to grow 
-summary(snow_grwseason_historical)
+  filter(pck==0) %>% 
+  arrange(month) %>% 
+  filter(row_number()==1) #get first month for each pop and year with no snowpack for germ
+
+snow_first_month_tomerge <- snow_first_month %>% 
+  select(parent.pop:elev_m, year, firstmonth=month)
+
+snow_first_month_col <- full_join(snow_pops_historical_years, snow_first_month_tomerge)
+```
+
+```
+## Joining with `by = join_by(parent.pop, elevation.group, elev_m, year)`
+```
+
+```r
+dim(snow_first_month_col)
+```
+
+```
+## [1] 6480   12
+```
+
+```r
+snow_last_month <- snow_first_month_col %>%
+  group_by(parent.pop, elevation.group, elev_m, year) %>% 
+  filter(month>firstmonth) %>% 
+  filter(pck>70) %>% 
+  arrange(month) %>% 
+  filter(row_number()==1) #get first month after growstart for each pop and year with pck >70 
+
+snow_last_month_tomerge <- snow_last_month %>% 
+  select(parent.pop:elev_m, year, firstmonth,lastmonth=month)
+
+snow_last_month_col <- full_join(snow_first_month_col, snow_last_month_tomerge)
+```
+
+```
+## Joining with `by = join_by(parent.pop, elevation.group, elev_m, year,
+## firstmonth)`
+```
+
+```r
+dim(snow_last_month_col)
+```
+
+```
+## [1] 6480   13
+```
+
+```r
+#check weird cases
+snow_last_month_col %>% filter(is.na(firstmonth)) #no cases where there isn't a firstmonth
+```
+
+```
+## # A tibble: 0 × 13
+## # Groups:   parent.pop, elevation.group, elev_m [0]
+## # ℹ 13 variables: parent.pop <chr>, elevation.group <chr>, elev_m <dbl>,
+## #   PckSum <dbl>, year <chr>, month <dbl>, cwd <dbl>, pck <dbl>, ppt <dbl>,
+## #   tmn <dbl>, tmx <dbl>, firstmonth <dbl>, lastmonth <dbl>
+```
+
+```r
+snow_last_month_col %>% filter(is.na(lastmonth)) #191 cases where there isn't a lastmonth 
+```
+
+```
+## # A tibble: 2,292 × 13
+## # Groups:   parent.pop, elevation.group, elev_m [18]
+##    parent.pop elevation.group elev_m PckSum year  month   cwd   pck    ppt   tmn
+##    <chr>      <chr>            <dbl>  <dbl> <chr> <dbl> <dbl> <dbl>  <dbl> <dbl>
+##  1 CP2        High             2244.  3158. 1962      1  21.3  179. 107.   -7.95
+##  2 CP2        High             2244.  3158. 1962      2  21.5  650. 479.   -8.15
+##  3 CP2        High             2244.  3158. 1962      3  16.6  844. 212.   -9.09
+##  4 CP2        High             2244.  3158. 1962      4  60.1  614.  48.3  -2.58
+##  5 CP2        High             2244.  3158. 1962      5  77.5  318.  46.2  -1.77
+##  6 CP2        High             2244.  3158. 1962      6 112.     0    6.90  3.23
+##  7 CP2        High             2244.  3158. 1962      7 121.     0   11.5   7.48
+##  8 CP2        High             2244.  3158. 1962      8 116.     0    7.21  6.18
+##  9 CP2        High             2244.  3158. 1962      9  98.9    0    6.55  5.36
+## 10 CP2        High             2244.  3158. 1962     10  60.2    0  288.    1.61
+## # ℹ 2,282 more rows
+## # ℹ 3 more variables: tmx <dbl>, firstmonth <dbl>, lastmonth <dbl>
+```
+
+```r
+snow_last_month_col %>% filter(lastmonth==firstmonth+1) #9 cases where there was sig snowpack in the month after the first month of 0 snowpack
+```
+
+```
+## # A tibble: 108 × 13
+## # Groups:   parent.pop, elevation.group, elev_m [7]
+##    parent.pop elevation.group elev_m PckSum year  month   cwd   pck     ppt
+##    <chr>      <chr>            <dbl>  <dbl> <chr> <dbl> <dbl> <dbl>   <dbl>
+##  1 DPR        Mid              1019.   228. 1962      1  10.9    0  132.   
+##  2 DPR        Mid              1019.   228. 1962      2  11.6  173. 543.   
+##  3 DPR        Mid              1019.   228. 1962      3  10.6  113. 219.   
+##  4 DPR        Mid              1019.   228. 1962      4  43.8    0   55.6  
+##  5 DPR        Mid              1019.   228. 1962      5  38.9    0   21.9  
+##  6 DPR        Mid              1019.   228. 1962      6  40.6    0    0.860
+##  7 DPR        Mid              1019.   228. 1962      7   0      0    1.09 
+##  8 DPR        Mid              1019.   228. 1962      8   0      0    8.75 
+##  9 DPR        Mid              1019.   228. 1962      9  57.5    0    4.95 
+## 10 DPR        Mid              1019.   228. 1962     10  38.7    0  513.   
+## # ℹ 98 more rows
+## # ℹ 4 more variables: tmn <dbl>, tmx <dbl>, firstmonth <dbl>, lastmonth <dbl>
+```
+
+```r
+snow_last_month_col %>% filter(lastmonth==firstmonth+2) #8 cases where there was sig snowpack in the second month after the first month of 0 snowpack
+```
+
+```
+## # A tibble: 96 × 13
+## # Groups:   parent.pop, elevation.group, elev_m [8]
+##    parent.pop elevation.group elev_m PckSum year  month   cwd   pck     ppt
+##    <chr>      <chr>            <dbl>  <dbl> <chr> <dbl> <dbl> <dbl>   <dbl>
+##  1 DPR        Mid              1019.   228. 1991      1 11.6     0   27.5  
+##  2 DPR        Mid              1019.   228. 1991      2 21.9     0   91.0  
+##  3 DPR        Mid              1019.   228. 1991      3 10.6   113. 577.   
+##  4 DPR        Mid              1019.   228. 1991      4 40.9     0   66.0  
+##  5 DPR        Mid              1019.   228. 1991      5  5.91    0   96.2  
+##  6 DPR        Mid              1019.   228. 1991      6  0       0   53.8  
+##  7 DPR        Mid              1019.   228. 1991      7 38.6     0    0    
+##  8 DPR        Mid              1019.   228. 1991      8  0       0    9.82 
+##  9 DPR        Mid              1019.   228. 1991      9 54.8     0    0.820
+## 10 DPR        Mid              1019.   228. 1991     10 37.8     0  119.   
+## # ℹ 86 more rows
+## # ℹ 4 more variables: tmn <dbl>, tmx <dbl>, firstmonth <dbl>, lastmonth <dbl>
+```
+
+```r
+#snow_last_month_col %>% filter(year==1991)
+#snow_last_month_col %>% filter(parent.pop=="DPR") %>% filter(year==1962|year==1975)
+#snow_last_month_col %>% filter(parent.pop=="WR") %>% filter(year==1975|year==1986)
+#snow_last_month_col %>% filter(parent.pop=="YO7") %>% filter(year==1976)
+#snow_last_month_col %>% filter(parent.pop=="FR") %>% filter(year==1975)
+#snow_last_month_col %>% filter(parent.pop=="SQ3") %>% filter(year==1976)
+
+
+snow_grwseason_historical <- snow_last_month_col %>% #fill in months b/t start and stop 
+  group_by(parent.pop, elevation.group, elev_m, year) %>% 
+  filter(month>=firstmonth) %>% 
+  filter(ifelse(is.na(lastmonth), pck<70, month<lastmonth))
+summary(snow_grwseason_historical) 
 ```
 
 ```
 ##   parent.pop        elevation.group        elev_m           PckSum      
-##  Length:3654        Length:3654        Min.   : 748.9   Min.   : 222.8  
-##  Class :character   Class :character   1st Qu.:1158.0   1st Qu.: 545.4  
-##  Mode  :character   Mode  :character   Median :1934.5   Median :1007.6  
-##                                        Mean   :1824.2   Mean   :1930.0  
-##                                        3rd Qu.:2373.2   3rd Qu.:3101.7  
-##                                        Max.   :2872.3   Max.   :6273.5  
-##      year               month             cwd              pck   
-##  Length:3654        Min.   : 1.000   Min.   :  0.00   Min.   :0  
-##  Class :character   1st Qu.: 6.000   1st Qu.: 45.15   1st Qu.:0  
-##  Mode  :character   Median : 8.000   Median : 67.40   Median :0  
-##                     Mean   : 7.654   Mean   : 67.30   Mean   :0  
-##                     3rd Qu.:10.000   3rd Qu.: 89.40   3rd Qu.:0  
-##                     Max.   :12.000   Max.   :164.00   Max.   :0  
-##       ppt               tmn              tmx       
-##  Min.   :  0.000   Min.   :-9.790   Min.   : 5.67  
-##  1st Qu.:  5.385   1st Qu.: 1.140   1st Qu.:14.68  
-##  Median : 21.255   Median : 4.490   Median :19.40  
-##  Mean   : 47.575   Mean   : 4.643   Mean   :19.28  
-##  3rd Qu.: 62.657   3rd Qu.: 8.068   3rd Qu.:23.29  
-##  Max.   :778.980   Max.   :16.840   Max.   :35.12
-```
-
-```r
-unique(snow_grwseason_historical$parent.pop)
-```
-
-```
-##  [1] "CP2"   "CP3"   "DPR"   "FR"    "LV1"   "LV3"   "LVTR1" "SQ1"   "SQ2"  
-## [10] "SQ3"   "WL1"   "WL2"   "WR"    "WV"    "YO11"  "YO4"   "YO7"   "YO8"
+##  Length:3702        Length:3702        Min.   : 748.9   Min.   : 228.4  
+##  Class :character   Class :character   1st Qu.:1158.0   1st Qu.: 560.8  
+##  Mode  :character   Mode  :character   Median :2020.1   Median :1776.3  
+##                                        Mean   :1844.7   Mean   :2016.3  
+##                                        3rd Qu.:2373.2   3rd Qu.:3157.7  
+##                                        Max.   :2872.3   Max.   :6363.1  
+##                                                                         
+##      year               month             cwd              pck        
+##  Length:3702        Min.   : 1.000   Min.   :  0.00   Min.   : 0.000  
+##  Class :character   1st Qu.: 6.000   1st Qu.: 40.60   1st Qu.: 0.000  
+##  Mode  :character   Median : 8.000   Median : 65.75   Median : 0.000  
+##                     Mean   : 7.857   Mean   : 65.78   Mean   : 1.726  
+##                     3rd Qu.:10.000   3rd Qu.: 88.92   3rd Qu.: 0.000  
+##                     Max.   :12.000   Max.   :159.40   Max.   :69.880  
+##                                                                       
+##       ppt               tmn               tmx          firstmonth   
+##  Min.   :  0.000   Min.   :-13.580   Min.   : 0.82   Min.   :1.000  
+##  1st Qu.:  5.965   1st Qu.:  0.620   1st Qu.:13.64   1st Qu.:3.000  
+##  Median : 23.285   Median :  4.045   Median :19.02   Median :5.000  
+##  Mean   : 53.734   Mean   :  4.120   Mean   :18.65   Mean   :4.518  
+##  3rd Qu.: 68.930   3rd Qu.:  7.800   3rd Qu.:22.97   3rd Qu.:6.000  
+##  Max.   :794.420   Max.   : 16.840   Max.   :35.12   Max.   :9.000  
+##                                                                     
+##    lastmonth   
+##  Min.   : 2.0  
+##  1st Qu.:11.0  
+##  Median :12.0  
+##  Mean   :11.5  
+##  3rd Qu.:12.0  
+##  Max.   :12.0  
+##  NA's   :1721
 ```
 
 ```r
@@ -2887,74 +4454,661 @@ xtabs(~parent.pop+month, data=snow_grwseason_historical)
 ```
 ##           month
 ## parent.pop  1  2  3  4  5  6  7  8  9 10 11 12
-##      CP2    0  0  0  3 12 25 30 30 30 30 12  3
-##      CP3    0  0  0  1 10 24 30 30 30 30 12  2
-##      DPR   10 16 23 29 30 30 30 30 30 30 30 17
-##      FR     7 11 23 29 30 30 30 30 30 30 29 15
-##      LV1    0  0  0  0  1 14 25 29 30 25  2  0
-##      LV3    0  0  0  0  1 14 26 29 30 25  2  0
-##      LVTR1  0  0  0  0  1 14 25 29 30 25  2  0
-##      SQ1    3  2  2 15 27 30 30 30 30 30 23  9
-##      SQ2    2  2  2 15 27 30 30 30 30 30 23  9
-##      SQ3    1  0  0  4 16 27 30 30 30 30 19  5
-##      WL1    3  2  6 16 30 30 30 30 30 30 24  7
-##      WL2    1  1  0  7 17 30 30 30 30 30 14  5
-##      WR     8  7 15 25 30 30 30 30 30 30 28 14
-##      WV     5  9 17 29 30 30 30 30 30 30 28 10
-##      YO11   0  0  0  0  7 23 30 30 30 30  3  1
-##      YO4    1  1  0 11 19 30 30 30 30 30 15  5
-##      YO7    1  0  0  1 11 23 30 30 30 30 12  3
-##      YO8    0  0  0  1  9 22 30 30 30 30 10  2
+##      CP2    0  0  0  2 11 25 30 30 30 30 16  8
+##      CP3    0  0  0  1  9 24 30 30 30 30 15  8
+##      DPR   10 15 22 26 27 27 27 27 27 27 27 21
+##      FR     6 10 23 28 29 29 29 29 29 29 29 22
+##      LV1    0  0  0  0  0 13 25 29 30 28  7  1
+##      LV3    0  0  0  0  0 13 26 29 30 30  7  1
+##      LVTR1  0  0  0  0  0 13 25 29 30 28  7  1
+##      SQ1    2  3  2 14 26 29 29 29 29 29 29 15
+##      SQ2    1  3  2 14 26 29 29 29 29 29 29 16
+##      SQ3    1  1  0  3 14 26 29 29 29 29 22 11
+##      WL1    2  3  5 15 29 29 29 29 29 29 27 15
+##      WL2    1  2  1  6 15 29 29 29 29 29 22  8
+##      WR     7  6 13 23 27 27 27 27 27 27 26 16
+##      WV     4  8 17 29 30 30 30 30 30 30 30 19
+##      YO11   0  0  0  0  6 23 30 30 30 30 15  7
+##      YO4    1  2  1 10 18 29 29 29 29 29 22  9
+##      YO7    1  0  0  1  9 22 29 29 29 29 13  6
+##      YO8    0  0  0  1  8 22 30 30 30 30 14  7
 ```
 
 ```r
-xtabs(~elevation.group+month, data=snow_grwseason_historical) #11 "high" and 7 "mid" pops
+options(max.print=1000000)
+xtabs(~year+month+parent.pop, data=snow_grwseason_historical)
 ```
 
 ```
-##                month
-## elevation.group   1   2   3   4   5   6   7   8   9  10  11  12
-##            High   4   2   0  28 104 246 316 327 330 315 103  26
-##            Mid   38  49  88 158 204 210 210 210 210 210 185  81
-```
-
-```r
-xtabs(~year+month, data=snow_grwseason_historical)
-```
-
-```
+## , , parent.pop = CP2
+## 
 ##       month
-## year    1  2  3  4  5  6  7  8  9 10 11 12
-##   1963  0  4  4  4  9 15 18 18 18 18  7  7
-##   1964  0  1  4  8 10 18 18 18 18 18  3  0
-##   1965  0  0  2  4  7 10 18 18 18 18  7  0
-##   1966  0  0  2  8 15 18 18 18 18 18 10  0
-##   1967  0  1  1  3  5  9 15 18 18 18 14  0
-##   1968  0  0  3  8 15 18 18 18 18 18  8  0
-##   1969  0  0  0  0  5  9 18 18 18 18 14  1
-##   1970  0  0  2  4  9 15 18 18 18 18  8  0
-##   1971  0  0  0  4  8 15 18 18 18 18  8  0
-##   1972  0  0  2  7 11 18 18 18 18 18  5  0
-##   1973  0  0  0  3  7 15 18 18 18 18  1  0
-##   1974  0  0  2  4  8 15 15 18 18 18 14  3
-##   1975  3  0  0  3  7 14 18 18 18 15 11 12
-##   1976 11  4  5  9 15 18 18 18 18 18 18 15
-##   1977  2  7  7 14 15 18 18 18 18 18 13  3
-##   1978  0  1  4  4  7 12 16 18 18 18  7  4
-##   1979  0  0  3  4  8 18 18 18 18 18  9  6
-##   1980  0  3  3  5  7 11 18 18 18 18 14 10
-##   1981  3  4  5  9 13 18 18 18 18 15  8  4
-##   1982  0  0  1  4  7 10 15 18 18 15  4  0
-##   1983  0  0  0  3  5  9 15 15 18 18  4  0
-##   1984  1  1  4  7  9 15 18 18 18 15  3  3
-##   1985  3  4  4  7 14 18 18 18 18 18  4  4
-##   1986  4  3  4  7 10 15 18 18 18 18 18 10
-##   1987  0  1  4  9 15 18 18 18 18 18 12  0
-##   1988  0  2  5  9 14 18 18 18 18 18  7  2
-##   1989  2  2  4  9 12 15 18 18 18 15 14 14
-##   1990  0  0  5 11 15 18 18 18 18 18 14  2
-##   1991  6  9  1  4  8 18 18 18 18 18 14  7
-##   1992  7  4  7 11 18 18 18 18 18 18 15  0
+## year   1 2 3 4 5 6 7 8 9 10 11 12
+##   1962 0 0 0 0 0 1 1 1 1  1  1  1
+##   1963 0 0 0 0 0 1 1 1 1  1  0  0
+##   1964 0 0 0 0 0 1 1 1 1  1  0  0
+##   1965 0 0 0 0 0 0 1 1 1  1  0  0
+##   1966 0 0 0 0 1 1 1 1 1  1  1  0
+##   1967 0 0 0 0 0 0 1 1 1  1  1  0
+##   1968 0 0 0 0 1 1 1 1 1  1  0  0
+##   1969 0 0 0 0 0 0 1 1 1  1  1  0
+##   1970 0 0 0 0 0 1 1 1 1  1  0  0
+##   1971 0 0 0 0 0 1 1 1 1  1  0  0
+##   1972 0 0 0 0 1 1 1 1 1  1  0  0
+##   1973 0 0 0 0 0 1 1 1 1  1  0  0
+##   1974 0 0 0 0 0 1 1 1 1  1  1  0
+##   1975 0 0 0 0 0 1 1 1 1  1  1  1
+##   1976 0 0 0 0 1 1 1 1 1  1  1  1
+##   1977 0 0 0 1 1 1 1 1 1  1  1  0
+##   1978 0 0 0 0 0 1 1 1 1  1  1  0
+##   1979 0 0 0 0 0 1 1 1 1  1  1  0
+##   1980 0 0 0 0 0 1 1 1 1  1  1  1
+##   1981 0 0 0 0 1 1 1 1 1  1  0  0
+##   1982 0 0 0 0 0 0 1 1 1  1  0  0
+##   1983 0 0 0 0 0 0 1 1 1  1  0  0
+##   1984 0 0 0 0 0 1 1 1 1  1  0  0
+##   1985 0 0 0 0 1 1 1 1 1  1  0  0
+##   1986 0 0 0 0 0 1 1 1 1  1  1  1
+##   1987 0 0 0 0 1 1 1 1 1  1  1  0
+##   1988 0 0 0 0 1 1 1 1 1  1  0  0
+##   1989 0 0 0 0 1 1 1 1 1  1  1  1
+##   1990 0 0 0 1 1 1 1 1 1  1  1  1
+##   1991 0 0 0 0 0 1 1 1 1  1  1  1
+## 
+## , , parent.pop = CP3
+## 
+##       month
+## year   1 2 3 4 5 6 7 8 9 10 11 12
+##   1962 0 0 0 0 0 1 1 1 1  1  1  1
+##   1963 0 0 0 0 0 1 1 1 1  1  0  0
+##   1964 0 0 0 0 0 1 1 1 1  1  0  0
+##   1965 0 0 0 0 0 0 1 1 1  1  0  0
+##   1966 0 0 0 0 1 1 1 1 1  1  0  0
+##   1967 0 0 0 0 0 0 1 1 1  1  1  0
+##   1968 0 0 0 0 1 1 1 1 1  1  0  0
+##   1969 0 0 0 0 0 0 1 1 1  1  1  0
+##   1970 0 0 0 0 0 1 1 1 1  1  0  0
+##   1971 0 0 0 0 0 1 1 1 1  1  0  0
+##   1972 0 0 0 0 0 1 1 1 1  1  0  0
+##   1973 0 0 0 0 0 1 1 1 1  1  0  0
+##   1974 0 0 0 0 0 1 1 1 1  1  1  0
+##   1975 0 0 0 0 0 1 1 1 1  1  1  1
+##   1976 0 0 0 0 1 1 1 1 1  1  1  1
+##   1977 0 0 0 1 1 1 1 1 1  1  1  0
+##   1978 0 0 0 0 0 1 1 1 1  1  1  0
+##   1979 0 0 0 0 0 1 1 1 1  1  1  0
+##   1980 0 0 0 0 0 0 1 1 1  1  1  1
+##   1981 0 0 0 0 1 1 1 1 1  1  0  0
+##   1982 0 0 0 0 0 0 1 1 1  1  0  0
+##   1983 0 0 0 0 0 0 1 1 1  1  0  0
+##   1984 0 0 0 0 0 1 1 1 1  1  0  0
+##   1985 0 0 0 0 1 1 1 1 1  1  0  0
+##   1986 0 0 0 0 0 1 1 1 1  1  1  1
+##   1987 0 0 0 0 1 1 1 1 1  1  1  0
+##   1988 0 0 0 0 1 1 1 1 1  1  0  0
+##   1989 0 0 0 0 0 1 1 1 1  1  1  1
+##   1990 0 0 0 0 1 1 1 1 1  1  1  1
+##   1991 0 0 0 0 0 1 1 1 1  1  1  1
+## 
+## , , parent.pop = DPR
+## 
+##       month
+## year   1 2 3 4 5 6 7 8 9 10 11 12
+##   1962 1 0 0 0 0 0 0 0 0  0  0  0
+##   1963 0 1 1 1 1 1 1 1 1  1  1  1
+##   1964 0 1 1 1 1 1 1 1 1  1  1  0
+##   1965 0 0 1 1 1 1 1 1 1  1  1  1
+##   1966 0 0 1 1 1 1 1 1 1  1  1  1
+##   1967 0 1 1 1 1 1 1 1 1  1  1  1
+##   1968 0 0 1 1 1 1 1 1 1  1  1  0
+##   1969 0 0 0 0 1 1 1 1 1  1  1  1
+##   1970 0 0 1 1 1 1 1 1 1  1  1  0
+##   1971 0 0 0 1 1 1 1 1 1  1  1  0
+##   1972 0 0 1 1 1 1 1 1 1  1  1  0
+##   1973 0 0 0 1 1 1 1 1 1  1  1  1
+##   1974 0 0 1 1 1 1 1 1 1  1  1  1
+##   1975 1 0 0 0 0 0 0 0 0  0  0  0
+##   1976 1 1 1 1 1 1 1 1 1  1  1  1
+##   1977 1 1 1 1 1 1 1 1 1  1  1  1
+##   1978 0 1 1 1 1 1 1 1 1  1  1  1
+##   1979 0 0 1 1 1 1 1 1 1  1  1  1
+##   1980 0 1 1 1 1 1 1 1 1  1  1  1
+##   1981 1 1 1 1 1 1 1 1 1  1  1  1
+##   1982 0 0 0 1 1 1 1 1 1  1  1  1
+##   1983 0 0 0 1 1 1 1 1 1  1  1  1
+##   1984 1 1 1 1 1 1 1 1 1  1  1  1
+##   1985 1 1 1 1 1 1 1 1 1  1  1  1
+##   1986 1 1 1 1 1 1 1 1 1  1  1  1
+##   1987 0 1 1 1 1 1 1 1 1  1  1  0
+##   1988 0 1 1 1 1 1 1 1 1  1  1  1
+##   1989 1 1 1 1 1 1 1 1 1  1  1  1
+##   1990 0 0 1 1 1 1 1 1 1  1  1  1
+##   1991 1 1 0 0 0 0 0 0 0  0  0  0
+## 
+## , , parent.pop = FR
+## 
+##       month
+## year   1 2 3 4 5 6 7 8 9 10 11 12
+##   1962 0 0 0 1 1 1 1 1 1  1  1  1
+##   1963 0 1 1 1 1 1 1 1 1  1  1  1
+##   1964 0 0 1 1 1 1 1 1 1  1  1  0
+##   1965 0 0 1 1 1 1 1 1 1  1  1  1
+##   1966 0 0 1 1 1 1 1 1 1  1  1  1
+##   1967 0 0 0 1 1 1 1 1 1  1  1  1
+##   1968 0 0 1 1 1 1 1 1 1  1  1  0
+##   1969 0 0 0 0 1 1 1 1 1  1  1  1
+##   1970 0 0 1 1 1 1 1 1 1  1  1  0
+##   1971 0 0 0 1 1 1 1 1 1  1  1  0
+##   1972 0 0 1 1 1 1 1 1 1  1  1  0
+##   1973 0 0 0 1 1 1 1 1 1  1  1  1
+##   1974 0 0 1 1 1 1 1 1 1  1  1  1
+##   1975 1 0 0 0 0 0 0 0 0  0  0  0
+##   1976 1 1 1 1 1 1 1 1 1  1  1  1
+##   1977 0 1 1 1 1 1 1 1 1  1  1  1
+##   1978 0 0 1 1 1 1 1 1 1  1  1  1
+##   1979 0 0 1 1 1 1 1 1 1  1  1  1
+##   1980 0 1 1 1 1 1 1 1 1  1  1  1
+##   1981 0 1 1 1 1 1 1 1 1  1  1  1
+##   1982 0 0 1 1 1 1 1 1 1  1  1  1
+##   1983 0 0 0 1 1 1 1 1 1  1  1  0
+##   1984 0 0 1 1 1 1 1 1 1  1  1  1
+##   1985 1 1 1 1 1 1 1 1 1  1  1  1
+##   1986 1 1 1 1 1 1 1 1 1  1  1  1
+##   1987 0 0 1 1 1 1 1 1 1  1  1  0
+##   1988 0 1 1 1 1 1 1 1 1  1  1  1
+##   1989 1 1 1 1 1 1 1 1 1  1  1  1
+##   1990 0 0 1 1 1 1 1 1 1  1  1  1
+##   1991 1 1 1 1 1 1 1 1 1  1  1  1
+## 
+## , , parent.pop = LV1
+## 
+##       month
+## year   1 2 3 4 5 6 7 8 9 10 11 12
+##   1962 0 0 0 0 0 0 1 1 1  1  0  0
+##   1963 0 0 0 0 0 0 1 1 1  1  0  0
+##   1964 0 0 0 0 0 1 1 1 1  1  0  0
+##   1965 0 0 0 0 0 0 1 1 1  1  0  0
+##   1966 0 0 0 0 0 1 1 1 1  1  0  0
+##   1967 0 0 0 0 0 0 0 1 1  1  1  0
+##   1968 0 0 0 0 0 1 1 1 1  1  0  0
+##   1969 0 0 0 0 0 0 1 1 1  1  1  0
+##   1970 0 0 0 0 0 0 1 1 1  1  0  0
+##   1971 0 0 0 0 0 0 1 1 1  1  0  0
+##   1972 0 0 0 0 0 1 1 1 1  1  0  0
+##   1973 0 0 0 0 0 0 1 1 1  1  0  0
+##   1974 0 0 0 0 0 0 0 1 1  1  0  0
+##   1975 0 0 0 0 0 0 1 1 1  1  0  0
+##   1976 0 0 0 0 0 1 1 1 1  1  1  1
+##   1977 0 0 0 0 0 1 1 1 1  1  0  0
+##   1978 0 0 0 0 0 0 0 1 1  1  0  0
+##   1979 0 0 0 0 0 1 1 1 1  1  0  0
+##   1980 0 0 0 0 0 0 1 1 1  1  1  0
+##   1981 0 0 0 0 0 1 1 1 1  0  0  0
+##   1982 0 0 0 0 0 0 0 1 1  1  0  0
+##   1983 0 0 0 0 0 0 0 0 1  1  0  0
+##   1984 0 0 0 0 0 0 1 1 1  0  0  0
+##   1985 0 0 0 0 0 1 1 1 1  1  0  0
+##   1986 0 0 0 0 0 0 1 1 1  1  1  0
+##   1987 0 0 0 0 0 1 1 1 1  1  0  0
+##   1988 0 0 0 0 0 1 1 1 1  1  0  0
+##   1989 0 0 0 0 0 0 1 1 1  1  0  0
+##   1990 0 0 0 0 0 1 1 1 1  1  1  0
+##   1991 0 0 0 0 0 1 1 1 1  1  1  0
+## 
+## , , parent.pop = LV3
+## 
+##       month
+## year   1 2 3 4 5 6 7 8 9 10 11 12
+##   1962 0 0 0 0 0 0 1 1 1  1  0  0
+##   1963 0 0 0 0 0 0 1 1 1  1  0  0
+##   1964 0 0 0 0 0 1 1 1 1  1  0  0
+##   1965 0 0 0 0 0 0 1 1 1  1  0  0
+##   1966 0 0 0 0 0 1 1 1 1  1  0  0
+##   1967 0 0 0 0 0 0 0 1 1  1  1  0
+##   1968 0 0 0 0 0 1 1 1 1  1  0  0
+##   1969 0 0 0 0 0 0 1 1 1  1  1  0
+##   1970 0 0 0 0 0 0 1 1 1  1  0  0
+##   1971 0 0 0 0 0 0 1 1 1  1  0  0
+##   1972 0 0 0 0 0 1 1 1 1  1  0  0
+##   1973 0 0 0 0 0 0 1 1 1  1  0  0
+##   1974 0 0 0 0 0 0 0 1 1  1  0  0
+##   1975 0 0 0 0 0 0 1 1 1  1  0  0
+##   1976 0 0 0 0 0 1 1 1 1  1  1  1
+##   1977 0 0 0 0 0 1 1 1 1  1  0  0
+##   1978 0 0 0 0 0 0 1 1 1  1  0  0
+##   1979 0 0 0 0 0 1 1 1 1  1  0  0
+##   1980 0 0 0 0 0 0 1 1 1  1  1  0
+##   1981 0 0 0 0 0 1 1 1 1  1  0  0
+##   1982 0 0 0 0 0 0 0 1 1  1  0  0
+##   1983 0 0 0 0 0 0 0 0 1  1  0  0
+##   1984 0 0 0 0 0 0 1 1 1  1  0  0
+##   1985 0 0 0 0 0 1 1 1 1  1  0  0
+##   1986 0 0 0 0 0 0 1 1 1  1  1  0
+##   1987 0 0 0 0 0 1 1 1 1  1  0  0
+##   1988 0 0 0 0 0 1 1 1 1  1  0  0
+##   1989 0 0 0 0 0 0 1 1 1  1  0  0
+##   1990 0 0 0 0 0 1 1 1 1  1  1  0
+##   1991 0 0 0 0 0 1 1 1 1  1  1  0
+## 
+## , , parent.pop = LVTR1
+## 
+##       month
+## year   1 2 3 4 5 6 7 8 9 10 11 12
+##   1962 0 0 0 0 0 0 1 1 1  1  0  0
+##   1963 0 0 0 0 0 0 1 1 1  1  0  0
+##   1964 0 0 0 0 0 1 1 1 1  1  0  0
+##   1965 0 0 0 0 0 0 1 1 1  1  0  0
+##   1966 0 0 0 0 0 1 1 1 1  1  0  0
+##   1967 0 0 0 0 0 0 0 1 1  1  1  0
+##   1968 0 0 0 0 0 1 1 1 1  1  0  0
+##   1969 0 0 0 0 0 0 1 1 1  1  1  0
+##   1970 0 0 0 0 0 0 1 1 1  1  0  0
+##   1971 0 0 0 0 0 0 1 1 1  1  0  0
+##   1972 0 0 0 0 0 1 1 1 1  1  0  0
+##   1973 0 0 0 0 0 0 1 1 1  1  0  0
+##   1974 0 0 0 0 0 0 0 1 1  1  0  0
+##   1975 0 0 0 0 0 0 1 1 1  1  0  0
+##   1976 0 0 0 0 0 1 1 1 1  1  1  1
+##   1977 0 0 0 0 0 1 1 1 1  1  0  0
+##   1978 0 0 0 0 0 0 0 1 1  1  0  0
+##   1979 0 0 0 0 0 1 1 1 1  1  0  0
+##   1980 0 0 0 0 0 0 1 1 1  1  1  0
+##   1981 0 0 0 0 0 1 1 1 1  0  0  0
+##   1982 0 0 0 0 0 0 0 1 1  1  0  0
+##   1983 0 0 0 0 0 0 0 0 1  1  0  0
+##   1984 0 0 0 0 0 0 1 1 1  0  0  0
+##   1985 0 0 0 0 0 1 1 1 1  1  0  0
+##   1986 0 0 0 0 0 0 1 1 1  1  1  0
+##   1987 0 0 0 0 0 1 1 1 1  1  0  0
+##   1988 0 0 0 0 0 1 1 1 1  1  0  0
+##   1989 0 0 0 0 0 0 1 1 1  1  0  0
+##   1990 0 0 0 0 0 1 1 1 1  1  1  0
+##   1991 0 0 0 0 0 1 1 1 1  1  1  0
+## 
+## , , parent.pop = SQ1
+## 
+##       month
+## year   1 2 3 4 5 6 7 8 9 10 11 12
+##   1962 0 0 0 0 1 1 1 1 1  1  1  1
+##   1963 0 0 0 0 1 1 1 1 1  1  1  1
+##   1964 0 0 0 1 1 1 1 1 1  1  1  0
+##   1965 0 0 0 0 1 1 1 1 1  1  1  0
+##   1966 0 0 0 1 1 1 1 1 1  1  1  0
+##   1967 0 0 0 0 0 1 1 1 1  1  1  0
+##   1968 0 0 0 1 1 1 1 1 1  1  1  0
+##   1969 0 0 0 0 0 1 1 1 1  1  1  1
+##   1970 0 0 0 0 1 1 1 1 1  1  1  0
+##   1971 0 0 0 0 1 1 1 1 1  1  1  0
+##   1972 0 0 0 1 1 1 1 1 1  1  1  0
+##   1973 0 0 0 0 1 1 1 1 1  1  1  1
+##   1974 0 0 0 0 1 1 1 1 1  1  1  1
+##   1975 0 0 0 0 1 1 1 1 1  1  1  1
+##   1976 1 1 1 1 1 1 1 1 1  1  1  1
+##   1977 0 1 1 1 1 1 1 1 1  1  1  1
+##   1978 0 0 0 0 1 1 1 1 1  1  1  0
+##   1979 0 0 0 0 1 1 1 1 1  1  1  1
+##   1980 0 0 0 0 1 1 1 1 1  1  1  1
+##   1981 0 0 0 1 1 1 1 1 1  1  1  1
+##   1982 0 0 0 0 1 1 1 1 1  1  1  0
+##   1983 0 0 0 0 0 1 1 1 1  1  1  0
+##   1984 0 0 0 1 1 1 1 1 1  1  1  0
+##   1985 0 0 0 1 1 1 1 1 1  1  1  1
+##   1986 0 0 0 1 1 1 1 1 1  1  1  1
+##   1987 0 0 0 1 1 1 1 1 1  1  1  0
+##   1988 0 0 0 1 1 1 1 1 1  1  1  0
+##   1989 0 0 0 1 1 1 1 1 1  1  1  1
+##   1990 0 0 0 1 1 1 1 1 1  1  1  1
+##   1991 1 1 0 0 0 0 0 0 0  0  0  0
+## 
+## , , parent.pop = SQ2
+## 
+##       month
+## year   1 2 3 4 5 6 7 8 9 10 11 12
+##   1962 0 0 0 0 1 1 1 1 1  1  1  1
+##   1963 0 0 0 0 1 1 1 1 1  1  1  1
+##   1964 0 0 0 1 1 1 1 1 1  1  1  0
+##   1965 0 0 0 0 1 1 1 1 1  1  1  0
+##   1966 0 0 0 1 1 1 1 1 1  1  1  0
+##   1967 0 0 0 0 0 1 1 1 1  1  1  0
+##   1968 0 0 0 1 1 1 1 1 1  1  1  0
+##   1969 0 0 0 0 0 1 1 1 1  1  1  1
+##   1970 0 0 0 0 1 1 1 1 1  1  1  0
+##   1971 0 0 0 0 1 1 1 1 1  1  1  0
+##   1972 0 0 0 1 1 1 1 1 1  1  1  0
+##   1973 0 0 0 0 1 1 1 1 1  1  1  1
+##   1974 0 0 0 0 1 1 1 1 1  1  1  1
+##   1975 0 0 0 0 1 1 1 1 1  1  1  1
+##   1976 1 1 1 1 1 1 1 1 1  1  1  1
+##   1977 0 1 1 1 1 1 1 1 1  1  1  1
+##   1978 0 0 0 0 1 1 1 1 1  1  1  1
+##   1979 0 0 0 0 1 1 1 1 1  1  1  1
+##   1980 0 0 0 0 1 1 1 1 1  1  1  1
+##   1981 0 0 0 1 1 1 1 1 1  1  1  1
+##   1982 0 0 0 0 1 1 1 1 1  1  1  0
+##   1983 0 0 0 0 0 1 1 1 1  1  1  0
+##   1984 0 0 0 1 1 1 1 1 1  1  1  0
+##   1985 0 0 0 1 1 1 1 1 1  1  1  1
+##   1986 0 0 0 1 1 1 1 1 1  1  1  1
+##   1987 0 0 0 1 1 1 1 1 1  1  1  0
+##   1988 0 0 0 1 1 1 1 1 1  1  1  0
+##   1989 0 0 0 1 1 1 1 1 1  1  1  1
+##   1990 0 0 0 1 1 1 1 1 1  1  1  1
+##   1991 0 1 0 0 0 0 0 0 0  0  0  0
+## 
+## , , parent.pop = SQ3
+## 
+##       month
+## year   1 2 3 4 5 6 7 8 9 10 11 12
+##   1962 0 0 0 0 0 1 1 1 1  1  1  1
+##   1963 0 0 0 0 0 1 1 1 1  1  1  1
+##   1964 0 0 0 0 1 1 1 1 1  1  0  0
+##   1965 0 0 0 0 0 1 1 1 1  1  1  0
+##   1966 0 0 0 0 1 1 1 1 1  1  1  0
+##   1967 0 0 0 0 0 0 1 1 1  1  1  0
+##   1968 0 0 0 0 1 1 1 1 1  1  1  0
+##   1969 0 0 0 0 0 0 1 1 1  1  1  1
+##   1970 0 0 0 0 1 1 1 1 1  1  1  0
+##   1971 0 0 0 0 0 1 1 1 1  1  1  0
+##   1972 0 0 0 0 1 1 1 1 1  1  0  0
+##   1973 0 0 0 0 0 1 1 1 1  1  0  0
+##   1974 0 0 0 0 0 1 1 1 1  1  1  0
+##   1975 0 0 0 0 0 1 1 1 1  1  1  1
+##   1976 1 1 0 0 0 0 0 0 0  0  0  0
+##   1977 0 0 0 1 1 1 1 1 1  1  1  0
+##   1978 0 0 0 0 0 1 1 1 1  1  1  0
+##   1979 0 0 0 0 0 1 1 1 1  1  1  1
+##   1980 0 0 0 0 0 1 1 1 1  1  1  1
+##   1981 0 0 0 0 1 1 1 1 1  1  1  1
+##   1982 0 0 0 0 0 1 1 1 1  1  0  0
+##   1983 0 0 0 0 0 0 1 1 1  1  0  0
+##   1984 0 0 0 0 1 1 1 1 1  1  0  0
+##   1985 0 0 0 0 1 1 1 1 1  1  0  0
+##   1986 0 0 0 0 1 1 1 1 1  1  1  1
+##   1987 0 0 0 0 1 1 1 1 1  1  1  0
+##   1988 0 0 0 0 1 1 1 1 1  1  1  0
+##   1989 0 0 0 1 1 1 1 1 1  1  1  1
+##   1990 0 0 0 1 1 1 1 1 1  1  1  1
+##   1991 0 0 0 0 0 1 1 1 1  1  1  1
+## 
+## , , parent.pop = WL1
+## 
+##       month
+## year   1 2 3 4 5 6 7 8 9 10 11 12
+##   1962 0 0 0 0 1 1 1 1 1  1  1  1
+##   1963 0 0 0 0 1 1 1 1 1  1  1  1
+##   1964 0 0 0 1 1 1 1 1 1  1  1  0
+##   1965 0 0 0 0 1 1 1 1 1  1  1  0
+##   1966 0 0 0 1 1 1 1 1 1  1  1  1
+##   1967 0 0 0 0 1 1 1 1 1  1  1  0
+##   1968 0 0 0 1 1 1 1 1 1  1  1  0
+##   1969 0 0 0 0 1 1 1 1 1  1  1  0
+##   1970 0 0 0 0 1 1 1 1 1  1  1  0
+##   1971 0 0 0 0 1 1 1 1 1  1  1  0
+##   1972 0 0 0 1 1 1 1 1 1  1  1  0
+##   1973 0 0 0 0 1 1 1 1 1  1  0  0
+##   1974 0 0 0 0 1 1 1 1 1  1  1  1
+##   1975 0 0 0 0 1 1 1 1 1  1  1  1
+##   1976 1 1 1 1 1 1 1 1 1  1  1  1
+##   1977 0 1 1 1 1 1 1 1 1  1  1  1
+##   1978 0 0 0 0 1 1 1 1 1  1  1  1
+##   1979 0 0 0 0 1 1 1 1 1  1  1  1
+##   1980 0 0 0 1 1 1 1 1 1  1  1  1
+##   1981 0 0 1 1 1 1 1 1 1  1  1  0
+##   1982 0 0 0 0 1 1 1 1 1  1  1  0
+##   1983 0 0 0 0 1 1 1 1 1  1  0  0
+##   1984 0 0 0 1 1 1 1 1 1  1  1  0
+##   1985 0 0 0 1 1 1 1 1 1  1  1  1
+##   1986 0 0 0 1 1 1 1 1 1  1  1  1
+##   1987 0 0 0 1 1 1 1 1 1  1  1  0
+##   1988 0 0 1 1 1 1 1 1 1  1  1  1
+##   1989 0 0 0 1 1 1 1 1 1  1  1  1
+##   1990 0 0 1 1 1 1 1 1 1  1  1  1
+##   1991 1 1 0 0 0 0 0 0 0  0  0  0
+## 
+## , , parent.pop = WL2
+## 
+##       month
+## year   1 2 3 4 5 6 7 8 9 10 11 12
+##   1962 0 0 0 0 0 1 1 1 1  1  1  1
+##   1963 0 0 0 0 1 1 1 1 1  1  0  0
+##   1964 0 0 0 0 1 1 1 1 1  1  0  0
+##   1965 0 0 0 0 0 1 1 1 1  1  1  0
+##   1966 0 0 0 0 1 1 1 1 1  1  1  0
+##   1967 0 0 0 0 0 1 1 1 1  1  1  0
+##   1968 0 0 0 0 1 1 1 1 1  1  1  0
+##   1969 0 0 0 0 0 1 1 1 1  1  1  0
+##   1970 0 0 0 0 0 1 1 1 1  1  1  0
+##   1971 0 0 0 0 0 1 1 1 1  1  1  0
+##   1972 0 0 0 0 1 1 1 1 1  1  1  0
+##   1973 0 0 0 0 0 1 1 1 1  1  0  0
+##   1974 0 0 0 0 0 1 1 1 1  1  1  0
+##   1975 0 0 0 0 0 1 1 1 1  1  1  1
+##   1976 1 1 1 1 1 1 1 1 1  1  1  1
+##   1977 0 0 0 1 1 1 1 1 1  1  1  0
+##   1978 0 0 0 0 0 1 1 1 1  1  1  0
+##   1979 0 0 0 0 1 1 1 1 1  1  1  1
+##   1980 0 0 0 0 0 1 1 1 1  1  1  1
+##   1981 0 0 0 1 1 1 1 1 1  1  1  0
+##   1982 0 0 0 0 0 1 1 1 1  1  0  0
+##   1983 0 0 0 0 0 1 1 1 1  1  0  0
+##   1984 0 0 0 0 0 1 1 1 1  1  0  0
+##   1985 0 0 0 0 1 1 1 1 1  1  0  0
+##   1986 0 0 0 0 1 1 1 1 1  1  1  1
+##   1987 0 0 0 1 1 1 1 1 1  1  1  0
+##   1988 0 0 0 1 1 1 1 1 1  1  1  0
+##   1989 0 0 0 0 1 1 1 1 1  1  1  1
+##   1990 0 0 0 1 1 1 1 1 1  1  1  1
+##   1991 0 1 0 0 0 0 0 0 0  0  0  0
+## 
+## , , parent.pop = WR
+## 
+##       month
+## year   1 2 3 4 5 6 7 8 9 10 11 12
+##   1962 0 0 0 1 1 1 1 1 1  1  1  1
+##   1963 0 1 1 1 1 1 1 1 1  1  1  1
+##   1964 0 0 1 1 1 1 1 1 1  1  1  0
+##   1965 0 0 0 1 1 1 1 1 1  1  1  0
+##   1966 0 0 0 1 1 1 1 1 1  1  1  1
+##   1967 0 0 0 0 1 1 1 1 1  1  1  0
+##   1968 0 0 1 1 1 1 1 1 1  1  1  0
+##   1969 0 0 0 0 1 1 1 1 1  1  1  1
+##   1970 0 0 0 1 1 1 1 1 1  1  1  0
+##   1971 0 0 0 1 1 1 1 1 1  1  1  0
+##   1972 0 0 0 1 1 1 1 1 1  1  1  0
+##   1973 0 0 0 0 1 1 1 1 1  1  0  0
+##   1974 0 0 0 1 1 1 1 1 1  1  1  1
+##   1975 1 0 0 0 0 0 0 0 0  0  0  0
+##   1976 1 1 1 1 1 1 1 1 1  1  1  1
+##   1977 1 1 1 1 1 1 1 1 1  1  1  1
+##   1978 0 0 1 1 1 1 1 1 1  1  1  1
+##   1979 0 0 0 1 1 1 1 1 1  1  1  1
+##   1980 0 0 0 1 1 1 1 1 1  1  1  1
+##   1981 1 1 1 1 1 1 1 1 1  1  1  1
+##   1982 0 0 0 1 1 1 1 1 1  1  1  0
+##   1983 0 0 0 0 1 1 1 1 1  1  1  0
+##   1984 0 0 1 1 1 1 1 1 1  1  1  1
+##   1985 1 1 1 1 1 1 1 1 1  1  1  1
+##   1986 1 0 0 0 0 0 0 0 0  0  0  0
+##   1987 0 0 1 1 1 1 1 1 1  1  1  0
+##   1988 0 0 1 1 1 1 1 1 1  1  1  1
+##   1989 0 0 1 1 1 1 1 1 1  1  1  1
+##   1990 0 0 1 1 1 1 1 1 1  1  1  1
+##   1991 1 1 0 0 0 0 0 0 0  0  0  0
+## 
+## , , parent.pop = WV
+## 
+##       month
+## year   1 2 3 4 5 6 7 8 9 10 11 12
+##   1962 0 0 1 1 1 1 1 1 1  1  1  1
+##   1963 0 1 1 1 1 1 1 1 1  1  1  1
+##   1964 0 0 1 1 1 1 1 1 1  1  1  0
+##   1965 0 0 0 1 1 1 1 1 1  1  1  1
+##   1966 0 0 0 1 1 1 1 1 1  1  1  1
+##   1967 0 0 0 1 1 1 1 1 1  1  1  0
+##   1968 0 0 0 1 1 1 1 1 1  1  1  0
+##   1969 0 0 0 0 1 1 1 1 1  1  1  0
+##   1970 0 0 0 1 1 1 1 1 1  1  1  0
+##   1971 0 0 0 1 1 1 1 1 1  1  1  0
+##   1972 0 0 0 1 1 1 1 1 1  1  1  0
+##   1973 0 0 0 1 1 1 1 1 1  1  1  1
+##   1974 0 0 0 1 1 1 1 1 1  1  1  1
+##   1975 0 0 0 1 1 1 1 1 1  1  1  1
+##   1976 1 1 1 1 1 1 1 1 1  1  1  1
+##   1977 0 1 1 1 1 1 1 1 1  1  1  1
+##   1978 0 0 1 1 1 1 1 1 1  1  1  1
+##   1979 0 0 1 1 1 1 1 1 1  1  1  1
+##   1980 0 1 1 1 1 1 1 1 1  1  1  1
+##   1981 1 1 1 1 1 1 1 1 1  1  1  1
+##   1982 0 0 0 1 1 1 1 1 1  1  1  0
+##   1983 0 0 0 1 1 1 1 1 1  1  1  0
+##   1984 0 0 1 1 1 1 1 1 1  1  1  0
+##   1985 0 1 1 1 1 1 1 1 1  1  1  1
+##   1986 1 1 1 1 1 1 1 1 1  1  1  1
+##   1987 0 0 1 1 1 1 1 1 1  1  1  0
+##   1988 0 0 1 1 1 1 1 1 1  1  1  1
+##   1989 0 0 1 1 1 1 1 1 1  1  1  1
+##   1990 0 0 1 1 1 1 1 1 1  1  1  1
+##   1991 1 1 1 1 1 1 1 1 1  1  1  1
+## 
+## , , parent.pop = YO11
+## 
+##       month
+## year   1 2 3 4 5 6 7 8 9 10 11 12
+##   1962 0 0 0 0 0 1 1 1 1  1  1  1
+##   1963 0 0 0 0 0 1 1 1 1  1  0  0
+##   1964 0 0 0 0 0 1 1 1 1  1  0  0
+##   1965 0 0 0 0 0 0 1 1 1  1  0  0
+##   1966 0 0 0 0 1 1 1 1 1  1  0  0
+##   1967 0 0 0 0 0 0 1 1 1  1  1  0
+##   1968 0 0 0 0 1 1 1 1 1  1  1  0
+##   1969 0 0 0 0 0 0 1 1 1  1  1  0
+##   1970 0 0 0 0 0 1 1 1 1  1  0  0
+##   1971 0 0 0 0 0 1 1 1 1  1  0  0
+##   1972 0 0 0 0 0 1 1 1 1  1  0  0
+##   1973 0 0 0 0 0 1 1 1 1  1  0  0
+##   1974 0 0 0 0 0 1 1 1 1  1  1  0
+##   1975 0 0 0 0 0 1 1 1 1  1  1  1
+##   1976 0 0 0 0 1 1 1 1 1  1  1  1
+##   1977 0 0 0 0 1 1 1 1 1  1  1  0
+##   1978 0 0 0 0 0 0 1 1 1  1  0  0
+##   1979 0 0 0 0 0 1 1 1 1  1  1  0
+##   1980 0 0 0 0 0 0 1 1 1  1  1  1
+##   1981 0 0 0 0 0 1 1 1 1  1  0  0
+##   1982 0 0 0 0 0 0 1 1 1  1  0  0
+##   1983 0 0 0 0 0 0 1 1 1  1  0  0
+##   1984 0 0 0 0 0 1 1 1 1  1  0  0
+##   1985 0 0 0 0 0 1 1 1 1  1  0  0
+##   1986 0 0 0 0 0 1 1 1 1  1  1  1
+##   1987 0 0 0 0 1 1 1 1 1  1  1  0
+##   1988 0 0 0 0 0 1 1 1 1  1  0  0
+##   1989 0 0 0 0 0 1 1 1 1  1  1  1
+##   1990 0 0 0 0 1 1 1 1 1  1  1  1
+##   1991 0 0 0 0 0 1 1 1 1  1  1  0
+## 
+## , , parent.pop = YO4
+## 
+##       month
+## year   1 2 3 4 5 6 7 8 9 10 11 12
+##   1962 0 0 0 0 0 1 1 1 1  1  1  1
+##   1963 0 0 0 0 1 1 1 1 1  1  1  1
+##   1964 0 0 0 1 1 1 1 1 1  1  0  0
+##   1965 0 0 0 0 0 1 1 1 1  1  0  0
+##   1966 0 0 0 1 1 1 1 1 1  1  1  0
+##   1967 0 0 0 0 0 1 1 1 1  1  1  0
+##   1968 0 0 0 1 1 1 1 1 1  1  1  0
+##   1969 0 0 0 0 0 1 1 1 1  1  1  0
+##   1970 0 0 0 0 1 1 1 1 1  1  1  0
+##   1971 0 0 0 0 1 1 1 1 1  1  1  0
+##   1972 0 0 0 0 1 1 1 1 1  1  1  0
+##   1973 0 0 0 0 0 1 1 1 1  1  0  0
+##   1974 0 0 0 0 1 1 1 1 1  1  1  0
+##   1975 0 0 0 0 0 1 1 1 1  1  1  1
+##   1976 1 1 1 1 1 1 1 1 1  1  1  1
+##   1977 0 0 0 1 1 1 1 1 1  1  1  0
+##   1978 0 0 0 0 0 1 1 1 1  1  1  0
+##   1979 0 0 0 0 0 1 1 1 1  1  1  1
+##   1980 0 0 0 0 0 1 1 1 1  1  1  1
+##   1981 0 0 0 1 1 1 1 1 1  1  1  0
+##   1982 0 0 0 0 0 1 1 1 1  1  0  0
+##   1983 0 0 0 0 0 1 1 1 1  1  0  0
+##   1984 0 0 0 0 1 1 1 1 1  1  0  0
+##   1985 0 0 0 0 1 1 1 1 1  1  0  0
+##   1986 0 0 0 0 1 1 1 1 1  1  1  1
+##   1987 0 0 0 1 1 1 1 1 1  1  1  0
+##   1988 0 0 0 1 1 1 1 1 1  1  1  0
+##   1989 0 0 0 1 1 1 1 1 1  1  1  1
+##   1990 0 0 0 1 1 1 1 1 1  1  1  1
+##   1991 0 1 0 0 0 0 0 0 0  0  0  0
+## 
+## , , parent.pop = YO7
+## 
+##       month
+## year   1 2 3 4 5 6 7 8 9 10 11 12
+##   1962 0 0 0 0 0 1 1 1 1  1  1  1
+##   1963 0 0 0 0 0 1 1 1 1  1  0  0
+##   1964 0 0 0 0 0 1 1 1 1  1  0  0
+##   1965 0 0 0 0 0 0 1 1 1  1  0  0
+##   1966 0 0 0 0 1 1 1 1 1  1  0  0
+##   1967 0 0 0 0 0 0 1 1 1  1  1  0
+##   1968 0 0 0 0 1 1 1 1 1  1  0  0
+##   1969 0 0 0 0 0 0 1 1 1  1  1  0
+##   1970 0 0 0 0 0 1 1 1 1  1  0  0
+##   1971 0 0 0 0 0 1 1 1 1  1  0  0
+##   1972 0 0 0 0 0 1 1 1 1  1  0  0
+##   1973 0 0 0 0 0 1 1 1 1  1  0  0
+##   1974 0 0 0 0 0 1 1 1 1  1  1  0
+##   1975 0 0 0 0 0 1 1 1 1  1  1  1
+##   1976 1 0 0 0 0 0 0 0 0  0  0  0
+##   1977 0 0 0 1 1 1 1 1 1  1  1  0
+##   1978 0 0 0 0 0 0 1 1 1  1  0  0
+##   1979 0 0 0 0 0 1 1 1 1  1  1  0
+##   1980 0 0 0 0 0 0 1 1 1  1  1  1
+##   1981 0 0 0 0 1 1 1 1 1  1  0  0
+##   1982 0 0 0 0 0 0 1 1 1  1  0  0
+##   1983 0 0 0 0 0 0 1 1 1  1  0  0
+##   1984 0 0 0 0 0 1 1 1 1  1  0  0
+##   1985 0 0 0 0 1 1 1 1 1  1  0  0
+##   1986 0 0 0 0 0 1 1 1 1  1  1  1
+##   1987 0 0 0 0 1 1 1 1 1  1  1  0
+##   1988 0 0 0 0 1 1 1 1 1  1  0  0
+##   1989 0 0 0 0 1 1 1 1 1  1  1  1
+##   1990 0 0 0 0 1 1 1 1 1  1  1  1
+##   1991 0 0 0 0 0 1 1 1 1  1  1  0
+## 
+## , , parent.pop = YO8
+## 
+##       month
+## year   1 2 3 4 5 6 7 8 9 10 11 12
+##   1962 0 0 0 0 0 1 1 1 1  1  1  1
+##   1963 0 0 0 0 0 1 1 1 1  1  0  0
+##   1964 0 0 0 0 0 1 1 1 1  1  0  0
+##   1965 0 0 0 0 0 0 1 1 1  1  0  0
+##   1966 0 0 0 0 1 1 1 1 1  1  0  0
+##   1967 0 0 0 0 0 0 1 1 1  1  1  0
+##   1968 0 0 0 0 1 1 1 1 1  1  0  0
+##   1969 0 0 0 0 0 0 1 1 1  1  1  0
+##   1970 0 0 0 0 0 1 1 1 1  1  0  0
+##   1971 0 0 0 0 0 1 1 1 1  1  0  0
+##   1972 0 0 0 0 0 1 1 1 1  1  0  0
+##   1973 0 0 0 0 0 1 1 1 1  1  0  0
+##   1974 0 0 0 0 0 1 1 1 1  1  1  0
+##   1975 0 0 0 0 0 0 1 1 1  1  1  1
+##   1976 0 0 0 0 1 1 1 1 1  1  1  1
+##   1977 0 0 0 1 1 1 1 1 1  1  1  0
+##   1978 0 0 0 0 0 0 1 1 1  1  0  0
+##   1979 0 0 0 0 0 1 1 1 1  1  1  0
+##   1980 0 0 0 0 0 0 1 1 1  1  1  1
+##   1981 0 0 0 0 0 1 1 1 1  1  0  0
+##   1982 0 0 0 0 0 0 1 1 1  1  0  0
+##   1983 0 0 0 0 0 0 1 1 1  1  0  0
+##   1984 0 0 0 0 0 1 1 1 1  1  0  0
+##   1985 0 0 0 0 1 1 1 1 1  1  0  0
+##   1986 0 0 0 0 0 1 1 1 1  1  1  1
+##   1987 0 0 0 0 1 1 1 1 1  1  1  0
+##   1988 0 0 0 0 1 1 1 1 1  1  0  0
+##   1989 0 0 0 0 0 1 1 1 1  1  1  1
+##   1990 0 0 0 0 1 1 1 1 1  1  1  1
+##   1991 0 0 0 0 0 1 1 1 1  1  1  0
 ```
 
 ```r
@@ -2977,27 +5131,38 @@ summary(allpops_recent_grwseason)
 ```
 
 ```
-##   parent.pop        elevation.group        elev_m           PckSum        
-##  Length:5204        Length:5204        Min.   : 313.0   Min.   :   0.000  
-##  Class :character   Class :character   1st Qu.: 511.4   1st Qu.:   2.187  
-##  Mode  :character   Mode  :character   Median :1613.8   Median : 611.263  
-##                                        Mean   :1485.2   Mean   :1216.847  
-##                                        3rd Qu.:2266.4   3rd Qu.:2178.827  
-##                                        Max.   :2872.3   Max.   :5412.180  
-##      year               month             cwd              pck   
-##  Length:5204        Min.   : 1.000   Min.   :  0.00   Min.   :0  
-##  Class :character   1st Qu.: 5.000   1st Qu.: 33.15   1st Qu.:0  
-##  Mode  :character   Median : 7.000   Median : 61.40   Median :0  
-##                     Mean   : 7.178   Mean   : 62.87   Mean   :0  
-##                     3rd Qu.:10.000   3rd Qu.: 89.01   3rd Qu.:0  
-##                     Max.   :12.000   Max.   :182.70   Max.   :0  
-##       ppt              tmn              tmx       
-##  Min.   :  0.00   Min.   :-7.020   Min.   : 5.31  
-##  1st Qu.:  4.41   1st Qu.: 2.737   1st Qu.:14.42  
-##  Median : 25.94   Median : 5.840   Median :19.49  
-##  Mean   : 60.18   Mean   : 6.165   Mean   :19.60  
-##  3rd Qu.: 79.86   3rd Qu.: 9.530   3rd Qu.:23.96  
-##  Max.   :791.57   Max.   :19.730   Max.   :35.45
+##      month          growmonth       parent.pop        elevation.group   
+##  Min.   : 1.000   Min.   : 1.000   Length:5215        Length:5215       
+##  1st Qu.: 5.000   1st Qu.: 5.000   Class :character   Class :character  
+##  Median : 7.000   Median : 7.000   Mode  :character   Mode  :character  
+##  Mean   : 7.277   Mean   : 7.018                                        
+##  3rd Qu.:10.000   3rd Qu.: 9.000                                        
+##  Max.   :12.000   Max.   :12.000                                        
+##                   NA's   :4000                                          
+##      elev_m           PckSum           year                cwd        
+##  Min.   : 313.0   Min.   :   0.0   Length:5215        Min.   :  0.00  
+##  1st Qu.: 748.9   1st Qu.: 107.5   Class :character   1st Qu.: 30.89  
+##  Median :1613.8   Median : 613.4   Mode  :character   Median : 58.96  
+##  Mean   :1518.4   Mean   :1268.3                      Mean   : 60.67  
+##  3rd Qu.:2266.4   3rd Qu.:2162.0                      3rd Qu.: 86.77  
+##  Max.   :2872.3   Max.   :5408.1                      Max.   :182.70  
+##                                                                       
+##       pck              ppt              tmn               tmx       
+##  Min.   : 0.000   Min.   :  0.00   Min.   :-10.440   Min.   : 2.09  
+##  1st Qu.: 0.000   1st Qu.:  4.68   1st Qu.:  2.260   1st Qu.:13.77  
+##  Median : 0.000   Median : 29.23   Median :  5.430   Median :18.91  
+##  Mean   : 1.091   Mean   : 64.80   Mean   :  5.666   Mean   :19.02  
+##  3rd Qu.: 0.000   3rd Qu.: 89.72   3rd Qu.:  9.185   3rd Qu.:23.61  
+##  Max.   :69.930   Max.   :803.25   Max.   : 19.740   Max.   :35.97  
+##                                                                     
+##    firstmonth      lastmonth   
+##  Min.   :1.000   Min.   : 1.0  
+##  1st Qu.:3.000   1st Qu.:11.0  
+##  Median :4.000   Median :12.0  
+##  Mean   :3.923   Mean   :10.5  
+##  3rd Qu.:5.000   3rd Qu.:12.0  
+##  Max.   :8.000   Max.   :12.0  
+##                  NA's   :1780
 ```
 
 ```r
@@ -3016,27 +5181,38 @@ summary(allpops_historical_grwseason)
 ```
 
 ```
-##   parent.pop        elevation.group        elev_m           PckSum        
-##  Length:4992        Length:4992        Min.   : 313.0   Min.   :   0.234  
-##  Class :character   Class :character   1st Qu.: 511.4   1st Qu.:  17.482  
-##  Mode  :character   Mode  :character   Median :1613.8   Median : 871.252  
-##                                        Mean   :1446.2   Mean   :1414.114  
-##                                        3rd Qu.:2244.1   3rd Qu.:2046.749  
-##                                        Max.   :2872.3   Max.   :6273.504  
-##      year               month             cwd              pck   
-##  Length:4992        Min.   : 1.000   Min.   :  0.00   Min.   :0  
-##  Class :character   1st Qu.: 5.000   1st Qu.: 34.28   1st Qu.:0  
-##  Mode  :character   Median : 8.000   Median : 61.32   Median :0  
-##                     Mean   : 7.261   Mean   : 61.13   Mean   :0  
-##                     3rd Qu.:10.000   3rd Qu.: 84.41   3rd Qu.:0  
-##                     Max.   :12.000   Max.   :168.60   Max.   :0  
-##       ppt              tmn              tmx       
-##  Min.   :  0.00   Min.   :-9.790   Min.   : 5.67  
-##  1st Qu.:  8.10   1st Qu.: 1.750   1st Qu.:14.55  
-##  Median : 30.07   Median : 4.805   Median :19.07  
-##  Mean   : 60.06   Mean   : 5.083   Mean   :19.36  
-##  3rd Qu.: 80.49   3rd Qu.: 8.390   3rd Qu.:23.60  
-##  Max.   :778.98   Max.   :17.920   Max.   :35.34
+##      month          growmonth       parent.pop        elevation.group   
+##  Min.   : 1.000   Min.   : 1.000   Length:5012        Length:5012       
+##  1st Qu.: 5.000   1st Qu.: 5.000   Class :character   Class :character  
+##  Median : 8.000   Median : 7.000   Mode  :character   Mode  :character  
+##  Mean   : 7.384   Mean   : 6.724                                        
+##  3rd Qu.:10.000   3rd Qu.: 9.000                                        
+##  Max.   :12.000   Max.   :12.000                                        
+##                   NA's   :3702                                          
+##      elev_m           PckSum             year                cwd        
+##  Min.   : 313.0   Min.   :   0.234   Length:5012        Min.   :  0.00  
+##  1st Qu.: 511.4   1st Qu.:  17.344   Class :character   1st Qu.: 31.74  
+##  Median :1613.8   Median : 891.549   Mode  :character   Median : 59.49  
+##  Mean   :1471.1   Mean   :1490.692                      Mean   : 59.55  
+##  3rd Qu.:2266.4   3rd Qu.:2451.753                      3rd Qu.: 83.22  
+##  Max.   :2872.3   Max.   :6363.078                      Max.   :168.60  
+##                                                                         
+##       pck               ppt              tmn               tmx       
+##  Min.   :  0.000   Min.   :  0.00   Min.   :-13.580   Min.   : 0.82  
+##  1st Qu.:  0.000   1st Qu.:  8.18   1st Qu.:  1.270   1st Qu.:13.80  
+##  Median :  0.000   Median : 32.84   Median :  4.430   Median :18.68  
+##  Mean   :  1.422   Mean   : 66.10   Mean   :  4.582   Mean   :18.75  
+##  3rd Qu.:  0.000   3rd Qu.: 87.59   3rd Qu.:  8.030   3rd Qu.:23.18  
+##  Max.   :129.460   Max.   :794.42   Max.   : 17.920   Max.   :35.85  
+##                                                                      
+##    firstmonth     lastmonth    
+##  Min.   :1.00   Min.   : 1.00  
+##  1st Qu.:3.00   1st Qu.:11.00  
+##  Median :4.00   Median :11.00  
+##  Mean   :4.06   Mean   :10.29  
+##  3rd Qu.:5.00   3rd Qu.:12.00  
+##  Max.   :9.00   Max.   :12.00  
+##                 NA's   :1721
 ```
 
 ```r
@@ -3060,9 +5236,10 @@ names(allpops_recent_grwseason)
 ```
 
 ```
-##  [1] "parent.pop"      "elevation.group" "elev_m"          "PckSum"         
-##  [5] "year"            "month"           "cwd"             "pck"            
-##  [9] "ppt"             "tmn"             "tmx"
+##  [1] "month"           "growmonth"       "parent.pop"      "elevation.group"
+##  [5] "elev_m"          "PckSum"          "year"            "cwd"            
+##  [9] "pck"             "ppt"             "tmn"             "tmx"            
+## [13] "firstmonth"      "lastmonth"
 ```
 
 ```r
@@ -3148,16 +5325,16 @@ allpops_recent_grwseason_avgs #30 year averages during growth season months
 ## # Groups:   parent.pop, elevation.group [23]
 ##    parent.pop elevation.group elev_m cwd_mean pck_mean ppt_mean tmn_mean
 ##    <chr>      <chr>            <dbl>    <dbl>    <dbl>    <dbl>    <dbl>
-##  1 BH         Low               511.     49.2        0     70.8     5.75
-##  2 CC         Low               313      43.9        0    114.      7.89
-##  3 CP2        High             2244.     90.6        0     37.5     5.61
-##  4 CP3        High             2266.     68.5        0     33.5     5.33
-##  5 DPR        Mid              1019.     29.2        0     92.7     8.59
-##  6 FR         Mid               787      65.0        0     48.9     6.64
-##  7 IH         Low               454.     38.1        0    110.      6.92
-##  8 LV1        High             2593.     74.8        0     44.0     3.59
-##  9 LV3        High             2354.     93.5        0     43.8     3.59
-## 10 LVTR1      High             2741.     85.1        0     46.0     3.28
+##  1 BH         Low               511.     46.0    0         77.7     5.48
+##  2 CC         Low               313      41.0    0        122.      7.36
+##  3 CP2        High             2244.     86.8    1.28      41.2     5.06
+##  4 CP3        High             2266.     65.4    1.75      38.5     4.74
+##  5 DPR        Mid              1019.     28.8    0.869    102.      8.29
+##  6 FR         Mid               787      62.0    1.58      56.1     6.17
+##  7 IH         Low               454.     38.9    0.102    104.      7.48
+##  8 LV1        High             2593.     71.7    2.06      49.0     3.05
+##  9 LV3        High             2354.     88.3    2.73      51.3     2.92
+## 10 LVTR1      High             2741.     81.4    2.03      50.5     2.74
 ## # ℹ 13 more rows
 ## # ℹ 6 more variables: tmx_mean <dbl>, cwd_sem <dbl>, pck_sem <dbl>,
 ## #   ppt_sem <dbl>, tmn_sem <dbl>, tmx_sem <dbl>
@@ -3246,16 +5423,16 @@ allpops_historical_grwseason_avgs #30 year averages during growth season months
 ## # Groups:   parent.pop, elevation.group [23]
 ##    parent.pop elevation.group elev_m cwd_mean pck_mean ppt_mean tmn_mean
 ##    <chr>      <chr>            <dbl>    <dbl>    <dbl>    <dbl>    <dbl>
-##  1 BH         Low               511.     52.3        0     68.6     5.12
-##  2 CC         Low               313      46.7        0    102.      7.13
-##  3 CP2        High             2244.     87.2        0     40.1     4.45
-##  4 CP3        High             2266.     64.2        0     39.8     4.17
-##  5 DPR        Mid              1019.     29.1        0     86.3     7.35
-##  6 FR         Mid               787      63.1        0     55.4     5.43
-##  7 IH         Low               454.     40.7        0    100.      6.52
-##  8 LV1        High             2593.     70.5        0     52.3     1.33
-##  9 LV3        High             2354.     89.3        0     51.4     1.29
-## 10 LVTR1      High             2741.     81.3        0     55.0     1.11
+##  1 BH         Low               511.     50.1   0.0294     71.5    4.73 
+##  2 CC         Low               313      45.5   0.108     110.     6.65 
+##  3 CP2        High             2244.     84.7   1.57       44.0    3.98 
+##  4 CP3        High             2266.     62.3   1.86       42.3    3.64 
+##  5 DPR        Mid              1019.     28.9   0.804      92.9    7.07 
+##  6 FR         Mid               787      61.8   1.19       61.9    5.18 
+##  7 IH         Low               454.     40.3   1.71      104.     6.51 
+##  8 LV1        High             2593.     67.9   2.47       64.0    0.823
+##  9 LV3        High             2354.     85.3   2.69       66.4    0.705
+## 10 LVTR1      High             2741.     78.0   2.49       67.3    0.600
 ## # ℹ 13 more rows
 ## # ℹ 6 more variables: tmx_mean <dbl>, cwd_sem <dbl>, pck_sem <dbl>,
 ## #   ppt_sem <dbl>, tmn_sem <dbl>, tmx_sem <dbl>
@@ -3356,16 +5533,16 @@ bioclim_recent_avgs
 ## # Groups:   parent.pop, elevation.group [23]
 ##    parent.pop elevation.group elev_m ann_tmean_avg mean_diurnal_range_avg
 ##    <chr>      <chr>            <dbl>         <dbl>                  <dbl>
-##  1 BH         Low               511.         16.2                    14.8
+##  1 BH         Low               511.         16.2                    14.7
 ##  2 CC         Low               313          16.6                    13.3
 ##  3 CP2        High             2244.          7.28                   12.3
 ##  4 CP3        High             2266.          6.57                   12.2
 ##  5 DPR        Mid              1019.         14.0                    12.4
 ##  6 FR         Mid               787          12.6                    14.6
 ##  7 IH         Low               454.         15.4                    13.6
-##  8 LV1        High             2593.          4.89                   12.6
-##  9 LV3        High             2354.          4.87                   12.5
-## 10 LVTR1      High             2741.          4.74                   12.7
+##  8 LV1        High             2593.          4.89                   12.7
+##  9 LV3        High             2354.          4.87                   12.6
+## 10 LVTR1      High             2741.          4.74                   12.8
 ## # ℹ 13 more rows
 ## # ℹ 18 more variables: temp_seasonality_avg <dbl>, temp_ann_range_avg <dbl>,
 ## #   tmean_wettest_quarter_avg <dbl>, tmean_driest_quarter_avg <dbl>,
@@ -3376,6 +5553,8 @@ bioclim_recent_avgs
 ```
 
 ```r
+write_csv(bioclim_recent_avgs, "../output/Climate/Pops_BioClimAvgs_Recent.csv")
+
 bioclim_recent_avgs %>% ggplot(aes(x=fct_reorder(parent.pop, ann_tmean_avg), y=ann_tmean_avg, fill=elev_m)) + 
   geom_col(width = 0.7,position = position_dodge(0.75)) + 
   geom_errorbar(aes(ymin=ann_tmean_avg-ann_tmean_sem,ymax=ann_tmean_avg+ann_tmean_sem),width=.2, position = position_dodge(0.75)) +
@@ -3554,16 +5733,16 @@ bioclim_historical_avgs
 ## # Groups:   parent.pop, elevation.group [23]
 ##    parent.pop elevation.group elev_m ann_tmean_avg mean_diurnal_range_avg
 ##    <chr>      <chr>            <dbl>         <dbl>                  <dbl>
-##  1 BH         Low               511.         15.3                    15.2
-##  2 CC         Low               313          15.9                    14.0
-##  3 CP2        High             2244.          6.10                   12.8
-##  4 CP3        High             2266.          5.45                   12.6
+##  1 BH         Low               511.         15.3                    15.3
+##  2 CC         Low               313          15.9                    14.1
+##  3 CP2        High             2244.          6.06                   12.9
+##  4 CP3        High             2266.          5.41                   12.7
 ##  5 DPR        Mid              1019.         12.9                    13.5
 ##  6 FR         Mid               787          12.0                    15.8
 ##  7 IH         Low               454.         14.7                    14.2
-##  8 LV1        High             2593.          3.42                   13.8
-##  9 LV3        High             2354.          3.39                   13.7
-## 10 LVTR1      High             2741.          3.27                   13.8
+##  8 LV1        High             2593.          3.38                   13.8
+##  9 LV3        High             2354.          3.35                   13.7
+## 10 LVTR1      High             2741.          3.23                   13.8
 ## # ℹ 13 more rows
 ## # ℹ 18 more variables: temp_seasonality_avg <dbl>, temp_ann_range_avg <dbl>,
 ## #   tmean_wettest_quarter_avg <dbl>, tmean_driest_quarter_avg <dbl>,
@@ -3574,6 +5753,8 @@ bioclim_historical_avgs
 ```
 
 ```r
+write_csv(bioclim_historical_avgs, "../output/Climate/Pops_BioClimAvgs_Historical.csv")
+
 bioclim_historical_avgs %>% ggplot(aes(x=fct_reorder(parent.pop, ann_tmean_avg), y=ann_tmean_avg, fill=elev_m)) + 
   geom_col(width = 0.7,position = position_dodge(0.75)) + 
   geom_errorbar(aes(ymin=ann_tmean_avg-ann_tmean_sem,ymax=ann_tmean_avg+ann_tmean_sem),width=.2, position = position_dodge(0.75)) +
@@ -3734,17 +5915,18 @@ head(allpops_recent_grwseason)
 ```
 
 ```
-## # A tibble: 6 × 11
-## # Groups:   parent.pop, elevation.group, elev_m, year [1]
-##   parent.pop elevation.group elev_m PckSum year  month   cwd   pck   ppt   tmn
-##   <chr>      <chr>            <dbl>  <dbl> <chr> <dbl> <dbl> <dbl> <dbl> <dbl>
-## 1 BH         Low               511.      0 1993      1  25.6     0 289.   1.82
-## 2 BH         Low               511.      0 1993      2  37.0     0 140.   3.29
-## 3 BH         Low               511.      0 1993      3  46.0     0  89.9  7.11
-## 4 BH         Low               511.      0 1993      4  71.2     0  12.8  6.01
-## 5 BH         Low               511.      0 1993      5  73.7     0  12.9  9.38
-## 6 BH         Low               511.      0 1993      6  35.7     0  33.6 11.2 
-## # ℹ 1 more variable: tmx <dbl>
+## # A tibble: 6 × 14
+## # Groups:   parent.pop, elevation.group, elev_m, year [6]
+##   month growmonth parent.pop elevation.group elev_m PckSum year    cwd   pck
+##   <dbl>     <dbl> <chr>      <chr>            <dbl>  <dbl> <chr> <dbl> <dbl>
+## 1     1         6 BH         Low               511.      0 1992   28.3     0
+## 2     1         6 BH         Low               511.      0 1993   25.6     0
+## 3     1         6 BH         Low               511.      0 1994   31.3     0
+## 4     1         6 BH         Low               511.      0 1995   27.9     0
+## 5     1         6 BH         Low               511.      0 1996   31.3     0
+## 6     1         6 BH         Low               511.      0 1997   26.1     0
+## # ℹ 5 more variables: ppt <dbl>, tmn <dbl>, tmx <dbl>, firstmonth <dbl>,
+## #   lastmonth <dbl>
 ```
 
 ```r
@@ -3754,24 +5936,24 @@ allpops_recent_grwseason %>% cor_test(cwd, ppt, tmn, tmx, method = "pearson")
 
 ```
 ## # A tibble: 16 × 8
-##    var1  var2    cor    statistic         p conf.low conf.high method 
-##    <chr> <chr> <dbl>        <dbl>     <dbl>    <dbl>     <dbl> <chr>  
-##  1 cwd   cwd    1           Inf   0            1         1     Pearson
-##  2 cwd   ppt   -0.53        -45.3 0           -0.551    -0.512 Pearson
-##  3 cwd   tmn    0.42         33.1 1.86e-218    0.395     0.440 Pearson
-##  4 cwd   tmx    0.53         45.0 0            0.510     0.549 Pearson
-##  5 ppt   cwd   -0.53        -45.3 0           -0.551    -0.512 Pearson
-##  6 ppt   ppt    1    4840219547.  0            1         1     Pearson
-##  7 ppt   tmn   -0.34        -25.7 1.72e-137   -0.360    -0.312 Pearson
-##  8 ppt   tmx   -0.52        -43.4 0           -0.535    -0.495 Pearson
-##  9 tmn   cwd    0.42         33.1 1.86e-218    0.395     0.440 Pearson
-## 10 tmn   ppt   -0.34        -25.7 1.72e-137   -0.360    -0.312 Pearson
-## 11 tmn   tmn    1           Inf   0            1         1     Pearson
-## 12 tmn   tmx    0.93        187.  0            0.929     0.936 Pearson
-## 13 tmx   cwd    0.53         45.0 0            0.510     0.549 Pearson
-## 14 tmx   ppt   -0.52        -43.4 0           -0.535    -0.495 Pearson
-## 15 tmx   tmn    0.93        187.  0            0.929     0.936 Pearson
-## 16 tmx   tmx    1           Inf   0            1         1     Pearson
+##    var1  var2    cor statistic         p conf.low conf.high method 
+##    <chr> <chr> <dbl>     <dbl>     <dbl>    <dbl>     <dbl> <chr>  
+##  1 cwd   cwd    1        Inf   0            1         1     Pearson
+##  2 cwd   ppt   -0.54     -45.9 0           -0.555    -0.517 Pearson
+##  3 cwd   tmn    0.43      34.6 1.26e-236    0.410     0.454 Pearson
+##  4 cwd   tmx    0.55      47.0 0            0.526     0.565 Pearson
+##  5 ppt   cwd   -0.54     -45.9 0           -0.555    -0.517 Pearson
+##  6 ppt   ppt    1        Inf   0            1         1     Pearson
+##  7 ppt   tmn   -0.34     -25.9 2.55e-139   -0.362    -0.313 Pearson
+##  8 ppt   tmx   -0.52     -43.4 0           -0.535    -0.495 Pearson
+##  9 tmn   cwd    0.43      34.6 1.26e-236    0.410     0.454 Pearson
+## 10 tmn   ppt   -0.34     -25.9 2.55e-139   -0.362    -0.313 Pearson
+## 11 tmn   tmn    1        Inf   0            1         1     Pearson
+## 12 tmn   tmx    0.94     193.  0            0.933     0.940 Pearson
+## 13 tmx   cwd    0.55      47.0 0            0.526     0.565 Pearson
+## 14 tmx   ppt   -0.52     -43.4 0           -0.535    -0.495 Pearson
+## 15 tmx   tmn    0.94     193.  0            0.933     0.940 Pearson
+## 16 tmx   tmx    1        Inf   0            1         1     Pearson
 ```
 
 ```r
@@ -3783,10 +5965,10 @@ recent_cor_mat
 ## # A tibble: 4 × 5
 ##   rowname   cwd   ppt   tmn   tmx
 ## * <chr>   <dbl> <dbl> <dbl> <dbl>
-## 1 cwd      1    -0.53  0.42  0.53
-## 2 ppt     -0.53  1    -0.34 -0.52
-## 3 tmn      0.42 -0.34  1     0.93
-## 4 tmx      0.53 -0.52  0.93  1
+## 1 cwd      1    -0.54  0.43  0.55
+## 2 ppt     -0.54  1    -0.34 -0.52
+## 3 tmn      0.43 -0.34  1     0.94
+## 4 tmx      0.55 -0.52  0.94  1
 ```
 
 ```r
@@ -3812,20 +5994,20 @@ allpops_historical_grwseason %>% cor_test(cwd, ppt, tmn, tmx, method = "pearson"
 ##    var1  var2    cor    statistic         p conf.low conf.high method 
 ##    <chr> <chr> <dbl>        <dbl>     <dbl>    <dbl>     <dbl> <chr>  
 ##  1 cwd   cwd    1           Inf   0            1         1     Pearson
-##  2 cwd   ppt   -0.5         -40.9 6.65e-316   -0.522    -0.480 Pearson
-##  3 cwd   tmn    0.34         25.8 4.69e-138    0.319     0.368 Pearson
-##  4 cwd   tmx    0.48         39.2 8.39e-293    0.463     0.506 Pearson
-##  5 ppt   cwd   -0.5         -40.9 6.65e-316   -0.522    -0.480 Pearson
-##  6 ppt   ppt    1    4740565593.  0            1         1     Pearson
-##  7 ppt   tmn   -0.3         -22.0 2.5 e-102   -0.322    -0.272 Pearson
-##  8 ppt   tmx   -0.49        -39.9 1.29e-302   -0.513    -0.471 Pearson
-##  9 tmn   cwd    0.34         25.8 4.69e-138    0.319     0.368 Pearson
-## 10 tmn   ppt   -0.3         -22.0 2.5 e-102   -0.322    -0.272 Pearson
+##  2 cwd   ppt   -0.51        -41.5 1.98e-323   -0.526    -0.485 Pearson
+##  3 cwd   tmn    0.39         29.8 2.32e-179    0.364     0.411 Pearson
+##  4 cwd   tmx    0.53         43.8 0            0.506     0.546 Pearson
+##  5 ppt   cwd   -0.51        -41.5 1.98e-323   -0.526    -0.485 Pearson
+##  6 ppt   ppt    1    3358796967.  0            1         1     Pearson
+##  7 ppt   tmn   -0.31        -23.3 3.49e-114   -0.338    -0.288 Pearson
+##  8 ppt   tmx   -0.5         -41.1 7.47e-319   -0.523    -0.481 Pearson
+##  9 tmn   cwd    0.39         29.8 2.32e-179    0.364     0.411 Pearson
+## 10 tmn   ppt   -0.31        -23.3 3.49e-114   -0.338    -0.288 Pearson
 ## 11 tmn   tmn    1           Inf   0            1         1     Pearson
-## 12 tmn   tmx    0.92        161.  0            0.911     0.920 Pearson
-## 13 tmx   cwd    0.48         39.2 8.39e-293    0.463     0.506 Pearson
-## 14 tmx   ppt   -0.49        -39.9 1.29e-302   -0.513    -0.471 Pearson
-## 15 tmx   tmn    0.92        161.  0            0.911     0.920 Pearson
+## 12 tmn   tmx    0.92        166.  0            0.915     0.924 Pearson
+## 13 tmx   cwd    0.53         43.8 0            0.506     0.546 Pearson
+## 14 tmx   ppt   -0.5         -41.1 7.47e-319   -0.523    -0.481 Pearson
+## 15 tmx   tmn    0.92        166.  0            0.915     0.924 Pearson
 ## 16 tmx   tmx    1           Inf   0            1         1     Pearson
 ```
 
@@ -3838,10 +6020,10 @@ historical_cor_mat
 ## # A tibble: 4 × 5
 ##   rowname   cwd   ppt   tmn   tmx
 ## * <chr>   <dbl> <dbl> <dbl> <dbl>
-## 1 cwd      1    -0.5   0.34  0.48
-## 2 ppt     -0.5   1    -0.3  -0.49
-## 3 tmn      0.34 -0.3   1     0.92
-## 4 tmx      0.48 -0.49  0.92  1
+## 1 cwd      1    -0.51  0.39  0.53
+## 2 ppt     -0.51  1    -0.31 -0.5 
+## 3 tmn      0.39 -0.31  1     0.92
+## 4 tmx      0.53 -0.5   0.92  1
 ```
 
 ```r
@@ -3882,16 +6064,16 @@ bioclim_recent %>% cor_test(ann_tmean:ppt_coldest_quarter, method = "pearson")
 ## # A tibble: 100 × 8
 ##    var1      var2              cor statistic         p conf.low conf.high method
 ##    <chr>     <chr>           <dbl>     <dbl>     <dbl>    <dbl>     <dbl> <chr> 
-##  1 ann_tmean ann_tmean       1        1.22e9 0           1          1     Pears…
-##  2 ann_tmean mean_diurnal_…  0.34     9.34e0 1.48e- 19   0.271      0.406 Pears…
-##  3 ann_tmean temp_seasonal…  0.057    1.47e0 1.43e-  1  -0.0192     0.132 Pears…
-##  4 ann_tmean temp_ann_range  0.1      2.69e0 7.25e-  3   0.0282     0.178 Pears…
-##  5 ann_tmean tmean_wettest…  0.94     7.06e1 2.59e-311   0.930      0.948 Pears…
-##  6 ann_tmean tmean_driest_…  0.96     8.90e1 0           0.954      0.966 Pears…
-##  7 ann_tmean ann_ppt        -0.31    -8.56e0 8.01e- 17  -0.382     -0.245 Pears…
-##  8 ann_tmean ppt_seasonali…  0.2      5.16e0 3.26e-  7   0.122      0.268 Pears…
-##  9 ann_tmean ppt_warmest_q… -0.48    -1.43e1 1.36e- 40  -0.541     -0.424 Pears…
-## 10 ann_tmean ppt_coldest_q… -0.25    -6.54e0 1.23e- 10  -0.316     -0.173 Pears…
+##  1 ann_tmean ann_tmean       1        Inf    0           1          1     Pears…
+##  2 ann_tmean mean_diurnal_…  0.34       9.49 3.77e- 20   0.272      0.405 Pears…
+##  3 ann_tmean temp_seasonal…  0.064      1.69 9.23e-  2  -0.0106     0.138 Pears…
+##  4 ann_tmean temp_ann_range  0.11       2.92 3.62e-  3   0.0363     0.184 Pears…
+##  5 ann_tmean tmean_wettest…  0.94      71.6  3.06e-321   0.930      0.947 Pears…
+##  6 ann_tmean tmean_driest_…  0.95      83.0  0           0.946      0.960 Pears…
+##  7 ann_tmean ann_ppt        -0.31      -8.70 2.39e- 17  -0.381     -0.246 Pears…
+##  8 ann_tmean ppt_seasonali…  0.2        5.33 1.34e-  7   0.126      0.270 Pears…
+##  9 ann_tmean ppt_warmest_q… -0.48     -14.5  7.98e- 42  -0.539     -0.425 Pears…
+## 10 ann_tmean ppt_coldest_q… -0.24      -6.60 8.11e- 11  -0.313     -0.173 Pears…
 ## # ℹ 90 more rows
 ```
 
@@ -3904,16 +6086,16 @@ recent_cor_bioclim_mat
 ## # A tibble: 10 × 11
 ##    rowname          ann_tmean mean_diurnal_range temp_seasonality temp_ann_range
 ##  * <chr>                <dbl>              <dbl>            <dbl>          <dbl>
-##  1 ann_tmean            1                  0.34             0.057          0.1  
-##  2 mean_diurnal_ra…     0.34               1                0.054          0.49 
-##  3 temp_seasonality     0.057              0.054            1              0.67 
-##  4 temp_ann_range       0.1                0.49             0.67           1    
-##  5 tmean_wettest_q…     0.94               0.28            -0.03           0.027
-##  6 tmean_driest_qu…     0.96               0.32             0.15           0.17 
-##  7 ann_ppt             -0.31              -0.47            -0.15          -0.27 
-##  8 ppt_seasonality      0.2                0.075           -0.035         -0.069
-##  9 ppt_warmest_qua…    -0.48              -0.2             -0.15          -0.089
-## 10 ppt_coldest_qua…    -0.25              -0.4             -0.17          -0.26 
+##  1 ann_tmean            1                  0.34             0.064          0.11 
+##  2 mean_diurnal_ra…     0.34               1                0.061          0.5  
+##  3 temp_seasonality     0.064              0.061            1              0.66 
+##  4 temp_ann_range       0.11               0.5              0.66           1    
+##  5 tmean_wettest_q…     0.94               0.28            -0.019          0.026
+##  6 tmean_driest_qu…     0.95               0.31             0.16           0.17 
+##  7 ann_ppt             -0.31              -0.46            -0.14          -0.27 
+##  8 ppt_seasonality      0.2                0.074           -0.037         -0.064
+##  9 ppt_warmest_qua…    -0.48              -0.19            -0.16          -0.066
+## 10 ppt_coldest_qua…    -0.24              -0.39            -0.17          -0.26 
 ## # ℹ 6 more variables: tmean_wettest_quarter <dbl>, tmean_driest_quarter <dbl>,
 ## #   ann_ppt <dbl>, ppt_seasonality <dbl>, ppt_warmest_quarter <dbl>,
 ## #   ppt_coldest_quarter <dbl>
@@ -3942,15 +6124,15 @@ bioclim_historical %>% cor_test(ann_tmean:ppt_coldest_quarter, method = "pearson
 ##    var1      var2               cor statistic        p conf.low conf.high method
 ##    <chr>     <chr>            <dbl>     <dbl>    <dbl>    <dbl>     <dbl> <chr> 
 ##  1 ann_tmean ann_tmean         1       Inf    0           1         1     Pears…
-##  2 ann_tmean mean_diurnal_ra…  0.36     10.1  1.25e-22    0.294     0.424 Pears…
-##  3 ann_tmean temp_seasonality  0.2       5.37 1.06e- 7    0.128     0.271 Pears…
-##  4 ann_tmean temp_ann_range    0.23      6.12 1.54e- 9    0.155     0.297 Pears…
-##  5 ann_tmean tmean_wettest_q…  0.96     88.6  0           0.952     0.965 Pears…
-##  6 ann_tmean tmean_driest_qu…  0.95     77.5  0           0.939     0.954 Pears…
-##  7 ann_tmean ann_ppt          -0.37    -10.3  3.15e-23   -0.428    -0.299 Pears…
-##  8 ann_tmean ppt_seasonality   0.22      5.83 8.67e- 9    0.145     0.287 Pears…
-##  9 ann_tmean ppt_warmest_qua… -0.49    -14.6  2.51e-42   -0.542    -0.428 Pears…
-## 10 ann_tmean ppt_coldest_qua… -0.19     -5.10 4.35e- 7   -0.262    -0.118 Pears…
+##  2 ann_tmean mean_diurnal_ra…  0.37     10.3  2.53e-23    0.300     0.429 Pears…
+##  3 ann_tmean temp_seasonality  0.2       5.35 1.17e- 7    0.127     0.271 Pears…
+##  4 ann_tmean temp_ann_range    0.23      6.20 9.89e-10    0.158     0.299 Pears…
+##  5 ann_tmean tmean_wettest_q…  0.96     85.8  0           0.949     0.962 Pears…
+##  6 ann_tmean tmean_driest_qu…  0.95     82.2  0           0.945     0.959 Pears…
+##  7 ann_tmean ann_ppt          -0.36    -10.2  1.15e-22   -0.424    -0.294 Pears…
+##  8 ann_tmean ppt_seasonality   0.2       5.30 1.56e- 7    0.125     0.269 Pears…
+##  9 ann_tmean ppt_warmest_qua… -0.48    -14.4  4.49e-41   -0.536    -0.421 Pears…
+## 10 ann_tmean ppt_coldest_qua… -0.19     -5.21 2.55e- 7   -0.265    -0.122 Pears…
 ## # ℹ 90 more rows
 ```
 
@@ -3963,15 +6145,15 @@ historical_cor_bioclim_mat
 ## # A tibble: 10 × 11
 ##    rowname          ann_tmean mean_diurnal_range temp_seasonality temp_ann_range
 ##  * <chr>                <dbl>              <dbl>            <dbl>          <dbl>
-##  1 ann_tmean             1                 0.36             0.2            0.23 
-##  2 mean_diurnal_ra…      0.36              1                0.22           0.68 
+##  1 ann_tmean             1                 0.37             0.2            0.23 
+##  2 mean_diurnal_ra…      0.37              1                0.22           0.69 
 ##  3 temp_seasonality      0.2               0.22             1              0.65 
-##  4 temp_ann_range        0.23              0.68             0.65           1    
-##  5 tmean_wettest_q…      0.96              0.33             0.071          0.14 
-##  6 tmean_driest_qu…      0.95              0.36             0.33           0.32 
-##  7 ann_ppt              -0.37             -0.4             -0.15          -0.32 
-##  8 ppt_seasonality       0.22              0.067           -0.022          0.048
-##  9 ppt_warmest_qua…     -0.49             -0.18            -0.31          -0.21 
+##  4 temp_ann_range        0.23              0.69             0.65           1    
+##  5 tmean_wettest_q…      0.96              0.33             0.072          0.15 
+##  6 tmean_driest_qu…      0.95              0.35             0.33           0.32 
+##  7 ann_ppt              -0.36             -0.4             -0.14          -0.31 
+##  8 ppt_seasonality       0.2               0.077           -0.027          0.047
+##  9 ppt_warmest_qua…     -0.48             -0.17            -0.31          -0.21 
 ## 10 ppt_coldest_qua…     -0.19             -0.35            -0.13          -0.29 
 ## # ℹ 6 more variables: tmean_wettest_quarter <dbl>, tmean_driest_quarter <dbl>,
 ## #   ann_ppt <dbl>, ppt_seasonality <dbl>, ppt_warmest_quarter <dbl>,
@@ -4011,13 +6193,13 @@ head(climate_normalized)
 ```
 
 ```
-##             cwd        ppt         tmn         tmx
-## [1,] -1.0681006  2.6876533 -0.92027201 -1.19982470
-## [2,] -0.7397749  0.9429403 -0.60893615 -0.93461363
-## [3,] -0.4830735  0.3493854  0.20011359 -0.21131041
-## [4,]  0.2374671 -0.5565730 -0.03285882  0.03621981
-## [5,]  0.3090913 -0.5555156  0.68088396  0.98455044
-## [6,] -0.7795980 -0.3127831  1.05999363  1.54069029
+##             cwd        ppt        tmn        tmx
+## [1,] -0.9340134 -0.2497441 -0.9013383 -1.2858827
+## [2,] -1.0118972  2.5278439 -0.7797138 -1.0556326
+## [3,] -0.8471874 -0.2305712 -0.6844413 -0.6258327
+## [4,] -0.9461286  2.4029944 -0.1128060 -0.9297627
+## [5,] -0.8463220  0.1592023 -0.4553818 -0.7808676
+## [6,] -0.9957436  2.9150233 -0.3661905 -0.9696727
 ```
 
 ```r
@@ -4034,10 +6216,10 @@ summary(climate.pca) #PC1 explains 91% of the variation, PC2 explains 9.3%, toge
 
 ```
 ## Importance of components:
-##                           Comp.1     Comp.2      Comp.3 Comp.4
-## Standard deviation     1.1133882 0.35690875 0.037893254      0
-## Proportion of Variance 0.9058647 0.09308603 0.001049286      0
-## Cumulative Proportion  0.9058647 0.99895071 1.000000000      1
+##                          Comp.1    Comp.2       Comp.3 Comp.4
+## Standard deviation     1.119571 0.3477514 0.0358444403      0
+## Proportion of Variance 0.911158 0.0879080 0.0009339726      0
+## Cumulative Proportion  0.911158 0.9990660 1.0000000000      1
 ```
 
 ```r
@@ -4046,10 +6228,10 @@ climate.pca$loadings[, 1:2] #PC1 has high positive loading values for tmn, tmx, 
 
 ```
 ##         Comp.1     Comp.2
-## cwd  0.4466313  0.6956623
-## ppt -0.5665674 -0.2488277
-## tmn  0.4461289 -0.5497501
-## tmx  0.5296139 -0.3897609
+## cwd  0.4512467  0.6904085
+## ppt -0.5644029 -0.2516209
+## tmn  0.4458240 -0.5544344
+## tmx  0.5282676 -0.3906732
 ```
 
 ```r
@@ -4127,13 +6309,13 @@ head(climate_normalized_avgs)
 ```
 
 ```
-##         cwd_mean   ppt_mean   tmn_mean   tmx_mean
-## [1,] -0.84952437  0.4832246 -0.0411465 -0.2275065
-## [2,] -1.11292234  1.8695013  1.2219417  0.4351143
-## [3,]  1.20926597 -0.5967660 -0.1260053 -0.2200375
-## [4,]  0.10742578 -0.7268686 -0.2916108 -0.5649110
-## [5,] -1.84595164  1.1946986  1.6385796  1.4646613
-## [6,] -0.06319325 -0.2284302  0.4820257  2.2024656
+##         cwd_mean   ppt_mean    tmn_mean   tmx_mean
+## [1,] -0.87171192  0.4929802  0.06812917 -0.1741032
+## [2,] -1.12918772  1.8564402  1.10022273  0.2638439
+## [3,]  1.20082422 -0.6288554 -0.16087245 -0.2227265
+## [4,]  0.11203342 -0.7125966 -0.33691807 -0.5920547
+## [5,] -1.74834788  1.2370860  1.61198995  1.4853656
+## [6,] -0.06227222 -0.1720920  0.44669436  1.9126197
 ```
 
 ```r
@@ -4157,10 +6339,10 @@ summary(climate.pca_avgs) #PC1 explains 90% of the variation, PC2 explains 8.1%,
 
 ```
 ## Importance of components:
-##                           Comp.1     Comp.2     Comp.3       Comp.4
-## Standard deviation     1.3469589 0.29181943 0.09257356 1.454628e-08
-## Proportion of Variance 0.9508768 0.04463176 0.00449148 1.108969e-16
-## Cumulative Proportion  0.9508768 0.99550852 1.00000000 1.000000e+00
+##                           Comp.1     Comp.2      Comp.3 Comp.4
+## Standard deviation     1.3530363 0.28915484 0.074703339      0
+## Proportion of Variance 0.9535438 0.04354945 0.002906711      0
+## Cumulative Proportion  0.9535438 0.99709329 1.000000000      1
 ```
 
 ```r
@@ -4169,10 +6351,10 @@ climate.pca_avgs$loadings[, 1:2] #PC1 has high positive loading values for tmn, 
 
 ```
 ##              Comp.1     Comp.2
-## cwd_mean  0.5596612  0.2292785
-## ppt_mean -0.5102092 -0.5747525
-## tmn_mean -0.5079365  0.2207524
-## tmx_mean -0.4104466  0.7538961
+## cwd_mean  0.5557510  0.2711216
+## ppt_mean -0.5163709 -0.5524523
+## tmn_mean -0.5073302  0.2595903
+## tmx_mean -0.4088007  0.7442462
 ```
 
 ```r
@@ -4261,9 +6443,10 @@ names(allpops_recent_grwseason)
 ```
 
 ```
-##  [1] "parent.pop"      "elevation.group" "elev_m"          "PckSum"         
-##  [5] "year"            "month"           "cwd"             "pck"            
-##  [9] "ppt"             "tmn"             "tmx"
+##  [1] "month"           "growmonth"       "parent.pop"      "elevation.group"
+##  [5] "elev_m"          "PckSum"          "year"            "cwd"            
+##  [9] "pck"             "ppt"             "tmn"             "tmx"            
+## [13] "firstmonth"      "lastmonth"
 ```
 
 ```r
@@ -4274,21 +6457,21 @@ allpops_recent_grwseason_mosavgs #30 year averages per growth season month
 ```
 
 ```
-## # A tibble: 245 × 11
+## # A tibble: 247 × 11
 ## # Groups:   parent.pop, elevation.group [23]
 ##    parent.pop elevation.group month cwd_mean ppt_mean tmn_mean tmx_mean cwd_sem
 ##    <chr>      <chr>           <dbl>    <dbl>    <dbl>    <dbl>    <dbl>   <dbl>
-##  1 BH         Low                 1     29.4   124.       2.75     13.9   0.431
-##  2 BH         Low                 2     41.0    94.7      3.38     15.0   0.497
-##  3 BH         Low                 3     54.2    84.0      4.92     17.6   1.55 
-##  4 BH         Low                 4     59.0    48.6      6.35     20.5   2.91 
-##  5 BH         Low                 5     49.5    24.8      9.67     25.6   5.57 
+##  1 BH         Low                 1     29.3   129.       2.76     13.8   0.444
+##  2 BH         Low                 2     40.9   103.       3.51     15.0   0.509
+##  3 BH         Low                 3     53.6    87.5      4.88     17.4   1.56 
+##  4 BH         Low                 4     58.5    48.3      6.34     20.4   2.97 
+##  5 BH         Low                 5     50.6    23.4      9.74     25.8   5.49 
 ##  6 BH         Low                 6     41.8    24.3     12.6      29.6   5.34 
 ##  7 BH         Low                 7     80.9     1.42    15.6      33.5  NA    
-##  8 BH         Low                 8    117.     10.8     16.2      33.9  NA    
-##  9 BH         Low                 9    133.     17.7     15.8      32.5   5.40 
-## 10 BH         Low                10     87.8    40.8      9.06     24.5   0.466
-## # ℹ 235 more rows
+##  8 BH         Low                10     87.6    74.0      9.29     24.1   0.580
+##  9 BH         Low                11     45.0    56.9      5.04     18.0   0.548
+## 10 BH         Low                12     29.8   112.       2.43     13.5   0.347
+## # ℹ 237 more rows
 ## # ℹ 3 more variables: ppt_sem <dbl>, tmn_sem <dbl>, tmx_sem <dbl>
 ```
 
@@ -4318,13 +6501,13 @@ head(climate_normalized_mosavgs)
 ```
 
 ```
-##          cwd_mean   ppt_mean   tmn_mean   tmx_mean
-## [1,] -0.898526179  1.2608488 -0.4279863 -0.6361238
-## [2,] -0.542198673  0.6971182 -0.3126086 -0.4895391
-## [3,] -0.139667523  0.4906759 -0.0327692 -0.1161993
-## [4,]  0.007355232 -0.1892452  0.2271942  0.2876770
-## [5,] -0.283206254 -0.6456044  0.8311697  1.0227146
-## [6,] -0.519142814 -0.6544123  1.3563230  1.5919318
+##         cwd_mean   ppt_mean    tmn_mean    tmx_mean
+## [1,] -0.86381036  1.1730807 -0.32392500 -0.56519207
+## [2,] -0.49640236  0.7089039 -0.19276000 -0.40499983
+## [3,] -0.09590962  0.4242495  0.04622095 -0.06152499
+## [4,]  0.05922915 -0.2850169  0.30324161  0.35510929
+## [5,] -0.18894478 -0.7357748  0.89782812  1.10724955
+## [6,] -0.46975807 -0.7187571  1.39146917  1.63951553
 ```
 
 ```r
@@ -4348,10 +6531,10 @@ summary(climate.pca_mosavgs) #PC1 explains 90% of the variation, PC2 explains 8.
 
 ```
 ## Importance of components:
-##                           Comp.1     Comp.2       Comp.3       Comp.4
-## Standard deviation     1.1903076 0.31304473 0.0195145990 9.763764e-09
-## Proportion of Variance 0.9350731 0.06467553 0.0002513312 6.291609e-17
-## Cumulative Proportion  0.9350731 0.99974867 1.0000000000 1.000000e+00
+##                           Comp.1     Comp.2       Comp.3 Comp.4
+## Standard deviation     1.1931646 0.32381553 0.0237242226      0
+## Proportion of Variance 0.9310562 0.06857574 0.0003680943      0
+## Cumulative Proportion  0.9310562 0.99963191 1.0000000000      1
 ```
 
 ```r
@@ -4360,10 +6543,10 @@ climate.pca_mosavgs$loadings[, 1:2] #PC1 has high positive loading values for tm
 
 ```
 ##              Comp.1     Comp.2
-## cwd_mean  0.4761261  0.6547751
-## ppt_mean -0.5518321 -0.2885725
-## tmn_mean  0.4569131 -0.5495886
-## tmx_mean  0.5099174 -0.4312167
+## cwd_mean  0.4789655  0.6443253
+## ppt_mean -0.5535691 -0.2958083
+## tmn_mean  0.4504181 -0.5551376
+## tmx_mean  0.5111524 -0.4349307
 ```
 
 ```r
@@ -4426,7 +6609,7 @@ ggplot() +
 ```
 
 ```
-## Warning: ggrepel: 74 unlabeled data points (too many overlaps). Consider
+## Warning: ggrepel: 72 unlabeled data points (too many overlaps). Consider
 ## increasing max.overlaps
 ```
 
@@ -4437,7 +6620,7 @@ ggsave("../output/Climate/RecentClim_PCA_Elev_MonthlyAvgs_Pops.png", width = 6, 
 ```
 
 ```
-## Warning: ggrepel: 129 unlabeled data points (too many overlaps). Consider
+## Warning: ggrepel: 132 unlabeled data points (too many overlaps). Consider
 ## increasing max.overlaps
 ```
 
@@ -4453,7 +6636,7 @@ ggplot() +
 ```
 
 ```
-## Warning: ggrepel: 28 unlabeled data points (too many overlaps). Consider
+## Warning: ggrepel: 16 unlabeled data points (too many overlaps). Consider
 ## increasing max.overlaps
 ```
 
@@ -4464,7 +6647,7 @@ ggsave("../output/Climate/RecentClim_PCA_Elev_MonthlyAvgs_Months.png", width = 6
 ```
 
 ```
-## Warning: ggrepel: 53 unlabeled data points (too many overlaps). Consider
+## Warning: ggrepel: 54 unlabeled data points (too many overlaps). Consider
 ## increasing max.overlaps
 ```
 
@@ -4481,26 +6664,26 @@ head(climate_normalized)
 
 ```
 ##      ann_tmean mean_diurnal_range temp_seasonality temp_ann_range
-## [1,]  1.294590          1.8110520       -0.9814223    -0.24805872
-## [2,]  1.311061          2.0669507        1.0801389     1.31118392
-## [3,]  1.426064          1.3151438       -1.7638979    -0.67330676
-## [4,]  1.496066          1.7516768       -0.2349690     0.60243594
-## [5,]  1.497537          1.8043616       -0.5800779     0.04677838
-## [6,]  1.111939          0.5558097        0.4611078     2.45651740
+## [1,]  1.488048           1.484196        0.6345835     1.51641105
+## [2,]  1.292581           1.793357       -0.9850409    -0.27252427
+## [3,]  1.309042           2.048352        1.1007088     1.28430291
+## [4,]  1.423970           1.299199       -1.7766975    -0.69711355
+## [5,]  1.493926           1.734191       -0.2298294     0.57665287
+## [6,]  1.495396           1.786690       -0.5789875     0.02185609
 ##      tmean_wettest_quarter tmean_driest_quarter    ann_ppt ppt_seasonality
-## [1,]              1.359491            1.1201108 -1.0033415      1.35067766
-## [2,]              0.969595            1.4360371 -1.4500367     -1.34784814
-## [3,]              1.521691            0.8497858 -0.6992399      1.06041541
-## [4,]              1.400330            1.4834627 -0.4317688      0.13003908
-## [5,]              1.329054            1.3123662 -1.4001878      5.06741990
-## [6,]              1.294380            1.4079467 -0.5478668      0.02606213
+## [1,]             0.9477349            0.3062418 -1.2499359       0.6552141
+## [2,]             1.3701910            1.1218507 -1.0038190       1.3630755
+## [3,]             0.9804684            1.4338282 -1.4555166      -1.3703942
+## [4,]             1.5323185            0.8549045 -0.6963120       1.0690546
+## [5,]             1.4110117            1.4806609 -0.4258456       0.1266306
+## [6,]             1.3397678            1.3117031 -1.4051095       5.1279468
 ##      ppt_warmest_quarter ppt_coldest_quarter
-## [1,]          -0.9497549          -0.5106395
-## [2,]          -0.7898796          -1.4810005
-## [3,]          -0.8800979          -0.6757435
-## [4,]          -0.5725163          -0.2641936
-## [5,]          -0.8599562          -0.8432352
-## [6,]          -0.6379770          -0.2784228
+## [1,]           0.3981273          -0.8725818
+## [2,]          -0.9374355          -0.5158821
+## [3,]          -0.7864416          -1.4995947
+## [4,]          -0.8716482          -0.6832578
+## [5,]          -0.5811534          -0.2660452
+## [6,]          -0.8526253          -0.8530541
 ```
 
 ```r
@@ -4517,17 +6700,17 @@ summary(climate.pca) #PC1 explains 91% of the variation, PC2 explains 9.3%, toge
 
 ```
 ## Importance of components:
-##                           Comp.1    Comp.2     Comp.3     Comp.4    Comp.5
-## Standard deviation     1.1564422 0.6274276 0.35952160 0.32619316 0.2175471
-## Proportion of Variance 0.6621154 0.1949005 0.06399349 0.05267876 0.0234311
-## Cumulative Proportion  0.6621154 0.8570160 0.92100945 0.97368821 0.9971193
-##                             Comp.6       Comp.7      Comp.8       Comp.9
-## Standard deviation     0.066233249 0.0324454538 0.017419894 0.0086895921
-## Proportion of Variance 0.002171891 0.0005211869 0.000150237 0.0000373839
-## Cumulative Proportion  0.999291192 0.9998123791 0.999962616 1.0000000000
+##                          Comp.1    Comp.2     Comp.3     Comp.4     Comp.5
+## Standard deviation     1.150707 0.6298924 0.36071490 0.32191161 0.22017834
+## Proportion of Variance 0.658955 0.1974509 0.06475219 0.05157029 0.02412545
+## Cumulative Proportion  0.658955 0.8564059 0.92115807 0.97272835 0.99685381
+##                             Comp.6       Comp.7       Comp.8       Comp.9
+## Standard deviation     0.069756668 0.0323147710 0.0174575349 1.034719e-02
+## Proportion of Variance 0.002421574 0.0005196709 0.0001516674 5.328086e-05
+## Cumulative Proportion  0.999275381 0.9997950518 0.9999467191 1.000000e+00
 ##                             Comp.10
-## Standard deviation     8.880283e-09
-## Proportion of Variance 3.904267e-17
+## Standard deviation     1.139135e-08
+## Proportion of Variance 6.457681e-17
 ## Cumulative Proportion  1.000000e+00
 ```
 
@@ -4537,16 +6720,16 @@ climate.pca$loadings[, 1:2] #PC1 has high positive loading values for tmn, tmx, 
 
 ```
 ##                            Comp.1     Comp.2
-## ann_tmean              0.42033892  0.2911399
-## mean_diurnal_range     0.28736668 -0.2492181
-## temp_seasonality       0.09740075 -0.4245870
-## temp_ann_range         0.16124222 -0.5214512
-## tmean_wettest_quarter  0.41149767  0.3034075
-## tmean_driest_quarter   0.41098142  0.2554482
-## ann_ppt               -0.38396650  0.2769346
-## ppt_seasonality        0.04691985  0.1860567
-## ppt_warmest_quarter   -0.30031837 -0.1822185
-## ppt_coldest_quarter   -0.35663805  0.3148319
+## ann_tmean              0.42218724  0.2844874
+## mean_diurnal_range     0.28501158 -0.2600425
+## temp_seasonality       0.10189008 -0.4042994
+## temp_ann_range         0.15955805 -0.5159323
+## tmean_wettest_quarter  0.41461687  0.3010946
+## tmean_driest_quarter   0.41265005  0.2590390
+## ann_ppt               -0.37993290  0.2892133
+## ppt_seasonality        0.04697644  0.1821506
+## ppt_warmest_quarter   -0.30075753 -0.2056759
+## ppt_coldest_quarter   -0.35424269  0.3239069
 ```
 
 ```r
@@ -4625,33 +6808,33 @@ head(climate_normalized_avgs)
 
 ```
 ##      ann_tmean_avg mean_diurnal_range_avg temp_seasonality_avg
-## [1,]     1.4379399              2.1393221            0.7294643
-## [2,]     1.5381920              0.3551916           -0.8419953
-## [3,]    -0.6395070             -0.7607969            0.3256934
-## [4,]    -0.8041063             -0.9121192            0.5252890
-## [5,]     0.9327207             -0.6747347            0.5657229
-## [6,]     0.6073101              1.9550948            1.9647802
+## [1,]     1.4365744              2.1103241            0.7807743
+## [2,]     1.5373314              0.3677399           -0.8002917
+## [3,]    -0.6392846             -0.7794069            0.3106801
+## [4,]    -0.8035757             -0.9284072            0.4993965
+## [5,]     0.9327698             -0.6542612            0.5574192
+## [6,]     0.6102852              1.9623190            2.0068328
 ##      temp_ann_range_avg tmean_wettest_quarter_avg tmean_driest_quarter_avg
-## [1,]          1.9057098                 1.4410908                1.4401421
-## [2,]         -0.3474640                 1.5360056                1.4657190
-## [3,]         -0.4781143                -0.6067282               -0.5418125
-## [4,]         -0.4687308                -0.7839524               -0.6856955
-## [5,]         -0.6304193                 0.9473614                0.9939327
-## [6,]          2.6538806                 0.4734667                0.7129846
+## [1,]          1.8936564                 1.4365670                1.4092314
+## [2,]         -0.3106149                 1.5348149                1.4696802
+## [3,]         -0.5013491                -0.6077896               -0.5261052
+## [4,]         -0.4954106                -0.7839883               -0.6694831
+## [5,]         -0.6071962                 0.9485100                0.9987417
+## [6,]          2.6723127                 0.4768846                0.7235035
 ##      ann_ppt_avg ppt_seasonality_avg ppt_warmest_quarter_avg
-## [1,] -1.86113135           1.7420463              -1.4183081
-## [2,] -0.49427368           0.7902683              -1.0207323
-## [3,]  0.25254989          -0.8345221               0.4772332
-## [4,]  0.08678465          -1.0543038               0.5775437
-## [5,]  0.85599477           0.4815438              -0.7117259
-## [6,] -0.58036948           0.4545491              -0.5953679
+## [1,] -1.86140109           1.7404586              -1.3773151
+## [2,] -0.49161686           0.7630087              -1.0853401
+## [3,]  0.26032562          -0.8113405               0.5514082
+## [4,]  0.09597021          -1.0345910               0.6482123
+## [5,]  0.85590061           0.5143695              -0.7943749
+## [6,] -0.58929595           0.4725516              -0.6697992
 ##      ppt_coldest_quarter_avg
-## [1,]             -2.00964285
-## [2,]             -0.52547007
-## [3,]              0.28285658
-## [4,]              0.04282477
-## [5,]              1.18359929
-## [6,]             -0.65352645
+## [1,]             -2.00643695
+## [2,]             -0.51718604
+## [3,]              0.28983231
+## [4,]              0.05138236
+## [5,]              1.19209454
+## [6,]             -0.65810989
 ```
 
 ```r
@@ -4675,13 +6858,13 @@ summary(climate.pca_avgs) #PC1 explains 90% of the variation, PC2 explains 8.1%,
 
 ```
 ## Importance of components:
-##                           Comp.1    Comp.2    Comp.3     Comp.4      Comp.5
-## Standard deviation     1.6842097 0.6373673 0.2897489 0.23097206 0.076809257
-## Proportion of Variance 0.8377269 0.1199747 0.0247944 0.01575539 0.001742357
-## Cumulative Proportion  0.8377269 0.9577016 0.9824960 0.99825140 0.999993756
+##                          Comp.1    Comp.2     Comp.3     Comp.4      Comp.5
+## Standard deviation     1.677552 0.6397661 0.28391871 0.24532861 0.076839605
+## Proportion of Variance 0.835020 0.1214471 0.02391844 0.01785834 0.001751923
+## Cumulative Proportion  0.835020 0.9564671 0.98038557 0.99824391 0.999995834
 ##                              Comp.6       Comp.7       Comp.8       Comp.9
-## Standard deviation     4.557519e-03 4.182549e-04 3.821676e-04 2.262677e-04
-## Proportion of Variance 6.134329e-06 5.166449e-08 4.313381e-08 1.512012e-08
+## Standard deviation     3.687709e-03 4.832704e-04 3.726029e-04 2.634748e-04
+## Proportion of Variance 4.035135e-06 6.929872e-08 4.119431e-08 2.059790e-08
 ## Cumulative Proportion  9.999999e-01 9.999999e-01 1.000000e+00 1.000000e+00
 ##                        Comp.10
 ## Standard deviation           0
@@ -4694,17 +6877,17 @@ climate.pca_avgs$loadings[, 1:2] #PC1 has high positive loading values for tmn, 
 ```
 
 ```
-##                                Comp.1      Comp.2
-## ann_tmean_avg              0.36313511  0.27778959
-## mean_diurnal_range_avg     0.25659578 -0.36263830
-## temp_seasonality_avg       0.08578561 -0.31349709
-## temp_ann_range_avg         0.19226843 -0.54437351
-## tmean_wettest_quarter_avg  0.35195278  0.30890310
-## tmean_driest_quarter_avg   0.35487592  0.28164314
-## ann_ppt_avg               -0.34871918  0.26525106
-## ppt_seasonality_avg        0.34671290  0.09596767
-## ppt_warmest_quarter_avg   -0.39561040 -0.20201723
-## ppt_coldest_quarter_avg   -0.33141365  0.31871712
+##                                Comp.1     Comp.2
+## ann_tmean_avg              0.36735579  0.2701106
+## mean_diurnal_range_avg     0.25344989 -0.3689642
+## temp_seasonality_avg       0.09229607 -0.3107929
+## temp_ann_range_avg         0.19244417 -0.5407832
+## tmean_wettest_quarter_avg  0.35679039  0.3009518
+## tmean_driest_quarter_avg   0.35650688  0.2761101
+## ann_ppt_avg               -0.34490217  0.2689878
+## ppt_seasonality_avg        0.34451126  0.1037666
+## ppt_warmest_quarter_avg   -0.39530741 -0.2143358
+## ppt_coldest_quarter_avg   -0.32703142  0.3255710
 ```
 
 ```r
