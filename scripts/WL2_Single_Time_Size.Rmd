@@ -1,0 +1,579 @@
+---
+title: "Single_Time_Size"
+author: "Brandie Quarles"
+date: "2023-11-07"
+output: 
+  html_document: 
+    keep_md: yes
+---
+
+# Comparison of Size Traits at WL2 Garden
+
+
+
+To Do:
+-   Fix summary plots code to account for cases where N for length is </= 2
+-   Fix mixed effects model code to account for cases where N for length is </= 2
+-   Add climate to the models!
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Relevant Libraries and Functions
+
+```{r}
+library(tidyverse)
+library(tidymodels)
+tidymodels_prefer()
+library(lmerTest) #for mixed effect models
+conflicted::conflicts_prefer(lmerTest::lmer)
+library(broom.mixed) #tidy method for lmerTest
+library(emmeans) #for post-hoc pairwise comparisons 
+library(naniar) #replaces values with NA
+library(corrplot) #plotting correlations 
+library(rstatix) #performing cor_test
+sem <- function(x, na.rm=FALSE) {           #for caclulating standard error
+  sd(x,na.rm=na.rm)/sqrt(length(na.omit(x)))
+} 
+
+elev_three_palette <- c("#0043F0", "#C9727F", "#F5A540") #colors from Gremer et al 2019
+elev_order <- c("High", "Mid", "Low") #for proper arrangement in figures 
+```
+
+## Load the pop and location data
+
+```{r}
+#pop info
+pops_common_garden <- read_csv("../input/WL2_Data/Pops_for_2023_WL2.csv") #pops included in common garden 
+summary(pops_common_garden)
+pops_common_garden_nonotes <- pops_common_garden %>% select(parent.pop:`seed year`)
+pops_common_garden_nonotes$elevation.group <- str_to_title(pops_common_garden_nonotes$elevation.group)
+
+#extra location info 
+pop_loc <- read_csv("../input/Strep_tort_locs.csv")
+
+unique(pop_loc$`Site code`)
+unique(pops_common_garden_nonotes$parent.pop)
+#need to change YOSE to YO
+pop_loc_yo <- pop_loc %>% mutate(parent.pop = str_replace(`Site code`, "YOSE(\\d+)", "YO\\1")) %>% select(Lat, Long, elev_m=`Elevation (m)`, parent.pop)
+unique(pop_loc_yo$parent.pop)
+
+#merge in location info
+pop_elev <- left_join(pops_common_garden_nonotes, pop_loc_yo)
+head(pop_elev)
+```
+
+## Load size data using map
+
+Want equivalent dates to Davis 
+Dec (2 weeks in field) --> 0802
+Jan (2 months in field) --> 0913
+Feb (3 months in field) --> 1020 (this is only 1 week away from the annual census at WL2)
+```{r}
+files <- dir("../input/WL2_Data/CorrectedCSVs/",
+             pattern="WL2_size_survey.*0802.*csv|WL2_size_survey.*0913.*csv|WL2_size_survey.*1020.*csv",
+             full.names = TRUE)   #get list of desired files 
+files
+
+single_time_all <- tibble(path=files, filename=basename(path)) %>%  #make a tibble with the filenames and paths 
+  mutate(survey_date=str_extract(filename, "20[0-9]*"),   #extract survey date from filenames
+        survey_date=ymd(survey_date),                   #format the date column 
+         survey_month=c("aug_size", "sept_size", "oct_size"))        #make a column for month
+single_time_all
+
+single_time_all <- single_time_all %>%                              #read in the data to "sheets" column
+  mutate(sheets=map(path, 
+                    read_csv,
+                    na = c("", "NA", "-", "N/A"))) %>%              #set NA strings 
+  select(-path)
+single_time_all
+
+map(single_time_all$sheets, head, 10)          #check to make sure the datasheets look good 
+single_time_all$sheets[[3]] %>%  rowwise() %>% filter(!is.na(mf), mf != "buffer") %>%  filter(is.na(as.numeric(mf))) #all buffers --> safe to convert to double
+single_time_all$sheets[[1]] %>%  rowwise() %>% filter(!is.na(rep), rep != "buffer") %>% filter(is.na(as.numeric(rep))) #all buffers --> safe to convert to double
+single_time_all$sheets[[1]] <- single_time_all$sheets[[1]] %>% mutate(mf=as.double(mf),
+                                                                      rep=as.double(rep)) 
+single_time_all$sheets[[2]] <- single_time_all$sheets[[2]] %>% mutate(mf=as.double(mf),
+                                                                      rep=as.double(rep)) 
+single_time_all$sheets[[3]] <- single_time_all$sheets[[3]] %>% mutate(mf=as.double(mf),
+                                                                      rep=as.double(rep)) 
+
+map(single_time_all$sheets, colnames) %>% #check the column names 
+  unlist() %>%
+  unique() %>%
+  sort()
+
+#unnest to perform tidyverse functions 
+single_time_all2 <- single_time_all %>% unnest(sheets) %>%
+  rename(parent.pop=pop) %>% 
+  filter(parent.pop != "buffer") %>% 
+  filter(!is.na(mf)) %>% #make sure buffers are removed
+  mutate(parent.pop= str_replace(parent.pop, ".*VTR.*", "LVTR1"))
+head(single_time_all2)
+unique(single_time_all2$parent.pop)
+
+#merge in pop loc info
+single_time_all2_elev <- left_join(single_time_all2, pop_elev) %>% select(survey_date:survey_month, block:survey.notes, elevation.group,Lat, Long, elev_m)
+head(single_time_all2_elev)
+names(single_time_all2_elev)
+```
+
+## Check Sample sizes at each survey
+
+No pops with only 1 individual 
+
+Create a data set that removes pops with 2 or less individuals for comparison.
+
+```{r}
+sample_sizes <- single_time_all2_elev %>% 
+  group_by(survey_month, parent.pop) %>% 
+  summarise(N_height = sum(!is.na(height.cm)), N_length = sum(!is.na(long.leaf.cm))) %>% 
+  arrange(N_height)
+sample_sizes
+
+#Oct WR has only 2 individuals 
+#WV has 0 individuals at all times
+
+single_time_all_sample_sizes <- left_join(single_time_all2_elev, sample_sizes) %>% 
+  filter(N_height != 0) #remove pops with no individuals alive for surveys
+single_time_all_sample_sizes %>% filter(N_height == 0)
+single_time_all_sample_sizes %>% filter(N_length == 0) #some pops with height data but no length data 
+
+single_time_all_GTTWO <- single_time_all_sample_sizes %>% filter(N_height > 2) #only pops with greater than two individuals alive at a given survey 
+```
+
+## Summary plots
+
+When sample size is greater than one:
+
+```{r}
+single_time_all_sample_sizes$survey_month <- factor(single_time_all_sample_sizes$survey_month, levels = c("aug_size","sept_size","oct_size")) #ensures the months are printed in chronological order 
+
+#Histograms
+single_time_all_sample_sizes %>% select(height.cm, long.leaf.cm) %>% 
+  names() %>% 
+  map(~ggplot(single_time_all_sample_sizes, aes_string(x = .)) + 
+        geom_histogram() + 
+        facet_grid(survey_month ~ ., scales = "free"))
+#prints height first then longest leaf 
+
+#qq plots 
+single_time_all_sample_sizes %>% select(height.cm, long.leaf.cm) %>% 
+  names() %>% 
+  map(~ggplot(single_time_all_sample_sizes, aes_string(sample = .)) + 
+       stat_qq() +
+        stat_qq_line() +
+        facet_grid(survey_month ~ ., scales="free"))
+
+#all months height is right skewed
+#oct longest leaf slightly right skewed
+
+
+#Transformations:
+single_time_all_sample_sizes_transf <- single_time_all_sample_sizes %>% 
+  mutate(sheight.cm=sqrt(height.cm), logheight.cm=log(height.cm),log10height.cm=log10(height.cm),
+         slong.leaf.cm=sqrt(long.leaf.cm), loglong.leaf.cm=log(long.leaf.cm),
+         log10long.leaf.cm=log10(long.leaf.cm))
+
+single_time_all_sample_sizes_transf$survey_month <- factor(single_time_all_sample_sizes_transf$survey_month, levels = c("aug_size","sept_size","oct_size"))
+
+single_time_all_sample_sizes_transf %>% select(ends_with("cm")) %>% 
+  names() %>% 
+  map(~ggplot(single_time_all_sample_sizes_transf, aes_string(x = .)) + 
+        geom_histogram() + 
+        facet_grid(survey_month ~ ., scales = "free"))
+#prints in the following order: height, longest leaf, sheight, logheight, log10height, slong.leaf.cm, loglong.leaf.cm, log10long.leaf.cm
+
+single_time_all_sample_sizes_transf %>% select(ends_with("cm")) %>% 
+  names() %>% 
+  map(~ggplot(single_time_all_sample_sizes_transf, aes_string(sample = .)) + 
+       stat_qq() +
+        stat_qq_line() +
+        facet_grid(survey_month ~ ., scales="free"))
+
+#log transformation is the best for height (all months)
+#no transformations greatly improve Oct distribution 
+```
+
+When sample size is greater than two:
+
+```{r}
+single_time_all_GTTWO$survey_month <- factor(single_time_all_GTTWO$survey_month, levels = c("aug_size","sept_size","oct_size")) #ensures the months are printed in chronological order
+
+#Histograms
+single_time_all_GTTWO %>% select(height.cm, long.leaf.cm) %>% 
+  names() %>% 
+  map(~ggplot(single_time_all_GTTWO, aes_string(x = .)) + 
+        geom_histogram() + 
+        facet_grid(survey_month ~ ., scales = "free"))
+#prints height first then longest leaf 
+
+#qq plots 
+single_time_all_GTTWO %>% select(height.cm, long.leaf.cm) %>% 
+  names() %>% 
+  map(~ggplot(single_time_all_GTTWO, aes_string(sample = .)) + 
+       stat_qq() +
+        stat_qq_line() +
+        facet_grid(survey_month ~ ., scales="free"))
+
+#all months height is right skewed, similar to GTONE results 
+#oct longest leaf very slightly right skewed, similar to GTONE results 
+
+
+#Transformations:
+single_time_all_GTTWO_transf <- single_time_all_GTTWO %>% 
+  mutate(sheight.cm=sqrt(height.cm), logheight.cm=log(height.cm),log10height.cm=log10(height.cm),
+         slong.leaf.cm=sqrt(long.leaf.cm), loglong.leaf.cm=log(long.leaf.cm),
+         log10long.leaf.cm=log10(long.leaf.cm))
+
+single_time_all_GTTWO_transf$survey_month <- factor(single_time_all_GTTWO_transf$survey_month, levels = c("aug_size","sept_size","oct_size"))
+
+single_time_all_GTTWO_transf %>% select(ends_with("cm")) %>% 
+  names() %>% 
+  map(~ggplot(single_time_all_GTTWO_transf, aes_string(x = .)) + 
+        geom_histogram() + 
+        facet_grid(survey_month ~ ., scales = "free"))
+#prints in the following order: height, longest leaf, sheight, logheight, log10height, slong.leaf.cm, loglong.leaf.cm, log10long.leaf.cm
+
+single_time_all_GTTWO_transf %>% select(ends_with("cm")) %>% 
+  names() %>% 
+  map(~ggplot(single_time_all_GTTWO_transf, aes_string(sample = .)) + 
+       stat_qq() +
+        stat_qq_line() +
+        facet_grid(survey_month ~ ., scales="free"))
+
+#log transformation is the best for height (all months), similar to GTONE results 
+#no transformations greatly improve Oct distribution, similar to GTONE results 
+```
+
+## Relationship between height and longest leaf
+
+### Plotting Height and Length Together
+
+```{r}
+single_time_all_sample_sizes_transf %>% ggplot(aes(x=height.cm, y=long.leaf.cm)) +
+  geom_point() +
+  geom_smooth() +
+  facet_grid(survey_month ~ ., scales="free")
+
+#generally positive relationship at lower heights, but a lot more variability at lower heights
+#tall plants have smaller leaves (likely b/c tall plants = reproductive)
+#relationship not linear
+
+single_time_all_sample_sizes_transf %>% ggplot(aes(x=long.leaf.cm, y=height.cm)) +
+  geom_point() +
+  geom_smooth() +
+  facet_grid(survey_month ~ ., scales="free") #flipped axes
+#not much of a relationship  
+```
+
+### Calculating correlation b/t the two
+
+```{r}
+single_time_all_sample_sizes_transf %>% cor_test(height.cm, long.leaf.cm, method = "pearson") #all months 
+#Note, I used the pearson method event though height is not normally distributed...something to consider if we actually want to use this analysis
+#r=0.24, P <0.0001
+
+single_time_all_sample_sizes_transf %>% group_by(survey_month) %>% 
+  cor_test(height.cm, long.leaf.cm, method = "pearson") #separate test for each month
+#Aug r=0.37, P <0.0001
+#Sept r=0.19, P <0.0001
+#Oct r=0.36, P <0.0001
+
+summary(lm(sheight.cm ~ long.leaf.cm, data=single_time_all_sample_sizes_transf))
+```
+
+## Calculating means by pop (and elev)
+
+```{r}
+single_time_all_sample_sizes_transf_summary <- single_time_all_sample_sizes_transf %>% 
+  group_by(survey_month, parent.pop, elev_m) %>% 
+  summarise(N_height = sum(!is.na(height.cm)), mean_height.cm = mean(height.cm,na.rm=(TRUE)), 
+            sem_height.cm=sem(height.cm, na.rm=(TRUE)), N_length = sum(!is.na(long.leaf.cm)),
+            mean_long.leaf.cm=mean(long.leaf.cm, na.rm=(TRUE)), 
+            sem_long.leaf.cm=sem(long.leaf.cm, na.rm=TRUE)) %>% 
+  arrange(survey_month, elev_m)
+single_time_all_sample_sizes_transf_summary
+
+single_time_all_sample_sizes_transf_summary %>% filter(N_height < 3)
+single_time_all_sample_sizes_transf_summary %>% filter(N_length < 3) #4 plants that have at least 2 individuals for height, have limited sample size for length
+
+#write_csv(single_time_all_sample_sizes_transf_summary, file ="../output/WL2_Traits/single_time_size_summary.csv")
+
+#greater than 0 N for leaf length
+single_time_all_sample_sizes_transf_summary_GTONE <- single_time_all_sample_sizes_transf_summary %>% 
+  filter(N_length > 1)
+
+#february overall avg
+single_time_all_sample_sizes_transf %>% filter(survey_month=="oct_size") %>% summarise(AvgHeight=mean(height.cm, na.rm=(TRUE)), semHeight=sem(height.cm, na.rm=(TRUE)))
+
+single_time_all_sample_sizes_transf %>% filter(survey_month=="oct_size") %>% filter(parent.pop!="TM2") %>% summarise(MAX=max(height.cm, na.rm=(TRUE)))
+
+single_time_all_sample_sizes_transf %>% filter(survey_month=="oct_size") %>% filter(parent.pop!="TM2") %>% arrange(desc(height.cm))
+```
+
+## Figures of averages
+
+### Avg Height Figure
+
+```{r}
+single_time_all_sample_sizes_transf_summary_GTONE$survey_month <- factor(single_time_all_sample_sizes_transf_summary_GTONE$survey_month, levels = c("aug_size","sept_size","oct_size"))
+
+single_time_all_sample_sizes_transf_summary_GTONE %>% 
+  ggplot(aes(x=fct_reorder(parent.pop, mean_height.cm), y=mean_height.cm, fill=elev_m)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) + 
+  geom_errorbar(aes(ymin=mean_height.cm-sem_height.cm,ymax=mean_height.cm+sem_height.cm),width=.2, position = 
+                  position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  labs(fill="Elevation (m)", y="Avg Height (cm)", x="Population") +
+   theme_classic() +
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1)) +
+  facet_grid(survey_month ~ .)
+ggsave("../output/WL2_Traits/Single_Time_Height.png", width = 14, height = 18, units = "in")
+```
+
+### Avg Longest Leaf Figure
+
+```{r}
+single_time_all_sample_sizes_transf_summary_GTONE %>% 
+  ggplot(aes(x=fct_reorder(parent.pop, mean_long.leaf.cm), y=mean_long.leaf.cm, fill=elev_m)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) + 
+  geom_errorbar(aes(ymin=mean_long.leaf.cm-sem_long.leaf.cm,ymax=mean_long.leaf.cm+sem_long.leaf.cm),width=.2, position = 
+                  position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  labs(fill="Elevation (m)", y="Avg Longest Leaf (cm)", x="Population") +
+   theme_classic() +
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1)) +
+  facet_grid(survey_month ~ .)
+ggsave("../output/WL2_Traits/Single_Time_Longest_Leaf.png", width = 14, height = 18, units = "in")
+```
+
+## Mixed Effects Models
+
+### With a sample size of greater than 1 per pop
+Prep data for model
+```{r}
+single_time_split_by_month_GTONE <- single_time_all_sample_sizes_transf %>% 
+  select(survey_month, elev_m, parent.pop, mf, logheight.cm, long.leaf.cm) %>% 
+  group_nest(survey_month)
+single_time_split_by_month_GTONE #the data column contains the parameters in the model 
+
+model_by_month_GTONE <- 
+  single_time_split_by_month_GTONE %>% 
+  mutate(height_model_1 = map(data, ~ lmer(logheight.cm ~ (1|parent.pop/mf), data = .x)),
+         height_model_2 = map(data, ~ lmer(logheight.cm ~ elev_m + (1|parent.pop/mf), data = .x)),
+         leaf_model_1 = map(data, ~ lmer(long.leaf.cm ~ (1|parent.pop/mf), data = .x)), 
+         leaf_model_2 = map(data, ~ lmer(long.leaf.cm ~ elev_m + (1|parent.pop/mf), data = .x)),)
+model_by_month_GTONE
+```
+
+Summary output for one model across survey_months 
+```{r}
+model_by_month_GTONE %>% 
+  mutate(coef = map(height_model_1, tidy)) %>% 
+  select(survey_month, coef) %>% 
+  unnest(cols = c(coef))
+```
+
+Ranova output for each model (across months)
+```{r}
+#Model without random effects printed first, then nested predictor and then the predictor that nest was in
+#(1 | mf:parent.pop) 
+#(1 | parent.pop)
+model_by_month_GTONE %>% #height with just pop and mf
+  mutate(ranova = map(height_model_1, ranova)) %>% 
+  select(survey_month, ranova) %>% 
+  unnest(cols = c(ranova))
+```
+
+```{r}
+model_by_month_GTONE %>% #height with elev, pop, and mf
+  mutate(ranova = map(height_model_2, ranova)) %>% 
+  select(survey_month, ranova) %>% 
+  unnest(cols = c(ranova))
+```
+
+```{r}
+model_by_month_GTONE %>% #length with just pop and mf
+  mutate(ranova = map(leaf_model_1, ranova)) %>% 
+  select(survey_month, ranova) %>% 
+  unnest(cols = c(ranova))
+```
+
+```{r}
+model_by_month_GTONE %>% #length with elev, pop, and mf
+  mutate(ranova = map(leaf_model_2, ranova)) %>% 
+  select(survey_month, ranova) %>% 
+  unnest(cols = c(ranova))
+```
+
+Summary for all models per survey month
+```{r}
+tidy_models_GTONE <- model_by_month_GTONE %>% #get tidy summary of each model 
+  mutate(coef_1 = map(height_model_1, tidy),
+            coef_2 = map(height_model_2, tidy),
+            coef_3 = map(leaf_model_1, tidy),
+            coef_4 = map(leaf_model_2, tidy)) %>% 
+  select(survey_month, coef_1:coef_4)
+tidy_models_GTONE
+
+tidy_models_GTONE_aug <- tidy_models_GTONE %>% filter(survey_month == "aug_size")
+tidy_models_GTONE_sept <- tidy_models_GTONE %>% filter(survey_month == "sept_size")
+tidy_models_GTONE_oct <- tidy_models_GTONE %>% filter(survey_month == "oct_size")
+
+#convert to long 
+models_long_GTONEaug <- reshape(tidy_models_GTONE_aug, direction = "long", sep = "_",
+                           idvar = "survey_month", 
+                            varying = c("coef_1", "coef_2", "coef_3", "coef_4")) %>% 
+                unnest(coef) %>% 
+  rename("model"="time") %>% 
+  mutate(model = if_else(model==1, "height_model_1", 
+                         if_else(model==2, "height_model_2",
+                                 if_else(model==3, "leaf_model_1",
+                                         "leaf_model_2"))))
+models_long_GTONEaug
+write_csv(models_long_GTONEaug, "../output/WL2_Traits/08022023_Size_Models_GTONE.csv")
+
+models_long_GTONEsept <- reshape(tidy_models_GTONE_sept, direction = "long", sep = "_",
+                           idvar = "survey_month", 
+                            varying = c("coef_1", "coef_2", "coef_3", "coef_4")) %>% 
+                unnest(coef) %>% 
+  rename("model"="time") %>% 
+  mutate(model = if_else(model==1, "height_model_1", 
+                         if_else(model==2, "height_model_2",
+                                 if_else(model==3, "leaf_model_1",
+                                         "leaf_model_2"))))
+models_long_GTONEsept
+write_csv(models_long_GTONEsept, "../output/WL2_Traits/09132023_Size_Models_GTONE.csv")
+
+models_long_GTONEoct <-  reshape(tidy_models_GTONE_oct, direction = "long", sep = "_",
+                           idvar = "survey_month", 
+                            varying = c("coef_1", "coef_2", "coef_3", "coef_4")) %>% 
+                unnest(coef) %>% 
+  rename("model"="time") %>% 
+  mutate(model = if_else(model==1, "height_model_1", 
+                         if_else(model==2, "height_model_2",
+                                 if_else(model==3, "leaf_model_1",
+                                         "leaf_model_2"))))
+models_long_GTONEoct
+write_csv(models_long_GTONEoct, "../output/WL2_Traits/10202023_Size_Models_GTONE.csv")
+```
+Elevation is negatively associated with height and length 
+
+
+### With a sample size of greater than 2 per pop
+Prep data for model
+```{r}
+single_time_split_by_month_GTTWO <- single_time_all_GTTWO_transf %>% 
+  select(survey_month, elev_m, parent.pop, mf, logheight.cm, long.leaf.cm) %>% 
+  group_nest(survey_month)
+single_time_split_by_month_GTTWO #the data column contains the parameters in the model 
+
+model_by_month_GTTWO <- 
+  single_time_split_by_month_GTTWO %>% 
+  mutate(height_model_1 = map(data, ~ lmer(logheight.cm ~ (1|parent.pop/mf), data = .x)),
+         height_model_2 = map(data, ~ lmer(logheight.cm ~ elev_m + (1|parent.pop/mf), data = .x)),
+         leaf_model_1 = map(data, ~ lmer(long.leaf.cm ~ (1|parent.pop/mf), data = .x)), 
+         leaf_model_2 = map(data, ~ lmer(long.leaf.cm ~ elev_m + (1|parent.pop/mf), data = .x)),)
+model_by_month_GTTWO
+```
+
+Summary output for one model across survey_months 
+```{r}
+model_by_month_GTTWO %>% 
+  mutate(coef = map(height_model_1, tidy)) %>% 
+  select(survey_month, coef) %>% 
+  unnest(cols = c(coef))
+```
+
+Ranova output for each model (across months)
+```{r}
+#Model without random effects printed first, then nested predictor and then the predictor that nest was in
+#(1 | mf:parent.pop) 
+#(1 | parent.pop)
+model_by_month_GTTWO %>% #height with just pop and mf
+  mutate(ranova = map(height_model_1, ranova)) %>% 
+  select(survey_month, ranova) %>% 
+  unnest(cols = c(ranova))
+```
+
+```{r}
+model_by_month_GTTWO %>% #height with elev, pop and mf
+  mutate(ranova = map(height_model_2, ranova)) %>% 
+  select(survey_month, ranova) %>% 
+  unnest(cols = c(ranova))
+```
+
+```{r}
+model_by_month_GTTWO %>% #length with just pop and mf
+  mutate(ranova = map(leaf_model_1, ranova)) %>% 
+  select(survey_month, ranova) %>% 
+  unnest(cols = c(ranova))
+```
+
+```{r}
+model_by_month_GTTWO %>% #length with elev pop and mf
+  mutate(ranova = map(leaf_model_2, ranova)) %>% 
+  select(survey_month, ranova) %>% 
+  unnest(cols = c(ranova))
+```
+
+
+Summary for all models per survey month
+```{r}
+tidy_models_GTTWO <- model_by_month_GTTWO %>% #get tidy summary of each model 
+  mutate(coef_1 = map(height_model_1, tidy),
+            coef_2 = map(height_model_2, tidy),
+            coef_3 = map(leaf_model_1, tidy),
+            coef_4 = map(leaf_model_2, tidy)) %>% 
+  select(survey_month, coef_1:coef_4)
+tidy_models_GTTWO
+
+tidy_models_GTTWO_aug <- tidy_models_GTTWO %>% filter(survey_month == "aug_size")
+tidy_models_GTTWO_sept <- tidy_models_GTTWO %>% filter(survey_month == "sept_size")
+tidy_models_GTTWO_oct <- tidy_models_GTTWO %>% filter(survey_month == "oct_size")
+
+#convert to long 
+models_long_GTTWOaug <- reshape(tidy_models_GTTWO_aug, direction = "long", sep = "_",
+                           idvar = "survey_month", 
+                            varying = c("coef_1", "coef_2", "coef_3", "coef_4")) %>% 
+                unnest(coef) %>% 
+  rename("model"="time") %>% 
+  mutate(model = if_else(model==1, "height_model_1", 
+                         if_else(model==2, "height_model_2",
+                                 if_else(model==3, "leaf_model_1",
+                                         "leaf_model_2"))))
+models_long_GTTWOaug
+write_csv(models_long_GTTWOaug, "../output/WL2_Traits/08022023_Size_Models_GTTWO.csv")
+
+models_long_GTTWOsept <- reshape(tidy_models_GTTWO_sept, direction = "long", sep = "_",
+                           idvar = "survey_month", 
+                            varying = c("coef_1", "coef_2", "coef_3", "coef_4")) %>% 
+                unnest(coef) %>% 
+  rename("model"="time") %>% 
+  mutate(model = if_else(model==1, "height_model_1", 
+                         if_else(model==2, "height_model_2",
+                                 if_else(model==3, "leaf_model_1",
+                                         "leaf_model_2"))))
+models_long_GTTWOsept
+write_csv(models_long_GTTWOsept, "../output/WL2_Traits/09132023_Size_Models_GTTWO.csv")
+
+models_long_GTTWOoct <-  reshape(tidy_models_GTTWO_oct, direction = "long", sep = "_",
+                           idvar = "survey_month", 
+                            varying = c("coef_1", "coef_2", "coef_3", "coef_4")) %>% 
+                unnest(coef) %>% 
+  rename("model"="time") %>% 
+  mutate(model = if_else(model==1, "height_model_1", 
+                         if_else(model==2, "height_model_2",
+                                 if_else(model==3, "leaf_model_1",
+                                         "leaf_model_2"))))
+models_long_GTTWOoct
+write_csv(models_long_GTTWOoct, "../output/WL2_Traits/10202023_Size_Models_GTTWO.csv")
+```
+Results similar to GTONE case for ranova and elev_m as a fixed effect. 
+
+
