@@ -397,6 +397,10 @@ summary(bioclim_recent)
 ##  Max.   :73.960    Max.   :894.02
 ```
 
+```r
+write_csv(bioclim_recent, "../output/Climate/BioClim_growthseason_Recent.csv")
+```
+
 ### Historical Climate
 #### Prep
 
@@ -566,6 +570,10 @@ summary(bioclim_historical)
 ##  Mean   : 10.153   Mean   :245.85   
 ##  3rd Qu.: 11.765   3rd Qu.:322.09   
 ##  Max.   :249.430   Max.   :951.79
+```
+
+```r
+write_csv(bioclim_historical, "../output/Climate/BioClim_growthseason_Historical.csv")
 ```
 
 

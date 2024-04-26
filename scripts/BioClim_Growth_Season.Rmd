@@ -159,6 +159,7 @@ Merge all bioclims
 ```{r}
 bioclim_recent <- full_join(bioclim_recent_calc, all_periods_recent)
 summary(bioclim_recent)
+write_csv(bioclim_recent, "../output/Climate/BioClim_growthseason_Recent.csv")
 ```
 
 ### Historical Climate
@@ -236,6 +237,7 @@ Merge all bioclims
 ```{r}
 bioclim_historical <- full_join(bioclim_historical_calc, all_periods_historical)
 summary(bioclim_historical)
+write_csv(bioclim_historical, "../output/Climate/BioClim_growthseason_Historical.csv")
 ```
 
 
