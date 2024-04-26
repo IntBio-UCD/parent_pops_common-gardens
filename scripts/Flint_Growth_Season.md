@@ -1,7 +1,7 @@
 ---
 title: "Flint_Growth_Season"
 author: "Brandie Quarles"
-date: "2024-04-19"
+date: "2024-04-26"
 output: 
   html_document: 
     keep_md: yes
@@ -9,6 +9,7 @@ editor_options:
   markdown: 
     wrap: 72
 ---
+
 
 
 
@@ -23,8 +24,8 @@ editor_options:
 -   First month with snow pack or w/ significant CWD as end of growth
     season
     
-    -   This month isn't included in the final "growth season" - because
-        that month is likely a month when they're maturing seeds and no longer "growing"
+    -   This month is included in the final "growth season" - because
+        that month is likely a month when they're maturing seeds (esp at lower elevs)
 
 Mean height at WL2 in Oct was 7 cm --\> 70 mm
 
@@ -97,34 +98,7 @@ library(rstatix) #performing cor_test
 ```
 
 ```r
-library(lmerTest)
-```
-
-```
-## Loading required package: lme4
-## Loading required package: Matrix
-## 
-## Attaching package: 'Matrix'
-## 
-## The following objects are masked from 'package:tidyr':
-## 
-##     expand, pack, unpack
-## 
-## 
-## Attaching package: 'lmerTest'
-## 
-## The following object is masked from 'package:lme4':
-## 
-##     lmer
-## 
-## The following object is masked from 'package:stats':
-## 
-##     step
-```
-
-```r
 library(naniar) #replaces values with NA
-library(QBMS) #for function calc_biovars to calculate bioclim variables
 sem <- function(x, na.rm=FALSE) {
   sd(x,na.rm=na.rm)/sqrt(length(na.omit(x)))
 } #standard error function 
@@ -136,20 +110,20 @@ get_legend<-function(myggplot){
   return(legend)
 } #legend function for grid_arrange
 
+true_round <- function(number, digits) {
+  posneg <- sign(number)
+  number <- abs(number) * 10^digits
+  number <- number + 0.5 + sqrt(.Machine$double.eps)
+  number <- trunc(number)
+  number <- number / 10 ^ digits
+  number * posneg
+} #rounding function that bypasses R's round to even default
+
 elev_three_palette <- c("#0043F0", "#C9727F", "#F5A540") #colors from Gremer et al 2019
 elev_order <- c("High", "Mid", "Low")
-
-#For scree plots 
-#library("devtools") #The package devtools is required for the installation as factoextra is hosted on github.
-#1install_github("kassambara/factoextra")
-library("factoextra")
 ```
 
-```
-## Welcome! Want to learn more? See two factoextra-related books at https://goo.gl/ve3WBa
-```
-
-## Load the data
+## Load the data (from "Climate_Prep.Rmd")
 
 
 ```r
@@ -716,7 +690,7 @@ pop_elev_climate_historical_sums_avgs
 
 -   Last month = cwd \> 3rd quartile of CWD for those groups of pops
 
-    -   Remember this month is not included in the final "growth season"
+    -   Remember this month is included in the final "growth season"
 
 ### Recent Climate
 
@@ -831,18 +805,18 @@ dim(nosnow_recent_growyear_months)
 First month 
 
 ```r
-nosnow_first_month <- nosnow_recent_growyear_months %>%
+nosnow_recent_first_month <- nosnow_recent_growyear_months %>%
   group_by(parent.pop, elevation.group, elev_m, year) %>% 
   filter(ppt>=25) %>% 
   arrange(growmonth) %>% 
   filter(row_number()==1) #get first month for each pop and year with germinating inducing rain 
 
-#nosnow_first_month %>% filter(parent.pop=="IH") %>% arrange(year)
+#nosnow_recent_first_month %>% filter(parent.pop=="IH") %>% arrange(year)
 
-nosnow_first_month_tomerge <- nosnow_first_month %>% 
+nosnow_recent_first_month_tomerge <- nosnow_recent_first_month %>% 
   select(parent.pop:elev_m, year, firstmonth=growmonth)
 
-nosnow_first_month_col <- full_join(nosnow_recent_growyear_months, nosnow_first_month_tomerge)
+nosnow_recent_first_month_col <- full_join(nosnow_recent_growyear_months, nosnow_recent_first_month_tomerge)
 ```
 
 ```
@@ -850,7 +824,7 @@ nosnow_first_month_col <- full_join(nosnow_recent_growyear_months, nosnow_first_
 ```
 
 ```r
-dim(nosnow_first_month_col)
+dim(nosnow_recent_first_month_col)
 ```
 
 ```
@@ -860,16 +834,16 @@ dim(nosnow_first_month_col)
 Last month
 
 ```r
-nosnow_last_month <- nosnow_recent_growyear_months %>%
+nosnow_recent_last_month <- nosnow_recent_growyear_months %>%
   group_by(parent.pop, elevation.group, elev_m, year) %>% 
   filter(cwd>88) %>% #last month is when cwd gets too high 
   arrange(month) %>% 
   filter(row_number()==1)
 
-nosnow_last_month_tomerge <- nosnow_last_month %>% 
+nosnow_recent_last_month_tomerge <- nosnow_recent_last_month %>% 
   select(parent.pop:elev_m, year, lastmonth=growmonth) #last month is in grow month not calendar month format
 
-nosnow_last_month_col <- full_join(nosnow_first_month_col, nosnow_last_month_tomerge) %>% 
+nosnow_recent_last_month_col <- full_join(nosnow_recent_first_month_col, nosnow_recent_last_month_tomerge) %>% 
   select(firstmonth, lastmonth, month:tmx)
 ```
 
@@ -878,7 +852,7 @@ nosnow_last_month_col <- full_join(nosnow_first_month_col, nosnow_last_month_tom
 ```
 
 ```r
-dim(nosnow_last_month_col)
+dim(nosnow_recent_last_month_col)
 ```
 
 ```
@@ -888,7 +862,7 @@ dim(nosnow_last_month_col)
 Checking for weird cases 
 
 ```r
-summary(nosnow_last_month_col)
+summary(nosnow_recent_last_month_col)
 ```
 
 ```
@@ -927,7 +901,7 @@ summary(nosnow_last_month_col)
 ```
 
 ```r
-nosnow_last_month_col %>% filter(is.na(lastmonth)) %>% arrange(year) #3 years (1998, 2005, 2019) when IH doesn't have a last month based on these criteria (cwd never goes above 88 in those years)
+nosnow_recent_last_month_col %>% filter(is.na(lastmonth)) %>% arrange(year) #3 years (1998, 2005, 2019) when IH doesn't have a last month based on these criteria (cwd never goes above 88 in those years)
 ```
 
 ```
@@ -951,7 +925,7 @@ nosnow_last_month_col %>% filter(is.na(lastmonth)) %>% arrange(year) #3 years (1
 
 ```r
 #****CAN EXCLUDE THESE CASES
-nosnow_last_month_col %>% filter(is.na(firstmonth)) %>% arrange(year) #1 year when BH doesn't have a first month based on these criteria (ppt never above 25)
+nosnow_recent_last_month_col %>% filter(is.na(firstmonth)) %>% arrange(year) #1 year when BH doesn't have a first month based on these criteria (ppt never above 25)
 ```
 
 ```
@@ -976,7 +950,7 @@ nosnow_last_month_col %>% filter(is.na(firstmonth)) %>% arrange(year) #1 year wh
 
 ```r
 #****CAN EXCLUDE THIS CASE 
-nosnow_last_month_col %>% filter(lastmonth<4) %>% arrange(parent.pop, year) #some cases where last month is less than 4 (earlier than December)
+nosnow_recent_last_month_col %>% filter(lastmonth<4) %>% arrange(parent.pop, year) #some cases where last month is less than 4 (earlier than December)
 ```
 
 ```
@@ -999,7 +973,7 @@ nosnow_last_month_col %>% filter(lastmonth<4) %>% arrange(parent.pop, year) #som
 ```
 
 ```r
-nosnow_last_month_col %>% filter(lastmonth<firstmonth, lastmonth<4) %>% arrange(parent.pop, year) #all of the above are when the last month is before the first month (in growyear, not calendar year)
+nosnow_recent_last_month_col %>% filter(lastmonth<firstmonth, lastmonth<4) %>% arrange(parent.pop, year) #all of the above are when the last month is before the first month (in growyear, not calendar year)
 ```
 
 ```
@@ -1023,7 +997,7 @@ nosnow_last_month_col %>% filter(lastmonth<firstmonth, lastmonth<4) %>% arrange(
 
 ```r
 #****NEED TO CONVERT LAST MONTH TO CALENDAR YEAR FORMAT FOR AVG CALCS 
-nosnow_last_month_col %>% filter(lastmonth>firstmonth & lastmonth<4) %>% arrange(parent.pop, year) #0 cases where last month is after the first month 
+nosnow_recent_last_month_col %>% filter(lastmonth>firstmonth & lastmonth<4) %>% arrange(parent.pop, year) #0 cases where last month is after the first month 
 ```
 
 ```
@@ -1035,7 +1009,7 @@ nosnow_last_month_col %>% filter(lastmonth>firstmonth & lastmonth<4) %>% arrange
 ```
 
 ```r
-nosnow_last_month_col %>% filter(lastmonth==1) %>% arrange(parent.pop, year) #9 cases where Sept is last month 
+nosnow_recent_last_month_col %>% filter(lastmonth==1) %>% arrange(parent.pop, year) #9 cases where Sept is last month 
 ```
 
 ```
@@ -1058,7 +1032,7 @@ nosnow_last_month_col %>% filter(lastmonth==1) %>% arrange(parent.pop, year) #9 
 ```
 
 ```r
-nosnow_last_month_col %>% filter(lastmonth==4) #0 cases where Oct-Dec is the last month
+nosnow_recent_last_month_col %>% filter(lastmonth==4) #0 cases where Oct-Dec is the last month
 ```
 
 ```
@@ -1070,7 +1044,7 @@ nosnow_last_month_col %>% filter(lastmonth==4) #0 cases where Oct-Dec is the las
 ```
 
 ```r
-nosnow_last_month_col %>% filter(firstmonth>4) #0 cases where first month is after December
+nosnow_recent_last_month_col %>% filter(firstmonth>4) #0 cases where first month is after December
 ```
 
 ```
@@ -1082,7 +1056,7 @@ nosnow_last_month_col %>% filter(firstmonth>4) #0 cases where first month is aft
 ```
 
 ```r
-nosnow_last_month_col %>% filter(lastmonth==firstmonth) %>% arrange(parent.pop, year) #first month and last month are never the same 
+nosnow_recent_last_month_col %>% filter(lastmonth==firstmonth) %>% arrange(parent.pop, year) #first month and last month are never the same 
 ```
 
 ```
@@ -1094,7 +1068,7 @@ nosnow_last_month_col %>% filter(lastmonth==firstmonth) %>% arrange(parent.pop, 
 ```
 
 ```r
-nosnow_last_month_col %>% filter(growmonth==firstmonth+1, cwd>88) %>% arrange(parent.pop, year) #0 cases where cwd is high in the second growth month 
+nosnow_recent_last_month_col %>% filter(growmonth==firstmonth+1, cwd>88) %>% arrange(parent.pop, year) #0 cases where cwd is high in the second growth month 
 ```
 
 ```
@@ -1106,7 +1080,7 @@ nosnow_last_month_col %>% filter(growmonth==firstmonth+1, cwd>88) %>% arrange(pa
 ```
 
 ```r
-nosnow_last_month_col %>% filter(growmonth==lastmonth) %>% arrange(cwd, ppt)
+nosnow_recent_last_month_col %>% filter(growmonth==lastmonth) %>% arrange(cwd, ppt)
 ```
 
 ```
@@ -1135,7 +1109,7 @@ Average first and last month
 #remove BH: 2013
 #convert last month to cal year for avg calc 
 
-nosnowfirst_last_month_for_calc <- nosnow_last_month_col %>% 
+nosnow_recentfirst_last_month_for_calc <- nosnow_recent_last_month_col %>% 
   filter(!(parent.pop=="IH" & year==1998)) %>% 
   filter(!(parent.pop=="IH" & year==2005)) %>% 
   filter(!(parent.pop=="IH" & year==2019)) %>% 
@@ -1144,7 +1118,7 @@ nosnowfirst_last_month_for_calc <- nosnow_last_month_col %>%
   select(firstmonth:lastmonth, lastmonth_cal, parent.pop, elevation.group, elev_m, year) %>% 
   distinct()
 
-nosnow_avg_first_last_month <- nosnowfirst_last_month_for_calc %>% 
+nosnow_recent_avg_first_last_month <- nosnow_recentfirst_last_month_for_calc %>% 
   group_by(parent.pop, elevation.group, elev_m) %>% 
   summarise(AvgFirstMonth=mean(firstmonth), First_sem=sem(firstmonth),
             AvgLastMonth=mean(lastmonth), Last_sem=sem(lastmonth),
@@ -1157,7 +1131,7 @@ nosnow_avg_first_last_month <- nosnowfirst_last_month_for_calc %>%
 ```
 
 ```r
-nosnow_avg_first_last_month
+nosnow_recent_avg_first_last_month
 ```
 
 ```
@@ -1179,58 +1153,93 @@ nosnow_avg_first_last_month
 #8 in growmonth = April - w/o converting last month to calendar year format, the cases where growmonth=1 is pulling the last month much earlier and with a much greater standard error --> wrong!
 #8 in lastmonth_cal = August 
 
-#QUESTION: how to round?
-#For now just the whole number (2.75=2, 2.23=2)
-nosnow_avg_first_last_month_recent <- tibble(parent.pop=c("BH", "CC","IH","SC","TM2"), AvgFirstMonth=2, AvgLastMonth=c(10,10,12,10,10))
-
-nosnow_avg_first_last_month_allmonths <- left_join(nosnow_recent_growyear_months, nosnow_avg_first_last_month_recent)
+#Used Standard Rounding
+nosnow_avg_first_last_month_recent <- nosnow_recent_avg_first_last_month %>% 
+  mutate(AvgFirstMonth=true_round(AvgFirstMonth, 0), 
+         AvgLastMonth=if_else(parent.pop=="IH", 12, true_round(AvgLastMonth, 0))) %>% #in growmonth format
+  select(parent.pop:elev_m, AvgFirstMonth, AvgLastMonth)
+nosnow_recent_avg_first_last_month
 ```
 
 ```
-## Joining with `by = join_by(parent.pop)`
+## # A tibble: 5 × 9
+## # Groups:   parent.pop, elevation.group [5]
+##   parent.pop elevation.group elev_m AvgFirstMonth First_sem AvgLastMonth
+##   <chr>      <chr>            <dbl>         <dbl>     <dbl>        <dbl>
+## 1 BH         Low               511.          2.76     0.118        10.3 
+## 2 CC         Low               313           2.23     0.114        10.1 
+## 3 IH         Low               454.          2.19     0.131         8.74
+## 4 SC         Low               422.          2.5      0.115        10.4 
+## 5 TM2        Low               379.          2.27     0.117        10.2 
+## # ℹ 3 more variables: Last_sem <dbl>, AvgLastMonth_cal <dbl>,
+## #   Last_cal_sem <dbl>
+```
+
+```r
+nosnow_avg_first_last_month_recent
+```
+
+```
+## # A tibble: 5 × 5
+## # Groups:   parent.pop, elevation.group [5]
+##   parent.pop elevation.group elev_m AvgFirstMonth AvgLastMonth
+##   <chr>      <chr>            <dbl>         <dbl>        <dbl>
+## 1 BH         Low               511.             3           10
+## 2 CC         Low               313              2           10
+## 3 IH         Low               454.             2           12
+## 4 SC         Low               422.             3           10
+## 5 TM2        Low               379.             2           10
+```
+
+```r
+nosnow_recent_avg_first_last_month_allmonths <- left_join(nosnow_recent_growyear_months, nosnow_avg_first_last_month_recent)
+```
+
+```
+## Joining with `by = join_by(parent.pop, elevation.group, elev_m)`
 ```
 Apriori Assumption for growth season: Low: Oct-July
 
 Fill in all the months b/t the first and last for the full growth season 
 
 ```r
-nosnow_grwseason_recent <- nosnow_avg_first_last_month_allmonths %>% 
+nosnow_grwseason_recent <- nosnow_recent_avg_first_last_month_allmonths %>% 
   group_by(parent.pop, elevation.group, elev_m, year) %>% 
   filter(growmonth>AvgFirstMonth) %>% #first and last month are in grow month format not calendar year 
-  filter(growmonth<AvgLastMonth) %>% 
+  filter(growmonth<=AvgLastMonth) %>% 
   arrange(year,parent.pop, growmonth)
 summary(nosnow_grwseason_recent) 
 ```
 
 ```
 ##      month          growmonth       parent.pop        elevation.group   
-##  Min.   : 1.000   Min.   : 3.000   Length:1110        Length:1110       
-##  1st Qu.: 2.000   1st Qu.: 4.000   Class :character   Class :character  
-##  Median : 4.000   Median : 6.000   Mode  :character   Mode  :character  
-##  Mean   : 5.486   Mean   : 6.243                                        
-##  3rd Qu.:11.000   3rd Qu.: 8.000                                        
-##  Max.   :12.000   Max.   :11.000                                        
-##      elev_m          PckSum            year           cwd       
-##  Min.   :313.0   Min.   :0.0000   Min.   :1992   Min.   : 0.00  
-##  1st Qu.:379.2   1st Qu.:0.0000   1st Qu.:1999   1st Qu.:20.68  
-##  Median :421.5   Median :0.0000   Median :2006   Median :31.45  
-##  Mean   :417.9   Mean   :0.6131   Mean   :2006   Mean   :35.09  
-##  3rd Qu.:454.1   3rd Qu.:0.2523   3rd Qu.:2014   3rd Qu.:47.53  
-##  Max.   :511.4   Max.   :2.3243   Max.   :2021   Max.   :96.88  
+##  Min.   : 1.000   Min.   : 3.000   Length:1200        Length:1200       
+##  1st Qu.: 2.750   1st Qu.: 5.000   Class :character   Class :character  
+##  Median : 4.500   Median : 7.000   Mode  :character   Mode  :character  
+##  Mean   : 5.325   Mean   : 6.925                                        
+##  3rd Qu.: 6.250   3rd Qu.: 9.000                                        
+##  Max.   :12.000   Max.   :12.000                                        
+##      elev_m          PckSum            year           cwd        
+##  Min.   :313.0   Min.   :0.0000   Min.   :1992   Min.   :  0.00  
+##  1st Qu.:379.2   1st Qu.:0.0000   1st Qu.:1999   1st Qu.: 20.90  
+##  Median :421.5   Median :0.0000   Median :2006   Median : 32.16  
+##  Mean   :415.2   Mean   :0.6252   Mean   :2006   Mean   : 40.41  
+##  3rd Qu.:454.1   3rd Qu.:0.7703   3rd Qu.:2014   3rd Qu.: 56.69  
+##  Max.   :511.4   Max.   :2.3243   Max.   :2021   Max.   :172.80  
 ##       pck                ppt              tmn              tmx       
 ##  Min.   : 0.00000   Min.   :  0.00   Min.   :-1.050   Min.   : 9.38  
-##  1st Qu.: 0.00000   1st Qu.: 29.24   1st Qu.: 3.692   1st Qu.:13.76  
-##  Median : 0.00000   Median : 83.11   Median : 5.465   Median :16.95  
-##  Mean   : 0.06964   Mean   :115.64   Mean   : 6.046   Mean   :18.03  
-##  3rd Qu.: 0.00000   3rd Qu.:162.17   3rd Qu.: 7.535   3rd Qu.:21.03  
+##  1st Qu.: 0.00000   1st Qu.: 15.34   1st Qu.: 3.930   1st Qu.:14.05  
+##  Median : 0.00000   Median : 68.04   Median : 5.910   Median :17.80  
+##  Mean   : 0.06442   Mean   :105.06   Mean   : 7.084   Mean   :19.66  
+##  3rd Qu.: 0.00000   3rd Qu.:153.14   3rd Qu.: 9.812   3rd Qu.:24.70  
 ##  Max.   :42.30000   Max.   :614.04   Max.   :19.740   Max.   :35.97  
-##  AvgFirstMonth  AvgLastMonth  
-##  Min.   :2     Min.   :10.00  
-##  1st Qu.:2     1st Qu.:10.00  
-##  Median :2     Median :10.00  
-##  Mean   :2     Mean   :10.49  
-##  3rd Qu.:2     3rd Qu.:10.00  
-##  Max.   :2     Max.   :12.00
+##  AvgFirstMonth   AvgLastMonth 
+##  Min.   :2.00   Min.   :10.0  
+##  1st Qu.:2.00   1st Qu.:10.0  
+##  Median :2.00   Median :10.0  
+##  Mean   :2.35   Mean   :10.5  
+##  3rd Qu.:3.00   3rd Qu.:10.5  
+##  Max.   :3.00   Max.   :12.0
 ```
 
 ```r
@@ -1239,12 +1248,12 @@ xtabs(~parent.pop+month, data=nosnow_grwseason_recent)
 
 ```
 ##           month
-## parent.pop  1  2  3  4  5  6  7 11 12
-##        BH  30 30 30 30 30  0  0 30 30
-##        CC  30 30 30 30 30  0  0 30 30
-##        IH  30 30 30 30 30 30 30 30 30
-##        SC  30 30 30 30 30  0  0 30 30
-##        TM2 30 30 30 30 30  0  0 30 30
+## parent.pop  1  2  3  4  5  6  7  8 11 12
+##        BH  30 30 30 30 30 30  0  0  0 30
+##        CC  30 30 30 30 30 30  0  0 30 30
+##        IH  30 30 30 30 30 30 30 30 30 30
+##        SC  30 30 30 30 30 30  0  0  0 30
+##        TM2 30 30 30 30 30 30  0  0 30 30
 ```
 
 ```r
@@ -1473,16 +1482,16 @@ dim(nosnow_historical_growyear_months)
 First month 
 
 ```r
-nosnow_first_month <- nosnow_historical_growyear_months %>%
+nosnow_historical_first_month <- nosnow_historical_growyear_months %>%
   group_by(parent.pop, elevation.group, elev_m, year) %>% 
   filter(ppt>=25) %>% 
   arrange(growmonth) %>% 
   filter(row_number()==1) #get first month for each pop and year with germinating inducing rain 
 
-nosnow_first_month_tomerge <- nosnow_first_month %>% 
+nosnow_historical_first_month_tomerge <- nosnow_historical_first_month %>% 
   select(parent.pop:elev_m, year, firstmonth=growmonth)
 
-nosnow_first_month_col <- full_join(nosnow_historical_growyear_months, nosnow_first_month_tomerge)
+nosnow_historical_first_month_col <- full_join(nosnow_historical_growyear_months, nosnow_historical_first_month_tomerge)
 ```
 
 ```
@@ -1490,7 +1499,7 @@ nosnow_first_month_col <- full_join(nosnow_historical_growyear_months, nosnow_fi
 ```
 
 ```r
-dim(nosnow_first_month_col)
+dim(nosnow_historical_first_month_col)
 ```
 
 ```
@@ -1500,16 +1509,16 @@ dim(nosnow_first_month_col)
 Last month 
 
 ```r
-nosnow_last_month <- nosnow_historical_growyear_months %>%
+nosnow_historical_last_month <- nosnow_historical_growyear_months %>%
   group_by(parent.pop, elevation.group, elev_m, year) %>% 
   filter(cwd>87) %>% #adjusted for the historical 3rd quartile of cwd
   arrange(month) %>% 
   filter(row_number()==1)
 
-nosnow_last_month_tomerge <- nosnow_last_month %>% 
+nosnow_historical_last_month_tomerge <- nosnow_historical_last_month %>% 
   select(parent.pop:elev_m, year, lastmonth=growmonth) #last month is in grow month not calendar month format
 
-nosnow_last_month_col <- full_join(nosnow_first_month_col, nosnow_last_month_tomerge)  %>% 
+nosnow_historical_last_month_col <- full_join(nosnow_historical_first_month_col, nosnow_historical_last_month_tomerge)  %>% 
   select(firstmonth, lastmonth, month:tmx)
 ```
 
@@ -1518,7 +1527,7 @@ nosnow_last_month_col <- full_join(nosnow_first_month_col, nosnow_last_month_tom
 ```
 
 ```r
-dim(nosnow_last_month_col)
+dim(nosnow_historical_last_month_col)
 ```
 
 ```
@@ -1528,7 +1537,7 @@ dim(nosnow_last_month_col)
 Checking for weird cases
 
 ```r
-summary(nosnow_last_month_col)
+summary(nosnow_historical_last_month_col)
 ```
 
 ```
@@ -1563,7 +1572,7 @@ summary(nosnow_last_month_col)
 ```
 
 ```r
-nosnow_last_month_col %>% filter(is.na(lastmonth)) %>% arrange(year) #0 years where there isn't a last month
+nosnow_historical_last_month_col %>% filter(is.na(lastmonth)) %>% arrange(year) #0 years where there isn't a last month
 ```
 
 ```
@@ -1575,7 +1584,7 @@ nosnow_last_month_col %>% filter(is.na(lastmonth)) %>% arrange(year) #0 years wh
 ```
 
 ```r
-nosnow_last_month_col %>% filter(is.na(firstmonth)) %>% arrange(year) #0 years where there isn't a first month
+nosnow_historical_last_month_col %>% filter(is.na(firstmonth)) %>% arrange(year) #0 years where there isn't a first month
 ```
 
 ```
@@ -1587,7 +1596,7 @@ nosnow_last_month_col %>% filter(is.na(firstmonth)) %>% arrange(year) #0 years w
 ```
 
 ```r
-nosnow_last_month_col %>% filter(lastmonth<4) %>% arrange(parent.pop, year) #some cases where last month is less than 4 (earlier than December)
+nosnow_historical_last_month_col %>% filter(lastmonth<4) %>% arrange(parent.pop, year) #some cases where last month is less than 4 (earlier than December)
 ```
 
 ```
@@ -1610,7 +1619,7 @@ nosnow_last_month_col %>% filter(lastmonth<4) %>% arrange(parent.pop, year) #som
 ```
 
 ```r
-nosnow_last_month_col %>% filter(lastmonth<firstmonth, lastmonth<4) %>% arrange(parent.pop, year) #most of the above are when the last month is before the first month (in growyear, not calendar year)
+nosnow_historical_last_month_col %>% filter(lastmonth<firstmonth, lastmonth<4) %>% arrange(parent.pop, year) #most of the above are when the last month is before the first month (in growyear, not calendar year)
 ```
 
 ```
@@ -1634,7 +1643,7 @@ nosnow_last_month_col %>% filter(lastmonth<firstmonth, lastmonth<4) %>% arrange(
 
 ```r
 #****NEED TO CONVERT LAST MONTH TO CALENDAR YEAR FORMAT FOR AVG CALCS 
-nosnow_last_month_col %>% filter(lastmonth>firstmonth & lastmonth<4) %>% arrange(parent.pop, year) #0 cases where the last month is after the first month before Dec 
+nosnow_historical_last_month_col %>% filter(lastmonth>firstmonth & lastmonth<4) %>% arrange(parent.pop, year) #0 cases where the last month is after the first month before Dec 
 ```
 
 ```
@@ -1646,7 +1655,7 @@ nosnow_last_month_col %>% filter(lastmonth>firstmonth & lastmonth<4) %>% arrange
 ```
 
 ```r
-nosnow_last_month_col %>% filter(lastmonth==firstmonth) %>% arrange(parent.pop, year) #first month and last month are the same for IH in 2 years ('72, '89)
+nosnow_historical_last_month_col %>% filter(lastmonth==firstmonth) %>% arrange(parent.pop, year) #first month and last month are the same for IH in 2 years ('72, '89)
 ```
 
 ```
@@ -1671,7 +1680,7 @@ nosnow_last_month_col %>% filter(lastmonth==firstmonth) %>% arrange(parent.pop, 
 ```r
 #****CAN DROP THESE CASES (IF GO WITH THE AVG FIRST/LAST MONTH OPTION)
 
-nosnow_last_month_col %>% filter(lastmonth==1) %>% arrange(parent.pop, year) #8 cases where Sept is last month 
+nosnow_historical_last_month_col %>% filter(lastmonth==1) %>% arrange(parent.pop, year) #8 cases where Sept is last month 
 ```
 
 ```
@@ -1694,7 +1703,7 @@ nosnow_last_month_col %>% filter(lastmonth==1) %>% arrange(parent.pop, year) #8 
 ```
 
 ```r
-nosnow_last_month_col %>% filter(lastmonth==4) #0 cases where Oct-Dec is the last month
+nosnow_historical_last_month_col %>% filter(lastmonth==4) #0 cases where Oct-Dec is the last month
 ```
 
 ```
@@ -1706,7 +1715,7 @@ nosnow_last_month_col %>% filter(lastmonth==4) #0 cases where Oct-Dec is the las
 ```
 
 ```r
-nosnow_last_month_col %>% filter(firstmonth>4) #0 cases where first month is after December
+nosnow_historical_last_month_col %>% filter(firstmonth>4) #0 cases where first month is after December
 ```
 
 ```
@@ -1718,7 +1727,7 @@ nosnow_last_month_col %>% filter(firstmonth>4) #0 cases where first month is aft
 ```
 
 ```r
-nosnow_last_month_col %>% filter(growmonth==firstmonth+1, cwd>87) %>% arrange(parent.pop, year) #1 case where cwd is high in the second growth month 
+nosnow_historical_last_month_col %>% filter(growmonth==firstmonth+1, cwd>87) %>% arrange(parent.pop, year) #1 case where cwd is high in the second growth month 
 ```
 
 ```
@@ -1731,7 +1740,7 @@ nosnow_last_month_col %>% filter(growmonth==firstmonth+1, cwd>87) %>% arrange(pa
 ```
 
 ```r
-nosnow_last_month_col %>% filter(growmonth==lastmonth) %>% arrange(cwd, ppt)
+nosnow_historical_last_month_col %>% filter(growmonth==lastmonth) %>% arrange(cwd, ppt)
 ```
 
 ```
@@ -1759,14 +1768,14 @@ Average first and last month
 #remove IH: 1972, 1989
 #convert last month to cal year for avg calc 
 
-nosnowfirst_last_month_for_calc <- nosnow_last_month_col %>% 
+nosnow_historicalfirst_last_month_for_calc <- nosnow_historical_last_month_col %>% 
   filter(!(parent.pop=="IH" & year==1972)) %>% 
   filter(!(parent.pop=="IH" & year==1989)) %>% 
   mutate(lastmonth_cal=if_else(lastmonth<=4, lastmonth+8, lastmonth-4)) %>% 
   select(firstmonth:lastmonth, lastmonth_cal, parent.pop, elevation.group, elev_m, year) %>% 
   distinct()
 
-nosnow_avg_first_last_month <- nosnowfirst_last_month_for_calc %>% 
+nosnow_historical_avg_first_last_month <- nosnow_historicalfirst_last_month_for_calc %>% 
   group_by(parent.pop, elevation.group, elev_m) %>% 
   summarise(AvgFirstMonth=mean(firstmonth), First_sem=sem(firstmonth),
             AvgLastMonth=mean(lastmonth), Last_sem=sem(lastmonth),
@@ -1779,7 +1788,7 @@ nosnow_avg_first_last_month <- nosnowfirst_last_month_for_calc %>%
 ```
 
 ```r
-nosnow_avg_first_last_month
+nosnow_historical_avg_first_last_month
 ```
 
 ```
@@ -1801,57 +1810,92 @@ nosnow_avg_first_last_month
 #9 in growmonth = May - w/o converting last month to calendar year format, the cases where growmonth=1 is pulling the last month much earlier and with a much greater standard error --> wrong!
 #8 in lastmonth_cal = August 
 
-#QUESTION: how to round?
-#For now just the whole number (2.75=2, 2.23=2)
-nosnow_avg_first_last_month_historical <- tibble(parent.pop=c("BH", "CC","IH","SC","TM2"), AvgFirstMonth=c(2,1,1,2,1), AvgLastMonth=c(10,10,12,10,10))
-
-nosnow_avg_first_last_month_allmonths <- left_join(nosnow_historical_growyear_months, nosnow_avg_first_last_month_historical)
+#Used Standard Rounding
+nosnow_avg_first_last_month_historical <- nosnow_historical_avg_first_last_month %>% 
+  mutate(AvgFirstMonth=true_round(AvgFirstMonth, 0), 
+         AvgLastMonth=if_else(parent.pop=="IH", 12, true_round(AvgLastMonth, 0))) %>% #in growmonth format
+  select(parent.pop:elev_m, AvgFirstMonth, AvgLastMonth)
+nosnow_historical_avg_first_last_month
 ```
 
 ```
-## Joining with `by = join_by(parent.pop)`
+## # A tibble: 5 × 9
+## # Groups:   parent.pop, elevation.group [5]
+##   parent.pop elevation.group elev_m AvgFirstMonth First_sem AvgLastMonth
+##   <chr>      <chr>            <dbl>         <dbl>     <dbl>        <dbl>
+## 1 BH         Low               511.          2.27     0.151        10.2 
+## 2 CC         Low               313           1.93     0.143        10.5 
+## 3 IH         Low               454.          1.93     0.135         9.57
+## 4 SC         Low               422.          2.17     0.136        10.3 
+## 5 TM2        Low               379.          1.8      0.121        10   
+## # ℹ 3 more variables: Last_sem <dbl>, AvgLastMonth_cal <dbl>,
+## #   Last_cal_sem <dbl>
+```
+
+```r
+nosnow_avg_first_last_month_historical
+```
+
+```
+## # A tibble: 5 × 5
+## # Groups:   parent.pop, elevation.group [5]
+##   parent.pop elevation.group elev_m AvgFirstMonth AvgLastMonth
+##   <chr>      <chr>            <dbl>         <dbl>        <dbl>
+## 1 BH         Low               511.             2           10
+## 2 CC         Low               313              2           11
+## 3 IH         Low               454.             2           12
+## 4 SC         Low               422.             2           10
+## 5 TM2        Low               379.             2           10
+```
+
+```r
+nosnow_historical_avg_first_last_month_allmonths <- left_join(nosnow_historical_growyear_months, nosnow_avg_first_last_month_historical)
+```
+
+```
+## Joining with `by = join_by(parent.pop, elevation.group, elev_m)`
 ```
 
 Fill in all the months b/t the first and last for the full growth season 
 
 ```r
-nosnow_grwseason_historical <- nosnow_avg_first_last_month_allmonths %>% 
+nosnow_grwseason_historical <- nosnow_historical_avg_first_last_month_allmonths %>% 
   group_by(parent.pop, elevation.group, elev_m, year) %>% 
   filter(growmonth>AvgFirstMonth) %>% #first and last month are in grow month format not calendar year 
-  filter(growmonth<AvgLastMonth) %>% 
+  filter(growmonth<=AvgLastMonth) %>% 
   arrange(year,parent.pop, growmonth)
 summary(nosnow_grwseason_historical) 
 ```
 
 ```
 ##      month          growmonth       parent.pop        elevation.group   
-##  Min.   : 1.000   Min.   : 2.000   Length:1200        Length:1200       
-##  1st Qu.: 2.750   1st Qu.: 4.000   Class :character   Class :character  
-##  Median : 4.500   Median : 6.000   Mode  :character   Mode  :character  
-##  Mean   : 5.825   Mean   : 5.925                                        
-##  3rd Qu.:10.250   3rd Qu.: 8.000                                        
-##  Max.   :12.000   Max.   :11.000                                        
+##  Min.   : 1.000   Min.   : 3.000   Length:1290        Length:1290       
+##  1st Qu.: 3.000   1st Qu.: 5.000   Class :character   Class :character  
+##  Median : 5.000   Median : 7.000   Mode  :character   Mode  :character  
+##  Mean   : 5.628   Mean   : 6.837                                        
+##  3rd Qu.: 8.000   3rd Qu.: 9.000                                        
+##  Max.   :12.000   Max.   :12.000                                        
 ##      elev_m          PckSum             year           cwd        
 ##  Min.   :313.0   Min.   : 0.2340   Min.   :1962   Min.   :  0.00  
-##  1st Qu.:379.2   1st Qu.: 0.5973   1st Qu.:1969   1st Qu.: 21.23  
-##  Median :421.5   Median : 0.9510   Median :1976   Median : 32.95  
-##  Mean   :415.2   Mean   : 5.7652   Mean   :1976   Mean   : 38.72  
-##  3rd Qu.:454.1   3rd Qu.: 8.4365   3rd Qu.:1984   3rd Qu.: 55.45  
+##  1st Qu.:379.2   1st Qu.: 0.5973   1st Qu.:1969   1st Qu.: 21.89  
+##  Median :421.5   Median : 0.9510   Median :1976   Median : 34.33  
+##  Mean   :415.2   Mean   : 5.4044   Mean   :1976   Mean   : 43.64  
+##  3rd Qu.:454.1   3rd Qu.: 5.4673   3rd Qu.:1984   3rd Qu.: 61.50  
 ##  Max.   :511.4   Max.   :17.3440   Max.   :1991   Max.   :183.92  
 ##       pck                ppt              tmn              tmx       
 ##  Min.   :  0.0000   Min.   :  0.00   Min.   :-1.850   Min.   : 8.63  
-##  1st Qu.:  0.0000   1st Qu.: 26.74   1st Qu.: 2.598   1st Qu.:13.70  
-##  Median :  0.0000   Median : 73.13   Median : 4.725   Median :16.64  
-##  Mean   :  0.6148   Mean   :106.04   Mean   : 5.311   Mean   :18.17  
-##  3rd Qu.:  0.0000   3rd Qu.:157.98   3rd Qu.: 7.800   3rd Qu.:22.42  
-##  Max.   :129.4600   Max.   :559.96   Max.   :17.920   Max.   :35.34  
-##  AvgFirstMonth   AvgLastMonth 
-##  Min.   :1.00   Min.   :10.0  
-##  1st Qu.:1.00   1st Qu.:10.0  
-##  Median :1.00   Median :10.0  
-##  Mean   :1.35   Mean   :10.5  
-##  3rd Qu.:2.00   3rd Qu.:10.5  
-##  Max.   :2.00   Max.   :12.0
+##  1st Qu.:  0.0000   1st Qu.: 13.58   1st Qu.: 2.760   1st Qu.:13.93  
+##  Median :  0.0000   Median : 58.52   Median : 5.030   Median :17.25  
+##  Mean   :  0.5719   Mean   : 94.82   Mean   : 6.188   Mean   :19.56  
+##  3rd Qu.:  0.0000   3rd Qu.:145.06   3rd Qu.: 9.168   3rd Qu.:25.19  
+##  Max.   :129.4600   Max.   :559.96   Max.   :18.290   Max.   :36.45  
+##  AvgFirstMonth  AvgLastMonth  
+##  Min.   :2     Min.   :10.00  
+##  1st Qu.:2     1st Qu.:10.00  
+##  Median :2     Median :10.00  
+##  Mean   :2     Mean   :10.67  
+##  3rd Qu.:2     3rd Qu.:11.00  
+##  Max.   :2     Max.   :12.00
 ```
 
 ```r
@@ -1860,12 +1904,12 @@ xtabs(~parent.pop+month, data=nosnow_grwseason_historical)
 
 ```
 ##           month
-## parent.pop  1  2  3  4  5  6  7 10 11 12
-##        BH  30 30 30 30 30  0  0  0 30 30
-##        CC  30 30 30 30 30  0  0 30 30 30
+## parent.pop  1  2  3  4  5  6  7  8 11 12
+##        BH  30 30 30 30 30 30  0  0 30 30
+##        CC  30 30 30 30 30 30 30  0 30 30
 ##        IH  30 30 30 30 30 30 30 30 30 30
-##        SC  30 30 30 30 30  0  0  0 30 30
-##        TM2 30 30 30 30 30  0  0 30 30 30
+##        SC  30 30 30 30 30 30  0  0 30 30
+##        TM2 30 30 30 30 30 30  0  0 30 30
 ```
 
 ```r
@@ -1882,11 +1926,13 @@ nosnow_grwseason_historical %>% ggplot(aes(x=month)) + geom_histogram() +
 
 ## Populations that get more than 70 mm of snow pack in a year (on average)
 
--   First month = snowpack = 0
+-   First month = snowpack = 0 and min temp > 0
 
     -   Remember this month is not included in the final "growth season"
 
--   Last month = snowpack. \> 70 mm
+-   Last month = snowpack. \> 70 mm OR pck > 0 and min temp < 0 OR min temp < -5 (moderate freeze)
+
+Note: “The month name of the snowpack file (that is, pckmar.asc) relates to the first day of the next month (that is, station observations on April 1st correlate with the snowpack file for March)." But this makes sense, a survey on April 1 gives a sense for the total snowpack in March. 
 
 ### Recent climate
 
@@ -1978,17 +2024,17 @@ summary(snow_pops_recent_years)
 First month 
 
 ```r
-snow_first_month <- snow_pops_recent_years %>%
+snow_recent_first_month <- snow_pops_recent_years %>%
   group_by(parent.pop, elevation.group, elev_m, year) %>% 
   filter(pck==0) %>% 
   filter(tmn > 0) %>% 
   arrange(month) %>% 
   filter(row_number()==1) #get first month for each pop and year with no snowpack for germ
 
-snow_first_month_tomerge <- snow_first_month %>% 
+snow_recent_first_month_tomerge <- snow_recent_first_month %>% 
   select(parent.pop:elev_m, year, firstmonth=month)
 
-snow_first_month_col <- full_join(snow_pops_recent_years, snow_first_month_tomerge)
+snow_recent_first_month_col <- full_join(snow_pops_recent_years, snow_recent_first_month_tomerge)
 ```
 
 ```
@@ -1996,7 +2042,7 @@ snow_first_month_col <- full_join(snow_pops_recent_years, snow_first_month_tomer
 ```
 
 ```r
-dim(snow_first_month_col)
+dim(snow_recent_first_month_col)
 ```
 
 ```
@@ -2006,7 +2052,7 @@ dim(snow_first_month_col)
 Last month
 
 ```r
-snow_last_month <- snow_first_month_col %>%
+snow_recent_last_month <- snow_recent_first_month_col %>%
   group_by(parent.pop, elevation.group, elev_m, year) %>% 
   filter(month>firstmonth) %>% 
   filter(if_else(pck>70, pck>70, 
@@ -2014,10 +2060,10 @@ snow_last_month <- snow_first_month_col %>%
   arrange(month) %>% 
   filter(row_number()==1) #get first month after growstart for each pop and year with pck >70 
 
-snow_last_month_tomerge <- snow_last_month %>% 
+snow_recent_last_month_tomerge <- snow_recent_last_month %>% 
   select(parent.pop:elev_m, year, firstmonth,lastmonth=month)
 
-snow_last_month_col <- full_join(snow_first_month_col, snow_last_month_tomerge) %>% 
+snow_recent_last_month_col <- full_join(snow_recent_first_month_col, snow_recent_last_month_tomerge) %>% 
   select(firstmonth, lastmonth, year:tmx)
 ```
 
@@ -2028,7 +2074,7 @@ snow_last_month_col <- full_join(snow_first_month_col, snow_last_month_tomerge) 
 ```
 
 ```r
-dim(snow_last_month_col)
+dim(snow_recent_last_month_col)
 ```
 
 ```
@@ -2038,7 +2084,7 @@ dim(snow_last_month_col)
 Check weird cases
 
 ```r
-summary(snow_last_month_col)
+summary(snow_recent_last_month_col)
 ```
 
 ```
@@ -2069,7 +2115,7 @@ summary(snow_last_month_col)
 ```
 
 ```r
-snow_last_month_col %>% filter(is.na(firstmonth)) #no cases where there isn't a firstmonth
+snow_recent_last_month_col %>% filter(is.na(firstmonth)) #no cases where there isn't a firstmonth
 ```
 
 ```
@@ -2081,7 +2127,7 @@ snow_last_month_col %>% filter(is.na(firstmonth)) #no cases where there isn't a 
 ```
 
 ```r
-snow_last_month_col %>% filter(is.na(lastmonth)) #109 cases where there isn't a lastmonth 
+snow_recent_last_month_col %>% filter(is.na(lastmonth)) #109 cases where there isn't a lastmonth 
 ```
 
 ```
@@ -2104,10 +2150,10 @@ snow_last_month_col %>% filter(is.na(lastmonth)) #109 cases where there isn't a 
 ```
 
 ```r
-#***WHAT TO DO FOR THESE CASES? took them out of the avg calcs for now 
-#*Temperature never goes below 0, no snowpack, or min temp > -5 
+#***WHAT TO DO FOR THESE CASES? Make the last month 12 (Dec)
+#*Temperature never goes below 0, no snow_pack, or min temp > -5 
 
-snow_last_month_col %>% filter(lastmonth==firstmonth) %>% arrange(parent.pop, year) #no cases where last month is first month 
+snow_recent_last_month_col %>% filter(lastmonth==firstmonth) %>% arrange(parent.pop, year) #no cases where last month is first month 
 ```
 
 ```
@@ -2119,7 +2165,7 @@ snow_last_month_col %>% filter(lastmonth==firstmonth) %>% arrange(parent.pop, ye
 ```
 
 ```r
-snow_last_month_col %>% filter(lastmonth==firstmonth+1) %>% arrange(parent.pop, year) 
+snow_recent_last_month_col %>% filter(lastmonth==firstmonth+1) %>% arrange(parent.pop, year) 
 ```
 
 ```
@@ -2143,7 +2189,7 @@ snow_last_month_col %>% filter(lastmonth==firstmonth+1) %>% arrange(parent.pop, 
 
 ```r
 #***I added a temperature requirement for temp >0 for the first month and still get 11 cases where there is heavy snow in the month after the first month 
-snow_last_month_col %>% filter(lastmonth==firstmonth+2) #1 case where there was sig snowpack in the second month after the first month of 0 snowpack (WL1 - 2018)
+snow_recent_last_month_col %>% filter(lastmonth==firstmonth+2) #1 case where there was sig snowpack in the second month after the first month of 0 snowpack (WL1 - 2018)
 ```
 
 ```
@@ -2167,8 +2213,8 @@ snow_last_month_col %>% filter(lastmonth==firstmonth+2) #1 case where there was 
 ```
 
 ```r
-heavysnow <- snow_last_month_col %>% filter(lastmonth==firstmonth+1) %>% filter(month==firstmonth)
-summary(heavysnow)
+heavysnow_recent <- snow_recent_last_month_col %>% filter(lastmonth==firstmonth+1) %>% filter(month==firstmonth)
+summary(heavysnow_recent)
 ```
 
 ```
@@ -2196,7 +2242,7 @@ summary(heavysnow)
 ```
 
 ```r
-unique(heavysnow$parent.pop)
+unique(heavysnow_recent$parent.pop)
 ```
 
 ```
@@ -2204,7 +2250,7 @@ unique(heavysnow$parent.pop)
 ```
 
 ```r
-heavysnow %>% filter(elev_m>1800)
+heavysnow_recent %>% filter(elev_m>1800)
 ```
 
 ```
@@ -2228,16 +2274,17 @@ heavysnow %>% filter(elev_m>1800)
 Average first and last month
 
 ```r
-#remove cases with no last month - Alternative option to consider = making last month 12
+#for cases with no last month - make last month 12
 #remove cases where last month is first month +1 or 2 
 
-snowfirst_last_month_for_calc <- snow_last_month_col %>% 
-  filter(!is.na(lastmonth)) %>% 
+snow_recentfirst_last_month_for_calc <- snow_recent_last_month_col %>% 
+  mutate(lastmonth=if_else(is.na(lastmonth), 12, lastmonth)) %>% 
   filter(lastmonth > firstmonth+2) %>% 
   select(firstmonth:lastmonth, parent.pop, elevation.group, elev_m, year) %>% 
   distinct()
+#snow_recentfirst_last_month_for_calc %>% filter(parent.pop=="CP2", year=="2011") converting last month to 12 worked for the cases where it was NA before 
 
-snow_avg_first_last_month <- snowfirst_last_month_for_calc %>% 
+snow_recent_avg_first_last_month <- snow_recentfirst_last_month_for_calc %>% 
   group_by(parent.pop, elevation.group, elev_m) %>% 
   summarise(AvgFirstMonth=mean(firstmonth), First_sem=sem(firstmonth),
             AvgLastMonth=mean(lastmonth), Last_sem=sem(lastmonth)) %>% 
@@ -2250,7 +2297,7 @@ snow_avg_first_last_month <- snowfirst_last_month_for_calc %>%
 ```
 
 ```r
-snow_avg_first_last_month
+snow_recent_avg_first_last_month
 ```
 
 ```
@@ -2258,80 +2305,139 @@ snow_avg_first_last_month
 ## # Groups:   parent.pop, elevation.group [18]
 ##    parent.pop elevation.group elev_m AvgFirstMonth First_sem AvgLastMonth
 ##    <chr>      <chr>            <dbl>         <dbl>     <dbl>        <dbl>
-##  1 WL2        High             2020.          5.08    0.169          11.8
-##  2 YO4        High             2158.          4.96    0.194          11.8
-##  3 CP2        High             2244.          5.43    0.130          11.7
-##  4 CP3        High             2266.          5.62    0.126          11.6
+##  1 WL2        High             2020.          5.14    0.155          11.8
+##  2 YO4        High             2158.          5       0.165          11.8
+##  3 CP2        High             2244.          5.5     0.133          11.7
+##  4 CP3        High             2266.          5.67    0.130          11.6
 ##  5 LV3        High             2354.          6.4     0.141          11.2
-##  6 SQ3        High             2373.          5.35    0.135          11.8
-##  7 YO7        High             2470.          5.70    0.117          11.6
-##  8 YO8        High             2591.          5.93    0.106          11.6
+##  6 SQ3        High             2373.          5.33    0.111          11.8
+##  7 YO7        High             2470.          5.8     0.121          11.7
+##  8 YO8        High             2591.          6       0.107          11.6
 ##  9 LV1        High             2593.          6.43    0.133          11.2
 ## 10 LVTR1      High             2741.          6.43    0.133          11.2
 ## 11 YO11       High             2872.          6.13    0.0926         11.4
-## 12 WV         Mid               749.          2.94    0.249          11.9
-## 13 FR         Mid               787           2.84    0.206          11.9
-## 14 DPR        Mid              1019.          1.5     0.342          12  
-## 15 WR         Mid              1158           2.77    0.411          12  
-## 16 WL1        Mid              1614.          3.95    0.271          12.0
-## 17 SQ1        Mid              1921.          4.33    0.270          12.0
-## 18 SQ2        Mid              1934.          4.68    0.191          12.0
+## 12 WV         Mid               749.          3.07    0.172          12.0
+## 13 FR         Mid               787           2.8     0.188          12.0
+## 14 DPR        Mid              1019.          1.77    0.178          12  
+## 15 WR         Mid              1158           2.85    0.260          12  
+## 16 WL1        Mid              1614.          4.07    0.220          12.0
+## 17 SQ1        Mid              1921.          4.37    0.195          12.0
+## 18 SQ2        Mid              1934.          4.63    0.148          12.0
 ## # ℹ 1 more variable: Last_sem <dbl>
 ```
 
 ```r
-#Start = April-June for "high" elev, Jan-April for "mid" elevation 
+#Start = May-June for "high" elev, Feb-May for "mid" elevation 
 #End = Nov-Dec
 
-#QUESTION: how to round?
-#For now just the whole number (2.75=2, 2.23=2)
-snow_avg_first_last_month_recent <- tibble(parent.pop=c("WL2", "YO4","CP2","CP3","LV3", "SQ3", "YO7", "Y08", "LV1", "LVTR1", "YO11", "WV", "FR", "DPR", "WR", "WL1", "SQ1", "SQ2"), AvgFirstMonth=c(5, 4, 5, 5, 6, 5, 5, 5, 6, 6, 6, 2, 2, 1, 2, 3, 4, 4), AvgLastMonth=c(11,11,11,11,11,11,11,11,11,11,11,11,11,12,12,11,11,11))
-
-snow_avg_first_last_month_allmonths <- left_join(snow_pops_recent_years, snow_avg_first_last_month_recent)
+#Used Standard Rounding
+snow_avg_first_last_month_recent <- snow_recent_avg_first_last_month %>% 
+  mutate(AvgFirstMonth=true_round(AvgFirstMonth, 0), AvgLastMonth=true_round(AvgLastMonth, 0)) %>% 
+  select(parent.pop:elev_m, AvgFirstMonth, AvgLastMonth)
+snow_recent_avg_first_last_month
 ```
 
 ```
-## Joining with `by = join_by(parent.pop)`
+## # A tibble: 18 × 7
+## # Groups:   parent.pop, elevation.group [18]
+##    parent.pop elevation.group elev_m AvgFirstMonth First_sem AvgLastMonth
+##    <chr>      <chr>            <dbl>         <dbl>     <dbl>        <dbl>
+##  1 WL2        High             2020.          5.14    0.155          11.8
+##  2 YO4        High             2158.          5       0.165          11.8
+##  3 CP2        High             2244.          5.5     0.133          11.7
+##  4 CP3        High             2266.          5.67    0.130          11.6
+##  5 LV3        High             2354.          6.4     0.141          11.2
+##  6 SQ3        High             2373.          5.33    0.111          11.8
+##  7 YO7        High             2470.          5.8     0.121          11.7
+##  8 YO8        High             2591.          6       0.107          11.6
+##  9 LV1        High             2593.          6.43    0.133          11.2
+## 10 LVTR1      High             2741.          6.43    0.133          11.2
+## 11 YO11       High             2872.          6.13    0.0926         11.4
+## 12 WV         Mid               749.          3.07    0.172          12.0
+## 13 FR         Mid               787           2.8     0.188          12.0
+## 14 DPR        Mid              1019.          1.77    0.178          12  
+## 15 WR         Mid              1158           2.85    0.260          12  
+## 16 WL1        Mid              1614.          4.07    0.220          12.0
+## 17 SQ1        Mid              1921.          4.37    0.195          12.0
+## 18 SQ2        Mid              1934.          4.63    0.148          12.0
+## # ℹ 1 more variable: Last_sem <dbl>
+```
+
+```r
+snow_avg_first_last_month_recent
+```
+
+```
+## # A tibble: 18 × 5
+## # Groups:   parent.pop, elevation.group [18]
+##    parent.pop elevation.group elev_m AvgFirstMonth AvgLastMonth
+##    <chr>      <chr>            <dbl>         <dbl>        <dbl>
+##  1 WL2        High             2020.             5           12
+##  2 YO4        High             2158.             5           12
+##  3 CP2        High             2244.             6           12
+##  4 CP3        High             2266.             6           12
+##  5 LV3        High             2354.             6           11
+##  6 SQ3        High             2373.             5           12
+##  7 YO7        High             2470.             6           12
+##  8 YO8        High             2591.             6           12
+##  9 LV1        High             2593.             6           11
+## 10 LVTR1      High             2741.             6           11
+## 11 YO11       High             2872.             6           11
+## 12 WV         Mid               749.             3           12
+## 13 FR         Mid               787              3           12
+## 14 DPR        Mid              1019.             2           12
+## 15 WR         Mid              1158              3           12
+## 16 WL1        Mid              1614.             4           12
+## 17 SQ1        Mid              1921.             4           12
+## 18 SQ2        Mid              1934.             5           12
+```
+
+```r
+snow_recent_avg_first_last_month_allmonths <- left_join(snow_pops_recent_years, snow_avg_first_last_month_recent)
+```
+
+```
+## Joining with `by = join_by(parent.pop, elevation.group, elev_m)`
 ```
 
 Fill in months b/t start and stop 
 
 ```r
-snow_grwseason_recent <- snow_avg_first_last_month_allmonths %>% 
+snow_grwseason_recent <- snow_recent_avg_first_last_month_allmonths %>% 
   group_by(parent.pop, elevation.group, elev_m, year) %>% 
   filter(month>AvgFirstMonth) %>% 
-  filter(month<AvgLastMonth)
+  filter(month<=AvgLastMonth)
 summary(snow_grwseason_recent) 
 ```
 
 ```
 ##   parent.pop        elevation.group        elev_m           PckSum      
-##  Length:3030        Length:3030        Min.   : 748.9   Min.   : 107.5  
-##  Class :character   Class :character   1st Qu.:1018.6   1st Qu.: 322.2  
-##  Mode  :character   Mode  :character   Median :1934.5   Median : 704.1  
-##                                        Mean   :1776.1   Mean   :1552.5  
-##                                        3rd Qu.:2353.6   3rd Qu.:2439.9  
+##  Length:3750        Length:3750        Min.   : 748.9   Min.   : 107.5  
+##  Class :character   Class :character   1st Qu.:1158.0   1st Qu.: 391.1  
+##  Mode  :character   Mode  :character   Median :2020.1   Median :1461.6  
+##                                        Mean   :1858.7   Mean   :1682.8  
+##                                        3rd Qu.:2373.2   3rd Qu.:2649.6  
 ##                                        Max.   :2872.3   Max.   :5408.1  
-##       year          month             cwd              pck         
-##  Min.   :1992   Min.   : 2.000   Min.   :  0.00   Min.   :  0.000  
-##  1st Qu.:1999   1st Qu.: 6.000   1st Qu.: 53.97   1st Qu.:  0.000  
-##  Median :2006   Median : 8.000   Median : 76.73   Median :  0.000  
-##  Mean   :2006   Mean   : 7.446   Mean   : 74.52   Mean   :  5.442  
-##  3rd Qu.:2014   3rd Qu.: 9.000   3rd Qu.: 96.35   3rd Qu.:  0.000  
-##  Max.   :2021   Max.   :11.000   Max.   :182.70   Max.   :691.660  
-##       ppt               tmn              tmx        AvgFirstMonth  
-##  Min.   :  0.000   Min.   :-4.150   Min.   : 6.32   Min.   :1.000  
-##  1st Qu.:  1.363   1st Qu.: 4.013   1st Qu.:17.43   1st Qu.:2.000  
-##  Median : 12.670   Median : 7.165   Median :21.63   Median :4.000  
-##  Mean   : 42.993   Mean   : 7.269   Mean   :21.48   Mean   :3.703  
-##  3rd Qu.: 48.153   3rd Qu.:10.570   3rd Qu.:25.23   3rd Qu.:5.000  
-##  Max.   :715.400   Max.   :19.730   Max.   :35.13   Max.   :6.000  
+##       year          month             cwd              pck        
+##  Min.   :1992   Min.   : 3.000   Min.   :  0.00   Min.   :  0.00  
+##  1st Qu.:1999   1st Qu.: 7.000   1st Qu.: 32.38   1st Qu.:  0.00  
+##  Median :2006   Median : 9.000   Median : 65.81   Median :  0.00  
+##  Mean   :2006   Mean   : 8.696   Mean   : 65.72   Mean   : 18.52  
+##  3rd Qu.:2014   3rd Qu.:11.000   3rd Qu.: 93.33   3rd Qu.:  0.00  
+##  Max.   :2021   Max.   :12.000   Max.   :182.70   Max.   :618.37  
+##       ppt               tmn               tmx        AvgFirstMonth  
+##  Min.   :  0.000   Min.   :-11.090   Min.   :-0.10   Min.   :2.000  
+##  1st Qu.:  2.652   1st Qu.:  1.073   1st Qu.:12.61   1st Qu.:3.000  
+##  Median : 21.085   Median :  5.785   Median :20.11   Median :5.000  
+##  Mean   : 66.867   Mean   :  5.246   Mean   :18.73   Mean   :4.552  
+##  3rd Qu.: 86.582   3rd Qu.:  9.630   3rd Qu.:24.15   3rd Qu.:6.000  
+##  Max.   :894.020   Max.   : 19.730   Max.   :35.13   Max.   :6.000  
 ##   AvgLastMonth  
 ##  Min.   :11.00  
-##  1st Qu.:11.00  
-##  Median :11.00  
-##  Mean   :11.19  
-##  3rd Qu.:11.00  
+##  1st Qu.:12.00  
+##  Median :12.00  
+##  Mean   :11.84  
+##  3rd Qu.:12.00  
 ##  Max.   :12.00
 ```
 
@@ -2341,24 +2447,25 @@ xtabs(~parent.pop+month, data=snow_grwseason_recent)
 
 ```
 ##           month
-## parent.pop  2  3  4  5  6  7  8  9 10 11
-##      CP2    0  0  0  0 30 30 30 30 30  0
-##      CP3    0  0  0  0 30 30 30 30 30  0
+## parent.pop  3  4  5  6  7  8  9 10 11 12
+##      CP2    0  0  0  0 30 30 30 30 30 30
+##      CP3    0  0  0  0 30 30 30 30 30 30
 ##      DPR   30 30 30 30 30 30 30 30 30 30
-##      FR     0 30 30 30 30 30 30 30 30  0
-##      LV1    0  0  0  0  0 30 30 30 30  0
-##      LV3    0  0  0  0  0 30 30 30 30  0
-##      LVTR1  0  0  0  0  0 30 30 30 30  0
-##      SQ1    0  0  0 30 30 30 30 30 30  0
-##      SQ2    0  0  0 30 30 30 30 30 30  0
-##      SQ3    0  0  0  0 30 30 30 30 30  0
-##      WL1    0  0 30 30 30 30 30 30 30  0
-##      WL2    0  0  0  0 30 30 30 30 30  0
+##      FR     0 30 30 30 30 30 30 30 30 30
+##      LV1    0  0  0  0 30 30 30 30 30  0
+##      LV3    0  0  0  0 30 30 30 30 30  0
+##      LVTR1  0  0  0  0 30 30 30 30 30  0
+##      SQ1    0  0 30 30 30 30 30 30 30 30
+##      SQ2    0  0  0 30 30 30 30 30 30 30
+##      SQ3    0  0  0 30 30 30 30 30 30 30
+##      WL1    0  0 30 30 30 30 30 30 30 30
+##      WL2    0  0  0 30 30 30 30 30 30 30
 ##      WR     0 30 30 30 30 30 30 30 30 30
-##      WV     0 30 30 30 30 30 30 30 30  0
-##      YO11   0  0  0  0  0 30 30 30 30  0
-##      YO4    0  0  0 30 30 30 30 30 30  0
-##      YO7    0  0  0  0 30 30 30 30 30  0
+##      WV     0 30 30 30 30 30 30 30 30 30
+##      YO11   0  0  0  0 30 30 30 30 30  0
+##      YO4    0  0  0 30 30 30 30 30 30 30
+##      YO7    0  0  0  0 30 30 30 30 30 30
+##      YO8    0  0  0  0 30 30 30 30 30 30
 ```
 
 ```r
@@ -2488,17 +2595,17 @@ snow_pops_historical_years %>% filter(pck < 2, pck >0) %>% arrange(parent.pop, p
 First month 
 
 ```r
-snow_first_month <- snow_pops_historical_years %>%
+snow_historical_first_month <- snow_pops_historical_years %>%
   group_by(parent.pop, elevation.group, elev_m, year) %>% 
   filter(pck==0) %>% 
   filter(tmn > 0) %>% 
   arrange(month) %>% 
   filter(row_number()==1) #get first month for each pop and year with no snowpack for germ
 
-snow_first_month_tomerge <- snow_first_month %>% 
+snow_historical_first_month_tomerge <- snow_historical_first_month %>% 
   select(parent.pop:elev_m, year, firstmonth=month)
 
-snow_first_month_col <- full_join(snow_pops_historical_years, snow_first_month_tomerge)
+snow_historical_first_month_col <- full_join(snow_pops_historical_years, snow_historical_first_month_tomerge)
 ```
 
 ```
@@ -2506,7 +2613,7 @@ snow_first_month_col <- full_join(snow_pops_historical_years, snow_first_month_t
 ```
 
 ```r
-dim(snow_first_month_col)
+dim(snow_historical_first_month_col)
 ```
 
 ```
@@ -2516,7 +2623,7 @@ dim(snow_first_month_col)
 Last month
 
 ```r
-snow_last_month <- snow_first_month_col %>%
+snow_historical_last_month <- snow_historical_first_month_col %>%
   group_by(parent.pop, elevation.group, elev_m, year) %>% 
   filter(month>firstmonth) %>% 
   filter(if_else(pck>70, pck>70, 
@@ -2524,10 +2631,10 @@ snow_last_month <- snow_first_month_col %>%
   arrange(month) %>% 
   filter(row_number()==1) #get first month after growstart for each pop and year with pck >70 
 
-snow_last_month_tomerge <- snow_last_month %>% 
+snow_historical_last_month_tomerge <- snow_historical_last_month %>% 
   select(parent.pop:elev_m, year, firstmonth,lastmonth=month)
 
-snow_last_month_col <- full_join(snow_first_month_col, snow_last_month_tomerge) %>% 
+snow_historical_last_month_col <- full_join(snow_historical_first_month_col, snow_historical_last_month_tomerge) %>% 
   select(firstmonth, lastmonth, year:tmx)
 ```
 
@@ -2538,7 +2645,7 @@ snow_last_month_col <- full_join(snow_first_month_col, snow_last_month_tomerge) 
 ```
 
 ```r
-dim(snow_last_month_col)
+dim(snow_historical_last_month_col)
 ```
 
 ```
@@ -2548,7 +2655,7 @@ dim(snow_last_month_col)
 check weird cases
 
 ```r
-snow_last_month_col %>% filter(is.na(firstmonth)) #no cases where there isn't a firstmonth
+snow_historical_last_month_col %>% filter(is.na(firstmonth)) #no cases where there isn't a firstmonth
 ```
 
 ```
@@ -2560,7 +2667,7 @@ snow_last_month_col %>% filter(is.na(firstmonth)) #no cases where there isn't a 
 ```
 
 ```r
-snow_last_month_col %>% filter(is.na(lastmonth)) %>% arrange(elev_m) #120 cases where there isn't a lastmonth 
+snow_historical_last_month_col %>% filter(is.na(lastmonth)) %>% arrange(elev_m) #120 cases where there isn't a lastmonth 
 ```
 
 ```
@@ -2584,9 +2691,8 @@ snow_last_month_col %>% filter(is.na(lastmonth)) %>% arrange(elev_m) #120 cases 
 
 ```r
 #****range of elevations 
-#*ALSO CHECK THE FOLLOWING JAN TO SEE IF SNOW WAS JUST LATE THAT SEASON
 
-snow_last_month_col %>% filter(lastmonth==firstmonth) #no cases where last month is first month 
+snow_historical_last_month_col %>% filter(lastmonth==firstmonth) #no cases where last month is first month 
 ```
 
 ```
@@ -2598,7 +2704,7 @@ snow_last_month_col %>% filter(lastmonth==firstmonth) #no cases where last month
 ```
 
 ```r
-snow_last_month_col %>% filter(lastmonth==firstmonth+1) #4 cases where there was sig snowpack in the month after the first month of 0 snowpack
+snow_historical_last_month_col %>% filter(lastmonth==firstmonth+1) #4 cases where there was sig snowpack in the month after the first month of 0 snowpack
 ```
 
 ```
@@ -2621,7 +2727,7 @@ snow_last_month_col %>% filter(lastmonth==firstmonth+1) #4 cases where there was
 ```
 
 ```r
-snow_last_month_col %>% filter(lastmonth==firstmonth+2) #7 cases where there was sig snowpack in the second month after the first month of 0 snowpack
+snow_historical_last_month_col %>% filter(lastmonth==firstmonth+2) #7 cases where there was sig snowpack in the second month after the first month of 0 snowpack
 ```
 
 ```
@@ -2644,8 +2750,8 @@ snow_last_month_col %>% filter(lastmonth==firstmonth+2) #7 cases where there was
 ```
 
 ```r
-heavysnow <- snow_last_month_col %>% filter(lastmonth==firstmonth+1) %>% filter(month==firstmonth)
-summary(heavysnow)
+heavysnow_historical <- snow_historical_last_month_col %>% filter(lastmonth==firstmonth+1) %>% filter(month==firstmonth)
+summary(heavysnow_historical)
 ```
 
 ```
@@ -2673,7 +2779,7 @@ summary(heavysnow)
 ```
 
 ```r
-unique(heavysnow$parent.pop)
+unique(heavysnow_historical$parent.pop)
 ```
 
 ```
@@ -2681,7 +2787,7 @@ unique(heavysnow$parent.pop)
 ```
 
 ```r
-heavysnow %>% filter(elev_m>1800)
+heavysnow_historical %>% filter(elev_m>1800)
 ```
 
 ```
@@ -2699,27 +2805,27 @@ heavysnow %>% filter(elev_m>1800)
 #*OR START THE CHECK IN FEB FOR POPS > 6000 FT (ALL BELOW 6000 FT)
 #*OR just take these cases out
 
-#snow_last_month_col %>% filter(year==1991)
-#snow_last_month_col %>% filter(parent.pop=="DPR") %>% filter(year==1962|year==1975)
-#snow_last_month_col %>% filter(parent.pop=="WR") %>% filter(year==1975|year==1986)
-#snow_last_month_col %>% filter(parent.pop=="YO7") %>% filter(year==1976)
-#snow_last_month_col %>% filter(parent.pop=="FR") %>% filter(year==1975)
-#snow_last_month_col %>% filter(parent.pop=="SQ3") %>% filter(year==1976)
+#snow_historical_last_month_col %>% filter(year==1991)
+#snow_historical_last_month_col %>% filter(parent.pop=="DPR") %>% filter(year==1962|year==1975)
+#snow_historical_last_month_col %>% filter(parent.pop=="WR") %>% filter(year==1975|year==1986)
+#snow_historical_last_month_col %>% filter(parent.pop=="YO7") %>% filter(year==1976)
+#snow_historical_last_month_col %>% filter(parent.pop=="FR") %>% filter(year==1975)
+#snow_historical_last_month_col %>% filter(parent.pop=="SQ3") %>% filter(year==1976)
 ```
 
 Average first and last month 
 
 ```r
-#remove cases with no last month - Alternative option to consider = making last month 12
+#for cases with no last month - make last month 12
 #remove cases where last month is first month +1 or 2 
 
-snowfirst_last_month_for_calc <- snow_last_month_col %>% 
-  filter(!is.na(lastmonth)) %>% 
+snow_historicalfirst_last_month_for_calc <- snow_historical_last_month_col %>% 
+  mutate(lastmonth=if_else(is.na(lastmonth), 12, lastmonth)) %>% 
   filter(lastmonth > firstmonth+2) %>% 
   select(firstmonth:lastmonth, parent.pop, elevation.group, elev_m, year) %>% 
   distinct()
 
-snow_avg_first_last_month <- snowfirst_last_month_for_calc %>% 
+snow_historical_avg_first_last_month <- snow_historicalfirst_last_month_for_calc %>% 
   group_by(parent.pop, elevation.group, elev_m) %>% 
   summarise(AvgFirstMonth=mean(firstmonth), First_sem=sem(firstmonth),
             AvgLastMonth=mean(lastmonth), Last_sem=sem(lastmonth)) %>% 
@@ -2732,7 +2838,7 @@ snow_avg_first_last_month <- snowfirst_last_month_for_calc %>%
 ```
 
 ```r
-snow_avg_first_last_month
+snow_historical_avg_first_last_month
 ```
 
 ```
@@ -2740,81 +2846,139 @@ snow_avg_first_last_month
 ## # Groups:   parent.pop, elevation.group [18]
 ##    parent.pop elevation.group elev_m AvgFirstMonth First_sem AvgLastMonth
 ##    <chr>      <chr>            <dbl>         <dbl>     <dbl>        <dbl>
-##  1 WL2        High             2020.          5.46    0.147          11.3
-##  2 YO4        High             2158.          5.42    0.133          11.4
-##  3 CP2        High             2244.          5.93    0.125          11.4
-##  4 CP3        High             2266.          6.11    0.107          11.4
+##  1 WL2        High             2020.          5.47    0.124          11.5
+##  2 YO4        High             2158.          5.4     0.123          11.5
+##  3 CP2        High             2244.          5.87    0.124          11.4
+##  4 CP3        High             2266.          6.07    0.106          11.4
 ##  5 LV3        High             2354.          6.71    0.113          10.9
-##  6 SQ3        High             2373.          5.79    0.134          11.5
-##  7 YO7        High             2470.          6.22    0.0975         11.3
-##  8 YO8        High             2591.          6.29    0.0869         11.3
+##  6 SQ3        High             2373.          5.7     0.128          11.6
+##  7 YO7        High             2470.          6.2     0.0884         11.4
+##  8 YO8        High             2591.          6.27    0.0821         11.3
 ##  9 LV1        High             2593.          6.75    0.122          10.9
 ## 10 LVTR1      High             2741.          6.75    0.122          10.9
-## 11 YO11       High             2872.          6.45    0.0940         11.1
-## 12 WV         Mid               749.          4.19    0.164          12  
-## 13 FR         Mid               787           3.54    0.215          12  
-## 14 DPR        Mid              1019.          3.11    0.261          12  
-## 15 WR         Mid              1158           4       0.196          11.8
-## 16 WL1        Mid              1614.          4.59    0.126          11.7
-## 17 SQ1        Mid              1921.          4.85    0.15           11.6
-## 18 SQ2        Mid              1934.          4.9     0.143          11.6
+## 11 YO11       High             2872.          6.47    0.0926         11.1
+## 12 WV         Mid               749.          3.63    0.206          12  
+## 13 FR         Mid               787           3.24    0.177          12  
+## 14 DPR        Mid              1019.          2.90    0.207          12  
+## 15 WR         Mid              1158           3.68    0.186          11.9
+## 16 WL1        Mid              1614.          4.59    0.105          11.8
+## 17 SQ1        Mid              1921.          4.83    0.108          11.8
+## 18 SQ2        Mid              1934.          4.9     0.1            11.8
 ## # ℹ 1 more variable: Last_sem <dbl>
 ```
 
 ```r
-#Start = May-June for "high" elev, March-April for "mid" elevation 
-#End = Oct-Dec
+#Start = May-July for "high" elev, March-May for "mid" elevation 
+#End = Nov-Dec
 #interestingly, the starts are later than recent climate and ends are earlier in some cases 
 
-#QUESTION: how to round?
-#For now just the whole number (2.75=2, 2.23=2)
-snow_avg_first_last_month_historical <- tibble(parent.pop=c("WL2", "YO4","CP2","CP3","LV3", "SQ3", "YO7", "Y08", "LV1", "LVTR1", "YO11", "WV", "FR", "DPR", "WR", "WL1", "SQ1", "SQ2"), AvgFirstMonth=c(5, 5, 5, 6, 6, 5, 6, 6, 6, 6, 6, 4, 3, 3, 4, 4, 4, 4), AvgLastMonth=c(11,11,11,11,10,11,11,11,10,10,11,12,12,12,11,11,11,11))
-
-snow_avg_first_last_month_allmonths <- left_join(snow_pops_historical_years, snow_avg_first_last_month_historical)
+#Used Standard Rounding
+snow_avg_first_last_month_historical <- snow_historical_avg_first_last_month %>% 
+  mutate(AvgFirstMonth=true_round(AvgFirstMonth, 0), AvgLastMonth=true_round(AvgLastMonth, 0)) %>% 
+  select(parent.pop:elev_m, AvgFirstMonth, AvgLastMonth)
+snow_historical_avg_first_last_month
 ```
 
 ```
-## Joining with `by = join_by(parent.pop)`
+## # A tibble: 18 × 7
+## # Groups:   parent.pop, elevation.group [18]
+##    parent.pop elevation.group elev_m AvgFirstMonth First_sem AvgLastMonth
+##    <chr>      <chr>            <dbl>         <dbl>     <dbl>        <dbl>
+##  1 WL2        High             2020.          5.47    0.124          11.5
+##  2 YO4        High             2158.          5.4     0.123          11.5
+##  3 CP2        High             2244.          5.87    0.124          11.4
+##  4 CP3        High             2266.          6.07    0.106          11.4
+##  5 LV3        High             2354.          6.71    0.113          10.9
+##  6 SQ3        High             2373.          5.7     0.128          11.6
+##  7 YO7        High             2470.          6.2     0.0884         11.4
+##  8 YO8        High             2591.          6.27    0.0821         11.3
+##  9 LV1        High             2593.          6.75    0.122          10.9
+## 10 LVTR1      High             2741.          6.75    0.122          10.9
+## 11 YO11       High             2872.          6.47    0.0926         11.1
+## 12 WV         Mid               749.          3.63    0.206          12  
+## 13 FR         Mid               787           3.24    0.177          12  
+## 14 DPR        Mid              1019.          2.90    0.207          12  
+## 15 WR         Mid              1158           3.68    0.186          11.9
+## 16 WL1        Mid              1614.          4.59    0.105          11.8
+## 17 SQ1        Mid              1921.          4.83    0.108          11.8
+## 18 SQ2        Mid              1934.          4.9     0.1            11.8
+## # ℹ 1 more variable: Last_sem <dbl>
 ```
 
+```r
+snow_avg_first_last_month_historical
+```
+
+```
+## # A tibble: 18 × 5
+## # Groups:   parent.pop, elevation.group [18]
+##    parent.pop elevation.group elev_m AvgFirstMonth AvgLastMonth
+##    <chr>      <chr>            <dbl>         <dbl>        <dbl>
+##  1 WL2        High             2020.             5           11
+##  2 YO4        High             2158.             5           12
+##  3 CP2        High             2244.             6           11
+##  4 CP3        High             2266.             6           11
+##  5 LV3        High             2354.             7           11
+##  6 SQ3        High             2373.             6           12
+##  7 YO7        High             2470.             6           11
+##  8 YO8        High             2591.             6           11
+##  9 LV1        High             2593.             7           11
+## 10 LVTR1      High             2741.             7           11
+## 11 YO11       High             2872.             6           11
+## 12 WV         Mid               749.             4           12
+## 13 FR         Mid               787              3           12
+## 14 DPR        Mid              1019.             3           12
+## 15 WR         Mid              1158              4           12
+## 16 WL1        Mid              1614.             5           12
+## 17 SQ1        Mid              1921.             5           12
+## 18 SQ2        Mid              1934.             5           12
+```
+
+```r
+snow_historical_avg_first_last_month_allmonths <- left_join(snow_pops_historical_years, snow_avg_first_last_month_historical)
+```
+
+```
+## Joining with `by = join_by(parent.pop, elevation.group, elev_m)`
+```
 
 Fill in months b/t start and stop
 
 ```r
-snow_grwseason_historical <- snow_avg_first_last_month_allmonths %>%
+snow_grwseason_historical <- snow_historical_avg_first_last_month_allmonths %>%
   group_by(parent.pop, elevation.group, elev_m, year) %>% 
   filter(month>AvgFirstMonth) %>% 
-  filter(month<AvgLastMonth)
+  filter(month<=AvgLastMonth)
 summary(snow_grwseason_historical) 
 ```
 
 ```
 ##   parent.pop        elevation.group        elev_m           PckSum      
-##  Length:2640        Length:2640        Min.   : 748.9   Min.   : 228.4  
-##  Class :character   Class :character   1st Qu.:1018.6   1st Qu.: 403.8  
-##  Mode  :character   Mode  :character   Median :1934.5   Median :1048.5  
-##                                        Mean   :1783.2   Mean   :1869.8  
-##                                        3rd Qu.:2288.2   3rd Qu.:2628.2  
+##  Length:3330        Length:3330        Min.   : 748.9   Min.   : 228.4  
+##  Class :character   Class :character   1st Qu.:1158.0   1st Qu.: 560.8  
+##  Mode  :character   Mode  :character   Median :2020.1   Median :1776.3  
+##                                        Mean   :1839.9   Mean   :1996.4  
+##                                        3rd Qu.:2373.2   3rd Qu.:3157.7  
 ##                                        Max.   :2872.3   Max.   :6363.1  
-##       year          month             cwd              pck         
-##  Min.   :1962   Min.   : 4.000   Min.   :  0.00   Min.   :  0.000  
-##  1st Qu.:1969   1st Qu.: 7.000   1st Qu.: 58.06   1st Qu.:  0.000  
-##  Median :1976   Median : 8.000   Median : 75.00   Median :  0.000  
-##  Mean   :1976   Mean   : 7.841   Mean   : 73.96   Mean   :  3.712  
-##  3rd Qu.:1984   3rd Qu.: 9.000   3rd Qu.: 92.63   3rd Qu.:  0.000  
-##  Max.   :1991   Max.   :11.000   Max.   :159.40   Max.   :835.030  
-##       ppt               tmn              tmx        AvgFirstMonth  
-##  Min.   :  0.000   Min.   :-6.220   Min.   : 7.46   Min.   :3.000  
-##  1st Qu.:  3.455   1st Qu.: 3.297   1st Qu.:17.99   1st Qu.:4.000  
-##  Median : 14.435   Median : 6.290   Median :21.45   Median :4.000  
-##  Mean   : 35.902   Mean   : 6.250   Mean   :21.48   Mean   :4.523  
-##  3rd Qu.: 44.962   3rd Qu.: 9.190   3rd Qu.:24.68   3rd Qu.:5.000  
-##  Max.   :566.180   Max.   :16.840   Max.   :35.12   Max.   :6.000  
+##       year          month            cwd              pck        
+##  Min.   :1962   Min.   : 4.00   Min.   :  0.00   Min.   :  0.00  
+##  1st Qu.:1969   1st Qu.: 7.00   1st Qu.: 34.69   1st Qu.:  0.00  
+##  Median :1976   Median : 9.00   Median : 64.06   Median :  0.00  
+##  Mean   :1976   Mean   : 8.82   Mean   : 63.39   Mean   : 19.82  
+##  3rd Qu.:1984   3rd Qu.:10.00   3rd Qu.: 87.92   3rd Qu.:  0.00  
+##  Max.   :1991   Max.   :12.00   Max.   :159.40   Max.   :882.99  
+##       ppt               tmn               tmx        AvgFirstMonth  
+##  Min.   :  0.000   Min.   :-10.090   Min.   : 0.49   Min.   :3.000  
+##  1st Qu.:  5.655   1st Qu.:  0.000   1st Qu.:12.29   1st Qu.:4.000  
+##  Median : 25.415   Median :  4.680   Median :19.62   Median :5.000  
+##  Mean   : 72.715   Mean   :  4.126   Mean   :18.39   Mean   :5.027  
+##  3rd Qu.: 90.892   3rd Qu.:  8.370   3rd Qu.:23.64   3rd Qu.:6.000  
+##  Max.   :951.790   Max.   : 16.840   Max.   :35.12   Max.   :7.000  
 ##   AvgLastMonth  
-##  Min.   :10.00  
+##  Min.   :11.00  
 ##  1st Qu.:11.00  
-##  Median :11.00  
-##  Mean   :11.16  
+##  Median :12.00  
+##  Mean   :11.61  
 ##  3rd Qu.:12.00  
 ##  Max.   :12.00
 ```
@@ -2825,24 +2989,25 @@ xtabs(~parent.pop+month, data=snow_grwseason_historical)
 
 ```
 ##           month
-## parent.pop  4  5  6  7  8  9 10 11
-##      CP2    0  0 30 30 30 30 30  0
-##      CP3    0  0  0 30 30 30 30  0
-##      DPR   30 30 30 30 30 30 30 30
-##      FR    30 30 30 30 30 30 30 30
-##      LV1    0  0  0 30 30 30  0  0
-##      LV3    0  0  0 30 30 30  0  0
-##      LVTR1  0  0  0 30 30 30  0  0
-##      SQ1    0 30 30 30 30 30 30  0
-##      SQ2    0 30 30 30 30 30 30  0
-##      SQ3    0  0 30 30 30 30 30  0
-##      WL1    0 30 30 30 30 30 30  0
-##      WL2    0  0 30 30 30 30 30  0
-##      WR     0 30 30 30 30 30 30  0
-##      WV     0 30 30 30 30 30 30 30
-##      YO11   0  0  0 30 30 30 30  0
-##      YO4    0  0 30 30 30 30 30  0
-##      YO7    0  0  0 30 30 30 30  0
+## parent.pop  4  5  6  7  8  9 10 11 12
+##      CP2    0  0  0 30 30 30 30 30  0
+##      CP3    0  0  0 30 30 30 30 30  0
+##      DPR   30 30 30 30 30 30 30 30 30
+##      FR    30 30 30 30 30 30 30 30 30
+##      LV1    0  0  0  0 30 30 30 30  0
+##      LV3    0  0  0  0 30 30 30 30  0
+##      LVTR1  0  0  0  0 30 30 30 30  0
+##      SQ1    0  0 30 30 30 30 30 30 30
+##      SQ2    0  0 30 30 30 30 30 30 30
+##      SQ3    0  0  0 30 30 30 30 30 30
+##      WL1    0  0 30 30 30 30 30 30 30
+##      WL2    0  0 30 30 30 30 30 30  0
+##      WR     0 30 30 30 30 30 30 30 30
+##      WV     0 30 30 30 30 30 30 30 30
+##      YO11   0  0  0 30 30 30 30 30  0
+##      YO4    0  0 30 30 30 30 30 30 30
+##      YO7    0  0  0 30 30 30 30 30  0
+##      YO8    0  0  0 30 30 30 30 30  0
 ```
 
 ```r
@@ -2861,42 +3026,59 @@ snow_grwseason_historical %>% ggplot(aes(x=month)) + geom_histogram() +
 
 
 ```r
+unique(nosnow_grwseason_recent$parent.pop)
+```
+
+```
+## [1] "BH"  "CC"  "IH"  "SC"  "TM2"
+```
+
+```r
+unique(snow_grwseason_recent$parent.pop)
+```
+
+```
+##  [1] "CP2"   "CP3"   "DPR"   "FR"    "LV1"   "LV3"   "LVTR1" "SQ1"   "SQ2"  
+## [10] "SQ3"   "WL1"   "WL2"   "WR"    "WV"    "YO11"  "YO4"   "YO7"   "YO8"
+```
+
+```r
 allpops_recent_grwseason <- rbind(nosnow_grwseason_recent, snow_grwseason_recent)
 summary(allpops_recent_grwseason)
 ```
 
 ```
-##      month         growmonth       parent.pop        elevation.group   
-##  Min.   : 1.00   Min.   : 3.000   Length:4140        Length:4140       
-##  1st Qu.: 5.00   1st Qu.: 4.000   Class :character   Class :character  
-##  Median : 7.00   Median : 6.000   Mode  :character   Mode  :character  
-##  Mean   : 6.92   Mean   : 6.243                                        
-##  3rd Qu.: 9.00   3rd Qu.: 8.000                                        
-##  Max.   :12.00   Max.   :11.000                                        
-##                  NA's   :3030                                          
-##      elev_m           PckSum              year           cwd        
-##  Min.   : 313.0   Min.   :   0.000   Min.   :1992   Min.   :  0.00  
-##  1st Qu.: 511.4   1st Qu.:   2.324   1st Qu.:1999   1st Qu.: 35.38  
-##  Median :1158.0   Median : 391.054   Median :2006   Median : 63.66  
-##  Mean   :1411.9   Mean   :1136.413   Mean   :2006   Mean   : 63.95  
-##  3rd Qu.:2244.1   3rd Qu.:1692.098   3rd Qu.:2014   3rd Qu.: 89.68  
-##  Max.   :2872.3   Max.   :5408.115   Max.   :2021   Max.   :182.70  
-##                                                                     
-##       pck               ppt               tmn              tmx       
-##  Min.   :  0.000   Min.   :  0.000   Min.   :-4.150   Min.   : 6.32  
-##  1st Qu.:  0.000   1st Qu.:  3.107   1st Qu.: 3.890   1st Qu.:15.94  
-##  Median :  0.000   Median : 23.170   Median : 6.490   Median :20.48  
-##  Mean   :  4.001   Mean   : 62.471   Mean   : 6.941   Mean   :20.56  
-##  3rd Qu.:  0.000   3rd Qu.: 81.760   3rd Qu.: 9.900   3rd Qu.:24.46  
-##  Max.   :691.660   Max.   :715.400   Max.   :19.740   Max.   :35.97  
+##      month          growmonth       parent.pop        elevation.group   
+##  Min.   : 1.000   Min.   : 3.000   Length:4950        Length:4950       
+##  1st Qu.: 6.000   1st Qu.: 5.000   Class :character   Class :character  
+##  Median : 8.000   Median : 7.000   Mode  :character   Mode  :character  
+##  Mean   : 7.879   Mean   : 6.925                                        
+##  3rd Qu.:10.000   3rd Qu.: 9.000                                        
+##  Max.   :12.000   Max.   :12.000                                        
+##                   NA's   :3750                                          
+##      elev_m           PckSum            year           cwd        
+##  Min.   : 313.0   Min.   :   0.0   Min.   :1992   Min.   :  0.00  
+##  1st Qu.: 748.9   1st Qu.: 107.5   1st Qu.:1999   1st Qu.: 28.06  
+##  Median :1613.8   Median : 613.4   Median :2006   Median : 57.02  
+##  Mean   :1508.8   Mean   :1275.0   Mean   :2006   Mean   : 59.58  
+##  3rd Qu.:2266.4   3rd Qu.:2162.0   3rd Qu.:2014   3rd Qu.: 88.27  
+##  Max.   :2872.3   Max.   :5408.1   Max.   :2021   Max.   :182.70  
+##                                                                   
+##       pck              ppt               tmn               tmx       
+##  Min.   :  0.00   Min.   :  0.000   Min.   :-11.090   Min.   :-0.10  
+##  1st Qu.:  0.00   1st Qu.:  3.792   1st Qu.:  2.210   1st Qu.:13.28  
+##  Median :  0.00   Median : 28.785   Median :  5.855   Median :19.41  
+##  Mean   : 14.05   Mean   : 76.126   Mean   :  5.692   Mean   :18.95  
+##  3rd Qu.:  0.00   3rd Qu.:106.858   3rd Qu.:  9.670   3rd Qu.:24.22  
+##  Max.   :618.37   Max.   :894.020   Max.   : 19.740   Max.   :35.97  
 ##                                                                      
-##  AvgFirstMonth    AvgLastMonth
-##  Min.   :1.000   Min.   :10   
-##  1st Qu.:2.000   1st Qu.:11   
-##  Median :2.000   Median :11   
-##  Mean   :3.246   Mean   :11   
-##  3rd Qu.:5.000   3rd Qu.:11   
-##  Max.   :6.000   Max.   :12   
+##  AvgFirstMonth    AvgLastMonth  
+##  Min.   :2.000   Min.   :10.00  
+##  1st Qu.:3.000   1st Qu.:11.00  
+##  Median :4.000   Median :12.00  
+##  Mean   :4.018   Mean   :11.52  
+##  3rd Qu.:6.000   3rd Qu.:12.00  
+##  Max.   :6.000   Max.   :12.00  
 ## 
 ```
 
@@ -2907,7 +3089,26 @@ unique(allpops_recent_grwseason$parent.pop)
 ```
 ##  [1] "BH"    "CC"    "IH"    "SC"    "TM2"   "CP2"   "CP3"   "DPR"   "FR"   
 ## [10] "LV1"   "LV3"   "LVTR1" "SQ1"   "SQ2"   "SQ3"   "WL1"   "WL2"   "WR"   
-## [19] "WV"    "YO11"  "YO4"   "YO7"
+## [19] "WV"    "YO11"  "YO4"   "YO7"   "YO8"
+```
+
+```r
+write_csv(allpops_recent_grwseason, "../output/Climate/flint_climate_growthseason_recent.csv")
+
+unique(nosnow_grwseason_historical$parent.pop)
+```
+
+```
+## [1] "BH"  "CC"  "IH"  "SC"  "TM2"
+```
+
+```r
+unique(snow_grwseason_historical$parent.pop)
+```
+
+```
+##  [1] "CP2"   "CP3"   "DPR"   "FR"    "LV1"   "LV3"   "LVTR1" "SQ1"   "SQ2"  
+## [10] "SQ3"   "WL1"   "WL2"   "WR"    "WV"    "YO11"  "YO4"   "YO7"   "YO8"
 ```
 
 ```r
@@ -2917,36 +3118,36 @@ summary(allpops_historical_grwseason)
 
 ```
 ##      month          growmonth       parent.pop        elevation.group   
-##  Min.   : 1.000   Min.   : 2.000   Length:3840        Length:3840       
-##  1st Qu.: 5.000   1st Qu.: 4.000   Class :character   Class :character  
-##  Median : 7.500   Median : 6.000   Mode  :character   Mode  :character  
-##  Mean   : 7.211   Mean   : 5.925                                        
-##  3rd Qu.: 9.000   3rd Qu.: 8.000                                        
-##  Max.   :12.000   Max.   :11.000                                        
-##                   NA's   :2640                                          
+##  Min.   : 1.000   Min.   : 3.000   Length:4620        Length:4620       
+##  1st Qu.: 6.000   1st Qu.: 5.000   Class :character   Class :character  
+##  Median : 8.000   Median : 7.000   Mode  :character   Mode  :character  
+##  Mean   : 7.929   Mean   : 6.837                                        
+##  3rd Qu.:10.000   3rd Qu.: 9.000                                        
+##  Max.   :12.000   Max.   :12.000                                        
+##                   NA's   :3330                                          
 ##      elev_m           PckSum              year           cwd        
 ##  Min.   : 313.0   Min.   :   0.234   Min.   :1962   Min.   :  0.00  
-##  1st Qu.: 454.1   1st Qu.:  17.344   1st Qu.:1969   1st Qu.: 38.33  
-##  Median :1158.0   Median : 560.819   Median :1976   Median : 65.03  
-##  Mean   :1355.7   Mean   :1287.281   Mean   :1976   Mean   : 62.95  
-##  3rd Qu.:2157.6   3rd Qu.:2052.240   3rd Qu.:1984   3rd Qu.: 85.37  
+##  1st Qu.: 511.4   1st Qu.:  17.344   1st Qu.:1969   1st Qu.: 28.68  
+##  Median :1385.9   Median : 726.184   Median :1976   Median : 56.81  
+##  Mean   :1442.1   Mean   :1440.480   Mean   :1976   Mean   : 57.88  
+##  3rd Qu.:2244.1   3rd Qu.:2092.554   3rd Qu.:1984   3rd Qu.: 83.43  
 ##  Max.   :2872.3   Max.   :6363.078   Max.   :1991   Max.   :183.92  
 ##                                                                     
-##       pck               ppt               tmn              tmx       
-##  Min.   :  0.000   Min.   :  0.000   Min.   :-6.220   Min.   : 7.46  
-##  1st Qu.:  0.000   1st Qu.:  5.845   1st Qu.: 3.060   1st Qu.:16.12  
-##  Median :  0.000   Median : 24.590   Median : 5.640   Median :20.36  
-##  Mean   :  2.744   Mean   : 57.821   Mean   : 5.956   Mean   :20.45  
-##  3rd Qu.:  0.000   3rd Qu.: 74.965   3rd Qu.: 8.803   3rd Qu.:24.14  
-##  Max.   :835.030   Max.   :566.180   Max.   :17.920   Max.   :35.34  
+##       pck              ppt               tmn               tmx       
+##  Min.   :  0.00   Min.   :  0.000   Min.   :-10.090   Min.   : 0.49  
+##  1st Qu.:  0.00   1st Qu.:  6.987   1st Qu.:  1.160   1st Qu.:13.18  
+##  Median :  0.00   Median : 32.960   Median :  4.840   Median :18.98  
+##  Mean   : 14.45   Mean   : 78.886   Mean   :  4.702   Mean   :18.72  
+##  3rd Qu.:  0.00   3rd Qu.:107.480   3rd Qu.:  8.520   3rd Qu.:23.89  
+##  Max.   :882.99   Max.   :951.790   Max.   : 18.290   Max.   :36.45  
 ##                                                                      
 ##  AvgFirstMonth    AvgLastMonth  
-##  Min.   :1.000   Min.   :10.00  
-##  1st Qu.:2.000   1st Qu.:10.00  
-##  Median :4.000   Median :11.00  
-##  Mean   :3.531   Mean   :10.95  
-##  3rd Qu.:5.000   3rd Qu.:12.00  
-##  Max.   :6.000   Max.   :12.00  
+##  Min.   :2.000   Min.   :10.00  
+##  1st Qu.:2.000   1st Qu.:11.00  
+##  Median :4.500   Median :12.00  
+##  Mean   :4.182   Mean   :11.35  
+##  3rd Qu.:6.000   3rd Qu.:12.00  
+##  Max.   :7.000   Max.   :12.00  
 ## 
 ```
 
@@ -2957,7 +3158,11 @@ unique(allpops_historical_grwseason$parent.pop)
 ```
 ##  [1] "BH"    "CC"    "IH"    "SC"    "TM2"   "CP2"   "CP3"   "DPR"   "FR"   
 ## [10] "LV1"   "LV3"   "LVTR1" "SQ1"   "SQ2"   "SQ3"   "WL1"   "WL2"   "WR"   
-## [19] "WV"    "YO11"  "YO4"   "YO7"
+## [19] "WV"    "YO11"  "YO4"   "YO7"   "YO8"
+```
+
+```r
+write_csv(allpops_historical_grwseason, "../output/Climate/flint_climate_growthseason_historical.csv")
 ```
 
 
@@ -3025,21 +3230,21 @@ allpops_recent_grwseason_mosavgs #30 year averages during growth season months
 ```
 
 ```
-## # A tibble: 138 × 14
-## # Groups:   parent.pop, elevation.group, elev_m [22]
+## # A tibble: 165 × 14
+## # Groups:   parent.pop, elevation.group, elev_m [23]
 ##    parent.pop elevation.group elev_m month cwd_mean pck_mean ppt_mean tmn_mean
 ##    <chr>      <chr>            <dbl> <dbl>    <dbl>    <dbl>    <dbl>    <dbl>
-##  1 BH         Low               511.     1     29.3        0    125.      2.68
-##  2 BH         Low               511.     2     40.9        0    100.      3.43
-##  3 BH         Low               511.     3     53.8        0     85.4     4.90
-##  4 BH         Low               511.     4     59.0        0     47.2     6.37
-##  5 BH         Low               511.     5     51.5        0     23.1     9.76
-##  6 BH         Low               511.    11     45.5        0     50.5     5.18
-##  7 BH         Low               511.    12     29.8        0    109.      2.37
-##  8 CC         Low               313      1     19.6        0    187.      4.11
-##  9 CC         Low               313      2     31.2        0    179.      4.92
-## 10 CC         Low               313      3     45.4        0    145.      6.29
-## # ℹ 128 more rows
+##  1 BH         Low               511.     1     29.3        0   125.       2.68
+##  2 BH         Low               511.     2     40.9        0   100.       3.43
+##  3 BH         Low               511.     3     53.8        0    85.4      4.90
+##  4 BH         Low               511.     4     59.0        0    47.2      6.37
+##  5 BH         Low               511.     5     51.5        0    23.1      9.76
+##  6 BH         Low               511.     6     87.1        0     7.43    13.4 
+##  7 BH         Low               511.    12     29.8        0   109.       2.37
+##  8 CC         Low               313      1     19.6        0   187.       4.11
+##  9 CC         Low               313      2     31.2        0   179.       4.92
+## 10 CC         Low               313      3     45.4        0   145.       6.29
+## # ℹ 155 more rows
 ## # ℹ 6 more variables: tmx_mean <dbl>, cwd_sem <dbl>, pck_sem <dbl>,
 ## #   ppt_sem <dbl>, tmn_sem <dbl>, tmx_sem <dbl>
 ```
@@ -3127,21 +3332,21 @@ allpops_historical_grwseason_mosavgs #30 year averages during growth season mont
 ```
 
 ```
-## # A tibble: 128 × 14
-## # Groups:   parent.pop, elevation.group, elev_m [22]
+## # A tibble: 154 × 14
+## # Groups:   parent.pop, elevation.group, elev_m [23]
 ##    parent.pop elevation.group elev_m month cwd_mean pck_mean ppt_mean tmn_mean
 ##    <chr>      <chr>            <dbl> <dbl>    <dbl>    <dbl>    <dbl>    <dbl>
-##  1 BH         Low               511.     1     28.1    0.234     98.4     1.25
-##  2 BH         Low               511.     2     40.6    0         95.9     2.77
-##  3 BH         Low               511.     3     50.9    0        102.      3.76
-##  4 BH         Low               511.     4     61.0    0         51.0     5.44
-##  5 BH         Low               511.     5     61.1    0         13.0     8.64
-##  6 BH         Low               511.    11     43.6    0         85.5     4.36
-##  7 BH         Low               511.    12     28.5    0         84.2     1.43
-##  8 CC         Low               313      1     18.8    0.951    181.      2.29
-##  9 CC         Low               313      2     31.3    0        145.      4.07
-## 10 CC         Low               313      3     44.4    0        152.      5.08
-## # ℹ 118 more rows
+##  1 BH         Low               511.     1     28.1    0.234    98.4      1.25
+##  2 BH         Low               511.     2     40.6    0        95.9      2.77
+##  3 BH         Low               511.     3     50.9    0       102.       3.76
+##  4 BH         Low               511.     4     61.0    0        51.0      5.44
+##  5 BH         Low               511.     5     61.1    0        13.0      8.64
+##  6 BH         Low               511.     6     89.3    0         4.71    12.3 
+##  7 BH         Low               511.    11     43.6    0        85.5      4.36
+##  8 BH         Low               511.    12     28.5    0        84.2      1.43
+##  9 CC         Low               313      1     18.8    0.951   181.       2.29
+## 10 CC         Low               313      2     31.3    0       145.       4.07
+## # ℹ 144 more rows
 ## # ℹ 6 more variables: tmx_mean <dbl>, cwd_sem <dbl>, pck_sem <dbl>,
 ## #   ppt_sem <dbl>, tmn_sem <dbl>, tmx_sem <dbl>
 ```
@@ -3233,21 +3438,21 @@ allpops_recent_grwseason_avgs #30 year averages during growth season months
 ```
 
 ```
-## # A tibble: 22 × 13
-## # Groups:   parent.pop, elevation.group [22]
+## # A tibble: 23 × 13
+## # Groups:   parent.pop, elevation.group [23]
 ##    parent.pop elevation.group elev_m cwd_mean pck_mean ppt_mean tmn_mean
 ##    <chr>      <chr>            <dbl>    <dbl>    <dbl>    <dbl>    <dbl>
-##  1 BH         Low               511.     44.3    0         77.3     4.96
-##  2 CC         Low               313      36.4    0        135.      6.38
-##  3 CP2        High             2244.    100.     4.48      27.6     7.06
-##  4 CP3        High             2266.     75.8    7.40      27.5     6.55
-##  5 DPR        Mid              1019.     30.9    5.31      91.5     9.01
-##  6 FR         Mid               787      74.5    3.41      44.4     7.83
-##  7 IH         Low               454.     33.6    0.258    112.      7.16
-##  8 LV1        High             2593.     75.5    5.53      44.8     3.88
-##  9 LV3        High             2354.     94.8    5.29      44.4     3.88
-## 10 LVTR1      High             2741.     86.2    6.28      46.9     3.55
-## # ℹ 12 more rows
+##  1 BH         Low               511.     50.2    0         71.2     6.13
+##  2 CC         Low               313      40.7    0        120.      7.40
+##  3 CP2        High             2244.     74.9   40.3       77.0     3.79
+##  4 CP3        High             2266.     57.7   42.6       74.3     3.22
+##  5 DPR        Mid              1019.     30.3    2.89      96.4     8.97
+##  6 FR         Mid               787      66.7    4.87      56.2     6.97
+##  7 IH         Low               454.     40.3    0.232    101.      8.04
+##  8 LV1        High             2593.     65.1   27.7       75.6     2.20
+##  9 LV3        High             2354.     80.8   26.0       75.1     2.21
+## 10 LVTR1      High             2741.     73.3   28.6       78.8     1.90
+## # ℹ 13 more rows
 ## # ℹ 6 more variables: tmx_mean <dbl>, cwd_sem <dbl>, pck_sem <dbl>,
 ## #   ppt_sem <dbl>, tmn_sem <dbl>, tmx_sem <dbl>
 ```
@@ -3331,21 +3536,21 @@ allpops_historical_grwseason_avgs #30 year averages during growth season months
 ```
 
 ```
-## # A tibble: 22 × 13
-## # Groups:   parent.pop, elevation.group [22]
+## # A tibble: 23 × 13
+## # Groups:   parent.pop, elevation.group [23]
 ##    parent.pop elevation.group elev_m cwd_mean pck_mean ppt_mean tmn_mean
 ##    <chr>      <chr>            <dbl>    <dbl>    <dbl>    <dbl>    <dbl>
-##  1 BH         Low               511.     44.8   0.0334     75.7     3.95
-##  2 CC         Low               313      42.5   0.119     118.      5.85
-##  3 CP2        High             2244.     94.8   9.36       37.2     5.41
-##  4 CP3        High             2266.     69.6   0          39.7     5.26
-##  5 DPR        Mid              1019.     32.1   0.591      65.4     8.93
-##  6 FR         Mid               787      71.9   0.443      44.3     6.61
-##  7 IH         Low               454.     38.6   1.73      104.      6.38
-##  8 LV1        High             2593.     76.3  20.0        34.7     2.59
-##  9 LV3        High             2354.     98.0  18.8        34.2     2.52
-## 10 LVTR1      High             2741.     89.8  26.1        36.6     2.33
-## # ℹ 12 more rows
+##  1 BH         Low               511.     50.4   0.0292     66.8     4.99
+##  2 CC         Low               313      49.0   0.106      99.1     7.41
+##  3 CP2        High             2244.     79.9  19.4        72.2     3.92
+##  4 CP3        High             2266.     60.4  21.8        70.2     3.49
+##  5 DPR        Mid              1019.     29.8   4.69       84.3     7.96
+##  6 FR         Mid               787      65.4   4.96       57.6     5.72
+##  7 IH         Low               454.     41.5   1.73       97.7     6.99
+##  8 LV1        High             2593.     55.4  63.8       135.     -1.13
+##  9 LV3        High             2354.     66.8  60.8       134.     -1.18
+## 10 LVTR1      High             2741.     60.3  66.8       141.     -1.32
+## # ℹ 13 more rows
 ## # ℹ 6 more variables: tmx_mean <dbl>, cwd_sem <dbl>, pck_sem <dbl>,
 ## #   ppt_sem <dbl>, tmn_sem <dbl>, tmx_sem <dbl>
 ```
@@ -3429,12 +3634,12 @@ head(allpops_recent_grwseason)
 ## # Groups:   parent.pop, elevation.group, elev_m, year [1]
 ##   month growmonth parent.pop elevation.group elev_m PckSum  year   cwd   pck
 ##   <dbl>     <dbl> <chr>      <chr>            <dbl>  <dbl> <dbl> <dbl> <dbl>
-## 1    11         3 BH         Low               511.      0  1992  44.1     0
-## 2    12         4 BH         Low               511.      0  1992  27.8     0
-## 3     1         5 BH         Low               511.      0  1992  28.3     0
-## 4     2         6 BH         Low               511.      0  1992  40.1     0
-## 5     3         7 BH         Low               511.      0  1992  52.0     0
-## 6     4         8 BH         Low               511.      0  1992  75.9     0
+## 1    12         4 BH         Low               511.      0  1992  27.8     0
+## 2     1         5 BH         Low               511.      0  1992  28.3     0
+## 3     2         6 BH         Low               511.      0  1992  40.1     0
+## 4     3         7 BH         Low               511.      0  1992  52.0     0
+## 5     4         8 BH         Low               511.      0  1992  75.9     0
+## 6     5         9 BH         Low               511.      0  1992  78.6     0
 ## # ℹ 5 more variables: ppt <dbl>, tmn <dbl>, tmx <dbl>, AvgFirstMonth <dbl>,
 ## #   AvgLastMonth <dbl>
 ```
@@ -3446,24 +3651,24 @@ allpops_recent_grwseason %>% cor_test(cwd, ppt, tmn, tmx, method = "pearson")
 
 ```
 ## # A tibble: 16 × 8
-##    var1  var2    cor    statistic         p conf.low conf.high method 
-##    <chr> <chr> <dbl>        <dbl>     <dbl>    <dbl>     <dbl> <chr>  
-##  1 cwd   cwd    1           Inf   0            1         1     Pearson
-##  2 cwd   ppt   -0.57        -44.5 0           -0.589    -0.548 Pearson
-##  3 cwd   tmn    0.39         26.9 3.10e-147    0.360     0.412 Pearson
-##  4 cwd   tmx    0.51         38.2 4.99e-274    0.488     0.533 Pearson
-##  5 ppt   cwd   -0.57        -44.5 0           -0.589    -0.548 Pearson
-##  6 ppt   ppt    1    3052531348.  0            1         1     Pearson
-##  7 ppt   tmn   -0.43        -30.2 1.13e-181   -0.450    -0.400 Pearson
-##  8 ppt   tmx   -0.61        -50.1 0           -0.633    -0.595 Pearson
-##  9 tmn   cwd    0.39         26.9 3.10e-147    0.360     0.412 Pearson
-## 10 tmn   ppt   -0.43        -30.2 1.13e-181   -0.450    -0.400 Pearson
-## 11 tmn   tmn    1           Inf   0            1         1     Pearson
-## 12 tmn   tmx    0.91        144.  0            0.908     0.918 Pearson
-## 13 tmx   cwd    0.51         38.2 4.99e-274    0.488     0.533 Pearson
-## 14 tmx   ppt   -0.61        -50.1 0           -0.633    -0.595 Pearson
-## 15 tmx   tmn    0.91        144.  0            0.908     0.918 Pearson
-## 16 tmx   tmx    1           Inf   0            1         1     Pearson
+##    var1  var2    cor statistic         p conf.low conf.high method 
+##    <chr> <chr> <dbl>     <dbl>     <dbl>    <dbl>     <dbl> <chr>  
+##  1 cwd   cwd    1        Inf   0            1         1     Pearson
+##  2 cwd   ppt   -0.57     -48.8 0           -0.589    -0.551 Pearson
+##  3 cwd   tmn    0.52      42.4 0            0.495     0.536 Pearson
+##  4 cwd   tmx    0.61      53.6 0            0.588     0.623 Pearson
+##  5 ppt   cwd   -0.57     -48.8 0           -0.589    -0.551 Pearson
+##  6 ppt   ppt    1        Inf   0            1         1     Pearson
+##  7 ppt   tmn   -0.49     -39.7 2.13e-299   -0.512    -0.470 Pearson
+##  8 ppt   tmx   -0.63     -56.5 0           -0.643    -0.609 Pearson
+##  9 tmn   cwd    0.52      42.4 0            0.495     0.536 Pearson
+## 10 tmn   ppt   -0.49     -39.7 2.13e-299   -0.512    -0.470 Pearson
+## 11 tmn   tmn    1        Inf   0            1         1     Pearson
+## 12 tmn   tmx    0.95     213.  0            0.947     0.952 Pearson
+## 13 tmx   cwd    0.61      53.6 0            0.588     0.623 Pearson
+## 14 tmx   ppt   -0.63     -56.5 0           -0.643    -0.609 Pearson
+## 15 tmx   tmn    0.95     213.  0            0.947     0.952 Pearson
+## 16 tmx   tmx    1        Inf   0            1         1     Pearson
 ```
 
 ```r
@@ -3475,10 +3680,10 @@ recent_cor_mat
 ## # A tibble: 4 × 5
 ##   rowname   cwd   ppt   tmn   tmx
 ## * <chr>   <dbl> <dbl> <dbl> <dbl>
-## 1 cwd      1    -0.57  0.39  0.51
-## 2 ppt     -0.57  1    -0.43 -0.61
-## 3 tmn      0.39 -0.43  1     0.91
-## 4 tmx      0.51 -0.61  0.91  1
+## 1 cwd      1    -0.57  0.52  0.61
+## 2 ppt     -0.57  1    -0.49 -0.63
+## 3 tmn      0.52 -0.49  1     0.95
+## 4 tmx      0.61 -0.63  0.95  1
 ```
 
 ```r
@@ -3501,24 +3706,24 @@ allpops_historical_grwseason %>% cor_test(cwd, ppt, tmn, tmx, method = "pearson"
 
 ```
 ## # A tibble: 16 × 8
-##    var1  var2    cor    statistic         p conf.low conf.high method 
-##    <chr> <chr> <dbl>        <dbl>     <dbl>    <dbl>     <dbl> <chr>  
-##  1 cwd   cwd    1    4157501097.  0            1         1     Pearson
-##  2 cwd   ppt   -0.53        -38.8 6.22e-278   -0.553    -0.508 Pearson
-##  3 cwd   tmn    0.28         18.1 2.16e- 70    0.251     0.309 Pearson
-##  4 cwd   tmx    0.46         31.7 3.86e-196    0.430     0.480 Pearson
-##  5 ppt   cwd   -0.53        -38.8 6.22e-278   -0.553    -0.508 Pearson
-##  6 ppt   ppt    1           Inf   0            1         1     Pearson
-##  7 ppt   tmn   -0.35        -23.1 1.01e-110   -0.377    -0.321 Pearson
-##  8 ppt   tmx   -0.56        -42.4 3.75e-322   -0.586    -0.543 Pearson
-##  9 tmn   cwd    0.28         18.1 2.16e- 70    0.251     0.309 Pearson
-## 10 tmn   ppt   -0.35        -23.1 1.01e-110   -0.377    -0.321 Pearson
-## 11 tmn   tmn    1           Inf   0            1         1     Pearson
-## 12 tmn   tmx    0.89        118.  0            0.878     0.892 Pearson
-## 13 tmx   cwd    0.46         31.7 3.86e-196    0.430     0.480 Pearson
-## 14 tmx   ppt   -0.56        -42.4 3.75e-322   -0.586    -0.543 Pearson
-## 15 tmx   tmn    0.89        118.  0            0.878     0.892 Pearson
-## 16 tmx   tmx    1           Inf   0            1         1     Pearson
+##    var1  var2    cor statistic         p conf.low conf.high method 
+##    <chr> <chr> <dbl>     <dbl>     <dbl>    <dbl>     <dbl> <chr>  
+##  1 cwd   cwd    1        Inf   0            1         1     Pearson
+##  2 cwd   ppt   -0.53     -42.3 0           -0.549    -0.508 Pearson
+##  3 cwd   tmn    0.48      37.2 4.30e-265    0.458     0.502 Pearson
+##  4 cwd   tmx    0.59      49.5 0            0.569     0.607 Pearson
+##  5 ppt   cwd   -0.53     -42.3 0           -0.549    -0.508 Pearson
+##  6 ppt   ppt    1        Inf   0            1         1     Pearson
+##  7 ppt   tmn   -0.49     -37.9 5.68e-274   -0.509    -0.465 Pearson
+##  8 ppt   tmx   -0.62     -54.0 0           -0.639    -0.604 Pearson
+##  9 tmn   cwd    0.48      37.2 4.30e-265    0.458     0.502 Pearson
+## 10 tmn   ppt   -0.49     -37.9 5.68e-274   -0.509    -0.465 Pearson
+## 11 tmn   tmn    1        Inf   0            1         1     Pearson
+## 12 tmn   tmx    0.94     186.  0            0.936     0.943 Pearson
+## 13 tmx   cwd    0.59      49.5 0            0.569     0.607 Pearson
+## 14 tmx   ppt   -0.62     -54.0 0           -0.639    -0.604 Pearson
+## 15 tmx   tmn    0.94     186.  0            0.936     0.943 Pearson
+## 16 tmx   tmx    1        Inf   0            1         1     Pearson
 ```
 
 ```r
@@ -3530,10 +3735,10 @@ historical_cor_mat
 ## # A tibble: 4 × 5
 ##   rowname   cwd   ppt   tmn   tmx
 ## * <chr>   <dbl> <dbl> <dbl> <dbl>
-## 1 cwd      1    -0.53  0.28  0.46
-## 2 ppt     -0.53  1    -0.35 -0.56
-## 3 tmn      0.28 -0.35  1     0.89
-## 4 tmx      0.46 -0.56  0.89  1
+## 1 cwd      1    -0.53  0.48  0.59
+## 2 ppt     -0.53  1    -0.49 -0.62
+## 3 tmn      0.48 -0.49  1     0.94
+## 4 tmx      0.59 -0.62  0.94  1
 ```
 
 ```r
