@@ -1,7 +1,7 @@
 ---
 title: "Single Time Size Reaction Norms"
 author: "Brandie Quarles"
-date: "2024-02-27"
+date: "2024-05-03"
 output: 
   html_document: 
     keep_md: yes
@@ -599,16 +599,20 @@ All Genotypes Colored by Pop
 twomonths_rxnnorms_bothsites_loc %>% 
   ggplot(aes(x=Site, y=height.cm, group=Genotype, color=parent.pop)) + 
   geom_point(size=0.8) + geom_line(linewidth=0.8) +
-  theme_classic() 
+  theme_classic() +
+   theme(text=element_text(size=25))
 ```
 
 ![](Single_Time_Size_RxnNorms_files/figure-html/unnamed-chunk-6-1.png)<!-- -->
 
 ```r
+ggsave("../output/TwoMonths_RxNorms_Height_All_Genos.png", width = 12, height = 8, units = "in")
+
 twomonths_rxnnorms_bothsites_loc %>% 
   ggplot(aes(x=Site, y=long.leaf.cm, group=Genotype, color=parent.pop)) + 
   geom_point(size=0.8) + geom_line(linewidth=0.8) +
-  theme_classic() 
+  theme_classic()  +
+   theme(text=element_text(size=25))
 ```
 
 ```
@@ -620,6 +624,15 @@ twomonths_rxnnorms_bothsites_loc %>%
 ```
 
 ![](Single_Time_Size_RxnNorms_files/figure-html/unnamed-chunk-6-2.png)<!-- -->
+
+```r
+ggsave("../output/TwoMonths_RxNorms_LongestLength_All_Genos.png", width = 12, height = 8, units = "in")
+```
+
+```
+## Warning: Removed 18 rows containing missing values (`geom_point()`).
+## Removed 18 rows containing missing values (`geom_line()`).
+```
 All Genotypes colored by elevation
 
 ```r
@@ -655,17 +668,21 @@ twomonths_rxnnorms_bothsites_loc %>%
   filter(parent.pop=="TM2"|parent.pop=="WL2") %>% 
   ggplot(aes(x=Site, y=height.cm, group=Genotype, color=parent.pop)) + 
   geom_point(size=0.8) + geom_line(linewidth=0.8) +
-  theme_classic() 
+  theme_classic()  +
+   theme(text=element_text(size=25))
 ```
 
 ![](Single_Time_Size_RxnNorms_files/figure-html/unnamed-chunk-8-1.png)<!-- -->
 
 ```r
+ggsave("../output/TwoMonths_RxNorms_Height_TM2_WL2_Genos.png", width = 12, height = 8, units = "in")
+
 twomonths_rxnnorms_bothsites_loc %>% 
   filter(parent.pop=="TM2"|parent.pop=="WL2") %>% 
   ggplot(aes(x=Site, y=long.leaf.cm, group=Genotype, color=parent.pop)) + 
   geom_point(size=0.8) + geom_line(linewidth=0.8) +
-  theme_classic() 
+  theme_classic()  +
+   theme(text=element_text(size=25))
 ```
 
 ```
@@ -677,6 +694,15 @@ twomonths_rxnnorms_bothsites_loc %>%
 ```
 
 ![](Single_Time_Size_RxnNorms_files/figure-html/unnamed-chunk-8-2.png)<!-- -->
+
+```r
+ggsave("../output/TwoMonths_RxNorms_LongestLength_TM2_WL2_Genos.png", width = 12, height = 8, units = "in")
+```
+
+```
+## Warning: Removed 1 rows containing missing values (`geom_point()`).
+## Removed 1 row containing missing values (`geom_line()`).
+```
 
 
 Means by Pop
@@ -725,17 +751,21 @@ twomonths_rxnnorms_summary %>%
    ggplot(aes(x=Site, y=mean_height.cm, group=parent.pop, color=parent.pop)) + 
   geom_point(size=0.8) + geom_line(linewidth=0.8) +
   geom_errorbar(aes(ymin=mean_height.cm-sem_height.cm,ymax=mean_height.cm+sem_height.cm),width=.2) +
-  theme_classic() 
+  theme_classic() +
+   theme(text=element_text(size=25))
 ```
 
 ![](Single_Time_Size_RxnNorms_files/figure-html/unnamed-chunk-10-1.png)<!-- -->
 
 ```r
+ggsave("../output/TwoMonths_RxNorms_Height_ALL_PopAvgs2.png", width = 12, height = 8, units = "in")
+
 twomonths_rxnnorms_summary %>% 
    ggplot(aes(x=Site, y=mean_long.leaf.cm, group=parent.pop, color=parent.pop)) + 
   geom_point(size=0.8) + geom_line(linewidth=0.8) +
   geom_errorbar(aes(ymin=mean_long.leaf.cm-sem_long.leaf.cm,ymax=mean_long.leaf.cm+sem_long.leaf.cm),width=.2) +
-  theme_classic() 
+  theme_classic() +
+   theme(text=element_text(size=25))
 ```
 
 ```
@@ -748,23 +778,36 @@ twomonths_rxnnorms_summary %>%
 
 ![](Single_Time_Size_RxnNorms_files/figure-html/unnamed-chunk-10-2.png)<!-- -->
 
+```r
+ggsave("../output/TwoMonths_RxNorms_LongestLength_ALL_PopAvgs2.png", width = 12, height = 8, units = "in")
+```
+
+```
+## Warning: Removed 1 rows containing missing values (`geom_point()`).
+## Removed 1 row containing missing values (`geom_line()`).
+```
+
 
 ```r
 twomonths_rxnnorms_summary %>% 
    ggplot(aes(x=Site, y=mean_height.cm, group=parent.pop, color=elev_m)) + 
   geom_point(size=0.8) + geom_line(linewidth=0.8) +
   geom_errorbar(aes(ymin=mean_height.cm-sem_height.cm,ymax=mean_height.cm+sem_height.cm),width=.2) +
-  theme_classic() + scale_colour_gradient(low = "#F5A540", high = "#0043F0")
+  theme_classic() + scale_colour_gradient(low = "#F5A540", high = "#0043F0")  +
+   theme(text=element_text(size=25))
 ```
 
 ![](Single_Time_Size_RxnNorms_files/figure-html/unnamed-chunk-11-1.png)<!-- -->
 
 ```r
+ggsave("../output/TwoMonths_RxNorms_Height_ALL_PopAvgs.png", width = 12, height = 8, units = "in")
+
 twomonths_rxnnorms_summary %>% 
    ggplot(aes(x=Site, y=mean_long.leaf.cm, group=parent.pop, color=elev_m)) + 
   geom_point(size=0.8) + geom_line(linewidth=0.8) +
   geom_errorbar(aes(ymin=mean_long.leaf.cm-sem_long.leaf.cm,ymax=mean_long.leaf.cm+sem_long.leaf.cm),width=.2) +
-  theme_classic() + scale_colour_gradient(low = "#F5A540", high = "#0043F0")
+  theme_classic() + scale_colour_gradient(low = "#F5A540", high = "#0043F0")  +
+   theme(text=element_text(size=25))
 ```
 
 ```
@@ -777,6 +820,15 @@ twomonths_rxnnorms_summary %>%
 
 ![](Single_Time_Size_RxnNorms_files/figure-html/unnamed-chunk-11-2.png)<!-- -->
 
+```r
+ggsave("../output/TwoMonths_RxNorms_LongestLength_ALL_PopAvgs.png", width = 12, height = 8, units = "in")
+```
+
+```
+## Warning: Removed 1 rows containing missing values (`geom_point()`).
+## Removed 1 row containing missing values (`geom_line()`).
+```
+
 
 ```r
 twomonths_rxnnorms_summary %>% 
@@ -784,21 +836,29 @@ twomonths_rxnnorms_summary %>%
    ggplot(aes(x=Site, y=mean_height.cm, group=parent.pop, color=parent.pop)) + 
   geom_point(size=0.8) + geom_line(linewidth=0.8) +
   geom_errorbar(aes(ymin=mean_height.cm-sem_height.cm,ymax=mean_height.cm+sem_height.cm),width=.2) +
-  theme_classic() 
+  theme_classic()  +
+   theme(text=element_text(size=25))
 ```
 
 ![](Single_Time_Size_RxnNorms_files/figure-html/unnamed-chunk-12-1.png)<!-- -->
 
 ```r
+ggsave("../output/TwoMonths_RxNorms_Height_TM2_WL2_PopAvgs.png", width = 12, height = 8, units = "in")
+
 twomonths_rxnnorms_summary %>% 
   filter(parent.pop=="TM2"|parent.pop=="WL2") %>%  
    ggplot(aes(x=Site, y=mean_long.leaf.cm, group=parent.pop, color=parent.pop)) + 
   geom_point(size=0.8) + geom_line(linewidth=0.8) +
   geom_errorbar(aes(ymin=mean_long.leaf.cm-sem_long.leaf.cm,ymax=mean_long.leaf.cm+sem_long.leaf.cm),width=.2) +
-  theme_classic() 
+  theme_classic()  +
+   theme(text=element_text(size=25))
 ```
 
 ![](Single_Time_Size_RxnNorms_files/figure-html/unnamed-chunk-12-2.png)<!-- -->
+
+```r
+ggsave("../output/TwoMonths_RxNorms_LongestLength_TM2_WL2_PopAvgs.png", width = 12, height = 8, units = "in")
+```
 
 
 Means by Elevation
