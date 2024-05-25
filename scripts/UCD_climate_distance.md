@@ -1,7 +1,7 @@
 ---
 title: "UCD Climate Distance"
 author: "Brandie Quarles"
-date: "2024-05-10"
+date: "2024-05-25"
 output: 
   html_document: 
     keep_md: yes
@@ -13,6 +13,12 @@ editor_options:
 
 
 # Climate Distance at the Davis Garden
+What happens if I drop the bioclim?
+CWD might change the results too
+But maybe similar because the life history differences are allowing them to pick the same time
+Annual data might give a different result, worth presenting it both ways because that helps highlight the importance of the life history differences 
+To get confidence intervals could do some bootstrapping - samples some of the 30 years and calculates it and so on - Julin could help with the code 
+
 
 Options:
 
@@ -103,15 +109,6 @@ conflicts_prefer(dplyr::filter)
 library(ggrepel)
 library(cowplot)
 library(gridExtra)
-library(corrplot) #plotting correlations 
-```
-
-```
-## corrplot 0.92 loaded
-```
-
-```r
-library(rstatix) #performing cor_test
 library(naniar) #replaces values with NA
 sem <- function(x, na.rm=FALSE) {
   sd(x,na.rm=na.rm)/sqrt(length(na.omit(x)))
@@ -126,15 +123,6 @@ get_legend<-function(myggplot){
 
 elev_three_palette <- c("#0043F0", "#C9727F", "#F5A540") #colors from Gremer et al 2019
 elev_order <- c("High", "Mid", "Low")
-
-#For scree plots 
-#library("devtools") #The package devtools is required for the installation as factoextra is hosted on github.
-#1install_github("kassambara/factoextra")
-library("factoextra")
-```
-
-```
-## Welcome! Want to learn more? See two factoextra-related books at https://goo.gl/ve3WBa
 ```
 
 ## Home Climates
@@ -1283,7 +1271,7 @@ names(gowers_all_time)
 ```
 
 ```r
-write_csv(gowers_all_time, "../output/Climate/Pops_GowersEnvtalDist.csv")
+write_csv(gowers_all_time, "../output/Climate/Pops_GowersEnvtalDist_UCD.csv")
 ```
 
 Figures
@@ -1292,21 +1280,12 @@ Figures
 gowers_rec_fig <- gowers_all_time %>% 
   ggplot(aes(x=fct_reorder(parent.pop, Recent_Gowers_Dist), y=Recent_Gowers_Dist, group=parent.pop, fill=elev_m)) +
   geom_col(width = 0.7,position = position_dodge(0.75)) +
-  scale_y_continuous(expand = c(0, 0)) +
+  scale_y_continuous(expand = c(0, 0), (limits=c(0, 0.6))) +
   scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
    labs(fill="Elevation (m)",x="Population", title="Recent Climate", y="Gowers Envtal Distance \n from Davis") +
   theme_classic() +
-  scale_y_continuous(limits=c(0, 0.6)) +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-```
-
-```
-## Scale for y is already present.
-## Adding another scale for y, which will replace the existing scale.
-```
-
-```r
-ggsave("../output/Climate/Gowers_Recent.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/Gowers_Recent_fromDavis.png", width = 12, height = 6, units = "in")
 
 gowers_hist_fig <- gowers_all_time %>% 
   ggplot(aes(x=fct_reorder(parent.pop, Historic_Gowers_Dist), y=Historic_Gowers_Dist, group=parent.pop, fill=elev_m)) +
@@ -1316,7 +1295,7 @@ gowers_hist_fig <- gowers_all_time %>%
   labs(fill="Elevation (m)",x="Population", title="Historic Climate", y="Gowers Envtal Distance \n from Davis") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/Climate/Gowers_Historic.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/Gowers_Historic_fromDavis.png", width = 12, height = 6, units = "in")
 
 #should combine these into one figure and save that instead
 legend <- get_legend(gowers_rec_fig)
@@ -1390,7 +1369,7 @@ recent_flint_dist %>%
 ![](UCD_climate_distance_files/figure-html/unnamed-chunk-17-1.png)<!-- -->
 
 ```r
-ggsave("../output/Climate/MeanPPT_Dist_RecentClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/MeanPPT_DistfromDavis_RecentClim.png", width = 12, height = 6, units = "in")
 
 recent_flint_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, tmn_mean_dist), y=tmn_mean_dist, group=parent.pop, fill=elev_m)) +
@@ -1405,7 +1384,7 @@ recent_flint_dist %>%
 ![](UCD_climate_distance_files/figure-html/unnamed-chunk-17-2.png)<!-- -->
 
 ```r
-ggsave("../output/Climate/MeanTMN_Dist_RecentClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/MeanTMN_DistfromDavis_RecentClim.png", width = 12, height = 6, units = "in")
 
 recent_flint_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, tmx_mean_dist), y=tmx_mean_dist, group=parent.pop, fill=elev_m)) +
@@ -1420,7 +1399,7 @@ recent_flint_dist %>%
 ![](UCD_climate_distance_files/figure-html/unnamed-chunk-17-3.png)<!-- -->
 
 ```r
-ggsave("../output/Climate/MeanTMX_Dist_RecentClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/MeanTMX_DistfromDavis_RecentClim.png", width = 12, height = 6, units = "in")
 ```
 
 Figures Historical (subtraction distance)
@@ -1440,7 +1419,7 @@ historic_flint_dist %>%
 ![](UCD_climate_distance_files/figure-html/unnamed-chunk-18-1.png)<!-- -->
 
 ```r
-ggsave("../output/Climate/MeanPPT_Dist_HistoricalClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/MeanPPT_DistfromDavis_HistoricalClim.png", width = 12, height = 6, units = "in")
 
 historic_flint_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, tmn_mean_dist), y=tmn_mean_dist, group=parent.pop, fill=elev_m)) +
@@ -1455,7 +1434,7 @@ historic_flint_dist %>%
 ![](UCD_climate_distance_files/figure-html/unnamed-chunk-18-2.png)<!-- -->
 
 ```r
-ggsave("../output/Climate/MeanTMN_Dist_HistoricalClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/MeanTMN_DistfromDavis_HistoricalClim.png", width = 12, height = 6, units = "in")
 
 historic_flint_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, tmx_mean_dist), y=tmx_mean_dist, group=parent.pop, fill=elev_m)) +
@@ -1470,7 +1449,7 @@ historic_flint_dist %>%
 ![](UCD_climate_distance_files/figure-html/unnamed-chunk-18-3.png)<!-- -->
 
 ```r
-ggsave("../output/Climate/MeanTMX_Dist_HistoricalClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/MeanTMX_DistfromDavis_HistoricalClim.png", width = 12, height = 6, units = "in")
 ```
 
 ## Bioclim Climate Distance
@@ -1601,7 +1580,7 @@ recent_bioclim_dist %>%
 ![](UCD_climate_distance_files/figure-html/unnamed-chunk-20-1.png)<!-- -->
 
 ```r
-ggsave("../output/Climate/Ann_Tmean_Dist_RecentClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/Ann_Tmean_DistfromDavis_RecentClim.png", width = 12, height = 6, units = "in")
 
 recent_bioclim_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, mean_diurnal_range_dist), y=mean_diurnal_range_dist, group=parent.pop, fill=elev_m)) +
@@ -1616,7 +1595,7 @@ recent_bioclim_dist %>%
 ![](UCD_climate_distance_files/figure-html/unnamed-chunk-20-2.png)<!-- -->
 
 ```r
-ggsave("../output/Climate/Diurnal_Range_Dist_RecentClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/Diurnal_Range_DistfromDavis_RecentClim.png", width = 12, height = 6, units = "in")
 
 recent_bioclim_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, temp_seasonality_dist), y=temp_seasonality_dist, group=parent.pop, fill=elev_m)) +
@@ -1631,7 +1610,7 @@ recent_bioclim_dist %>%
 ![](UCD_climate_distance_files/figure-html/unnamed-chunk-20-3.png)<!-- -->
 
 ```r
-ggsave("../output/Climate/Temp_Seasonality_Dist_RecentClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/Temp_Seasonality_DistfromDavis_RecentClim.png", width = 12, height = 6, units = "in")
 
 recent_bioclim_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, temp_ann_range_dist), y=temp_ann_range_dist, group=parent.pop, fill=elev_m)) +
@@ -1646,7 +1625,7 @@ recent_bioclim_dist %>%
 ![](UCD_climate_distance_files/figure-html/unnamed-chunk-20-4.png)<!-- -->
 
 ```r
-ggsave("../output/Climate/Temp_Ann_Range_Dist_RecentClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/Temp_Ann_Range_DistfromDavis_RecentClim.png", width = 12, height = 6, units = "in")
 
 recent_bioclim_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, tmean_wettest_month_dist), y=tmean_wettest_month_dist, group=parent.pop, fill=elev_m)) +
@@ -1661,7 +1640,7 @@ recent_bioclim_dist %>%
 ![](UCD_climate_distance_files/figure-html/unnamed-chunk-20-5.png)<!-- -->
 
 ```r
-ggsave("../output/Climate/Temp_Wet_Dist_RecentClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/Temp_Wet_DistfromDavis_RecentClim.png", width = 12, height = 6, units = "in")
 
 recent_bioclim_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, tmean_driest_month_dist), y=tmean_driest_month_dist, group=parent.pop, fill=elev_m)) +
@@ -1676,7 +1655,7 @@ recent_bioclim_dist %>%
 ![](UCD_climate_distance_files/figure-html/unnamed-chunk-20-6.png)<!-- -->
 
 ```r
-ggsave("../output/Climate/Temp_Dry_Dist_RecentClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/Temp_Dry_DistfromDavis_RecentClim.png", width = 12, height = 6, units = "in")
 
 recent_bioclim_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, ann_ppt_dist), y=ann_ppt_dist, group=parent.pop, fill=elev_m)) +
@@ -1691,7 +1670,7 @@ recent_bioclim_dist %>%
 ![](UCD_climate_distance_files/figure-html/unnamed-chunk-20-7.png)<!-- -->
 
 ```r
-ggsave("../output/Climate/Ann_PPT_Dist_RecentClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/Ann_PPT_DistfromDavis_RecentClim.png", width = 12, height = 6, units = "in")
 
 recent_bioclim_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, ppt_seasonality_dist), y=ppt_seasonality_dist, group=parent.pop, fill=elev_m)) +
@@ -1706,7 +1685,7 @@ recent_bioclim_dist %>%
 ![](UCD_climate_distance_files/figure-html/unnamed-chunk-20-8.png)<!-- -->
 
 ```r
-ggsave("../output/Climate/PPT_Seasonality_Dist_RecentClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/PPT_Seasonality_DistfromDavis_RecentClim.png", width = 12, height = 6, units = "in")
 
 recent_bioclim_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, ppt_warmest_month_dist), y=ppt_warmest_month_dist, group=parent.pop, fill=elev_m)) +
@@ -1721,7 +1700,7 @@ recent_bioclim_dist %>%
 ![](UCD_climate_distance_files/figure-html/unnamed-chunk-20-9.png)<!-- -->
 
 ```r
-ggsave("../output/Climate/PPT_Warm_Dist_RecentClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/PPT_Warm_DistfromDavis_RecentClim.png", width = 12, height = 6, units = "in")
 
 recent_bioclim_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, ppt_coldest_month_dist), y=ppt_coldest_month_dist, group=parent.pop, fill=elev_m)) +
@@ -1736,7 +1715,7 @@ recent_bioclim_dist %>%
 ![](UCD_climate_distance_files/figure-html/unnamed-chunk-20-10.png)<!-- -->
 
 ```r
-ggsave("../output/Climate/PPT_Cold_Dist_RecentClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/PPT_Cold_DistfromDavis_RecentClim.png", width = 12, height = 6, units = "in")
 ```
 
 Historical (subtraction distance)
@@ -1756,7 +1735,7 @@ historical_bioclim_dist %>%
 ![](UCD_climate_distance_files/figure-html/unnamed-chunk-21-1.png)<!-- -->
 
 ```r
-ggsave("../output/Climate/Ann_Tmean_Dist_HistoricalClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/Ann_Tmean_DistfromDavis_HistoricalClim.png", width = 12, height = 6, units = "in")
 
 historical_bioclim_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, mean_diurnal_range_dist), y=mean_diurnal_range_dist, group=parent.pop, fill=elev_m)) +
@@ -1771,7 +1750,7 @@ historical_bioclim_dist %>%
 ![](UCD_climate_distance_files/figure-html/unnamed-chunk-21-2.png)<!-- -->
 
 ```r
-ggsave("../output/Climate/Diurnal_Range_Dist_HistoricalClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/Diurnal_Range_DistfromDavis_HistoricalClim.png", width = 12, height = 6, units = "in")
 
 historical_bioclim_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, temp_seasonality_dist), y=temp_seasonality_dist, group=parent.pop, fill=elev_m)) +
@@ -1786,7 +1765,7 @@ historical_bioclim_dist %>%
 ![](UCD_climate_distance_files/figure-html/unnamed-chunk-21-3.png)<!-- -->
 
 ```r
-ggsave("../output/Climate/Temp_Seasonality_Dist_HistoricalClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/Temp_Seasonality_DistfromDavis_HistoricalClim.png", width = 12, height = 6, units = "in")
 
 historical_bioclim_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, temp_ann_range_dist), y=temp_ann_range_dist, group=parent.pop, fill=elev_m)) +
@@ -1801,7 +1780,7 @@ historical_bioclim_dist %>%
 ![](UCD_climate_distance_files/figure-html/unnamed-chunk-21-4.png)<!-- -->
 
 ```r
-ggsave("../output/Climate/Temp_Ann_Range_Dist_HistoricalClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/Temp_Ann_Range_DistfromDavis_HistoricalClim.png", width = 12, height = 6, units = "in")
 
 historical_bioclim_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, tmean_wettest_month_dist), y=tmean_wettest_month_dist, group=parent.pop, fill=elev_m)) +
@@ -1816,7 +1795,7 @@ historical_bioclim_dist %>%
 ![](UCD_climate_distance_files/figure-html/unnamed-chunk-21-5.png)<!-- -->
 
 ```r
-ggsave("../output/Climate/Temp_Wet_Dist_HistoricalClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/Temp_Wet_DistfromDavis_HistoricalClim.png", width = 12, height = 6, units = "in")
 
 historical_bioclim_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, tmean_driest_month_dist), y=tmean_driest_month_dist, group=parent.pop, fill=elev_m)) +
@@ -1831,7 +1810,7 @@ historical_bioclim_dist %>%
 ![](UCD_climate_distance_files/figure-html/unnamed-chunk-21-6.png)<!-- -->
 
 ```r
-ggsave("../output/Climate/Temp_Dry_Dist_HistoricalClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/Temp_Dry_DistfromDavis_HistoricalClim.png", width = 12, height = 6, units = "in")
 
 historical_bioclim_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, ann_ppt_dist), y=ann_ppt_dist, group=parent.pop, fill=elev_m)) +
@@ -1846,7 +1825,7 @@ historical_bioclim_dist %>%
 ![](UCD_climate_distance_files/figure-html/unnamed-chunk-21-7.png)<!-- -->
 
 ```r
-ggsave("../output/Climate/Ann_PPT_Dist_HistoricalClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/Ann_PPT_DistfromDavis_HistoricalClim.png", width = 12, height = 6, units = "in")
 
 historical_bioclim_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, ppt_seasonality_dist), y=ppt_seasonality_dist, group=parent.pop, fill=elev_m)) +
@@ -1861,7 +1840,7 @@ historical_bioclim_dist %>%
 ![](UCD_climate_distance_files/figure-html/unnamed-chunk-21-8.png)<!-- -->
 
 ```r
-ggsave("../output/Climate/PPT_Seasonality_Dist_HistoricalClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/PPT_Seasonality_DistfromDavis_HistoricalClim.png", width = 12, height = 6, units = "in")
 
 historical_bioclim_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, ppt_warmest_month_dist), y=ppt_warmest_month_dist, group=parent.pop, fill=elev_m)) +
@@ -1876,7 +1855,7 @@ historical_bioclim_dist %>%
 ![](UCD_climate_distance_files/figure-html/unnamed-chunk-21-9.png)<!-- -->
 
 ```r
-ggsave("../output/Climate/PPT_Warm_Dist_HistoricalClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/PPT_Warm_DistfromDavis_HistoricalClim.png", width = 12, height = 6, units = "in")
 
 historical_bioclim_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, ppt_coldest_month_dist), y=ppt_coldest_month_dist, group=parent.pop, fill=elev_m)) +
@@ -1891,5 +1870,5 @@ historical_bioclim_dist %>%
 ![](UCD_climate_distance_files/figure-html/unnamed-chunk-21-10.png)<!-- -->
 
 ```r
-ggsave("../output/Climate/PPT_Cold_Dist_HistoricalClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/PPT_Cold_DistfromDavis_HistoricalClim.png", width = 12, height = 6, units = "in")
 ```
