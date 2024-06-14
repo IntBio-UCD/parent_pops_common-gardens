@@ -20,14 +20,19 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r}
 library(tidyverse)
+library(ggpubr) ##allows for background images
 library(ggrepel)
 library(cowplot)
 library(gridExtra)
-library(corrplot) #plotting correlations 
-library(rstatix) #performing cor_test
-library(lmerTest)
 library(naniar) #replaces values with NA
-library(QBMS) #for function calc_biovars to calculate bioclim variables
+library(jpeg)
+#making topo maps:
+library(elevatr)
+library(terra)
+library(sf)
+library(giscoR)
+library(marmap)
+
 sem <- function(x, na.rm=FALSE) {
   sd(x,na.rm=na.rm)/sqrt(length(na.omit(x)))
 } #standard error function 
@@ -41,11 +46,6 @@ get_legend<-function(myggplot){
 
 elev_three_palette <- c("#0043F0", "#C9727F", "#F5A540") #colors from Gremer et al 2019
 elev_order <- c("High", "Mid", "Low")
-
-#For scree plots 
-#library("devtools") #The package devtools is required for the installation as factoextra is hosted on github.
-#1install_github("kassambara/factoextra")
-library("factoextra")
 ```
 
 ## Load the pop and location data
@@ -85,7 +85,7 @@ states <- map_data("state") %>% filter(region == "california")
 
 
 #without labels 
-ggplot() +
+pops_locs_no_labels <- ggplot() +
   geom_polygon(data = states, aes(x = long, y = lat, group = group), fill = "gray") +
   coord_quickmap(xlim = c(-125, -114), ylim = c(35, 43))+
   geom_point(data = pop_elev,
@@ -118,6 +118,110 @@ ggplot() +
   theme(text=element_text(size=25))
 #ggsave("../output/Pop_Map_Labels.png", width = 12, height = 8, units = "in")
 ```
+
+### Map with elevation
+Overlay topographical image on graph
+```{r}
+imgfile <- "../input/CA_TOPO_9.jpg"
+img <- readJPEG(imgfile)
+
+pops_locs_no_labels_topo <- pops_locs_no_labels +
+  background_image(img)
+
+ggplot() +
+  background_image(img) +
+  geom_polygon(data = states, aes(x = long, y = lat, group = group), fill = "gray")
+#ggsave("../output/California.png", width = 6.69, height=7.5, units="in")
+
+pops_locs_no_labels_topo <- ggplot() +
+  #geom_polygon(data = states, aes(x = long, y = lat, group = group), fill = "gray") +
+  background_image(img) + #not perfectly aligned with the polygon 
+  coord_quickmap(xlim = c(-125, -114), ylim = c(35, 43))+
+  geom_point(data = pop_elev,
+             aes(x = Long, y = Lat, color=elev_m),
+             size = 4) +
+  labs(x="Long", y="Lat", color="Elevation (m)") +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  theme_classic() +
+  theme(text=element_text(size=25))
+ggsave("../output/Pop_Map_Topo.png", width = 6, height=4, units="in")
+```
+
+
+Get elevation data 
+```{r}
+cali <- states %>% rename(lon = long)
+summary(cali)
+
+##Get Country data 
+crsLONGLAT <- "+proj=longlat +datum=WGS84 +no_defs"
+get_sf <- function(country_sf, country_transformed) {
+	
+	country_sf <- giscoR::gisco_get_countries(
+    	year = "2020",
+    	epsg = "4326",
+    	resolution = "10",
+    	country = "USA") %>% 
+	  sf::st_crop(c(xmin = -124.4, xmax = -114.1, ymin = 32.5, ymax = 42.02))
+	
+	country_transformed <- st_transform(country_sf, crs = crsLONGLAT)
+
+	return(country_transformed)
+}
+
+country_transformed <- get_sf() 
+
+##Get elevation data 
+get_elevation_data <- function(country_elevation, country_elevation_df) {
+
+	country_elevation <- get_elev_raster(
+		locations = country_transformed, 
+		z = 14, # Please decrease the z value if you experience R crashing
+		#values ranging from 1 (high-level detail) to 14 (low-level detail).
+		clip = "locations") 
+
+	country_elevation_df <- as.data.frame(country_elevation, xy = T) %>%
+		na.omit()
+	
+	colnames(country_elevation_df)[3] <- "elevation"
+
+	return(country_elevation_df)
+}
+
+country_elevation_df <- get_elevation_data()
+head(country_elevation_df)
+```
+
+```{r}
+get_elevation_map <- function(country_map) {
+
+	country_map <- ggplot() +
+  		geom_tile(data = country_elevation_df, 
+  			aes(x = x, y = y, fill = elevation)) +
+  		scale_fill_etopo() +
+  		coord_sf(crs = crsLONGLAT)+
+  		theme_minimal() +
+  		theme(text = element_text(family = "georg", color = "#22211d"),
+    		axis.line = element_blank(),
+    		axis.text.x = element_blank(),
+    		axis.text.y = element_blank(),
+    		axis.ticks = element_blank(),
+    		axis.title.x = element_blank(),
+    		axis.title.y = element_blank(),
+    		legend.position = "none",
+   		  	panel.grid.major = element_line(color = "white", linewidth = 0.2),
+    		panel.grid.minor = element_blank(),
+    		plot.margin = unit(c(t=0, r=0, b=0, l=0),"lines"), #added these narrower margins to enlarge maps
+    		plot.background = element_rect(fill = "white", color = NA), 
+    		panel.background = element_rect(fill = "white", color = NA),
+    		panel.border = element_blank()) 
+
+	return(country_map)
+}
+
+country_map <- get_elevation_map()
+```
+
 
 ## Elevation group changes
 
