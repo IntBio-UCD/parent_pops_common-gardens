@@ -1,0 +1,191 @@
+---
+title: "WL2_OverWinter_Survival"
+author: "Brandie Quarles"
+date: "`r Sys.Date()`"
+output: 
+  html_document: 
+    keep_md: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Over-winter survival at WL2 garden 
+
+## Relevant Libraries and Functions
+
+```{r}
+library(tidyverse)
+library(tidymodels)
+tidymodels_prefer()
+library(lmerTest) #for mixed effect models
+conflicted::conflicts_prefer(lmerTest::lmer)
+library(broom.mixed) #tidy method for lmerTest
+library(emmeans) #for post-hoc pairwise comparisons 
+library(naniar) #replaces values with NA
+library(corrplot) #plotting correlations 
+library(rstatix) #performing cor_test
+sem <- function(x, na.rm=FALSE) {           #for caclulating standard error
+  sd(x,na.rm=na.rm)/sqrt(length(na.omit(x)))
+} 
+
+elev_three_palette <- c("#0043F0", "#C9727F", "#F5A540") #colors from Gremer et al 2019
+elev_order <- c("High", "Mid", "Low") #for proper arrangement in figures 
+
+#install.packages("viridis") #for more better color palettes (if want to distinguish between all pops)
+#library(viridis)
+```
+
+## Load the pop and location data and envtal dist data 
+
+```{r}
+gowersdist_UCD <- read_csv("../output/Climate/Pops_GowersEnvtalDist_UCD.csv") %>% 
+  rename(Recent_Gowers_Dist_UCD = Recent_Gowers_Dist, Historic_Gowers_Dist_UCD = Historic_Gowers_Dist)
+head(gowersdist_UCD)
+gowersdist_WL2 <- read_csv("../output/Climate/Pops_GowersEnvtalDist_WL2.csv") %>% 
+  rename(Recent_Gowers_Dist_WL2 = Recent_Gowers_Dist, Historic_Gowers_Dist_WL2 = Historic_Gowers_Dist)
+head(gowersdist_WL2)
+
+gowersdist_all <- full_join(gowersdist_UCD, gowersdist_WL2)
+head(gowersdist_all)
+```
+
+## Load the post-winter data
+```{r}
+post_winter <- read_csv("../input/WL2_status_check_20240603_corrected.csv",
+                         na = c("", "NA", "-", "N/A")) 
+head(post_winter)
+
+unique(post_winter$pop) #some wrong pop ids "iH", "1H", "cc"
+post_winter %>% rowwise() %>% filter(!is.na(mf), mf != "buffer") %>%  filter(is.na(as.numeric(mf))) #all buffers
+post_winter %>% rowwise() %>% filter(!is.na(rep), rep != "buffer") %>%  filter(is.na(as.numeric(rep))) #all buffers
+
+post_winter_clean <- post_winter %>% 
+  rename(parent.pop=pop) %>% 
+  mutate(parent.pop= str_replace(parent.pop, "iH", "IH")) %>% 
+  mutate(parent.pop= str_replace(parent.pop, "1H", "IH")) %>% 
+  mutate(parent.pop= str_replace(parent.pop, "cc", "CC")) %>% 
+  filter(parent.pop!="buffer", !str_detect(mf, "buf")) %>% 
+  mutate(mf=as.double(mf), rep=as.double(rep))
+head(post_winter_clean)
+unique(post_winter_clean$parent.pop)
+```
+
+## Add in location info 
+```{r}
+post_winter_loc <- left_join(post_winter_clean, gowersdist_all)
+head(post_winter_loc)
+```
+
+## Filter to only ones alive in October
+
+```{r}
+alive_oct <- post_winter_loc %>% 
+  filter(death.date == "A" | death.date == "B" | death.date == "C" | death.date == "D") %>% 
+  mutate(Survival=if_else(death.date=="D", 0, 1)) %>% 
+  select(Recent_Gowers_Dist_WL2, Historic_Gowers_Dist_WL2, elevation.group:elev_m, block:rep, 
+         death.date, Survival)
+head(alive_oct) #470 plants alive at annual census 
+unique(alive_oct$parent.pop) #22 populations with an individual alive in October 
+```
+
+Categories 
+A - alive, “happy” leaves
+B = “barely alive”, still has leaves but major damage
+C = no leaves, stem not brittle
+D = brittle, no leaves, definitely dead  
+
+## Survival 
+
+### Descriptive tables 
+```{r}
+#overall
+xtabs(~death.date, data=alive_oct) #335 dead post-winter out of 470 alive pre-winter = 71% overwinter mortality 
+
+xtabs(~death.date+parent.pop, data=alive_oct)
+```
+
+### Means by pop
+```{r}
+overwint_surv_summary <- alive_oct %>% 
+  group_by(parent.pop, elev_m, Recent_Gowers_Dist_WL2, Historic_Gowers_Dist_WL2) %>% 
+  summarise(N_Surv = sum(!is.na(Survival)), mean_Surv = mean(Survival,na.rm=(TRUE)), 
+            sem_surv=sem(Survival, na.rm=(TRUE)))
+overwint_surv_summary
+```
+
+```{r}
+overwint_surv_summary %>% 
+  #filter(N_Surv != 1) %>% 
+  ggplot(aes(x=fct_reorder(parent.pop, mean_Surv), y=mean_Surv, fill=elev_m)) + 
+  geom_col(width = 0.7,position = position_dodge(0.75)) + 
+  geom_errorbar(aes(ymin=mean_Surv-sem_surv,ymax=mean_Surv+sem_surv),width=.2, position = 
+                  position_dodge(0.75)) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  labs(y="Survival", fill="Elevation (m)", x="Parent Population") + 
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+ggsave("../output/WL2_Traits//WL2_Over_Winter_Surv_PopAvgs.png", width = 14, height = 8, units = "in")
+
+#sort by elevation 
+overwint_surv_summary %>% 
+  #filter(N_Surv != 1) %>% 
+  ggplot(aes(x=fct_reorder(parent.pop, elev_m), y=mean_Surv, fill=elev_m)) + 
+  geom_col(width = 0.7,position = position_dodge(0.75)) + 
+  geom_errorbar(aes(ymin=mean_Surv-sem_surv,ymax=mean_Surv+sem_surv),width=.2, position = 
+                  position_dodge(0.75)) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  labs(y="Survival", fill="Elevation (m)", x="Parent Population") + 
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+ggsave("../output/WL2_Traits//WL2_Over_Winter_Surv_PopAvgs_byelev.png", width = 14, height = 8, units = "in")
+
+
+#sort by gowers distance - need to play with this one, colors? 
+overwint_surv_summary %>% 
+  #filter(N_Surv != 1) %>% 
+  ggplot(aes(x=fct_reorder(parent.pop, Recent_Gowers_Dist_WL2), y=mean_Surv, fill=Recent_Gowers_Dist_WL2)) + 
+  geom_col(width = 0.7,position = position_dodge(0.75)) + 
+  geom_errorbar(aes(ymin=mean_Surv-sem_surv,ymax=mean_Surv+sem_surv),width=.2, position = 
+                  position_dodge(0.75)) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  scale_fill_gradient(low = "#0043F0", high = "#F5A540") +
+  labs(y="Survival", fill="Recent Gower's Distance", x="Parent Population") + 
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+ggsave("../output/WL2_Traits//WL2_Over_Winter_Surv_PopAvgs_byenvtdist.png", width = 14, height = 8, units = "in")
+```
+
+## Stats
+```{r}
+lmesurv1 <- glmer(Survival ~ Recent_Gowers_Dist_WL2 + (1|parent.pop/mf) + (1|block), 
+                  data = alive_oct, 
+                  family = binomial(link = "logit")) 
+summary(lmesurv1)
+anova(lmesurv1)
+glance(lmesurv1)
+
+lmesurv2 <- glmer(Survival ~ Historic_Gowers_Dist_WL2 + (1|parent.pop/mf) + (1|block), 
+                  data = alive_oct, 
+                  family = binomial(link = "logit")) 
+summary(lmesurv2)
+anova(lmesurv2)
+glance(lmesurv2)
+
+lmesurv3 <- glmer(Survival ~ elev_m + (1|parent.pop/mf) + (1|block), 
+                  data = alive_oct, 
+                  family = binomial(link = "logit")) #get a failed to converge and rescale variables warning for this model 
+summary(lmesurv3)
+anova(lmesurv3)
+glance(lmesurv3)
+
+#to test for significance of random effect: 
+#the most common way to do this is to use a likelihood ratio test, i.e. fit the full and reduced models (the reduced model is the model with the focal variance(s) set to zero). 
+m0 <- glmer(Survival ~ elev_m + (1|parent.pop), data = alive_oct, family = binomial("logit")) 
+m00 <- glm(Survival~ elev_m, alive_oct, family = binomial("logit"))
+anova(lmesurv1,m0, m00) #model with both random effects has a higher likelihood (better fit)
+```
+
