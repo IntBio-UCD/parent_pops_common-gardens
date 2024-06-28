@@ -238,26 +238,26 @@ ggsave("../output/TwoMonths_RxNorms_LongestLength_MFAvgs.png", width = 14, heigh
 ```{r}
 twomonths_rxnnorms_summary_mfs2 %>% 
   filter(N_height != 1) %>% 
-  filter(parent.pop=="TM2"|parent.pop=="WL2") %>%  
+  filter(parent.pop=="BH"|parent.pop=="WL1"|parent.pop=="CP2") %>%  
   ggplot(aes(x=Site, y=mean_height.cm, group=pop.mf, color=elev_m)) + 
   geom_point(size=0.8) + geom_line(linewidth=0.8) +
   geom_errorbar(aes(ymin=mean_height.cm-sem_height.cm,ymax=mean_height.cm+sem_height.cm),width=.1) +
   theme_classic() + scale_colour_gradient(low = "#F5A540", high = "#0043F0")  +
   labs(y="Height (cm)", color="Elevation (m)") +
   theme(text=element_text(size=28))
-ggsave("../output/TwoMonths_RxNorms_Height_TM2_WL2_MFAvgs.png", width = 14, height = 8, units = "in")
+ggsave("../output/TwoMonths_RxNorms_Height_BH_WL1_CP2_MFAvgs.png", width = 14, height = 8, units = "in")
 
 twomonths_rxnnorms_summary_mfs2 %>% 
   filter(N_length != 1) %>% 
-  filter(parent.pop=="TM2"|parent.pop=="WL2") %>%  
+  filter(parent.pop=="BH"|parent.pop=="WL1"|parent.pop=="CP2") %>%  
   ggplot(aes(x=Site, y=mean_long.leaf.cm, group=pop.mf, color=elev_m)) + 
   geom_point(size=0.8) + geom_line(linewidth=0.8) +
   geom_errorbar(aes(ymin=mean_long.leaf.cm-sem_long.leaf.cm,ymax=mean_long.leaf.cm+sem_long.leaf.cm),
                 width=.1) +
-  theme_classic() + scale_color_manual(low = "#F5A540", high = "#0043F0")  +
+  theme_classic() + scale_colour_gradient(low = "#F5A540", high = "#0043F0")  +
   labs(y="Leaf Length (cm)", color="Elevation (m)") +
   theme(text=element_text(size=28))
-ggsave("../output/TwoMonths_RxNorms_LongestLength_TM2_WL2_MFAvgs.png", width = 14, height = 8, units = "in")
+ggsave("../output/TwoMonths_RxNorms_LongestLength_BH_WL1_CP2_MFAvgs.png", width = 14, height = 8, units = "in")
 ```
 
 
