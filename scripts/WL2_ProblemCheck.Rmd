@@ -3,6 +3,52 @@ title: "Data Checking"
 output: html_notebook
 ---
 
+# Annual Census - Transplants 
+```{r}
+#load the libraries
+library(tidyverse)
+#tutorial at https://bookdown.org/ansellbr/WEHI_tidyR_course_book/week-4-part-3.html
+data_files <- list.files('~/Google Drive/Shared drives/IntBioTeam/Common Gardens/WL2_2023/CorrectedCSVs',pattern='annual_census',ignore.case=TRUE)
+data_files #make this specific to mortality or size
+
+data_names <- str_remove(data_files, pattern = ".csv")
+data_names
+
+for (i in data_names) {
+  #set up variable file names
+  in_file <- paste("~/Google Drive/Shared drives/IntBioTeam/Common Gardens/WL2_2023/CorrectedCSVs/", i, '.csv', sep = "")   #edit this to be correct path 
+  out_table <- paste("../output/", i, '_dataprobs.csv', sep="")
+  
+  #data checking code
+  data <- read_csv(in_file)
+  
+  #remove spaces in column names
+  names(data) <- gsub(" ", "", colnames(data))
+  
+  #check for spaces in numbers
+  data2 <- data %>% filter(grepl(" ", diam.mm) | grepl(" ", height.cm) | grepl(" ", total.branch) | grepl(" ", long.leaf.cm) | grepl(" ", num.flw) | grepl(" ", num.fruit) | grepl(" ", long.fruit.cm) | grepl(" ", repro.branch)) %>% mutate(problem="spaces")
+  
+  #check for extreme values
+  data3 <- data
+  data3 <- data3 %>% filter(diam.mm > 50, height.cm > 140 | long.leaf.cm > 12, long.fruit.cm > 15) %>% mutate(problem="extreme value")
+  
+  #check for letters in number columns 
+  data4 <- data %>% rowwise() %>% filter(!is.na(diam.mm)) %>% filter(is.na(as.numeric(diam.mm))) %>% mutate(problem="character")
+  data5 <- data %>% rowwise() %>% filter(!is.na(height.cm)) %>% filter(is.na(as.numeric(height.cm))) %>% mutate(problem="character")
+  data6 <- data %>% rowwise() %>% filter(!is.na(total.branch)) %>% filter(is.na(as.numeric(total.branch))) %>% mutate(problem="character")
+  data7 <- data %>% rowwise() %>% filter(!is.na(long.leaf.cm)) %>% filter(is.na(as.numeric(long.leaf.cm))) %>% mutate(problem="character")
+  data8 <- data %>% rowwise() %>% filter(!is.na(num.flw)) %>% filter(is.na(as.numeric(num.flw))) %>% mutate(problem="character")
+  data9 <- data %>% rowwise() %>% filter(!is.na(num.fruit)) %>% filter(is.na(as.numeric(num.fruit))) %>% mutate(problem="character")
+  data10 <- data %>% rowwise() %>% filter(!is.na(long.fruit.cm)) %>% filter(is.na(as.numeric(long.fruit.cm))) %>% mutate(problem="character")
+  data11 <- data %>% rowwise() %>% filter(!is.na(repro.branch)) %>% filter(is.na(as.numeric(repro.branch))) %>% mutate(problem="character")
+  
+  #combine into one problems list
+  data_probs <- rbind(data2, data3, data4, data5, data6, data7, data8, data9, data10, data11)
+  print(nrow(data_probs))
+  write_csv(data_probs, path=out_table)
+}
+```
+
 # Size Data - basic check 
 ```{r}
 #load the libraries
