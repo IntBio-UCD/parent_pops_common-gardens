@@ -4,7 +4,7 @@ output: html_notebook:
   keep_md: yes
 ---
 To Do:
-* Add the temporal size check for germ beds
+* Go through the file "UCDGermBeds_MissingDataPrevWeek_PopMFREp.csv" to investigate the cases of data when there is none in the previous week. 
 
 # Annual Census - Transplants 
 ```{r}
@@ -160,7 +160,7 @@ dat4 <- dat3 %>% unnest(sheets) %>%
   rename(height_cm = `height (cm)`, longest_leaf_cm = `longest leaf (cm)`, death_date=`death date`)
 head(dat4)
 names(dat4)
-dat4 %>% filter(!is.na(...10)) #an additional note for one plant 
+dat4 %>% filter(!is.na(...10)) #an additional note for two plants
 dat4 %>% filter(!is.na(...12)) #all NA
 
 #check for data issues
