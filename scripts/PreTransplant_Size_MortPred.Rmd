@@ -1,0 +1,233 @@
+---
+title: "PreTransplant_Size"
+author: "Brandie Quarles"
+date: "`r Sys.Date()`"
+output: 
+  html_document: 
+    keep_md: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Pre-Transplant Size for both gardens 
+There shouldn't be any large differences since the plants were grown in the same environment pre-transplant. 
+Is there a relationship between pre-transplant size and survival to the end of the first year? Does that differ across gardens?
+
+## Relevant Libraries and Functions
+
+```{r}
+library(tidyverse)
+library(tidymodels)
+tidymodels_prefer()
+library(lmerTest) #for mixed effect models
+conflicted::conflicts_prefer(lmerTest::lmer)
+library(broom.mixed) #tidy method for lmerTest
+library(emmeans) #for post-hoc pairwise comparisons 
+library(naniar) #replaces values with NA
+
+sem <- function(x, na.rm=FALSE) {           #for caclulating standard error
+  sd(x,na.rm=na.rm)/sqrt(length(na.omit(x)))
+} 
+
+elev_three_palette <- c("#0043F0", "#C9727F", "#F5A540") #colors from Gremer et al 2019
+elev_order <- c("High", "Mid", "Low") #for proper arrangement in figures 
+```
+
+## Load the pop and location data
+
+```{r}
+gowersdist_UCD <- read_csv("../output/Climate/Pops_GowersEnvtalDist_UCD.csv") %>% 
+  rename(Recent_Gowers_Dist_UCD = Recent_Gowers_Dist, Historic_Gowers_Dist_UCD = Historic_Gowers_Dist)
+
+gowersdist_WL2 <- read_csv("../output/Climate/Pops_GowersEnvtalDist_WL2.csv") %>% 
+  rename(Recent_Gowers_Dist_WL2 = Recent_Gowers_Dist, Historic_Gowers_Dist_WL2 = Historic_Gowers_Dist)
+
+gowersdist_all <- full_join(gowersdist_UCD, gowersdist_WL2)
+head(gowersdist_all)
+```
+
+## Load Pre-Transplant Size data from both Gardens
+```{r}
+ucd_pretrans_size <- read_csv("../input/UCD_Data/CorrectedCSVs/UCD_garden_size_measurements_20221128_corrected.csv",
+                              na = c("", "NA", "-", "N/A"))
+head(ucd_pretrans_size) #includes germs and non-germs 
+
+ucd_pretrans_size_germonly <- ucd_pretrans_size %>% 
+  rename(germ = `germinated?`, height.cm = `Height (cm)`, long.leaf.cm=`Longest leaf (cm)`) %>% 
+  filter(germ==1) %>% 
+  unite(Genotype, parent.pop:rep, sep="_", remove = FALSE) %>% 
+  unite(pop.mf, parent.pop:mf, sep="_", remove = FALSE)
+head(ucd_pretrans_size_germonly)
+unique(ucd_pretrans_size_germonly$parent.pop) #looks correct
+```
+
+```{r}
+wl2_pretrans_size1 <- read_csv("../input/WL2_Data/CorrectedCSVs/WL2_DNA_Collection_Size_survey_combined20230703_corrected.csv")
+head(wl2_pretrans_size1)
+
+wl2_pretrans_size2 <- read_csv("../input/WL2_Data/CorrectedCSVs/WL2_Extras_DNA_collection_size_survey_combined20230706_corrected.csv") %>% 
+  filter(!is.na(`height (cm)`)) #to get rid of genotypes that were measured on the other data sheet (NAs on this sheet)
+head(wl2_pretrans_size2)
+
+wl2_pretrans_size_all <- bind_rows(wl2_pretrans_size1, wl2_pretrans_size2) %>%
+  rename(parent.pop=Pop, height.cm = `height (cm)`, long.leaf.cm=`longest leaf (cm)`) %>% 
+  unite(Genotype, parent.pop:rep, sep="_", remove = FALSE) %>% 
+  unite(pop.mf, parent.pop:mf, sep="_", remove = FALSE)
+head(wl2_pretrans_size_all)
+```
+
+## Merge the two sites
+```{r}
+ucd_pretrans_size_prep <- ucd_pretrans_size_germonly %>% select(Genotype:rep, height.cm:long.leaf.cm) %>%
+  mutate(Site="UCD")
+names(ucd_pretrans_size_prep)
+
+wl2_pretrans_size_prep <- wl2_pretrans_size_all %>% select(Genotype:rep, height.cm:long.leaf.cm) %>%
+  mutate(Site="WL2")
+names(wl2_pretrans_size_prep)
+
+pretrans_rxnnorms <- bind_rows(ucd_pretrans_size_prep, wl2_pretrans_size_prep) %>% 
+  arrange(pop.mf, Site)
+head(pretrans_rxnnorms)
+```
+
+## Add in Location Info
+```{r}
+pretrans_rxnnorms_loc <-left_join(pretrans_rxnnorms, gowersdist_all) 
+head(pretrans_rxnnorms_loc)
+```
+
+## Load survival to end of first year data
+```{r}
+firstyear_surv <- read_csv("../output/firstyear_mort_both_sites.csv")
+head(firstyear_surv)
+
+firstyear_surv_merge_prep <- firstyear_surv %>% select(Genotype:rep, Site:Historic_Gowers_Dist_WL2)
+```
+
+## Merge size and survival
+```{r}
+pretrans_surv <- left_join(pretrans_rxnnorms_loc, firstyear_surv_merge_prep)
+pretrans_surv %>% filter(is.na(Survival)) #12 genotypes with no survival information... should investigate
+
+pretrans_surv_complete <- pretrans_surv %>% filter(!is.na(Survival))
+```
+
+
+## Plot Reaction Norms
+
+### Means by Pop
+```{r}
+pretrans_rxnnorms_summary <- pretrans_rxnnorms_loc %>% 
+  group_by(parent.pop, Site, elev_m) %>% 
+  summarise(N_height = sum(!is.na(height.cm)), mean_height.cm = mean(height.cm,na.rm=(TRUE)), 
+            sem_height.cm=sem(height.cm, na.rm=(TRUE)), N_length = sum(!is.na(long.leaf.cm)),
+            mean_long.leaf.cm=mean(long.leaf.cm, na.rm=(TRUE)), 
+            sem_long.leaf.cm=sem(long.leaf.cm, na.rm=TRUE)) %>% 
+  mutate(Site=str_replace_all(Site, "UCD", "Low Elev"), 
+         Site=str_replace_all(Site, "WL2", "High Elev"))
+pretrans_rxnnorms_summary
+
+pretrans_rxnnorms_summary$Site <- factor(pretrans_rxnnorms_summary$Site,
+                                               levels = c('Low Elev','High Elev'))
+```
+
+### Plot Pop Avgs
+```{r}
+pretrans_rxnnorms_summary %>% 
+  filter(N_height != 1) %>% 
+  ggplot(aes(x=Site, y=mean_height.cm, group=parent.pop, color=elev_m)) + 
+  geom_point(size=1.5) + geom_line(linewidth=1.5) +
+  geom_errorbar(aes(ymin=mean_height.cm-sem_height.cm,ymax=mean_height.cm+sem_height.cm),width=.1) +
+  theme_classic() + scale_colour_gradient(low = "#F5A540", high = "#0043F0")  +
+  labs(y="Height (cm)", color="Elevation (m)", title = "Pre-Transplant") +
+ # ylim(0,4) +
+  theme(text=element_text(size=28)) 
+ggsave("../output/PreTrans_RxNorms_Height_ALL_PopAvgs.png", width = 14, height = 8, units = "in")
+
+pretrans_rxnnorms_summary %>% 
+  filter(N_length != 1) %>% 
+  ggplot(aes(x=Site, y=mean_long.leaf.cm, group=parent.pop, color=elev_m)) + 
+  geom_point(size=1.5) + geom_line(linewidth=1.5) +
+  geom_errorbar(aes(ymin=mean_long.leaf.cm-sem_long.leaf.cm,
+                    ymax=mean_long.leaf.cm+sem_long.leaf.cm),width=.1) +
+  theme_classic() + scale_colour_gradient(low = "#F5A540", high = "#0043F0")  +
+  labs(y="Leaf Length (cm)", color="Elevation (m)", title = "Pre-Transplant") +
+  theme(text=element_text(size=28))
+ggsave("../output/PreTrans_RxNorms_LongestLength_ALL_PopAvgs.png", width = 14, height = 8, units = "in")
+```
+Plants were overall smaller when planted at WL2 than at Davis.
+
+## Connection to survival to end of first year
+```{r}
+pretrans_surv_pop_avgs <- pretrans_surv_complete %>% 
+  group_by(parent.pop, Site, elev_m) %>% 
+  summarise(N_Surv = sum(!is.na(Survival)), mean_Surv = mean(Survival,na.rm=(TRUE)), 
+            sem_surv=sem(Survival, na.rm=(TRUE)), 
+            N_height = sum(!is.na(height.cm)), mean_height.cm = mean(height.cm,na.rm=(TRUE)), 
+            sem_height.cm=sem(height.cm, na.rm=(TRUE)), N_length = sum(!is.na(long.leaf.cm)),
+            mean_long.leaf.cm=mean(long.leaf.cm, na.rm=(TRUE)), 
+            sem_long.leaf.cm=sem(long.leaf.cm, na.rm=TRUE)) %>% 
+  mutate(Site=str_replace_all(Site, "UCD", "Low Elev"), 
+         Site=str_replace_all(Site, "WL2", "High Elev"))
+
+pretrans_surv_pop_avgs %>% arrange(desc(mean_height.cm))
+
+pretrans_surv_pop_avgs$Site <- factor(pretrans_surv_pop_avgs$Site,
+                                               levels = c('Low Elev','High Elev'))
+```
+
+```{r}
+pretrans_surv_pop_avgs %>% 
+  ggplot(aes(x=mean_height.cm, y=mean_Surv, group=parent.pop, color=elev_m)) +
+  geom_point(size=8) +
+  theme_classic() + scale_colour_gradient(low = "#F5A540", high = "#0043F0")  +
+  labs(x="Height (cm)" ,y="Survival", color="Elevation (m)",title = "Pre-Transplant Size") +
+  theme(text=element_text(size=28)) +
+  facet_wrap(vars(Site), scales="free")
+ggsave("../output/Surv_PreTrans_Height_BothGardens.png", width = 18, height = 8, units = "in")
+
+pretrans_surv_pop_avgs %>% 
+  ggplot(aes(x=mean_long.leaf.cm, y=mean_Surv, group=parent.pop, color=elev_m)) +
+  geom_point(size=8) +
+  theme_classic() + scale_colour_gradient(low = "#F5A540", high = "#0043F0")  +
+  labs(x="Leaf Length (cm)" ,y="Survival", color="Elevation (m)", title = "Pre-Transplant Size") +
+  theme(text=element_text(size=28)) +
+  facet_wrap(vars(Site), scales="free")
+ggsave("../output/Surv_PreTrans_Length_BothGardens.png", width = 18, height = 8, units = "in")
+```
+
+### Log Reg survival ~ size 
+Height
+```{r}
+basiclogit_height <- glm(Survival ~ height.cm, data = pretrans_surv_complete, family = "binomial")
+basiclogit_height
+summary(basiclogit_height)
+
+basiclogit_height2 <- glmer(Survival ~ height.cm + (1|parent.pop/mf), data = pretrans_surv_complete, family = binomial(link = "logit"))
+summary(basiclogit_height2)
+
+logit_height <- glm(Survival ~ height.cm*Site, data = pretrans_surv_complete, family = "binomial")
+summary(logit_height)
+
+logit_height2 <- glmer(Survival ~ height.cm*Site + (1|parent.pop/mf), data = pretrans_surv_complete, family = binomial(link = "logit")) 
+summary(logit_height2)
+emtrends(logit_height2, pairwise ~ Site, var = "height.cm")
+emmip(logit_height2, Site ~ height.cm, cov.reduce = range)
+```
+
+Length
+```{r}
+basiclogit_length <- glm(Survival ~ long.leaf.cm, data = pretrans_surv_complete, family = "binomial")
+summary(basiclogit_length)
+
+basiclogit_length2 <- glmer(Survival ~ long.leaf.cm + (1|parent.pop/mf), data = pretrans_surv_complete, family = binomial(link = "logit"))
+summary(basiclogit_length2)
+
+logit_length2 <- glmer(Survival ~ long.leaf.cm*Site + (1|parent.pop/mf), data = pretrans_surv_complete, family = binomial(link = "logit")) 
+summary(logit_length2)
+emtrends(logit_length2, pairwise ~ Site, var = "long.leaf.cm")
+emmip(logit_length2, Site ~ long.leaf.cm, cov.reduce = range)
+```
