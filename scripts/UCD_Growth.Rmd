@@ -1,0 +1,121 @@
+---
+title: "UCD_Growth"
+author: "Brandie Quarles"
+date: "`r Sys.Date()`"
+output: 
+  html_document: 
+    keep_md: yes
+---
+
+# Analyze growth
+
+-   Get growth curve code from Julin
+
+-   Is the growth rate lower for high elev b/c drier and biennial?
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Libraries 
+```{r}
+library(tidyverse)
+```
+
+## Need to make a csv file with all survey data for each plant 
+
+Get list of size files 
+```{r}
+pretrans <-  dir("../input/UCD_Data/CorrectedCSVs/",
+             pattern=".*20221128.*csv",
+             full.names=TRUE)
+pretrans
+
+posttrans <- dir("../input/UCD_Data/CorrectedCSVs/",
+             pattern="Size_survey_transplants.*corrected.*csv",
+             full.names=TRUE)
+posttrans
+```
+
+Add data to a tibble
+```{r}
+pretrans_dat <- tibble(path=pretrans, filename=basename(path))
+pretrans_dat
+posttrans_dat <- tibble(path=posttrans, filename=basename(path))
+posttrans_dat
+
+all_ucd_size <- bind_rows(pretrans_dat, posttrans_dat) %>% 
+  mutate(survey_date=str_extract(filename, "2[0-9]*"),
+         survey_date=lubridate::ymd(survey_date))
+all_ucd_size
+```
+
+Read in the files
+```{r}
+all_ucd_size2 <- all_ucd_size %>%
+  mutate(sheets=map(path, 
+                    read_csv, 
+                    #col_types=cols(.default=col_character()), # forces all columns to be character
+                                                              # this is needed because of data sheet problems that cause some numerics to be imported as character  
+                    na = c("", "NA", "-", "N/A") # sets NA strings. 
+                    )) %>%
+  select(-path)
+
+all_ucd_size2
+```
+
+
+Check for data issues
+```{r}
+map(all_ucd_size2$sheets, colnames) %>% #get unique column names 
+  unlist() %>%
+  unique() %>%
+  sort()
+#size columns sometimes uppercase for initial size census 
+#pop is "parent.pop" for 1128 and 1213 
+
+map(all_ucd_size2$sheets, head,10) #look at first 10 lines of each sheet 
+#1213 read in height and longest leaf as characters - check why 
+#0210 read in height and longest leaf as characters - check why 
+
+all_ucd_size2$sheets[[1]] <- all_ucd_size2$sheets[[1]] %>% rename(pop=parent.pop, `height (cm)`=`Height (cm)`, `longest leaf (cm)`=`Longest leaf (cm)`) 
+all_ucd_size2$sheets[[2]] <- all_ucd_size2$sheets[[2]] %>% rename(pop=parent.pop) 
+
+all_ucd_size2$sheets[[2]] %>% rowwise() %>% filter(!is.na(`height (cm)`)) %>%  filter(is.na(as.numeric(`height (cm)`))) #character issue was caused by "N/A" so I added that to the previous code chunk so R could recognize it as NA
+all_ucd_size2$sheets[[4]] %>% rowwise() %>% filter(!is.na(`height (cm)`)) %>%  filter(is.na(as.numeric(`height (cm)`))) #character issue due to a ) in height column - fixed this in the original csv file 
+all_ucd_size2$sheets[[5]] %>% rowwise() %>% filter(!is.na(mf)) %>%  filter(is.na(as.numeric(mf))) #"." for mf on a buffer row 
+all_ucd_size2$sheets[[5]] <- all_ucd_size2$sheets[[5]] %>% mutate(mf=as.double(mf)) #convert mf to numeric
+all_ucd_size2$sheets[[1]] <- all_ucd_size2$sheets[[1]] %>% filter(`germinated?`== 1) #keep germs only from pretrans size 
+#ALL ISSUES FIXED!
+```
+
+Combine the data
+```{r}
+all_ucd_size_all <- all_ucd_size2 %>% unnest(sheets) %>%
+  rename(germ = `germinated?`, height.cm = `height (cm)`, 
+         long.leaf.cm = `longest leaf (cm)`, parent.pop=pop) %>% 
+  filter(parent.pop != "buffer") %>% 
+  mutate(parent.pop= str_replace(parent.pop, ".*VTR.*", "LVTR1")) %>% 
+  filter(rep != 100) %>% #get rid of individuals that germinated in the field 
+  unite(Genotype, parent.pop:rep, sep="_", remove = FALSE) %>% 
+  unite(pop.mf, parent.pop:mf, sep="_", remove = FALSE) %>% 
+  select(survey_date, block, Genotype:Notes)
+head(all_ucd_size_all)
+unique(all_ucd_size_all$parent.pop) #all 23 pops!
+
+#write_csv(all_ucd_size_all, "../output/UCD_Traits/UCD_Size_Combined.csv")
+```
+
+## Pop Location Info
+```{r}
+
+```
+
+## Quick figure
+```{r}
+all_ucd_size_all %>% 
+  ggplot(aes(group=Genotype, x=survey_date, y=height.cm, col=parent.pop)) + 
+  geom_line() + facet_wrap(~parent.pop)
+```
+
+## Calculate growth rate?
