@@ -26,25 +26,25 @@ library(tidyverse)
 
 Get list of size files 
 ```{r}
-pretrans <-  dir("../input/UCD_Data/CorrectedCSVs/",
+pretrans_ucd <-  dir("../input/UCD_Data/CorrectedCSVs/",
              pattern=".*20221128.*csv",
              full.names=TRUE)
-pretrans
+pretrans_ucd
 
-posttrans <- dir("../input/UCD_Data/CorrectedCSVs/",
+posttrans_ucd <- dir("../input/UCD_Data/CorrectedCSVs/",
              pattern="Size_survey_transplants.*corrected.*csv",
              full.names=TRUE)
-posttrans
+posttrans_ucd
 ```
 
 Add data to a tibble
 ```{r}
-pretrans_dat <- tibble(path=pretrans, filename=basename(path))
-pretrans_dat
-posttrans_dat <- tibble(path=posttrans, filename=basename(path))
-posttrans_dat
+pretrans_dat_ucd <- tibble(path=pretrans_ucd, filename=basename(path))
+pretrans_dat_ucd
+posttrans_dat_ucd <- tibble(path=posttrans_ucd, filename=basename(path))
+posttrans_dat_ucd
 
-all_ucd_size <- bind_rows(pretrans_dat, posttrans_dat) %>% 
+all_ucd_size <- bind_rows(pretrans_dat_ucd, posttrans_dat_ucd) %>% 
   mutate(survey_date=str_extract(filename, "2[0-9]*"),
          survey_date=lubridate::ymd(survey_date))
 all_ucd_size
@@ -116,6 +116,28 @@ unique(all_ucd_size_all$parent.pop) #all 23 pops!
 all_ucd_size_all %>% 
   ggplot(aes(group=Genotype, x=survey_date, y=height.cm, col=parent.pop)) + 
   geom_line() + facet_wrap(~parent.pop)
+
+all_ucd_size_all %>% 
+  group_by(parent.pop) %>% 
+  filter(n() > 10) %>% 
+  ggplot(aes(color=parent.pop, x=survey_date, y=height.cm, group=parent.pop)) + 
+  geom_smooth() #this is not great b/c many populations died before April
+```
+
+```{r}
+all_ucd_size_all %>% 
+  filter(parent.pop=="SQ3") %>% 
+  ggplot(aes(group=Genotype, x=survey_date, y=long.leaf.cm, col=parent.pop)) + 
+  geom_line() + facet_wrap(~parent.pop)
+
+all_ucd_size_all %>% 
+  group_by(parent.pop) %>% 
+  filter(n() > 10) %>% 
+  ggplot(aes(color=parent.pop, x=survey_date, y=long.leaf.cm, group=parent.pop)) + 
+  geom_smooth() #this is not great b/c many populations died before April
+
+all_ucd_size_all %>% filter(parent.pop=="SQ3") %>% filter(Genotype=="SQ3_4_3") #SOMETHING WEIRD HAPPENED WITH THIS PLANT 
+unique(all_ucd_size_all$survey_date)
 ```
 
 ## Calculate growth rate?

@@ -1,0 +1,166 @@
+---
+title: "WL2_Growth"
+author: "Brandie Quarles"
+date: "`r Sys.Date()`"
+output: 
+  html_document: 
+    keep_md: yes
+---
+
+# Analyze Growth
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Libraries 
+```{r}
+library(tidyverse)
+```
+
+## Need to make a csv file with all survey data for each plant 
+
+Get list of size files 
+```{r}
+pretrans_wl2 <-  dir("../input/WL2_Data/CorrectedCSVs/",
+             pattern=".*DNA.*csv",
+             full.names=TRUE)
+pretrans_wl2
+
+posttrans_wl2 <- dir("../input/WL2_Data/CorrectedCSVs/",
+             pattern="WL2_size_survey.*corrected.*csv",
+             full.names=TRUE)
+posttrans_wl2
+```
+
+Add data to a tibble
+```{r}
+pretrans_dat_wl2 <- tibble(path=pretrans_wl2, filename=basename(path))
+pretrans_dat_wl2
+posttrans_dat_wl2 <- tibble(path=posttrans_wl2, filename=basename(path))
+posttrans_dat_wl2
+
+all_wl2_size <- bind_rows(pretrans_dat_wl2, posttrans_dat_wl2) %>% 
+  mutate(survey_date=str_extract(filename, "20[0-9]*"),
+         survey_date=lubridate::ymd(survey_date))
+all_wl2_size
+```
+
+Read in the files
+```{r}
+all_wl2_size2 <- all_wl2_size %>%
+  mutate(sheets=map(path, 
+                    read_csv, 
+                    #col_types=cols(.default=col_character()), # forces all columns to be character
+                                                              # this is needed because of data sheet problems that cause some numerics to be imported as character  
+                    na = c("", "NA", "-", "N/A") # sets NA strings. 
+                    )) %>%
+  select(-path)
+
+all_wl2_size2
+```
+
+
+Check for data issues
+```{r}
+map(all_wl2_size2$sheets, colnames) %>% #get unique column names 
+  unlist() %>%
+  unique() %>%
+  sort()
+#height sometimes with space and sometimes with "."
+#herbivory sometimes has space between y and n
+#longest leaf has many different versions 
+#pop is "Pop" 
+#Notes are "Notes", survey-notes, and survey.notes
+
+map(all_wl2_size2$sheets, head,10) #look at first 10 lines of each sheet 
+
+all_wl2_size2$sheets[[1]] <- all_wl2_size2$sheets[[1]] %>% 
+  rename(pop=Pop, height.cm=`height (cm)`, long.leaf.cm=`longest leaf (cm)`, survey.notes=Notes) %>% 
+  mutate(mf=as.character(mf), rep=as.character(rep)) #convert to character since the majority of the sheets have these columns as characters 
+
+all_wl2_size2$sheets[[2]] <- all_wl2_size2$sheets[[2]] %>% 
+  rename(pop=Pop, height.cm=`height (cm)`, long.leaf.cm=`longest leaf (cm)`, survey.notes=Notes) %>% 
+  filter(!is.na(height.cm))  %>% #to get rid of genotypes that were measured on the other data sheet (NAs on this sheet)
+  mutate(mf=as.character(mf), rep=as.character(rep)) #convert to character since the majority of the sheets have these columns as characters 
+
+all_wl2_size2$sheets[[3]] <- all_wl2_size2$sheets[[3]] %>% 
+  rename(long.leaf.cm=`long.leaf. cm`, herbiv.y.n=`herbiv.y. n`)
+
+all_wl2_size2$sheets[[5]] <- all_wl2_size2$sheets[[5]] %>% 
+  rename(long.leaf.cm=`long.leaf.c m`)
+
+all_wl2_size2$sheets[[7]] <- all_wl2_size2$sheets[[7]] %>% 
+  rename(long.leaf.cm=`long.leaf.c m`)
+
+all_wl2_size2$sheets[[11]] <- all_wl2_size2$sheets[[11]] %>% 
+  rename(survey.notes=`survey-notes`) %>% 
+  filter(block=="A"|block=="B"|block=="C"|block=="D"|block=="E"|block=="F")
+unique(all_wl2_size2$sheets[[11]]$block) #only blocks A-F censused on this day 
+
+all_wl2_size2$sheets[[12]] <- all_wl2_size2$sheets[[12]] %>% 
+  filter(block=="G"|block=="H"|block=="I"|block=="J"|block=="K"|block=="L"|block=="M") #only blocks G-M censused on this day 
+unique(all_wl2_size2$sheets[[12]]$block)
+
+#Need to check mf and rep columns after merge 
+```
+
+Combine the data
+```{r}
+all_wl2_size_all <- all_wl2_size2 %>% unnest(sheets) %>%
+  rename(parent.pop=pop) %>% 
+  filter(parent.pop != "buffer") %>% 
+  mutate(parent.pop= str_replace(parent.pop, ".*VTR.*", "LVTR1")) %>% 
+  unite(Genotype, parent.pop:rep, sep="_", remove = FALSE) %>% 
+  unite(pop.mf, parent.pop:mf, sep="_", remove = FALSE) %>% 
+  select(survey_date, block, Genotype:survey.notes)
+head(all_wl2_size_all)
+unique(all_wl2_size_all$parent.pop) #all 23 pops! + buffers though 
+
+all_wl2_size_all %>% filter(!str_detect(mf, "buff")) %>% rowwise() %>% 
+  filter(!is.na(mf)) %>%  filter(is.na(as.numeric(mf))) #all buffers --> safe to convert to numeric 
+all_wl2_size_all %>% filter(!str_detect(rep, "buff")) %>% rowwise() %>% 
+  filter(!is.na(rep)) %>%  filter(is.na(as.numeric(rep))) #all buffers --> safe to convert to numeric 
+
+all_wl2_size_all_nobuffers <- all_wl2_size_all %>% 
+  filter(!str_detect(mf, "buff")) %>% 
+  mutate(mf=as.double(mf), rep=as.double(rep))
+unique(all_wl2_size_all_nobuffers$parent.pop) #buffers removed!
+unique(all_wl2_size_all_nobuffers$survey_date) 
+tail(all_wl2_size_all_nobuffers)
+
+#write_csv(all_wl2_size_all_nobuffers, "../output/WL2_Traits/WL2_Size_Combined.csv")
+```
+
+## Pop Location Info
+```{r}
+
+```
+
+
+## Quick figure
+```{r}
+all_wl2_size_all_nobuffers %>% 
+  ggplot(aes(group=Genotype, x=survey_date, y=height.cm, col=parent.pop)) + 
+  geom_line() + facet_wrap(~parent.pop)
+
+all_wl2_size_all %>% 
+  group_by(parent.pop) %>% 
+  filter(n() > 10) %>% 
+  ggplot(aes(color=parent.pop, x=survey_date, y=height.cm, group=parent.pop)) + 
+  geom_smooth() #this is not great b/c many populations died before April
+```
+
+```{r}
+all_wl2_size_all_nobuffers %>% 
+  ggplot(aes(group=Genotype, x=survey_date, y=long.leaf.cm, col=parent.pop)) + 
+  geom_line() + facet_wrap(~parent.pop)
+
+all_wl2_size_all %>% 
+  group_by(parent.pop) %>% 
+  filter(n() > 10) %>% 
+  ggplot(aes(color=parent.pop, x=survey_date, y=long.leaf.cm, group=parent.pop)) + 
+  geom_smooth() #this is not great b/c many populations died before April
+```
+
+## Calculate growth rate?

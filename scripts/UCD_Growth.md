@@ -1,7 +1,7 @@
 ---
 title: "UCD_Growth"
 author: "Brandie Quarles"
-date: "2024-08-16"
+date: "2024-08-19"
 output: 
   html_document: 
     keep_md: yes
@@ -39,10 +39,10 @@ library(tidyverse)
 Get list of size files 
 
 ```r
-pretrans <-  dir("../input/UCD_Data/CorrectedCSVs/",
+pretrans_ucd <-  dir("../input/UCD_Data/CorrectedCSVs/",
              pattern=".*20221128.*csv",
              full.names=TRUE)
-pretrans
+pretrans_ucd
 ```
 
 ```
@@ -50,10 +50,10 @@ pretrans
 ```
 
 ```r
-posttrans <- dir("../input/UCD_Data/CorrectedCSVs/",
+posttrans_ucd <- dir("../input/UCD_Data/CorrectedCSVs/",
              pattern="Size_survey_transplants.*corrected.*csv",
              full.names=TRUE)
-posttrans
+posttrans_ucd
 ```
 
 ```
@@ -81,8 +81,8 @@ posttrans
 Add data to a tibble
 
 ```r
-pretrans_dat <- tibble(path=pretrans, filename=basename(path))
-pretrans_dat
+pretrans_dat_ucd <- tibble(path=pretrans_ucd, filename=basename(path))
+pretrans_dat_ucd
 ```
 
 ```
@@ -93,8 +93,8 @@ pretrans_dat
 ```
 
 ```r
-posttrans_dat <- tibble(path=posttrans, filename=basename(path))
-posttrans_dat
+posttrans_dat_ucd <- tibble(path=posttrans_ucd, filename=basename(path))
+posttrans_dat_ucd
 ```
 
 ```
@@ -123,7 +123,7 @@ posttrans_dat
 ```
 
 ```r
-all_ucd_size <- bind_rows(pretrans_dat, posttrans_dat) %>% 
+all_ucd_size <- bind_rows(pretrans_dat_ucd, posttrans_dat_ucd) %>% 
   mutate(survey_date=str_extract(filename, "2[0-9]*"),
          survey_date=lubridate::ymd(survey_date))
 all_ucd_size
@@ -868,5 +868,190 @@ all_ucd_size_all %>%
 ```
 
 ![](UCD_Growth_files/figure-html/unnamed-chunk-8-1.png)<!-- -->
+
+```r
+all_ucd_size_all %>% 
+  group_by(parent.pop) %>% 
+  filter(n() > 10) %>% 
+  ggplot(aes(color=parent.pop, x=survey_date, y=height.cm, group=parent.pop)) + 
+  geom_smooth() #this is not great b/c many populations died before April
+```
+
+```
+## `geom_smooth()` using method = 'gam' and formula = 'y ~ s(x, bs = "cs")'
+```
+
+```
+## Warning: Removed 10538 rows containing non-finite outside the scale range
+## (`stat_smooth()`).
+```
+
+```
+## Warning: Failed to fit group 4.
+## Caused by error in `smooth.construct.cr.smooth.spec()`:
+## ! x has insufficient unique values to support 10 knots: reduce k.
+```
+
+```
+## Warning: Failed to fit group 8.
+## Caused by error in `smooth.construct.cr.smooth.spec()`:
+## ! x has insufficient unique values to support 10 knots: reduce k.
+```
+
+```
+## Warning: Failed to fit group 13.
+## Caused by error in `smooth.construct.cr.smooth.spec()`:
+## ! x has insufficient unique values to support 10 knots: reduce k.
+```
+
+```
+## Warning: Failed to fit group 18.
+## Caused by error in `smooth.construct.cr.smooth.spec()`:
+## ! x has insufficient unique values to support 10 knots: reduce k.
+```
+
+```
+## Warning: Failed to fit group 19.
+## Caused by error in `smooth.construct.cr.smooth.spec()`:
+## ! x has insufficient unique values to support 10 knots: reduce k.
+```
+
+```
+## Warning: Failed to fit group 20.
+## Caused by error in `smooth.construct.cr.smooth.spec()`:
+## ! x has insufficient unique values to support 10 knots: reduce k.
+```
+
+```
+## Warning: Failed to fit group 21.
+## Caused by error in `smooth.construct.cr.smooth.spec()`:
+## ! x has insufficient unique values to support 10 knots: reduce k.
+```
+
+![](UCD_Growth_files/figure-html/unnamed-chunk-8-2.png)<!-- -->
+
+
+```r
+all_ucd_size_all %>% 
+  filter(parent.pop=="SQ3") %>% 
+  ggplot(aes(group=Genotype, x=survey_date, y=long.leaf.cm, col=parent.pop)) + 
+  geom_line() + facet_wrap(~parent.pop)
+```
+
+```
+## Warning: Removed 130 rows containing missing values or values outside the scale range
+## (`geom_line()`).
+```
+
+![](UCD_Growth_files/figure-html/unnamed-chunk-9-1.png)<!-- -->
+
+```r
+all_ucd_size_all %>% 
+  group_by(parent.pop) %>% 
+  filter(n() > 10) %>% 
+  ggplot(aes(color=parent.pop, x=survey_date, y=long.leaf.cm, group=parent.pop)) + 
+  geom_smooth() #this is not great b/c many populations died before April
+```
+
+```
+## `geom_smooth()` using method = 'gam' and formula = 'y ~ s(x, bs = "cs")'
+```
+
+```
+## Warning: Removed 10552 rows containing non-finite outside the scale range
+## (`stat_smooth()`).
+```
+
+```
+## Warning: Failed to fit group 4.
+## Caused by error in `smooth.construct.cr.smooth.spec()`:
+## ! x has insufficient unique values to support 10 knots: reduce k.
+```
+
+```
+## Warning: Failed to fit group 8.
+## Caused by error in `smooth.construct.cr.smooth.spec()`:
+## ! x has insufficient unique values to support 10 knots: reduce k.
+```
+
+```
+## Warning: Failed to fit group 9.
+## Caused by error in `smooth.construct.cr.smooth.spec()`:
+## ! x has insufficient unique values to support 10 knots: reduce k.
+```
+
+```
+## Warning: Failed to fit group 13.
+## Caused by error in `smooth.construct.cr.smooth.spec()`:
+## ! x has insufficient unique values to support 10 knots: reduce k.
+```
+
+```
+## Warning: Failed to fit group 18.
+## Caused by error in `smooth.construct.cr.smooth.spec()`:
+## ! x has insufficient unique values to support 10 knots: reduce k.
+```
+
+```
+## Warning: Failed to fit group 19.
+## Caused by error in `smooth.construct.cr.smooth.spec()`:
+## ! x has insufficient unique values to support 10 knots: reduce k.
+```
+
+```
+## Warning: Failed to fit group 20.
+## Caused by error in `smooth.construct.cr.smooth.spec()`:
+## ! x has insufficient unique values to support 10 knots: reduce k.
+```
+
+```
+## Warning: Failed to fit group 21.
+## Caused by error in `smooth.construct.cr.smooth.spec()`:
+## ! x has insufficient unique values to support 10 knots: reduce k.
+```
+
+![](UCD_Growth_files/figure-html/unnamed-chunk-9-2.png)<!-- -->
+
+```r
+all_ucd_size_all %>% filter(parent.pop=="SQ3") %>% filter(Genotype=="SQ3_4_3") #SOMETHING WEIRD HAPPENED WITH THIS PLANT 
+```
+
+```
+## # A tibble: 20 × 11
+##    survey_date block Genotype pop.mf parent.pop    mf   rep  germ height.cm
+##    <date>      <chr> <chr>    <chr>  <chr>      <dbl> <dbl> <dbl>     <dbl>
+##  1 2022-11-28  <NA>  SQ3_4_3  SQ3_4  SQ3            4     3     1       1  
+##  2 2022-12-13  L1    SQ3_4_3  SQ3_4  SQ3            4     3    NA       0.4
+##  3 2023-01-27  L1    SQ3_4_3  SQ3_4  SQ3            4     3    NA       1.2
+##  4 2023-02-10  L1    SQ3_4_3  SQ3_4  SQ3            4     3    NA       0.4
+##  5 2023-02-17  L1    SQ3_4_3  SQ3_4  SQ3            4     3    NA       0.4
+##  6 2023-03-03  L1    SQ3_4_3  SQ3_4  SQ3            4     3    NA       0.5
+##  7 2023-03-17  L1    SQ3_4_3  SQ3_4  SQ3            4     3    NA      NA  
+##  8 2023-03-24  L1    SQ3_4_3  SQ3_4  SQ3            4     3    NA       0.6
+##  9 2023-04-03  L1    SQ3_4_3  SQ3_4  SQ3            4     3    NA      NA  
+## 10 2023-04-10  L1    SQ3_4_3  SQ3_4  SQ3            4     3    NA       0.1
+## 11 2023-04-17  L1    SQ3_4_3  SQ3_4  SQ3            4     3    NA      NA  
+## 12 2023-04-24  L1    SQ3_4_3  SQ3_4  SQ3            4     3    NA       9.6
+## 13 2023-05-01  L1    SQ3_4_3  SQ3_4  SQ3            4     3    NA       5.1
+## 14 2023-05-08  L1    SQ3_4_3  SQ3_4  SQ3            4     3    NA       8.8
+## 15 2023-06-05  L1    SQ3_4_3  SQ3_4  SQ3            4     3    NA      36.9
+## 16 2023-06-12  L1    SQ3_4_3  SQ3_4  SQ3            4     3    NA      34.1
+## 17 2023-07-03  L1    SQ3_4_3  SQ3_4  SQ3            4     3    NA      36.5
+## 18 2023-07-10  L1    SQ3_4_3  SQ3_4  SQ3            4     3    NA      NA  
+## 19 2023-07-17  L1    SQ3_4_3  SQ3_4  SQ3            4     3    NA      NA  
+## 20 2023-07-24  L1    SQ3_4_3  SQ3_4  SQ3            4     3    NA      NA  
+## # ℹ 2 more variables: long.leaf.cm <dbl>, Notes <chr>
+```
+
+```r
+unique(all_ucd_size_all$survey_date)
+```
+
+```
+##  [1] "2022-11-28" "2022-12-13" "2023-01-27" "2023-02-10" "2023-02-17"
+##  [6] "2023-03-03" "2023-03-17" "2023-03-24" "2023-04-03" "2023-04-10"
+## [11] "2023-04-17" "2023-04-24" "2023-05-01" "2023-05-08" "2023-06-05"
+## [16] "2023-06-12" "2023-07-03" "2023-07-10" "2023-07-17" "2023-07-24"
+```
 
 ## Calculate growth rate?
