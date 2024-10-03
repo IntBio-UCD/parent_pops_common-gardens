@@ -1,14 +1,10 @@
 ---
-title: "WL2_Survival-Analysis"
-author: "Brandie Quarles"
-date: '2024-10-03'
+title: "UCD_SurvAnalysis"
 output: 
   html_document: 
-    keep_md: yes
+    keep_md: true
+date: "2024-10-03"
 ---
-To Do:
-- figure out how to make the x axis = weeks 
-
 
 
 
@@ -43,207 +39,116 @@ library(survival)
 ```
 
 ## Read in the data
+Need to come back to this to check the data for issues!!
 
 ``` r
-wl2_surv <- read_csv("../input/WL2_Data/CorrectedCSVs/WL2_mort_pheno_20231020_corrected.csv",
+ucd_surv <- read_csv("../input/UCD_Data/CorrectedCSVs/UCD_transplants_pheno_mort_20231016_corrected.csv",
                      na = c("", "NA", "-", "N/A")) %>% #note this only goes to 10/20 need to come back and change this to include dates after this
-  select(block:rep, death.date, survey.notes) %>% 
+  select(block:rep, death.date=`Death Date`, Notes) %>% 
   rename(parent.pop=pop) %>% 
-  mutate(parent.pop= str_replace(parent.pop, "Y08", "YO8")) %>% 
-  mutate(parent.pop= str_replace(parent.pop, "Y04", "YO4")) %>% 
+  filter(rep != 100) %>% #get rid of individuals that germinated in the field 
   filter(!is.na(parent.pop)) %>% 
-   unite(BedLoc, bed:bed.col, sep="_", remove = FALSE) %>% 
+   unite(BedLoc, block:col, sep="_", remove = FALSE) %>% 
   unite(Genotype, parent.pop:rep, sep="_", remove = FALSE) %>% 
   filter(!str_detect(Genotype, ".*buff*")) %>% 
   unite(pop.mf, parent.pop:mf, sep="_", remove = FALSE)
 ```
 
 ```
-## Warning: One or more parsing issues, call `problems()` on your data frame for details,
-## e.g.:
-##   dat <- vroom(...)
-##   problems(dat)
-```
-
-```
-## Rows: 1826 Columns: 14
+## Rows: 858 Columns: 13
 ## ── Column specification ────────────────────────────────────────────────────────
 ## Delimiter: ","
-## chr (11): block, bed, bed.col, pop, mf, rep, bud.date, flower.date, fruit.da...
-## dbl  (1): bed.row
-## lgl  (2): last.flower.date, last.fruit.date
+## chr (10): block, col, pop, Date First Bud, Date First Flower, Date First Fru...
+## dbl  (3): row, mf, rep
 ## 
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
 ```
 
 ``` r
-head(wl2_surv)
+head(ucd_surv)
 ```
 
 ```
-## # A tibble: 6 × 12
-##   block BedLoc bed   bed.row bed.col Genotype  pop.mf  parent.pop mf    rep  
-##   <chr> <chr>  <chr>   <dbl> <chr>   <chr>     <chr>   <chr>      <chr> <chr>
-## 1 A     A_1_A  A           1 A       TM2_6_11  TM2_6   TM2        6     11   
-## 2 A     A_1_B  A           1 B       LVTR1_7_1 LVTR1_7 LVTR1      7     1    
-## 3 A     A_2_A  A           2 A       SQ2_6_14  SQ2_6   SQ2        6     14   
-## 4 A     A_2_B  A           2 B       YO8_8_3   YO8_8   YO8        8     3    
-## 5 A     A_3_A  A           3 A       CC_2_3    CC_2    CC         2     3    
-## 6 A     A_3_B  A           3 B       YO11_5_14 YO11_5  YO11       5     14   
-## # ℹ 2 more variables: death.date <chr>, survey.notes <chr>
-```
-
-``` r
-unique(wl2_surv$parent.pop)
-```
-
-```
-##  [1] "TM2"   "LVTR1" "SQ2"   "YO8"   "CC"    "YO11"  "BH"    "DPR"   "CP2"  
-## [10] "WL1"   "IH"    "CP3"   "SC"    "FR"    "LV3"   "YO7"   "WV"    "SQ3"  
-## [19] "WL2"   "LV1"   "YO4"   "WR"    "SQ1"
+## # A tibble: 6 × 11
+##   BedLoc block   row col   Genotype  pop.mf parent.pop    mf   rep death.date
+##   <chr>  <chr> <dbl> <chr> <chr>     <chr>  <chr>      <dbl> <dbl> <chr>     
+## 1 D1_3_A D1        3 A     WL2_4_11  WL2_4  WL2            4    11 4/24/23   
+## 2 D1_3_B D1        3 B     CP2_10_4  CP2_10 CP2           10     4 1/27/23   
+## 3 D1_4_A D1        4 A     YO11_4_10 YO11_4 YO11           4    10 1/12/23   
+## 4 D1_4_B D1        4 B     CC_5_12   CC_5   CC             5    12 2/10/23   
+## 5 D1_5_A D1        5 A     FR_3_6    FR_3   FR             3     6 2/24/23   
+## 6 D1_5_B D1        5 B     BH_5_24   BH_5   BH             5    24 3/3/23    
+## # ℹ 1 more variable: Notes <chr>
 ```
 
 ``` r
-wl2_surv %>% filter(Genotype=="CC_1_2") #there are 2 CC_1_2 plants (in different field locs), CC-1-2 was planted in 13-A and not 5C according to planting notes 
+unique(ucd_surv$parent.pop) #there's an SQ with no number - need to check on this 
 ```
 
 ```
-## # A tibble: 2 × 12
-##   block BedLoc bed   bed.row bed.col Genotype pop.mf parent.pop mf    rep  
-##   <chr> <chr>  <chr>   <dbl> <chr>   <chr>    <chr>  <chr>      <chr> <chr>
-## 1 M     K_13_A K          13 A       CC_1_2   CC_1   CC         1     2    
-## 2 M     K_5_C  K           5 C       CC_1_2   CC_1   CC         1     2    
-## # ℹ 2 more variables: death.date <chr>, survey.notes <chr>
+##  [1] "WL2"   "CP2"   "YO11"  "CC"    "FR"    "BH"    "IH"    "LV3"   "SC"   
+## [10] "LVTR1" "SQ3"   "TM2"   "WL1"   "YO7"   "DPR"   "SQ2"   "SQ1"   "SQ"   
+## [19] "YO8"   "YO4"   "WR"    "WV"    "CP3"   "LV1"
 ```
 
 ``` r
-wl2_surv %>% filter(Genotype=="IH_4_5") #there are 2 IH_4_5 plants (in different field locs), IH_4_5 was planted in 22B and not 32A according to planting notes 
-```
-
-```
-## # A tibble: 2 × 12
-##   block BedLoc bed   bed.row bed.col Genotype pop.mf parent.pop mf    rep  
-##   <chr> <chr>  <chr>   <dbl> <chr>   <chr>    <chr>  <chr>      <chr> <chr>
-## 1 C     B_22_B B          22 B       IH_4_5   IH_4   IH         4     5    
-## 2 C     B_32_A B          32 A       IH_4_5   IH_4   IH         4     5    
-## # ℹ 2 more variables: death.date <chr>, survey.notes <chr>
-```
-
-``` r
-wl2_surv %>% rowwise() %>%  #checking if mf and rep can be converted to numeric 
+ucd_surv %>% rowwise() %>%  #checking if mf and rep can be converted to numeric 
   filter(!is.na(rep)) %>%  
   filter(is.na(as.numeric(rep)))
 ```
 
 ```
-## # A tibble: 0 × 12
+## # A tibble: 0 × 11
 ## # Rowwise: 
-## # ℹ 12 variables: block <chr>, BedLoc <chr>, bed <chr>, bed.row <dbl>,
-## #   bed.col <chr>, Genotype <chr>, pop.mf <chr>, parent.pop <chr>, mf <chr>,
-## #   rep <chr>, death.date <chr>, survey.notes <chr>
+## # ℹ 11 variables: BedLoc <chr>, block <chr>, row <dbl>, col <chr>,
+## #   Genotype <chr>, pop.mf <chr>, parent.pop <chr>, mf <dbl>, rep <dbl>,
+## #   death.date <chr>, Notes <chr>
 ```
 
 As weeks
 
 ``` r
-wl2_surv %>% filter(is.na(death.date),!is.na(survey.notes)) #no plants that seemed to disappear 
-```
-
-```
-## # A tibble: 253 × 12
-##    block BedLoc bed   bed.row bed.col Genotype  pop.mf  parent.pop mf    rep  
-##    <chr> <chr>  <chr>   <dbl> <chr>   <chr>     <chr>   <chr>      <chr> <chr>
-##  1 A     A_5_A  A           5 A       CP2_5_1   CP2_5   CP2        5     1    
-##  2 A     A_6_A  A           6 A       CC_5_3    CC_5    CC         5     3    
-##  3 A     A_9_B  A           9 B       SQ2_8_9   SQ2_8   SQ2        8     9    
-##  4 A     A_15_B A          15 B       YO11_7_9  YO11_7  YO11       7     9    
-##  5 A     A_19_A A          19 A       SQ3_4_7   SQ3_4   SQ3        4     7    
-##  6 A     A_20_B A          20 B       WL2_8_9   WL2_8   WL2        8     9    
-##  7 A     A_21_A A          21 A       CP2_6_5   CP2_6   CP2        6     5    
-##  8 A     A_21_B A          21 B       LVTR1_8_4 LVTR1_8 LVTR1      8     4    
-##  9 A     A_23_B A          23 B       WL1_4_11  WL1_4   WL1        4     11   
-## 10 A     A_25_A A          25 A       YO4_1_13  YO4_1   YO4        1     13   
-## # ℹ 243 more rows
-## # ℹ 2 more variables: death.date <chr>, survey.notes <chr>
-```
-
-``` r
-wl2_surv %>% filter(Genotype=="YO7_4_2")
-```
-
-```
-## # A tibble: 1 × 12
-##   block BedLoc bed   bed.row bed.col Genotype pop.mf parent.pop mf    rep  
-##   <chr> <chr>  <chr>   <dbl> <chr>   <chr>    <chr>  <chr>      <chr> <chr>
-## 1 A     A_18_D A          18 D       YO7_4_2  YO7_4  YO7        4     2    
-## # ℹ 2 more variables: death.date <chr>, survey.notes <chr>
-```
-
-``` r
-wl2_surv_dates <- wl2_surv %>% 
-  filter(BedLoc!="K_5_C") %>% 
-  filter(BedLoc!="B_32_A") %>% 
+ucd_surv_dates <- ucd_surv %>% 
   mutate(mf=as.double(mf), rep=as.double(rep)) %>% 
-  mutate(planting.date="7/19/23", #could try to make this more specific to when certain blocks were planted 
-         last_fup_date=if_else(is.na(death.date), "10/20/23", death.date)) %>%  #need this to calculate survival times
+  mutate(planting.date="11/30/22", #could try to make this more specific to when certain blocks were planted 
+         last_fup_date=if_else(is.na(death.date), "10/16/23", death.date)) %>%  #need this to calculate survival times
   mutate(planting.date=mdy(planting.date), last_fup_date=mdy(last_fup_date)) %>% #convert to date objects
   mutate(os_weeks=as.duration(planting.date %--% last_fup_date) / dweeks(1), #observed number of weeks
          status=if_else(is.na(death.date), 0, 1)) %>% #0=censured (alive in this case), 1=dead
   filter(os_weeks > 0) %>% #there is one case of a plant that was dead at planting, so just removed it since this is survival post- transplanting
-  select(-survey.notes)
-head(wl2_surv_dates)
+  select(-Notes)
+head(ucd_surv_dates)
 ```
 
 ```
-## # A tibble: 6 × 15
-##   block BedLoc bed   bed.row bed.col Genotype  pop.mf  parent.pop    mf   rep
-##   <chr> <chr>  <chr>   <dbl> <chr>   <chr>     <chr>   <chr>      <dbl> <dbl>
-## 1 A     A_1_A  A           1 A       TM2_6_11  TM2_6   TM2            6    11
-## 2 A     A_1_B  A           1 B       LVTR1_7_1 LVTR1_7 LVTR1          7     1
-## 3 A     A_2_A  A           2 A       SQ2_6_14  SQ2_6   SQ2            6    14
-## 4 A     A_2_B  A           2 B       YO8_8_3   YO8_8   YO8            8     3
-## 5 A     A_3_A  A           3 A       CC_2_3    CC_2    CC             2     3
-## 6 A     A_3_B  A           3 B       YO11_5_14 YO11_5  YO11           5    14
-## # ℹ 5 more variables: death.date <chr>, planting.date <date>,
-## #   last_fup_date <date>, os_weeks <dbl>, status <dbl>
+## # A tibble: 6 × 14
+##   BedLoc block   row col   Genotype  pop.mf parent.pop    mf   rep death.date
+##   <chr>  <chr> <dbl> <chr> <chr>     <chr>  <chr>      <dbl> <dbl> <chr>     
+## 1 D1_3_A D1        3 A     WL2_4_11  WL2_4  WL2            4    11 4/24/23   
+## 2 D1_3_B D1        3 B     CP2_10_4  CP2_10 CP2           10     4 1/27/23   
+## 3 D1_4_A D1        4 A     YO11_4_10 YO11_4 YO11           4    10 1/12/23   
+## 4 D1_4_B D1        4 B     CC_5_12   CC_5   CC             5    12 2/10/23   
+## 5 D1_5_A D1        5 A     FR_3_6    FR_3   FR             3     6 2/24/23   
+## 6 D1_5_B D1        5 B     BH_5_24   BH_5   BH             5    24 3/3/23    
+## # ℹ 4 more variables: planting.date <date>, last_fup_date <date>,
+## #   os_weeks <dbl>, status <dbl>
 ```
-
-``` r
-unique(wl2_surv_dates$os_weeks)
-```
-
-```
-##  [1] 13.28571  1.00000  3.00000  2.00000 12.28571  9.00000  6.00000  4.00000
-##  [9]  8.00000  7.00000 10.00000  5.00000
-```
-
-
 
 ``` r
-wl2_surv_dates %>% filter(parent.pop=="WL2") #there's a different number of WL2 plants here compared to annual census (see FirstYear Survv)
+unique(ucd_surv_dates$os_weeks)
 ```
 
 ```
-## # A tibble: 91 × 15
-##    block BedLoc bed   bed.row bed.col Genotype pop.mf parent.pop    mf   rep
-##    <chr> <chr>  <chr>   <dbl> <chr>   <chr>    <chr>  <chr>      <dbl> <dbl>
-##  1 A     A_20_B A          20 B       WL2_8_9  WL2_8  WL2            8     9
-##  2 A     A_24_A A          24 A       WL2_7_9  WL2_7  WL2            7     9
-##  3 A     A_29_B A          29 B       WL2_3_9  WL2_3  WL2            3     9
-##  4 A     A_31_A A          31 A       WL2_3_10 WL2_3  WL2            3    10
-##  5 B     A_37_B A          37 B       WL2_8_10 WL2_8  WL2            8    10
-##  6 B     A_39_B A          39 B       WL2_7_10 WL2_7  WL2            7    10
-##  7 B     A_59_A A          59 A       WL2_5_10 WL2_5  WL2            5    10
-##  8 A     A_2_D  A           2 D       WL2_1_9  WL2_1  WL2            1     9
-##  9 A     A_6_D  A           6 D       WL2_6_9  WL2_6  WL2            6     9
-## 10 A     A_7_C  A           7 C       WL2_5_9  WL2_5  WL2            5     9
-## # ℹ 81 more rows
-## # ℹ 5 more variables: death.date <chr>, planting.date <date>,
-## #   last_fup_date <date>, os_weeks <dbl>, status <dbl>
+##  [1] 20.714286  8.285714  6.142857 10.285714 12.285714 13.285714 11.285714
+##  [8]  9.285714 15.285714 18.714286 17.285714 17.714286  7.285714  5.285714
+## [15] 14.285714 45.714286 21.714286 29.285714 16.285714 23.714286 39.857143
+## [22]  1.857143 22.714286  3.000000 33.714286 19.714286 28.142857 32.714286
+## [29] 24.714286 26.714286 31.142857 31.714286 35.714286
 ```
 
 ## Location Info
+Note: the below files include climate distance which is not finalized yet (as of 10/3)
 
 ``` r
 gowersdist_UCD <- read_csv("../output/Climate/Pops_GowersEnvtalDist_UCD.csv") %>% 
@@ -339,23 +244,22 @@ head(gowersdist_all)
 
 
 ``` r
-wl2_surv_dates_loc <- left_join(wl2_surv_dates, gowersdist_all)
+ucd_surv_dates_loc <- left_join(ucd_surv_dates, gowersdist_all)
 ```
 
 ```
 ## Joining with `by = join_by(parent.pop)`
 ```
 
-
 ## Create Survival Objects and Curves
 
 ``` r
-Surv(wl2_surv_dates_loc$os_weeks, wl2_surv_dates_loc$status)[1:10] #show the first 10 observations of the survival object
+Surv(ucd_surv_dates_loc$os_weeks, ucd_surv_dates_loc$status)[1:10] #show the first 10 observations of the survival object
 ```
 
 ```
-##  [1] 13.28571+  1.00000   1.00000   1.00000  13.28571+  1.00000   1.00000 
-##  [8]  1.00000  13.28571+  1.00000
+##  [1] 20.714286  8.285714  6.142857 10.285714 12.285714 13.285714 13.285714
+##  [8] 13.285714 11.285714  9.285714
 ```
 
 ``` r
@@ -365,28 +269,28 @@ Surv(wl2_surv_dates_loc$os_weeks, wl2_surv_dates_loc$status)[1:10] #show the fir
 "The survfit() function creates survival curves using the Kaplan-Meier method based on a formula. Let’s generate the overall survival curve for the entire cohort, assign it to object s1, and look at the structure using str():"
 
 ``` r
-s1 <- survfit(Surv(os_weeks, status) ~ 1, data = wl2_surv_dates_loc)
+s1 <- survfit(Surv(os_weeks, status) ~ 1, data = ucd_surv_dates_loc)
 str(s1)
 ```
 
 ```
 ## List of 16
-##  $ n        : int 1572
-##  $ time     : num [1:12] 1 2 3 4 5 6 7 8 9 10 ...
-##  $ n.risk   : num [1:12] 1572 1059 846 727 712 ...
-##  $ n.event  : num [1:12] 513 213 119 15 21 22 8 16 35 25 ...
-##  $ n.censor : num [1:12] 0 0 0 0 0 0 0 0 0 0 ...
-##  $ surv     : num [1:12] 0.674 0.538 0.462 0.453 0.44 ...
-##  $ std.err  : num [1:12] 0.0176 0.0234 0.0272 0.0277 0.0285 ...
-##  $ cumhaz   : num [1:12] 0.326 0.527 0.668 0.689 0.718 ...
-##  $ std.chaz : num [1:12] 0.0144 0.0199 0.0237 0.0243 0.0252 ...
+##  $ n        : int 751
+##  $ time     : num [1:33] 1.86 3 5.29 6.14 7.29 ...
+##  $ n.risk   : num [1:33] 751 737 734 685 662 627 607 574 504 410 ...
+##  $ n.event  : num [1:33] 14 3 49 23 35 20 33 70 94 14 ...
+##  $ n.censor : num [1:33] 0 0 0 0 0 0 0 0 0 0 ...
+##  $ surv     : num [1:33] 0.981 0.977 0.912 0.881 0.835 ...
+##  $ std.err  : num [1:33] 0.00503 0.00555 0.01133 0.01338 0.01623 ...
+##  $ cumhaz   : num [1:33] 0.0186 0.0227 0.0895 0.123 0.1759 ...
+##  $ std.chaz : num [1:33] 0.00498 0.00551 0.01101 0.01305 0.01582 ...
 ##  $ type     : chr "right"
 ##  $ logse    : logi TRUE
 ##  $ conf.int : num 0.95
 ##  $ conf.type: chr "log"
-##  $ lower    : num [1:12] 0.651 0.514 0.438 0.429 0.416 ...
-##  $ upper    : num [1:12] 0.697 0.563 0.488 0.478 0.465 ...
-##  $ call     : language survfit(formula = Surv(os_weeks, status) ~ 1, data = wl2_surv_dates_loc)
+##  $ lower    : num [1:33] 0.972 0.967 0.892 0.859 0.809 ...
+##  $ upper    : num [1:33] 0.991 0.988 0.933 0.905 0.862 ...
+##  $ call     : language survfit(formula = Surv(os_weeks, status) ~ 1, data = ucd_surv_dates_loc)
 ##  - attr(*, "class")= chr "survfit"
 ```
 
@@ -398,7 +302,7 @@ str(s1)
 ## Survival Plot
 
 ``` r
-survfit2(Surv(os_weeks, status) ~ 1, data = wl2_surv_dates_loc) %>% 
+survfit2(Surv(os_weeks, status) ~ 1, data = ucd_surv_dates_loc) %>% 
   ggsurvfit() +
   labs(
     x = "Weeks",
@@ -408,47 +312,47 @@ survfit2(Surv(os_weeks, status) ~ 1, data = wl2_surv_dates_loc) %>%
   add_risktable() #at risk = plants still alive, event=plants dead
 ```
 
-![](WL2_SurvAnalysis_files/figure-html/unnamed-chunk-9-1.png)<!-- -->
+![](UCD_SurvAnalysis_files/figure-html/unnamed-chunk-8-1.png)<!-- -->
 
 ## Estimating x-week survival
 
 ``` r
-summary(survfit(Surv(os_weeks, status) ~ 1, data = wl2_surv_dates_loc), times = 8) #survival for 2 months
+summary(survfit(Surv(os_weeks, status) ~ 1, data = ucd_surv_dates_loc), times = 8) #survival for 2 months
 ```
 
 ```
-## Call: survfit(formula = Surv(os_weeks, status) ~ 1, data = wl2_surv_dates_loc)
+## Call: survfit(formula = Surv(os_weeks, status) ~ 1, data = ucd_surv_dates_loc)
 ## 
 ##  time n.risk n.event survival std.err lower 95% CI upper 95% CI
-##     8    661     927     0.41  0.0124        0.387        0.435
+##     8    627     124    0.835  0.0135        0.809        0.862
 ```
 
 ``` r
-#2 month survival probability is 41%
+#2 month survival probability is 84%
 ```
 
 ## Estimating median survival time
 
 ``` r
-survfit(Surv(os_weeks, status) ~ 1, data = wl2_surv_dates_loc) 
+survfit(Surv(os_weeks, status) ~ 1, data = ucd_surv_dates_loc) 
 ```
 
 ```
-## Call: survfit(formula = Surv(os_weeks, status) ~ 1, data = wl2_surv_dates_loc)
+## Call: survfit(formula = Surv(os_weeks, status) ~ 1, data = ucd_surv_dates_loc)
 ## 
-##         n events median 0.95LCL 0.95UCL
-## [1,] 1572   1059      3       3       3
+##        n events median 0.95LCL 0.95UCL
+## [1,] 751    742   13.3    12.3    13.3
 ```
 
 ``` r
-#median survival time is 3 weeks
+#median survival time is 13.3 weeks 
 ```
 
 ## Compare Survival between Populations 
 Plot survival differences
 
 ``` r
-survfit2(Surv(os_weeks, status) ~ elevation.group, data = wl2_surv_dates_loc) %>% 
+survfit2(Surv(os_weeks, status) ~ elevation.group, data = ucd_surv_dates_loc) %>% 
   ggsurvfit() +
   labs(
     x = "Weeks",
@@ -456,77 +360,79 @@ survfit2(Surv(os_weeks, status) ~ elevation.group, data = wl2_surv_dates_loc) %>
   add_confidence_interval() 
 ```
 
-![](WL2_SurvAnalysis_files/figure-html/unnamed-chunk-12-1.png)<!-- -->
+![](UCD_SurvAnalysis_files/figure-html/unnamed-chunk-11-1.png)<!-- -->
 
 ``` r
-survfit(Surv(os_weeks, status) ~ parent.pop, data = wl2_surv_dates_loc) #median survival lengths for each pop
+survfit(Surv(os_weeks, status) ~ parent.pop, data = ucd_surv_dates_loc) #median survival lengths for each pop
 ```
 
 ```
-## Call: survfit(formula = Surv(os_weeks, status) ~ parent.pop, data = wl2_surv_dates_loc)
+## Call: survfit(formula = Surv(os_weeks, status) ~ parent.pop, data = ucd_surv_dates_loc)
 ## 
-##                   n events median 0.95LCL 0.95UCL
-## parent.pop=BH    91     38     NA       8      NA
-## parent.pop=CC    91     39     NA       6      NA
-## parent.pop=CP2   92     72    4.5       3    10.0
-## parent.pop=CP3   91     74    2.0       2     3.0
-## parent.pop=DPR   91     58    3.0       2     8.0
-## parent.pop=FR    48     43    1.0       1     6.0
-## parent.pop=IH    92     37     NA      NA      NA
-## parent.pop=LV1   91     83    2.0       2     2.0
-## parent.pop=LV3   27     23    2.0       1     9.0
-## parent.pop=LVTR1 91     81    2.0       1     2.0
-## parent.pop=SC    91     44     NA       3      NA
-## parent.pop=SQ1   30     18    2.0       2      NA
-## parent.pop=SQ2   61     49    2.0       1     3.0
-## parent.pop=SQ3   33     26    2.0       1    10.0
-## parent.pop=TM2   84     46    4.0       2      NA
-## parent.pop=WL1   48     30   10.0       8      NA
-## parent.pop=WL2   91     49   10.0       3      NA
-## parent.pop=WR    14     12    1.0       1      NA
-## parent.pop=WV     3      3    1.0      NA      NA
-## parent.pop=YO11  91     75    3.0       2     3.0
-## parent.pop=YO4   40     28    4.5       1    13.3
-## parent.pop=YO7   90     52    3.0       2      NA
-## parent.pop=YO8   91     79    2.0       1     3.0
+##                    n events median 0.95LCL 0.95UCL
+## parent.pop=BH    110    101  15.79   13.29    17.3
+## parent.pop=CC     44     44  13.29   11.29    15.3
+## parent.pop=CP2    38     38  13.29   10.29    14.3
+## parent.pop=CP3     8      8   9.29    8.29      NA
+## parent.pop=DPR    22     22  14.29   12.29    18.7
+## parent.pop=FR     37     37  11.29   11.29    13.3
+## parent.pop=IH     49     49  13.29   13.29    14.3
+## parent.pop=LV1     3      3   7.29    5.29      NA
+## parent.pop=LV3    65     65  11.29   10.29    13.3
+## parent.pop=LVTR1  15     15  10.29    7.29    18.7
+## parent.pop=SC     36     36  13.29   11.29    16.3
+## parent.pop=SQ      1      1   5.29      NA      NA
+## parent.pop=SQ1    46     46  11.29   11.29    13.3
+## parent.pop=SQ2    21     21  10.29    8.29    11.3
+## parent.pop=SQ3    10     10  13.79   11.29      NA
+## parent.pop=TM2    37     37  18.71   16.29    23.7
+## parent.pop=WL1   125    125  11.29   11.29    13.3
+## parent.pop=WL2    23     23  16.29   11.29    20.7
+## parent.pop=WR      9      9  11.29   10.29      NA
+## parent.pop=WV      2      2   9.79    8.29      NA
+## parent.pop=YO11   14     14   9.29    7.29    16.3
+## parent.pop=YO4     6      6   9.79    9.29      NA
+## parent.pop=YO7    17     17  15.29   10.29    18.7
+## parent.pop=YO8    13     13  11.29    7.29      NA
 ```
 
 "We can conduct between-group significance tests using a log-rank test. The log-rank test equally weights observations over the entire follow-up time and is the most common way to compare survival times between groups."
 
 ``` r
-survdiff(Surv(os_weeks, status) ~ parent.pop, data = wl2_surv_dates_loc)
+survdiff(Surv(os_weeks, status) ~ parent.pop, data = ucd_surv_dates_loc)
 ```
 
 ```
 ## Call:
-## survdiff(formula = Surv(os_weeks, status) ~ parent.pop, data = wl2_surv_dates_loc)
+## survdiff(formula = Surv(os_weeks, status) ~ parent.pop, data = ucd_surv_dates_loc)
 ## 
-##                   N Observed Expected (O-E)^2/E (O-E)^2/V
-## parent.pop=BH    91       38   70.450   14.9472   20.2310
-## parent.pop=CC    91       39   72.563   15.5243   21.0373
-## parent.pop=CP2   92       72   65.414    0.6631    0.9053
-## parent.pop=CP3   91       74   55.779    5.9521    8.2186
-## parent.pop=DPR   91       58   62.580    0.3351    0.4578
-## parent.pop=FR    48       43   27.348    8.9575   12.1168
-## parent.pop=IH    92       37   72.465   17.3570   23.4956
-## parent.pop=LV1   91       83   50.760   20.4771   28.7569
-## parent.pop=LV3   27       23   15.903    3.1669    4.2296
-## parent.pop=LVTR1 91       81   49.081   20.7584   29.1479
-## parent.pop=SC    91       44   67.915    8.4213   11.4237
-## parent.pop=SQ1   30       18   20.146    0.2286    0.2995
-## parent.pop=SQ2   61       49   37.623    3.4405    4.6539
-## parent.pop=SQ3   33       26   20.805    1.2974    1.7226
-## parent.pop=TM2   84       46   58.878    2.8168    3.8108
-## parent.pop=WL1   48       30   37.545    1.5164    1.9852
-## parent.pop=WL2   91       49   68.495    5.5486    7.5339
-## parent.pop=WR    14       12    6.978    3.6143    4.8819
-## parent.pop=WV     3        3    0.979    4.1720    6.2009
-## parent.pop=YO11  91       75   57.347    5.4343    7.5009
-## parent.pop=YO4   40       28   27.140    0.0273    0.0358
-## parent.pop=YO7   90       52   61.191    1.3804    1.8808
-## parent.pop=YO8   91       79   51.615   14.5298   20.1989
+##                    N Observed Expected (O-E)^2/E (O-E)^2/V
+## parent.pop=BH    110      101 181.5165    35.715    62.419
+## parent.pop=CC     44       44  39.4605     0.522     0.651
+## parent.pop=CP2    38       38  34.8903     0.277     0.340
+## parent.pop=CP3     8        8   1.9219    19.223    20.626
+## parent.pop=DPR    22       22  24.3192     0.221     0.269
+## parent.pop=FR     37       37  27.5950     3.205     3.900
+## parent.pop=IH     49       49  53.6479     0.403     0.512
+## parent.pop=LV1     3        3   1.1606     2.915     3.390
+## parent.pop=LV3    65       65  45.1669     8.709    10.928
+## parent.pop=LVTR1  15       15   9.2613     3.556     4.174
+## parent.pop=SC     36       36  39.7116     0.347     0.429
+## parent.pop=SQ      1        1   0.0895     9.266     9.794
+## parent.pop=SQ1    46       46  33.7330     4.461     5.452
+## parent.pop=SQ2    21       21  10.2836    11.167    12.952
+## parent.pop=SQ3    10       10  11.5820     0.216     0.258
+## parent.pop=TM2    37       37  61.9774    10.066    13.207
+## parent.pop=WL1   125      125  92.8105    11.164    15.215
+## parent.pop=WL2    23       23  29.7057     1.514     1.857
+## parent.pop=WR      9        9   6.8044     0.708     0.835
+## parent.pop=WV      2        2   0.7785     1.917     2.114
+## parent.pop=YO11   14       14   6.0585    10.410    11.934
+## parent.pop=YO4     6        6   2.2105     6.496     7.279
+## parent.pop=YO7    17       17  18.5361     0.127     0.154
+## parent.pop=YO8    13       13   8.7787     2.030     2.384
 ## 
-##  Chisq= 214  on 22 degrees of freedom, p= <2e-16
+##  Chisq= 186  on 23 degrees of freedom, p= <2e-16
 ```
 
 ``` r
@@ -538,28 +444,28 @@ survdiff(Surv(os_weeks, status) ~ parent.pop, data = wl2_surv_dates_loc)
 The Cox regression model is a semi-parametric model that can be used to fit univariable and multivariable regression models that have survival outcomes.:
 
 ``` r
-coxph(Surv(os_weeks, status) ~ parent.pop, data = wl2_surv_dates_loc) %>% 
+coxph(Surv(os_weeks, status) ~ parent.pop, data = ucd_surv_dates_loc) %>% 
   tbl_regression(exp = TRUE) 
 ```
 
 ```{=html}
-<div id="wegepimipu" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
-<style>#wegepimipu table {
+<div id="brxekuegda" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>#brxekuegda table {
   font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-#wegepimipu thead, #wegepimipu tbody, #wegepimipu tfoot, #wegepimipu tr, #wegepimipu td, #wegepimipu th {
+#brxekuegda thead, #brxekuegda tbody, #brxekuegda tfoot, #brxekuegda tr, #brxekuegda td, #brxekuegda th {
   border-style: none;
 }
 
-#wegepimipu p {
+#brxekuegda p {
   margin: 0;
   padding: 0;
 }
 
-#wegepimipu .gt_table {
+#brxekuegda .gt_table {
   display: table;
   border-collapse: collapse;
   line-height: normal;
@@ -585,12 +491,12 @@ coxph(Surv(os_weeks, status) ~ parent.pop, data = wl2_surv_dates_loc) %>%
   border-left-color: #D3D3D3;
 }
 
-#wegepimipu .gt_caption {
+#brxekuegda .gt_caption {
   padding-top: 4px;
   padding-bottom: 4px;
 }
 
-#wegepimipu .gt_title {
+#brxekuegda .gt_title {
   color: #333333;
   font-size: 125%;
   font-weight: initial;
@@ -602,7 +508,7 @@ coxph(Surv(os_weeks, status) ~ parent.pop, data = wl2_surv_dates_loc) %>%
   border-bottom-width: 0;
 }
 
-#wegepimipu .gt_subtitle {
+#brxekuegda .gt_subtitle {
   color: #333333;
   font-size: 85%;
   font-weight: initial;
@@ -614,7 +520,7 @@ coxph(Surv(os_weeks, status) ~ parent.pop, data = wl2_surv_dates_loc) %>%
   border-top-width: 0;
 }
 
-#wegepimipu .gt_heading {
+#brxekuegda .gt_heading {
   background-color: #FFFFFF;
   text-align: center;
   border-bottom-color: #FFFFFF;
@@ -626,13 +532,13 @@ coxph(Surv(os_weeks, status) ~ parent.pop, data = wl2_surv_dates_loc) %>%
   border-right-color: #D3D3D3;
 }
 
-#wegepimipu .gt_bottom_border {
+#brxekuegda .gt_bottom_border {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
 }
 
-#wegepimipu .gt_col_headings {
+#brxekuegda .gt_col_headings {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -647,7 +553,7 @@ coxph(Surv(os_weeks, status) ~ parent.pop, data = wl2_surv_dates_loc) %>%
   border-right-color: #D3D3D3;
 }
 
-#wegepimipu .gt_col_heading {
+#brxekuegda .gt_col_heading {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -667,7 +573,7 @@ coxph(Surv(os_weeks, status) ~ parent.pop, data = wl2_surv_dates_loc) %>%
   overflow-x: hidden;
 }
 
-#wegepimipu .gt_column_spanner_outer {
+#brxekuegda .gt_column_spanner_outer {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -679,15 +585,15 @@ coxph(Surv(os_weeks, status) ~ parent.pop, data = wl2_surv_dates_loc) %>%
   padding-right: 4px;
 }
 
-#wegepimipu .gt_column_spanner_outer:first-child {
+#brxekuegda .gt_column_spanner_outer:first-child {
   padding-left: 0;
 }
 
-#wegepimipu .gt_column_spanner_outer:last-child {
+#brxekuegda .gt_column_spanner_outer:last-child {
   padding-right: 0;
 }
 
-#wegepimipu .gt_column_spanner {
+#brxekuegda .gt_column_spanner {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
@@ -699,11 +605,11 @@ coxph(Surv(os_weeks, status) ~ parent.pop, data = wl2_surv_dates_loc) %>%
   width: 100%;
 }
 
-#wegepimipu .gt_spanner_row {
+#brxekuegda .gt_spanner_row {
   border-bottom-style: hidden;
 }
 
-#wegepimipu .gt_group_heading {
+#brxekuegda .gt_group_heading {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -729,7 +635,7 @@ coxph(Surv(os_weeks, status) ~ parent.pop, data = wl2_surv_dates_loc) %>%
   text-align: left;
 }
 
-#wegepimipu .gt_empty_group_heading {
+#brxekuegda .gt_empty_group_heading {
   padding: 0.5px;
   color: #333333;
   background-color: #FFFFFF;
@@ -744,15 +650,15 @@ coxph(Surv(os_weeks, status) ~ parent.pop, data = wl2_surv_dates_loc) %>%
   vertical-align: middle;
 }
 
-#wegepimipu .gt_from_md > :first-child {
+#brxekuegda .gt_from_md > :first-child {
   margin-top: 0;
 }
 
-#wegepimipu .gt_from_md > :last-child {
+#brxekuegda .gt_from_md > :last-child {
   margin-bottom: 0;
 }
 
-#wegepimipu .gt_row {
+#brxekuegda .gt_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -771,7 +677,7 @@ coxph(Surv(os_weeks, status) ~ parent.pop, data = wl2_surv_dates_loc) %>%
   overflow-x: hidden;
 }
 
-#wegepimipu .gt_stub {
+#brxekuegda .gt_stub {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -784,7 +690,7 @@ coxph(Surv(os_weeks, status) ~ parent.pop, data = wl2_surv_dates_loc) %>%
   padding-right: 5px;
 }
 
-#wegepimipu .gt_stub_row_group {
+#brxekuegda .gt_stub_row_group {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -798,15 +704,15 @@ coxph(Surv(os_weeks, status) ~ parent.pop, data = wl2_surv_dates_loc) %>%
   vertical-align: top;
 }
 
-#wegepimipu .gt_row_group_first td {
+#brxekuegda .gt_row_group_first td {
   border-top-width: 2px;
 }
 
-#wegepimipu .gt_row_group_first th {
+#brxekuegda .gt_row_group_first th {
   border-top-width: 2px;
 }
 
-#wegepimipu .gt_summary_row {
+#brxekuegda .gt_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -816,16 +722,16 @@ coxph(Surv(os_weeks, status) ~ parent.pop, data = wl2_surv_dates_loc) %>%
   padding-right: 5px;
 }
 
-#wegepimipu .gt_first_summary_row {
+#brxekuegda .gt_first_summary_row {
   border-top-style: solid;
   border-top-color: #D3D3D3;
 }
 
-#wegepimipu .gt_first_summary_row.thick {
+#brxekuegda .gt_first_summary_row.thick {
   border-top-width: 2px;
 }
 
-#wegepimipu .gt_last_summary_row {
+#brxekuegda .gt_last_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -835,7 +741,7 @@ coxph(Surv(os_weeks, status) ~ parent.pop, data = wl2_surv_dates_loc) %>%
   border-bottom-color: #D3D3D3;
 }
 
-#wegepimipu .gt_grand_summary_row {
+#brxekuegda .gt_grand_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -845,7 +751,7 @@ coxph(Surv(os_weeks, status) ~ parent.pop, data = wl2_surv_dates_loc) %>%
   padding-right: 5px;
 }
 
-#wegepimipu .gt_first_grand_summary_row {
+#brxekuegda .gt_first_grand_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -855,7 +761,7 @@ coxph(Surv(os_weeks, status) ~ parent.pop, data = wl2_surv_dates_loc) %>%
   border-top-color: #D3D3D3;
 }
 
-#wegepimipu .gt_last_grand_summary_row_top {
+#brxekuegda .gt_last_grand_summary_row_top {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -865,11 +771,11 @@ coxph(Surv(os_weeks, status) ~ parent.pop, data = wl2_surv_dates_loc) %>%
   border-bottom-color: #D3D3D3;
 }
 
-#wegepimipu .gt_striped {
+#brxekuegda .gt_striped {
   background-color: rgba(128, 128, 128, 0.05);
 }
 
-#wegepimipu .gt_table_body {
+#brxekuegda .gt_table_body {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -878,7 +784,7 @@ coxph(Surv(os_weeks, status) ~ parent.pop, data = wl2_surv_dates_loc) %>%
   border-bottom-color: #D3D3D3;
 }
 
-#wegepimipu .gt_footnotes {
+#brxekuegda .gt_footnotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -892,7 +798,7 @@ coxph(Surv(os_weeks, status) ~ parent.pop, data = wl2_surv_dates_loc) %>%
   border-right-color: #D3D3D3;
 }
 
-#wegepimipu .gt_footnote {
+#brxekuegda .gt_footnote {
   margin: 0px;
   font-size: 90%;
   padding-top: 4px;
@@ -901,7 +807,7 @@ coxph(Surv(os_weeks, status) ~ parent.pop, data = wl2_surv_dates_loc) %>%
   padding-right: 5px;
 }
 
-#wegepimipu .gt_sourcenotes {
+#brxekuegda .gt_sourcenotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -915,7 +821,7 @@ coxph(Surv(os_weeks, status) ~ parent.pop, data = wl2_surv_dates_loc) %>%
   border-right-color: #D3D3D3;
 }
 
-#wegepimipu .gt_sourcenote {
+#brxekuegda .gt_sourcenote {
   font-size: 90%;
   padding-top: 4px;
   padding-bottom: 4px;
@@ -923,72 +829,72 @@ coxph(Surv(os_weeks, status) ~ parent.pop, data = wl2_surv_dates_loc) %>%
   padding-right: 5px;
 }
 
-#wegepimipu .gt_left {
+#brxekuegda .gt_left {
   text-align: left;
 }
 
-#wegepimipu .gt_center {
+#brxekuegda .gt_center {
   text-align: center;
 }
 
-#wegepimipu .gt_right {
+#brxekuegda .gt_right {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
 
-#wegepimipu .gt_font_normal {
+#brxekuegda .gt_font_normal {
   font-weight: normal;
 }
 
-#wegepimipu .gt_font_bold {
+#brxekuegda .gt_font_bold {
   font-weight: bold;
 }
 
-#wegepimipu .gt_font_italic {
+#brxekuegda .gt_font_italic {
   font-style: italic;
 }
 
-#wegepimipu .gt_super {
+#brxekuegda .gt_super {
   font-size: 65%;
 }
 
-#wegepimipu .gt_footnote_marks {
+#brxekuegda .gt_footnote_marks {
   font-size: 75%;
   vertical-align: 0.4em;
   position: initial;
 }
 
-#wegepimipu .gt_asterisk {
+#brxekuegda .gt_asterisk {
   font-size: 100%;
   vertical-align: 0;
 }
 
-#wegepimipu .gt_indent_1 {
+#brxekuegda .gt_indent_1 {
   text-indent: 5px;
 }
 
-#wegepimipu .gt_indent_2 {
+#brxekuegda .gt_indent_2 {
   text-indent: 10px;
 }
 
-#wegepimipu .gt_indent_3 {
+#brxekuegda .gt_indent_3 {
   text-indent: 15px;
 }
 
-#wegepimipu .gt_indent_4 {
+#brxekuegda .gt_indent_4 {
   text-indent: 20px;
 }
 
-#wegepimipu .gt_indent_5 {
+#brxekuegda .gt_indent_5 {
   text-indent: 25px;
 }
 
-#wegepimipu .katex-display {
+#brxekuegda .katex-display {
   display: inline-flex !important;
   margin-bottom: 0.75em !important;
 }
 
-#wegepimipu div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
+#brxekuegda div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
   height: 0px !important;
 }
 </style>
@@ -1011,92 +917,96 @@ coxph(Surv(os_weeks, status) ~ parent.pop, data = wl2_surv_dates_loc) %>%
 <td headers="conf.low" class="gt_row gt_center">—</td>
 <td headers="p.value" class="gt_row gt_center"><br /></td></tr>
     <tr><td headers="label" class="gt_row gt_left">    CC</td>
-<td headers="estimate" class="gt_row gt_center">0.98</td>
-<td headers="conf.low" class="gt_row gt_center">0.63, 1.54</td>
-<td headers="p.value" class="gt_row gt_center">>0.9</td></tr>
+<td headers="estimate" class="gt_row gt_center">2.55</td>
+<td headers="conf.low" class="gt_row gt_center">1.76, 3.69</td>
+<td headers="p.value" class="gt_row gt_center"><0.001</td></tr>
     <tr><td headers="label" class="gt_row gt_left">    CP2</td>
-<td headers="estimate" class="gt_row gt_center">2.11</td>
-<td headers="conf.low" class="gt_row gt_center">1.42, 3.13</td>
+<td headers="estimate" class="gt_row gt_center">2.40</td>
+<td headers="conf.low" class="gt_row gt_center">1.64, 3.51</td>
 <td headers="p.value" class="gt_row gt_center"><0.001</td></tr>
     <tr><td headers="label" class="gt_row gt_left">    CP3</td>
-<td headers="estimate" class="gt_row gt_center">2.69</td>
-<td headers="conf.low" class="gt_row gt_center">1.82, 3.98</td>
+<td headers="estimate" class="gt_row gt_center">12.6</td>
+<td headers="conf.low" class="gt_row gt_center">6.02, 26.4</td>
 <td headers="p.value" class="gt_row gt_center"><0.001</td></tr>
     <tr><td headers="label" class="gt_row gt_left">    DPR</td>
-<td headers="estimate" class="gt_row gt_center">1.78</td>
-<td headers="conf.low" class="gt_row gt_center">1.19, 2.69</td>
-<td headers="p.value" class="gt_row gt_center">0.006</td></tr>
+<td headers="estimate" class="gt_row gt_center">1.99</td>
+<td headers="conf.low" class="gt_row gt_center">1.24, 3.18</td>
+<td headers="p.value" class="gt_row gt_center">0.004</td></tr>
     <tr><td headers="label" class="gt_row gt_left">    FR</td>
-<td headers="estimate" class="gt_row gt_center">3.35</td>
-<td headers="conf.low" class="gt_row gt_center">2.16, 5.18</td>
+<td headers="estimate" class="gt_row gt_center">3.32</td>
+<td headers="conf.low" class="gt_row gt_center">2.24, 4.92</td>
 <td headers="p.value" class="gt_row gt_center"><0.001</td></tr>
     <tr><td headers="label" class="gt_row gt_left">    IH</td>
-<td headers="estimate" class="gt_row gt_center">0.94</td>
-<td headers="conf.low" class="gt_row gt_center">0.60, 1.48</td>
-<td headers="p.value" class="gt_row gt_center">0.8</td></tr>
+<td headers="estimate" class="gt_row gt_center">1.89</td>
+<td headers="conf.low" class="gt_row gt_center">1.34, 2.68</td>
+<td headers="p.value" class="gt_row gt_center"><0.001</td></tr>
     <tr><td headers="label" class="gt_row gt_left">    LV1</td>
-<td headers="estimate" class="gt_row gt_center">3.47</td>
-<td headers="conf.low" class="gt_row gt_center">2.36, 5.10</td>
+<td headers="estimate" class="gt_row gt_center">7.43</td>
+<td headers="conf.low" class="gt_row gt_center">2.34, 23.6</td>
 <td headers="p.value" class="gt_row gt_center"><0.001</td></tr>
     <tr><td headers="label" class="gt_row gt_left">    LV3</td>
-<td headers="estimate" class="gt_row gt_center">3.01</td>
-<td headers="conf.low" class="gt_row gt_center">1.79, 5.05</td>
+<td headers="estimate" class="gt_row gt_center">3.53</td>
+<td headers="conf.low" class="gt_row gt_center">2.53, 4.93</td>
 <td headers="p.value" class="gt_row gt_center"><0.001</td></tr>
     <tr><td headers="label" class="gt_row gt_left">    LVTR1</td>
-<td headers="estimate" class="gt_row gt_center">3.59</td>
-<td headers="conf.low" class="gt_row gt_center">2.44, 5.28</td>
+<td headers="estimate" class="gt_row gt_center">3.83</td>
+<td headers="conf.low" class="gt_row gt_center">2.20, 6.65</td>
 <td headers="p.value" class="gt_row gt_center"><0.001</td></tr>
     <tr><td headers="label" class="gt_row gt_left">    SC</td>
-<td headers="estimate" class="gt_row gt_center">1.22</td>
-<td headers="conf.low" class="gt_row gt_center">0.79, 1.88</td>
-<td headers="p.value" class="gt_row gt_center">0.4</td></tr>
+<td headers="estimate" class="gt_row gt_center">1.96</td>
+<td headers="conf.low" class="gt_row gt_center">1.33, 2.89</td>
+<td headers="p.value" class="gt_row gt_center"><0.001</td></tr>
+    <tr><td headers="label" class="gt_row gt_left">    SQ</td>
+<td headers="estimate" class="gt_row gt_center">48.3</td>
+<td headers="conf.low" class="gt_row gt_center">6.60, 354</td>
+<td headers="p.value" class="gt_row gt_center"><0.001</td></tr>
     <tr><td headers="label" class="gt_row gt_left">    SQ1</td>
-<td headers="estimate" class="gt_row gt_center">1.75</td>
-<td headers="conf.low" class="gt_row gt_center">1.00, 3.07</td>
-<td headers="p.value" class="gt_row gt_center">0.050</td></tr>
+<td headers="estimate" class="gt_row gt_center">3.28</td>
+<td headers="conf.low" class="gt_row gt_center">2.27, 4.73</td>
+<td headers="p.value" class="gt_row gt_center"><0.001</td></tr>
     <tr><td headers="label" class="gt_row gt_left">    SQ2</td>
-<td headers="estimate" class="gt_row gt_center">2.66</td>
-<td headers="conf.low" class="gt_row gt_center">1.74, 4.06</td>
+<td headers="estimate" class="gt_row gt_center">5.38</td>
+<td headers="conf.low" class="gt_row gt_center">3.31, 8.75</td>
 <td headers="p.value" class="gt_row gt_center"><0.001</td></tr>
     <tr><td headers="label" class="gt_row gt_left">    SQ3</td>
-<td headers="estimate" class="gt_row gt_center">2.51</td>
-<td headers="conf.low" class="gt_row gt_center">1.52, 4.13</td>
-<td headers="p.value" class="gt_row gt_center"><0.001</td></tr>
-    <tr><td headers="label" class="gt_row gt_left">    TM2</td>
-<td headers="estimate" class="gt_row gt_center">1.50</td>
-<td headers="conf.low" class="gt_row gt_center">0.98, 2.30</td>
+<td headers="estimate" class="gt_row gt_center">1.85</td>
+<td headers="conf.low" class="gt_row gt_center">0.96, 3.57</td>
 <td headers="p.value" class="gt_row gt_center">0.065</td></tr>
+    <tr><td headers="label" class="gt_row gt_left">    TM2</td>
+<td headers="estimate" class="gt_row gt_center">1.20</td>
+<td headers="conf.low" class="gt_row gt_center">0.82, 1.77</td>
+<td headers="p.value" class="gt_row gt_center">0.4</td></tr>
     <tr><td headers="label" class="gt_row gt_left">    WL1</td>
-<td headers="estimate" class="gt_row gt_center">1.48</td>
-<td headers="conf.low" class="gt_row gt_center">0.92, 2.39</td>
-<td headers="p.value" class="gt_row gt_center">0.11</td></tr>
+<td headers="estimate" class="gt_row gt_center">3.27</td>
+<td headers="conf.low" class="gt_row gt_center">2.46, 4.34</td>
+<td headers="p.value" class="gt_row gt_center"><0.001</td></tr>
     <tr><td headers="label" class="gt_row gt_left">    WL2</td>
-<td headers="estimate" class="gt_row gt_center">1.34</td>
-<td headers="conf.low" class="gt_row gt_center">0.87, 2.04</td>
-<td headers="p.value" class="gt_row gt_center">0.2</td></tr>
+<td headers="estimate" class="gt_row gt_center">1.53</td>
+<td headers="conf.low" class="gt_row gt_center">0.97, 2.42</td>
+<td headers="p.value" class="gt_row gt_center">0.068</td></tr>
     <tr><td headers="label" class="gt_row gt_left">    WR</td>
-<td headers="estimate" class="gt_row gt_center">3.97</td>
-<td headers="conf.low" class="gt_row gt_center">2.08, 7.60</td>
+<td headers="estimate" class="gt_row gt_center">3.27</td>
+<td headers="conf.low" class="gt_row gt_center">1.64, 6.53</td>
 <td headers="p.value" class="gt_row gt_center"><0.001</td></tr>
     <tr><td headers="label" class="gt_row gt_left">    WV</td>
-<td headers="estimate" class="gt_row gt_center">11.2</td>
-<td headers="conf.low" class="gt_row gt_center">3.46, 36.5</td>
-<td headers="p.value" class="gt_row gt_center"><0.001</td></tr>
+<td headers="estimate" class="gt_row gt_center">7.51</td>
+<td headers="conf.low" class="gt_row gt_center">1.84, 30.7</td>
+<td headers="p.value" class="gt_row gt_center">0.005</td></tr>
     <tr><td headers="label" class="gt_row gt_left">    YO11</td>
-<td headers="estimate" class="gt_row gt_center">2.62</td>
-<td headers="conf.low" class="gt_row gt_center">1.77, 3.87</td>
+<td headers="estimate" class="gt_row gt_center">5.94</td>
+<td headers="conf.low" class="gt_row gt_center">3.35, 10.5</td>
 <td headers="p.value" class="gt_row gt_center"><0.001</td></tr>
     <tr><td headers="label" class="gt_row gt_left">    YO4</td>
-<td headers="estimate" class="gt_row gt_center">2.02</td>
-<td headers="conf.low" class="gt_row gt_center">1.24, 3.30</td>
-<td headers="p.value" class="gt_row gt_center">0.005</td></tr>
+<td headers="estimate" class="gt_row gt_center">7.85</td>
+<td headers="conf.low" class="gt_row gt_center">3.40, 18.1</td>
+<td headers="p.value" class="gt_row gt_center"><0.001</td></tr>
     <tr><td headers="label" class="gt_row gt_left">    YO7</td>
-<td headers="estimate" class="gt_row gt_center">1.65</td>
-<td headers="conf.low" class="gt_row gt_center">1.09, 2.51</td>
-<td headers="p.value" class="gt_row gt_center">0.019</td></tr>
+<td headers="estimate" class="gt_row gt_center">1.98</td>
+<td headers="conf.low" class="gt_row gt_center">1.18, 3.34</td>
+<td headers="p.value" class="gt_row gt_center">0.010</td></tr>
     <tr><td headers="label" class="gt_row gt_left">    YO8</td>
-<td headers="estimate" class="gt_row gt_center">3.25</td>
-<td headers="conf.low" class="gt_row gt_center">2.21, 4.79</td>
+<td headers="estimate" class="gt_row gt_center">3.62</td>
+<td headers="conf.low" class="gt_row gt_center">2.01, 6.52</td>
 <td headers="p.value" class="gt_row gt_center"><0.001</td></tr>
   </tbody>
   
