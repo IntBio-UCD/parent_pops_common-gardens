@@ -47,8 +47,9 @@ tail(pop_elev)
 ## Common Garden Sites Lat/Long
 ```{r}
 #38.532504, -121.782986 - Davis Veg Crops
+#38.82599, -120.25090 - WL2 Garden
 
-sites_loc <- tibble(parent.pop="UCD_Garden", phylogroup=NA, Lat="38.53250", Long="-121.78299", elev_m=16)
+sites_loc <- tibble(parent.pop=c("UCD_Garden", "WL2_Garden"), phylogroup=NA, Lat=c("38.53250", "38.82599"), Long=c("-121.78299", "-120.25090"), elev_m=c(16,2020))
 sites_loc
 ```
 
