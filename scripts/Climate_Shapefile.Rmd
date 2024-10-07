@@ -1,0 +1,63 @@
+---
+title: "Climate_Shapefile"
+output: html_document
+date: "2024-10-07"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Create a shapefile for USGS to extract the climate data for all populations and common garden sites
+
+## Libraries
+```{r}
+library(tidyverse)
+```
+
+## Load the pop and location data
+
+```{r}
+#pop info
+pops_common_garden <- read_csv("../input/UCD_Data/Pops_for_2022_UCD.csv") #pops included in common garden 
+names(pops_common_garden)
+pops_common_garden_nonotes <- pops_common_garden %>% select(parent.pop:phylogroup)
+head(pops_common_garden_nonotes)
+
+yose1 <- tibble(parent.pop="YO1", phylogroup=NA) #Need to add YO1 for JGI
+
+pops_common_garden_jgi <- bind_rows(pops_common_garden_nonotes, yose1)
+
+#extra location info 
+pop_loc <- read_csv("../input/Strep_tort_locs.csv")
+names(pop_loc)
+head(pop_loc)
+
+unique(pop_loc$`Site code`)
+unique(pops_common_garden_jgi$parent.pop)
+#need to change YOSE to YO
+pop_loc_yo <- pop_loc %>% mutate(parent.pop = str_replace(`Site code`, "YOSE(\\d+)", "YO\\1")) %>% select(Lat, Long, elev_m=`Elevation (m)`, parent.pop)
+unique(pop_loc_yo$parent.pop)
+
+#merge in location info
+pop_elev <- left_join(pops_common_garden_jgi, pop_loc_yo)
+tail(pop_elev)
+```
+
+## Common Garden Sites Lat/Long
+```{r}
+#38.532504, -121.782986 - Davis Veg Crops
+
+sites_loc <- tibble(parent.pop="UCD_Garden", phylogroup=NA, Lat="38.53250", Long="-121.78299", elev_m=16)
+sites_loc
+```
+
+## Make coordinates file that will be converted into a shapefile 
+```{r}
+pops_gardens_locs <- bind_rows(pop_elev, sites_loc)
+pops_gardens_locs
+
+pops_gardens_coord <- pops_gardens_locs %>% select(Lat:Long)
+write_csv(pops_gardens_coord, "../output/Climate/Shapefile_coords.csv")
+```
+
