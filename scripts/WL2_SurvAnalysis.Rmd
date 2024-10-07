@@ -6,9 +6,6 @@ output:
   html_document: 
     keep_md: yes
 ---
-To Do:
-- figure out how to make the x axis = weeks 
-
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)

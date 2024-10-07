@@ -27,7 +27,7 @@ library(survival)
 Need to come back to this to check the data for issues!!
 ```{r}
 ucd_surv <- read_csv("../input/UCD_Data/CorrectedCSVs/UCD_transplants_pheno_mort_20231016_corrected.csv",
-                     na = c("", "NA", "-", "N/A")) %>% #note this only goes to 10/20 need to come back and change this to include dates after this
+                     na = c("", "NA", "-", "N/A")) %>% 
   select(block:rep, death.date=`Death Date`, Notes) %>% 
   rename(parent.pop=pop) %>% 
   filter(rep != 100) %>% #get rid of individuals that germinated in the field 
@@ -39,15 +39,14 @@ ucd_surv <- read_csv("../input/UCD_Data/CorrectedCSVs/UCD_transplants_pheno_mort
 head(ucd_surv)
 unique(ucd_surv$parent.pop) #there's an SQ with no number - need to check on this 
 
-ucd_surv %>% rowwise() %>%  #checking if mf and rep can be converted to numeric 
-  filter(!is.na(rep)) %>%  
-  filter(is.na(as.numeric(rep)))
+ucd_surv %>% filter(parent.pop=="SQ") #per the DataScan and "Corrected Bed Map 2022-12-06, it's supposed to be SQ2 - changed it on the csv file 
+
+#duplicated(ucd_surv$Genotype) no duplicated genotypes
 ```
 
 As weeks
 ```{r}
 ucd_surv_dates <- ucd_surv %>% 
-  mutate(mf=as.double(mf), rep=as.double(rep)) %>% 
   mutate(planting.date="11/30/22", #could try to make this more specific to when certain blocks were planted 
          last_fup_date=if_else(is.na(death.date), "10/16/23", death.date)) %>%  #need this to calculate survival times
   mutate(planting.date=mdy(planting.date), last_fup_date=mdy(last_fup_date)) %>% #convert to date objects
