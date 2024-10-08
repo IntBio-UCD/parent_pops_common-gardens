@@ -148,8 +148,8 @@ map(dat3$sheets, head,10) #see which ones have different names
 dat3$sheets[[1]] <- dat3$sheets[[1]] %>% rename(bed.row=`bed.r ow`, bed.col=`bed.c ol`, long.leaf.cm=`long.leaf. cm`) 
 dat3$sheets[[1]]
 
-dat3$sheets[[2]] <- dat3$sheets[[2]] %>% rename(bed.row=`bed. row`, bed.col=`bed. col`, long.leaf.cm=`long.leaf.c m`) 
-dat3$sheets[[2]]
+#dat3$sheets[[2]] <- dat3$sheets[[2]] %>% rename(bed.row=`bed. row`, bed.col=`bed. col`, long.leaf.cm=`long.leaf.c m`) 
+#dat3$sheets[[2]]
 
 dat3$sheets[[3]] <- dat3$sheets[[3]] %>% rename(bed.row=`bed. row`, bed.col=`bed. col`, long.leaf.cm=`long.leaf.c m`) 
 dat3$sheets[[3]]
@@ -245,10 +245,14 @@ dat5 %>% filter(is.na(censusN))
 dat6 <- dat5 %>%  #by bed, row, col
   filter(!is.na(censusN)) %>% 
   group_by(bed, bed.row, bed.col) %>% 
-  mutate(previous_census_height=lag(height.cm, order_by = censusN), previous_census_length=lag(long.leaf.cm, order_by = censusN)) %>% 
-  select(censusN, bed, bed.row, bed.col, previous_census_height, height.cm, previous_census_length, long.leaf.cm, survey.notes) %>% 
+  mutate(previous_census_height=lag(height.cm, order_by = censusN),
+         delta_h=abs(height.cm-previous_census_height), 
+         previous_census_length=lag(long.leaf.cm, order_by = censusN),
+         delta_l = abs(long.leaf.cm-previous_census_length)) %>% 
+  select(survey_date, censusN, bed, bed.row, bed.col, previous_census_height, height.cm, delta_h, previous_census_length, long.leaf.cm, delta_l, survey.notes) %>% 
   arrange(bed, bed.row, bed.col, censusN)
 head(dat6)
+
 #Check for data when there is no data in previous week 
 dat8 <- dat6 %>% filter(censusN!=1) %>% filter(is.na(previous_census_height), !is.na(height.cm)) #18 rows 
 #write.csv(dat8, "../output/WL2_MissingDataPrevWeek_BedRowCol.csv", row.names = FALSE)
@@ -259,14 +263,20 @@ dat8
 dat7 <- dat5 %>% #by pop, mf, rep 
   filter(!is.na(censusN)) %>% 
   group_by(pop, mf, rep) %>% 
-  mutate(previous_census_height=lag(height.cm, order_by = censusN), previous_census_length=lag(long.leaf.cm, order_by = censusN)) %>% 
-  select(loc, survey_date,censusN, pop, mf, rep, previous_census_height, height.cm, previous_census_length, long.leaf.cm, survey.notes) %>% 
+  mutate(previous_census_height=lag(height.cm, order_by = censusN),
+         delta_h=abs(height.cm-previous_census_height), 
+         previous_census_length=lag(long.leaf.cm, order_by = censusN),
+         delta_l = abs(long.leaf.cm-previous_census_length)) %>% 
+  select(loc, survey_date,censusN, pop, mf, rep, previous_census_height, height.cm, delta_h, previous_census_length, long.leaf.cm, delta_l, survey.notes) %>% 
   arrange(pop, mf, rep, censusN)
 head(dat7)
+dat7 %>% filter(pop=="CP2", mf==3, rep==7)
 #Check for data when there is no data in previous week 
 dat9 <- dat7 %>% filter(censusN!=1) %>% filter(is.na(previous_census_height), !is.na(height.cm)) #matches dat 8
 #write.csv(dat9, "../output/WL2_MissingDataPrevWeek_PopMFRep.csv", row.names = FALSE)
-dat9
+
+dat10 <- dat7 %>% filter(delta_h > 8 | delta_l > 5)
+write_csv(dat10, "../output/WL2_LargeDeltas_PopMFRep.csv")
 ```
 
 # Mortality
