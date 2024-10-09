@@ -206,13 +206,28 @@ dat6
 #F2 31 D was dead, Amazon had turned a "-" into a "1" for height, fixed it  
 #H2 28 C on 0217 had a column name of ": C" - amazon error - fixed it on the corrected csv
 
-dat7 <- dat4 %>% filter(pop!="buffer") %>% mutate(across(c(row, mf, rep,longest_leaf_cm, height_cm), as.numeric)) %>% mutate(pop=str_replace(pop, ".*VTR.*", "LVTR1")) %>%  group_by(pop, mf, rep) %>% mutate(previous_census_height=lag(height_cm, order_by = survey_date), previous_census_length=lag(longest_leaf_cm, order_by = survey_date)) %>% select(survey_date, block, row, col, pop, mf, rep, previous_census_height, height_cm, previous_census_length, longest_leaf_cm, death_date, Notes) #add in pop, mf, rep info and check if grouping it by pop, mf, rep matched the results for grouping it by block, row, col
+dat7 <- dat4 %>% 
+  filter(pop!="buffer") %>% 
+  mutate(across(c(row, mf, rep,longest_leaf_cm, height_cm), as.numeric)) %>% 
+  mutate(pop=str_replace(pop, ".*VTR.*", "LVTR1")) %>%  
+  unite(loc, block:col, remove = FALSE) %>% 
+  group_by(pop, mf, rep) %>% 
+  mutate(previous_census_height=lag(height_cm, order_by = survey_date),
+         delta_h=abs(height_cm-previous_census_height), 
+         previous_census_length=lag(longest_leaf_cm, order_by = survey_date),
+         delta_l = abs(longest_leaf_cm-previous_census_length)) %>% 
+  select(loc, survey_date, pop, mf, rep, previous_census_height, height_cm, delta_h, previous_census_length, longest_leaf_cm, delta_l, death_date, Notes) #add in pop, mf, rep info and check if grouping it by pop, mf, rep matched the results for grouping it by block, row, col
 head(dat7)
 
 #Check for data when there is no data in previous week 
 dat8 <- dat7 %>% filter(survey_date!="2022-12-13") %>% filter(is.na(previous_census_height), !is.na(height_cm)) #same number rows as the above 
 #write.csv(dat8, "../output/UCD_MissingDataPrevWeek_PopMFREp.csv", row.names = FALSE)
 dat8 #matches dat6
+
+dat10 <- dat7 %>% filter(delta_h > 8 | delta_l > 5)
+write_csv(dat10, "../output/UCD_LargeDeltas_PopMFRep.csv")
+
+unique(dat10$survey_date)
 ```
 
 # Mortality/Phenology - Transplants
@@ -354,7 +369,7 @@ for (i in data_names) {
 }
 ```
 
-# Size Data - Transplants (temporal check)
+# Size Data - Germination Beds (temporal check)
 Check for data when there is no data in previous week 
 * Reason: found a case where someone wrote the data in the wrong row (in the row of a dead plant) 
 
