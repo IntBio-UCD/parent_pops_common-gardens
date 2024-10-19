@@ -1,0 +1,423 @@
+---
+title: "WL2_Survival-Analysis"
+author: "Brandie Quarles"
+date: '`r Sys.Date()`'
+output: 
+  html_document: 
+    keep_md: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Survival Analysis 
+
+See tutorial: https://www.emilyzabor.com/tutorials/survival_analysis_in_r_tutorial.html
+
+## Libraries
+```{r}
+# install.packages(c("ggsurvfit", "gtsummary"))
+library(tidyverse) #includes lubridate, which we need 
+library(ggrepel)
+library(ggsurvfit)
+library(gtsummary)
+library(rstanarm)
+options(mc.cores = parallel::detectCores())
+```
+
+## Read in the data
+```{r}
+wl2_surv <- read_csv("../input/WL2_Data/CorrectedCSVs/WL2_mort_pheno_20231020_corrected.csv",
+                     na = c("", "NA", "-", "N/A")) %>% #note this only goes to 10/20 need to come back and change this to include dates after this
+  select(block:rep, death.date, survey.notes) %>% 
+  rename(parent.pop=pop) %>% 
+  mutate(parent.pop= str_replace(parent.pop, "Y08", "YO8")) %>% 
+  mutate(parent.pop= str_replace(parent.pop, "Y04", "YO4")) %>% 
+  filter(!is.na(parent.pop)) %>% 
+  unite(BedLoc, bed:bed.col, sep="_", remove = FALSE) %>% 
+  unite(Genotype, parent.pop:rep, sep="_", remove = FALSE) %>% 
+  filter(!str_detect(Genotype, ".*buff*")) %>% 
+  unite(pop.mf, parent.pop:mf, sep="_", remove = FALSE)
+head(wl2_surv)
+unique(wl2_surv$parent.pop)
+
+wl2_surv %>% filter(Genotype=="CC_1_2") #there are 2 CC_1_2 plants (in different field locs), CC-1-2 was planted in 13-A and not 5C according to planting notes 
+wl2_surv %>% filter(Genotype=="IH_4_5") #there are 2 IH_4_5 plants (in different field locs), IH_4_5 was planted in 22B and not 32A according to planting notes 
+wl2_surv %>% rowwise() %>%  #checking if mf and rep can be converted to numeric 
+  filter(!is.na(rep)) %>%  
+  filter(is.na(as.numeric(rep)))
+```
+
+As weeks
+```{r}
+wl2_surv %>% filter(is.na(death.date),!is.na(survey.notes)) #no plants that seemed to disappear 
+wl2_surv %>% filter(Genotype=="YO7_4_2")
+
+wl2_surv_dates <- wl2_surv %>% 
+  filter(BedLoc!="K_5_C") %>% 
+  filter(BedLoc!="B_32_A") %>% 
+  mutate(mf=as.double(mf), rep=as.double(rep)) %>% 
+  mutate(planting.date="7/19/23", #could try to make this more specific to when certain blocks were planted 
+         last_fup_date=if_else(is.na(death.date), "10/20/23", death.date)) %>%  #need this to calculate survival times
+  mutate(planting.date=mdy(planting.date), last_fup_date=mdy(last_fup_date)) %>% #convert to date objects
+  mutate(os_weeks=as.duration(planting.date %--% last_fup_date) / dweeks(1), #observed number of weeks
+         status=if_else(is.na(death.date), 0, 1)) %>% #0=censured (alive in this case), 1=dead
+  filter(os_weeks > 0) %>% #there is one case of a plant that was dead at planting, so just removed it since this is survival post- transplanting
+  select(-survey.notes)
+head(wl2_surv_dates)
+unique(wl2_surv_dates$os_weeks)
+```
+
+
+```{r}
+wl2_surv_dates %>% filter(parent.pop=="WL2") #there's a different number of WL2 plants here compared to annual census (see FirstYear Survv)
+```
+
+## Location Info
+```{r}
+gowersdist_UCD <- read_csv("../output/Climate/Pops_GowersEnvtalDist_UCD.csv") %>% 
+  rename(Recent_Gowers_Dist_UCD = Recent_Gowers_Dist, Historic_Gowers_Dist_UCD = Historic_Gowers_Dist)
+head(gowersdist_UCD)
+gowersdist_WL2 <- read_csv("../output/Climate/Pops_GowersEnvtalDist_WL2.csv") %>% 
+  rename(Recent_Gowers_Dist_WL2 = Recent_Gowers_Dist, Historic_Gowers_Dist_WL2 = Historic_Gowers_Dist)
+head(gowersdist_WL2)
+
+gowersdist_all <- full_join(gowersdist_UCD, gowersdist_WL2)
+head(gowersdist_all)
+```
+
+```{r}
+wl2_surv_dates_loc <- left_join(wl2_surv_dates, gowersdist_all) %>%
+  mutate(elevation.group = factor(elevation.group, levels= c("Low", "Mid", "High")))
+wl2_surv_dates_loc
+```
+## plot observed data
+
+```{r}
+# set up week 0 for 100% survival
+week0 <- wl2_surv_dates_loc %>% 
+  select(parent.pop, elevation.group) %>% 
+  unique() %>%
+  bind_cols(os_weeks=0,
+            prop.surviving=1 )
+
+wl2_obs <- 
+  wl2_surv_dates_loc %>% select(parent.pop, death.date, os_weeks, status, elevation.group) %>%
+  group_by(parent.pop) %>%
+  mutate(total=n()) %>%
+  group_by(parent.pop, os_weeks) %>%
+  summarize(n.newly.dead=sum(status),
+            total=unique(total),
+            elevation.group=unique(elevation.group)) %>%
+  ungroup() %>%
+  complete(parent.pop, os_weeks, fill = list(n.newly.dead=0)) %>% # we have missing data for weeks where nobody died and we need to fill that in
+  group_by(parent.pop) %>%
+  mutate(total=unique(na.omit(total)), elevation.group=unique(na.omit(elevation.group)), # filling in the blanks from the complete() step above
+    total.dead=cumsum(n.newly.dead),
+         surviving = total - total.dead,
+         prop.surviving = surviving/total) %>%
+  ungroup() %>%
+  bind_rows(week0) %>%
+  select(parent.pop, elevation.group, os_weeks, prop.surviving) %>%
+  arrange(parent.pop, os_weeks)
+
+wl2_obs %>%
+  ggplot(aes(x=os_weeks, y = prop.surviving, color = elevation.group)) +
+  geom_smooth() +
+  geom_point()
+
+wl2_obs %>%
+  ggplot(aes(x=os_weeks, y = prop.surviving, color = parent.pop)) +
+  geom_line() +
+  geom_point()
+
+wl2_obs_elev.summary <- wl2_obs %>%
+  group_by(os_weeks, elevation.group) %>%
+  summarize(sem = sd(prop.surviving) / sqrt(n()),
+            prop.surviving = mean(prop.surviving)) 
+
+
+wl2_obs_elev.summary %>%
+  ggplot(aes(x=os_weeks, y=prop.surviving, ymin=prop.surviving-sem, ymax=prop.surviving+sem, color=elevation.group )) +
+  geom_point() +
+  geom_line() +
+  geom_errorbar(width=.25)
+
+```
+
+
+## Create Survival Objects and Curves
+```{r}
+Surv(wl2_surv_dates_loc$os_weeks, wl2_surv_dates_loc$status)[1:10] #show the first 10 observations of the survival object
+#There will be one entry for each subject that is the survival time, which is followed by a + if the subject was censored.
+```
+
+## Try a fit
+
+```{r}
+f1 <- Surv(os_weeks, status) ~ 1
+m1 <- stan_surv(f1, data= wl2_surv_dates_loc, chains=4)
+m1_loo <- loo(m1)
+```
+```{r}
+summary(m1)
+```
+
+
+```{r}
+m1
+```
+
+```{r}
+f2 <- Surv(os_weeks, status) ~ elevation.group
+m2 <- stan_surv(f2, data= wl2_surv_dates_loc, chains=4)
+m2_loo <- loo(m2)
+```
+
+```{r}
+summary(m2)
+```
+
+```{r}
+print(m2)
+```
+
+```{r}
+plot(m1, plotfun = "basehaz")
+plot(m2, plotfun = "basehaz")
+```
+
+```{r}
+# Try b-splines intead of m-splines
+#m2b <- update(m2, basehaz = "bs") # SLOW!! Takes Several hours
+
+#m2b <- stan_surv(f2, data= wl2_surv_dates_loc, chains=4, basehaz = "bs")
+
+# also gave an error at the end (maybe because of update...changing to a new cal), although did produce an object.
+# m2b_loo <- loo(m2b)
+
+# different # of knots for the m-splines
+m3 <- update(m2, basehaz_ops = list(df = 10))
+m3_loo <- loo(m3)
+
+#m3b <- update(m3, basehaz = "bs")
+#m3b_loo <- loo(m3b)
+
+
+m4 <- update(m2, basehaz_ops = list(df = 15))
+m4_loo <- loo(m4)
+
+
+m5 <- update(m2, basehaz_ops = list(df = 20))
+m5_loo <- loo(m5)
+
+
+m6 <- update(m2, basehaz_ops = list(df = 30))
+m6_loo <- loo(m6)
+```
+
+
+```{r}
+loo_compare(m1_loo, m2_loo, m3_loo, m4_loo, m5_loo, m6_loo)
+```
+b-splines is better than m-splines for a given number of knots, but not better than more knots.  and takes forever to fit.
+
+how many knots is reasonable here?
+
+```{r}
+nd <- data.frame(elevation.group = levels(wl2_surv_dates_loc$elevation.group))
+nd
+```
+
+```{r}
+preds <- posterior_survfit(m3, newdata = nd, times = 0, extrapolate = TRUE)
+
+preds <- preds %>%
+  as_tibble() %>%
+  mutate(elevation.group = nd$elevation.group[id])
+
+preds %>%
+  ggplot(aes(x=time, y = median, ymin=ci_lb, ymax = ci_ub, group = elevation.group)) +
+  geom_ribbon(fill="grey70", alpha=.5) +
+  geom_line(aes(color=elevation.group), lwd=1.5) +
+  scale_color_viridis_d() +
+  geom_point(aes(x = os_weeks, y=prop.surviving, group = elevation.group, color = elevation.group), data=wl2_obs_elev.summary, lty=2, inherit.aes = FALSE, lwd=1.5) +
+  ylab("proportion surviving") +
+  xlab("weeks after transplant")
+```
+
+```{r}
+preds <- posterior_survfit(m6, newdata = nd, times = 0, extrapolate = TRUE)
+
+
+preds <- preds %>%
+  as_tibble() %>%
+  mutate(elevation.group = nd$elevation.group[id])
+
+preds %>%
+  ggplot(aes(x=time, y = median, ymin=ci_lb, ymax = ci_ub, group = elevation.group)) +
+  geom_ribbon(fill="grey70", alpha=.5) +
+  geom_line(aes(color=elevation.group), lwd=1.5) +
+  geom_line(aes(x = os_weeks, y=prop.surviving, group = elevation.group, color = elevation.group), data=wl2_obs_elev.summary, lty=2, inherit.aes = FALSE, lwd=1.5) +
+  scale_color_viridis_d()
+```
+hmm, so more knots allows better modelling of the "steps" in the data but that doesn't reflect reality anyway.  m3 is likely sufficient. ALSO CHECK MODELING FUNCTION, THERE MAY BE A WAY TO INDICATE THAT WE WEREN'T OBSERVING IN BETWEEN.
+
+
+Fit a random effects model
+```{r}
+f3 <- Surv(os_weeks, status) ~ elevation.group + (1|parent.pop)
+m3_ran <- update(m3, formula = f3)
+m3_ran_loo <- loo(m3_ran)
+loo_compare(m3_loo, m3_ran_loo)
+```
+
+```{r}
+m3_ran
+summary(m3_ran)
+```
+
+
+```{r}
+nd2 <- wl2_surv_dates_loc %>%
+  select(parent.pop, elevation.group) %>%
+  unique()
+
+preds <- posterior_survfit(m3_ran, newdata = nd2, times = 0, extrapolate = TRUE)
+
+
+preds <- preds %>%
+  as_tibble() %>%
+  mutate(elevation.group = nd2$elevation.group[id],
+         parent.pop = nd2$parent.pop[id]) 
+
+pred.labels <- preds %>%
+  filter(time==max(time))
+
+preds %>%
+  ggplot(aes(x=time, y = median, ymin=ci_lb, ymax = ci_ub, group = parent.pop)) +
+  geom_ribbon(fill="grey70", alpha=.5) +
+  geom_line(aes(color=elevation.group)) +
+  geom_label_repel(aes(label = parent.pop), data = pred.labels, max.overlaps = 20, xlim=c(14, 17), direction = "both", size=2.5, label.padding = .1, force_pull=10) +
+  #facet_wrap(~ elevation.group)
+  scale_color_viridis_d() +
+  coord_cartesian(xlim = c(0, 16)) +
+  ylab("proportion surviving") +
+  xlab("weeks after transplant")
+```
+
+```{r}
+preds %>%
+  group_by(elevation.group, time) %>%
+  summarize(median = mean(median),
+            ci_lb = mean(ci_lb), # this is probably not correct
+            ci_ub = mean(ci_ub)) %>%
+  ggplot(aes(x=time, y = median, ymin=ci_lb, ymax = ci_ub, group = elevation.group)) +
+  geom_ribbon(fill="grey70", alpha=.5) +
+  geom_line(aes(color=elevation.group), lwd=2) +
+    geom_line(aes(x = os_weeks, y=prop.surviving, group = elevation.group, color = elevation.group), data=wl2_obs_elev.summary, lty=2, inherit.aes = FALSE, lwd=1.5) +
+
+  #facet_wrap(~ elevation.group)
+  scale_color_viridis_d() 
+```
+
+But can I have tve for group? (yes)
+
+deegree=0 fits piecewise constant function for elevation group.   Otherwise b-splines.
+
+
+
+```{r}
+f10  <- Surv(os_weeks, status) ~ tve(elevation.group)
+m10 <- stan_surv(f10, data= wl2_surv_dates_loc, chains=4)
+m10_loo <- loo(m10)
+```
+```{r}
+m10
+```
+
+```{r}
+summary(m10)
+```
+
+```{r}
+preds <- posterior_survfit(m10, newdata = nd, times = 0, extrapolate = TRUE)
+
+preds <- preds %>%
+  as_tibble() %>%
+  mutate(elevation.group = nd$elevation.group[id])
+
+preds %>%
+  ggplot(aes(x=time, y = median, ymin=ci_lb, ymax = ci_ub, group = elevation.group)) +
+  geom_ribbon(fill="grey70", alpha=.5) +
+  geom_line(aes(color=elevation.group), lwd=1.5) +
+    geom_line(aes(x = os_weeks, y=prop.surviving, group = elevation.group, color = elevation.group), data=wl2_obs_elev.summary, lty=2, inherit.aes = FALSE, lwd=1.5) +
+  scale_color_viridis_d()
+```
+```{r}
+loo_compare(m2_loo, m3_loo, m10_loo)
+```
+
+
+"The survfit() function creates survival curves using the Kaplan-Meier method based on a formula. Let’s generate the overall survival curve for the entire cohort, assign it to object s1, and look at the structure using str():"
+```{r}
+s1 <- survfit(Surv(os_weeks, status) ~ 1, data = wl2_surv_dates_loc)
+str(s1)
+#time: the timepoints at which the curve has a step, i.e. at least one event occurred
+#surv: the estimate of survival at the corresponding time
+```
+
+## Survival Plot
+```{r}
+survfit2(Surv(os_weeks, status) ~ 1, data = wl2_surv_dates_loc) %>% 
+  ggsurvfit() +
+  labs(
+    x = "Weeks",
+    y = "Overall survival probability"
+  ) + 
+  add_confidence_interval() +
+  add_risktable() #at risk = plants still alive, event=plants dead
+```
+
+## Estimating x-week survival
+```{r}
+summary(survfit(Surv(os_weeks, status) ~ 1, data = wl2_surv_dates_loc), times = 8) #survival for 2 months
+#2 month survival probability is 41%
+```
+
+## Estimating median survival time
+```{r}
+survfit(Surv(os_weeks, status) ~ 1, data = wl2_surv_dates_loc) 
+#median survival time is 3 weeks
+```
+
+## Compare Survival between Populations 
+Plot survival differences
+```{r}
+survfit2(Surv(os_weeks, status) ~ elevation.group, data = wl2_surv_dates_loc) %>% 
+  ggsurvfit() +
+  labs(
+    x = "Weeks",
+    y = "Overall survival probability") + 
+  add_confidence_interval() 
+
+survfit(Surv(os_weeks, status) ~ parent.pop, data = wl2_surv_dates_loc) #median survival lengths for each pop
+```
+
+"We can conduct between-group significance tests using a log-rank test. The log-rank test equally weights observations over the entire follow-up time and is the most common way to compare survival times between groups."
+```{r}
+survdiff(Surv(os_weeks, status) ~ parent.pop, data = wl2_surv_dates_loc)
+#significant difference in overall survival according to population
+```
+
+## Cox regression model
+"We may want to quantify an effect size for a single variable, or include more than one variable into a regression model to account for the effects of multiple variables.
+The Cox regression model is a semi-parametric model that can be used to fit univariable and multivariable regression models that have survival outcomes.:
+```{r}
+coxph(Surv(os_weeks, status) ~ parent.pop, data = wl2_surv_dates_loc) %>% 
+  tbl_regression(exp = TRUE) 
+
+# hazard ratio (HR) represents the ratio of hazards between two groups at any particular point in time. 
+#A HR < 1 indicates reduced hazard of death whereas a HR > 1 indicates an increased hazard of death.
+```
