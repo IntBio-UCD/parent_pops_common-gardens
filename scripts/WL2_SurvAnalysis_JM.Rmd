@@ -114,7 +114,7 @@ wl2_obs <-
   complete(parent.pop, os_weeks, fill = list(n.newly.dead=0)) %>% # we have missing data for weeks where nobody died and we need to fill that in
   group_by(parent.pop) %>%
   mutate(total=unique(na.omit(total)), elevation.group=unique(na.omit(elevation.group)), # filling in the blanks from the complete() step above
-    total.dead=cumsum(n.newly.dead),
+         total.dead=cumsum(n.newly.dead),
          surviving = total - total.dead,
          prop.surviving = surviving/total) %>%
   ungroup() %>%
@@ -242,7 +242,10 @@ preds %>%
   geom_ribbon(fill="grey70", alpha=.5) +
   geom_line(aes(color=elevation.group), lwd=1.5) +
   scale_color_viridis_d() +
-  geom_point(aes(x = os_weeks, y=prop.surviving, group = elevation.group, color = elevation.group), data=wl2_obs_elev.summary, lty=2, inherit.aes = FALSE, lwd=1.5) +
+  
+  geom_point(aes(x = os_weeks, y=prop.surviving, color = elevation.group), data=wl2_obs_elev.summary, inherit.aes = FALSE) +
+  geom_errorbar(aes(x = os_weeks, ymin=prop.surviving-sem, ymax= prop.surviving+sem,  color = elevation.group), data=wl2_obs_elev.summary, inherit.aes = FALSE, width=.25, lwd=.75) +
+  
   ylab("proportion surviving") +
   xlab("weeks after transplant")
 ```
@@ -259,7 +262,10 @@ preds %>%
   ggplot(aes(x=time, y = median, ymin=ci_lb, ymax = ci_ub, group = elevation.group)) +
   geom_ribbon(fill="grey70", alpha=.5) +
   geom_line(aes(color=elevation.group), lwd=1.5) +
-  geom_line(aes(x = os_weeks, y=prop.surviving, group = elevation.group, color = elevation.group), data=wl2_obs_elev.summary, lty=2, inherit.aes = FALSE, lwd=1.5) +
+  
+  geom_point(aes(x = os_weeks, y=prop.surviving, color = elevation.group), data=wl2_obs_elev.summary, inherit.aes = FALSE) +
+  geom_errorbar(aes(x = os_weeks, ymin=prop.surviving-sem, ymax= prop.surviving+sem,  color = elevation.group), data=wl2_obs_elev.summary, inherit.aes = FALSE, width=.25, lwd=.75) +
+  
   scale_color_viridis_d()
 ```
 hmm, so more knots allows better modelling of the "steps" in the data but that doesn't reflect reality anyway.  m3 is likely sufficient. ALSO CHECK MODELING FUNCTION, THERE MAY BE A WAY TO INDICATE THAT WE WEREN'T OBSERVING IN BETWEEN.
@@ -316,8 +322,10 @@ preds %>%
   ggplot(aes(x=time, y = median, ymin=ci_lb, ymax = ci_ub, group = elevation.group)) +
   geom_ribbon(fill="grey70", alpha=.5) +
   geom_line(aes(color=elevation.group), lwd=2) +
-    geom_line(aes(x = os_weeks, y=prop.surviving, group = elevation.group, color = elevation.group), data=wl2_obs_elev.summary, lty=2, inherit.aes = FALSE, lwd=1.5) +
-
+  
+  geom_point(aes(x = os_weeks, y=prop.surviving, color = elevation.group), data=wl2_obs_elev.summary, inherit.aes = FALSE) +
+  geom_errorbar(aes(x = os_weeks, ymin=prop.surviving-sem, ymax= prop.surviving+sem,  color = elevation.group), data=wl2_obs_elev.summary, inherit.aes = FALSE, width=.25, lwd=.75) +
+  
   #facet_wrap(~ elevation.group)
   scale_color_viridis_d() 
 ```
@@ -352,7 +360,10 @@ preds %>%
   ggplot(aes(x=time, y = median, ymin=ci_lb, ymax = ci_ub, group = elevation.group)) +
   geom_ribbon(fill="grey70", alpha=.5) +
   geom_line(aes(color=elevation.group), lwd=1.5) +
-    geom_line(aes(x = os_weeks, y=prop.surviving, group = elevation.group, color = elevation.group), data=wl2_obs_elev.summary, lty=2, inherit.aes = FALSE, lwd=1.5) +
+  
+  geom_point(aes(x = os_weeks, y=prop.surviving, color = elevation.group), data=wl2_obs_elev.summary, inherit.aes = FALSE) +
+  geom_errorbar(aes(x = os_weeks, ymin=prop.surviving-sem, ymax= prop.surviving+sem,  color = elevation.group), data=wl2_obs_elev.summary, inherit.aes = FALSE, width=.25, lwd=.75) +
+  
   scale_color_viridis_d()
 ```
 ```{r}
