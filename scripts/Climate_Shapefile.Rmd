@@ -59,6 +59,114 @@ pops_gardens_locs <- bind_rows(pop_elev, sites_loc)
 pops_gardens_locs
 
 pops_gardens_coord <- pops_gardens_locs %>% select(Lat:Long)
-write_csv(pops_gardens_coord, "../output/Climate/Shapefile_coords.csv")
+#write_csv(pops_gardens_coord, "../output/Climate/Shapefile_coords.csv")
+```
+
+## Connecting pop ids to new Flint data
+
+### add row names to pops_gardens
+```{r}
+pops_gardens_locs_rowids <- pops_gardens_locs %>% rowid_to_column() %>% mutate(rowid = as.character(rowid))
+```
+
+### import new data 
+Note: This only goes through Aug 2024 - will need to reach back out to get Sept and Oct 2024 probably in December 2024?
+```{r}
+new_flint_data <- read_csv("../input/Updated_Flint_Climate_Oct2024.csv")
+new_flint_data
+```
+
+```{r}
+new_cwd <- new_flint_data %>% filter(str_detect(
+DataFileName, "cwd"))
+head(new_cwd)
+tail(new_cwd)
+new_cwd %>% filter(str_detect(DataFileName, "2024"))
+
+new_cwd_long <- new_cwd %>% pivot_longer(!DataFileName, names_to = 
+"rowid", values_to = "cwd") %>% extract(DataFileName, c("year", "month"), "(\\d+)(.*)", convert = TRUE) %>% separate(month, into = c("month", "file_type")) %>% select(rowid, year, month, cwd)
+head(new_cwd_long, 30)
+```
+
+```{r}
+new_pet <- new_flint_data %>% filter(str_detect(
+DataFileName, "pet"))
+head(new_pet)
+tail(new_pet)
+
+new_pet_long <- new_pet %>% pivot_longer(!DataFileName, names_to = 
+"rowid", values_to = "pet") %>% extract(DataFileName, c("year", "month"), "(\\d+)(.*)", convert = TRUE) %>% separate(month, into = c("month", "file_type")) %>% select(rowid, year, month, pet)
+head(new_pet_long, 30)
+```
+
+```{r}
+new_aet <- new_flint_data %>% filter(str_detect(
+DataFileName, "aet"))
+head(new_aet)
+tail(new_aet)
+
+new_aet_long <- new_aet %>% pivot_longer(!DataFileName, names_to = 
+"rowid", values_to = "aet") %>% extract(DataFileName, c("year", "month"), "(\\d+)(.*)", convert = TRUE) %>% separate(month, into = c("month", "file_type")) %>% select(rowid, year, month, aet)
+head(new_aet_long, 30)
+```
+
+```{r}
+new_pck <- new_flint_data %>% filter(str_detect(
+DataFileName, "pck"))
+head(new_pck)
+tail(new_pck)
+
+new_pck_long <- new_pck %>% pivot_longer(!DataFileName, names_to = 
+"rowid", values_to = "pck") %>% extract(DataFileName, c("year", "month"), "(\\d+)(.*)", convert = TRUE) %>% separate(month, into = c("month", "file_type")) %>% select(rowid, year, month, pck)
+head(new_pck_long, 30)
+```
+
+```{r}
+new_ppt <- new_flint_data %>% filter(str_detect(
+DataFileName, "ppt"))
+head(new_ppt)
+tail(new_ppt)
+
+new_ppt_long <- new_ppt %>% pivot_longer(!DataFileName, names_to = 
+"rowid", values_to = "ppt") %>% extract(DataFileName, c("year", "month"), "(\\d+)(.*)", convert = TRUE) %>% separate(month, into = c("month", "file_type")) %>% select(rowid, year, month, ppt)
+head(new_ppt_long, 30)
+```
+
+```{r}
+new_tmn <- new_flint_data %>% filter(str_detect(
+DataFileName, "tmn"))
+head(new_tmn)
+tail(new_tmn)
+
+new_tmn_long <- new_tmn %>% pivot_longer(!DataFileName, names_to = 
+"rowid", values_to = "tmn") %>% extract(DataFileName, c("year", "month"), "(\\d+)(.*)", convert = TRUE) %>% separate(month, into = c("month", "file_type")) %>% select(rowid, year, month, tmn)
+head(new_tmn_long, 30)
+```
+
+```{r}
+new_tmx <- new_flint_data %>% filter(str_detect(
+DataFileName, "tmx"))
+head(new_tmx)
+tail(new_tmx)
+
+new_tmx_long <- new_tmx %>% pivot_longer(!DataFileName, names_to = 
+"rowid", values_to = "tmx") %>% extract(DataFileName, c("year", "month"), "(\\d+)(.*)", convert = TRUE) %>% separate(month, into = c("month", "file_type")) %>% select(rowid, year, month, tmx)
+head(new_tmx_long, 30)
+```
+
+Merge
+```{r}
+new_flint_long <- full_join(new_aet_long, new_cwd_long)
+new_flint_long <- full_join(new_flint_long, new_pck_long)
+new_flint_long <- full_join(new_flint_long, new_pet_long)
+new_flint_long <- full_join(new_flint_long, new_ppt_long)
+new_flint_long <- full_join(new_flint_long, new_tmn_long)
+new_flint_long <- full_join(new_flint_long, new_tmx_long)
+head(new_flint_long)
+
+
+new_flint_pops <- full_join(pops_gardens_locs_rowids, new_flint_long)
+head(new_flint_pops)
+write_csv(new_flint_pops, "../output//Flint_AllSites_Aug2024.csv")
 ```
 
