@@ -403,4 +403,6 @@ TODO:
 
 [] Random effects
 [] Time as (polynomial) continuous
+[] Time as a smoothed continuous
+[] BRMS time-to-event parameterization (maybe)
 [] Environmental co-variates
