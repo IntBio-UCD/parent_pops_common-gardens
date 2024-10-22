@@ -10,7 +10,7 @@ editor_options:
     wrap: 72
 ---
 
-# Climate Data Preparation 
+# Climate Data Preparation
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -52,7 +52,7 @@ elev_order <- c("High", "Mid", "Low")
 
 ```{r}
 #pop info
-pops_common_garden <- read_csv("../input/UCD_Data/Pops_for_2022_UCD.csv") #pops included in common garden 
+pops_common_garden <- read_csv("../input/UCD_Data/Pops_for_2022_UCD.csv") #pops included in both common gardens 
 summary(pops_common_garden)
 names(pops_common_garden)
 pops_common_garden_nonotes <- pops_common_garden %>% select(parent.pop:elevation.group, UCD.seed.year)
@@ -75,12 +75,21 @@ pop_elev <- left_join(pops_common_garden_nonotes, pop_loc_yo)
 head(pop_elev)
 ```
 
+## Common Garden Sites Lat/Long
+
+```{r}
+sites_loc <- tibble(parent.pop=c("UCD_Garden", "WL2_Garden"), phylogroup=NA, elevation.group=c("Low", "High"), Lat=c("38.53250", "38.82599"), Long=c("-121.78299", "-120.25090"), elev_m=c(16,2020))
+sites_loc
+
+pops_gardens_locs <- bind_rows(pop_elev, sites_loc)
+pops_gardens_locs
+```
+
 ## Map populations
 
 ```{r}
-names(pop_elev)
-sapply(pop_elev, class) #lat and long are characters, need to be numeric 
-pop_elev <- pop_elev %>% mutate_at(c("Lat", "Long"), as.double)
+sapply(pops_gardens_locs, class) #lat and long are characters, need to be numeric 
+pops_gardens_locs <- pops_gardens_locs %>% mutate_at(c("Lat", "Long"), as.double)
 states <- map_data("state") %>% filter(region == "california")
 
 
@@ -88,7 +97,7 @@ states <- map_data("state") %>% filter(region == "california")
 pops_locs_no_labels <- ggplot() +
   geom_polygon(data = states, aes(x = long, y = lat, group = group), fill = "gray") +
   coord_quickmap(xlim = c(-125, -114), ylim = c(35, 43))+
-  geom_point(data = pop_elev,
+  geom_point(data = pops_gardens_locs,
              aes(x = Long, y = Lat, color=elev_m),
              size = 4) +
   labs(x="Long", y="Lat", color="Elevation (m)") +
@@ -101,10 +110,10 @@ pops_locs_no_labels <- ggplot() +
 ggplot() +
   geom_polygon(data = states, aes(x = long, y = lat, group = group), fill = "gray") +
   coord_quickmap(xlim = c(-125, -114), ylim = c(35, 43))+
-  geom_point(data = pop_elev,
+  geom_point(data = pops_gardens_locs,
              aes(x = Long, y = Lat, color=elev_m),
              size = 4) +
-  geom_text_repel(data = pop_elev,
+  geom_text_repel(data = pops_gardens_locs,
          aes(x = Long, y = Lat,
              label = `parent.pop`),
          min.segment.length = 0,
@@ -120,7 +129,9 @@ ggplot() +
 ```
 
 ### Map with elevation
+
 Overlay topographical image on graph
+
 ```{r}
 imgfile <- "../input/CA_TOPO_9.jpg"
 img <- readJPEG(imgfile)
@@ -144,84 +155,29 @@ pops_locs_no_labels_topo <- ggplot() +
   scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
   theme_classic() +
   theme(text=element_text(size=25))
-ggsave("../output/Pop_Map_Topo.png", width = 6, height=4, units="in")
+#ggsave("../output/Pop_Map_Topo.png", width = 6, height=4, units="in")
+
+pops_locs_labels_topo <- ggplot() +
+  #geom_polygon(data = states, aes(x = long, y = lat, group = group), fill = "gray") +
+  background_image(img) + #not perfectly aligned with the polygon 
+  coord_quickmap(xlim = c(-125, -114), ylim = c(35, 43))+
+  geom_point(data = pops_gardens_locs,
+             aes(x = Long, y = Lat, color=elev_m),
+             size = 4) +
+  geom_text_repel(data = pops_gardens_locs,
+         aes(x = Long, y = Lat,
+             label = `parent.pop`),
+         min.segment.length = 0,
+         max.overlaps = 100,
+        # label.padding = 1,
+        # point.padding = 0.5,
+         size = 4) +
+  labs(x="Long", y="Lat", color="Elevation (m)") +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  theme_classic() +
+  theme(text=element_text(size=25))
+#ggsave("../output/Pop_Map_Topo_PlusGardens.png", width = 6, height=4, units="in")
 ```
-
-
-Get elevation data 
-```{r}
-cali <- states %>% rename(lon = long)
-summary(cali)
-
-##Get Country data 
-crsLONGLAT <- "+proj=longlat +datum=WGS84 +no_defs"
-get_sf <- function(country_sf, country_transformed) {
-	
-	country_sf <- giscoR::gisco_get_countries(
-    	year = "2020",
-    	epsg = "4326",
-    	resolution = "10",
-    	country = "USA") %>% 
-	  sf::st_crop(c(xmin = -124.4, xmax = -114.1, ymin = 32.5, ymax = 42.02))
-	
-	country_transformed <- st_transform(country_sf, crs = crsLONGLAT)
-
-	return(country_transformed)
-}
-
-country_transformed <- get_sf() 
-
-##Get elevation data 
-get_elevation_data <- function(country_elevation, country_elevation_df) {
-
-	country_elevation <- get_elev_raster(
-		locations = country_transformed, 
-		z = 14, # Please decrease the z value if you experience R crashing
-		#values ranging from 1 (high-level detail) to 14 (low-level detail).
-		clip = "locations") 
-
-	country_elevation_df <- as.data.frame(country_elevation, xy = T) %>%
-		na.omit()
-	
-	colnames(country_elevation_df)[3] <- "elevation"
-
-	return(country_elevation_df)
-}
-
-country_elevation_df <- get_elevation_data()
-head(country_elevation_df)
-```
-
-```{r}
-get_elevation_map <- function(country_map) {
-
-	country_map <- ggplot() +
-  		geom_tile(data = country_elevation_df, 
-  			aes(x = x, y = y, fill = elevation)) +
-  		scale_fill_etopo() +
-  		coord_sf(crs = crsLONGLAT)+
-  		theme_minimal() +
-  		theme(text = element_text(family = "georg", color = "#22211d"),
-    		axis.line = element_blank(),
-    		axis.text.x = element_blank(),
-    		axis.text.y = element_blank(),
-    		axis.ticks = element_blank(),
-    		axis.title.x = element_blank(),
-    		axis.title.y = element_blank(),
-    		legend.position = "none",
-   		  	panel.grid.major = element_line(color = "white", linewidth = 0.2),
-    		panel.grid.minor = element_blank(),
-    		plot.margin = unit(c(t=0, r=0, b=0, l=0),"lines"), #added these narrower margins to enlarge maps
-    		plot.background = element_rect(fill = "white", color = NA), 
-    		panel.background = element_rect(fill = "white", color = NA),
-    		panel.border = element_blank()) 
-
-	return(country_map)
-}
-
-country_map <- get_elevation_map()
-```
-
 
 ## Elevation group changes
 
@@ -250,13 +206,9 @@ pop_elev %>% ggplot(aes(x=fct_reorder(parent.pop, elev_m), y=elev_m, fill=elevat
 -   pet (mm) = potential evapotranspiration (total amount of water that
     can evaporate from the ground or be transpired by plants)
 -   ppt (mm) = precipitation
--   rch (mm) = recharge (water that penetrates below the root zone)
--   run (mm) = runoff (water that becomes streamflow)
--   str (mm) = soil water storage (avg amount of water stored in the
-    soil annually)
 -   all above are totals or sums per month
 -   tmn (deg C) = min air temp (for a given month)
--   tmx (deg C) = max air temp (for a given month) 127 years
+-   tmx (deg C) = max air temp (for a given month)
 
 Notes
 
@@ -274,56 +226,50 @@ Notes
 
 ## Load the climate data
 
+Note: changed the input file from "Dimensions_All_1895-2022.csv" to
+"Flint_AllSites_Aug2024.csv"
+
 ```{r}
-climate_data <- read_csv("../input/Dimensions_All_1895-2022.csv")
+climate_data <- read_csv("../output/Flint_AllSites_Aug2024.csv") %>% select(!rowid) %>% mutate(Lat=as.character(Lat), Long=as.character(Long))
 head(climate_data)
 names(climate_data)
-unique(climate_data$pop)
+unique(climate_data$parent.pop)
 climate_data$year = as.character(climate_data$year)
-head(climate_data)
-
-climate_data_yo <- climate_data %>% mutate(pop = str_replace(pop, "YOSE(\\d+)", "YO\\1")) #changing YOSE to YO 
-#`(\\d+)`: This part contains a regular expression within parentheses: 
-#`\\d`: Matches a digit (equivalent to `[0-9]`). 
-#The double backslash `\\` is used to escape the `\` #character in R strings, so `\\d` is interpreted as `\d` in the regex, denoting a digit.
-#`+`: This qualifier means "one or more of the preceding element," so `\\d+` will match one or more digits.
-#`()`: Parentheses are used to define a capturing group, which means that the part of the regex within the parentheses `(\\d+)` is captured to be used in back-references or for extracting matched parts.
-#\\1 references the first capturing group
-unique(climate_data_yo$pop)
 ```
 
 ## Combine pop info with climate data
+
 ```{r}
-names(pop_elev)
-names(climate_data_yo)
-pop_elev_climate <- left_join(pop_elev, climate_data_yo, by=c("parent.pop"="pop")) %>% select(parent.pop, elevation.group, elev_m, year:tmx)
+pop_elev_climate <- left_join(climate_data, pop_elev) %>% 
+  select(parent.pop, elevation.group, elev_m, Lat:Long, year:tmx) %>% 
+  filter(parent.pop!="YO1") %>% #remove YO1 from the dataset 
+  mutate(elevation.group=if_else(parent.pop=="UCD_Garden", "Low", 
+                                 if_else(parent.pop=="WL2_Garden", "High", elevation.group)))
 #write_csv(pop_elev_climate, "../output/Climate/flint_climate_UCDpops.csv") #this is the file used in "Flint_Growth_Season.Rmd"
 unique(pop_elev_climate$parent.pop)
-#unique(pop_elev$parent.pop)
 head(pop_elev_climate, 30)
-names(pop_elev_climate)
 ```
 
 ## Calculation of recent (last 30 years) and historical climate (prior 30 years)
 
-Took out 2022 b/c only 9 months for that year Flint variables
+Note: this does not include Sept-Dec 2024
 
 ```{r}
-pop_elev_climate_recent <- pop_elev_climate %>% filter(year>1991 & year<2022) %>% select(parent.pop:month, cwd, pck, ppt, tmn, tmx)
+pop_elev_climate_recent <- pop_elev_climate %>% filter(year>1994 & year<=2024) %>% select(parent.pop:month, cwd, pck, ppt, tmn, tmx)
 head(pop_elev_climate_recent)
 tail(pop_elev_climate_recent)
 summary(pop_elev_climate_recent)
 xtabs(~parent.pop+month, data=pop_elev_climate_recent)
 
-pop_elev_climate_historical <- pop_elev_climate %>% filter(year<=1991 & year>1961) %>% select(parent.pop:month, cwd, pck, ppt, tmn, tmx)
+pop_elev_climate_historical <- pop_elev_climate %>% filter(year<=1994 & year>1964) %>% select(parent.pop:month, cwd, pck, ppt, tmn, tmx)
 head(pop_elev_climate_historical, 13)
+tail(pop_elev_climate_historical, 13)
 xtabs(~parent.pop+month, data=pop_elev_climate_historical)
 ```
 
 ## Snow Cover - Average across years (all months included)
 
 ```{r}
-names(pop_elev_climate_recent)
 pop_elev_climate_recent %>% filter(year==2006) %>% ggplot(aes(x=month, y=pck, group=parent.pop, color=parent.pop)) + geom_point() + geom_line()
 pop_elev_climate_recent %>% filter(year==2006) %>% ggplot(aes(x=month, y=pck, group=parent.pop, color=elevation.group)) + geom_point() + geom_line()
 
@@ -384,14 +330,13 @@ monthly_pck <- pop_elev_climate_recent %>%
   group_by(parent.pop, elev_m, month) %>%
   summarise(pck_mean=mean(pck), pck_sem=sem(pck))
 monthly_pck$parent.pop <- factor(monthly_pck$parent.pop, levels=c("WL1", "SQ1", "SQ2", "WL2", "YO4"))
-monthly_pck
+monthly_pck$month <- factor(monthly_pck$month, levels=c("jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"))
 
 monthly_pck %>% ggplot(aes(x=month, y=pck_mean, group=parent.pop, fill=parent.pop)) + 
   geom_col(width = 0.7,position = position_dodge(0.75)) +
   geom_errorbar(aes(ymin=pck_mean-pck_sem,ymax=pck_mean+pck_sem),width=.2, position=position_dodge(0.75)) +
   labs(title="Recent Climate", y="Avg SnwPck (mm)")  + 
   scale_y_continuous(expand = c(0, 0)) +
-  scale_x_continuous(breaks=c(1, 2, 3, 4, 5,6,7,8,9,10, 11, 12)) +
   theme_classic() + 
   theme(text=element_text(size=30))
 #ggsave("../output/Climate/Monthly_Avg_PCK_RecnetClim.png", width = 14, height = 6, units = "in")
@@ -402,13 +347,13 @@ monthly_pck_high_elev <- pop_elev_climate_recent %>%
   group_by(parent.pop, elev_m, month) %>%
   summarise(pck_mean=mean(pck), pck_sem=sem(pck))
 monthly_pck_high_elev$parent.pop <- factor(monthly_pck_high_elev$parent.pop, levels=c("CP2", "CP3", "LV3", "SQ3", "YO7","YO8", "LV1", "LVTR1", "YO11"))
+monthly_pck_high_elev$month <- factor(monthly_pck_high_elev$month, levels=c("jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"))
 
 monthly_pck_high_elev %>% ggplot(aes(x=month, y=pck_mean, group=parent.pop, fill=parent.pop)) + 
   geom_col(width = 0.7,position = position_dodge(0.75)) +
   geom_errorbar(aes(ymin=pck_mean-pck_sem,ymax=pck_mean+pck_sem),width=.2, position=position_dodge(0.75)) +
   labs(title="Recent Climate", y="Avg SnwPck (mm)")  + 
   scale_y_continuous(expand = c(0, 0)) +
-  scale_x_continuous(breaks=c(1, 2, 3, 4, 5,6,7,8,9,10, 11, 12)) +
   theme_classic() + 
   theme(text=element_text(size=30))
 #ggsave("../output/Climate/Monthly_Avg_PCK_HIGHELEV_RecnetClim.png", width = 14, height = 6, units = "in")
@@ -426,25 +371,22 @@ monthly_cwd
 
 monthly_cwd %>% #low elev
   filter(elev_m<520) %>% 
-  ggplot(aes(x=month, y=cwd_mean)) +
+  ggplot(aes(x=month, y=cwd_mean, group=parent.pop)) +
   geom_line() +
-  scale_x_continuous(breaks=c(1, 2, 3, 4, 5,6,7,8,9,10, 11, 12)) +
   theme_classic() +
   facet_wrap(~parent.pop)
 
 monthly_cwd %>% #mid elev
   filter(elev_m>520, elev_m<1940) %>% 
-  ggplot(aes(x=month, y=cwd_mean)) +
+  ggplot(aes(x=month, y=cwd_mean,group=parent.pop)) +
   geom_line() +
-  scale_x_continuous(breaks=c(1, 2, 3, 4, 5,6,7,8,9,10, 11, 12)) +
   theme_classic() +
   facet_wrap(~parent.pop)
 
 monthly_cwd %>% #high elev
   filter(elev_m>1940) %>% 
-  ggplot(aes(x=month, y=cwd_mean)) +
+  ggplot(aes(x=month, y=cwd_mean,group=parent.pop)) +
   geom_line() +
-  scale_x_continuous(breaks=c(1, 2, 3, 4, 5,6,7,8,9,10, 11, 12)) +
   theme_classic() +
   facet_wrap(~parent.pop)
 ```
@@ -458,4 +400,3 @@ pop_elev_climate_avgs <- pop_elev_climate %>% filter(year>1992) %>% group_by(par
 pop_elev_climate_avgs #30 year averages of all climate variables 
 pop_elev_climate_avgs$elevation.group <- factor(pop_elev_climate_avgs$elevation.group, levels=elev_order)
 ```
-
