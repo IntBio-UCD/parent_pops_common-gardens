@@ -542,7 +542,7 @@ Note: changed the input file from "Dimensions_All_1895-2022.csv" to
 
 
 ``` r
-climate_data <- read_csv("../output/Flint_AllSites_Aug2024.csv") %>% select(!rowid) %>% mutate(Lat=as.character(Lat), Long=as.character(Long))
+climate_data <- read_csv("../output/Climate/Flint_AllSites_Aug2024.csv") %>% select(!rowid) %>% mutate(Lat=as.character(Lat), Long=as.character(Long))
 ```
 
 ```

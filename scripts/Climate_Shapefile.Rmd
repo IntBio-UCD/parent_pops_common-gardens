@@ -167,6 +167,6 @@ head(new_flint_long)
 
 new_flint_pops <- full_join(pops_gardens_locs_rowids, new_flint_long)
 head(new_flint_pops)
-write_csv(new_flint_pops, "../output//Flint_AllSites_Aug2024.csv")
+#write_csv(new_flint_pops, "../output/Climate/Flint_AllSites_Aug2024.csv")
 ```
 
