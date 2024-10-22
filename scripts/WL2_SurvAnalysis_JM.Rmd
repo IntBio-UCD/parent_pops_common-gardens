@@ -1,11 +1,15 @@
 ---
 title: "WL2_Survival-Analysis"
-author: "Brandie Quarles"
+author: "Julin Maloof"
 date: '`r Sys.Date()`'
 output: 
   html_document: 
     keep_md: yes
 ---
+
+YOU PROBABLY DON'T WANT THIS, IT DOESN'T WORK WELL.  SEE `WL2_SurvAnalysis_BRMS_JM.Rmd` INSTEAD
+
+
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -23,6 +27,7 @@ library(ggrepel)
 library(ggsurvfit)
 library(gtsummary)
 library(rstanarm)
+library(bayesplot)
 options(mc.cores = parallel::detectCores())
 ```
 
@@ -94,15 +99,18 @@ wl2_surv_dates_loc
 ```
 ## plot observed data
 
+Need to summarize separately for pops and for elevation.  It is a mistake to average pops and then elevation, at least with respect to comparing to population naive models
+
+### population level summary:
 ```{r}
 # set up week 0 for 100% survival
-week0 <- wl2_surv_dates_loc %>% 
+week0.pop <- wl2_surv_dates_loc %>% 
   select(parent.pop, elevation.group) %>% 
   unique() %>%
   bind_cols(os_weeks=0,
             prop.surviving=1 )
 
-wl2_obs <- 
+wl2_obs.pop <- 
   wl2_surv_dates_loc %>% select(parent.pop, death.date, os_weeks, status, elevation.group) %>%
   group_by(parent.pop) %>%
   mutate(total=n()) %>%
@@ -118,42 +126,63 @@ wl2_obs <-
          surviving = total - total.dead,
          prop.surviving = surviving/total) %>%
   ungroup() %>%
-  bind_rows(week0) %>%
+  bind_rows(week0.pop) %>%
   select(parent.pop, elevation.group, os_weeks, prop.surviving) %>%
   arrange(parent.pop, os_weeks)
 
-wl2_obs %>%
+wl2_obs.pop %>%
   ggplot(aes(x=os_weeks, y = prop.surviving, color = elevation.group)) +
   geom_smooth() +
   geom_point()
 
-wl2_obs %>%
+wl2_obs.pop %>%
   ggplot(aes(x=os_weeks, y = prop.surviving, color = parent.pop)) +
   geom_line() +
   geom_point()
+```
 
-wl2_obs_elev.summary <- wl2_obs %>%
+### elevation group summary
+```{r}
+week0.elev <- wl2_surv_dates_loc %>% 
+  select(elevation.group) %>% 
+  unique() %>%
+  bind_cols(os_weeks=0,
+            prop.surviving=1 )
+
+wl2_obs.elev <-
+  wl2_surv_dates_loc %>% select(death.date, os_weeks, status, elevation.group) %>%
+  group_by(elevation.group) %>%
+  mutate(total=n()) %>%
+  group_by(elevation.group, os_weeks) %>%
+  summarize(n.newly.dead=sum(status),
+            total=unique(total)
+            ) %>%
+  ungroup() %>%
+  complete(elevation.group, os_weeks, fill = list(n.newly.dead=0)) %>% # we have missing data for weeks where nobody died and we need to fill that in
+  group_by(elevation.group) %>%
+  mutate(total=unique(na.omit(total)), # filling in the blanks from the complete() step above
+         total.dead=cumsum(n.newly.dead),
+         surviving = total - total.dead,
+         prop.surviving = surviving/total) %>%
+  ungroup() %>%
+  bind_rows(week0.elev) %>%
+  select(elevation.group, os_weeks, prop.surviving) %>%
+  arrange(elevation.group, os_weeks)
+
+
+wl2_obs_elev.summary <- wl2_obs.elev %>%
   group_by(os_weeks, elevation.group) %>%
-  summarize(sem = sd(prop.surviving) / sqrt(n()),
-            prop.surviving = mean(prop.surviving)) 
+  summarize(prop.surviving = mean(prop.surviving))
 
 
 wl2_obs_elev.summary %>%
-  ggplot(aes(x=os_weeks, y=prop.surviving, ymin=prop.surviving-sem, ymax=prop.surviving+sem, color=elevation.group )) +
+  ggplot(aes(x=os_weeks, y=prop.surviving, color=elevation.group )) +
   geom_point() +
-  geom_line() +
-  geom_errorbar(width=.25)
+  geom_line()
 
 ```
 
-
-## Create Survival Objects and Curves
-```{r}
-Surv(wl2_surv_dates_loc$os_weeks, wl2_surv_dates_loc$status)[1:10] #show the first 10 observations of the survival object
-#There will be one entry for each subject that is the survival time, which is followed by a + if the subject was censored.
-```
-
-## Try a fit
+## Simple fit
 
 ```{r}
 f1 <- Surv(os_weeks, status) ~ 1
@@ -183,92 +212,154 @@ summary(m2)
 print(m2)
 ```
 
-```{r}
-plot(m1, plotfun = "basehaz")
-plot(m2, plotfun = "basehaz")
-```
+
+
+
 
 ```{r}
-# Try b-splines intead of m-splines
-#m2b <- update(m2, basehaz = "bs") # SLOW!! Takes Several hours
-
-#m2b <- stan_surv(f2, data= wl2_surv_dates_loc, chains=4, basehaz = "bs")
-
-# also gave an error at the end (maybe because of update...changing to a new cal), although did produce an object.
-# m2b_loo <- loo(m2b)
-
 # different # of knots for the m-splines
-m3 <- update(m2, basehaz_ops = list(df = 10))
-m3_loo <- loo(m3)
+mdf10 <- update(m2, basehaz_ops = list(df = 10))
+mdf10_loo <- loo(mdf10)
 
-#m3b <- update(m3, basehaz = "bs")
-#m3b_loo <- loo(m3b)
+# quadratic instead of cubic splines
+mdeg4 <- update(m2, basehaz_ops = list(degree = 4))
+mdeg4_loo <- loo(mdeg4)
 
+# quadratic splines with and 10 df
+mdf10deg4 <- update(m3, basehaz_ops = list(degree = 4))
+mdf10deg4_loo <- loo(mdf10deg4)
 
-m4 <- update(m2, basehaz_ops = list(df = 15))
-m4_loo <- loo(m4)
-
-
-m5 <- update(m2, basehaz_ops = list(df = 20))
-m5_loo <- loo(m5)
-
-
-m6 <- update(m2, basehaz_ops = list(df = 30))
-m6_loo <- loo(m6)
+# specify knot location
+mknots5 <- update(m2, basehaz_ops = list (knots = c(1,2,3,5,7)))
+mknots5_loo <- loo(mknots5)
 ```
 
 
 ```{r}
-loo_compare(m1_loo, m2_loo, m3_loo, m4_loo, m5_loo, m6_loo)
+loo_compare(m2_loo, mdf10_loo, mdeg4_loo, mdf10deg4_loo, mknots5_loo)
 ```
-b-splines is better than m-splines for a given number of knots, but not better than more knots.  and takes forever to fit.
 
-how many knots is reasonable here?
+create a function to plot fits along with observations
+```{r}
+plot_fit <- function(fit, obs, newdata, title=NULL) {
+  preds <- posterior_survfit(fit, newdata = newdata, times = 0, extrapolate = TRUE)
+  
+  preds <- preds %>%
+    as_tibble() %>%
+    mutate(elevation.group = newdata$elevation.group[id])
+  
+  pl <- preds %>%
+    ggplot(aes(x=time, y = median, ymin=ci_lb, ymax = ci_ub, group = elevation.group)) +
+    geom_ribbon(fill="grey70", alpha=.5) +
+    geom_line(aes(color=elevation.group), lwd=1.5) +
+    scale_color_viridis_d() +
+    
+    geom_point(aes(x = os_weeks, y=prop.surviving, color = elevation.group), data=wl2_obs_elev.summary, inherit.aes = FALSE) +
+    ylab("proportion surviving") +
+    xlab("weeks after transplant") 
+  
+  if(!is.null(title)) pl <- pl + ggtitle(title)
+  
+  pl
+}
+```
 
+Make some plots
 ```{r}
 nd <- data.frame(elevation.group = levels(wl2_surv_dates_loc$elevation.group))
-nd
+
+plot_fit(m2, wl2_obs_elev.summary, nd, "m2 default") 
+plot_fit(mdeg4, wl2_obs_elev.summary, nd, "quadratic splines")
+plot_fit(mdf10, wl2_obs_elev.summary, nd, "10 degrees of freedom")
+plot_fit(mdf10deg4, wl2_obs_elev.summary, nd, "10 degrees of freedom and quadratic splines")
+plot_fit(mknots5, wl2_obs_elev.summary, nd, "5 manual knots")
+
+
+```
+Let's try some variations on having tve coefficients
+
+```{r}
+mtve_default <- stan_surv(Surv(os_weeks, status) ~ tve(elevation.group), data = wl2_surv_dates_loc, chains=4) # 900 seconds
+mtve_default_loo <- loo(mtve_default)
+
+mtve_base_10df <- update(mtve_default, basehaz_ops = list(df = 10) ) # 900 seconds
+mtve_base_10df_loo <- loo(mtve_base_10df)
+
+mtve_tve_5knots <- update(mtve_default, formula = Surv(os_weeks, status) ~ tve(elevation.group, knots=c(1,2,3,5,7)) )
+mtve_tve_5knots_loo <- loo(mtve_tve_5knots)
+
+mtve_base_10df_tve_5knots <- update(mtve_tve_5knots, basehaz_ops = list(df = 10) ) # 1 hour
+mtve_base_10df_tve_5knots_loo <- loo(mtve_base_10df_tve_5knots)
+
+```
+
+
+```{r}
+loo_compare(mget(ls(pattern="loo")))
+```
+```{r}
+plot_fit(m2, wl2_obs_elev.summary, nd, "m2 default") 
+plot_fit(mdf10, wl2_obs_elev.summary, nd, "10 degrees of freedom")
+plot_fit(mtve_default, wl2_obs_elev.summary, nd, "tve default")
+
+plot_fit(mtve_tve_5knots, wl2_obs_elev.summary, nd, "tve 5 tve knots")
+
+plot_fit(mtve_base_10df, wl2_obs_elev.summary, nd, "tve 10 base df")
+
+plot_fit(mtve_base_10df_tve_5knots, wl2_obs_elev.summary, nd, "tve 10 base df 5 tve knots")
+
+
+```
+
+
+```{r}
+mtve_tve_7knots <- update(mtve_default, formula = Surv(os_weeks, status) ~ tve(elevation.group, knots=c(1, 2, 3, 4, 6, 7,10)) )
+mtve_tve_7knots_loo <- loo(mtve_tve_7knots)
+```
+
+exponentional model
+
+```{r}
+m_exp <- stan_surv(Surv(os_weeks, status) ~ elevation.group, basehaz = "exp" , data = wl2_surv_dates_loc, chains=4) 
+m_exp_loo <- loo(m_exp)
+
+m_expb <- stan_surv(Surv(os_weeks, status) ~ elevation.group, basehaz = "exp" , data = {wl2_surv_dates_loc %>% mutate(elevation.group=relevel(elevation.group, ref="High"))}
+  , chains=4) 
+m_expb_loo <- loo(m_expb)
+
+m_exp_tve <- stan_surv(Surv(os_weeks, status) ~ tve(elevation.group), basehaz = "exp" , data = wl2_surv_dates_loc, chains=4) 
+m_exp_tve_loo <- loo(m_exp)
 ```
 
 ```{r}
-preds <- posterior_survfit(m3, newdata = nd, times = 0, extrapolate = TRUE)
+plot_fit(m2, wl2_obs_elev.summary, nd, "m2 default") 
+plot_fit(m_exp, wl2_obs_elev.summary, nd, "exp model")
+plot_fit(m_expb, wl2_obs_elev.summary, nd, "exp model b")
 
-preds <- preds %>%
-  as_tibble() %>%
-  mutate(elevation.group = nd$elevation.group[id])
-
-preds %>%
-  ggplot(aes(x=time, y = median, ymin=ci_lb, ymax = ci_ub, group = elevation.group)) +
-  geom_ribbon(fill="grey70", alpha=.5) +
-  geom_line(aes(color=elevation.group), lwd=1.5) +
-  scale_color_viridis_d() +
-  
-  geom_point(aes(x = os_weeks, y=prop.surviving, color = elevation.group), data=wl2_obs_elev.summary, inherit.aes = FALSE) +
-  geom_errorbar(aes(x = os_weeks, ymin=prop.surviving-sem, ymax= prop.surviving+sem,  color = elevation.group), data=wl2_obs_elev.summary, inherit.aes = FALSE, width=.25, lwd=.75) +
-  
-  ylab("proportion surviving") +
-  xlab("weeks after transplant")
+plot_fit(m_exp_tve, wl2_obs_elev.summary, nd, "exp tve model")
 ```
+
+Seems like priors are too stringent?
 
 ```{r}
-preds <- posterior_survfit(m6, newdata = nd, times = 0, extrapolate = TRUE)
-
-
-preds <- preds %>%
-  as_tibble() %>%
-  mutate(elevation.group = nd$elevation.group[id])
-
-preds %>%
-  ggplot(aes(x=time, y = median, ymin=ci_lb, ymax = ci_ub, group = elevation.group)) +
-  geom_ribbon(fill="grey70", alpha=.5) +
-  geom_line(aes(color=elevation.group), lwd=1.5) +
-  
-  geom_point(aes(x = os_weeks, y=prop.surviving, color = elevation.group), data=wl2_obs_elev.summary, inherit.aes = FALSE) +
-  geom_errorbar(aes(x = os_weeks, ymin=prop.surviving-sem, ymax= prop.surviving+sem,  color = elevation.group), data=wl2_obs_elev.summary, inherit.aes = FALSE, width=.25, lwd=.75) +
-  
-  scale_color_viridis_d()
+m_exp
 ```
-hmm, so more knots allows better modelling of the "steps" in the data but that doesn't reflect reality anyway.  m3 is likely sufficient. ALSO CHECK MODELING FUNCTION, THERE MAY BE A WAY TO INDICATE THAT WE WEREN'T OBSERVING IN BETWEEN.
+
+
+```{r}
+prior_summary(m_exp)
+```
+```{r}
+m_exp %>%
+  as.matrix() %>%
+  mcmc_areas()
+```
+
+save the models so far
+
+```{r}
+save(list=ls(pattern="^m"), file="../output/WL2_Stan_Surv_Models_JM.Rdata")
+```
 
 
 Fit a random effects model
@@ -369,6 +460,8 @@ preds %>%
 ```{r}
 loo_compare(m2_loo, m3_loo, m10_loo)
 ```
+
+
 
 
 "The survfit() function creates survival curves using the Kaplan-Meier method based on a formula. Let’s generate the overall survival curve for the entire cohort, assign it to object s1, and look at the structure using str():"
