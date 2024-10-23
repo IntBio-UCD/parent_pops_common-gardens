@@ -25,6 +25,7 @@ library(ggrepel)
 library(brms)
 library(ggdist)
 library(tidybayes)
+library(modelr)
 #library(bayesplot)
 options(mc.cores = parallel::detectCores())
 ```
@@ -406,3 +407,207 @@ TODO:
 [] Time as a smoothed continuous
 [] BRMS time-to-event parameterization (maybe)
 [] Environmental co-variates
+
+
+## Continuous time
+
+### linear
+
+```{r}
+m5 <- brm(n.newly.dead | trials(n)  ~ os_weeks*elevation.group, 
+          prior(normal(0, 4), class = b),
+          family = "binomial",
+          chains = 4, cores = 4,
+          data = na.omit(wl2_obs.elev),
+          save_pars = save_pars(all = TRUE)) %>%
+  add_criterion("loo", moment_match = TRUE)
+```
+```{r}
+summary(m5)
+```
+
+
+logit to hazard probabilities
+```{r}
+fixef(m5) %>% inv_logit_scaled()
+```
+
+```{r}
+plot(m5, ask = FALSE, nvariables = 3)
+```
+
+```{r}
+loo_compare(m1, m2, m3, m4, m5)
+```
+OK that does not fit well at all.
+
+What about quadratic?
+
+### Quadratic
+
+```{r}
+m6 <- brm(n.newly.dead | trials(n)  ~ os_weeks*elevation.group + I(os_weeks^2)*elevation.group, 
+          prior(normal(0, 4), class = b),
+          family = "binomial",
+          chains = 4, cores = 4,
+          iter = 3000,
+          data = na.omit(wl2_obs.elev),
+          save_pars = save_pars(all = TRUE)) %>%
+  add_criterion("loo", moment_match = TRUE)
+```
+
+```{r}
+summary(m6)
+```
+
+
+logit to hazard probabilities
+```{r}
+fixef(m6) %>% inv_logit_scaled()
+```
+Wide confidence intervals on some of those coefficients...
+
+```{r}
+plot(m6, ask = FALSE, nvariables = 3)
+```
+
+```{r}
+loo_compare(m1, m2, m3, m4, m5, m6)
+```
+It does do a decent job, although marginally not as good as the best.
+
+The confidence intervals on the coefficients for the elevation:linear time term include 0.  how about a model without those interactions?
+
+
+```{r}
+m7 <- brm(n.newly.dead | trials(n)  ~  os_weeks + elevation.group + I(os_weeks^2)*elevation.group, 
+          prior(normal(0, 4), class = b),
+          family = "binomial",
+          chains = 4, cores = 4,
+          data = na.omit(wl2_obs.elev),
+          save_pars = save_pars(all = TRUE)) %>%
+  add_criterion("loo", moment_match = TRUE)
+```
+
+```{r}
+summary(m7)
+```
+
+no parameter estimates crossing zero, this is nicer than m6
+
+logit to hazard probabilities
+```{r}
+fixef(m7) %>% inv_logit_scaled()
+```
+
+```{r}
+plot(m7, ask = FALSE, nvariables = 3)
+```
+
+```{r}
+loo_compare(m6,m7)
+loo_compare(m1, m2, m3, m4, m5, m6, m7)
+```
+Although about the same as m6 on the loo scale.  Still, we would go with the simpler model (m7)
+
+### Extracting and plotting from m7
+
+This is somewhat differnet than m1 - m4 because now we have a function of time.
+
+Tidybayes can help.  See https://cran.r-project.org/web/packages/tidybayes/vignettes/tidy-brms.html
+
+One thing I can't figure out is how to do cumulative survivorship if we use something other than the original intervals.  But I haven't looked at the book yet.
+
+```{r}
+wl2_obs.elev %>% 
+  na.omit() %>% #get rid of week 0
+  data_grid(os_weeks, elevation.group, n=1) %>%
+  
+  # Add the discrete hazard probabilities
+  add_epred_draws(m7) %>% 
+
+  # convert hazard to survival probability (1 - hazard)
+  mutate(point.survivorship = 1 - .epred) %>%
+  
+  # calculate the cumulative survivorship
+  arrange(elevation.group, .draw, os_weeks) %>% 
+  group_by(elevation.group, .draw) %>%
+  mutate(cum.survivorship = cumprod(point.survivorship)) %>%
+  
+  # calculate Bayesian highest density 95% credible intervals
+  group_by(elevation.group, os_weeks) %>%
+  point_interval(point.survivorship, cum.survivorship, .interval = hdci) %>%
+  
+    ggplot(aes(x = os_weeks, y = cum.survivorship, ymin = cum.survivorship.lower, ymax = cum.survivorship.upper, group = elevation.group)) +
+  geom_ribbon(fill="grey50", alpha = .5) +
+  geom_line(aes(color=elevation.group), lwd=1.5) +
+  geom_point(aes(x=os_weeks, y = prop.surviving, color = elevation.group), data = wl2_obs_elev.summary, inherit.aes = FALSE) +
+  scale_color_viridis_d() + 
+  ggtitle("m7: n.newly.dead | trials(n) ~ os_weeks + elevation.group + I(os_weeks^2) * elevation.group ")
+```
+
+### Cubic
+
+I am not including a cubic interaction term.  The estimates of that were very small and the confidence intervals included zero (not shown)
+
+```{r}
+m8 <- brm(n.newly.dead | trials(n)  ~  os_weeks + elevation.group + I(os_weeks^2)*elevation.group + I(os_weeks^3), 
+          prior(normal(0, 4), class = b),
+          family = "binomial",
+          chains = 4, cores = 4,
+          data = na.omit(wl2_obs.elev),
+          save_pars = save_pars(all = TRUE),
+          control = list( max_treedepth = 20)) %>%
+  add_criterion("loo", moment_match = TRUE)
+```
+
+```{r}
+summary(m8)
+```
+
+no parameter estimates crossing zero, this is nicer than m6
+
+logit to hazard probabilities
+```{r}
+fixef(m8) %>% inv_logit_scaled()
+```
+
+```{r}
+plot(m8, ask = FALSE, nvariables = 3)
+```
+
+```{r}
+loo_compare(m7,m8)
+loo_compare(m1, m2, m3, m4, m5, m6, m7, m8)
+```
+Although about the same as m7 on the loo scale, so we would favor the simpler model (m7) based on this.  Go ahead and plot it.
+
+### Extracting and plotting from m8
+
+```{r}
+wl2_obs.elev %>% 
+  na.omit() %>% #get rid of week 0
+  data_grid(os_weeks, elevation.group, n=1) %>%
+  
+  # Add the discrete hazard probabilities
+  add_epred_draws(m8) %>% 
+
+  # convert hazard to survival probability (1 - hazard)
+  mutate(point.survivorship = 1 - .epred) %>%
+  
+  # calculate the cumulative survivorship
+  arrange(elevation.group, .draw, os_weeks) %>% 
+  group_by(elevation.group, .draw) %>%
+  mutate(cum.survivorship = cumprod(point.survivorship)) %>%
+  
+  # calculate Bayesian highest density 95% credible intervals
+  group_by(elevation.group, os_weeks) %>%
+  point_interval(point.survivorship, cum.survivorship, .interval = hdci) %>%
+  
+    ggplot(aes(x = os_weeks, y = cum.survivorship, ymin = cum.survivorship.lower, ymax = cum.survivorship.upper, group = elevation.group)) +
+  geom_ribbon(fill="grey50", alpha = .5) +
+  geom_line(aes(color=elevation.group), lwd=1.5) +
+  geom_point(aes(x=os_weeks, y = prop.surviving, color = elevation.group), data = wl2_obs_elev.summary, inherit.aes = FALSE) +
+  scale_color_viridis_d() + 
+  ggtitle("m8: n.newly.dead | trials(n) ~ os_weeks + elevation.group + I(os_weeks^2) * elevation.group + I(os_weeks^3) ")
+```
