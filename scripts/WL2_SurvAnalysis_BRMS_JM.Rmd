@@ -102,13 +102,6 @@ Need to summarize separately for pops and for elevation.  It is a mistake to ave
 
 ### population-level summary
 ```{r}
-# set up week 0 for 100% survival
-week0.pop <- wl2_surv_dates_loc %>% 
-  select(parent.pop, elevation.group) %>% 
-  unique() %>%
-  bind_cols(os_weeks=0,
-            prop.surviving=1 )
-
 wl2_obs.pop <- 
   wl2_surv_dates_loc %>% select(parent.pop, death.date, os_weeks, status, elevation.group) %>%
   group_by(parent.pop) %>%
@@ -125,29 +118,75 @@ wl2_obs.pop <-
          surviving = total - total.dead,
          prop.surviving = surviving/total) %>%
   ungroup() %>%
-  bind_rows(week0.pop) %>%
-  select(parent.pop, elevation.group, os_weeks, prop.surviving) %>%
+#  bind_rows(week0.pop) %>%
+#  select(parent.pop, elevation.group, os_weeks, prop.surviving) %>%
   arrange(parent.pop, os_weeks)
 
-wl2_obs.pop %>%
+# Add a week 0 with all plants
+
+wl2_obs.pop.0 <- wl2_obs.pop %>%
+  filter(os_weeks==1) %>%
+   mutate(os_weeks = 0,
+          n.newly.dead = 0,
+          total.dead = 0,
+          surviving = total,
+          prop.surviving = 1) %>%
+   rbind(wl2_obs.pop) %>%
+   arrange(parent.pop, os_weeks)
+
+wl2_obs.pop.0 %>%
   ggplot(aes(x=os_weeks, y = prop.surviving, color = elevation.group)) +
   geom_smooth() +
   geom_point()
 
-wl2_obs.pop %>%
+wl2_obs.pop.0 %>%
   ggplot(aes(x=os_weeks, y = prop.surviving, color = parent.pop)) +
   geom_line() +
   geom_point()
 ```
+
+## Some additional summaries
+
+```{r}
+# total number of plants:
+wl2_obs.pop.0 %>%
+  filter(os_weeks==0) %>%
+  select(parent.pop, total) %>%
+  pull(total) %>% sum()
+```
+
+## select 50% of dead plants to omit per week1 and week2
+
+```{r}
+wl2_obs.pop.0 %>%
+  filter(os_weeks > 0) %>%
+  mutate(dead_50 = floor(n.newly.dead/2)) %>%
+  group_by(os_weeks) %>%
+  summarize(omit = sum(dead_50)) 
+  
+```
+
+How many plants are alive at the end?
+
+```{r}
+wl2_obs.pop.0 %>%
+  filter(os_weeks > 13) 
+
+wl2_obs.pop.0 %>%
+  filter(os_weeks > 13) %>%
+  pull(surviving) %>%
+  sum()
+
+wl2_obs.pop.0 %>%
+  filter(os_weeks > 13) %>%
+  pull(total.dead) %>%
+  sum()
+```
+
+
 ### elevation-level summary
 
 ```{r}
-week0.elev <- wl2_surv_dates_loc %>% 
-  select(elevation.group) %>% 
-  unique() %>%
-  bind_cols(os_weeks=0,
-            prop.surviving=1 )
-
 wl2_obs.elev <-
   wl2_surv_dates_loc %>% select(death.date, os_weeks, status, elevation.group) %>%
   group_by(elevation.group) %>%
@@ -163,16 +202,24 @@ wl2_obs.elev <-
          total.dead=cumsum(n.newly.dead),
          surviving = total - total.dead,
          prop.surviving = surviving/total) %>%
-  ungroup() %>%
-  bind_rows(week0.elev) %>%
-#  select(elevation.group, os_weeks, prop.surviving) %>%
-  arrange(elevation.group, os_weeks)
+  ungroup()  %>%
+   arrange(elevation.group, os_weeks)
 
+# Add a week 0 with all plants
 
-wl2_obs_elev.summary <- wl2_obs.elev %>%
+wl2_obs.elev.0 <- wl2_obs.elev %>%
+  filter(os_weeks==1) %>%
+   mutate(os_weeks = 0,
+          n.newly.dead = 0,
+          total.dead = 0,
+          surviving = total,
+          prop.surviving = 1) %>%
+   rbind(wl2_obs.elev) %>%
+   arrange(elevation.group, os_weeks)
+
+wl2_obs_elev.summary <- wl2_obs.elev.0 %>%
   group_by(os_weeks, elevation.group) %>%
   summarize(prop.surviving = mean(prop.surviving))
-
 
 wl2_obs_elev.summary %>%
   ggplot(aes(x=os_weeks, y=prop.surviving, color=elevation.group )) +
@@ -192,13 +239,21 @@ Modify the input data to add some factor variables and to compute the total numb
 ```{r}
 wl2_obs.elev <- wl2_obs.elev %>% mutate(n=n.newly.dead + surviving,
                                         os_weeks_f = factor(str_pad(round(os_weeks, 1), 2, pad = "0")), # padding so it will sort correctly
-                                        os_weeks_elev = str_c(elevation.group,"_", os_weeks_f)
+                                        os_weeks_elev = factor(str_c(elevation.group,"_", os_weeks_f))
 )
 wl2_obs.elev
+
+wl2_obs.elev.0 <- wl2_obs.elev.0 %>% mutate(n=n.newly.dead + surviving,
+                                        os_weeks_f = factor(str_pad(round(os_weeks, 1), 2, pad = "0")), # padding so it will sort correctly
+                                        os_weeks_elev = factor(str_c(elevation.group,"_", os_weeks_f))
+)
+
+wl2_obs.elev.0
 ```
 
 ### simple: time only
 
+no week 0 data
 ```{r}
 m1 <- brm(n.newly.dead | trials(n)  ~ 0 + os_weeks_f, 
           prior(normal(0, 4), class = b),
@@ -206,6 +261,12 @@ m1 <- brm(n.newly.dead | trials(n)  ~ 0 + os_weeks_f,
           chains = 4, cores = 4,
           data = na.omit(wl2_obs.elev),
           save_pars = save_pars(all = TRUE)) %>%
+  add_criterion("loo", moment_match = TRUE)
+```
+
+with week 0
+```{r}
+m1.w0 <- update(m1, newdata = wl2_obs.elev.0)  %>%
   add_criterion("loo", moment_match = TRUE)
 ```
 
@@ -240,12 +301,24 @@ m2 <- brm(n.newly.dead | trials(n)  ~ 0 + os_weeks_f + elevation.group,
 
 
 ```{r}
+m2.w0 <- update(m2, newdata = wl2_obs.elev.0)  %>%
+  add_criterion("loo", moment_match = TRUE)
+```
+
+
+```{r}
 summary(m2)
+```
+
+```{r}
+summary(m2.w0)
 ```
 
 from logit to hazard probabilities:
 ```{r}
 fixef(m2) %>% inv_logit_scaled()
+fixef(m2.w0) %>% inv_logit_scaled()
+
 ```
 
 ```{r}
@@ -261,12 +334,17 @@ m3 <- brm(n.newly.dead | trials(n)  ~ 0 + os_weeks_f*elevation.group,
           chains = 4, cores = 4,
           data = na.omit(wl2_obs.elev),
           save_pars = save_pars(all = TRUE)) %>%
-  add_criterion("loo", moment_match = TRUE)
+  add_criterion("loo", moment_match = TRUE, reloo = TRUE)
 ```
 
+```{r}
+m3.w0 <- update(m3, newdata = wl2_obs.elev.0)  %>%
+  add_criterion("loo", moment_match = TRUE, reloo = TRUE)
+```
 
 ```{r}
 summary(m3)
+summary(m3.w0)
 ```
 
 Transform logits to hazard probabilities
@@ -288,12 +366,25 @@ m4 <- brm(n.newly.dead | trials(n)  ~ 0 + os_weeks_elev,
           chains = 4, cores = 4,
           data = na.omit(wl2_obs.elev),
           save_pars = save_pars(all = TRUE)) %>%
-  add_criterion("loo", moment_match = TRUE)
+  add_criterion("loo", moment_match = TRUE) # reloo gives an error so not using it
 ```
+
+```{r}
+# update model not working here because of factor levels
+
+m4.w0 <- update(m4, newdata = wl2_obs.elev.0) %>%
+  add_criterion("loo", moment_match = TRUE) #, reloo = TRUE) gives an error, not using it
+
+
+```
+
+
+Levels allowed: 'High_00', 'High_01', 'High_02', 'High_03', 'High_04', 'High_05', 'High_06', 'High_07', 'High_08', 'High_09', 'High_10', 'High_12.3', 'High_13.3', 'Low_00', 'Low_01', 'Low_02', 'Low_03', 'Low_04', 'Low_06', 'Low_07', 'Low_08', 'Low_09', 'Low_10', 'Low_12.3', 'Low_13.3', 'Mid_00', 'Mid_01', 'Mid_02', 'Mid_03', 'Mid_04', 'Mid_05', 'Mid_06', 'Mid_07', 'Mid_08', 'Mid_09', 'Mid_10', 'Mid_12.3', 'Mid_13.3'
 
 
 ```{r}
 summary(m4)
+summary(m4.w0)
 ```
 logit to hazard probabilities
 ```{r}
@@ -304,10 +395,17 @@ fixef(m4) %>% inv_logit_scaled()
 plot(m4, ask = FALSE, nvariables = 3)
 ```
 
+Compare models without week 0
 ```{r}
 loo_compare(m1, m2, m3, m4)
 ```
 m4 and m3 are equivalent.  m1 is notably worse and m2 is somewhat worse.
+
+Compare models with week 0
+```{r}
+loo_compare(m1.w0, m2.w0, m3.w0, m4.w0)
+```
+m4 is maybe slightly worse
 
 ## plots from m4 and m2
 
@@ -344,6 +442,44 @@ m4.plot.df <- as_draws_df(m4) %>%
 
 ```{r}
 m4.plot.df %>%
+  ggplot(aes(x = week, y = cum.survivorship, ymin = cum.survivorship.lower, ymax = cum.survivorship.upper, group = elevation)) +
+  geom_ribbon(fill="grey50", alpha = .5) +
+  geom_line(aes(color=elevation), lwd=1.5) +
+  geom_point(aes(x=os_weeks, y = prop.surviving, color = elevation.group), data = wl2_obs_elev.summary, inherit.aes = FALSE) +
+  scale_color_viridis_d() + 
+  ggtitle("m4: n.dead ~ time*elevation")
+```
+
+### m4 week 0
+
+```{r}
+m4.w0.plot.df <- as_draws_df(m4.w0) %>%
+  select(starts_with("b_")) %>%
+  rename_with( ~ str_remove(.x, "b_os_weeks_elev")) %>%
+  
+  # transform hazards from logit to probability
+  mutate(across(everything(), .fns = inv_logit_scaled)) %>%
+  
+  # convert hazard to survival probability (1 - hazard)
+  mutate(across(everything(), .fns = ~ 1- .)) %>%
+  
+  # label the draws and pivot
+  mutate(draw = 1:n()) %>%
+  pivot_longer(-draw, names_to = c("elevation", "week"), names_sep = "_", values_to = "point.survivorship") %>%
+  
+  # calculate the cumulative survivorship
+  arrange(elevation, draw, week) %>% 
+  group_by(elevation, draw) %>%
+  mutate(cum.survivorship = cumprod(point.survivorship)) %>%
+  
+  # calculate Bayesian highest density 95% credible intervals
+  group_by(elevation, week) %>%
+  point_interval(point.survivorship, cum.survivorship, .interval = hdci) %>%
+  mutate(week = as.numeric(week))
+```
+
+```{r}
+m4.w0.plot.df %>%
   ggplot(aes(x = week, y = cum.survivorship, ymin = cum.survivorship.lower, ymax = cum.survivorship.upper, group = elevation)) +
   geom_ribbon(fill="grey50", alpha = .5) +
   geom_line(aes(color=elevation), lwd=1.5) +
@@ -400,11 +536,59 @@ m2.plot.df %>%
   ggtitle("m2: n.dead ~ time + elevation")
 ```
 
+### m2 with week 0
+```{r}
+m2.w0.plot.df <- 
+as_draws_df(m2.w0) %>%
+  select(starts_with("b_")) %>%
+  rename_with( ~ str_remove(.x, "b_")) %>%
+  
+# Add coefficients to get estimates for each elevation at each week.
+  
+  mutate(across(starts_with("os_weeks"), 
+                .fns = list(Mid = ~ . + elevation.groupMid, High = ~ . + elevation.groupHigh)
+  )) %>%
+  rename_with( ~ str_c(., "_Low"), matches("[0-9]$")) %>% # the original week estimates are from the Low elevation
+  select(-elevation.groupMid, - elevation.groupHigh) %>%
+  
+  
+  # transform hazards from logit to probability
+  mutate(across(everything(), .fns = inv_logit_scaled)) %>%
+  
+  # Convert hazard to probability of survivorship (1 - hazard)
+  mutate(across(everything(), .fns = ~ 1- .)) %>%
+  
+  # label the draws and pivot
+  mutate(draw = 1:n()) %>%
+  pivot_longer(-draw, names_to = c("week", "elevation"), names_sep = "_", values_to = "point.survivorship", names_prefix = "os_weeks_f") %>%
+  
+  # calculate the cumulative survivorship
+  arrange(elevation, draw, week) %>% 
+  group_by(elevation, draw) %>%
+  mutate(cum.survivorship = cumprod(point.survivorship)) %>%
+  
+  # calculalte Bayesian highest density 95% credible interval
+  group_by(elevation, week) %>%
+  point_interval(point.survivorship, cum.survivorship, .interval = hdci) %>%
+  mutate(week = as.numeric(week))
+```
+
+```{r}
+m2.w0.plot.df %>%
+  ggplot(aes(x = week, y = cum.survivorship, ymin = cum.survivorship.lower, ymax = cum.survivorship.upper, group = elevation)) +
+  geom_ribbon(fill="grey50", alpha = .5) +
+  geom_line(aes(color=elevation), lwd=1.5) +
+  geom_point(aes(x=os_weeks, y = prop.surviving, color = elevation.group), data = wl2_obs_elev.summary, inherit.aes = FALSE) +
+  scale_color_viridis_d() +
+  ggtitle("m2: n.dead ~ time + elevation")
+```
+
+
 TODO:
 
 [] Random effects
-[] Time as (polynomial) continuous
-[] Time as a smoothed continuous
+[*] Time as (polynomial) continuous
+[*] Time as a smoothed continuous
 [] BRMS time-to-event parameterization (maybe)
 [] Environmental co-variates
 
@@ -422,8 +606,15 @@ m5 <- brm(n.newly.dead | trials(n)  ~ os_weeks*elevation.group,
           save_pars = save_pars(all = TRUE)) %>%
   add_criterion("loo", moment_match = TRUE)
 ```
+
+```{r}
+m5.w0 <- update(m5, newdata = wl2_obs.elev.0) %>%
+  add_criterion("loo", moment_match = TRUE)
+```
+
 ```{r}
 summary(m5)
+summary(m5.w0)
 ```
 
 
@@ -439,6 +630,10 @@ plot(m5, ask = FALSE, nvariables = 3)
 ```{r}
 loo_compare(m1, m2, m3, m4, m5)
 ```
+```{r}
+loo_compare(m1.w0, m2.w0, m3.w0, m4.w0, m5.w0)
+```
+
 OK that does not fit well at all.
 
 What about quadratic?
@@ -457,7 +652,14 @@ m6 <- brm(n.newly.dead | trials(n)  ~ os_weeks*elevation.group + I(os_weeks^2)*e
 ```
 
 ```{r}
+m6.w0 <- update(m6, newdata = wl2_obs.elev.0) %>%
+  add_criterion("loo", moment_match = TRUE)
+```
+
+
+```{r}
 summary(m6)
+summary(m6.w0)
 ```
 
 
@@ -465,7 +667,6 @@ logit to hazard probabilities
 ```{r}
 fixef(m6) %>% inv_logit_scaled()
 ```
-Wide confidence intervals on some of those coefficients...
 
 ```{r}
 plot(m6, ask = FALSE, nvariables = 3)
@@ -474,9 +675,15 @@ plot(m6, ask = FALSE, nvariables = 3)
 ```{r}
 loo_compare(m1, m2, m3, m4, m5, m6)
 ```
-It does do a decent job, although marginally not as good as the best.
 
-The confidence intervals on the coefficients for the elevation:linear time term include 0.  how about a model without those interactions?
+```{r}
+loo_compare(m1.w0, m2.w0, m3.w0, m4.w0, m5.w0, m6.w0)
+```
+
+
+For the model without week 0, it does an okay job, but the confidence intervals on the coefficients for the elevation:linear time term include 0.  how about a model without those interactions?
+
+For the model with week 0, the confidence intervals do not cross 0.  it also does a terrible job.  Won't pursue m7 for week0 data
 
 
 ```{r}
@@ -490,10 +697,14 @@ m7 <- brm(n.newly.dead | trials(n)  ~  os_weeks + elevation.group + I(os_weeks^2
 ```
 
 ```{r}
-summary(m7)
+m7.w0 <- update(m7, newdata = wl2_obs.elev.0) %>%
+  add_criterion("loo", moment_match = TRUE)
 ```
 
-no parameter estimates crossing zero, this is nicer than m6
+
+```{r}
+summary(m7)
+```
 
 logit to hazard probabilities
 ```{r}
@@ -508,7 +719,12 @@ plot(m7, ask = FALSE, nvariables = 3)
 loo_compare(m6,m7)
 loo_compare(m1, m2, m3, m4, m5, m6, m7)
 ```
-Although about the same as m6 on the loo scale.  Still, we would go with the simpler model (m7)
+About the same as m6 on the loo scale.  Would go with the simpler model (m7)
+
+```{r}
+loo_compare(m1.w0, m2.w0, m3.w0, m4.w0, m5.w0, m6.w0, m7.w0)
+```
+
 
 ### Extracting and plotting from m7
 
@@ -562,7 +778,14 @@ m8 <- brm(n.newly.dead | trials(n)  ~  os_weeks + elevation.group + I(os_weeks^2
 ```
 
 ```{r}
+m8.w0 <- update(m8, newdata = wl2_obs.elev.0) %>%
+  add_criterion("loo", moment_match = TRUE)
+```
+
+
+```{r}
 summary(m8)
+summary(m8.w0)
 ```
 
 no parameter estimates crossing zero, this is nicer than m6
@@ -575,12 +798,41 @@ fixef(m8) %>% inv_logit_scaled()
 ```{r}
 plot(m8, ask = FALSE, nvariables = 3)
 ```
+```{r}
+plot(m8.w0, ask = FALSE, nvariables = 3)
+```
+
+```{r}
+prior_summary(m8.w0)
+```
+Try a different intercept prior
+
+```{r}
+m8.w0.1 <- brm(n.newly.dead | trials(n)  ~ 0 + Intercept + os_weeks + elevation.group + I(os_weeks^2)*elevation.group + I(os_weeks^3), 
+          prior(normal(0, 4), class = b) + prior(normal(-10, 2), class = b, coef = Intercept),
+          family = "binomial",
+          chains = 4, cores = 4,
+          data = na.omit(wl2_obs.elev.0),
+          save_pars = save_pars(all = TRUE),
+          control = list( max_treedepth = 20)) %>%
+  add_criterion("loo", moment_match = TRUE)
+```
+
+```{r}
+summary(m8.w0.1)
+```
+
 
 ```{r}
 loo_compare(m7,m8)
 loo_compare(m1, m2, m3, m4, m5, m6, m7, m8)
 ```
 Although about the same as m7 on the loo scale, so we would favor the simpler model (m7) based on this.  Go ahead and plot it.
+
+```{r}
+loo_compare(m1.w0, m2.w0, m3.w0, m4.w0, m5.w0, m6.w0, m7.w0, m8.w0, m8.w0.1)
+```
+
 
 ### Extracting and plotting from m8
 
@@ -610,4 +862,366 @@ wl2_obs.elev %>%
   geom_point(aes(x=os_weeks, y = prop.surviving, color = elevation.group), data = wl2_obs_elev.summary, inherit.aes = FALSE) +
   scale_color_viridis_d() + 
   ggtitle("m8: n.newly.dead | trials(n) ~ os_weeks + elevation.group + I(os_weeks^2) * elevation.group + I(os_weeks^3) ")
+```
+
+```{r}
+wl2_obs.elev.0 %>% 
+  data_grid(os_weeks, elevation.group, n=1) %>%
+  
+  # Add the discrete hazard probabilities
+  add_epred_draws(m8.w0) %>% 
+
+  # convert hazard to survival probability (1 - hazard)
+  mutate(point.survivorship = 1 - .epred) %>%
+  
+  # calculate the cumulative survivorship
+  arrange(elevation.group, .draw, os_weeks) %>% 
+  group_by(elevation.group, .draw) %>%
+  mutate(cum.survivorship = cumprod(point.survivorship)) %>%
+  
+  # calculate Bayesian highest density 95% credible intervals
+  group_by(elevation.group, os_weeks) %>%
+  point_interval(point.survivorship, cum.survivorship, .interval = hdci) %>%
+  
+    ggplot(aes(x = os_weeks, y = cum.survivorship, ymin = cum.survivorship.lower, ymax = cum.survivorship.upper, group = elevation.group)) +
+  geom_ribbon(fill="grey50", alpha = .5) +
+  geom_line(aes(color=elevation.group), lwd=1.5) +
+  geom_point(aes(x=os_weeks, y = prop.surviving, color = elevation.group), data = wl2_obs_elev.summary, inherit.aes = FALSE) +
+  scale_color_viridis_d() + 
+  ggtitle("m8: n.newly.dead | trials(n) ~ os_weeks + elevation.group + I(os_weeks^2) * elevation.group + I(os_weeks^3) ") +
+  ylim(c(0,1))
+```
+
+### Smoothed, no interaction, default
+
+using default parameters for `s()`.  Could modify number of knots, etc.  See `mgcv::s`
+```{r}
+m9 <- brm(n.newly.dead | trials(n)  ~  elevation.group + s(os_weeks) , 
+          prior(normal(0, 4), class = b),
+          family = "binomial",
+          chains = 4, cores = 4,
+          data = na.omit(wl2_obs.elev),
+          save_pars = save_pars(all = TRUE),
+          control = list(adapt_delta = 0.99, max_treedepth = 20, stepsize=0.1)) %>%
+  add_criterion("loo", moment_match = TRUE, reloo=TRUE)
+```
+
+```{r}
+m9.w0 <- update(m9, newdata = wl2_obs.elev.0) %>%
+    add_criterion("loo", moment_match = TRUE, reloo=TRUE)
+```
+
+
+```{r}
+summary(m9)
+summary(m9.w0)
+```
+
+logit to hazard probabilities
+```{r}
+fixef(m9) %>% inv_logit_scaled()
+```
+
+```{r}
+plot(m9, ask = FALSE, nvariables = 3)
+```
+
+```{r}
+loo_compare(m1, m2, m3, m4, m5, m6, m7, m8, m9)
+```
+
+
+```{r}
+loo_compare(m1.w0, m2.w0, m3.w0, m4.w0, m5.w0, m6.w0, m7.w0, m8.w0, m9.w0)
+```
+
+not the best but better than any of the linear / polynomial models
+
+### Extracting and plotting from m9
+
+```{r}
+wl2_obs.elev %>% 
+  na.omit() %>% #get rid of week 0
+  data_grid(os_weeks, elevation.group, n=1) %>%
+  
+  # Add the discrete hazard probabilities
+  add_epred_draws(m9) %>% 
+
+  # convert hazard to survival probability (1 - hazard)
+  mutate(point.survivorship = 1 - .epred) %>%
+  
+  # calculate the cumulative survivorship
+  arrange(elevation.group, .draw, os_weeks) %>% 
+  group_by(elevation.group, .draw) %>%
+  mutate(cum.survivorship = cumprod(point.survivorship)) %>%
+  
+  # calculate Bayesian highest density 95% credible intervals
+  group_by(elevation.group, os_weeks) %>%
+  point_interval(point.survivorship, cum.survivorship, .interval = hdci) %>%
+  
+  ggplot(aes(x = os_weeks, y = cum.survivorship, ymin = cum.survivorship.lower, ymax = cum.survivorship.upper, group = elevation.group)) +
+  geom_ribbon(fill="grey50", alpha = .5) +
+  geom_line(aes(color=elevation.group), lwd=1.5) +
+  geom_point(aes(x=os_weeks, y = prop.surviving, color = elevation.group), data = wl2_obs_elev.summary, inherit.aes = FALSE) +
+  scale_color_viridis_d() + 
+  ggtitle("m9: brm(n.newly.dead | trials(n)  ~  elevation.group + s(os_weeks)")
+```
+
+```{r}
+wl2_obs.elev.0 %>% 
+  na.omit() %>% #get rid of week 0
+  data_grid(os_weeks, elevation.group, n=1) %>%
+  
+  # Add the discrete hazard probabilities
+  add_epred_draws(m9.w0) %>% 
+
+  # convert hazard to survival probability (1 - hazard)
+  mutate(point.survivorship = 1 - .epred) %>%
+  
+  # calculate the cumulative survivorship
+  arrange(elevation.group, .draw, os_weeks) %>% 
+  group_by(elevation.group, .draw) %>%
+  mutate(cum.survivorship = cumprod(point.survivorship)) %>%
+  
+  # calculate Bayesian highest density 95% credible intervals
+  group_by(elevation.group, os_weeks) %>%
+  point_interval(point.survivorship, cum.survivorship, .interval = hdci) %>%
+  
+  ggplot(aes(x = os_weeks, y = cum.survivorship, ymin = cum.survivorship.lower, ymax = cum.survivorship.upper, group = elevation.group)) +
+  geom_ribbon(fill="grey50", alpha = .5) +
+  geom_line(aes(color=elevation.group), lwd=1.5) +
+  geom_point(aes(x=os_weeks, y = prop.surviving, color = elevation.group), data = wl2_obs_elev.summary, inherit.aes = FALSE) +
+  scale_color_viridis_d() + 
+  ggtitle("m9: brm(n.newly.dead | trials(n)  ~  elevation.group + s(os_weeks)")
+```
+
+### smoothed, with interaction, default
+
+using default parameters for `s()`.  Could modify number of knots, etc.  See `mgcv::s`
+```{r}
+m10 <- brm(n.newly.dead | trials(n)  ~  elevation.group + s(os_weeks, by=elevation.group) , 
+          prior(normal(0, 4), class = b),
+          family = "binomial",
+          chains = 4, cores = 4,
+          data = na.omit(wl2_obs.elev),
+          save_pars = save_pars(all = TRUE),
+          control = list(adapt_delta = 0.99, max_treedepth = 20, stepsize=0.1)) %>%
+  add_criterion("loo", moment_match = TRUE, reloo=TRUE)
+```
+
+```{r}
+#m10.w0 <- update(m10, newdata = wl2_obs.elev.0) %>%
+#  add_criterion("loo", moment_match = TRUE, reloo = TRUE)
+
+# starting without update, just in case
+
+m10.w0 <- brm(n.newly.dead | trials(n)  ~  elevation.group + s(os_weeks, by=elevation.group) , 
+          prior(normal(0, 4), class = b),
+          family = "binomial",
+          chains = 4, cores = 4,
+          data = na.omit(wl2_obs.elev.0),
+          save_pars = save_pars(all = TRUE),
+          control = list(adapt_delta = 0.99, max_treedepth = 20, stepsize=0.1)) %>%
+  add_criterion("loo", moment_match = TRUE, reloo=TRUE)
+```
+
+
+```{r}
+summary(m10)
+summary(m10.w0)
+```
+
+```{r}
+plot(m10, ask = FALSE, nvariables = 3)
+```
+
+```{r}
+loo_compare(m1, m2, m3, m4, m5, m6, m7, m8, m9, m10)
+```
+
+```{r}
+loo_compare(m1.w0, m2.w0, m3.w0, m4.w0, m5.w0, m6.w0, m7.w0, m8.w0, m9.w0, m10.w0)
+```
+
+huh, without week 0 data it is as good as the best, but with week 0 it is the worst! (But see below...the fit looks great...)
+
+what about WAIC? WAIC gives a warning. What about bayes R2?
+
+```{r}
+bayes_R2(m4.w0)
+bayes_R2(m9.w0)
+bayes_R2(m10.w0)
+```
+Tighter priors on the smoothing coefficients:
+
+```{r}
+m10.w0.1 <- brm(n.newly.dead | trials(n)  ~  elevation.group + s(os_weeks, by=elevation.group) , 
+          prior(normal(0, 4), class = b) + prior(normal(0,1), class = sds), #tigher priors on "wigglieness" of smoothing splines
+          family = "binomial",
+          chains = 4, cores = 4,
+          data = na.omit(wl2_obs.elev.0),
+          save_pars = save_pars(all = TRUE),
+          control = list(adapt_delta = 0.99, max_treedepth = 20, stepsize=0.1)) %>%
+  add_criterion("loo", moment_match = TRUE, reloo=TRUE)
+```
+
+```{r}
+plot(m10.w0.1, ask = FALSE)
+```
+
+
+```{r}
+loo_compare(m4.w0, m9.w0, m10.w0, m10.w0.1)
+```
+what about penalizing the splines?
+
+
+```{r}
+m10.w0.2 <- brm(n.newly.dead | trials(n)  ~  elevation.group + s(os_weeks, by=elevation.group, bs = "ts") , 
+          prior(normal(0, 4), class = b) + prior(normal(0,1), class = sds), #tigher priors on "wigglieness" of smoothing splines
+          family = "binomial",
+          chains = 4, cores = 4,
+          data = na.omit(wl2_obs.elev.0),
+          save_pars = save_pars(all = TRUE),
+          control = list(adapt_delta = 0.99, max_treedepth = 20, stepsize=0.1)) %>%
+  add_criterion("loo", moment_match = TRUE, reloo=TRUE)
+```
+
+```{r}
+plot(m10.w0.2, ask = FALSE)
+```
+
+```{r}
+m10.w0.3 <- brm(n.newly.dead | trials(n)  ~  elevation.group + s(os_weeks, by=elevation.group, bs = "ps") , 
+          prior(normal(0, 4), class = b) + prior(normal(0,1), class = sds), #tigher priors on "wigglieness" of smoothing splines
+          family = "binomial",
+          chains = 4, cores = 4,
+          data = na.omit(wl2_obs.elev.0),
+          save_pars = save_pars(all = TRUE),
+          control = list(adapt_delta = 0.99, max_treedepth = 20, stepsize=0.1)) %>%
+  add_criterion("loo", moment_match = TRUE, reloo=TRUE)
+```
+
+```{r}
+m10.w0.4 <- brm(n.newly.dead | trials(n)  ~  elevation.group + s(os_weeks, by=elevation.group, bs = "cc") , 
+          prior(normal(0, 4), class = b) + prior(normal(0,1), class = sds), #tigher priors on "wigglieness" of smoothing splines
+          family = "binomial",
+          chains = 4, cores = 4,
+          data = na.omit(wl2_obs.elev.0),
+          save_pars = save_pars(all = TRUE),
+          control = list(adapt_delta = 0.99, max_treedepth = 20, stepsize=0.1)) %>%
+  add_criterion("loo", moment_match = TRUE, reloo=TRUE)
+```
+
+```{r}
+plot(m10.w0.2, ask = FALSE)
+```
+
+```{r}
+loo_compare(m4.w0, m9.w0, m10.w0, m10.w0.1, m10.w0.2, m10.w0.3, m10.w0.4)
+```
+
+### Extracting and plotting from m10
+
+```{r}
+wl2_obs.elev %>% 
+  na.omit() %>% #get rid of week 0
+  data_grid(os_weeks, elevation.group, n=1) %>%
+  
+  # Add the discrete hazard probabilities
+  add_epred_draws(m10) %>% 
+
+  # convert hazard to survival probability (1 - hazard)
+  mutate(point.survivorship = 1 - .epred) %>%
+  
+  # calculate the cumulative survivorship
+  arrange(elevation.group, .draw, os_weeks) %>% 
+  group_by(elevation.group, .draw) %>%
+  mutate(cum.survivorship = cumprod(point.survivorship)) %>%
+  
+  # calculate Bayesian highest density 95% credible intervals
+  group_by(elevation.group, os_weeks) %>%
+  point_interval(point.survivorship, cum.survivorship, .interval = hdci) %>%
+  
+    ggplot(aes(x = os_weeks, y = cum.survivorship, ymin = cum.survivorship.lower, ymax = cum.survivorship.upper, group = elevation.group)) +
+  geom_ribbon(fill="grey50", alpha = .5) +
+  geom_line(aes(color=elevation.group), lwd=1.5) +
+  geom_point(aes(x=os_weeks, y = prop.surviving, color = elevation.group), data = wl2_obs_elev.summary, inherit.aes = FALSE) +
+  scale_color_viridis_d() + 
+  ggtitle("m10: brm(n.newly.dead | trials(n)  ~  elevation.group + s(os_weeks), by = elevation.group")
+```
+
+
+
+```{r}
+wl2_obs.elev.0 %>% 
+  data_grid(os_weeks, elevation.group, n=1) %>%
+  
+  # Add the discrete hazard probabilities
+  add_epred_draws(m10.w0.3) %>% 
+
+  # convert hazard to survival probability (1 - hazard)
+  mutate(point.survivorship = 1 - .epred) %>%
+  
+  # calculate the cumulative survivorship
+  arrange(elevation.group, .draw, os_weeks) %>% 
+  group_by(elevation.group, .draw) %>%
+  mutate(cum.survivorship = cumprod(point.survivorship)) %>%
+  
+  # calculate Bayesian highest density 95% credible intervals
+  group_by(elevation.group, os_weeks) %>%
+  point_interval(point.survivorship, cum.survivorship, .interval = hdci) %>%
+  
+    ggplot(aes(x = os_weeks, y = cum.survivorship, ymin = cum.survivorship.lower, ymax = cum.survivorship.upper, group = elevation.group)) +
+  geom_ribbon(fill="grey50", alpha = .5) +
+  geom_line(aes(color=elevation.group), lwd=1.5) +
+  geom_point(aes(x=os_weeks, y = prop.surviving, color = elevation.group), data = wl2_obs_elev.summary, inherit.aes = FALSE) +
+  scale_color_viridis_d() + 
+  ggtitle("m10: brm(n.newly.dead | trials(n)  ~  elevation.group + s(os_weeks), by = elevation.group")
+```
+
+```{r}
+#m10.w0 <- update(m10, newdata = wl2_obs.elev.0) %>%
+#  add_criterion("loo", moment_match = TRUE, reloo = TRUE)
+
+# starting without update, just in case
+
+m11.w0 <- brm(n.newly.dead | trials(n)  ~  s(os_weeks, by=elevation.group) , 
+          prior(normal(0, 4), class = b),
+          family = "binomial",
+          chains = 4, cores = 4,
+          data = na.omit(wl2_obs.elev.0),
+          save_pars = save_pars(all = TRUE),
+          control = list(adapt_delta = 0.99, max_treedepth = 20, stepsize=0.1)) %>%
+  add_criterion("loo", moment_match = TRUE, reloo=TRUE)
+```
+
+```{r}
+loo_compare(m4.w0, m10.w0, m11.w0)
+```
+
+
+```{r}
+#m10.w0 <- update(m10, newdata = wl2_obs.elev.0) %>%
+#  add_criterion("loo", moment_match = TRUE, reloo = TRUE)
+
+# starting without update, just in case
+
+m12.w0 <- brm(n.newly.dead | trials(n)  ~  s(os_weeks, by=elevation.group) , 
+          prior(normal(0, 4), class = b),
+          family = "binomial",
+          chains = 4, cores = 4,
+          data = {na.omit(wl2_obs.elev.0) %>% mutate(os_weeks = scale(os_weeks, scale=FALSE)) },
+          save_pars = save_pars(all = TRUE),
+          control = list(adapt_delta = 0.99, max_treedepth = 20, stepsize=0.1)) %>%
+  add_criterion("loo", moment_match = TRUE, reloo=TRUE)
+```
+
+```{r}
+loo_compare(m4.w0, m10.w0, m11.w0, m12.w0)
+```
+
+
+```{r}
+save.image(file = "../output/WL2_Surv_BRMS_Fits.Rdata")
 ```
