@@ -1,0 +1,640 @@
+---
+title: "Climate_PCAs_AllYear"
+author: "Brandie QC"
+date: "`r Sys.Date()`"
+output: 
+  html_document: 
+    keep_md: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Climate PCAs
+
+-   Should use this code to check the significance of the PCA:
+    <https://github.com/StatQuest/pca_demo/blob/master/pca_demo.R>
+-   Remember this paper: Björklund, M. 2019. Be careful with your
+    principal components. Evolution 73: 2151--2158.
+
+-   Notes
+
+    -   Include snowpack? Not in the growth season PCAs since growth season is based off snowpack. 
+    -   Take out UCD_garden? It is pretty different from the other sites so it may be skewing things... depends on if we want the PCA to describe home sites-only or all home sites and gardens
+
+## Load necessary libraries 
+```{r}
+library(tidyverse)
+library(ggrepel)
+#library(cowplot)
+library(gridExtra)
+library(corrplot) #plotting correlations 
+library(rstatix) #performing cor_test
+library(QBMS) #for function calc_biovars to calculate bioclim variables
+library(ggfortify) #easier PCA figures
+sem <- function(x, na.rm=FALSE) {
+  sd(x,na.rm=na.rm)/sqrt(length(na.omit(x)))
+} #standard error function 
+
+get_legend<-function(myggplot){
+  tmp <- ggplot_gtable(ggplot_build(myggplot))
+  leg <- which(sapply(tmp$grobs, function(x) x$name) == "guide-box")
+  legend <- tmp$grobs[[leg]]
+  return(legend)
+} #legend function for grid_arrange
+
+elev_three_palette <- c("#0043F0", "#C9727F", "#F5A540") #colors from Gremer et al 2019
+elev_order <- c("High", "Mid", "Low")
+```
+
+## Load Flint Data
+```{r}
+flint_all_year <- read_csv("../output/Climate/flint_climate_UCDpops.csv")
+head(flint_all_year)
+```
+
+## Generate bioclim for all year
+-   annual mean temperature (BIO1)
+-   mean diurnal range (BIO2) - (Mean of monthly (max temp - min temp))
+-   temperature seasonality (BIO4) (standard deviation *100)
+-   temperature annual range (BIO7) (Max Temperature of Warmest Month - Min Temperature of Coldest Month)
+-   mean temp of wettest quarter (BIO8)
+-   mean temp of driest quarter (BIO9)
+-   annual precipitation (BIO12) - sum of ppt for the entire year (not the avg)
+-   precipitation seasonality (BIO15)  (Coefficient of Variation)
+-   precip of warmest quarter (BIO18)
+-   precip of coldest quarter (BIO19)
+
+### Prep
+```{r}
+bioclim_allyear_prep <- flint_all_year %>% 
+  rename(tmin=tmn, tmax=tmx) %>% #rename columns to match what calc_biovars expects
+  filter(year != "1895", year !="2024") %>%  #remove years with less than 12 months of data
+  arrange(parent.pop, year, month)
+
+bioclim_all_year <- tibble(bio1=NA, bio2=NA, bio4=NA, bio7=NA, bio8=NA, bio9=NA, bio12=NA, bio15=NA, bio18=NA, bio19=NA, year=2025) #blank tibble to bind calculations to
+bioclim_all_year
+ 
+popids <- unique(bioclim_allyear_prep$parent.pop) #list of pop ids for for loop 
+
+pop_elev <- flint_all_year %>% select(parent.pop:Long) %>% distinct()
+```
+
+### Calculation
+```{r}
+for(i in popids) {
+  A <- bioclim_allyear_prep %>% filter(parent.pop==i) %>% calc_biovars() %>% mutate(parent.pop=i)
+  #print(A)
+  bioclim_all_year <- bind_rows(bioclim_all_year, A)
+}
+unique(bioclim_all_year$parent.pop) #has all the populations in there!
+```
+
+### SUBSET
+```{r}
+bioclim_all_year_final <- bioclim_all_year %>% 
+  select(parent.pop, year, ann_tmean=bio1, mean_diurnal_range=bio2, 
+         temp_seasonality=bio4, temp_ann_range=bio7, tmean_wettest_quarter=bio8,
+         tmean_driest_quarter=bio9, ann_ppt=bio12, ppt_seasonality=bio15,
+         ppt_warmest_quarter=bio18, ppt_coldest_quarter=bio19) %>%
+  filter(year!=2025)
+head(bioclim_all_year_final)
+```
+
+### Merge with pop info
+```{r}
+pop_elev_bioclim_all_year <- left_join(bioclim_all_year_final, pop_elev) %>% 
+  select(parent.pop, elevation.group:Long, year:ppt_coldest_quarter)
+head(pop_elev_bioclim_all_year)
+```
+
+## Calculation of recent (last 30 years) and historical climate (prior 30 years)
+
+Note: Removed 2024 to facilitate use of QBMS package (also most of the plants did not experience 2024)
+
+```{r}
+flint_all_year_recent <- flint_all_year %>% filter(year>1993 & year<=2023) %>% select(parent.pop:month, cwd, pck, ppt, tmn, tmx)
+head(flint_all_year_recent)
+tail(flint_all_year_recent)
+
+flint_all_year_historical <- flint_all_year %>% filter(year<=1993 & year>1963) %>% select(parent.pop:month, cwd, pck, ppt, tmn, tmx)
+head(flint_all_year_historical, 13)
+tail(flint_all_year_historical, 13)
+
+bioclim_all_year_recent <- pop_elev_bioclim_all_year %>% filter(year>1993 & year<=2023)
+head(bioclim_all_year_recent)
+tail(bioclim_all_year_recent)
+
+bioclim_all_year_historical <- pop_elev_bioclim_all_year %>% filter(year<=1993 & year>1963)
+head(bioclim_all_year_historical, 13)
+tail(bioclim_all_year_historical, 13)
+```
+
+## All years and months included (Flint)
+
+Correlations - Flint Recent
+
+```{r}
+#normalize the data
+climate_normalized_all_flint_recent <- flint_all_year_recent %>% select(cwd, ppt, tmn, tmx) %>% scale() #normalize the data so they're all on the same scale
+head(climate_normalized_all_flint_recent)
+cor.norm = cor(climate_normalized_all_flint_recent) #test correlations among the traits
+corrplot(cor.norm)
+```
+
+Overlay populations on PCA plot - Flint Recent
+
+```{r}
+#flint_all_year_recent[c(8:12)]
+all_flint_recent.pc = prcomp(flint_all_year_recent[c(8, 10:12)], scale = TRUE, center = TRUE)
+summary(all_flint_recent.pc)
+
+all_flint_recent.pc.dat = data.frame(all_flint_recent.pc$x)
+
+all_flint_recent_locs.pc = cbind(flint_all_year_recent, all_flint_recent.pc.dat)
+
+all_flint_recent_loadings = data.frame(varnames=rownames(all_flint_recent.pc$rotation), all_flint_recent.pc$rotation)
+
+autoplot(all_flint_recent.pc, all_flint_recent_loadings=TRUE, loadings.label=TRUE, 
+         loadings.colour="blue", loadings.label.colour="red",  loadings.label.size = 10)
+#this method results in different amounts of variation explained by PCs compared to princomp
+
+autoplot(all_flint_recent.pc, data = flint_all_year_recent,
+         colour='elevation.group', loadings=TRUE,
+         loadings.colour='black', loadings.label = TRUE)
+
+all_flint_recent_locs.pc %>% 
+  ggplot(aes(x = PC1, y = PC2, colour=elev_m)) +
+  geom_point() +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_vline(xintercept = 0, linetype="dashed") + geom_hline(yintercept = 0, linetype="dashed") 
+
+```
+
+Correlations - Flint Historical
+
+```{r}
+#normalize the data
+climate_normalized_all_flint_historical <- flint_all_year_historical %>% select(cwd, ppt, tmn, tmx) %>% scale() #normalize the data so they're all on the same scale
+head(climate_normalized_all_flint_historical)
+cor.norm = cor(climate_normalized_all_flint_historical) #test correlations among the traits
+corrplot(cor.norm)
+```
+
+Overlay populations on PCA plot - Flint Historical
+
+```{r}
+#flint_all_year_historical[c(8:12)]
+all_flint_historical.pc = prcomp(flint_all_year_historical[c(8, 10:12)], scale = TRUE, center = TRUE)
+summary(all_flint_historical.pc)
+
+all_flint_historical.pc.dat = data.frame(all_flint_historical.pc$x)
+
+all_flint_historical_locs.pc = cbind(flint_all_year_historical, all_flint_historical.pc.dat)
+
+all_flint_historical_loadings = data.frame(varnames=rownames(all_flint_historical.pc$rotation), all_flint_historical.pc$rotation)
+
+autoplot(all_flint_historical.pc, all_flint_historical_loadings=TRUE, loadings.label=TRUE, 
+         loadings.colour="blue", loadings.label.colour="red",  loadings.label.size = 10)
+#this method results in different amounts of variation explained by PCs compared to princomp
+
+autoplot(all_flint_historical.pc, data = flint_all_year_historical,
+         colour='elevation.group', loadings=TRUE,
+         loadings.colour='black', loadings.label = TRUE)
+
+all_flint_historical_locs.pc %>% 
+  ggplot(aes(x = PC1, y = PC2, colour=elev_m)) +
+  geom_point() +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_vline(xintercept = 0, linetype="dashed") + geom_hline(yintercept = 0, linetype="dashed") 
+
+```
+
+## All years included (bioclim)
+
+Correlations - bioclim Recent
+
+```{r}
+#normalize the data
+climate_normalized_all_bioclim_recent <- bioclim_all_year_recent %>% select(ann_tmean:ppt_coldest_quarter) %>% scale() #normalize the data so they're all on the same scale
+head(climate_normalized_all_bioclim_recent)
+cor.norm = cor(climate_normalized_all_bioclim_recent) #test correlations among the traits
+corrplot(cor.norm)
+```
+
+Overlay populations on PCA plot - bioclim Recent
+
+```{r}
+all_bioclim_recent.pc = prcomp(bioclim_all_year_recent[c(7:16)], scale = TRUE, center = TRUE)
+summary(all_bioclim_recent.pc)
+
+all_bioclim_recent.pc.dat = data.frame(all_bioclim_recent.pc$x)
+
+all_bioclim_recent_locs.pc = cbind(bioclim_all_year_recent, all_bioclim_recent.pc.dat)
+
+all_bioclim_recent_loadings = data.frame(varnames=rownames(all_bioclim_recent.pc$rotation), all_bioclim_recent.pc$rotation)
+
+autoplot(all_bioclim_recent.pc, all_bioclim_recent_loadings=TRUE, loadings.label=TRUE, 
+         loadings.colour="blue", loadings.label.colour="red",  loadings.label.size = 5)
+#this method results in different amounts of variation explained by PCs compared to princomp
+
+autoplot(all_bioclim_recent.pc, data = bioclim_all_year_recent,
+         colour='elevation.group', loadings=TRUE,
+         loadings.colour='black', loadings.label = TRUE)
+
+all_bioclim_recent_locs.pc %>% 
+  ggplot(aes(x = PC1, y = PC2, colour=elev_m)) +
+  geom_point() +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_vline(xintercept = 0, linetype="dashed") + geom_hline(yintercept = 0, linetype="dashed") 
+
+```
+
+Correlations - bioclim Historical
+
+```{r}
+#normalize the data
+climate_normalized_all_bioclim_historical <- bioclim_all_year_historical %>% select(ann_tmean:ppt_coldest_quarter) %>% scale() #normalize the data so they're all on the same scale
+head(climate_normalized_all_bioclim_historical)
+cor.norm = cor(climate_normalized_all_bioclim_historical) #test correlations among the traits
+corrplot(cor.norm)
+```
+
+Overlay populations on PCA plot - bioclim Historical
+
+```{r}
+all_bioclim_historical.pc = prcomp(bioclim_all_year_historical[c(7:16)], scale = TRUE, center = TRUE)
+summary(all_bioclim_historical.pc)
+
+all_bioclim_historical.pc.dat = data.frame(all_bioclim_historical.pc$x)
+
+all_bioclim_historical_locs.pc = cbind(bioclim_all_year_historical, all_bioclim_historical.pc.dat)
+
+all_bioclim_historical_loadings = data.frame(varnames=rownames(all_bioclim_historical.pc$rotation), all_bioclim_historical.pc$rotation)
+
+autoplot(all_bioclim_historical.pc, all_bioclim_historical_loadings=TRUE, loadings.label=TRUE, 
+         loadings.colour="blue", loadings.label.colour="red",  loadings.label.size = 5)
+#this method results in different amounts of variation explained by PCs compared to princomp
+
+autoplot(all_bioclim_historical.pc, data = bioclim_all_year_historical,
+         colour='elevation.group', loadings=TRUE,
+         loadings.colour='black', loadings.label = TRUE)
+
+all_bioclim_historical_locs.pc %>% 
+  ggplot(aes(x = PC1, y = PC2, colour=elev_m)) +
+  geom_point() +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_vline(xintercept = 0, linetype="dashed") + geom_hline(yintercept = 0, linetype="dashed") 
+```
+
+## Yearly Flint Avgs + bioclim 
+
+Calculate avgs
+
+```{r}
+flint_all_year_recent_yrlyavgs <- flint_all_year_recent %>% 
+  group_by(parent.pop, elevation.group, elev_m, Lat, Long, year) %>% 
+  summarise_at(c("cwd",  "ppt", "tmn", "tmx"), c(mean, sem), na.rm = TRUE) 
+names(flint_all_year_recent_yrlyavgs) <- gsub("fn2", "sem", colnames(flint_all_year_recent_yrlyavgs))
+names(flint_all_year_recent_yrlyavgs) <-gsub("fn1", "mean", colnames(flint_all_year_recent_yrlyavgs))
+flint_all_year_recent_yrlyavgs
+
+flint_all_year_historical_yrlyavgs <- flint_all_year_historical %>% 
+  group_by(parent.pop, elevation.group, elev_m, Lat, Long, year) %>% 
+  summarise_at(c("cwd",  "ppt", "tmn", "tmx"), c(mean, sem), na.rm = TRUE) 
+names(flint_all_year_historical_yrlyavgs) <- gsub("fn2", "sem", colnames(flint_all_year_historical_yrlyavgs))
+names(flint_all_year_historical_yrlyavgs) <-gsub("fn1", "mean", colnames(flint_all_year_historical_yrlyavgs))
+flint_all_year_historical_yrlyavgs
+
+```
+
+Merge with bioclim
+```{r}
+flint_all_year_recent_yrlyavgs_prep <- flint_all_year_recent_yrlyavgs %>% select(parent.pop:cwd_mean, tmn_mean:tmx_mean) #removed ppt_mean because that parameter is included in bioclim vars 
+bioclim_flint_all_year_recent <- full_join(flint_all_year_recent_yrlyavgs_prep, bioclim_all_year_recent)
+head(bioclim_flint_all_year_recent)
+
+flint_all_year_historical_yrlyavgs_prep <- flint_all_year_historical_yrlyavgs %>% select(parent.pop:cwd_mean, tmn_mean:tmx_mean)
+bioclim_flint_all_year_historical <- full_join(flint_all_year_historical_yrlyavgs_prep, bioclim_all_year_historical)
+head(bioclim_flint_all_year_historical)
+```
+
+Correlations - Recent
+
+```{r}
+#normalize the data
+climate_normalized_bioclim_flint_all_year_recent <- bioclim_flint_all_year_recent %>% ungroup() %>% 
+  select(cwd_mean:ppt_coldest_quarter) %>% scale() #normalize the data so they're all on the same scale
+head(climate_normalized_bioclim_flint_all_year_recent)
+cor.norm = cor(climate_normalized_bioclim_flint_all_year_recent) #test correlations among the traits
+corrplot(cor.norm)
+```
+
+Overlay populations on PCA plot - Recent
+
+```{r}
+all_bioclim_flint_recent.pc = prcomp(bioclim_flint_all_year_recent[c(7:19)], scale = TRUE, center = TRUE)
+summary(all_bioclim_flint_recent.pc)
+
+all_bioclim_flint_recent.pc.dat = data.frame(all_bioclim_flint_recent.pc$x)
+
+all_bioclim_flint_recent_locs.pc = cbind(bioclim_flint_all_year_recent, all_bioclim_flint_recent.pc.dat)
+
+all_bioclim_flint_recent_loadings = data.frame(varnames=rownames(all_bioclim_flint_recent.pc$rotation), all_bioclim_flint_recent.pc$rotation)
+
+autoplot(all_bioclim_flint_recent.pc, all_bioclim_flint_recent_loadings=TRUE, loadings.label=TRUE, 
+         loadings.colour="blue", loadings.label.colour="red",  loadings.label.size = 5)
+#this method results in different amounts of variation explained by PCs compared to princomp
+
+autoplot(all_bioclim_flint_recent.pc, data = bioclim_flint_all_year_recent,
+         colour='elevation.group', loadings=TRUE,
+         loadings.colour='black', loadings.label = TRUE)
+
+all_bioclim_flint_recent_locs.pc %>% 
+  ggplot(aes(x = PC1, y = PC2, colour=elev_m)) +
+  geom_point() +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_vline(xintercept = 0, linetype="dashed") + geom_hline(yintercept = 0, linetype="dashed") 
+
+```
+
+Correlations - historical
+
+```{r}
+#normalize the data
+climate_normalized_bioclim_flint_all_year_historical <- bioclim_flint_all_year_historical %>% ungroup() %>% 
+  select(cwd_mean:ppt_coldest_quarter) %>% scale() #normalize the data so they're all on the same scale
+head(climate_normalized_bioclim_flint_all_year_historical)
+cor.norm = cor(climate_normalized_bioclim_flint_all_year_historical) #test correlations among the traits
+corrplot(cor.norm)
+```
+
+Overlay populations on PCA plot - historical
+
+```{r}
+all_bioclim_flint_historical.pc = prcomp(bioclim_flint_all_year_historical[c(7:19)], scale = TRUE, center = TRUE)
+summary(all_bioclim_flint_historical.pc)
+
+all_bioclim_flint_historical.pc.dat = data.frame(all_bioclim_flint_historical.pc$x)
+
+all_bioclim_flint_historical_locs.pc = cbind(bioclim_flint_all_year_historical, all_bioclim_flint_historical.pc.dat)
+
+all_bioclim_flint_historical_loadings = data.frame(varnames=rownames(all_bioclim_flint_historical.pc$rotation), all_bioclim_flint_historical.pc$rotation)
+
+autoplot(all_bioclim_flint_historical.pc, all_bioclim_flint_historical_loadings=TRUE, loadings.label=TRUE, 
+         loadings.colour="blue", loadings.label.colour="red",  loadings.label.size = 5)
+#this method results in different amounts of variation explained by PCs compared to princomp
+
+autoplot(all_bioclim_flint_historical.pc, data = bioclim_flint_all_year_historical,
+         colour='elevation.group', loadings=TRUE,
+         loadings.colour='black', loadings.label = TRUE)
+
+all_bioclim_flint_historical_locs.pc %>% 
+  ggplot(aes(x = PC1, y = PC2, colour=elev_m)) +
+  geom_point() +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+
+  geom_vline(xintercept = 0, linetype="dashed") + geom_hline(yintercept = 0, linetype="dashed") 
+
+```
+
+## Avg across years and months (Flint)
+Calculate avgs
+
+```{r}
+flint_all_year_recent_avgs <- flint_all_year_recent %>% 
+  group_by(parent.pop, elevation.group, elev_m, Lat, Long) %>% 
+  summarise_at(c("cwd",  "ppt", "tmn", "tmx"), c(mean, sem), na.rm = TRUE) 
+names(flint_all_year_recent_avgs) <- gsub("fn2", "sem", colnames(flint_all_year_recent_avgs))
+names(flint_all_year_recent_avgs) <-gsub("fn1", "mean", colnames(flint_all_year_recent_avgs))
+flint_all_year_recent_avgs
+
+flint_all_year_historical_avgs <- flint_all_year_historical %>% 
+  group_by(parent.pop, elevation.group, elev_m, Lat, Long) %>% 
+  summarise_at(c("cwd",  "ppt", "tmn", "tmx"), c(mean, sem), na.rm = TRUE) 
+names(flint_all_year_historical_avgs) <- gsub("fn2", "sem", colnames(flint_all_year_historical_avgs))
+names(flint_all_year_historical_avgs) <-gsub("fn1", "mean", colnames(flint_all_year_historical_avgs))
+flint_all_year_historical_avgs
+
+```
+
+Correlations - Recent
+
+```{r}
+#normalize the data
+climate_normalized_flint_all_year_recent_avgs <- flint_all_year_recent_avgs %>% ungroup() %>% 
+  select(cwd_mean:tmx_mean) %>% scale() #normalize the data so they're all on the same scale
+head(climate_normalized_flint_all_year_recent_avgs)
+cor.norm = cor(climate_normalized_flint_all_year_recent_avgs) #test correlations among the traits
+corrplot(cor.norm)
+```
+
+Overlay populations on PCA plot - Recent
+
+```{r}
+all_flint_avgs_recent.pc = prcomp(flint_all_year_recent_avgs[c(6:9)], scale = TRUE, center = TRUE)
+summary(all_flint_avgs_recent.pc)
+
+all_flint_avgs_recent.pc.dat = data.frame(all_flint_avgs_recent.pc$x)
+
+all_flint_avgs_recent_locs.pc = cbind(flint_all_year_recent_avgs, all_flint_avgs_recent.pc.dat)
+
+all_flint_avgs_recent_loadings = data.frame(varnames=rownames(all_flint_avgs_recent.pc$rotation), all_flint_avgs_recent.pc$rotation)
+
+autoplot(all_flint_avgs_recent.pc, all_flint_avgs_recent_loadings=TRUE, loadings.label=TRUE, 
+         loadings.colour="blue", loadings.label.colour="red",  loadings.label.size = 5)
+#this method results in different amounts of variation explained by PCs compared to princomp
+
+autoplot(all_flint_avgs_recent.pc, data = flint_all_year_recent_avgs,
+         colour='elevation.group', loadings=TRUE,
+         loadings.colour='black', loadings.label = TRUE)
+
+all_flint_avgs_recent_locs.pc %>% 
+  ggplot(aes(x = PC1, y = PC2, colour=elev_m)) +
+  geom_point() +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_text_repel(aes(label = parent.pop),
+                  min.segment.length = 0) +
+  geom_segment(data = all_flint_avgs_recent_loadings, 
+               aes(x = 0, y = 0, xend = (PC1*5), yend = (PC2*5)), 
+               arrow = arrow(length = unit(1/2, "picas")), color = "black") +
+  annotate("text", x = (all_flint_avgs_recent_loadings$PC1*5), y = (all_flint_avgs_recent_loadings$PC2*5),
+     label = all_flint_avgs_recent_loadings$varnames) +
+  geom_vline(xintercept = 0, linetype="dashed") + geom_hline(yintercept = 0, linetype="dashed") 
+
+```
+
+Correlations - historical
+
+```{r}
+#normalize the data
+climate_normalized_flint_all_year_historical_avgs <- flint_all_year_historical_avgs %>% ungroup() %>% 
+  select(cwd_mean:tmx_mean) %>% scale() #normalize the data so they're all on the same scale
+head(climate_normalized_flint_all_year_historical_avgs)
+cor.norm = cor(climate_normalized_flint_all_year_historical_avgs) #test correlations among the traits
+corrplot(cor.norm)
+```
+
+Overlay populations on PCA plot - historical
+
+```{r}
+all_flint_avgs_historical.pc = prcomp(flint_all_year_historical_avgs[c(6:9)], scale = TRUE, center = TRUE)
+summary(all_flint_avgs_historical.pc)
+
+all_flint_avgs_historical.pc.dat = data.frame(all_flint_avgs_historical.pc$x)
+
+all_flint_avgs_historical_locs.pc = cbind(flint_all_year_historical_avgs, all_flint_avgs_historical.pc.dat)
+
+all_flint_avgs_historical_loadings = data.frame(varnames=rownames(all_flint_avgs_historical.pc$rotation), all_flint_avgs_historical.pc$rotation)
+
+autoplot(all_flint_avgs_historical.pc, all_flint_avgs_historical_loadings=TRUE, loadings.label=TRUE, 
+         loadings.colour="blue", loadings.label.colour="red",  loadings.label.size = 5)
+#this method results in different amounts of variation explained by PCs compared to princomp
+
+autoplot(all_flint_avgs_historical.pc, data = flint_all_year_historical_avgs,
+         colour='elevation.group', loadings=TRUE,
+         loadings.colour='black', loadings.label = TRUE)
+
+all_flint_avgs_historical_locs.pc %>% 
+  ggplot(aes(x = PC1, y = PC2, colour=elev_m)) +
+  geom_point() +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_text_repel(aes(label = parent.pop),
+                  min.segment.length = 0) +
+  geom_segment(data = all_flint_avgs_historical_loadings, 
+               aes(x = 0, y = 0, xend = (PC1*5), yend = (PC2*5)), 
+               arrow = arrow(length = unit(1/2, "picas")), color = "black") +
+  annotate("text", x = (all_flint_avgs_historical_loadings$PC1*5), y = (all_flint_avgs_historical_loadings$PC2*5),
+     label = all_flint_avgs_historical_loadings$varnames) +
+  geom_vline(xintercept = 0, linetype="dashed") + geom_hline(yintercept = 0, linetype="dashed") 
+```
+
+## Avg across years and months (Flint + bioclim)
+
+Calculate avgs
+
+```{r}
+bioclim_all_year_recent_avgs <- bioclim_all_year_recent %>% 
+  group_by(parent.pop, elevation.group, elev_m, Lat, Long) %>% 
+  summarise_at(c("ann_tmean", "mean_diurnal_range", "temp_seasonality", "temp_ann_range",
+                 "tmean_wettest_quarter", "tmean_driest_quarter", "ann_ppt",
+                 "ppt_seasonality","ppt_warmest_quarter", "ppt_coldest_quarter"),
+               c(mean, sem), na.rm = TRUE) 
+names(bioclim_all_year_recent_avgs) <- gsub("fn2", "sem", colnames(bioclim_all_year_recent_avgs))
+names(bioclim_all_year_recent_avgs) <-gsub("fn1", "mean", colnames(bioclim_all_year_recent_avgs))
+bioclim_all_year_recent_avgs
+
+bioclim_all_year_historical_avgs <- bioclim_all_year_historical %>% 
+  group_by(parent.pop, elevation.group, elev_m, Lat, Long) %>% 
+  summarise_at(c("ann_tmean", "mean_diurnal_range", "temp_seasonality", "temp_ann_range",
+                 "tmean_wettest_quarter", "tmean_driest_quarter", "ann_ppt",
+                 "ppt_seasonality","ppt_warmest_quarter", "ppt_coldest_quarter"),
+               c(mean, sem), na.rm = TRUE) 
+names(bioclim_all_year_historical_avgs) <- gsub("fn2", "sem", colnames(bioclim_all_year_historical_avgs))
+names(bioclim_all_year_historical_avgs) <-gsub("fn1", "mean", colnames(bioclim_all_year_historical_avgs))
+bioclim_all_year_historical_avgs
+```
+
+Merge with flint
+```{r}
+flint_all_year_recent_avgs_prep <- flint_all_year_recent_avgs %>% select(parent.pop:cwd_mean, tmn_mean:tmx_mean) #removed ppt_mean because that parameter is included in bioclim vars 
+bioclim_flint_all_year_recent_avgs <- full_join(flint_all_year_recent_avgs_prep, bioclim_all_year_recent_avgs)
+head(bioclim_flint_all_year_recent_avgs)
+
+flint_all_year_historical_avgs_prep <- flint_all_year_historical_avgs %>% select(parent.pop:cwd_mean, tmn_mean:tmx_mean) #removed ppt_mean because that parameter is included in bioclim vars 
+bioclim_flint_all_year_historical_avgs <- full_join(flint_all_year_historical_avgs_prep, bioclim_all_year_historical_avgs)
+head(bioclim_flint_all_year_historical_avgs)
+```
+
+
+Correlations - Recent
+
+```{r}
+#normalize the data
+climate_normalized_bioclim_flint_all_year_recent_avgs <- bioclim_flint_all_year_recent_avgs %>% ungroup() %>% 
+  select(cwd_mean:ppt_coldest_quarter_mean) %>% scale() #normalize the data so they're all on the same scale
+head(climate_normalized_bioclim_flint_all_year_recent_avgs)
+cor.norm = cor(climate_normalized_bioclim_flint_all_year_recent_avgs) #test correlations among the traits
+corrplot(cor.norm)
+```
+
+Overlay populations on PCA plot - Recent
+
+```{r}
+all_bioclim_flint_avgs_recent.pc = prcomp(bioclim_flint_all_year_recent_avgs[c(6:18)], scale = TRUE, center = TRUE)
+summary(all_bioclim_flint_avgs_recent.pc)
+
+all_bioclim_flint_avgs_recent.pc.dat = data.frame(all_bioclim_flint_avgs_recent.pc$x)
+
+all_bioclim_flint_avgs_recent_locs.pc = cbind(bioclim_flint_all_year_recent_avgs, all_bioclim_flint_avgs_recent.pc.dat)
+
+all_bioclim_flint_avgs_recent_loadings = data.frame(varnames=rownames(all_bioclim_flint_avgs_recent.pc$rotation), all_bioclim_flint_avgs_recent.pc$rotation)
+
+autoplot(all_bioclim_flint_avgs_recent.pc, all_bioclim_flint_avgs_recent_loadings=TRUE, loadings.label=TRUE, 
+         loadings.colour="blue", loadings.label.colour="red",  loadings.label.size = 5)
+#this method results in different amounts of variation explained by PCs compared to princomp
+
+autoplot(all_bioclim_flint_avgs_recent.pc, data = bioclim_flint_all_year_recent_avgs,
+         colour='elevation.group', loadings=TRUE,
+         loadings.colour='black', loadings.label = TRUE)
+
+all_bioclim_flint_avgs_recent_locs.pc %>% 
+  ggplot(aes(x = PC1, y = PC2, colour=elev_m)) +
+  geom_point() +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_text_repel(aes(label = parent.pop),
+                  min.segment.length = 0) +
+  geom_segment(data = all_bioclim_flint_avgs_recent_loadings, 
+               aes(x = 0, y = 0, xend = (PC1*5), yend = (PC2*5)), 
+               arrow = arrow(length = unit(1/2, "picas")), color = "black") +
+  annotate("text", x = (all_bioclim_flint_avgs_recent_loadings$PC1*5), y = (all_bioclim_flint_avgs_recent_loadings$PC2*5),
+     label = all_bioclim_flint_avgs_recent_loadings$varnames) +
+  geom_vline(xintercept = 0, linetype="dashed") + geom_hline(yintercept = 0, linetype="dashed") 
+
+```
+
+Correlations - historical
+
+```{r}
+#normalize the data
+climate_normalized_bioclim_flint_all_year_historical_avgs <- bioclim_flint_all_year_historical_avgs %>% ungroup() %>% 
+  select(cwd_mean:ppt_coldest_quarter_mean) %>% scale() #normalize the data so they're all on the same scale
+head(climate_normalized_bioclim_flint_all_year_historical_avgs)
+cor.norm = cor(climate_normalized_bioclim_flint_all_year_historical_avgs) #test correlations among the traits
+corrplot(cor.norm)
+```
+
+Overlay populations on PCA plot - historical
+
+```{r}
+all_bioclim_flint_avgs_historical.pc = prcomp(bioclim_flint_all_year_historical_avgs[c(6:18)], scale = TRUE, center = TRUE)
+summary(all_bioclim_flint_avgs_historical.pc)
+
+all_bioclim_flint_avgs_historical.pc.dat = data.frame(all_bioclim_flint_avgs_historical.pc$x)
+
+all_bioclim_flint_avgs_historical_locs.pc = cbind(bioclim_flint_all_year_historical_avgs, all_bioclim_flint_avgs_historical.pc.dat)
+
+all_bioclim_flint_avgs_historical_loadings = data.frame(varnames=rownames(all_bioclim_flint_avgs_historical.pc$rotation), all_bioclim_flint_avgs_historical.pc$rotation)
+
+autoplot(all_bioclim_flint_avgs_historical.pc, all_bioclim_flint_avgs_historical_loadings=TRUE, loadings.label=TRUE, 
+         loadings.colour="blue", loadings.label.colour="red",  loadings.label.size = 5)
+#this method results in different amounts of variation explained by PCs compared to princomp
+
+autoplot(all_bioclim_flint_avgs_historical.pc, data = bioclim_flint_all_year_historical_avgs,
+         colour='elevation.group', loadings=TRUE,
+         loadings.colour='black', loadings.label = TRUE)
+
+all_bioclim_flint_avgs_historical_locs.pc %>% 
+  ggplot(aes(x = PC1, y = PC2, colour=elev_m)) +
+  geom_point() +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_text_repel(aes(label = parent.pop),
+                  min.segment.length = 0) +
+  geom_segment(data = all_bioclim_flint_avgs_historical_loadings, 
+               aes(x = 0, y = 0, xend = (PC1*5), yend = (PC2*5)), 
+               arrow = arrow(length = unit(1/2, "picas")), color = "black") +
+  annotate("text", x = (all_bioclim_flint_avgs_historical_loadings$PC1*5), y = (all_bioclim_flint_avgs_historical_loadings$PC2*5),
+     label = all_bioclim_flint_avgs_historical_loadings$varnames) +
+  geom_vline(xintercept = 0, linetype="dashed") + geom_hline(yintercept = 0, linetype="dashed") 
+```
