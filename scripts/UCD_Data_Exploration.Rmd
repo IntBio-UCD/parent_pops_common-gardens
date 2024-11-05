@@ -6,8 +6,6 @@ output: html_document:
   keep_md: yes
 ---
 
-# Note: Not all data has been added to the corrected csvs folder, some are still in raw csvs
-
 ## Note: There are 3 individuals with rep \# 100 in transplant data sheets that should be analyzed with germination bed data instead!!
 
 ```{r setup, include=FALSE}
@@ -75,7 +73,7 @@ head(mortsurvey)
 
 ## Phenology Survey of Germination Bed? See the later mort-pheno surveys
 
-**If a plant didn\'t fruit, did flowers fail, or did it flower too late?**
+**If a plant didn't fruit, did flowers fail, or did it flower too late?**
 
 ```{r}
 pheno_germs <- read_csv("../input/UCD_Data/CorrectedCSVs/Phenology_survey_germination_20230515_corrected.csv")
@@ -118,7 +116,7 @@ size_trans_0424
 size_trans_0501
 size_trans_0508
 size_trans_0605
-size_trans_0612 #--> needs verification
+size_trans_0612
 size_trans_0703
 size_trans_0710
 size_trans_0717
