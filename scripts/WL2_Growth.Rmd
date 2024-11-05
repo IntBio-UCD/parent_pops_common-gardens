@@ -61,7 +61,7 @@ all_wl2_size2
 ```
 
 
-Check for data issues
+Check for merging issues
 ```{r}
 map(all_wl2_size2$sheets, colnames) %>% #get unique column names 
   unlist() %>%
@@ -101,8 +101,6 @@ unique(all_wl2_size2$sheets[[11]]$block) #only blocks A-F censused on this day
 all_wl2_size2$sheets[[12]] <- all_wl2_size2$sheets[[12]] %>% 
   filter(block=="G"|block=="H"|block=="I"|block=="J"|block=="K"|block=="L"|block=="M") #only blocks G-M censused on this day 
 unique(all_wl2_size2$sheets[[12]]$block)
-
-#Need to check mf and rep columns after merge 
 ```
 
 Combine the data
@@ -134,33 +132,43 @@ tail(all_wl2_size_all_nobuffers)
 
 ## Pop Location Info
 ```{r}
+gowersdist_UCD <- read_csv("../output/Climate/Pops_GowersEnvtalDist_UCD.csv") %>% 
+  rename(Recent_Gowers_Dist_UCD = Recent_Gowers_Dist, Historic_Gowers_Dist_UCD = Historic_Gowers_Dist)
+head(gowersdist_UCD)
+gowersdist_WL2 <- read_csv("../output/Climate/Pops_GowersEnvtalDist_WL2.csv") %>% 
+  rename(Recent_Gowers_Dist_WL2 = Recent_Gowers_Dist, Historic_Gowers_Dist_WL2 = Historic_Gowers_Dist)
+head(gowersdist_WL2)
 
+gowersdist_all <- full_join(gowersdist_UCD, gowersdist_WL2)
+head(gowersdist_all)
+```
+
+Merge
+```{r}
+all_wl2_size_loc <- left_join(all_wl2_size_all_nobuffers, gowersdist_all)
+head(all_wl2_size_loc)
 ```
 
 
 ## Quick figure
+Height
 ```{r}
-all_wl2_size_all_nobuffers %>% 
-  ggplot(aes(group=Genotype, x=survey_date, y=height.cm, col=parent.pop)) + 
-  geom_line() + facet_wrap(~parent.pop)
+all_wl2_size_loc$parent.pop = factor(all_wl2_size_loc$parent.pop, levels=c('CC','TM2','SC','IH','BH','WV','FR','DPR','WR','WL1','SQ1','SQ2','WL2','YO4','CP2','CP3','LV3','SQ3','YO7','YO8','LV1','LVTR1','YO11'))
+  
+all_wl2_size_loc %>% 
+  ggplot(aes(group=Genotype, x=survey_date, y=height.cm, col=elev_m)) + 
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_line() + facet_wrap(~parent.pop, scales = "free")
+ggsave("../output/WL2_Traits/Growth_AllPops.png", width = 14, height = 8, units = "in")
 
-all_wl2_size_all %>% 
-  group_by(parent.pop) %>% 
-  filter(n() > 10) %>% 
-  ggplot(aes(color=parent.pop, x=survey_date, y=height.cm, group=parent.pop)) + 
-  geom_smooth() #this is not great b/c many populations died before April
+#Check strange lines
+all_wl2_size_loc %>% filter(parent.pop=="CP3") %>% filter(height.cm > 8)
 ```
 
+Leaf Length
 ```{r}
-all_wl2_size_all_nobuffers %>% 
-  ggplot(aes(group=Genotype, x=survey_date, y=long.leaf.cm, col=parent.pop)) + 
-  geom_line() + facet_wrap(~parent.pop)
-
-all_wl2_size_all %>% 
-  group_by(parent.pop) %>% 
-  filter(n() > 10) %>% 
-  ggplot(aes(color=parent.pop, x=survey_date, y=long.leaf.cm, group=parent.pop)) + 
-  geom_smooth() #this is not great b/c many populations died before April
+all_wl2_size_loc %>% 
+  ggplot(aes(group=Genotype, x=survey_date, y=long.leaf.cm, col=elev_m)) + 
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_line() + facet_wrap(~parent.pop, scales = "free")
 ```
-
-## Calculate growth rate?
