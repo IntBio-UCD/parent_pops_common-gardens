@@ -3517,7 +3517,7 @@ allpops_recent_grwseason_avgs #30 year averages during growth season months
 
 ``` r
 allpops_recent_grwseason_avgs$elevation.group <- factor(allpops_recent_grwseason_avgs$elevation.group, levels=elev_order)    
-write_csv(allpops_recent_grwseason_avgs, "../output/Climate/Pops_FlintAvgs_Recent.csv")
+#write_csv(allpops_recent_grwseason_avgs, "../output/Climate/growthseason_FlintAvgs_Recent.csv")
 
 allpops_recent_grwseason_avgs %>% ggplot(aes(x=fct_reorder(parent.pop, cwd_mean), y=cwd_mean, fill=elev_m)) + 
   geom_col(width = 0.7,position = position_dodge(0.75)) +
@@ -3616,7 +3616,7 @@ allpops_historical_grwseason_avgs #30 year averages during growth season months
 
 ``` r
 allpops_historical_grwseason_avgs$elevation.group <- factor(allpops_historical_grwseason_avgs$elevation.group, levels=elev_order)    
-write_csv(allpops_historical_grwseason_avgs, "../output/Climate/Pops_FlintAvgs_Historic.csv")
+#write_csv(allpops_historical_grwseason_avgs, "../output/Climate/growthseason_FlintAvgs_Historic.csv")
 
 allpops_historical_grwseason_avgs %>% ggplot(aes(x=fct_reorder(parent.pop, cwd_mean), y=cwd_mean, fill=elev_m)) + 
   geom_col(width = 0.7,position = position_dodge(0.75)) +

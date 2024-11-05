@@ -2828,7 +2828,7 @@ allpops_recent_grwseason_avgs #30 year averages during growth season months </co
 ## # ℹ 6 more variables: tmx_mean &lt;dbl&gt;, cwd_sem &lt;dbl&gt;, pck_sem &lt;dbl&gt;,
 ## #   ppt_sem &lt;dbl&gt;, tmn_sem &lt;dbl&gt;, tmx_sem &lt;dbl&gt;</code></pre>
 <pre class="r"><code>allpops_recent_grwseason_avgs$elevation.group &lt;- factor(allpops_recent_grwseason_avgs$elevation.group, levels=elev_order)    
-write_csv(allpops_recent_grwseason_avgs, &quot;../output/Climate/Pops_FlintAvgs_Recent.csv&quot;)
+#write_csv(allpops_recent_grwseason_avgs, &quot;../output/Climate/growthseason_FlintAvgs_Recent.csv&quot;)
 
 allpops_recent_grwseason_avgs %&gt;% ggplot(aes(x=fct_reorder(parent.pop, cwd_mean), y=cwd_mean, fill=elev_m)) + 
   geom_col(width = 0.7,position = position_dodge(0.75)) +
@@ -2902,7 +2902,7 @@ allpops_historical_grwseason_avgs #30 year averages during growth season months 
 ## # ℹ 6 more variables: tmx_mean &lt;dbl&gt;, cwd_sem &lt;dbl&gt;, pck_sem &lt;dbl&gt;,
 ## #   ppt_sem &lt;dbl&gt;, tmn_sem &lt;dbl&gt;, tmx_sem &lt;dbl&gt;</code></pre>
 <pre class="r"><code>allpops_historical_grwseason_avgs$elevation.group &lt;- factor(allpops_historical_grwseason_avgs$elevation.group, levels=elev_order)    
-write_csv(allpops_historical_grwseason_avgs, &quot;../output/Climate/Pops_FlintAvgs_Historic.csv&quot;)
+#write_csv(allpops_historical_grwseason_avgs, &quot;../output/Climate/growthseason_FlintAvgs_Historic.csv&quot;)
 
 allpops_historical_grwseason_avgs %&gt;% ggplot(aes(x=fct_reorder(parent.pop, cwd_mean), y=cwd_mean, fill=elev_m)) + 
   geom_col(width = 0.7,position = position_dodge(0.75)) +
