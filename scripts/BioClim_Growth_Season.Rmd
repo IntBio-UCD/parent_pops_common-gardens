@@ -46,7 +46,7 @@ library(cowplot)
 library(gridExtra)
 library(corrplot) #plotting correlations 
 library(rstatix) #performing cor_test
-library(naniar) #replaces values with NA
+
 sem <- function(x, na.rm=FALSE) {
   sd(x,na.rm=na.rm)/sqrt(length(na.omit(x)))
 } #standard error function 
@@ -60,11 +60,6 @@ get_legend<-function(myggplot){
 
 elev_three_palette <- c("#0043F0", "#C9727F", "#F5A540") #colors from Gremer et al 2019
 elev_order <- c("High", "Mid", "Low")
-
-#For scree plots 
-#library("devtools") #The package devtools is required for the installation as factoextra is hosted on github.
-#1install_github("kassambara/factoextra")
-library("factoextra")
 ```
 
 ## Load the Flint growth season data (from "Flint_Growth_Season.Rmd")
@@ -96,7 +91,7 @@ bioclim_recent_meantemp_prep <- flint_recent_grwseason %>%
 Calculating wettest, driest, warmest, and coldest months 
 
 ```{r}
-recent_wettest_month <- bioclim_recent_meantemp_prep %>%  
+recent_wettest_month <- bioclim_recent_meantemp_prep %>%  #there's one wettest month per pop/year
   group_by(parent.pop, elevation.group, elev_m, year) %>% 
   slice_max(ppt)
 
@@ -104,7 +99,7 @@ recent_driest_month <- bioclim_recent_meantemp_prep %>%  #there's more than one 
   group_by(parent.pop, elevation.group, elev_m, year) %>% 
   slice_min(ppt)
 
-recent_warmest_month <- bioclim_recent_meantemp_prep %>% #there's one warmest month per pop/year
+recent_warmest_month <- bioclim_recent_meantemp_prep %>% #there's more than one warmest month for 1 pop/year
   group_by(parent.pop, elevation.group, elev_m, year) %>% 
   slice_max(tavg)
 
@@ -144,7 +139,8 @@ bio8_9_recent <- full_join(bio8_recent, bio9_recent)
 
 #bio18 = ppt_warmest_month
 bio18_recent <- recent_warmest_month %>% 
-  dplyr::select(parent.pop, elevation.group, elev_m, year, ppt_warmest_month=ppt)
+  group_by(parent.pop, elevation.group, elev_m, year) %>% 
+  summarise(ppt_warmest_month=mean(ppt)) #taking the avg b/c more than one warmest month for one pop/year
 
 #bio19 = ppt_coldest_month
 bio19_recent <- recent_wettest_month %>% 
@@ -265,7 +261,7 @@ bioclim_recent_avgs <- bioclim_recent %>% group_by(parent.pop, elevation.group, 
 names(bioclim_recent_avgs) <- gsub("fn2", "sem", colnames(bioclim_recent_avgs))
 names(bioclim_recent_avgs) <-gsub("fn1", "avg", colnames(bioclim_recent_avgs))
 bioclim_recent_avgs
-write_csv(bioclim_recent_avgs, "../output/Climate/Pops_BioClimAvgs_Recent.csv")
+#write_csv(bioclim_recent_avgs, "../output/Climate/growthseason_BioClimAvgs_Recent.csv")
 
 bioclim_recent_avgs %>% ggplot(aes(x=fct_reorder(parent.pop, ann_tmean_avg), y=ann_tmean_avg, fill=elev_m)) + 
   geom_col(width = 0.7,position = position_dodge(0.75)) + 
@@ -275,7 +271,7 @@ bioclim_recent_avgs %>% ggplot(aes(x=fct_reorder(parent.pop, ann_tmean_avg), y=a
   labs(fill="Elevation (m)", y="Avg Annual Mean Temp", x="Population", title ="Recent Climate - Growth Season") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/Climate/Bioclim_AnnMeanTmp_RecentClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/growthseason_AnnMeanTmp_RecentClim.png", width = 12, height = 6, units = "in")
 
 bioclim_recent_avgs %>% ggplot(aes(x=fct_reorder(parent.pop, mean_diurnal_range_avg), y=mean_diurnal_range_avg, fill=elev_m)) + 
   geom_col(width = 0.7,position = position_dodge(0.75)) + 
@@ -285,7 +281,7 @@ bioclim_recent_avgs %>% ggplot(aes(x=fct_reorder(parent.pop, mean_diurnal_range_
   labs(fill="Elevation (m)", y="Avg Diurnal Range", x="Population", title ="Recent Climate - Growth Season") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/Climate/Bioclim_DiurnalRange_RecentClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/growthseason_DiurnalRange_RecentClim.png", width = 12, height = 6, units = "in")
 
 bioclim_recent_avgs %>% ggplot(aes(x=fct_reorder(parent.pop, temp_seasonality_avg), y=temp_seasonality_avg, fill=elev_m)) + 
   geom_col(width = 0.7,position = position_dodge(0.75)) + 
@@ -295,7 +291,7 @@ bioclim_recent_avgs %>% ggplot(aes(x=fct_reorder(parent.pop, temp_seasonality_av
   labs(fill="Elevation (m)",  x="Population", title ="Recent Climate - Growth Season") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/Climate/Bioclim_TempSeasonality_RecentClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/growthseason_TempSeasonality_RecentClim.png", width = 12, height = 6, units = "in")
 
 bioclim_recent_avgs %>% ggplot(aes(x=fct_reorder(parent.pop, temp_ann_range_avg), y=temp_ann_range_avg, fill=elev_m)) + 
   geom_col(width = 0.7,position = position_dodge(0.75)) + 
@@ -305,7 +301,7 @@ bioclim_recent_avgs %>% ggplot(aes(x=fct_reorder(parent.pop, temp_ann_range_avg)
   labs(fill="Elevation (m)",  x="Population", title ="Recent Climate - Growth Season") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/Climate/Bioclim_AnnTmpRange_RecentClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/growthseason_AnnTmpRange_RecentClim.png", width = 12, height = 6, units = "in")
 
 bioclim_recent_avgs %>% ggplot(aes(x=fct_reorder(parent.pop, tmean_wettest_month_avg), y=tmean_wettest_month_avg, fill=elev_m)) + 
   geom_col(width = 0.7,position = position_dodge(0.75)) + 
@@ -315,7 +311,7 @@ bioclim_recent_avgs %>% ggplot(aes(x=fct_reorder(parent.pop, tmean_wettest_month
   labs(fill="Elevation (m)",  x="Population", title ="Recent Climate - Growth Season") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/Climate/Bioclim_TmpMeanWet_RecentClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/growthseason_TmpMeanWet_RecentClim.png", width = 12, height = 6, units = "in")
 
 bioclim_recent_avgs %>% ggplot(aes(x=fct_reorder(parent.pop, tmean_driest_month_avg), y=tmean_driest_month_avg, fill=elev_m)) + 
   geom_col(width = 0.7,position = position_dodge(0.75)) + 
@@ -325,7 +321,7 @@ bioclim_recent_avgs %>% ggplot(aes(x=fct_reorder(parent.pop, tmean_driest_month_
   labs(fill="Elevation (m)",  x="Population", title ="Recent Climate - Growth Season") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/Climate/Bioclim_TmpMeanDry_RecentClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/growthseason_TmpMeanDry_RecentClim.png", width = 12, height = 6, units = "in")
 
 bioclim_recent_avgs %>% ggplot(aes(x=fct_reorder(parent.pop, ann_ppt_avg), y=ann_ppt_avg, fill=elev_m)) + 
   geom_col(width = 0.7,position = position_dodge(0.75)) + 
@@ -335,7 +331,7 @@ bioclim_recent_avgs %>% ggplot(aes(x=fct_reorder(parent.pop, ann_ppt_avg), y=ann
   labs(fill="Elevation (m)",  x="Population", title ="Recent Climate - Growth Season") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/Climate/Bioclim_AnnPPT_RecentClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/growthseason_AnnPPT_RecentClim.png", width = 12, height = 6, units = "in")
 
 bioclim_recent_avgs %>% ggplot(aes(x=fct_reorder(parent.pop, ppt_seasonality_avg), y=ppt_seasonality_avg, fill=elev_m)) + 
   geom_col(width = 0.7,position = position_dodge(0.75)) + 
@@ -345,7 +341,7 @@ bioclim_recent_avgs %>% ggplot(aes(x=fct_reorder(parent.pop, ppt_seasonality_avg
   labs(fill="Elevation (m)",  x="Population", title ="Recent Climate - Growth Season") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/Climate/Bioclim_PPTSeasonality_RecentClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/growthseason_PPTSeasonality_RecentClim.png", width = 12, height = 6, units = "in")
 
 bioclim_recent_avgs %>% ggplot(aes(x=fct_reorder(parent.pop, ppt_warmest_month_avg), y=ppt_warmest_month_avg, fill=elev_m)) + 
   geom_col(width = 0.7,position = position_dodge(0.75)) + 
@@ -355,7 +351,7 @@ bioclim_recent_avgs %>% ggplot(aes(x=fct_reorder(parent.pop, ppt_warmest_month_a
   labs(fill="Elevation (m)",  x="Population", title ="Recent Climate - Growth Season") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/Climate/Bioclim_PPTWarm_RecentClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/growthseason_PPTWarm_RecentClim.png", width = 12, height = 6, units = "in")
 
 bioclim_recent_avgs %>% ggplot(aes(x=fct_reorder(parent.pop, ppt_coldest_month_avg), y=ppt_coldest_month_avg, fill=elev_m)) + 
   geom_col(width = 0.7,position = position_dodge(0.75)) + 
@@ -365,7 +361,7 @@ bioclim_recent_avgs %>% ggplot(aes(x=fct_reorder(parent.pop, ppt_coldest_month_a
   labs(fill="Elevation (m)",  x="Population", title ="Recent Climate - Growth Season") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/Climate/Bioclim_PPTCold_RecentClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/growthseason_PPTCold_RecentClim.png", width = 12, height = 6, units = "in")
 ```
 
 ### Historical Years - BioClim
@@ -376,7 +372,7 @@ bioclim_historical_avgs <- bioclim_historical %>% group_by(parent.pop, elevation
 names(bioclim_historical_avgs) <- gsub("fn2", "sem", colnames(bioclim_historical_avgs))
 names(bioclim_historical_avgs) <-gsub("fn1", "avg", colnames(bioclim_historical_avgs))
 bioclim_historical_avgs
-write_csv(bioclim_historical_avgs, "../output/Climate/Pops_BioClimAvgs_Historical.csv")
+#write_csv(bioclim_historical_avgs, "../output/Climate/growthseason_BioClimAvgs_Historical.csv")
 
 bioclim_historical_avgs %>% ggplot(aes(x=fct_reorder(parent.pop, ann_tmean_avg), y=ann_tmean_avg, fill=elev_m)) + 
   geom_col(width = 0.7,position = position_dodge(0.75)) + 
@@ -386,7 +382,7 @@ bioclim_historical_avgs %>% ggplot(aes(x=fct_reorder(parent.pop, ann_tmean_avg),
   labs(fill="Elevation (m)", y="Avg Annual Mean Temp", x="Population", title ="Historical Climate - Growth Season") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/Climate/Bioclim_AnnMeanTmp_HistoricalClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/growthseason_AnnMeanTmp_HistoricalClim.png", width = 12, height = 6, units = "in")
 
 bioclim_historical_avgs %>% ggplot(aes(x=fct_reorder(parent.pop, mean_diurnal_range_avg), y=mean_diurnal_range_avg, fill=elev_m)) + 
   geom_col(width = 0.7,position = position_dodge(0.75)) + 
@@ -396,7 +392,7 @@ bioclim_historical_avgs %>% ggplot(aes(x=fct_reorder(parent.pop, mean_diurnal_ra
   labs(fill="Elevation (m)", y="Avg Diurnal Range", x="Population", title ="Historical Climate - Growth Season") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/Climate/Bioclim_DiurnalRange_HistoricalClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/growthseason_DiurnalRange_HistoricalClim.png", width = 12, height = 6, units = "in")
 
 bioclim_historical_avgs %>% ggplot(aes(x=fct_reorder(parent.pop, temp_seasonality_avg), y=temp_seasonality_avg, fill=elev_m)) + 
   geom_col(width = 0.7,position = position_dodge(0.75)) + 
@@ -406,7 +402,7 @@ bioclim_historical_avgs %>% ggplot(aes(x=fct_reorder(parent.pop, temp_seasonalit
   labs(fill="Elevation (m)",  x="Population", title ="Historical Climate - Growth Season") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/Climate/Bioclim_TempSeasonality_HistoricalClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/growthseason_TempSeasonality_HistoricalClim.png", width = 12, height = 6, units = "in")
 
 bioclim_historical_avgs %>% ggplot(aes(x=fct_reorder(parent.pop, temp_ann_range_avg), y=temp_ann_range_avg, fill=elev_m)) + 
   geom_col(width = 0.7,position = position_dodge(0.75)) + 
@@ -416,7 +412,7 @@ bioclim_historical_avgs %>% ggplot(aes(x=fct_reorder(parent.pop, temp_ann_range_
   labs(fill="Elevation (m)",  x="Population", title ="Historical Climate - Growth Season") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/Climate/Bioclim_AnnTmpRange_HistoricalClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/growthseason_AnnTmpRange_HistoricalClim.png", width = 12, height = 6, units = "in")
 
 bioclim_historical_avgs %>% ggplot(aes(x=fct_reorder(parent.pop, tmean_wettest_month_avg), y=tmean_wettest_month_avg, fill=elev_m)) + 
   geom_col(width = 0.7,position = position_dodge(0.75)) + 
@@ -426,7 +422,7 @@ bioclim_historical_avgs %>% ggplot(aes(x=fct_reorder(parent.pop, tmean_wettest_m
   labs(fill="Elevation (m)",  x="Population", title ="Historical Climate - Growth Season") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/Climate/Bioclim_TmpMeanWet_HistoricalClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/growthseason_TmpMeanWet_HistoricalClim.png", width = 12, height = 6, units = "in")
 
 bioclim_historical_avgs %>% ggplot(aes(x=fct_reorder(parent.pop, tmean_driest_month_avg), y=tmean_driest_month_avg, fill=elev_m)) + 
   geom_col(width = 0.7,position = position_dodge(0.75)) + 
@@ -436,7 +432,7 @@ bioclim_historical_avgs %>% ggplot(aes(x=fct_reorder(parent.pop, tmean_driest_mo
   labs(fill="Elevation (m)",  x="Population", title ="Historical Climate - Growth Season") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/Climate/Bioclim_TmpMeanDry_HistoricalClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/growthseason_TmpMeanDry_HistoricalClim.png", width = 12, height = 6, units = "in")
 
 bioclim_historical_avgs %>% ggplot(aes(x=fct_reorder(parent.pop, ann_ppt_avg), y=ann_ppt_avg, fill=elev_m)) + 
   geom_col(width = 0.7,position = position_dodge(0.75)) + 
@@ -446,7 +442,7 @@ bioclim_historical_avgs %>% ggplot(aes(x=fct_reorder(parent.pop, ann_ppt_avg), y
   labs(fill="Elevation (m)",  x="Population", title ="Historical Climate - Growth Season") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/Climate/Bioclim_AnnPPT_HistoricalClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/growthseason_AnnPPT_HistoricalClim.png", width = 12, height = 6, units = "in")
 
 bioclim_historical_avgs %>% ggplot(aes(x=fct_reorder(parent.pop, ppt_seasonality_avg), y=ppt_seasonality_avg, fill=elev_m)) + 
   geom_col(width = 0.7,position = position_dodge(0.75)) + 
@@ -456,7 +452,7 @@ bioclim_historical_avgs %>% ggplot(aes(x=fct_reorder(parent.pop, ppt_seasonality
   labs(fill="Elevation (m)",  x="Population", title ="Historical Climate - Growth Season") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/Climate/Bioclim_PPTSeasonality_HistoricalClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/growthseason_PPTSeasonality_HistoricalClim.png", width = 12, height = 6, units = "in")
 
 bioclim_historical_avgs %>% ggplot(aes(x=fct_reorder(parent.pop, ppt_warmest_month_avg), y=ppt_warmest_month_avg, fill=elev_m)) + 
   geom_col(width = 0.7,position = position_dodge(0.75)) + 
@@ -466,7 +462,7 @@ bioclim_historical_avgs %>% ggplot(aes(x=fct_reorder(parent.pop, ppt_warmest_mon
   labs(fill="Elevation (m)",  x="Population", title ="Historical Climate - Growth Season") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/Climate/Bioclim_PPTWarm_HistoricalClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/growthseason_PPTWarm_HistoricalClim.png", width = 12, height = 6, units = "in")
 
 bioclim_historical_avgs %>% ggplot(aes(x=fct_reorder(parent.pop, ppt_coldest_month_avg), y=ppt_coldest_month_avg, fill=elev_m)) + 
   geom_col(width = 0.7,position = position_dodge(0.75)) + 
@@ -476,7 +472,7 @@ bioclim_historical_avgs %>% ggplot(aes(x=fct_reorder(parent.pop, ppt_coldest_mon
   labs(fill="Elevation (m)",  x="Population", title ="Historical Climate - Growth Season") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/Climate/Bioclim_PPTCold_HistoricalClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/growthseason_PPTCold_HistoricalClim.png", width = 12, height = 6, units = "in")
 ```
 
 
