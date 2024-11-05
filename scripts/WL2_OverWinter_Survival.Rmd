@@ -6,6 +6,10 @@ output:
   html_document: 
     keep_md: yes
 ---
+To Do:
+- Figure out how to color the 0 mortality bars or pop names by elevation 
+- See Julin's binomSurvivorExamples.Rmd for getting error from the model 
+- Check the data - when looking at Oct 2024 survival, only found 131 "2023-survivors" whereas in this code there are 135. Are any missclassified as TM2 fruiting?
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -53,7 +57,7 @@ head(gowersdist_all)
 
 ## Load the post-winter data
 ```{r}
-post_winter <- read_csv("../input/WL2_status_check_20240603_corrected.csv",
+post_winter <- read_csv("../input/WL2_Data/WL2_status_check_20240603_corrected.csv",
                          na = c("", "NA", "-", "N/A")) 
 head(post_winter)
 
@@ -117,7 +121,7 @@ overwint_surv_summary
 
 ```{r}
 overwint_surv_summary %>% 
-  #filter(N_Surv != 1) %>% 
+  filter(N_Surv != 1) %>% 
   ggplot(aes(x=fct_reorder(parent.pop, mean_Surv), y=mean_Surv, fill=elev_m)) + 
   geom_col(width = 0.7,position = position_dodge(0.75)) + 
   geom_errorbar(aes(ymin=mean_Surv-sem_surv,ymax=mean_Surv+sem_surv),width=.2, position = 
@@ -146,8 +150,8 @@ ggsave("../output/WL2_Traits//WL2_Over_Winter_Surv_PopAvgs_byelev.png", width = 
 
 #sort by gowers distance - need to play with this one, colors? 
 overwint_surv_summary %>% 
-  #filter(N_Surv != 1) %>% 
-  ggplot(aes(x=fct_reorder(parent.pop, Recent_Gowers_Dist_WL2), y=mean_Surv, fill=Recent_Gowers_Dist_WL2)) + 
+  filter(N_Surv != 1) %>% 
+  ggplot(aes(x=fct_reorder(parent.pop, mean_Surv), y=mean_Surv, fill=Recent_Gowers_Dist_WL2)) + 
   geom_col(width = 0.7,position = position_dodge(0.75)) + 
   geom_errorbar(aes(ymin=mean_Surv-sem_surv,ymax=mean_Surv+sem_surv),width=.2, position = 
                   position_dodge(0.75)) +
@@ -175,8 +179,10 @@ summary(lmesurv2)
 anova(lmesurv2)
 glance(lmesurv2)
 
-lmesurv3 <- glmer(Survival ~ elev_m + (1|parent.pop/mf) + (1|block), 
-                  data = alive_oct, 
+alive_oct_scale <- alive_oct %>% 
+  mutate(elev_m_s = scale_this(elev_m))
+lmesurv3 <- glmer(Survival ~ elev_m_s + (1|parent.pop/mf) + (1|block), 
+                  data = alive_oct_scale, 
                   family = binomial(link = "logit")) #get a failed to converge and rescale variables warning for this model 
 summary(lmesurv3)
 anova(lmesurv3)
@@ -184,8 +190,8 @@ glance(lmesurv3)
 
 #to test for significance of random effect: 
 #the most common way to do this is to use a likelihood ratio test, i.e. fit the full and reduced models (the reduced model is the model with the focal variance(s) set to zero). 
-m0 <- glmer(Survival ~ elev_m + (1|parent.pop), data = alive_oct, family = binomial("logit")) 
-m00 <- glm(Survival~ elev_m, alive_oct, family = binomial("logit"))
-anova(lmesurv1,m0, m00) #model with both random effects has a higher likelihood (better fit)
+m0 <- glmer(Survival ~ elev_m_s + (1|parent.pop), data = alive_oct_scale, family = binomial("logit")) 
+m00 <- glm(Survival~ elev_m_s, alive_oct_scale, family = binomial("logit"))
+anova(lmesurv3,m0, m00) #model with both random effects has a higher likelihood (better fit)
 ```
 

@@ -209,10 +209,10 @@ summary(basiclogit_height)
 basiclogit_height2 <- glmer(Survival ~ height.cm + (1|parent.pop/mf), data = pretrans_surv_complete, family = binomial(link = "logit"))
 summary(basiclogit_height2)
 
-logit_height <- glm(Survival ~ height.cm*Site, data = pretrans_surv_complete, family = "binomial")
+logit_height <- glm(Survival ~ height.cm*Site*elev_m, data = pretrans_surv_complete, family = "binomial")
 summary(logit_height)
 
-logit_height2 <- glmer(Survival ~ height.cm*Site + (1|parent.pop/mf), data = pretrans_surv_complete, family = binomial(link = "logit")) 
+logit_height2 <- glmer(Survival ~ height.cm*Site*elev_m + (1|parent.pop/mf), data = pretrans_surv_complete, family = binomial(link = "logit")) 
 summary(logit_height2)
 emtrends(logit_height2, pairwise ~ Site, var = "height.cm")
 emmip(logit_height2, Site ~ height.cm, cov.reduce = range)

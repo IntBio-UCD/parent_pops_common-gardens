@@ -68,6 +68,7 @@ WL2_firstyear_mort <- read_csv("../input/WL2_Data/CorrectedCSVs/WL2_annual_censu
 head(WL2_firstyear_mort)
 unique(WL2_firstyear_mort$parent.pop)
 WL2_firstyear_mort %>% filter(Genotype=="CC_1_2") #there are 2 CC_1_2 plants (in different field locs), CC-1-2 was planted in 13-A and not 5C according to planting notes 
+WL2_firstyear_mort %>% filter(Genotype=="IH_4_5") #there are 2 IH_4_5 plants (in different field locs), IH_4_5 was planted in 22B and not 32A according to planting notes 
 WL2_firstyear_mort %>% rowwise() %>%  #checking if mf and rep can be converted to numeric 
   filter(!is.na(rep)) %>%  
   filter(is.na(as.numeric(rep)))
@@ -87,10 +88,19 @@ UCD_firstyear_mort %>% rowwise() %>%  #checking if mf and rep can be converted t
   filter(is.na(as.numeric(rep)))
 ```
 
+```{r}
+WL2_firstyear_mort %>% filter(pheno=="P")
+WL2_firstyear_mort %>% filter(pheno=="B")
+WL2_firstyear_mort %>% filter(pheno=="F")
+WL2_firstyear_mort %>% filter(pheno=="X") %>% filter(!is.na(num.fruit)) #no dead that had mature fruit. 
+```
+
+
 ## Merge the Data
 ```{r}
 WL2_firstyear_mort_prep <- WL2_firstyear_mort %>%
   filter(BedLoc!="K_5_C") %>% 
+  filter(BedLoc!="B_32_A") %>% 
   select(Genotype:rep, pheno) %>% 
   mutate(Site="WL2") %>%
   mutate(mf=as.double(mf), rep=as.double(rep))
@@ -114,6 +124,7 @@ head(firstyear_mort_rxnnorms)
 ```{r}
 firstyear_mort_rxnnorms_loc <- left_join(firstyear_mort_rxnnorms, gowersdist_all)
 head(firstyear_mort_rxnnorms_loc)
+write_csv(firstyear_mort_rxnnorms_loc, "../output/firstyear_mort_both_sites.csv")
 ```
 
 ## Means by maternal family 
@@ -196,6 +207,7 @@ firstyear_mort_rxnnorms_summary_mfs2 %>%
 
 ## Means by Pop
 ```{r}
+xtabs(~parent.pop+Survival, data=firstyear_mort_rxnnorms_loc)
 firstyear_mort_rxnnorms_summary <- firstyear_mort_rxnnorms_loc %>% 
   group_by(parent.pop, Site, elev_m) %>% 
   summarise(N_Surv = sum(!is.na(Survival)), mean_Surv = mean(Survival,na.rm=(TRUE)), 
@@ -487,7 +499,7 @@ size_surv_pop_avgs %>%
   ggplot(aes(x=mean_height.cm, y=mean_Surv, group=parent.pop, color=elev_m)) +
   geom_point(size=1) +
   theme_classic() + scale_colour_gradient(low = "#F5A540", high = "#0043F0")  +
-  labs(x="Height (cm)" ,y="Survival", color="Elevation (m)", title="Low Elevation Garden") +
+  labs(x="Height (cm)" ,y="Survival", color="Elevation (m)", title="High Elevation Garden") +
   theme(text=element_text(size=25))
 
 size_surv_pop_avgs %>% 
@@ -496,7 +508,7 @@ size_surv_pop_avgs %>%
   geom_point(size=1) +
   geom_smooth() +
   theme_classic()  +
-  labs(x="Height (cm)" ,y="Survival", color="Elevation (m)", title="Low Elevation Garden") +
+  labs(x="Height (cm)" ,y="Survival", color="Elevation (m)", title="High Elevation Garden") +
   theme(text=element_text(size=25))
 ```
 

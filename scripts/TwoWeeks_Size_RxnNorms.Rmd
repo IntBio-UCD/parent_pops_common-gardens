@@ -1,0 +1,209 @@
+---
+title: "TwoWeeks_Size_RxnNorms"
+author: "Brandie Quarles"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Reaction Norms of Size (between UCD and WL2) - Two Weeks Post-Transplanting
+
+## Relevant Libraries and Functions
+
+```{r}
+library(tidyverse)
+library(lmerTest) #for mixed effect models
+conflicted::conflicts_prefer(lmerTest::lmer)
+library(emmeans) #for post-hoc pairwise comparisons 
+library(naniar) #replaces values with NA
+library(scatterpie)
+
+sem <- function(x, na.rm=FALSE) {           #for calculating standard error
+  sd(x,na.rm=na.rm)/sqrt(length(na.omit(x)))
+} 
+
+elev_three_palette <- c("#0043F0", "#C9727F", "#F5A540") #colors from Gremer et al 2019
+elev_order <- c("High", "Mid", "Low") #for proper arrangement in figures 
+```
+
+## Load the pop and location data
+
+```{r}
+gowersdist_UCD <- read_csv("../output/Climate/Pops_GowersEnvtalDist_UCD.csv") %>% 
+  rename(Recent_Gowers_Dist_UCD = Recent_Gowers_Dist, Historic_Gowers_Dist_UCD = Historic_Gowers_Dist)
+
+gowersdist_WL2 <- read_csv("../output/Climate/Pops_GowersEnvtalDist_WL2.csv") %>% 
+  rename(Recent_Gowers_Dist_WL2 = Recent_Gowers_Dist, Historic_Gowers_Dist_WL2 = Historic_Gowers_Dist)
+
+gowersdist_all <- full_join(gowersdist_UCD, gowersdist_WL2)
+head(gowersdist_all)
+```
+
+Relationship between WL2 and UCD distance
+```{r}
+gowersdist_all %>% 
+  ggplot(aes(x=Recent_Gowers_Dist_WL2, y=Recent_Gowers_Dist_UCD, color=elev_m)) +
+  geom_point() +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0")
+
+gowersdist_all %>% 
+  ggplot(aes(x=Historic_Gowers_Dist_WL2, y=Historic_Gowers_Dist_UCD, color=elev_m)) +
+  geom_point() +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0")
+```
+
+
+## Load size data 
+```{r}
+ucd_twowks_size <- read_csv("../input/UCD_Data/CorrectedCSVs/Size_survey_transplants_20221213_corrected.csv",
+                             na = c("", "NA", "-", "N/A")) %>% 
+  rename(height.cm = `height (cm)`, long.leaf.cm = `longest leaf (cm)`) %>% 
+  filter(rep != 100) %>%  #get rid of individuals that germinated in the field 
+  unite(Genotype, parent.pop:rep, sep="_", remove = FALSE) %>% 
+  unite(pop.mf, parent.pop:mf, sep="_", remove = FALSE)
+head(ucd_twowks_size)
+unique(ucd_twowks_size$parent.pop)
+```
+
+```{r}
+wl2_twowks_size <- read_csv("../input/WL2_Data/CorrectedCSVs/WL2_size_survey_20230802_corrected.csv",
+                             na = c("", "NA", "-", "N/A")) %>% 
+  rename(parent.pop=pop) %>% 
+  unite(Genotype, parent.pop:rep, sep="_", remove = FALSE) %>% 
+  unite(pop.mf, parent.pop:mf, sep="_", remove = FALSE)
+head(wl2_twowks_size)
+unique(wl2_twowks_size$parent.pop)
+
+wl2_twowks_size %>% rowwise() %>% filter(!is.na(mf), mf != "buffer") %>%  filter(is.na(as.numeric(mf))) #all buffers
+wl2_twowks_size %>% rowwise() %>% filter(!is.na(rep), rep != "buffer") %>%  filter(is.na(as.numeric(rep))) #all buffers
+```
+
+## Merge the two sites
+```{r}
+WL2_twowks_size_prep <- wl2_twowks_size %>% select(Genotype:long.leaf.cm) %>% mutate(Site="WL2") %>%
+  mutate(mf=as.double(mf), rep=as.double(rep))
+names(WL2_twowks_size_prep)
+
+UCD_twowks_size_prep <- ucd_twowks_size %>% select(Genotype:long.leaf.cm) %>% mutate(Site="UCD")
+names(UCD_twowks_size_prep)
+
+twowks_rxnnorms <- bind_rows(UCD_twowks_size_prep, WL2_twowks_size_prep) %>% 
+  filter(!str_detect(Genotype, ".*buffer.*")) %>% 
+  arrange(pop.mf, Site)
+head(twowks_rxnnorms)
+```
+
+## Add in location info
+```{r}
+twowks_rxnnorms_loc <-left_join(twowks_rxnnorms, gowersdist_all) 
+head(twowks_rxnnorms_loc)
+```
+
+## Plot Reaction Norms
+
+### Means by maternal family 
+```{r}
+twowks_rxnnorms_summary_mfs <- twowks_rxnnorms_loc %>% 
+  group_by(pop.mf, parent.pop, Site, elev_m) %>% 
+  summarise(N_height = sum(!is.na(height.cm)), mean_height.cm = mean(height.cm,na.rm=(TRUE)), 
+            sem_height.cm=sem(height.cm, na.rm=(TRUE)), N_length = sum(!is.na(long.leaf.cm)),
+            mean_long.leaf.cm=mean(long.leaf.cm, na.rm=(TRUE)), 
+            sem_long.leaf.cm=sem(long.leaf.cm, na.rm=TRUE))
+#twowks_rxnnorms_summary_mfs %>% arrange(N_height)
+
+#restrict to mfs with plants at both sites
+twowks_rxnnorms_summary_mfs_wide <- twowks_rxnnorms_summary_mfs %>% 
+  select(pop.mf, Site, N_height) %>% 
+  spread(Site, N_height) %>% 
+  mutate(Both.Sites=if_else(!is.na(UCD) & !is.na(WL2), TRUE, FALSE)) %>% 
+  filter(Both.Sites != "FALSE")
+#twowks_rxnnorms_summary_mfs_wide %>% arrange(Both.Sites)
+
+twowks_rxnnorms_summary_mfs_bothsites <- left_join(twowks_rxnnorms_summary_mfs_wide, twowks_rxnnorms_summary_mfs)
+twowks_rxnnorms_summary_mfs_bothsites
+
+twowks_rxnnorms_summary_mfs2 <- twowks_rxnnorms_summary_mfs_bothsites %>% 
+  mutate(Site=str_replace_all(Site, "UCD", "Low Elev"), 
+         Site=str_replace_all(Site, "WL2", "High Elev")) 
+twowks_rxnnorms_summary_mfs2$Site <- factor(twowks_rxnnorms_summary_mfs2$Site,
+                                               levels = c('Low Elev','High Elev'))
+
+twowks_rxnnorms_summary_mfs2 %>% filter(N_height!=1) %>% filter(is.na(sem_height.cm))
+#8 maternal families with 0 plants left alive at one of the sites by these measurements. 
+```
+
+### Plot mf avgs
+```{r}
+twowks_rxnnorms_summary_mfs2 %>% 
+  filter(N_height != 1) %>% 
+  ggplot(aes(x=Site, y=mean_height.cm, group=pop.mf, color=elev_m)) + 
+  geom_point(size=0.8) + geom_line(linewidth=0.8) +
+  geom_errorbar(aes(ymin=mean_height.cm-sem_height.cm,ymax=mean_height.cm+sem_height.cm),width=.1) +
+  theme_classic() + scale_colour_gradient(low = "#F5A540", high = "#0043F0")  +
+  labs(y="Height (cm)", color="Elevation (m)") +
+  theme(text=element_text(size=28))
+ggsave("../output/TwoWeeks_RxNorms_Height_MFAvgs.png", width = 14, height = 8, units = "in")
+
+twowks_rxnnorms_summary_mfs2 %>% 
+  filter(N_length != 1) %>% 
+  ggplot(aes(x=Site, y=mean_long.leaf.cm, group=pop.mf, color=elev_m)) + 
+  geom_point(size=0.8) + geom_line(linewidth=0.8) +
+  geom_errorbar(aes(ymin=mean_long.leaf.cm-sem_long.leaf.cm,ymax=mean_long.leaf.cm+sem_long.leaf.cm),
+                width=.1) +
+  theme_classic() + scale_colour_gradient(low = "#F5A540", high = "#0043F0")  +
+  labs(y="Leaf Length (cm)", color="Elevation (m)") +
+  theme(text=element_text(size=28))
+ggsave("../output/TwoWeeks_RxNorms_LongestLength_MFAvgs.png", width = 14, height = 8, units = "in")
+```
+
+### Means by Pop
+```{r}
+twowks_rxnnorms_summary_pops <- twowks_rxnnorms_loc %>% 
+  filter(!is.na(parent.pop)) %>% 
+  group_by(parent.pop, Site, elev_m, Recent_Gowers_Dist_UCD, Recent_Gowers_Dist_WL2, Historic_Gowers_Dist_UCD, Historic_Gowers_Dist_WL2) %>% 
+  summarise(N_height = sum(!is.na(height.cm)), mean_height.cm = mean(height.cm,na.rm=(TRUE)), 
+            sem_height.cm=sem(height.cm, na.rm=(TRUE)), N_length = sum(!is.na(long.leaf.cm)),
+            mean_long.leaf.cm=mean(long.leaf.cm, na.rm=(TRUE)), 
+            sem_long.leaf.cm=sem(long.leaf.cm, na.rm=TRUE))
+#twowks_rxnnorms_summary_pops
+
+twowks_rxnnorms_summary_pops2 <- twowks_rxnnorms_summary_pops %>% 
+  mutate(Site=str_replace_all(Site, "UCD", "Low Elev"), 
+         Site=str_replace_all(Site, "WL2", "High Elev"))
+twowks_rxnnorms_summary_pops2$Site <- factor(twowks_rxnnorms_summary_pops2$Site,
+                                               levels = c('Low Elev','High Elev'))
+
+twowks_rxnnorms_summary_pops2 %>% filter(N_height!=1) %>% filter(is.na(sem_height.cm))
+#no data for WV at high elevation (dead by the time of these measurements)
+```
+
+### Plot Pop Avgs
+```{r}
+twowks_rxnnorms_summary_pops2 %>% 
+  filter(N_height != 1) %>% 
+  ggplot(aes(x=Site, y=mean_height.cm, group=parent.pop, color=elev_m)) + 
+  geom_point(size=1.5) + geom_line(linewidth=1.5) +
+  geom_errorbar(aes(ymin=mean_height.cm-sem_height.cm,ymax=mean_height.cm+sem_height.cm),width=.1) +
+  theme_classic() + scale_colour_gradient(low = "#F5A540", high = "#0043F0")  +
+  labs(y="Height (cm)", color="Elevation (m)") +
+ # ylim(0,4) +
+  theme(text=element_text(size=28))
+ggsave("../output/TwoWeeks_RxNorms_Height_ALL_PopAvgs.png", width = 14, height = 8, units = "in")
+
+twowks_rxnnorms_summary_pops2 %>% 
+  filter(N_length != 1) %>% 
+  ggplot(aes(x=Site, y=mean_long.leaf.cm, group=parent.pop, color=elev_m)) + 
+  geom_point(size=1.5) + geom_line(linewidth=1.5) +
+  geom_errorbar(aes(ymin=mean_long.leaf.cm-sem_long.leaf.cm,
+                    ymax=mean_long.leaf.cm+sem_long.leaf.cm),width=.1) +
+  theme_classic() + scale_colour_gradient(low = "#F5A540", high = "#0043F0")  +
+  labs(y="Leaf Length (cm)", color="Elevation (m)") +
+  theme(text=element_text(size=28))
+ggsave("../output/TwoWeeks_RxNorms_LongestLength_ALL_PopAvgs.png", width = 14, height = 8, units = "in")
+```
+
+## Stats
+
