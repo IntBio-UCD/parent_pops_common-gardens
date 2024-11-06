@@ -1,0 +1,596 @@
+---
+title: "Climate_Figs_All_Year"
+author: "Brandie QC"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Climate Figures with Year-Round data (as opposed to growth season)
+
+## Relevant Libraries and Functions
+
+```{r}
+library(tidyverse)
+library(ggrepel)
+library(cowplot)
+library(gridExtra)
+
+sem <- function(x, na.rm=FALSE) {
+  sd(x,na.rm=na.rm)/sqrt(length(na.omit(x)))
+} #standard error function 
+
+get_legend<-function(myggplot){
+  tmp <- ggplot_gtable(ggplot_build(myggplot))
+  leg <- which(sapply(tmp$grobs, function(x) x$name) == "guide-box")
+  legend <- tmp$grobs[[leg]]
+  return(legend)
+} #legend function for grid_arrange
+
+elev_three_palette <- c("#0043F0", "#C9727F", "#F5A540") #colors from Gremer et al 2019
+elev_order <- c("High", "Mid", "Low")
+```
+
+## Load the data
+```{r}
+flint_all_year <- read_csv("../output/Climate/flint_climate_UCDpops.csv")
+head(flint_all_year)
+
+bioclim_all_year <- read_csv("../output/Climate/bioclim_all_year_UCD_pops.csv")
+head(bioclim_all_year)
+```
+
+## Historical and Recent Climate
+```{r}
+flint_recent_all_year <- flint_all_year %>% 
+  mutate(month = recode(month, #convert months to numbers 
+  jan = 1,
+  feb = 2,
+  mar = 3,
+  apr = 4,
+  may = 5,
+  jun = 6,
+  jul = 7,
+  aug = 8,
+  sep = 9,
+  oct = 10,
+  nov = 11,
+  dec = 12
+)) %>% 
+  filter(parent.pop != "UCD_Garden", parent.pop != "WL2_Garden") %>%  #remove garden sites 
+  filter(year>1993 & year<=2023) %>% 
+  select(parent.pop:month, cwd, pck, ppt, tmn, tmx)
+  
+flint_historical_all_year <- flint_all_year %>% 
+  mutate(month = recode(month, #convert months to numbers 
+  jan = 1,
+  feb = 2,
+  mar = 3,
+  apr = 4,
+  may = 5,
+  jun = 6,
+  jul = 7,
+  aug = 8,
+  sep = 9,
+  oct = 10,
+  nov = 11,
+  dec = 12
+)) %>% 
+  filter(parent.pop != "UCD_Garden", parent.pop != "WL2_Garden") %>%  #remove garden sites 
+  filter(year<=1993 & year>1963) %>% 
+  select(parent.pop:month, cwd, pck, ppt, tmn, tmx)
+
+bioclim_recent <- bioclim_all_year %>% 
+  filter(year>1993 & year<=2023)
+  
+bioclim_historical <- bioclim_all_year %>% 
+  filter(year<=1993 & year>1963)
+```
+
+
+## Flint 
+
+### Monthly Averages
+
+#### Recent Years - Flint Year Round
+```{r}
+flint_recent_all_year_mosavgs <- flint_recent_all_year %>% group_by(parent.pop, elevation.group, elev_m, month) %>% summarise_at(c("cwd", "pck", "ppt", "tmn", "tmx"), c(mean, sem), na.rm = TRUE) 
+names(flint_recent_all_year_mosavgs) <- gsub("fn2", "sem", colnames(flint_recent_all_year_mosavgs))
+names(flint_recent_all_year_mosavgs) <-gsub("fn1", "mean", colnames(flint_recent_all_year_mosavgs))
+flint_recent_all_year_mosavgs #30 year averages during growth season months 
+flint_recent_all_year_mosavgs$elevation.group <- factor(flint_recent_all_year_mosavgs$elevation.group, levels=elev_order)       
+
+flint_recent_all_year_mosavgs %>% ggplot(aes(x=month, y=cwd_mean, fill=elev_m)) + 
+  geom_col(width = 0.7,position = position_dodge(0.75)) +
+  geom_errorbar(aes(ymin=cwd_mean-cwd_sem,ymax=cwd_mean+cwd_sem),width=.2, position = 
+                  position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_x_continuous(breaks=c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0")+ 
+  labs(fill="Elevation",x="Population", y="Avg CWD" ,title = "Average CWD Year-Round - Recent Climate") +
+   theme_classic() +
+  theme(text=element_text(size=20), axis.text.x = element_text(angle = 45,  hjust = 1)) + 
+  facet_wrap(~parent.pop)
+ggsave("../output/Climate/all_year_Avg_Monthly_CWD_RecentClim.png", width = 16, height = 10, units = "in")
+
+flint_recent_all_year_mosavgs %>% ggplot(aes(x=month, y=pck_mean, fill=elev_m)) + 
+  geom_col(width = 0.7,position = position_dodge(0.75)) +
+  geom_errorbar(aes(ymin=pck_mean-pck_sem,ymax=pck_mean+pck_sem),width=.2, position = 
+                  position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_x_continuous(breaks=c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0")+ 
+  labs(fill="Elevation",x="Population", y="Avg PCK" ,title = "Average PCK Year-Round - Recent Climate") +
+   theme_classic() +
+  theme(text=element_text(size=20), axis.text.x = element_text(angle = 45,  hjust = 1)) + 
+  facet_wrap(~parent.pop)
+ggsave("../output/Climate/all_year_Avg_Monthly_PCK_RecentClim.png", width = 16, height = 10, units = "in")
+
+flint_recent_all_year_mosavgs %>% ggplot(aes(x=month, y=ppt_mean, fill=elev_m)) + 
+  geom_col(width = 0.7,position = position_dodge(0.75)) +
+  geom_errorbar(aes(ymin=ppt_mean-ppt_sem,ymax=ppt_mean+ppt_sem),width=.2, position = 
+                  position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") + 
+  labs(fill="Elevation",x="Population", y="Avg Precip" ,title = "Average Precip Year-Round - Recent Climate") +
+   theme_classic() +
+  theme(text=element_text(size=20), axis.text.x = element_text(angle = 45,  hjust = 1))+ 
+  facet_wrap(~parent.pop)
+ggsave("../output/Climate/all_year_Avg_Monthly_Precip_RecentClim.png", width = 12, height = 6, units = "in")
+
+flint_recent_all_year_mosavgs %>% ggplot(aes(x=month, y=tmn_mean, fill=elev_m)) + 
+  geom_col(width = 0.7,position = position_dodge(0.75)) +
+  geom_errorbar(aes(ymin=tmn_mean-tmn_sem,ymax=tmn_mean+tmn_sem),width=.2, position = 
+                  position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") + 
+  labs(fill="Elevation",x="Population", y="Avg MinTemp" ,title = "Average MinTemp Year-Round - Recent Climate") +
+   theme_classic() +
+  theme(text=element_text(size=20), axis.text.x = element_text(angle = 45,  hjust = 1))+ 
+  facet_wrap(~parent.pop)
+ggsave("../output/Climate/all_year_Avg_Monthly_MinTemp_RecentClim.png", width = 12, height = 6, units = "in")
+
+flint_recent_all_year_mosavgs %>% ggplot(aes(x=month, y=tmx_mean, fill=elev_m)) + 
+  geom_col(width = 0.7,position = position_dodge(0.75)) +
+  geom_errorbar(aes(ymin=tmx_mean-tmx_sem,ymax=tmx_mean+tmx_sem),width=.2, position = 
+                  position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") + 
+  labs(fill="Elevation",x="Population", y="Avg MaxTemp" ,title = "Average MaxTemp Year-Round - Recent Climate") +
+   theme_classic() +
+  theme(text=element_text(size=20), axis.text.x = element_text(angle = 45,  hjust = 1))+ 
+  facet_wrap(~parent.pop)
+ggsave("../output/Climate/all_year_Avg_Monthly_MaxTemp_RecentClim.png", width = 12, height = 6, units = "in")
+```
+
+#### Historical Years - Flint Year Round
+```{r}
+flint_historical_all_year_mosavgs <- flint_historical_all_year %>% group_by(parent.pop, elevation.group, elev_m, month) %>% summarise_at(c("cwd", "pck", "ppt", "tmn", "tmx"), c(mean, sem), na.rm = TRUE) 
+names(flint_historical_all_year_mosavgs) <- gsub("fn2", "sem", colnames(flint_historical_all_year_mosavgs))
+names(flint_historical_all_year_mosavgs) <-gsub("fn1", "mean", colnames(flint_historical_all_year_mosavgs))
+flint_historical_all_year_mosavgs #30 year averages during growth season months 
+flint_historical_all_year_mosavgs$elevation.group <- factor(flint_historical_all_year_mosavgs$elevation.group, levels=elev_order)       
+
+flint_historical_all_year_mosavgs %>% ggplot(aes(x=month, y=cwd_mean, fill=elev_m)) + 
+  geom_col(width = 0.7,position = position_dodge(0.75)) +
+  geom_errorbar(aes(ymin=cwd_mean-cwd_sem,ymax=cwd_mean+cwd_sem),width=.2, position = 
+                  position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_x_continuous(breaks=c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0")+ 
+  labs(fill="Elevation",x="Population", y="Avg CWD" ,title = "Average CWD Year-Round - Historical Climate") +
+   theme_classic() +
+  theme(text=element_text(size=20), axis.text.x = element_text(angle = 45,  hjust = 1)) + 
+  facet_wrap(~parent.pop)
+ggsave("../output/Climate/all_year_Avg_Monthly_CWD_HistoricalClim.png", width = 16, height = 10, units = "in")
+
+flint_historical_all_year_mosavgs %>% ggplot(aes(x=month, y=pck_mean, fill=elev_m)) + 
+  geom_col(width = 0.7,position = position_dodge(0.75)) +
+  geom_errorbar(aes(ymin=pck_mean-pck_sem,ymax=pck_mean+pck_sem),width=.2, position = 
+                  position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_x_continuous(breaks=c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0")+ 
+  labs(fill="Elevation",x="Population", y="Avg PCK" ,title = "Average PCK Year-Round - Historical Climate") +
+   theme_classic() +
+  theme(text=element_text(size=20), axis.text.x = element_text(angle = 45,  hjust = 1)) + 
+  facet_wrap(~parent.pop)
+ggsave("../output/Climate/all_year_Avg_Monthly_PCK_HistoricalClim.png", width = 16, height = 10, units = "in")
+
+flint_historical_all_year_mosavgs %>% ggplot(aes(x=month, y=ppt_mean, fill=elev_m)) + 
+  geom_col(width = 0.7,position = position_dodge(0.75)) +
+  geom_errorbar(aes(ymin=ppt_mean-ppt_sem,ymax=ppt_mean+ppt_sem),width=.2, position = 
+                  position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") + 
+  labs(fill="Elevation",x="Population", y="Avg Precip" ,title = "Average Precip Year-Round - Historical Climate") +
+   theme_classic() +
+  theme(text=element_text(size=20), axis.text.x = element_text(angle = 45,  hjust = 1))+ 
+  facet_wrap(~parent.pop)
+ggsave("../output/Climate/all_year_Avg_Monthly_Precip_HistoricalClim.png", width = 12, height = 6, units = "in")
+
+flint_historical_all_year_mosavgs %>% ggplot(aes(x=month, y=tmn_mean, fill=elev_m)) + 
+  geom_col(width = 0.7,position = position_dodge(0.75)) +
+  geom_errorbar(aes(ymin=tmn_mean-tmn_sem,ymax=tmn_mean+tmn_sem),width=.2, position = 
+                  position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") + 
+  labs(fill="Elevation",x="Population", y="Avg MinTemp" ,title = "Average MinTemp Year-Round - Historical Climate") +
+   theme_classic() +
+  theme(text=element_text(size=20), axis.text.x = element_text(angle = 45,  hjust = 1))+ 
+  facet_wrap(~parent.pop)
+ggsave("../output/Climate/all_year_Avg_Monthly_MinTemp_HistoricalClim.png", width = 12, height = 6, units = "in")
+
+flint_historical_all_year_mosavgs %>% ggplot(aes(x=month, y=tmx_mean, fill=elev_m)) + 
+  geom_col(width = 0.7,position = position_dodge(0.75)) +
+  geom_errorbar(aes(ymin=tmx_mean-tmx_sem,ymax=tmx_mean+tmx_sem),width=.2, position = 
+                  position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") + 
+  labs(fill="Elevation",x="Population", y="Avg MaxTemp" ,title = "Average MaxTemp Year-Round - Historical Climate") +
+   theme_classic() +
+  theme(text=element_text(size=20), axis.text.x = element_text(angle = 45,  hjust = 1))+ 
+  facet_wrap(~parent.pop)
+ggsave("../output/Climate/all_year_Avg_Monthly_MaxTemp_HistoricalClim.png", width = 12, height = 6, units = "in")
+```
+
+
+### 30 Year Averages
+
+#### Recent Years - Flint Year Round
+
+```{r}
+flint_recent_all_year_avgs <- flint_recent_all_year %>% group_by(parent.pop, elevation.group, elev_m) %>% summarise_at(c("cwd", "pck", "ppt", "tmn", "tmx"), c(mean, sem), na.rm = TRUE) 
+names(flint_recent_all_year_avgs) <- gsub("fn2", "sem", colnames(flint_recent_all_year_avgs))
+names(flint_recent_all_year_avgs) <-gsub("fn1", "mean", colnames(flint_recent_all_year_avgs))
+flint_recent_all_year_avgs #30 year averages during growth season months 
+flint_recent_all_year_avgs$elevation.group <- factor(flint_recent_all_year_avgs$elevation.group, levels=elev_order)    
+#write_csv(flint_recent_all_year_avgs, "../output/Climate/all_year__FlintAvgs_Recent.csv")
+
+flint_recent_all_year_avgs %>% ggplot(aes(x=fct_reorder(parent.pop, cwd_mean), y=cwd_mean, fill=elev_m)) + 
+  geom_col(width = 0.7,position = position_dodge(0.75)) +
+  geom_errorbar(aes(ymin=cwd_mean-cwd_sem,ymax=cwd_mean+cwd_sem),width=.2, position = 
+                  position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0")+ 
+  labs(fill="Elevation",x="Population", y="Avg CWD" ,title = "Average CWD Year-Round - Recent Climate") +
+   theme_classic() +
+  theme(text=element_text(size=20), axis.text.x = element_text(angle = 45,  hjust = 1))
+ggsave("../output/Climate/all_year_Avg_CWD_RecentClim.png", width = 12, height = 6, units = "in")
+
+flint_recent_all_year_avgs %>% ggplot(aes(x=fct_reorder(parent.pop, pck_mean), y=pck_mean, fill=elev_m)) + 
+  geom_col(width = 0.7,position = position_dodge(0.75)) +
+  geom_errorbar(aes(ymin=pck_mean-pck_sem,ymax=pck_mean+pck_sem),width=.2, position = 
+                  position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0")+ 
+  labs(fill="Elevation",x="Population", y="Avg PCK" ,title = "Average PCK Year-Round - Recent Climate") +
+   theme_classic() +
+  theme(text=element_text(size=20), axis.text.x = element_text(angle = 45,  hjust = 1))
+ggsave("../output/Climate/all_year_Avg_PCK_RecentClim.png", width = 12, height = 6, units = "in")
+
+flint_recent_all_year_avgs %>% ggplot(aes(x=fct_reorder(parent.pop, ppt_mean), y=ppt_mean, fill=elev_m)) + 
+  geom_col(width = 0.7,position = position_dodge(0.75)) +
+  geom_errorbar(aes(ymin=ppt_mean-ppt_sem,ymax=ppt_mean+ppt_sem),width=.2, position = 
+                  position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") + 
+  labs(fill="Elevation",x="Population", y="Avg Precip" ,title = "Average Precip Year-Round - Recent Climate") +
+   theme_classic() +
+  theme(text=element_text(size=20), axis.text.x = element_text(angle = 45,  hjust = 1))
+ggsave("../output/Climate/all_year_Avg_Precip_RecentClim.png", width = 12, height = 6, units = "in")
+
+flint_recent_all_year_avgs %>% ggplot(aes(x=fct_reorder(parent.pop, tmn_mean), y=tmn_mean, fill=elev_m)) + 
+  geom_col(width = 0.7,position = position_dodge(0.75)) +
+  geom_errorbar(aes(ymin=tmn_mean-tmn_sem,ymax=tmn_mean+tmn_sem),width=.2, position = 
+                  position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") + 
+  labs(fill="Elevation",x="Population", y="Avg MinTemp" ,title = "Average MinTemp Year-Round - Recent Climate") +
+   theme_classic() +
+  theme(text=element_text(size=20), axis.text.x = element_text(angle = 45,  hjust = 1))
+ggsave("../output/Climate/all_year_Avg_MinTemp_RecentClim.png", width = 12, height = 6, units = "in")
+
+flint_recent_all_year_avgs %>% ggplot(aes(x=fct_reorder(parent.pop, tmx_mean), y=tmx_mean, fill=elev_m)) + 
+  geom_col(width = 0.7,position = position_dodge(0.75)) +
+  geom_errorbar(aes(ymin=tmx_mean-tmx_sem,ymax=tmx_mean+tmx_sem),width=.2, position = 
+                  position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") + 
+  labs(fill="Elevation",x="Population", y="Avg MaxTemp" ,title = "Average MaxTemp Year-Round - Recent Climate") +
+   theme_classic() +
+  theme(text=element_text(size=20), axis.text.x = element_text(angle = 45,  hjust = 1))
+ggsave("../output/Climate/all_year_Avg_MaxTemp_RecentClim.png", width = 12, height = 6, units = "in")
+```
+
+#### Historical Years - Flint Year Round
+
+```{r}
+flint_historical_all_year_avgs <- flint_historical_all_year %>% group_by(parent.pop, elevation.group, elev_m) %>% summarise_at(c("cwd", "pck", "ppt", "tmn", "tmx"), c(mean, sem), na.rm = TRUE) 
+names(flint_historical_all_year_avgs) <- gsub("fn2", "sem", colnames(flint_historical_all_year_avgs))
+names(flint_historical_all_year_avgs) <-gsub("fn1", "mean", colnames(flint_historical_all_year_avgs))
+flint_historical_all_year_avgs #30 year averages during growth season months 
+flint_historical_all_year_avgs$elevation.group <- factor(flint_historical_all_year_avgs$elevation.group, levels=elev_order)    
+#write_csv(flint_historical_all_year_avgs, "../output/Climate/all_year__FlintAvgs_Historic.csv")
+
+flint_historical_all_year_avgs %>% ggplot(aes(x=fct_reorder(parent.pop, cwd_mean), y=cwd_mean, fill=elev_m)) + 
+  geom_col(width = 0.7,position = position_dodge(0.75)) +
+  geom_errorbar(aes(ymin=cwd_mean-cwd_sem,ymax=cwd_mean+cwd_sem),width=.2, position = 
+                  position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0")+ 
+  labs(fill="Elevation",x="Population", y="Avg CWD" ,title = "Average CWD Year-Round - Historical Climate") +
+   theme_classic() +
+  theme(text=element_text(size=20), axis.text.x = element_text(angle = 45,  hjust = 1))
+ggsave("../output/Climate/all_year_Avg_CWD_HistoricalClim.png", width = 12, height = 6, units = "in")
+
+flint_historical_all_year_avgs %>% ggplot(aes(x=fct_reorder(parent.pop, pck_mean), y=pck_mean, fill=elev_m)) + 
+  geom_col(width = 0.7,position = position_dodge(0.75)) +
+  geom_errorbar(aes(ymin=pck_mean-pck_sem,ymax=pck_mean+pck_sem),width=.2, position = 
+                  position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0")+ 
+  labs(fill="Elevation",x="Population", y="Avg PCK" ,title = "Average PCK Year-Round - Historical Climate") +
+   theme_classic() +
+  theme(text=element_text(size=20), axis.text.x = element_text(angle = 45,  hjust = 1))
+ggsave("../output/Climate/all_year_Avg_PCK_HistoricalClim.png", width = 12, height = 6, units = "in")
+
+flint_historical_all_year_avgs %>% ggplot(aes(x=fct_reorder(parent.pop, ppt_mean), y=ppt_mean, fill=elev_m)) + 
+  geom_col(width = 0.7,position = position_dodge(0.75)) +
+  geom_errorbar(aes(ymin=ppt_mean-ppt_sem,ymax=ppt_mean+ppt_sem),width=.2, position = 
+                  position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") + 
+  labs(fill="Elevation",x="Population", y="Avg Precip" ,title = "Average Precip Year-Round - Historical Climate") +
+   theme_classic() +
+  theme(text=element_text(size=20), axis.text.x = element_text(angle = 45,  hjust = 1))
+ggsave("../output/Climate/all_year_Avg_Precip_HistoricalClim.png", width = 12, height = 6, units = "in")
+
+flint_historical_all_year_avgs %>% ggplot(aes(x=fct_reorder(parent.pop, tmn_mean), y=tmn_mean, fill=elev_m)) + 
+  geom_col(width = 0.7,position = position_dodge(0.75)) +
+  geom_errorbar(aes(ymin=tmn_mean-tmn_sem,ymax=tmn_mean+tmn_sem),width=.2, position = 
+                  position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") + 
+  labs(fill="Elevation",x="Population", y="Avg MinTemp" ,title = "Average MinTemp Year-Round - Historical Climate") +
+   theme_classic() +
+  theme(text=element_text(size=20), axis.text.x = element_text(angle = 45,  hjust = 1))
+ggsave("../output/Climate/all_year_Avg_MinTemp_HistoricalClim.png", width = 12, height = 6, units = "in")
+
+flint_historical_all_year_avgs %>% ggplot(aes(x=fct_reorder(parent.pop, tmx_mean), y=tmx_mean, fill=elev_m)) + 
+  geom_col(width = 0.7,position = position_dodge(0.75)) +
+  geom_errorbar(aes(ymin=tmx_mean-tmx_sem,ymax=tmx_mean+tmx_sem),width=.2, position = 
+                  position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") + 
+  labs(fill="Elevation",x="Population", y="Avg MaxTemp" ,title = "Average MaxTemp Year-Round - Historical Climate") +
+   theme_classic() +
+  theme(text=element_text(size=20), axis.text.x = element_text(angle = 45,  hjust = 1))
+ggsave("../output/Climate/all_year_Avg_MaxTemp_HistoricalClim.png", width = 12, height = 6, units = "in")
+```
+
+## Bioclim - 30 year averages 
+
+### Recent Years - BioClim
+```{r}
+bioclim_recent_avgs <- bioclim_recent %>% group_by(parent.pop, elevation.group, elev_m) %>%
+  summarise_at(c("ann_tmean", "mean_diurnal_range", "temp_seasonality", "temp_ann_range", "tmean_wettest_quarter", "tmean_driest_quarter", "ann_ppt", "ppt_seasonality","ppt_warmest_quarter", "ppt_coldest_quarter"), c(mean, sem), na.rm = TRUE) 
+names(bioclim_recent_avgs) <- gsub("fn2", "sem", colnames(bioclim_recent_avgs))
+names(bioclim_recent_avgs) <-gsub("fn1", "avg", colnames(bioclim_recent_avgs))
+bioclim_recent_avgs
+#write_csv(bioclim_recent_avgs, "../output/Climate/all_year_BioClimAvgs_Recent.csv")
+
+bioclim_recent_avgs %>% ggplot(aes(x=fct_reorder(parent.pop, ann_tmean_avg), y=ann_tmean_avg, fill=elev_m)) + 
+  geom_col(width = 0.7,position = position_dodge(0.75)) + 
+  geom_errorbar(aes(ymin=ann_tmean_avg-ann_tmean_sem,ymax=ann_tmean_avg+ann_tmean_sem),width=.2, position = position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  labs(fill="Elevation (m)", y="Avg Annual Mean Temp", x="Population", title ="Recent Climate - Growth Season") +
+  theme_classic() +
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+ggsave("../output/Climate/all_year_AnnMeanTmp_RecentClim.png", width = 12, height = 6, units = "in")
+
+bioclim_recent_avgs %>% ggplot(aes(x=fct_reorder(parent.pop, mean_diurnal_range_avg), y=mean_diurnal_range_avg, fill=elev_m)) + 
+  geom_col(width = 0.7,position = position_dodge(0.75)) + 
+  geom_errorbar(aes(ymin=mean_diurnal_range_avg-mean_diurnal_range_sem,ymax=mean_diurnal_range_avg+mean_diurnal_range_sem),width=.2, position = position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  labs(fill="Elevation (m)", y="Avg Diurnal Range", x="Population", title ="Recent Climate - Growth Season") +
+  theme_classic() +
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+ggsave("../output/Climate/all_year_DiurnalRange_RecentClim.png", width = 12, height = 6, units = "in")
+
+bioclim_recent_avgs %>% ggplot(aes(x=fct_reorder(parent.pop, temp_seasonality_avg), y=temp_seasonality_avg, fill=elev_m)) + 
+  geom_col(width = 0.7,position = position_dodge(0.75)) + 
+  geom_errorbar(aes(ymin=temp_seasonality_avg-temp_seasonality_sem,ymax=temp_seasonality_avg+temp_seasonality_sem),width=.2, position = position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  labs(fill="Elevation (m)",  x="Population", title ="Recent Climate - Growth Season") +
+  theme_classic() +
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+ggsave("../output/Climate/all_year_TempSeasonality_RecentClim.png", width = 12, height = 6, units = "in")
+
+bioclim_recent_avgs %>% ggplot(aes(x=fct_reorder(parent.pop, temp_ann_range_avg), y=temp_ann_range_avg, fill=elev_m)) + 
+  geom_col(width = 0.7,position = position_dodge(0.75)) + 
+  geom_errorbar(aes(ymin=temp_ann_range_avg-temp_ann_range_sem,ymax=temp_ann_range_avg+temp_ann_range_sem),width=.2, position = position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  labs(fill="Elevation (m)",  x="Population", title ="Recent Climate - Growth Season") +
+  theme_classic() +
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+ggsave("../output/Climate/all_year_AnnTmpRange_RecentClim.png", width = 12, height = 6, units = "in")
+
+bioclim_recent_avgs %>% ggplot(aes(x=fct_reorder(parent.pop, tmean_wettest_quarter_avg), y=tmean_wettest_quarter_avg, fill=elev_m)) + 
+  geom_col(width = 0.7,position = position_dodge(0.75)) + 
+  geom_errorbar(aes(ymin=tmean_wettest_quarter_avg-tmean_wettest_quarter_sem,ymax=tmean_wettest_quarter_avg+tmean_wettest_quarter_sem),width=.2, position = position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  labs(fill="Elevation (m)",  x="Population", title ="Recent Climate - Growth Season") +
+  theme_classic() +
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+ggsave("../output/Climate/all_year_TmpMeanWet_RecentClim.png", width = 12, height = 6, units = "in")
+
+bioclim_recent_avgs %>% ggplot(aes(x=fct_reorder(parent.pop, tmean_driest_quarter_avg), y=tmean_driest_quarter_avg, fill=elev_m)) + 
+  geom_col(width = 0.7,position = position_dodge(0.75)) + 
+  geom_errorbar(aes(ymin=tmean_driest_quarter_avg-tmean_driest_quarter_sem,ymax=tmean_driest_quarter_avg+tmean_driest_quarter_sem),width=.2, position = position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  labs(fill="Elevation (m)",  x="Population", title ="Recent Climate - Growth Season") +
+  theme_classic() +
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+ggsave("../output/Climate/all_year_TmpMeanDry_RecentClim.png", width = 12, height = 6, units = "in")
+
+bioclim_recent_avgs %>% ggplot(aes(x=fct_reorder(parent.pop, ann_ppt_avg), y=ann_ppt_avg, fill=elev_m)) + 
+  geom_col(width = 0.7,position = position_dodge(0.75)) + 
+  geom_errorbar(aes(ymin=ann_ppt_avg-ann_ppt_sem,ymax=ann_ppt_avg+ann_ppt_sem),width=.2, position = position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  labs(fill="Elevation (m)",  x="Population", title ="Recent Climate - Growth Season") +
+  theme_classic() +
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+ggsave("../output/Climate/all_year_AnnPPT_RecentClim.png", width = 12, height = 6, units = "in")
+
+bioclim_recent_avgs %>% ggplot(aes(x=fct_reorder(parent.pop, ppt_seasonality_avg), y=ppt_seasonality_avg, fill=elev_m)) + 
+  geom_col(width = 0.7,position = position_dodge(0.75)) + 
+  geom_errorbar(aes(ymin=ppt_seasonality_avg-ppt_seasonality_sem,ymax=ppt_seasonality_avg+ppt_seasonality_sem),width=.2, position = position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  labs(fill="Elevation (m)",  x="Population", title ="Recent Climate - Growth Season") +
+  theme_classic() +
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+ggsave("../output/Climate/all_year_PPTSeasonality_RecentClim.png", width = 12, height = 6, units = "in")
+
+bioclim_recent_avgs %>% ggplot(aes(x=fct_reorder(parent.pop, ppt_warmest_quarter_avg), y=ppt_warmest_quarter_avg, fill=elev_m)) + 
+  geom_col(width = 0.7,position = position_dodge(0.75)) + 
+  geom_errorbar(aes(ymin=ppt_warmest_quarter_avg-ppt_warmest_quarter_sem,ymax=ppt_warmest_quarter_avg+ppt_warmest_quarter_sem),width=.2, position = position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  labs(fill="Elevation (m)",  x="Population", title ="Recent Climate - Growth Season") +
+  theme_classic() +
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+ggsave("../output/Climate/all_year_PPTWarm_RecentClim.png", width = 12, height = 6, units = "in")
+
+bioclim_recent_avgs %>% ggplot(aes(x=fct_reorder(parent.pop, ppt_coldest_quarter_avg), y=ppt_coldest_quarter_avg, fill=elev_m)) + 
+  geom_col(width = 0.7,position = position_dodge(0.75)) + 
+  geom_errorbar(aes(ymin=ppt_coldest_quarter_avg-ppt_coldest_quarter_sem,ymax=ppt_coldest_quarter_avg+ppt_coldest_quarter_sem),width=.2, position = position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  labs(fill="Elevation (m)",  x="Population", title ="Recent Climate - Growth Season") +
+  theme_classic() +
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+ggsave("../output/Climate/all_year_PPTCold_RecentClim.png", width = 12, height = 6, units = "in")
+```
+
+### Historical Years - BioClim
+```{r}
+names(bioclim_historical)
+bioclim_historical_avgs <- bioclim_historical %>% group_by(parent.pop, elevation.group, elev_m) %>%
+  summarise_at(c("ann_tmean", "mean_diurnal_range", "temp_seasonality", "temp_ann_range", "tmean_wettest_quarter", "tmean_driest_quarter", "ann_ppt", "ppt_seasonality","ppt_warmest_quarter", "ppt_coldest_quarter"), c(mean, sem), na.rm = TRUE) 
+names(bioclim_historical_avgs) <- gsub("fn2", "sem", colnames(bioclim_historical_avgs))
+names(bioclim_historical_avgs) <-gsub("fn1", "avg", colnames(bioclim_historical_avgs))
+bioclim_historical_avgs
+#write_csv(bioclim_historical_avgs, "../output/Climate/all_year_BioClimAvgs_Historical.csv")
+
+bioclim_historical_avgs %>% ggplot(aes(x=fct_reorder(parent.pop, ann_tmean_avg), y=ann_tmean_avg, fill=elev_m)) + 
+  geom_col(width = 0.7,position = position_dodge(0.75)) + 
+  geom_errorbar(aes(ymin=ann_tmean_avg-ann_tmean_sem,ymax=ann_tmean_avg+ann_tmean_sem),width=.2, position = position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  labs(fill="Elevation (m)", y="Avg Annual Mean Temp", x="Population", title ="Historical Climate - Growth Season") +
+  theme_classic() +
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+ggsave("../output/Climate/all_year_AnnMeanTmp_HistoricalClim.png", width = 12, height = 6, units = "in")
+
+bioclim_historical_avgs %>% ggplot(aes(x=fct_reorder(parent.pop, mean_diurnal_range_avg), y=mean_diurnal_range_avg, fill=elev_m)) + 
+  geom_col(width = 0.7,position = position_dodge(0.75)) + 
+  geom_errorbar(aes(ymin=mean_diurnal_range_avg-mean_diurnal_range_sem,ymax=mean_diurnal_range_avg+mean_diurnal_range_sem),width=.2, position = position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  labs(fill="Elevation (m)", y="Avg Diurnal Range", x="Population", title ="Historical Climate - Growth Season") +
+  theme_classic() +
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+ggsave("../output/Climate/all_year_DiurnalRange_HistoricalClim.png", width = 12, height = 6, units = "in")
+
+bioclim_historical_avgs %>% ggplot(aes(x=fct_reorder(parent.pop, temp_seasonality_avg), y=temp_seasonality_avg, fill=elev_m)) + 
+  geom_col(width = 0.7,position = position_dodge(0.75)) + 
+  geom_errorbar(aes(ymin=temp_seasonality_avg-temp_seasonality_sem,ymax=temp_seasonality_avg+temp_seasonality_sem),width=.2, position = position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  labs(fill="Elevation (m)",  x="Population", title ="Historical Climate - Growth Season") +
+  theme_classic() +
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+ggsave("../output/Climate/all_year_TempSeasonality_HistoricalClim.png", width = 12, height = 6, units = "in")
+
+bioclim_historical_avgs %>% ggplot(aes(x=fct_reorder(parent.pop, temp_ann_range_avg), y=temp_ann_range_avg, fill=elev_m)) + 
+  geom_col(width = 0.7,position = position_dodge(0.75)) + 
+  geom_errorbar(aes(ymin=temp_ann_range_avg-temp_ann_range_sem,ymax=temp_ann_range_avg+temp_ann_range_sem),width=.2, position = position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  labs(fill="Elevation (m)",  x="Population", title ="Historical Climate - Growth Season") +
+  theme_classic() +
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+ggsave("../output/Climate/all_year_AnnTmpRange_HistoricalClim.png", width = 12, height = 6, units = "in")
+
+bioclim_historical_avgs %>% ggplot(aes(x=fct_reorder(parent.pop, tmean_wettest_quarter_avg), y=tmean_wettest_quarter_avg, fill=elev_m)) + 
+  geom_col(width = 0.7,position = position_dodge(0.75)) + 
+  geom_errorbar(aes(ymin=tmean_wettest_quarter_avg-tmean_wettest_quarter_sem,ymax=tmean_wettest_quarter_avg+tmean_wettest_quarter_sem),width=.2, position = position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  labs(fill="Elevation (m)",  x="Population", title ="Historical Climate - Growth Season") +
+  theme_classic() +
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+ggsave("../output/Climate/all_year_TmpMeanWet_HistoricalClim.png", width = 12, height = 6, units = "in")
+
+bioclim_historical_avgs %>% ggplot(aes(x=fct_reorder(parent.pop, tmean_driest_quarter_avg), y=tmean_driest_quarter_avg, fill=elev_m)) + 
+  geom_col(width = 0.7,position = position_dodge(0.75)) + 
+  geom_errorbar(aes(ymin=tmean_driest_quarter_avg-tmean_driest_quarter_sem,ymax=tmean_driest_quarter_avg+tmean_driest_quarter_sem),width=.2, position = position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  labs(fill="Elevation (m)",  x="Population", title ="Historical Climate - Growth Season") +
+  theme_classic() +
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+ggsave("../output/Climate/all_year_TmpMeanDry_HistoricalClim.png", width = 12, height = 6, units = "in")
+
+bioclim_historical_avgs %>% ggplot(aes(x=fct_reorder(parent.pop, ann_ppt_avg), y=ann_ppt_avg, fill=elev_m)) + 
+  geom_col(width = 0.7,position = position_dodge(0.75)) + 
+  geom_errorbar(aes(ymin=ann_ppt_avg-ann_ppt_sem,ymax=ann_ppt_avg+ann_ppt_sem),width=.2, position = position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  labs(fill="Elevation (m)",  x="Population", title ="Historical Climate - Growth Season") +
+  theme_classic() +
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+ggsave("../output/Climate/all_year_AnnPPT_HistoricalClim.png", width = 12, height = 6, units = "in")
+
+bioclim_historical_avgs %>% ggplot(aes(x=fct_reorder(parent.pop, ppt_seasonality_avg), y=ppt_seasonality_avg, fill=elev_m)) + 
+  geom_col(width = 0.7,position = position_dodge(0.75)) + 
+  geom_errorbar(aes(ymin=ppt_seasonality_avg-ppt_seasonality_sem,ymax=ppt_seasonality_avg+ppt_seasonality_sem),width=.2, position = position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  labs(fill="Elevation (m)",  x="Population", title ="Historical Climate - Growth Season") +
+  theme_classic() +
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+ggsave("../output/Climate/all_year_PPTSeasonality_HistoricalClim.png", width = 12, height = 6, units = "in")
+
+bioclim_historical_avgs %>% ggplot(aes(x=fct_reorder(parent.pop, ppt_warmest_quarter_avg), y=ppt_warmest_quarter_avg, fill=elev_m)) + 
+  geom_col(width = 0.7,position = position_dodge(0.75)) + 
+  geom_errorbar(aes(ymin=ppt_warmest_quarter_avg-ppt_warmest_quarter_sem,ymax=ppt_warmest_quarter_avg+ppt_warmest_quarter_sem),width=.2, position = position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  labs(fill="Elevation (m)",  x="Population", title ="Historical Climate - Growth Season") +
+  theme_classic() +
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+ggsave("../output/Climate/all_year_PPTWarm_HistoricalClim.png", width = 12, height = 6, units = "in")
+
+bioclim_historical_avgs %>% ggplot(aes(x=fct_reorder(parent.pop, ppt_coldest_quarter_avg), y=ppt_coldest_quarter_avg, fill=elev_m)) + 
+  geom_col(width = 0.7,position = position_dodge(0.75)) + 
+  geom_errorbar(aes(ymin=ppt_coldest_quarter_avg-ppt_coldest_quarter_sem,ymax=ppt_coldest_quarter_avg+ppt_coldest_quarter_sem),width=.2, position = position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  labs(fill="Elevation (m)",  x="Population", title ="Historical Climate - Growth Season") +
+  theme_classic() +
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+ggsave("../output/Climate/all_year_PPTCold_HistoricalClim.png", width = 12, height = 6, units = "in")
+```
