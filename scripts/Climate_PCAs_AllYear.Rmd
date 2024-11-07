@@ -18,12 +18,6 @@ knitr::opts_chunk$set(echo = TRUE)
 -   Remember this paper: Björklund, M. 2019. Be careful with your
     principal components. Evolution 73: 2151--2158.
 
--   Notes
-
-    -   Include snowpack? Not in the growth season PCAs since growth season is based off snowpack. 
-    -   Take out UCD_garden? It is pretty different from the other sites so it may be skewing things... depends on if we want the PCA to describe home sites-only or all home sites and gardens
-    -   SEE BOTTOM CODE CHUNK FOR HOW TO MODIFY AUTOPLOT CODE TO GET FULLY FORMATTED PCA FIGURE 
-
 ## Load necessary libraries 
 ```{r}
 library(tidyverse)
