@@ -486,6 +486,7 @@ flint_historical_grwseason_avgs
 flint_grwseason_avgs <- bind_rows(flint_recent_grwseason_avgs, flint_historical_grwseason_avgs) #combine into 1 dataframe 
 head(flint_grwseason_avgs)
 tail(flint_grwseason_avgs)
+write_csv(flint_grwseason_avgs, "../output/Climate/growthseason_FlintAvgs.csv")
 ```
 
 ### Correlations - Recent + Historical
@@ -606,6 +607,7 @@ bioclim_historical_grwseason_avgs
 bioclim_grwseason_avgs <- bind_rows(bioclim_recent_grwseason_avgs, bioclim_historical_grwseason_avgs) #combine into 1 dataframe 
 head(bioclim_grwseason_avgs)
 tail(bioclim_grwseason_avgs)
+write_csv(bioclim_grwseason_avgs, "../output/Climate/growthseason_BioClimAvgs.csv")
 ```
 
 Merge with flint

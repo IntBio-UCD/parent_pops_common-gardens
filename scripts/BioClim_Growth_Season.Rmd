@@ -261,7 +261,6 @@ bioclim_recent_avgs <- bioclim_recent %>% group_by(parent.pop, elevation.group, 
 names(bioclim_recent_avgs) <- gsub("fn2", "sem", colnames(bioclim_recent_avgs))
 names(bioclim_recent_avgs) <-gsub("fn1", "avg", colnames(bioclim_recent_avgs))
 bioclim_recent_avgs
-#write_csv(bioclim_recent_avgs, "../output/Climate/growthseason_BioClimAvgs_Recent.csv")
 
 bioclim_recent_avgs %>% ggplot(aes(x=fct_reorder(parent.pop, ann_tmean_avg), y=ann_tmean_avg, fill=elev_m)) + 
   geom_col(width = 0.7,position = position_dodge(0.75)) + 
@@ -372,7 +371,6 @@ bioclim_historical_avgs <- bioclim_historical %>% group_by(parent.pop, elevation
 names(bioclim_historical_avgs) <- gsub("fn2", "sem", colnames(bioclim_historical_avgs))
 names(bioclim_historical_avgs) <-gsub("fn1", "avg", colnames(bioclim_historical_avgs))
 bioclim_historical_avgs
-#write_csv(bioclim_historical_avgs, "../output/Climate/growthseason_BioClimAvgs_Historical.csv")
 
 bioclim_historical_avgs %>% ggplot(aes(x=fct_reorder(parent.pop, ann_tmean_avg), y=ann_tmean_avg, fill=elev_m)) + 
   geom_col(width = 0.7,position = position_dodge(0.75)) + 

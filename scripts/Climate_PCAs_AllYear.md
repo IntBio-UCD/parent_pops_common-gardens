@@ -1,7 +1,7 @@
 ---
 title: "Climate_PCAs_AllYear"
 author: "Brandie QC"
-date: "2024-11-06"
+date: "2024-11-26"
 output: 
   html_document: 
     keep_md: true
@@ -15,12 +15,6 @@ output:
     <https://github.com/StatQuest/pca_demo/blob/master/pca_demo.R>
 -   Remember this paper: Björklund, M. 2019. Be careful with your
     principal components. Evolution 73: 2151--2158.
-
--   Notes
-
-    -   Include snowpack? Not in the growth season PCAs since growth season is based off snowpack. 
-    -   Take out UCD_garden? It is pretty different from the other sites so it may be skewing things... depends on if we want the PCA to describe home sites-only or all home sites and gardens
-    -   SEE BOTTOM CODE CHUNK FOR HOW TO MODIFY AUTOPLOT CODE TO GET FULLY FORMATTED PCA FIGURE 
 
 ## Load necessary libraries 
 
@@ -1440,6 +1434,10 @@ tail(flint_all_year_avgs)
 ## # ℹ 1 more variable: TimePd <chr>
 ```
 
+``` r
+write_csv(flint_all_year_avgs, "../output/Climate/fullyear_FlintAvgs.csv")
+```
+
 ### Correlations - Recent + Historical
 
 
@@ -1748,6 +1746,10 @@ tail(bioclim_all_year_avgs)
 ## #   tmean_wettest_quarter <dbl>, tmean_driest_quarter <dbl>, ann_ppt <dbl>,
 ## #   ppt_seasonality <dbl>, ppt_warmest_quarter <dbl>,
 ## #   ppt_coldest_quarter <dbl>, TimePd <chr>
+```
+
+``` r
+write_csv(bioclim_all_year_avgs, "../output/Climate/fullyear_BioClimAvgs.csv")
 ```
 
 Merge with flint

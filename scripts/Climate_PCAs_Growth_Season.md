@@ -1,7 +1,7 @@
 ---
 title: "Climate PCAs_Growth Season"
 author: "Brandie Quarles"
-date: "2024-11-06"
+date: "2024-11-26"
 output: 
   html_document: 
     keep_md: true
@@ -1261,6 +1261,10 @@ tail(flint_grwseason_avgs)
 ## # ℹ 1 more variable: TimePd <chr>
 ```
 
+``` r
+write_csv(flint_grwseason_avgs, "../output/Climate/growthseason_FlintAvgs.csv")
+```
+
 ### Correlations - Recent + Historical
 
 
@@ -1566,6 +1570,10 @@ tail(bioclim_grwseason_avgs)
 ## #   tmean_wettest_month <dbl>, tmean_driest_month <dbl>, ann_ppt <dbl>,
 ## #   ppt_seasonality <dbl>, ppt_warmest_month <dbl>, ppt_coldest_month <dbl>,
 ## #   TimePd <chr>
+```
+
+``` r
+write_csv(bioclim_grwseason_avgs, "../output/Climate/growthseason_BioClimAvgs.csv")
 ```
 
 Merge with flint
