@@ -6,6 +6,8 @@ output:
   html_document: 
     keep_md: yes
 ---
+To Do: 
+- Copy this code and substitute the full year climate data for the growth season inputs used here.
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)

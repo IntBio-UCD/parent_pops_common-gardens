@@ -9,6 +9,8 @@ editor_options:
   markdown: 
     wrap: 72
 ---
+To Do: 
+- Copy this code and substitute the full year climate data for the growth season inputs used here.
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -32,31 +34,6 @@ Options:
     PCA, with EDij corresponding to the Euclidian distance between i and
     j based on PCA1 & PCA2." as in Moran et al 2017
 
-Davis CWD
-
-Evapotranspiration can be computed as reference, potential, or actual
-evapotranspiration.   Reference evapotranspiration is that from a grass
-surface that is well-watered.  Potential evapotranspiration is that from
-a surface that has unlimited water (such as a lake). 
-
--   CWD = PET - AET
-
-    -   PET = modeled on an hourly basis from solar radiation that is
-        modeled using topgraphic shading and cloudiness
-
-        -   Priestley-Taylor Equation
-
-        -   Still figuring out how to calculate this. The people we
-            reached out to say Eto(ref) is similar to PET, but not quite
-            the same...
-
-    -   AET = PET x monthly Kv for each vegtype when soil is above
-        wilting point
-
-        -   Kv values used by flint for different veg types is in the
-            control file - can't access the control file because they're
-            currently revising the data release
-
 ## Relevant Libraries and Functions
 
 ```{r}
@@ -69,6 +46,7 @@ library(ggrepel)
 library(cowplot)
 library(gridExtra)
 library(naniar) #replaces values with NA
+
 sem <- function(x, na.rm=FALSE) {
   sd(x,na.rm=na.rm)/sqrt(length(na.omit(x)))
 } #standard error function 
@@ -136,6 +114,20 @@ names(davis_climate_short)
 
 davis_climate_short_flint <- davis_climate_short %>% #get the means for the variables to compare to home sites 
   summarise(ppt_mean_Davis=mean(ppt), tmn_mean_Davis=mean(tmn), tmx_mean_Davis=mean(tmx))
+```
+
+```{r}
+davis_climate_short %>% 
+  ggplot(aes(x=month,y=tmx)) +
+  geom_point()
+
+davis_climate_short %>% 
+  ggplot(aes(x=month,y=tmn)) +
+  geom_point()
+
+davis_climate_short %>% 
+  ggplot(aes(x=month,y=ppt)) +
+  geom_point()
 ```
 
 ### BioClim
