@@ -8,6 +8,7 @@ output: html_document
 To Do:
 - Look at relationship between size and survival
 - Do stats on size and survival separately 
+- Try using Bayes analyis and get standard error from that. 
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -245,6 +246,19 @@ firstyear_mort_rxnnorms_summary2 %>%
   labs(y="Survival", color="Elevation (m)") + #ylim(0,1) +
   theme(text=element_text(size=28))
 ggsave("../output/Surv_FirstYear_RxNorms_ALL_PopAvgs.png", width = 14, height = 8, units = "in")
+```
+
+```{r}
+firstyear_mort_rxnnorms_summary2 %>% 
+  filter(N_Surv != 1) %>% 
+  filter(Site=="High Elev") %>% 
+  ggplot(aes(x=fct_reorder(parent.pop, mean_Surv), y=mean_Surv, group=parent.pop, fill=elev_m)) + 
+  geom_col(width = 0.7,position = position_dodge(0.75)) +
+  geom_errorbar(aes(ymin=mean_Surv-sem_surv,ymax=mean_Surv+sem_surv),width=.1) +
+  theme_classic() + scale_fill_gradient(low = "#F5A540", high = "#0043F0")  +
+  labs(y="Survival", fill="Elevation (m)", x="Population") + #ylim(0,1) +
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+ggsave("../output/Surv_FirstYear_WL2ONLY_ALL_PopAvgs.png", width = 14, height = 8, units = "in")
 ```
 
 Combine pop and mf avgs 
