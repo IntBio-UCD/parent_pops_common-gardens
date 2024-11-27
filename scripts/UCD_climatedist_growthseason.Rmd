@@ -17,9 +17,6 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 # Climate Distance at the Davis Garden
-What happens if I drop the bioclim?
-CWD might change the results too
-But maybe similar because the life history differences are allowing them to pick the same time
 Annual data might give a different result, worth presenting it both ways because that helps highlight the importance of the life history differences 
 To get confidence intervals could do some bootstrapping - samples some of the 30 years and calculates it and so on - Julin could help with the code 
 
