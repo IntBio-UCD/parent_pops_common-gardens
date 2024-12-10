@@ -1,7 +1,7 @@
 ---
 title: "WL2_climate_distance"
 author: "Brandie Quarles"
-date: "2024-12-09"
+date: "2024-12-10"
 output: 
   html_document: 
     keep_md: yes
@@ -1427,6 +1427,7 @@ names(recent_flint_dist_prep)
 ``` r
 recent_flint_dist <- recent_flint_dist_prep %>% 
   mutate(ppt_dist=ppt_WL2 - ppt,
+         cwd_dist=cwd_WL2 - cwd,
          tmn_dist=tmn_WL2 - tmn,
          tmx_dist=tmx_WL2 - tmx) %>% 
  dplyr::select(parent.pop, elevation.group, elev_m, ends_with("_dist"))
@@ -1445,6 +1446,7 @@ names(historic_flint_dist_prep)
 ``` r
 historic_flint_dist <- historic_flint_dist_prep %>% 
   mutate(ppt_dist=ppt_WL2 - ppt,
+         cwd_dist=cwd_WL2 - cwd,
          tmn_dist=tmn_WL2 - tmn,
          tmx_dist=tmx_WL2 - tmx) %>% 
  dplyr::select(parent.pop, elevation.group, elev_m, ends_with("_dist"))
@@ -1455,7 +1457,7 @@ Figures Recent (subtraction distance)
 
 ``` r
 recent_flint_dist %>% 
-  ggplot(aes(x=fct_reorder(parent.pop, ppt_dist), y=ppt_dist, group=parent.pop, fill=elev_m)) +
+  ggplot(aes(x=fct_reorder(parent.pop, cwd_dist), y=cwd_dist, group=parent.pop, fill=elev_m)) +
   geom_col(width = 0.7,position = position_dodge(0.75)) +
   scale_y_continuous(expand = c(0, 0)) +
   scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
@@ -1465,6 +1467,21 @@ recent_flint_dist %>%
 ```
 
 ![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-23-1.png)<!-- -->
+
+``` r
+ggsave("../output/Climate/grwssn_MeanCWD_DistfromWL2_RecentClim.png", width = 12, height = 6, units = "in")
+
+recent_flint_dist %>% 
+  ggplot(aes(x=fct_reorder(parent.pop, ppt_dist), y=ppt_dist, group=parent.pop, fill=elev_m)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  labs(fill="Elevation (m)",x="Population") +
+  theme_classic() +
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+```
+
+![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-23-2.png)<!-- -->
 
 ``` r
 ggsave("../output/Climate/grwssn_MeanPPT_DistfromWL2_RecentClim.png", width = 12, height = 6, units = "in")
@@ -1479,7 +1496,7 @@ recent_flint_dist %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 ```
 
-![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-23-2.png)<!-- -->
+![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-23-3.png)<!-- -->
 
 ``` r
 ggsave("../output/Climate/grwssn_MeanTMN_DistfromWL2_RecentClim.png", width = 12, height = 6, units = "in")
@@ -1494,7 +1511,7 @@ recent_flint_dist %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 ```
 
-![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-23-3.png)<!-- -->
+![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-23-4.png)<!-- -->
 
 ``` r
 ggsave("../output/Climate/grwssn_MeanTMX_DistfromWL2_RecentClim.png", width = 12, height = 6, units = "in")
@@ -1505,7 +1522,7 @@ Figures Historical (subtraction distance)
 
 ``` r
 historic_flint_dist %>% 
-  ggplot(aes(x=fct_reorder(parent.pop, ppt_dist), y=ppt_dist, group=parent.pop, fill=elev_m)) +
+  ggplot(aes(x=fct_reorder(parent.pop, cwd_dist), y=cwd_dist, group=parent.pop, fill=elev_m)) +
   geom_col(width = 0.7,position = position_dodge(0.75)) +
   scale_y_continuous(expand = c(0, 0)) +
   scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
@@ -1515,6 +1532,21 @@ historic_flint_dist %>%
 ```
 
 ![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-24-1.png)<!-- -->
+
+``` r
+ggsave("../output/Climate/grwssn_MeanCWD_DistfromWL2_HistoricalClim.png", width = 12, height = 6, units = "in")
+
+historic_flint_dist %>% 
+  ggplot(aes(x=fct_reorder(parent.pop, ppt_dist), y=ppt_dist, group=parent.pop, fill=elev_m)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  labs(fill="Elevation (m)",x="Population") +
+  theme_classic() +
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+```
+
+![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-24-2.png)<!-- -->
 
 ``` r
 ggsave("../output/Climate/grwssn_MeanPPT_DistfromWL2_HistoricalClim.png", width = 12, height = 6, units = "in")
@@ -1529,7 +1561,7 @@ historic_flint_dist %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 ```
 
-![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-24-2.png)<!-- -->
+![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-24-3.png)<!-- -->
 
 ``` r
 ggsave("../output/Climate/grwssn_MeanTMN_DistfromWL2_HistoricalClim.png", width = 12, height = 6, units = "in")
@@ -1544,7 +1576,7 @@ historic_flint_dist %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 ```
 
-![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-24-3.png)<!-- -->
+![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-24-4.png)<!-- -->
 
 ``` r
 ggsave("../output/Climate/grwssn_MeanTMX_DistfromWL2_HistoricalClim.png", width = 12, height = 6, units = "in")
