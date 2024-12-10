@@ -1,7 +1,7 @@
 ---
 title: "WL2_climate_distance"
 author: "Brandie Quarles"
-date: "2024-11-27"
+date: "2024-12-09"
 output: 
   html_document: 
     keep_md: yes
@@ -1689,6 +1689,42 @@ names(gowers_all_time_bioclim)
 write_csv(gowers_all_time_bioclim, "../output/Climate/growthseason_GowersEnvtalDist_WL2bioclim.csv")
 ```
 
+Figures
+
+``` r
+gowers_rec_fig_bioclim <- gowers_all_time_bioclim %>% 
+  ggplot(aes(x=fct_reorder(parent.pop, Recent_Gowers_Dist), y=Recent_Gowers_Dist, group=parent.pop, fill=elev_m)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  labs(y="Gowers Envtal Distance \n from WL2", fill="Elevation (m)", x="Population", title="Recent Climate") +
+  theme_classic() +
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+#ggsave("../output/Climate/growthseason_Gowers_Recentbioclim_fromWL2.png", width = 12, height = 6, units = "in")
+
+gowers_hist_fig_bioclim <- gowers_all_time_bioclim %>% 
+  ggplot(aes(x=fct_reorder(parent.pop, Historic_Gowers_Dist), y=Historic_Gowers_Dist, group=parent.pop, fill=elev_m)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  labs(fill="Elevation (m)",x="Population", title="Historic Climate", y="Gowers Envtal Distance \n from WL2") +
+  theme_classic() +
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+#ggsave("../output/Climate/growthseason_Gowers_Historicbioclim_fromWL2.png", width = 12, height = 6, units = "in")
+
+#should combine these into one figure and save that instead
+legend <- get_legend(gowers_rec_fig_bioclim)
+gowers_hist_fig_bioclim <- gowers_hist_fig_bioclim + theme(legend.position="none")
+gowers_rec_fig_bioclim <- gowers_rec_fig_bioclim + theme(legend.position="none")
+grid.arrange(gowers_hist_fig_bioclim, gowers_rec_fig_bioclim, legend, ncol=3, widths=c(3.12, 3.12, 1.09))
+```
+
+![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-28-1.png)<!-- -->
+
+``` r
+ #2000 x 850
+```
+
 ### Subtraction
 
 
@@ -1808,7 +1844,7 @@ recent_bioclim_dist %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 ```
 
-![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-29-1.png)<!-- -->
+![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-30-1.png)<!-- -->
 
 ``` r
 ggsave("../output/Climate/grwssn_Ann_Tmean_DistfromWL2_RecentClim.png", width = 12, height = 6, units = "in")
@@ -1823,7 +1859,7 @@ recent_bioclim_dist %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 ```
 
-![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-29-2.png)<!-- -->
+![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-30-2.png)<!-- -->
 
 ``` r
 ggsave("../output/Climate/grwssn_Diurnal_Range_DistfromWL2_RecentClim.png", width = 12, height = 6, units = "in")
@@ -1838,7 +1874,7 @@ recent_bioclim_dist %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 ```
 
-![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-29-3.png)<!-- -->
+![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-30-3.png)<!-- -->
 
 ``` r
 ggsave("../output/Climate/grwssn_Temp_Seasonality_DistfromWL2_RecentClim.png", width = 12, height = 6, units = "in")
@@ -1853,7 +1889,7 @@ recent_bioclim_dist %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 ```
 
-![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-29-4.png)<!-- -->
+![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-30-4.png)<!-- -->
 
 ``` r
 ggsave("../output/Climate/grwssn_Temp_Ann_Range_DistfromWL2_RecentClim.png", width = 12, height = 6, units = "in")
@@ -1868,7 +1904,7 @@ recent_bioclim_dist %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 ```
 
-![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-29-5.png)<!-- -->
+![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-30-5.png)<!-- -->
 
 ``` r
 ggsave("../output/Climate/grwssn_Temp_Wet_DistfromWL2_RecentClim.png", width = 12, height = 6, units = "in")
@@ -1883,7 +1919,7 @@ recent_bioclim_dist %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 ```
 
-![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-29-6.png)<!-- -->
+![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-30-6.png)<!-- -->
 
 ``` r
 ggsave("../output/Climate/grwssn_Temp_Dry_DistfromWL2_RecentClim.png", width = 12, height = 6, units = "in")
@@ -1898,7 +1934,7 @@ recent_bioclim_dist %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 ```
 
-![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-29-7.png)<!-- -->
+![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-30-7.png)<!-- -->
 
 ``` r
 ggsave("../output/Climate/grwssn_Ann_PPT_DistfromWL2_RecentClim.png", width = 12, height = 6, units = "in")
@@ -1913,7 +1949,7 @@ recent_bioclim_dist %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 ```
 
-![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-29-8.png)<!-- -->
+![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-30-8.png)<!-- -->
 
 ``` r
 ggsave("../output/Climate/grwssn_PPT_Seasonality_DistfromWL2_RecentClim.png", width = 12, height = 6, units = "in")
@@ -1928,7 +1964,7 @@ recent_bioclim_dist %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 ```
 
-![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-29-9.png)<!-- -->
+![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-30-9.png)<!-- -->
 
 ``` r
 ggsave("../output/Climate/grwssn_PPT_Warm_DistfromWL2_RecentClim.png", width = 12, height = 6, units = "in")
@@ -1943,7 +1979,7 @@ recent_bioclim_dist %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 ```
 
-![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-29-10.png)<!-- -->
+![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-30-10.png)<!-- -->
 
 ``` r
 ggsave("../output/Climate/grwssn_PPT_Cold_DistfromWL2_RecentClim.png", width = 12, height = 6, units = "in")
@@ -1963,7 +1999,7 @@ historical_bioclim_dist %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 ```
 
-![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-30-1.png)<!-- -->
+![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-31-1.png)<!-- -->
 
 ``` r
 ggsave("../output/Climate/grwssn_Ann_Tmean_DistfromWL2_HistoricalClim.png", width = 12, height = 6, units = "in")
@@ -1978,7 +2014,7 @@ historical_bioclim_dist %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 ```
 
-![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-30-2.png)<!-- -->
+![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-31-2.png)<!-- -->
 
 ``` r
 ggsave("../output/Climate/grwssn_Diurnal_Range_DistfromWL2_HistoricalClim.png", width = 12, height = 6, units = "in")
@@ -1993,7 +2029,7 @@ historical_bioclim_dist %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 ```
 
-![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-30-3.png)<!-- -->
+![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-31-3.png)<!-- -->
 
 ``` r
 ggsave("../output/Climate/grwssn_Temp_Seasonality_DistfromWL2_HistoricalClim.png", width = 12, height = 6, units = "in")
@@ -2008,7 +2044,7 @@ historical_bioclim_dist %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 ```
 
-![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-30-4.png)<!-- -->
+![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-31-4.png)<!-- -->
 
 ``` r
 ggsave("../output/Climate/grwssn_Temp_Ann_Range_DistfromWL2_HistoricalClim.png", width = 12, height = 6, units = "in")
@@ -2023,7 +2059,7 @@ historical_bioclim_dist %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 ```
 
-![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-30-5.png)<!-- -->
+![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-31-5.png)<!-- -->
 
 ``` r
 ggsave("../output/Climate/grwssn_Temp_Wet_DistfromWL2_HistoricalClim.png", width = 12, height = 6, units = "in")
@@ -2038,7 +2074,7 @@ historical_bioclim_dist %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 ```
 
-![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-30-6.png)<!-- -->
+![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-31-6.png)<!-- -->
 
 ``` r
 ggsave("../output/Climate/grwssn_Temp_Dry_DistfromWL2_HistoricalClim.png", width = 12, height = 6, units = "in")
@@ -2053,7 +2089,7 @@ historical_bioclim_dist %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 ```
 
-![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-30-7.png)<!-- -->
+![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-31-7.png)<!-- -->
 
 ``` r
 ggsave("../output/Climate/grwssn_Ann_PPT_DistfromWL2_HistoricalClim.png", width = 12, height = 6, units = "in")
@@ -2068,7 +2104,7 @@ historical_bioclim_dist %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 ```
 
-![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-30-8.png)<!-- -->
+![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-31-8.png)<!-- -->
 
 ``` r
 ggsave("../output/Climate/grwssn_PPT_Seasonality_DistfromWL2_HistoricalClim.png", width = 12, height = 6, units = "in")
@@ -2083,7 +2119,7 @@ historical_bioclim_dist %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 ```
 
-![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-30-9.png)<!-- -->
+![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-31-9.png)<!-- -->
 
 ``` r
 ggsave("../output/Climate/grwssn_PPT_Warm_DistfromWL2_HistoricalClim.png", width = 12, height = 6, units = "in")
@@ -2098,7 +2134,7 @@ historical_bioclim_dist %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 ```
 
-![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-30-10.png)<!-- -->
+![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-31-10.png)<!-- -->
 
 ``` r
 ggsave("../output/Climate/grwssn_PPT_Cold_DistfromWL2_HistoricalClim.png", width = 12, height = 6, units = "in")
