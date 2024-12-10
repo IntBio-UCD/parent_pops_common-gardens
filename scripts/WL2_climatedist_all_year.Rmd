@@ -6,9 +6,6 @@ output:
   html_document: 
     keep_md: yes
 ---
-To Do: 
-- Change to be full 2023 at WL2
-- If do change it to the full year for the garden environment maybe should add in snowpack 
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
