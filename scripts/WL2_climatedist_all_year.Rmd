@@ -13,10 +13,6 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # Climate Distance at the WL2 Garden
 
-Note, there is no air temperature data for WL2 in July 2023!! 
-Add data for November and December once we get the data after snowmelt? 
-- Reference growth season criteria 
-
 ## Relevant Libraries and Functions
 
 ```{r}

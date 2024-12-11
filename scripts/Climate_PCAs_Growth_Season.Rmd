@@ -11,6 +11,10 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+To Do:
+- For each PC fit a mixed-effects model with parent.pop to test for climate change 
+- Save PC figures of inerest 
+
 # Climate PCAs
 
 -   Should use this code to check the significance of the PCA:

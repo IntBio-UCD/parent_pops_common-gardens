@@ -9,8 +9,8 @@ editor_options:
   markdown: 
     wrap: 72
 ---
-To Do: 
-- - Edit this code to be for all year data! - Should the distance still be from when the plants were growing? Or should it be for full 2022 and 2023?
+
+To do: Change this to be climate distance from 2022-2023 water year. 
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -97,8 +97,8 @@ names(pops_bioclim_historical_avgs)
 davis_climate <- read_csv("../output/Climate/flint_climate_UCDpops.csv") %>% 
   filter(parent.pop=="UCD_Garden") %>% 
   filter(year>=2022, year<2024) %>% 
-  filter(if_else(year==2022, month=="nov" | month=="dec",
-                 month!="nov" & month !="dec")) %>% 
+ # filter(if_else(year==2022, month=="nov" | month=="dec",
+  #               month!="nov" & month !="dec")) %>% 
   mutate(tavg = (tmn + tmx)/2, t_diurnal = (tmx-tmn))
 head(davis_climate)
 summary(davis_climate)
@@ -109,7 +109,7 @@ davis_climate_flint
 ```
 ## Davis Climate Trends
 ```{r}
-davis_climate$month <- factor(davis_climate$month, levels = c("nov","dec","jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct"))
+davis_climate$month <- factor(davis_climate$month, levels = c("jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov","dec"))
 
 davis_climate %>% 
   ggplot(aes(x=month,y=cwd)) +
@@ -125,7 +125,8 @@ davis_climate %>%
 
 davis_climate %>% 
   ggplot(aes(x=month,y=ppt)) +
-  geom_point()
+  geom_point() + 
+  facet_wrap(~year)
 ```
 
 ### BioClim
