@@ -12,8 +12,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 To Do:
-- For each PC fit a mixed-effects model with parent.pop to test for climate change 
-- Save PC figures of inerest 
+- Save PC figures of interest 
 
 # Climate PCAs
 
@@ -83,7 +82,7 @@ bioclim_historical_grwseason <- read_csv("../output/Climate/BioClim_growthseason
 
 ```{r}
 #normalize the data
-climate_normalized_all_flint_recent <- flint_recent_grwseason %>% select(cwd, pck, ppt, tmn, tmx) %>% scale() #normalize the data so they're all on the same scale
+climate_normalized_all_flint_recent <- flint_recent_grwseason %>% select(cwd, ppt, tmn, tmx) %>% scale() #normalize the data so they're all on the same scale
 head(climate_normalized_all_flint_recent)
 cor.norm = cor(climate_normalized_all_flint_recent) #test correlations among the traits
 corrplot(cor.norm)
@@ -147,7 +146,7 @@ autoplot(all_flint_recent.pc, data = flint_recent_grwseason,
 
 ```{r}
 #normalize the data
-climate_normalized_all_flint_historical <- flint_historical_grwseason %>% select(cwd, pck, ppt, tmn, tmx) %>% scale() #normalize the data so they're all on the same scale
+climate_normalized_all_flint_historical <- flint_historical_grwseason %>% select(cwd, ppt, tmn, tmx) %>% scale() #normalize the data so they're all on the same scale
 head(climate_normalized_all_flint_historical)
 cor.norm = cor(climate_normalized_all_flint_historical) #test correlations among the traits
 corrplot(cor.norm)
@@ -366,13 +365,13 @@ autoplot(all_bioclim_historical.pc, data = bioclim_historical_grwseason,
 ```{r}
 flint_recent_grwseason_mosavgs <- flint_recent_grwseason %>% 
   group_by(parent.pop, elevation.group, elev_m, Lat, Long, month) %>% 
-  summarise_at(c("cwd",  "pck", "ppt", "tmn", "tmx"), c(mean), na.rm = TRUE) %>% 
+  summarise_at(c("cwd", "ppt", "tmn", "tmx"), c(mean), na.rm = TRUE) %>% 
   mutate(TimePd = "Recent") 
 flint_recent_grwseason_mosavgs
 
 flint_historical_grwseason_mosavgs <- flint_historical_grwseason %>% 
   group_by(parent.pop, elevation.group, elev_m, Lat, Long, month) %>% 
-  summarise_at(c("cwd", "pck", "ppt", "tmn", "tmx"), c(mean), na.rm = TRUE) %>% 
+  summarise_at(c("cwd", "ppt", "tmn", "tmx"), c(mean), na.rm = TRUE) %>% 
   mutate(TimePd = "Historical")
 flint_historical_grwseason_mosavgs
 
@@ -477,13 +476,13 @@ mos_flint_locs.pc_avg %>%
 ```{r}
 flint_recent_grwseason_avgs <- flint_recent_grwseason %>% 
   group_by(parent.pop, elevation.group, elev_m, Lat, Long) %>% 
-  summarise_at(c("cwd",  "pck", "ppt", "tmn", "tmx"), c(mean), na.rm = TRUE) %>% 
+  summarise_at(c("cwd", "ppt", "tmn", "tmx"), c(mean), na.rm = TRUE) %>% 
   mutate(TimePd = "Recent") 
 flint_recent_grwseason_avgs
 
 flint_historical_grwseason_avgs <- flint_historical_grwseason %>% 
   group_by(parent.pop, elevation.group, elev_m, Lat, Long) %>% 
-  summarise_at(c("cwd", "pck", "ppt", "tmn", "tmx"), c(mean), na.rm = TRUE) %>% 
+  summarise_at(c("cwd", "ppt", "tmn", "tmx"), c(mean), na.rm = TRUE) %>% 
   mutate(TimePd = "Historical")
 flint_historical_grwseason_avgs
 
@@ -732,6 +731,119 @@ all_bioclim_flint_avgs_locs.pc_avg %>%
 all_bioclim_flint_avgs_locs.pc_avg %>% 
   mutate(group=str_c(parent.pop,elev_m))  %>%
   ggplot(aes(x=PC1, y=PC2, shape=TimePd, color=elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_point(size=2, alpha=0.7) +
+  geom_text_repel(aes(label = parent.pop)) +
+  geom_vline(xintercept = 0, linetype="dashed") + geom_hline(yintercept = 0, linetype="dashed")  +
+  geom_path(aes(group=group),arrow = arrow(length=unit(5, "points")), linewidth = .8)
+#high elev climate seems to be shifting to be more similar to low elev 
+```
+
+## LM on PCs
+For each PC fit a model with timepd and parent.pop/elev to test for climate change
+```{r}
+lmer_results <- all_bioclim_flint_avgs_locs.pc %>%
+  ungroup() %>% 
+  select(TimePd, parent.pop, elev_m, Lat, Long, PC1:PC11) %>% 
+  pivot_longer(starts_with("PC", ignore.case = FALSE), 
+               names_to = "PC", values_to = "value") %>% 
+  group_by(PC) %>% 
+  nest(data=c(TimePd, parent.pop, elev_m, Lat, Long, value)) %>% 
+  mutate(glm=map(data, ~ glm(value ~ TimePd*elev_m*Lat,
+                               data=.x)),
+         anova = map(glm, ~ broom.mixed::tidy(anova(.x))))
+
+lmer_results
+```
+
+```{r}
+PC_anova <- lmer_results %>% select(-data, -glm) %>% unnest(anova) %>%
+  select(PC, term, p.value) %>%
+  filter(p.value < 0.05) %>%
+  arrange(term, p.value)
+
+PC_anova
+```
+
+```{r}
+autoplot(all_bioclim_flint_avgs.pc, data = bioclim_flint_grwseason_avgs,
+         x=2, y=4,
+         colour='elev_m', alpha=0.5,
+         label=TRUE, label.label="parent.pop",
+         loadings=TRUE, loadings.colour='black', loadings.linewidth = 0.7,
+         loadings.label = TRUE, loadings.label.size=6, loadings.label.colour="black", 
+         loadings.label.vjust = -0.2, loadings.label.repel=TRUE) +
+   scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_vline(xintercept = 0, linetype="dashed") + geom_hline(yintercept = 0, linetype="dashed") +
+  theme_classic()
+
+all_bioclim_flint_avgs_locs.pc_avg %>% 
+  mutate(group=str_c(parent.pop,elev_m))  %>%
+  ggplot(aes(x=PC2, y=PC4, shape=TimePd, color=elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_point(size=2, alpha=0.7) +
+  geom_vline(xintercept = 0, linetype="dashed") + geom_hline(yintercept = 0, linetype="dashed") +
+  geom_path(aes(group=group),arrow = arrow(length=unit(5, "points")), linewidth = .8)
+
+all_bioclim_flint_avgs_locs.pc_avg %>% 
+  mutate(group=str_c(parent.pop,elev_m))  %>%
+  ggplot(aes(x=PC2, y=PC4, shape=TimePd, color=elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_point(size=2, alpha=0.7) +
+  geom_text_repel(aes(label = parent.pop)) +
+  geom_vline(xintercept = 0, linetype="dashed") + geom_hline(yintercept = 0, linetype="dashed")  +
+  geom_path(aes(group=group),arrow = arrow(length=unit(5, "points")), linewidth = .8)
+#high elev climate seems to be shifting to be more similar to low elev 
+```
+
+```{r}
+lmer_results_flint <- avgs_flint_locs.pc %>%
+  ungroup() %>% 
+  select(TimePd, parent.pop, elev_m, Lat, Long, PC1:PC5) %>% 
+  pivot_longer(starts_with("PC", ignore.case = FALSE), 
+               names_to = "PC", values_to = "value") %>% 
+  group_by(PC) %>% 
+  nest(data=c(TimePd, parent.pop, elev_m, Lat, Long, value)) %>% 
+  mutate(glm=map(data, ~ glm(value ~ TimePd*elev_m*Lat,
+                               data=.x)),
+         anova = map(glm, ~ broom.mixed::tidy(anova(.x))))
+
+lmer_results_flint
+```
+
+```{r}
+PC_anova_flint <- lmer_results_flint %>% select(-data, -glm) %>% unnest(anova) %>%
+  select(PC, term, p.value) %>%
+  filter(p.value < 0.05) %>%
+  arrange(term, p.value)
+
+PC_anova_flint
+```
+TimePd (evidence for climate change) is significant on PC1 with just Flint climate and Flint+Bioclim (dry/warm vs. cool/snowpack)
+
+```{r}
+autoplot(avgs_flint.pc, data = flint_grwseason_avgs,
+         x=1, y=5,
+         colour='elev_m', alpha=0.5,
+         label=TRUE, label.label="parent.pop",
+         loadings=TRUE, loadings.colour='black', loadings.linewidth = 0.7,
+         loadings.label = TRUE, loadings.label.size=6, loadings.label.colour="black", 
+         loadings.label.vjust = -0.2, loadings.label.repel=TRUE) +
+   scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_vline(xintercept = 0, linetype="dashed") + geom_hline(yintercept = 0, linetype="dashed") +
+  theme_classic()
+
+avgs_flint_locs.pc_avg %>% 
+  mutate(group=str_c(parent.pop,elev_m))  %>%
+  ggplot(aes(x=PC1, y=PC5, shape=TimePd, color=elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_point(size=2, alpha=0.7) +
+  geom_vline(xintercept = 0, linetype="dashed") + geom_hline(yintercept = 0, linetype="dashed") +
+  geom_path(aes(group=group),arrow = arrow(length=unit(5, "points")), linewidth = .8)
+
+avgs_flint_locs.pc_avg %>% 
+  mutate(group=str_c(parent.pop,elev_m))  %>%
+  ggplot(aes(x=PC1, y=PC5, shape=TimePd, color=elev_m)) +
   scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
   geom_point(size=2, alpha=0.7) +
   geom_text_repel(aes(label = parent.pop)) +
