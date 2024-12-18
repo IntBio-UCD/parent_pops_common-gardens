@@ -1,13 +1,16 @@
 ---
 title: "Climate PCAs_Growth Season"
 author: "Brandie Quarles"
-date: "2024-11-26"
+date: "2024-12-17"
 output: 
   html_document: 
     keep_md: true
 ---
 
 
+
+To Do:
+- Save PC figures of interest 
 
 # Climate PCAs
 
@@ -242,18 +245,18 @@ bioclim_historical_grwseason <- read_csv("../output/Climate/BioClim_growthseason
 
 ``` r
 #normalize the data
-climate_normalized_all_flint_recent <- flint_recent_grwseason %>% select(cwd, pck, ppt, tmn, tmx) %>% scale() #normalize the data so they're all on the same scale
+climate_normalized_all_flint_recent <- flint_recent_grwseason %>% select(cwd, ppt, tmn, tmx) %>% scale() #normalize the data so they're all on the same scale
 head(climate_normalized_all_flint_recent)
 ```
 
 ```
-##              cwd        pck        ppt         tmn         tmx
-## [1,] -0.86251414 -0.2402228 -0.1500623 -0.76764081 -0.96602478
-## [2,] -0.79994164 -0.2402228 -0.2881219 -0.63215078 -0.54476885
-## [3,] -0.52287391 -0.2402228  0.2133010 -0.61807389 -0.74153103
-## [4,]  0.02169808 -0.2402228 -0.5677457 -0.09195026  0.03231214
-## [5,] -0.05453654 -0.2402228 -0.1164927  0.12800108  0.32679513
-## [6,] -1.13329730 -0.2402228 -0.3165270  0.65412471  0.71503726
+##              cwd        ppt         tmn         tmx
+## [1,] -0.86251414 -0.1500623 -0.76764081 -0.96602478
+## [2,] -0.79994164 -0.2881219 -0.63215078 -0.54476885
+## [3,] -0.52287391  0.2133010 -0.61807389 -0.74153103
+## [4,]  0.02169808 -0.5677457 -0.09195026  0.03231214
+## [5,] -0.05453654 -0.1164927  0.12800108  0.32679513
+## [6,] -1.13329730 -0.3165270  0.65412471  0.71503726
 ```
 
 ``` r
@@ -264,33 +267,33 @@ corrplot(cor.norm)
 ![](Climate_PCAs_Growth_Season_files/figure-html/unnamed-chunk-4-1.png)<!-- -->
 
 ``` r
-#tmn and tmx highly correlated, consider removing one 
+#tmn and tmx highly correlated (95%), consider removing one 
 ```
 
 ### PCA - Flint Recent
 
 
 ``` r
-all_flint_recent.pc = prcomp(flint_recent_grwseason[c(9:13)], scale = TRUE, center = TRUE)
+all_flint_recent.pc = prcomp(flint_recent_grwseason[c(9, 11:12)], scale = TRUE, center = TRUE)
 
 str(all_flint_recent.pc)
 ```
 
 ```
 ## List of 5
-##  $ sdev    : num [1:5] 1.794 0.896 0.775 0.588 0.181
-##  $ rotation: num [1:5, 1:5] 0.421 -0.339 -0.442 0.491 0.521 ...
+##  $ sdev    : num [1:3] 1.441 0.71 0.648
+##  $ rotation: num [1:3, 1:3] 0.591 -0.574 0.567 -0.1 0.645 ...
 ##   ..- attr(*, "dimnames")=List of 2
-##   .. ..$ : chr [1:5] "cwd" "pck" "ppt" "tmn" ...
-##   .. ..$ : chr [1:5] "PC1" "PC2" "PC3" "PC4" ...
-##  $ center  : Named num [1:5] 60.58 14.61 75.6 5.88 19.07
-##   ..- attr(*, "names")= chr [1:5] "cwd" "pck" "ppt" "tmn" ...
-##  $ scale   : Named num [1:5] 36.6 60.82 108.43 5.68 7.57
-##   ..- attr(*, "names")= chr [1:5] "cwd" "pck" "ppt" "tmn" ...
-##  $ x       : num [1:4980, 1:5] -1.096 -0.723 -0.923 0.313 0.343 ...
+##   .. ..$ : chr [1:3] "cwd" "ppt" "tmn"
+##   .. ..$ : chr [1:3] "PC1" "PC2" "PC3"
+##  $ center  : Named num [1:3] 60.58 75.6 5.88
+##   ..- attr(*, "names")= chr [1:3] "cwd" "ppt" "tmn"
+##  $ scale   : Named num [1:3] 36.6 108.43 5.68
+##   ..- attr(*, "names")= chr [1:3] "cwd" "ppt" "tmn"
+##  $ x       : num [1:4980, 1:3] -0.859 -0.666 -0.782 0.286 0.107 ...
 ##   ..- attr(*, "dimnames")=List of 2
 ##   .. ..$ : NULL
-##   .. ..$ : chr [1:5] "PC1" "PC2" "PC3" "PC4" ...
+##   .. ..$ : chr [1:3] "PC1" "PC2" "PC3"
 ##  - attr(*, "class")= chr "prcomp"
 ```
 
@@ -302,15 +305,15 @@ summary(all_flint_recent.pc)
 
 ```
 ## Importance of components:
-##                           PC1    PC2    PC3     PC4     PC5
-## Standard deviation     1.7936 0.8963 0.7753 0.58803 0.18095
-## Proportion of Variance 0.6434 0.1607 0.1202 0.06916 0.00655
-## Cumulative Proportion  0.6434 0.8041 0.9243 0.99345 1.00000
+##                           PC1    PC2    PC3
+## Standard deviation     1.4409 0.7100 0.6479
+## Proportion of Variance 0.6921 0.1680 0.1399
+## Cumulative Proportion  0.6921 0.8601 1.0000
 ```
 
 ``` r
-tibble(PC=str_c("PC",str_pad(1:5,2,pad="0")),
-       percent_var=all_flint_recent.pc$sdev[1:5]^2/sum(all_flint_recent.pc$sdev^2)*100) %>%
+tibble(PC=str_c("PC",str_pad(1:3,2,pad="0")),
+       percent_var=all_flint_recent.pc$sdev[1:3]^2/sum(all_flint_recent.pc$sdev^2)*100) %>%
   ggplot(aes(x=PC, y=percent_var)) +
   geom_col() +
   ggtitle("Percent Variance Explained")
@@ -330,12 +333,10 @@ all_flint_recent_loadings
 ```
 
 ```
-##     varnames        PC1        PC2         PC3         PC4         PC5
-## cwd      cwd  0.4209633 -0.4046565  0.52803861 -0.61476189  0.04781279
-## pck      pck -0.3386036 -0.8402811  0.09896283  0.40951887  0.04214116
-## ppt      ppt -0.4415379 -0.2134006 -0.55927949 -0.65325346 -0.14131813
-## tmn      tmn  0.4914009 -0.2018630 -0.54036499  0.05579054  0.65013043
-## tmx      tmx  0.5212551 -0.2095049 -0.32648693  0.15655495 -0.74383982
+##     varnames        PC1        PC2        PC3
+## cwd      cwd  0.5914188 -0.1002271  0.8001115
+## ppt      ppt -0.5736978  0.6449753  0.5048542
+## tmn      tmn  0.5666522  0.7576024 -0.3239504
 ```
 
 
@@ -355,11 +356,11 @@ autoplot(all_flint_recent.pc, data = flint_recent_grwseason,
 #for plot customizations see: ?ggbiplot
 ```
 
-PCs 3 and 4
+PCs 1 and 3
 
 ``` r
 autoplot(all_flint_recent.pc, data = flint_recent_grwseason,
-         x=3, y=4,
+         x=1, y=3,
          colour='elev_m', alpha=0.5,
          loadings=TRUE, loadings.colour='black', loadings.linewidth = 0.7,
          loadings.label = TRUE, loadings.label.size=8, loadings.label.colour="black", loadings.label.vjust = -0.2) +
@@ -375,18 +376,18 @@ autoplot(all_flint_recent.pc, data = flint_recent_grwseason,
 
 ``` r
 #normalize the data
-climate_normalized_all_flint_historical <- flint_historical_grwseason %>% select(cwd, pck, ppt, tmn, tmx) %>% scale() #normalize the data so they're all on the same scale
+climate_normalized_all_flint_historical <- flint_historical_grwseason %>% select(cwd, ppt, tmn, tmx) %>% scale() #normalize the data so they're all on the same scale
 head(climate_normalized_all_flint_historical)
 ```
 
 ```
-##              cwd        pck         ppt         tmn        tmx
-## [1,] -0.51979441 -0.2387512  0.37680686 -0.29541143 -0.4545244
-## [2,] -0.87681447 -0.2387512  1.28117671 -0.07285286 -0.7038260
-## [3,] -0.87126343 -0.2387512 -0.12383791 -0.77636426 -0.9666766
-## [4,] -0.51336688 -0.2387512 -0.70526437 -0.88198528 -0.4531695
-## [5,] -0.06081035 -0.2387512 -0.05213384 -0.54060307 -0.3827147
-## [6,]  0.36136149 -0.2387512 -0.46310268 -0.11623292  0.2120864
+##              cwd         ppt         tmn        tmx
+## [1,] -0.51979441  0.37680686 -0.29541143 -0.4545244
+## [2,] -0.87681447  1.28117671 -0.07285286 -0.7038260
+## [3,] -0.87126343 -0.12383791 -0.77636426 -0.9666766
+## [4,] -0.51336688 -0.70526437 -0.88198528 -0.4531695
+## [5,] -0.06081035 -0.05213384 -0.54060307 -0.3827147
+## [6,]  0.36136149 -0.46310268 -0.11623292  0.2120864
 ```
 
 ``` r
@@ -404,26 +405,26 @@ corrplot(cor.norm)
 
 
 ``` r
-all_flint_historical.pc = prcomp(flint_historical_grwseason[c(9:13)], scale = TRUE, center = TRUE)
+all_flint_historical.pc = prcomp(flint_historical_grwseason[c(9, 11:12)], scale = TRUE, center = TRUE)
 
 str(all_flint_historical.pc)
 ```
 
 ```
 ## List of 5
-##  $ sdev    : num [1:5] 1.791 0.91 0.784 0.555 0.199
-##  $ rotation: num [1:5, 1:5] 0.402 -0.367 -0.453 0.481 0.517 ...
+##  $ sdev    : num [1:3] 1.419 0.721 0.682
+##  $ rotation: num [1:3, 1:3] 0.583 -0.582 0.567 -0.369 0.431 ...
 ##   ..- attr(*, "dimnames")=List of 2
-##   .. ..$ : chr [1:5] "cwd" "pck" "ppt" "tmn" ...
-##   .. ..$ : chr [1:5] "PC1" "PC2" "PC3" "PC4" ...
-##  $ center  : Named num [1:5] 57.95 15.85 79.27 4.64 18.56
-##   ..- attr(*, "names")= chr [1:5] "cwd" "pck" "ppt" "tmn" ...
-##  $ scale   : Named num [1:5] 34.23 66.4 109.06 5.3 7.38
-##   ..- attr(*, "names")= chr [1:5] "cwd" "pck" "ppt" "tmn" ...
-##  $ x       : num [1:4620, 1:5] -0.669 -1.243 -1.079 -0.458 -0.371 ...
+##   .. ..$ : chr [1:3] "cwd" "ppt" "tmn"
+##   .. ..$ : chr [1:3] "PC1" "PC2" "PC3"
+##  $ center  : Named num [1:3] 57.95 79.27 4.64
+##   ..- attr(*, "names")= chr [1:3] "cwd" "ppt" "tmn"
+##  $ scale   : Named num [1:3] 34.2 109.1 5.3
+##   ..- attr(*, "names")= chr [1:3] "cwd" "ppt" "tmn"
+##  $ x       : num [1:4620, 1:3] -0.69 -1.298 -0.876 -0.389 -0.311 ...
 ##   ..- attr(*, "dimnames")=List of 2
 ##   .. ..$ : NULL
-##   .. ..$ : chr [1:5] "PC1" "PC2" "PC3" "PC4" ...
+##   .. ..$ : chr [1:3] "PC1" "PC2" "PC3"
 ##  - attr(*, "class")= chr "prcomp"
 ```
 
@@ -435,15 +436,15 @@ summary(all_flint_historical.pc)
 
 ```
 ## Importance of components:
-##                           PC1    PC2    PC3     PC4     PC5
-## Standard deviation     1.7913 0.9104 0.7844 0.55473 0.19854
-## Proportion of Variance 0.6418 0.1658 0.1231 0.06154 0.00788
-## Cumulative Proportion  0.6418 0.8075 0.9306 0.99212 1.00000
+##                           PC1    PC2    PC3
+## Standard deviation     1.4194 0.7213 0.6819
+## Proportion of Variance 0.6716 0.1734 0.1550
+## Cumulative Proportion  0.6716 0.8450 1.0000
 ```
 
 ``` r
-tibble(PC=str_c("PC",str_pad(1:5,2,pad="0")),
-       percent_var=all_flint_historical.pc$sdev[1:5]^2/sum(all_flint_historical.pc$sdev^2)*100) %>%
+tibble(PC=str_c("PC",str_pad(1:3,2,pad="0")),
+       percent_var=all_flint_historical.pc$sdev[1:3]^2/sum(all_flint_historical.pc$sdev^2)*100) %>%
   ggplot(aes(x=PC, y=percent_var)) +
   geom_col() +
   ggtitle("Percent Variance Explained")
@@ -463,12 +464,10 @@ all_flint_historical_loadings
 ```
 
 ```
-##     varnames        PC1        PC2        PC3         PC4         PC5
-## cwd      cwd  0.4015908 -0.3597346 -0.7169875 -0.43715586  0.06433885
-## pck      pck -0.3672729 -0.7532999 -0.1416984  0.52355590  0.05882720
-## ppt      ppt -0.4528282 -0.3579272  0.3501661 -0.71964556 -0.16226126
-## tmn      tmn  0.4811828 -0.3112255  0.5099975 -0.04412598  0.63996661
-## tmx      tmx  0.5169576 -0.2795658  0.2883344  0.12225850 -0.74599859
+##     varnames        PC1        PC2         PC3
+## cwd      cwd  0.5834031 -0.3693248 -0.72335326
+## ppt      ppt -0.5818847  0.4312739 -0.68950201
+## tmn      tmn  0.5666136  0.8231658  0.03670208
 ```
 
 
@@ -484,11 +483,11 @@ autoplot(all_flint_historical.pc, data = flint_historical_grwseason,
 
 ![](Climate_PCAs_Growth_Season_files/figure-html/unnamed-chunk-14-1.png)<!-- -->
 
-PCs 3 and 4
+PCs 1 and 3
 
 ``` r
 autoplot(all_flint_historical.pc, data = flint_historical_grwseason,
-         x=3, y=4,
+         x=1, y=3,
          colour='elev_m', alpha=0.5,
          loadings=TRUE, loadings.colour='black', loadings.linewidth = 0.7,
          loadings.label = TRUE, loadings.label.size=8, loadings.label.colour="black", loadings.label.vjust = -0.2) +
@@ -885,55 +884,55 @@ autoplot(all_bioclim_historical.pc, data = bioclim_historical_grwseason,
 ``` r
 flint_recent_grwseason_mosavgs <- flint_recent_grwseason %>% 
   group_by(parent.pop, elevation.group, elev_m, Lat, Long, month) %>% 
-  summarise_at(c("cwd",  "pck", "ppt", "tmn", "tmx"), c(mean), na.rm = TRUE) %>% 
+  summarise_at(c("cwd", "ppt", "tmn", "tmx"), c(mean), na.rm = TRUE) %>% 
   mutate(TimePd = "Recent") 
 flint_recent_grwseason_mosavgs
 ```
 
 ```
-## # A tibble: 166 × 12
+## # A tibble: 166 × 11
 ## # Groups:   parent.pop, elevation.group, elev_m, Lat, Long [23]
-##    parent.pop elevation.group elev_m   Lat  Long month   cwd   pck    ppt   tmn
-##    <chr>      <chr>            <dbl> <dbl> <dbl> <dbl> <dbl> <dbl>  <dbl> <dbl>
-##  1 BH         Low               511.  37.4 -120.     1  29.4     0 124.    2.81
-##  2 BH         Low               511.  37.4 -120.     2  41.0     0  93.9   3.32
-##  3 BH         Low               511.  37.4 -120.     3  53.9     0  90.1   4.82
-##  4 BH         Low               511.  37.4 -120.     4  59.0     0  48.2   6.41
-##  5 BH         Low               511.  37.4 -120.     5  51.4     0  23.2   9.78
-##  6 BH         Low               511.  37.4 -120.     6  89.3     0   6.34 13.6 
-##  7 BH         Low               511.  37.4 -120.    12  30.0     0 111.    2.59
-##  8 CC         Low               313   39.6 -121.     1  19.6     0 184.    4.27
-##  9 CC         Low               313   39.6 -121.     2  31.4     0 165.    4.81
-## 10 CC         Low               313   39.6 -121.     3  45.3     0 148.    6.18
+##    parent.pop elevation.group elev_m   Lat  Long month   cwd    ppt   tmn   tmx
+##    <chr>      <chr>            <dbl> <dbl> <dbl> <dbl> <dbl>  <dbl> <dbl> <dbl>
+##  1 BH         Low               511.  37.4 -120.     1  29.4 124.    2.81  13.9
+##  2 BH         Low               511.  37.4 -120.     2  41.0  93.9   3.32  14.9
+##  3 BH         Low               511.  37.4 -120.     3  53.9  90.1   4.82  17.4
+##  4 BH         Low               511.  37.4 -120.     4  59.0  48.2   6.41  20.5
+##  5 BH         Low               511.  37.4 -120.     5  51.4  23.2   9.78  25.7
+##  6 BH         Low               511.  37.4 -120.     6  89.3   6.34 13.6   31.2
+##  7 BH         Low               511.  37.4 -120.    12  30.0 111.    2.59  13.6
+##  8 CC         Low               313   39.6 -121.     1  19.6 184.    4.27  13.5
+##  9 CC         Low               313   39.6 -121.     2  31.4 165.    4.81  15.3
+## 10 CC         Low               313   39.6 -121.     3  45.3 148.    6.18  17.8
 ## # ℹ 156 more rows
-## # ℹ 2 more variables: tmx <dbl>, TimePd <chr>
+## # ℹ 1 more variable: TimePd <chr>
 ```
 
 ``` r
 flint_historical_grwseason_mosavgs <- flint_historical_grwseason %>% 
   group_by(parent.pop, elevation.group, elev_m, Lat, Long, month) %>% 
-  summarise_at(c("cwd", "pck", "ppt", "tmn", "tmx"), c(mean), na.rm = TRUE) %>% 
+  summarise_at(c("cwd", "ppt", "tmn", "tmx"), c(mean), na.rm = TRUE) %>% 
   mutate(TimePd = "Historical")
 flint_historical_grwseason_mosavgs
 ```
 
 ```
-## # A tibble: 154 × 12
+## # A tibble: 154 × 11
 ## # Groups:   parent.pop, elevation.group, elev_m, Lat, Long [23]
-##    parent.pop elevation.group elev_m   Lat  Long month   cwd   pck    ppt   tmn
-##    <chr>      <chr>            <dbl> <dbl> <dbl> <dbl> <dbl> <dbl>  <dbl> <dbl>
-##  1 BH         Low               511.  37.4 -120.     1  28.0 0.234 104.    1.46
-##  2 BH         Low               511.  37.4 -120.     2  40.4 0      92.2   2.76
-##  3 BH         Low               511.  37.4 -120.     3  51.2 0     101.    4.04
-##  4 BH         Low               511.  37.4 -120.     4  62.2 0      46.4   5.57
-##  5 BH         Low               511.  37.4 -120.     5  63.5 0      12.6   8.83
-##  6 BH         Low               511.  37.4 -120.     6  87.5 0       5.73 12.4 
-##  7 BH         Low               511.  37.4 -120.    11  43.8 0      82.0   4.37
-##  8 BH         Low               511.  37.4 -120.    12  28.5 0      89.3   1.44
-##  9 CC         Low               313   39.6 -121.     1  18.7 0.951 191.    2.42
-## 10 CC         Low               313   39.6 -121.     2  31.1 0     146.    4.04
+##    parent.pop elevation.group elev_m   Lat  Long month   cwd    ppt   tmn   tmx
+##    <chr>      <chr>            <dbl> <dbl> <dbl> <dbl> <dbl>  <dbl> <dbl> <dbl>
+##  1 BH         Low               511.  37.4 -120.     1  28.0 104.    1.46  12.6
+##  2 BH         Low               511.  37.4 -120.     2  40.4  92.2   2.76  15.0
+##  3 BH         Low               511.  37.4 -120.     3  51.2 101.    4.04  16.5
+##  4 BH         Low               511.  37.4 -120.     4  62.2  46.4   5.57  20.1
+##  5 BH         Low               511.  37.4 -120.     5  63.5  12.6   8.83  25.8
+##  6 BH         Low               511.  37.4 -120.     6  87.5   5.73 12.4   30.6
+##  7 BH         Low               511.  37.4 -120.    11  43.8  82.0   4.37  17.4
+##  8 BH         Low               511.  37.4 -120.    12  28.5  89.3   1.44  12.6
+##  9 CC         Low               313   39.6 -121.     1  18.7 191.    2.42  12.5
+## 10 CC         Low               313   39.6 -121.     2  31.1 146.    4.04  15.5
 ## # ℹ 144 more rows
-## # ℹ 2 more variables: tmx <dbl>, TimePd <chr>
+## # ℹ 1 more variable: TimePd <chr>
 ```
 
 ``` r
@@ -942,17 +941,17 @@ head(flint_grwseason_mosavgs)
 ```
 
 ```
-## # A tibble: 6 × 12
+## # A tibble: 6 × 11
 ## # Groups:   parent.pop, elevation.group, elev_m, Lat, Long [1]
-##   parent.pop elevation.group elev_m   Lat  Long month   cwd   pck    ppt   tmn
-##   <chr>      <chr>            <dbl> <dbl> <dbl> <dbl> <dbl> <dbl>  <dbl> <dbl>
-## 1 BH         Low               511.  37.4 -120.     1  29.4     0 124.    2.81
-## 2 BH         Low               511.  37.4 -120.     2  41.0     0  93.9   3.32
-## 3 BH         Low               511.  37.4 -120.     3  53.9     0  90.1   4.82
-## 4 BH         Low               511.  37.4 -120.     4  59.0     0  48.2   6.41
-## 5 BH         Low               511.  37.4 -120.     5  51.4     0  23.2   9.78
-## 6 BH         Low               511.  37.4 -120.     6  89.3     0   6.34 13.6 
-## # ℹ 2 more variables: tmx <dbl>, TimePd <chr>
+##   parent.pop elevation.group elev_m   Lat  Long month   cwd    ppt   tmn   tmx
+##   <chr>      <chr>            <dbl> <dbl> <dbl> <dbl> <dbl>  <dbl> <dbl> <dbl>
+## 1 BH         Low               511.  37.4 -120.     1  29.4 124.    2.81  13.9
+## 2 BH         Low               511.  37.4 -120.     2  41.0  93.9   3.32  14.9
+## 3 BH         Low               511.  37.4 -120.     3  53.9  90.1   4.82  17.4
+## 4 BH         Low               511.  37.4 -120.     4  59.0  48.2   6.41  20.5
+## 5 BH         Low               511.  37.4 -120.     5  51.4  23.2   9.78  25.7
+## 6 BH         Low               511.  37.4 -120.     6  89.3   6.34 13.6   31.2
+## # ℹ 1 more variable: TimePd <chr>
 ```
 
 ``` r
@@ -960,17 +959,17 @@ tail(flint_grwseason_mosavgs)
 ```
 
 ```
-## # A tibble: 6 × 12
+## # A tibble: 6 × 11
 ## # Groups:   parent.pop, elevation.group, elev_m, Lat, Long [2]
-##   parent.pop elevation.group elev_m   Lat  Long month   cwd   pck   ppt    tmn
-##   <chr>      <chr>            <dbl> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl>  <dbl>
-## 1 YO7        High             2470.  37.8 -120.    11  33.2  82.1 149.  -5.04 
-## 2 YO8        High             2591.  37.8 -119.     7 117.    0    15.7  6.14 
-## 3 YO8        High             2591.  37.8 -119.     8 113.    0    14.1  6.00 
-## 4 YO8        High             2591.  37.8 -119.     9  98.1   0    32.5  2.92 
-## 5 YO8        High             2591.  37.8 -119.    10  71.9   0    64.0 -0.564
-## 6 YO8        High             2591.  37.8 -119.    11  31.9  88.9 148.  -5.77 
-## # ℹ 2 more variables: tmx <dbl>, TimePd <chr>
+##   parent.pop elevation.group elev_m   Lat  Long month   cwd   ppt    tmn   tmx
+##   <chr>      <chr>            <dbl> <dbl> <dbl> <dbl> <dbl> <dbl>  <dbl> <dbl>
+## 1 YO7        High             2470.  37.8 -120.    11  33.2 149.  -5.04   7.32
+## 2 YO8        High             2591.  37.8 -119.     7 117.   15.7  6.14  21.3 
+## 3 YO8        High             2591.  37.8 -119.     8 113.   14.1  6.00  21.1 
+## 4 YO8        High             2591.  37.8 -119.     9  98.1  32.5  2.92  17.9 
+## 5 YO8        High             2591.  37.8 -119.    10  71.9  64.0 -0.564 13.3 
+## 6 YO8        High             2591.  37.8 -119.    11  31.9 148.  -5.77   6.91
+## # ℹ 1 more variable: TimePd <chr>
 ```
 
 ### Correlations - Recent + Historical
@@ -984,13 +983,13 @@ head(climate_normalized_flint_grwseason_mosavgs)
 ```
 
 ```
-##               cwd        pck        ppt         tmn        tmx
-## [1,] -0.921478463 -0.3466925  0.6370523 -0.46312448 -0.6766390
-## [2,] -0.564920883 -0.3466925  0.2242746 -0.36707575 -0.5376371
-## [3,] -0.165578858 -0.3466925  0.1721933 -0.08609735 -0.1940932
-## [4,] -0.008743628 -0.3466925 -0.3952891  0.20996462  0.2278868
-## [5,] -0.242892723 -0.3466925 -0.7334882  0.84073244  0.9548144
-## [6,]  0.923602028 -0.3466925 -0.9618371  1.55259007  1.7153641
+##               cwd        ppt         tmn        tmx
+## [1,] -0.921478463  0.6370523 -0.46312448 -0.6766390
+## [2,] -0.564920883  0.2242746 -0.36707575 -0.5376371
+## [3,] -0.165578858  0.1721933 -0.08609735 -0.1940932
+## [4,] -0.008743628 -0.3952891  0.20996462  0.2278868
+## [5,] -0.242892723 -0.7334882  0.84073244  0.9548144
+## [6,]  0.923602028 -0.9618371  1.55259007  1.7153641
 ```
 
 ``` r
@@ -1010,26 +1009,26 @@ corrplot(cor.norm)
 
 ``` r
 #flint_grwseason_mosavgs[c(8:12)]
-mos_flint.pc = prcomp(flint_grwseason_mosavgs[c(7:11)], scale = TRUE, center = TRUE)
+mos_flint.pc = prcomp(flint_grwseason_mosavgs[c(7:9)], scale = TRUE, center = TRUE)
 
 str(mos_flint.pc)
 ```
 
 ```
 ## List of 5
-##  $ sdev    : num [1:5] 1.923 0.813 0.673 0.403 0.163
-##  $ rotation: num [1:5, 1:5] 0.408 -0.369 -0.478 0.475 0.493 ...
+##  $ sdev    : num [1:3] 1.548 0.66 0.412
+##  $ rotation: num [1:3, 1:3] 0.565 -0.611 0.555 -0.671 0.051 ...
 ##   ..- attr(*, "dimnames")=List of 2
-##   .. ..$ : chr [1:5] "cwd" "pck" "ppt" "tmn" ...
-##   .. ..$ : chr [1:5] "PC1" "PC2" "PC3" "PC4" ...
-##  $ center  : Named num [1:5] 59.31 15.21 77.36 5.28 18.82
-##   ..- attr(*, "names")= chr [1:5] "cwd" "pck" "ppt" "tmn" ...
-##  $ scale   : Named num [1:5] 32.47 43.87 73.85 5.35 7.24
-##   ..- attr(*, "names")= chr [1:5] "cwd" "pck" "ppt" "tmn" ...
-##  $ x       : num [1:320, 1:5] -1.106 -0.649 -0.159 0.526 1.25 ...
+##   .. ..$ : chr [1:3] "cwd" "ppt" "tmn"
+##   .. ..$ : chr [1:3] "PC1" "PC2" "PC3"
+##  $ center  : Named num [1:3] 59.31 77.36 5.28
+##   ..- attr(*, "names")= chr [1:3] "cwd" "ppt" "tmn"
+##  $ scale   : Named num [1:3] 32.47 73.85 5.35
+##   ..- attr(*, "names")= chr [1:3] "cwd" "ppt" "tmn"
+##  $ x       : num [1:320, 1:3] -1.167 -0.66 -0.246 0.353 0.777 ...
 ##   ..- attr(*, "dimnames")=List of 2
 ##   .. ..$ : NULL
-##   .. ..$ : chr [1:5] "PC1" "PC2" "PC3" "PC4" ...
+##   .. ..$ : chr [1:3] "PC1" "PC2" "PC3"
 ##  - attr(*, "class")= chr "prcomp"
 ```
 
@@ -1041,15 +1040,15 @@ summary(mos_flint.pc)
 
 ```
 ## Importance of components:
-##                           PC1    PC2     PC3    PC4     PC5
-## Standard deviation     1.9230 0.8129 0.67265 0.4031 0.16259
-## Proportion of Variance 0.7396 0.1322 0.09049 0.0325 0.00529
-## Cumulative Proportion  0.7396 0.8717 0.96222 0.9947 1.00000
+##                           PC1    PC2     PC3
+## Standard deviation     1.5475 0.6602 0.41159
+## Proportion of Variance 0.7983 0.1453 0.05647
+## Cumulative Proportion  0.7983 0.9435 1.00000
 ```
 
 ``` r
-tibble(PC=str_c("PC",str_pad(1:5,2,pad="0")),
-       percent_var=mos_flint.pc$sdev[1:5]^2/sum(mos_flint.pc$sdev^2)*100) %>%
+tibble(PC=str_c("PC",str_pad(1:3,2,pad="0")),
+       percent_var=mos_flint.pc$sdev[1:3]^2/sum(mos_flint.pc$sdev^2)*100) %>%
   ggplot(aes(x=PC, y=percent_var)) +
   geom_col() +
   ggtitle("Percent Variance Explained")
@@ -1069,12 +1068,10 @@ mos_flint_loadings
 ```
 
 ```
-##     varnames        PC1         PC2        PC3         PC4         PC5
-## cwd      cwd  0.4079383 -0.62441458  0.4356779 -0.50282739  0.03228327
-## pck      pck -0.3689755 -0.73758843 -0.5429174  0.14952145  0.05200364
-## ppt      ppt -0.4784822  0.20391233 -0.1918978 -0.81764612 -0.15525646
-## tmn      tmn  0.4747355  0.15600497 -0.5378861 -0.23370847  0.63745394
-## tmx      tmx  0.4930765  0.01232635 -0.4350623 -0.04053562 -0.75219766
+##     varnames        PC1         PC2        PC3
+## cwd      cwd  0.5650999 -0.67099258 -0.4800323
+## ppt      ppt -0.6106795  0.05103173 -0.7902318
+## tmn      tmn  0.5547366  0.73970583 -0.3809234
 ```
 
 
@@ -1115,19 +1112,19 @@ mos_flint_locs.pc_avg
 ```
 
 ```
-## # A tibble: 320 × 10
-##    parent.pop elev_m TimePd    month   pck    PC1    PC2    PC3     PC4      PC5
-##    <chr>       <dbl> <chr>     <dbl> <dbl>  <dbl>  <dbl>  <dbl>   <dbl>    <dbl>
-##  1 BH           511. Historic…     1 0.234 -1.20   0.804  0.458  0.342   0.0917 
-##  2 BH           511. Historic…     2 0     -0.691  0.580  0.381  0.209   0.0297 
-##  3 BH           511. Historic…     3 0     -0.394  0.437  0.281 -0.121   0.0158 
-##  4 BH           511. Historic…     4 0      0.476  0.125  0.204  0.227  -0.0453 
-##  5 BH           511. Historic…     5 0      1.39   0.113 -0.364  0.407  -0.179  
-##  6 BH           511. Historic…     6 0      2.38  -0.257 -0.670 -0.0708 -0.220  
-##  7 BH           511. Historic…    11 0     -0.273  0.538  0.143  0.184  -0.00600
-##  8 BH           511. Historic…    12 0     -1.10   0.759  0.503  0.496   0.113  
-##  9 BH           511. Recent        1 0     -1.11   0.880  0.208  0.0263  0.0671 
-## 10 BH           511. Recent        2 0     -0.649  0.590  0.330  0.156   0.0993 
+## # A tibble: 320 × 7
+##    parent.pop elev_m TimePd     month    PC1     PC2     PC3
+##    <chr>       <dbl> <chr>      <dbl>  <dbl>   <dbl>   <dbl>
+##  1 BH           511. Historical     1 -1.16   0.136   0.451 
+##  2 BH           511. Historical     2 -0.713  0.0517  0.301 
+##  3 BH           511. Historical     3 -0.465  0.0129 -0.0447
+##  4 BH           511. Historical     4  0.337 -0.0415  0.268 
+##  5 BH           511. Historical     5  0.976  0.361   0.379 
+##  6 BH           511. Historical     6  1.82   0.350  -0.155 
+##  7 BH           511. Historical    11 -0.403  0.198   0.244 
+##  8 BH           511. Historical    12 -1.03   0.113   0.601 
+##  9 BH           511. Recent         1 -1.17   0.308   0.115 
+## 10 BH           511. Recent         2 -0.660  0.119   0.234 
 ## # ℹ 310 more rows
 ```
 
@@ -1144,8 +1141,7 @@ mos_flint_locs.pc_avg %>%
 ![](Climate_PCAs_Growth_Season_files/figure-html/unnamed-chunk-37-1.png)<!-- -->
 
 ``` r
-#as I suspected from the raw PC figure, high elev pop cliamte is most similar to low elev climate in the summer months 
-#hard to see differences between recent and historical with this fig though
+#Remember: this is growth season so high elev pops don't have winter months 
 ```
 
 
@@ -1173,55 +1169,53 @@ mos_flint_locs.pc_avg %>%
 ``` r
 flint_recent_grwseason_avgs <- flint_recent_grwseason %>% 
   group_by(parent.pop, elevation.group, elev_m, Lat, Long) %>% 
-  summarise_at(c("cwd",  "pck", "ppt", "tmn", "tmx"), c(mean), na.rm = TRUE) %>% 
+  summarise_at(c("cwd", "ppt", "tmn", "tmx"), c(mean), na.rm = TRUE) %>% 
   mutate(TimePd = "Recent") 
 flint_recent_grwseason_avgs
 ```
 
 ```
-## # A tibble: 23 × 11
+## # A tibble: 23 × 10
 ## # Groups:   parent.pop, elevation.group, elev_m, Lat [23]
-##    parent.pop elevation.group elev_m   Lat  Long   cwd    pck   ppt   tmn   tmx
-##    <chr>      <chr>            <dbl> <dbl> <dbl> <dbl>  <dbl> <dbl> <dbl> <dbl>
-##  1 BH         Low               511.  37.4 -120.  50.6  0      71.0  6.19  19.6
-##  2 CC         Low               313   39.6 -121.  48.4  0     105.   8.56  21.0
-##  3 CP2        High             2244.  38.7 -120.  75.1 41.8    78.2  3.94  16.5
-##  4 CP3        High             2266.  38.7 -120.  57.8 44.3    75.4  3.36  15.7
-##  5 DPR        Mid              1019.  39.2 -121.  30.4  2.72   96.9  9.06  21.9
-##  6 FR         Mid               787   40.0 -121.  89.7  4.01   58.1  7.37  22.9
-##  7 IH         Low               454.  39.1 -121.  40.5  0.201 100.   8.07  21.2
-##  8 LV1        High             2593.  40.5 -122.  65.5 28.0    73.6  2.35  16.4
-##  9 LV3        High             2354.  40.5 -122.  53.6 28.2    72.7  2.31  16.4
-## 10 LVTR1      High             2741.  40.5 -122.  73.7 29.0    76.8  2.03  16.3
+##    parent.pop elevation.group elev_m   Lat  Long   cwd   ppt   tmn   tmx TimePd
+##    <chr>      <chr>            <dbl> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl> <chr> 
+##  1 BH         Low               511.  37.4 -120.  50.6  71.0  6.19  19.6 Recent
+##  2 CC         Low               313   39.6 -121.  48.4 105.   8.56  21.0 Recent
+##  3 CP2        High             2244.  38.7 -120.  75.1  78.2  3.94  16.5 Recent
+##  4 CP3        High             2266.  38.7 -120.  57.8  75.4  3.36  15.7 Recent
+##  5 DPR        Mid              1019.  39.2 -121.  30.4  96.9  9.06  21.9 Recent
+##  6 FR         Mid               787   40.0 -121.  89.7  58.1  7.37  22.9 Recent
+##  7 IH         Low               454.  39.1 -121.  40.5 100.   8.07  21.2 Recent
+##  8 LV1        High             2593.  40.5 -122.  65.5  73.6  2.35  16.4 Recent
+##  9 LV3        High             2354.  40.5 -122.  53.6  72.7  2.31  16.4 Recent
+## 10 LVTR1      High             2741.  40.5 -122.  73.7  76.8  2.03  16.3 Recent
 ## # ℹ 13 more rows
-## # ℹ 1 more variable: TimePd <chr>
 ```
 
 ``` r
 flint_historical_grwseason_avgs <- flint_historical_grwseason %>% 
   group_by(parent.pop, elevation.group, elev_m, Lat, Long) %>% 
-  summarise_at(c("cwd", "pck", "ppt", "tmn", "tmx"), c(mean), na.rm = TRUE) %>% 
+  summarise_at(c("cwd", "ppt", "tmn", "tmx"), c(mean), na.rm = TRUE) %>% 
   mutate(TimePd = "Historical")
 flint_historical_grwseason_avgs
 ```
 
 ```
-## # A tibble: 23 × 11
+## # A tibble: 23 × 10
 ## # Groups:   parent.pop, elevation.group, elev_m, Lat [23]
-##    parent.pop elevation.group elev_m   Lat  Long   cwd     pck   ppt   tmn   tmx
-##    <chr>      <chr>            <dbl> <dbl> <dbl> <dbl>   <dbl> <dbl> <dbl> <dbl>
-##  1 BH         Low               511.  37.4 -120.  50.6  0.0292  66.6  5.11  18.8
-##  2 CC         Low               313   39.6 -121.  42.5  0.119  112.   6.36  18.9
-##  3 CP2        High             2244.  38.7 -120.  79.7 18.4     69.0  3.99  17.6
-##  4 CP3        High             2266.  38.7 -120.  60.3 20.7     67.1  3.54  16.8
-##  5 DPR        Mid              1019.  39.2 -121.  30.0  5.13    82.5  8.02  22.2
-##  6 FR         Mid               787   40.0 -121.  87.8  4.54    57.8  6.15  23.0
-##  7 IH         Low               454.  39.1 -121.  41.5  1.77    97.9  7.07  20.9
-##  8 LV1        High             2593.  40.5 -122.  55.5 61.7    127.  -1.16  13.9
-##  9 LV3        High             2354.  40.5 -122.  43.8 62.3    125.  -1.20  13.9
-## 10 LVTR1      High             2741.  40.5 -122.  60.4 64.5    133.  -1.35  13.7
+##    parent.pop elevation.group elev_m   Lat  Long   cwd   ppt   tmn   tmx TimePd 
+##    <chr>      <chr>            <dbl> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl> <chr>  
+##  1 BH         Low               511.  37.4 -120.  50.6  66.6  5.11  18.8 Histor…
+##  2 CC         Low               313   39.6 -121.  42.5 112.   6.36  18.9 Histor…
+##  3 CP2        High             2244.  38.7 -120.  79.7  69.0  3.99  17.6 Histor…
+##  4 CP3        High             2266.  38.7 -120.  60.3  67.1  3.54  16.8 Histor…
+##  5 DPR        Mid              1019.  39.2 -121.  30.0  82.5  8.02  22.2 Histor…
+##  6 FR         Mid               787   40.0 -121.  87.8  57.8  6.15  23.0 Histor…
+##  7 IH         Low               454.  39.1 -121.  41.5  97.9  7.07  20.9 Histor…
+##  8 LV1        High             2593.  40.5 -122.  55.5 127.  -1.16  13.9 Histor…
+##  9 LV3        High             2354.  40.5 -122.  43.8 125.  -1.20  13.9 Histor…
+## 10 LVTR1      High             2741.  40.5 -122.  60.4 133.  -1.35  13.7 Histor…
 ## # ℹ 13 more rows
-## # ℹ 1 more variable: TimePd <chr>
 ```
 
 ``` r
@@ -1230,17 +1224,16 @@ head(flint_grwseason_avgs)
 ```
 
 ```
-## # A tibble: 6 × 11
+## # A tibble: 6 × 10
 ## # Groups:   parent.pop, elevation.group, elev_m, Lat [6]
-##   parent.pop elevation.group elev_m   Lat  Long   cwd   pck   ppt   tmn   tmx
-##   <chr>      <chr>            <dbl> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl>
-## 1 BH         Low               511.  37.4 -120.  50.6  0     71.0  6.19  19.6
-## 2 CC         Low               313   39.6 -121.  48.4  0    105.   8.56  21.0
-## 3 CP2        High             2244.  38.7 -120.  75.1 41.8   78.2  3.94  16.5
-## 4 CP3        High             2266.  38.7 -120.  57.8 44.3   75.4  3.36  15.7
-## 5 DPR        Mid              1019.  39.2 -121.  30.4  2.72  96.9  9.06  21.9
-## 6 FR         Mid               787   40.0 -121.  89.7  4.01  58.1  7.37  22.9
-## # ℹ 1 more variable: TimePd <chr>
+##   parent.pop elevation.group elev_m   Lat  Long   cwd   ppt   tmn   tmx TimePd
+##   <chr>      <chr>            <dbl> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl> <chr> 
+## 1 BH         Low               511.  37.4 -120.  50.6  71.0  6.19  19.6 Recent
+## 2 CC         Low               313   39.6 -121.  48.4 105.   8.56  21.0 Recent
+## 3 CP2        High             2244.  38.7 -120.  75.1  78.2  3.94  16.5 Recent
+## 4 CP3        High             2266.  38.7 -120.  57.8  75.4  3.36  15.7 Recent
+## 5 DPR        Mid              1019.  39.2 -121.  30.4  96.9  9.06  21.9 Recent
+## 6 FR         Mid               787   40.0 -121.  89.7  58.1  7.37  22.9 Recent
 ```
 
 ``` r
@@ -1248,17 +1241,16 @@ tail(flint_grwseason_avgs)
 ```
 
 ```
-## # A tibble: 6 × 11
+## # A tibble: 6 × 10
 ## # Groups:   parent.pop, elevation.group, elev_m, Lat [6]
-##   parent.pop elevation.group elev_m   Lat  Long   cwd   pck   ppt    tmn   tmx
-##   <chr>      <chr>            <dbl> <dbl> <dbl> <dbl> <dbl> <dbl>  <dbl> <dbl>
-## 1 WR         Mid              1158   39.3 -121.  50.2 10.8   89.3  7.59   21.8
-## 2 WV         Mid               749.  40.7 -123.  57.9  9.49  62.0  6.09   22.5
-## 3 YO11       High             2872.  37.9 -119.  71.8 15.9   42.1 -0.346  14.6
-## 4 YO4        High             2158.  37.8 -120.  62.0 28.6   64.2  3.94   16.9
-## 5 YO7        High             2470.  37.8 -120.  67.9 16.4   55.2  2.43   16.5
-## 6 YO8        High             2591.  37.8 -119.  86.4 17.8   54.9  1.74   16.1
-## # ℹ 1 more variable: TimePd <chr>
+##   parent.pop elevation.group elev_m   Lat  Long   cwd   ppt    tmn   tmx TimePd 
+##   <chr>      <chr>            <dbl> <dbl> <dbl> <dbl> <dbl>  <dbl> <dbl> <chr>  
+## 1 WR         Mid              1158   39.3 -121.  50.2  89.3  7.59   21.8 Histor…
+## 2 WV         Mid               749.  40.7 -123.  57.9  62.0  6.09   22.5 Histor…
+## 3 YO11       High             2872.  37.9 -119.  71.8  42.1 -0.346  14.6 Histor…
+## 4 YO4        High             2158.  37.8 -120.  62.0  64.2  3.94   16.9 Histor…
+## 5 YO7        High             2470.  37.8 -120.  67.9  55.2  2.43   16.5 Histor…
+## 6 YO8        High             2591.  37.8 -119.  86.4  54.9  1.74   16.1 Histor…
 ```
 
 ``` r
@@ -1276,13 +1268,13 @@ head(climate_normalized_flint_grwseason_avgs)
 ```
 
 ```
-##             cwd        pck         ppt        tmn        tmx
-## [1,] -0.6172020 -1.0311639 -0.23764779  0.5500615  0.5166783
-## [2,] -0.7518415 -1.0311639  1.12860553  1.4255887  1.0406251
-## [3,]  0.8805006  1.3254429  0.05282515 -0.2773442 -0.6693810
-## [4,] -0.1778697  1.4692660 -0.06106440 -0.4937444 -0.9718274
-## [5,] -1.8504094 -0.8776851  0.80338679  1.6105900  1.3922648
-## [6,]  1.7668993 -0.8050003 -0.75501629  0.9867385  1.7718521
+##             cwd         ppt        tmn        tmx
+## [1,] -0.6172020 -0.23764779  0.5500615  0.5166783
+## [2,] -0.7518415  1.12860553  1.4255887  1.0406251
+## [3,]  0.8805006  0.05282515 -0.2773442 -0.6693810
+## [4,] -0.1778697 -0.06106440 -0.4937444 -0.9718274
+## [5,] -1.8504094  0.80338679  1.6105900  1.3922648
+## [6,]  1.7668993 -0.75501629  0.9867385  1.7718521
 ```
 
 ``` r
@@ -1300,26 +1292,26 @@ corrplot(cor.norm)
 
 
 ``` r
-avgs_flint.pc = prcomp(flint_grwseason_avgs[c(6:10)], scale = TRUE, center = TRUE)
+avgs_flint.pc = prcomp(flint_grwseason_avgs[c(6:8)], scale = TRUE, center = TRUE)
 
 str(avgs_flint.pc)
 ```
 
 ```
 ## List of 5
-##  $ sdev    : num [1:5] 1.662 1.289 0.569 0.404 0.299
-##  $ rotation: num [1:5, 1:5] 0.2722 0.5299 -0.0457 -0.5749 -0.5591 ...
+##  $ sdev    : num [1:3] 1.333 0.999 0.475
+##  $ rotation: num [1:3, 1:3] 0.7067 -0.64335 -0.29441 0.00199 -0.41431 ...
 ##   ..- attr(*, "dimnames")=List of 2
-##   .. ..$ : chr [1:5] "cwd" "pck" "ppt" "tmn" ...
-##   .. ..$ : chr [1:5] "PC1" "PC2" "PC3" "PC4" ...
-##  $ center  : Named num [1:5] 60.7 18.3 76.9 4.7 18.3
-##   ..- attr(*, "names")= chr [1:5] "cwd" "pck" "ppt" "tmn" ...
-##  $ scale   : Named num [1:5] 16.4 17.72 24.88 2.71 2.62
-##   ..- attr(*, "names")= chr [1:5] "cwd" "pck" "ppt" "tmn" ...
-##  $ x       : num [1:46, 1:5] -1.31 -2.2 1.47 1.56 -2.71 ...
+##   .. ..$ : chr [1:3] "cwd" "ppt" "tmn"
+##   .. ..$ : chr [1:3] "PC1" "PC2" "PC3"
+##  $ center  : Named num [1:3] 60.7 76.9 4.7
+##   ..- attr(*, "names")= chr [1:3] "cwd" "ppt" "tmn"
+##  $ scale   : Named num [1:3] 16.4 24.88 2.71
+##   ..- attr(*, "names")= chr [1:3] "cwd" "ppt" "tmn"
+##  $ x       : num [1:46, 1:3] -0.4452 -1.6771 0.6699 0.0589 -2.2987 ...
 ##   ..- attr(*, "dimnames")=List of 2
 ##   .. ..$ : NULL
-##   .. ..$ : chr [1:5] "PC1" "PC2" "PC3" "PC4" ...
+##   .. ..$ : chr [1:3] "PC1" "PC2" "PC3"
 ##  - attr(*, "class")= chr "prcomp"
 ```
 
@@ -1331,15 +1323,15 @@ summary(avgs_flint.pc)
 
 ```
 ## Importance of components:
-##                           PC1    PC2     PC3     PC4     PC5
-## Standard deviation     1.6617 1.2893 0.56913 0.40400 0.29852
-## Proportion of Variance 0.5523 0.3325 0.06478 0.03264 0.01782
-## Cumulative Proportion  0.5523 0.8848 0.94953 0.98218 1.00000
+##                          PC1    PC2     PC3
+## Standard deviation     1.333 0.9991 0.47517
+## Proportion of Variance 0.592 0.3327 0.07526
+## Cumulative Proportion  0.592 0.9247 1.00000
 ```
 
 ``` r
-tibble(PC=str_c("PC",str_pad(1:5,2,pad="0")),
-       percent_var=avgs_flint.pc$sdev[1:5]^2/sum(avgs_flint.pc$sdev^2)*100) %>%
+tibble(PC=str_c("PC",str_pad(1:3,2,pad="0")),
+       percent_var=avgs_flint.pc$sdev[1:3]^2/sum(avgs_flint.pc$sdev^2)*100) %>%
   ggplot(aes(x=PC, y=percent_var)) +
   geom_col() +
   ggtitle("Percent Variance Explained")
@@ -1359,12 +1351,10 @@ avgs_flint_loadings
 ```
 
 ```
-##     varnames         PC1         PC2       PC3        PC4         PC5
-## cwd      cwd  0.27216688  0.63669484 0.4813808 -0.5293287  0.09288984
-## pck      pck  0.52989950 -0.18977160 0.5783539  0.5846822  0.08274511
-## ppt      ppt -0.04572174 -0.73485549 0.3688738 -0.5664219  0.03154816
-## tmn      tmn -0.57486538  0.07286451 0.2712605  0.1702671  0.74943140
-## tmx      tmx -0.55908052  0.11525882 0.4734229  0.1677293 -0.64952445
+##     varnames        PC1         PC2       PC3
+## cwd      cwd  0.7067019  0.00198701 0.7075087
+## ppt      ppt -0.6433471 -0.41431351 0.6437770
+## tmn      tmn -0.2944096  0.91013206 0.2915178
 ```
 
 
@@ -1400,19 +1390,19 @@ avgs_flint_locs.pc_avg
 ```
 
 ```
-## # A tibble: 46 × 9
-##    parent.pop elev_m TimePd         pck    PC1     PC2      PC3     PC4     PC5
-##    <chr>       <dbl> <chr>        <dbl>  <dbl>   <dbl>    <dbl>   <dbl>   <dbl>
-##  1 BH           511. Historical  0.0292 -0.899  0.144  -0.902    0.0187 -0.179 
-##  2 BH           511. Recent      0      -1.31   0.0770 -0.587    0.0387 -0.0735
-##  3 CC           313  Historical  0.119  -1.40  -1.49   -0.314   -0.673   0.153 
-##  4 CC           313  Recent      0      -2.20  -0.889   0.337   -0.427   0.273 
-##  5 CP2         2244. Historical 18.4     0.619  0.922   0.262   -0.513   0.0590
-##  6 CP2         2244. Recent     41.8     1.47   0.173   0.818    0.119   0.420 
-##  7 CP3         2266. Historical 20.7     0.639  0.151  -0.456    0.153   0.0383
-##  8 CP3         2266. Recent     44.3     1.56  -0.495   0.148    0.741   0.364 
-##  9 DPR         1019. Historical  5.13   -2.46  -0.952  -0.202    0.891  -0.288 
-## 10 DPR         1019. Recent      2.72   -2.71  -1.32   -0.00600  0.519   0.0836
+## # A tibble: 46 × 6
+##    parent.pop elev_m TimePd         PC1     PC2    PC3
+##    <chr>       <dbl> <chr>        <dbl>   <dbl>  <dbl>
+##  1 BH           511. Historical -0.212   0.309  -0.656
+##  2 BH           511. Recent     -0.445   0.598  -0.429
+##  3 CC           313  Historical -1.88   -0.0349  0.312
+##  4 CC           313  Recent     -1.68    0.828   0.610
+##  5 CP2         2244. Historical  1.10   -0.104   0.539
+##  6 CP2         2244. Recent      0.670  -0.273   0.576
+##  7 CP3         2266. Historical  0.359  -0.224  -0.396
+##  8 CP3         2266. Recent      0.0589 -0.424  -0.309
+##  9 DPR         1019. Historical -1.83    1.02   -0.823
+## 10 DPR         1019. Recent     -2.30    1.13   -0.322
 ## # ℹ 36 more rows
 ```
 
@@ -1592,17 +1582,17 @@ head(bioclim_flint_grwseason_avgs)
 ```
 
 ```
-## # A tibble: 6 × 21
+## # A tibble: 6 × 20
 ## # Groups:   parent.pop, elevation.group, elev_m, Lat [6]
-##   TimePd parent.pop elevation.group elev_m   Lat  Long   cwd   pck   ppt   tmn
+##   TimePd parent.pop elevation.group elev_m   Lat  Long   cwd   ppt   tmn   tmx
 ##   <chr>  <chr>      <chr>            <dbl> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl>
-## 1 Recent BH         Low               511.  37.4 -120.  50.6  0     71.0  6.19
-## 2 Recent CC         Low               313   39.6 -121.  48.4  0    105.   8.56
-## 3 Recent CP2        High             2244.  38.7 -120.  75.1 41.8   78.2  3.94
-## 4 Recent CP3        High             2266.  38.7 -120.  57.8 44.3   75.4  3.36
-## 5 Recent DPR        Mid              1019.  39.2 -121.  30.4  2.72  96.9  9.06
-## 6 Recent FR         Mid               787   40.0 -121.  89.7  4.01  58.1  7.37
-## # ℹ 11 more variables: tmx <dbl>, ann_tmean <dbl>, mean_diurnal_range <dbl>,
+## 1 Recent BH         Low               511.  37.4 -120.  50.6  71.0  6.19  19.6
+## 2 Recent CC         Low               313   39.6 -121.  48.4 105.   8.56  21.0
+## 3 Recent CP2        High             2244.  38.7 -120.  75.1  78.2  3.94  16.5
+## 4 Recent CP3        High             2266.  38.7 -120.  57.8  75.4  3.36  15.7
+## 5 Recent DPR        Mid              1019.  39.2 -121.  30.4  96.9  9.06  21.9
+## 6 Recent FR         Mid               787   40.0 -121.  89.7  58.1  7.37  22.9
+## # ℹ 10 more variables: ann_tmean <dbl>, mean_diurnal_range <dbl>,
 ## #   temp_seasonality <dbl>, temp_ann_range <dbl>, tmean_wettest_month <dbl>,
 ## #   tmean_driest_month <dbl>, ann_ppt <dbl>, ppt_seasonality <dbl>,
 ## #   ppt_warmest_month <dbl>, ppt_coldest_month <dbl>
@@ -1620,34 +1610,27 @@ head(climate_normalized_bioclim_flint_grwseason_avgs)
 ```
 
 ```
-##             cwd        pck         ppt        tmn        tmx  ann_tmean
-## [1,] -0.6172020 -1.0311639 -0.23764779  0.5500615  0.5166783  0.5469031
-## [2,] -0.7518415 -1.0311639  1.12860553  1.4255887  1.0406251  1.2672133
-## [3,]  0.8805006  1.3254429  0.05282515 -0.2773442 -0.6693810 -0.4815115
-## [4,] -0.1778697  1.4692660 -0.06106440 -0.4937444 -0.9718274 -0.7465804
-## [5,] -1.8504094 -0.8776851  0.80338679  1.6105900  1.3922648  1.5406620
-## [6,]  1.7668993 -0.8050003 -0.75501629  0.9867385  1.7718521  1.4063113
-##      mean_diurnal_range temp_seasonality temp_ann_range tmean_wettest_month
-## [1,]         -0.1195332       -1.1209686    -0.07197142           1.3220079
-## [2,]         -0.9777971        0.2176292     0.90627987           1.5057615
-## [3,]         -0.8548960        1.8467349     0.26777755          -1.0659034
-## [4,]         -1.0298625        1.9066012     0.24520507          -1.3111842
-## [5,]         -0.6198840        0.6320417     0.64752626           0.7558527
-## [6,]          1.6769223        0.7924384     1.93598312           0.6274792
-##      tmean_driest_month    ann_ppt ppt_seasonality ppt_warmest_month
-## [1,]         0.83013479 -0.1784713      -1.2746462        -0.3680526
-## [2,]         1.98990615  1.7683680      -0.9482063        -1.1973623
-## [3,]        -0.08712226 -0.2986810       0.4900038        -0.2830821
-## [4,]        -0.24044817 -0.3725666       0.3468043        -0.1547530
-## [5,]         1.54258744  1.8731054       0.5325080        -1.3291333
-## [6,]         1.29917434 -0.0646273       0.5488315        -1.1246699
-##      ppt_coldest_month
-## [1,]       -0.76904922
-## [2,]        1.18650529
-## [3,]        0.21409241
-## [4,]        0.02843811
-## [5,]        2.02788360
-## [6,]       -0.23405993
+##             cwd         ppt        tmn        tmx  ann_tmean mean_diurnal_range
+## [1,] -0.6172020 -0.23764779  0.5500615  0.5166783  0.5469031         -0.1195332
+## [2,] -0.7518415  1.12860553  1.4255887  1.0406251  1.2672133         -0.9777971
+## [3,]  0.8805006  0.05282515 -0.2773442 -0.6693810 -0.4815115         -0.8548960
+## [4,] -0.1778697 -0.06106440 -0.4937444 -0.9718274 -0.7465804         -1.0298625
+## [5,] -1.8504094  0.80338679  1.6105900  1.3922648  1.5406620         -0.6198840
+## [6,]  1.7668993 -0.75501629  0.9867385  1.7718521  1.4063113          1.6769223
+##      temp_seasonality temp_ann_range tmean_wettest_month tmean_driest_month
+## [1,]       -1.1209686    -0.07197142           1.3220079         0.83013479
+## [2,]        0.2176292     0.90627987           1.5057615         1.98990615
+## [3,]        1.8467349     0.26777755          -1.0659034        -0.08712226
+## [4,]        1.9066012     0.24520507          -1.3111842        -0.24044817
+## [5,]        0.6320417     0.64752626           0.7558527         1.54258744
+## [6,]        0.7924384     1.93598312           0.6274792         1.29917434
+##         ann_ppt ppt_seasonality ppt_warmest_month ppt_coldest_month
+## [1,] -0.1784713      -1.2746462        -0.3680526       -0.76904922
+## [2,]  1.7683680      -0.9482063        -1.1973623        1.18650529
+## [3,] -0.2986810       0.4900038        -0.2830821        0.21409241
+## [4,] -0.3725666       0.3468043        -0.1547530        0.02843811
+## [5,]  1.8731054       0.5325080        -1.3291333        2.02788360
+## [6,] -0.0646273       0.5488315        -1.1246699       -0.23405993
 ```
 
 ``` r
@@ -1656,41 +1639,38 @@ cor.norm
 ```
 
 ```
-##                              cwd         pck          ppt          tmn
-## cwd                  1.000000000  0.23774346 -0.705436341 -0.321135064
-## pck                  0.237743464  1.00000000  0.180204389 -0.791573862
-## ppt                 -0.705436341  0.18020439  1.000000000  0.002345286
-## tmn                 -0.321135064 -0.79157386  0.002345286  1.000000000
-## tmx                 -0.244239688 -0.75453631 -0.030980200  0.904342122
-## ann_tmean           -0.290402190 -0.79256589 -0.014367324  0.976660759
-## mean_diurnal_range   0.198275736  0.14738775 -0.074783031 -0.295576646
-## temp_seasonality     0.318540703  0.18692344 -0.359281428  0.212597043
-## temp_ann_range       0.005967133 -0.36067657 -0.164934870  0.594149922
-## tmean_wettest_month -0.564812550 -0.84264668  0.299482004  0.783527645
-## tmean_driest_month  -0.446002154 -0.69884120  0.212730550  0.923049105
-## ann_ppt             -0.764781593 -0.41977866  0.735711695  0.616211091
-## ppt_seasonality      0.474607306  0.21848579 -0.488168824  0.113209481
-## ppt_warmest_month    0.013355561  0.57475767  0.325364952 -0.826857051
-## ppt_coldest_month   -0.669308511  0.02795972  0.846232303  0.359770146
-##                            tmx   ann_tmean mean_diurnal_range temp_seasonality
-## cwd                 -0.2442397 -0.29040219        0.198275736      0.318540703
-## pck                 -0.7545363 -0.79256589        0.147387747      0.186923444
-## ppt                 -0.0309802 -0.01436732       -0.074783031     -0.359281428
-## tmn                  0.9043421  0.97666076       -0.295576646      0.212597043
-## tmx                  1.0000000  0.97490864        0.140435682      0.216598637
-## ann_tmean            0.9749086  1.00000000       -0.083487324      0.219883173
-## mean_diurnal_range   0.1404357 -0.08348732        1.000000000     -0.008362923
-## temp_seasonality     0.2165986  0.21988317       -0.008362923      1.000000000
-## temp_ann_range       0.7638816  0.69430075        0.331504402      0.629673853
-## tmean_wettest_month  0.7651390  0.79370506       -0.104990551     -0.341990317
-## tmean_driest_month   0.9205245  0.94467002       -0.080848873      0.201868335
-## ann_ppt              0.5391320  0.59270359       -0.222725893     -0.107209424
-## ppt_seasonality      0.1286005  0.12376247        0.025226748      0.728700508
-## ppt_warmest_month   -0.7642327 -0.81584773        0.207532806     -0.578408441
-## ppt_coldest_month    0.3217704  0.34956933       -0.114363623      0.043254214
+##                              cwd          ppt          tmn        tmx
+## cwd                  1.000000000 -0.705436341 -0.321135064 -0.2442397
+## ppt                 -0.705436341  1.000000000  0.002345286 -0.0309802
+## tmn                 -0.321135064  0.002345286  1.000000000  0.9043421
+## tmx                 -0.244239688 -0.030980200  0.904342122  1.0000000
+## ann_tmean           -0.290402190 -0.014367324  0.976660759  0.9749086
+## mean_diurnal_range   0.198275736 -0.074783031 -0.295576646  0.1404357
+## temp_seasonality     0.318540703 -0.359281428  0.212597043  0.2165986
+## temp_ann_range       0.005967133 -0.164934870  0.594149922  0.7638816
+## tmean_wettest_month -0.564812550  0.299482004  0.783527645  0.7651390
+## tmean_driest_month  -0.446002154  0.212730550  0.923049105  0.9205245
+## ann_ppt             -0.764781593  0.735711695  0.616211091  0.5391320
+## ppt_seasonality      0.474607306 -0.488168824  0.113209481  0.1286005
+## ppt_warmest_month    0.013355561  0.325364952 -0.826857051 -0.7642327
+## ppt_coldest_month   -0.669308511  0.846232303  0.359770146  0.3217704
+##                       ann_tmean mean_diurnal_range temp_seasonality
+## cwd                 -0.29040219        0.198275736      0.318540703
+## ppt                 -0.01436732       -0.074783031     -0.359281428
+## tmn                  0.97666076       -0.295576646      0.212597043
+## tmx                  0.97490864        0.140435682      0.216598637
+## ann_tmean            1.00000000       -0.083487324      0.219883173
+## mean_diurnal_range  -0.08348732        1.000000000     -0.008362923
+## temp_seasonality     0.21988317       -0.008362923      1.000000000
+## temp_ann_range       0.69430075        0.331504402      0.629673853
+## tmean_wettest_month  0.79370506       -0.104990551     -0.341990317
+## tmean_driest_month   0.94467002       -0.080848873      0.201868335
+## ann_ppt              0.59270359       -0.222725893     -0.107209424
+## ppt_seasonality      0.12376247        0.025226748      0.728700508
+## ppt_warmest_month   -0.81584773        0.207532806     -0.578408441
+## ppt_coldest_month    0.34956933       -0.114363623      0.043254214
 ##                     temp_ann_range tmean_wettest_month tmean_driest_month
 ## cwd                    0.005967133          -0.5648126        -0.44600215
-## pck                   -0.360676569          -0.8426467        -0.69884120
 ## ppt                   -0.164934870           0.2994820         0.21273055
 ## tmn                    0.594149922           0.7835276         0.92304911
 ## tmx                    0.763881582           0.7651390         0.92052446
@@ -1706,7 +1686,6 @@ cor.norm
 ## ppt_coldest_month      0.194979987           0.3611721         0.51759851
 ##                        ann_ppt ppt_seasonality ppt_warmest_month
 ## cwd                 -0.7647816      0.47460731        0.01335556
-## pck                 -0.4197787      0.21848579        0.57475767
 ## ppt                  0.7357117     -0.48816882        0.32536495
 ## tmn                  0.6162111      0.11320948       -0.82685705
 ## tmx                  0.5391320      0.12860054       -0.76423267
@@ -1722,7 +1701,6 @@ cor.norm
 ## ppt_coldest_month    0.8460232     -0.07921628       -0.11536553
 ##                     ppt_coldest_month
 ## cwd                       -0.66930851
-## pck                        0.02795972
 ## ppt                        0.84623230
 ## tmn                        0.35977015
 ## tmx                        0.32177042
@@ -1752,25 +1730,25 @@ corrplot(cor.norm)
 
 
 ``` r
-all_bioclim_flint_avgs.pc = prcomp(bioclim_flint_grwseason_avgs[c(7:8, 12:16, 18:21)], scale = TRUE, center = TRUE) 
+all_bioclim_flint_avgs.pc = prcomp(bioclim_flint_grwseason_avgs[c(7, 11:15, 17:20)], scale = TRUE, center = TRUE) 
 str(all_bioclim_flint_avgs.pc)
 ```
 
 ```
 ## List of 5
-##  $ sdev    : num [1:11] 2.113 1.737 1.24 1.079 0.612 ...
-##  $ rotation: num [1:11, 1:11] 0.2868 0.3572 -0.4288 0.0831 -0.0152 ...
+##  $ sdev    : num [1:10] 1.994 1.737 1.101 1.026 0.603 ...
+##  $ rotation: num [1:10, 1:10] 0.3304 -0.4331 0.0865 -0.0415 -0.2928 ...
 ##   ..- attr(*, "dimnames")=List of 2
-##   .. ..$ : chr [1:11] "cwd" "pck" "ann_tmean" "mean_diurnal_range" ...
-##   .. ..$ : chr [1:11] "PC1" "PC2" "PC3" "PC4" ...
-##  $ center  : Named num [1:11] 60.7 18.27 11.48 13.58 6.25 ...
-##   ..- attr(*, "names")= chr [1:11] "cwd" "pck" "ann_tmean" "mean_diurnal_range" ...
-##  $ scale   : Named num [1:11] 16.396 17.718 2.6 1.169 0.643 ...
-##   ..- attr(*, "names")= chr [1:11] "cwd" "pck" "ann_tmean" "mean_diurnal_range" ...
-##  $ x       : num [1:46, 1:11] -1.26 -3.6 1.23 1.29 -3.74 ...
+##   .. ..$ : chr [1:10] "cwd" "ann_tmean" "mean_diurnal_range" "temp_seasonality" ...
+##   .. ..$ : chr [1:10] "PC1" "PC2" "PC3" "PC4" ...
+##  $ center  : Named num [1:10] 60.7 11.48 13.58 6.25 29.54 ...
+##   ..- attr(*, "names")= chr [1:10] "cwd" "ann_tmean" "mean_diurnal_range" "temp_seasonality" ...
+##  $ scale   : Named num [1:10] 16.396 2.6 1.169 0.643 2.008 ...
+##   ..- attr(*, "names")= chr [1:10] "cwd" "ann_tmean" "mean_diurnal_range" "temp_seasonality" ...
+##  $ x       : num [1:46, 1:10] -0.819 -3.457 0.731 0.715 -3.789 ...
 ##   ..- attr(*, "dimnames")=List of 2
 ##   .. ..$ : NULL
-##   .. ..$ : chr [1:11] "PC1" "PC2" "PC3" "PC4" ...
+##   .. ..$ : chr [1:10] "PC1" "PC2" "PC3" "PC4" ...
 ##  - attr(*, "class")= chr "prcomp"
 ```
 
@@ -1782,19 +1760,19 @@ summary(all_bioclim_flint_avgs.pc)
 
 ```
 ## Importance of components:
-##                           PC1    PC2    PC3    PC4    PC5     PC6     PC7
-## Standard deviation     2.1129 1.7374 1.2404 1.0786 0.6116 0.49865 0.29210
-## Proportion of Variance 0.4058 0.2744 0.1399 0.1058 0.0340 0.02261 0.00776
-## Cumulative Proportion  0.4058 0.6803 0.8202 0.9259 0.9599 0.98252 0.99028
-##                            PC8     PC9    PC10    PC11
-## Standard deviation     0.22791 0.19645 0.11435 0.05749
-## Proportion of Variance 0.00472 0.00351 0.00119 0.00030
-## Cumulative Proportion  0.99500 0.99851 0.99970 1.00000
+##                           PC1    PC2    PC3    PC4     PC5     PC6     PC7
+## Standard deviation     1.9942 1.7374 1.1008 1.0262 0.60314 0.49746 0.24948
+## Proportion of Variance 0.3977 0.3018 0.1212 0.1053 0.03638 0.02475 0.00622
+## Cumulative Proportion  0.3977 0.6995 0.8207 0.9260 0.96239 0.98714 0.99336
+##                            PC8     PC9    PC10
+## Standard deviation     0.19650 0.12329 0.11197
+## Proportion of Variance 0.00386 0.00152 0.00125
+## Cumulative Proportion  0.99723 0.99875 1.00000
 ```
 
 ``` r
-tibble(PC=str_c("PC",str_pad(1:11,2,pad="0")),
-       percent_var=all_bioclim_flint_avgs.pc$sdev[1:11]^2/sum(all_bioclim_flint_avgs.pc$sdev^2)*100) %>%
+tibble(PC=str_c("PC",str_pad(1:10,2,pad="0")),
+       percent_var=all_bioclim_flint_avgs.pc$sdev[1:10]^2/sum(all_bioclim_flint_avgs.pc$sdev^2)*100) %>%
   ggplot(aes(x=PC, y=percent_var)) +
   geom_col() +
   ggtitle("Percent Variance Explained")
@@ -1814,42 +1792,39 @@ all_bioclim_flint_avgs_loadings
 ```
 
 ```
-##                                varnames         PC1          PC2         PC3
-## cwd                                 cwd  0.28680303  0.327441196 -0.28822861
-## pck                                 pck  0.35723241 -0.007749669  0.49142779
-## ann_tmean                     ann_tmean -0.42881133  0.186494965 -0.13184196
-## mean_diurnal_range   mean_diurnal_range  0.08310213  0.087754510 -0.10073156
-## temp_seasonality       temp_seasonality -0.01522327  0.504889231  0.30633715
-## temp_ann_range           temp_ann_range -0.27413141  0.386255302  0.02360241
-## tmean_wettest_month tmean_wettest_month -0.42456104 -0.151653843 -0.25173020
-## ann_ppt                         ann_ppt -0.40294787 -0.183172287  0.29359587
-## ppt_seasonality         ppt_seasonality  0.08765410  0.476292970  0.19773503
-## ppt_warmest_month     ppt_warmest_month  0.31792621 -0.380463775  0.08011007
-## ppt_coldest_month     ppt_coldest_month -0.26941558 -0.134074734  0.59867431
-##                              PC4         PC5         PC6          PC7
-## cwd                  0.021611974  0.08840880 -0.84540413  0.020005889
-## pck                 -0.105643314 -0.13523326 -0.05930551  0.593657240
-## ann_tmean            0.009685354  0.27337339 -0.03341264  0.016970083
-## mean_diurnal_range  -0.884009096  0.18444646  0.11393480 -0.008691253
-## temp_seasonality     0.065839429 -0.37507093  0.06713824 -0.437971002
-## temp_ann_range      -0.358100869 -0.35551709 -0.03451010  0.044178516
-## tmean_wettest_month -0.051323581  0.10453701 -0.06890233  0.217741072
-## ann_ppt             -0.033467656 -0.08533869 -0.31592323 -0.231965263
-## ppt_seasonality      0.149342141  0.68736575  0.22298797 -0.056562592
-## ppt_warmest_month   -0.196791872  0.15486522 -0.09276813 -0.588345102
-## ppt_coldest_month   -0.097217039  0.28880121 -0.31479214  0.049685412
-##                             PC8         PC9         PC10        PC11
-## cwd                  0.01876541  0.02760019 -0.053242664  0.01050158
-## pck                 -0.37673051 -0.01622169  0.035413379  0.31935238
-## ann_tmean           -0.44716691  0.31898430  0.591071799  0.19144677
-## mean_diurnal_range   0.20860091  0.26547524 -0.090221071  0.15673480
-## temp_seasonality    -0.20463773  0.41032251 -0.309332278  0.06120350
-## temp_ann_range      -0.14339441 -0.61557373  0.171611983 -0.29729914
-## tmean_wettest_month -0.43142752 -0.03580975 -0.692148639  0.03432718
-## ann_ppt              0.28671028 -0.23520489 -0.005875233  0.64676549
-## ppt_seasonality      0.03566604 -0.35723252 -0.174122211  0.13949632
-## ppt_warmest_month   -0.52149189 -0.23068786  0.056134054 -0.04432540
-## ppt_coldest_month    0.10125460  0.20497754 -0.026352098 -0.55104041
+##                                varnames         PC1         PC2         PC3
+## cwd                                 cwd  0.33035795  0.32336565  0.14513860
+## ann_tmean                     ann_tmean -0.43305014  0.19004301  0.14579957
+## mean_diurnal_range   mean_diurnal_range  0.08650529  0.08695809  0.72946824
+## temp_seasonality       temp_seasonality -0.04146249  0.50637232 -0.25741484
+## temp_ann_range           temp_ann_range -0.29282795  0.38930335  0.30747875
+## tmean_wettest_month tmean_wettest_month -0.42179168 -0.14858659  0.27953724
+## ann_ppt                         ann_ppt -0.45144203 -0.17793379 -0.12105398
+## ppt_seasonality         ppt_seasonality  0.08143769  0.47609927 -0.27703851
+## ppt_warmest_month     ppt_warmest_month  0.32074575 -0.38315031  0.03898934
+## ppt_coldest_month     ppt_coldest_month -0.34229026 -0.12873807 -0.30607539
+##                            PC4         PC5           PC6         PC7        PC8
+## cwd                  0.2071081 -0.12793611  0.8374958393  0.03010128  0.0274088
+## ann_tmean            0.2404278 -0.33465885  0.0008597795 -0.38512528  0.3293708
+## mean_diurnal_range  -0.5208889 -0.15891192 -0.1107438057  0.14972974  0.2576504
+## temp_seasonality    -0.2252441  0.42940610 -0.0325273015 -0.40707743  0.4104176
+## temp_ann_range      -0.1590066  0.34555713  0.0400364604 -0.06347758 -0.6076659
+## tmean_wettest_month  0.3201770 -0.18530473  0.0324053747 -0.22260609 -0.0196293
+## ann_ppt             -0.1840513  0.09745449  0.3288920432  0.02368943 -0.2525137
+## ppt_seasonality     -0.1384887 -0.65691102 -0.2336682566 -0.02967361 -0.3601942
+## ppt_warmest_month   -0.3100884 -0.10083553  0.1143499023 -0.75748161 -0.2226030
+## ppt_coldest_month   -0.5479373 -0.23884801  0.3267690427  0.18395222  0.2079399
+##                             PC9        PC10
+## cwd                 -0.01959217  0.05031077
+## ann_tmean            0.31070799 -0.48160649
+## mean_diurnal_range   0.14999473  0.18079712
+## temp_seasonality    -0.05342718  0.32002173
+## temp_ann_range      -0.22023880 -0.31632805
+## tmean_wettest_month -0.48911163  0.54295720
+## ann_ppt              0.63648191  0.35904005
+## ppt_seasonality      0.04956549  0.22706348
+## ppt_warmest_month   -0.02379300 -0.07418037
+## ppt_coldest_month   -0.42644627 -0.22267968
 ```
 
 
@@ -1917,21 +1892,21 @@ all_bioclim_flint_avgs_locs.pc_avg
 ```
 
 ```
-## # A tibble: 46 × 15
-##    parent.pop elev_m TimePd        pck   PC1    PC2    PC3     PC4    PC5    PC6
-##    <chr>       <dbl> <chr>       <dbl> <dbl>  <dbl>  <dbl>   <dbl>  <dbl>  <dbl>
-##  1 BH           511. Historic…  0.0292 -1.28 -1.49  -2.16  -0.311  -0.639  0.392
-##  2 BH           511. Recent     0      -1.26 -1.23  -1.86   0.0535 -0.343  0.436
-##  3 CC           313  Historic…  0.119  -2.30 -3.04  -0.399  0.311  -0.106 -0.524
-##  4 CC           313  Recent     0      -3.60 -0.335  0.296  0.501  -0.653 -0.610
-##  5 CP2         2244. Historic… 18.4     1.64 -0.799 -1.17   0.301   0.687 -0.632
-##  6 CP2         2244. Recent    41.8     1.23  1.68   1.50   0.829  -0.910 -0.554
-##  7 CP3         2266. Historic… 20.7     1.65 -1.37  -0.734  0.574   0.386  0.366
-##  8 CP3         2266. Recent    44.3     1.29  1.25   1.86   0.941  -1.29   0.381
-##  9 DPR         1019. Historic…  5.13   -2.99  0.252  0.597 -0.633   0.663  1.15 
-## 10 DPR         1019. Recent     2.72   -3.74  0.233  1.74   0.468   0.460  0.474
+## # A tibble: 46 × 13
+##    parent.pop elev_m TimePd     PC1    PC2     PC3    PC4     PC5    PC6     PC7
+##    <chr>       <dbl> <chr>    <dbl>  <dbl>   <dbl>  <dbl>   <dbl>  <dbl>   <dbl>
+##  1 BH           511. Histor… -0.815 -1.50   1.63    1.55   0.466  -0.442  0.419 
+##  2 BH           511. Recent  -0.819 -1.23   1.13    1.50   0.204  -0.481  0.0904
+##  3 CC           313  Histor… -2.06  -3.02   0.0610  0.585  0.0674  0.524 -0.267 
+##  4 CC           313  Recent  -3.46  -0.308 -0.355   0.474  0.588   0.612  0.0569
+##  5 CP2         2244. Histor…  1.83  -0.821  0.330   0.792 -0.743   0.600 -0.176 
+##  6 CP2         2244. Recent   0.731  1.68  -1.43   -0.330  0.894   0.573 -0.215 
+##  7 CP3         2266. Histor…  1.76  -1.39  -0.146   0.643 -0.387  -0.378 -0.256 
+##  8 CP3         2266. Recent   0.715  1.25  -1.73   -0.515  1.33   -0.342 -0.269 
+##  9 DPR         1019. Histor… -2.95   0.277  0.274  -0.608 -0.634  -1.18   0.0563
+## 10 DPR         1019. Recent  -3.79   0.269 -1.30   -0.811 -0.343  -0.448  0.200 
 ## # ℹ 36 more rows
-## # ℹ 5 more variables: PC7 <dbl>, PC8 <dbl>, PC9 <dbl>, PC10 <dbl>, PC11 <dbl>
+## # ℹ 3 more variables: PC8 <dbl>, PC9 <dbl>, PC10 <dbl>
 ```
 
 
@@ -1971,6 +1946,209 @@ all_bioclim_flint_avgs_locs.pc_avg %>%
 ```
 
 ![](Climate_PCAs_Growth_Season_files/figure-html/unnamed-chunk-59-2.png)<!-- -->
+
+``` r
+#high elev climate seems to be shifting to be more similar to low elev 
+```
+
+## LM on PCs
+For each PC fit a model with timepd and parent.pop/elev to test for climate change
+
+``` r
+lmer_results <- all_bioclim_flint_avgs_locs.pc %>%
+  ungroup() %>% 
+  select(TimePd, parent.pop, elev_m, Lat, Long, PC1:PC10) %>% 
+  pivot_longer(starts_with("PC", ignore.case = FALSE), 
+               names_to = "PC", values_to = "value") %>% 
+  group_by(PC) %>% 
+  nest(data=c(TimePd, parent.pop, elev_m, Lat, Long, value)) %>% 
+  mutate(glm=map(data, ~ glm(value ~ TimePd*elev_m*Lat,
+                               data=.x)),
+         anova = map(glm, ~ broom.mixed::tidy(anova(.x))))
+
+lmer_results
+```
+
+```
+## # A tibble: 10 × 4
+## # Groups:   PC [10]
+##    PC    data              glm    anova           
+##    <chr> <list>            <list> <list>          
+##  1 PC1   <tibble [46 × 6]> <glm>  <tibble [8 × 7]>
+##  2 PC2   <tibble [46 × 6]> <glm>  <tibble [8 × 7]>
+##  3 PC3   <tibble [46 × 6]> <glm>  <tibble [8 × 7]>
+##  4 PC4   <tibble [46 × 6]> <glm>  <tibble [8 × 7]>
+##  5 PC5   <tibble [46 × 6]> <glm>  <tibble [8 × 7]>
+##  6 PC6   <tibble [46 × 6]> <glm>  <tibble [8 × 7]>
+##  7 PC7   <tibble [46 × 6]> <glm>  <tibble [8 × 7]>
+##  8 PC8   <tibble [46 × 6]> <glm>  <tibble [8 × 7]>
+##  9 PC9   <tibble [46 × 6]> <glm>  <tibble [8 × 7]>
+## 10 PC10  <tibble [46 × 6]> <glm>  <tibble [8 × 7]>
+```
+
+
+``` r
+PC_anova <- lmer_results %>% select(-data, -glm) %>% unnest(anova) %>%
+  select(PC, term, p.value) %>%
+  filter(p.value < 0.05) %>%
+  arrange(term, p.value)
+
+PC_anova
+```
+
+```
+## # A tibble: 10 × 3
+## # Groups:   PC [6]
+##    PC    term        p.value
+##    <chr> <chr>         <dbl>
+##  1 PC4   Lat        1.37e-10
+##  2 PC3   TimePd     1.13e- 2
+##  3 PC2   TimePd     2.00e- 2
+##  4 PC9   TimePd:Lat 1.50e- 2
+##  5 PC4   TimePd:Lat 2.50e- 2
+##  6 PC1   elev_m     5.93e-16
+##  7 PC3   elev_m     3.99e- 2
+##  8 PC9   elev_m:Lat 1.26e- 4
+##  9 PC2   elev_m:Lat 5.53e- 3
+## 10 PC7   elev_m:Lat 3.73e- 2
+```
+
+
+``` r
+autoplot(all_bioclim_flint_avgs.pc, data = bioclim_flint_grwseason_avgs,
+         x=2, y=3,
+         colour='elev_m', alpha=0.5,
+         label=TRUE, label.label="parent.pop",
+         loadings=TRUE, loadings.colour='black', loadings.linewidth = 0.7,
+         loadings.label = TRUE, loadings.label.size=6, loadings.label.colour="black", 
+         loadings.label.vjust = -0.2, loadings.label.repel=TRUE) +
+   scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_vline(xintercept = 0, linetype="dashed") + geom_hline(yintercept = 0, linetype="dashed") +
+  theme_classic()
+```
+
+![](Climate_PCAs_Growth_Season_files/figure-html/unnamed-chunk-62-1.png)<!-- -->
+
+``` r
+all_bioclim_flint_avgs_locs.pc_avg %>% 
+  mutate(group=str_c(parent.pop,elev_m))  %>%
+  ggplot(aes(x=PC2, y=PC3, shape=TimePd, color=elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_point(size=2, alpha=0.7) +
+  geom_vline(xintercept = 0, linetype="dashed") + geom_hline(yintercept = 0, linetype="dashed") +
+  geom_path(aes(group=group),arrow = arrow(length=unit(5, "points")), linewidth = .8)
+```
+
+![](Climate_PCAs_Growth_Season_files/figure-html/unnamed-chunk-62-2.png)<!-- -->
+
+``` r
+all_bioclim_flint_avgs_locs.pc_avg %>% 
+  mutate(group=str_c(parent.pop,elev_m))  %>%
+  ggplot(aes(x=PC2, y=PC3, shape=TimePd, color=elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_point(size=2, alpha=0.7) +
+  geom_text_repel(aes(label = parent.pop)) +
+  geom_vline(xintercept = 0, linetype="dashed") + geom_hline(yintercept = 0, linetype="dashed")  +
+  geom_path(aes(group=group),arrow = arrow(length=unit(5, "points")), linewidth = .8)
+```
+
+![](Climate_PCAs_Growth_Season_files/figure-html/unnamed-chunk-62-3.png)<!-- -->
+
+``` r
+#high elev climate seems to be shifting to be more similar to low elev 
+```
+
+
+``` r
+lmer_results_flint <- avgs_flint_locs.pc %>%
+  ungroup() %>% 
+  select(TimePd, parent.pop, elev_m, Lat, Long, PC1:PC3) %>% 
+  pivot_longer(starts_with("PC", ignore.case = FALSE), 
+               names_to = "PC", values_to = "value") %>% 
+  group_by(PC) %>% 
+  nest(data=c(TimePd, parent.pop, elev_m, Lat, Long, value)) %>% 
+  mutate(glm=map(data, ~ glm(value ~ TimePd*elev_m*Lat,
+                               data=.x)),
+         anova = map(glm, ~ broom.mixed::tidy(anova(.x))))
+
+lmer_results_flint
+```
+
+```
+## # A tibble: 3 × 4
+## # Groups:   PC [3]
+##   PC    data              glm    anova           
+##   <chr> <list>            <list> <list>          
+## 1 PC1   <tibble [46 × 6]> <glm>  <tibble [8 × 7]>
+## 2 PC2   <tibble [46 × 6]> <glm>  <tibble [8 × 7]>
+## 3 PC3   <tibble [46 × 6]> <glm>  <tibble [8 × 7]>
+```
+
+
+``` r
+PC_anova_flint <- lmer_results_flint %>% select(-data, -glm) %>% unnest(anova) %>%
+  select(PC, term, p.value) %>%
+  filter(p.value < 0.05) %>%
+  arrange(term, p.value)
+
+PC_anova_flint
+```
+
+```
+## # A tibble: 7 × 3
+## # Groups:   PC [2]
+##   PC    term           p.value
+##   <chr> <chr>            <dbl>
+## 1 PC2   Lat        0.0000688  
+## 2 PC1   Lat        0.00315    
+## 3 PC2   TimePd     0.00255    
+## 4 PC1   elev_m     0.000000180
+## 5 PC2   elev_m     0.000000280
+## 6 PC2   elev_m:Lat 0.00529    
+## 7 PC1   elev_m:Lat 0.0473
+```
+TimePd (evidence for climate change) is significant on PC1 with just Flint climate and Flint+Bioclim (dry/warm vs. cool/snowpack)
+
+
+``` r
+autoplot(avgs_flint.pc, data = flint_grwseason_avgs,
+         x=1, y=2,
+         colour='elev_m', alpha=0.5,
+         label=TRUE, label.label="parent.pop",
+         loadings=TRUE, loadings.colour='black', loadings.linewidth = 0.7,
+         loadings.label = TRUE, loadings.label.size=6, loadings.label.colour="black", 
+         loadings.label.vjust = -0.2, loadings.label.repel=TRUE) +
+   scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_vline(xintercept = 0, linetype="dashed") + geom_hline(yintercept = 0, linetype="dashed") +
+  theme_classic()
+```
+
+![](Climate_PCAs_Growth_Season_files/figure-html/unnamed-chunk-65-1.png)<!-- -->
+
+``` r
+avgs_flint_locs.pc_avg %>% 
+  mutate(group=str_c(parent.pop,elev_m))  %>%
+  ggplot(aes(x=PC1, y=PC2, shape=TimePd, color=elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_point(size=2, alpha=0.7) +
+  geom_vline(xintercept = 0, linetype="dashed") + geom_hline(yintercept = 0, linetype="dashed") +
+  geom_path(aes(group=group),arrow = arrow(length=unit(5, "points")), linewidth = .8)
+```
+
+![](Climate_PCAs_Growth_Season_files/figure-html/unnamed-chunk-65-2.png)<!-- -->
+
+``` r
+avgs_flint_locs.pc_avg %>% 
+  mutate(group=str_c(parent.pop,elev_m))  %>%
+  ggplot(aes(x=PC1, y=PC2, shape=TimePd, color=elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_point(size=2, alpha=0.7) +
+  geom_text_repel(aes(label = parent.pop)) +
+  geom_vline(xintercept = 0, linetype="dashed") + geom_hline(yintercept = 0, linetype="dashed")  +
+  geom_path(aes(group=group),arrow = arrow(length=unit(5, "points")), linewidth = .8)
+```
+
+![](Climate_PCAs_Growth_Season_files/figure-html/unnamed-chunk-65-3.png)<!-- -->
 
 ``` r
 #high elev climate seems to be shifting to be more similar to low elev 
