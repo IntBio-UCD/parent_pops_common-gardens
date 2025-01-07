@@ -12,16 +12,19 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 To Do:
-- Save PC figures of interest 
 
-# Climate PCAs
+-   Save PC figures of interest
 
--   Should use this code to check the significance of the PCA:
-    <https://github.com/StatQuest/pca_demo/blob/master/pca_demo.R>
--   Remember this paper: Björklund, M. 2019. Be careful with your
-    principal components. Evolution 73: 2151--2158.
+-   Save linear model results
 
-## Load necessary libraries 
+-   Should use this code to check the significance of the PCA: <https://github.com/StatQuest/pca_demo/blob/master/pca_demo.R>
+
+    -   Remember this paper: Björklund, M. 2019. Be careful with your principal components. Evolution 73: 2151--2158.
+
+# Climate PCAs for Full "Water" Year 
+
+## Load necessary libraries
+
 ```{r}
 library(tidyverse)
 library(lmerTest)
@@ -49,24 +52,27 @@ month_order <- c("jan","feb","mar","apr","may","jun","jul","aug","sep","oct","no
 ```
 
 ## Load Flint Data
+
 ```{r}
 flint_all_year <- read_csv("../output/Climate/flint_climate_UCDpops.csv")
 head(flint_all_year)
 ```
 
 ## Generate bioclim for all year
+
 -   annual mean temperature (BIO1)
 -   mean diurnal range (BIO2) - (Mean of monthly (max temp - min temp))
--   temperature seasonality (BIO4) (standard deviation *100)
+-   temperature seasonality (BIO4) (standard deviation \*100)
 -   temperature annual range (BIO7) (Max Temperature of Warmest Month - Min Temperature of Coldest Month)
 -   mean temp of wettest quarter (BIO8)
 -   mean temp of driest quarter (BIO9)
 -   annual precipitation (BIO12) - sum of ppt for the entire year (not the avg)
--   precipitation seasonality (BIO15)  (Coefficient of Variation)
+-   precipitation seasonality (BIO15) (Coefficient of Variation)
 -   precip of warmest quarter (BIO18)
 -   precip of coldest quarter (BIO19)
 
 ### Prep
+
 ```{r}
 bioclim_allyear_prep <- flint_all_year %>% 
   filter(parent.pop != "UCD_Garden", parent.pop != "WL2_Garden") %>%  #remove garden sites 
@@ -83,6 +89,7 @@ pop_elev <- flint_all_year %>% select(parent.pop:Long) %>% distinct()
 ```
 
 ### Calculation
+
 ```{r}
 for(i in popids) {
   A <- bioclim_allyear_prep %>% filter(parent.pop==i) %>% calc_biovars() %>% mutate(parent.pop=i)
@@ -93,6 +100,7 @@ unique(bioclim_all_year$parent.pop) #has all the populations in there!
 ```
 
 ### SUBSET
+
 ```{r}
 bioclim_all_year_final <- bioclim_all_year %>% 
   select(parent.pop, year, ann_tmean=bio1, mean_diurnal_range=bio2, 
@@ -104,6 +112,7 @@ head(bioclim_all_year_final)
 ```
 
 ### Merge with pop info
+
 ```{r}
 pop_elev_bioclim_all_year <- left_join(bioclim_all_year_final, pop_elev) %>% 
   select(parent.pop, elevation.group:Long, year:ppt_coldest_quarter)
@@ -139,7 +148,6 @@ head(bioclim_all_year_historical, 13)
 tail(bioclim_all_year_historical, 13)
 ```
 
-
 ## All years and months included (Flint)
 
 ### Correlations - Flint Recent
@@ -163,6 +171,7 @@ str(all_flint_recent.pc)
 ```
 
 plot % Variance Explained
+
 ```{r}
 summary(all_flint_recent.pc)
 
@@ -174,6 +183,7 @@ tibble(PC=str_c("PC",str_pad(1:5,2,pad="0")),
 ```
 
 Combine PCs with metadata
+
 ```{r}
 all_flint_recent.pc.dat = data.frame(all_flint_recent.pc$x)
 
@@ -196,6 +206,7 @@ autoplot(all_flint_recent.pc, data = flint_all_year_recent,
 ```
 
 PCs 3 and 4
+
 ```{r}
 autoplot(all_flint_recent.pc, data = flint_all_year_recent,
          x=3, y=4,
@@ -228,6 +239,7 @@ str(all_flint_historical.pc)
 ```
 
 plot % Variance Explained
+
 ```{r}
 summary(all_flint_historical.pc)
 
@@ -239,6 +251,7 @@ tibble(PC=str_c("PC",str_pad(1:5,2,pad="0")),
 ```
 
 Combine PCs with metadata
+
 ```{r}
 all_flint_historical.pc.dat = data.frame(all_flint_historical.pc$x)
 
@@ -259,6 +272,7 @@ autoplot(all_flint_historical.pc, data = flint_all_year_historical,
 ```
 
 PCs 3 and 4
+
 ```{r}
 autoplot(all_flint_historical.pc, data = flint_all_year_historical,
          x=3, y=4,
@@ -294,6 +308,7 @@ str(all_bioclim_recent.pc)
 ```
 
 plot % Variance Explained
+
 ```{r}
 summary(all_bioclim_recent.pc)
 
@@ -305,6 +320,7 @@ tibble(PC=str_c("PC",str_pad(1:5,2,pad="0")),
 ```
 
 Combine PCs with metadata
+
 ```{r}
 all_bioclim_recent.pc.dat = data.frame(all_bioclim_recent.pc$x)
 
@@ -326,6 +342,7 @@ autoplot(all_bioclim_recent.pc, data = bioclim_all_year_recent,
 ```
 
 PCs 3 and 4
+
 ```{r}
 autoplot(all_bioclim_recent.pc, data = bioclim_all_year_recent,
          x=3, y=4,
@@ -339,6 +356,7 @@ autoplot(all_bioclim_recent.pc, data = bioclim_all_year_recent,
 ```
 
 PCs 4 and 5
+
 ```{r}
 autoplot(all_bioclim_recent.pc, data = bioclim_all_year_recent,
          x=4, y=5,
@@ -373,6 +391,7 @@ str(all_bioclim_historical.pc)
 ```
 
 plot % Variance Explained
+
 ```{r}
 summary(all_bioclim_historical.pc)
 
@@ -384,6 +403,7 @@ tibble(PC=str_c("PC",str_pad(1:5,2,pad="0")),
 ```
 
 Combine PCs with metadata
+
 ```{r}
 all_bioclim_historical.pc.dat = data.frame(all_bioclim_historical.pc$x)
 
@@ -405,6 +425,7 @@ autoplot(all_bioclim_historical.pc, data = bioclim_all_year_historical,
 ```
 
 PCs 3 and 4
+
 ```{r}
 autoplot(all_bioclim_historical.pc, data = bioclim_all_year_historical,
          x=3, y=4,
@@ -418,6 +439,7 @@ autoplot(all_bioclim_historical.pc, data = bioclim_all_year_historical,
 ```
 
 PCs 4 and 5
+
 ```{r}
 autoplot(all_bioclim_historical.pc, data = bioclim_all_year_historical,
          x=4, y=5,
@@ -430,7 +452,7 @@ autoplot(all_bioclim_historical.pc, data = bioclim_all_year_historical,
   theme_classic()
 ```
 
-## Monthly Averages - Flint  
+## Monthly Averages - Flint
 
 ### Calculate avgs
 
@@ -477,6 +499,7 @@ str(mos_flint.pc)
 ```
 
 plot % Variance Explained
+
 ```{r}
 summary(mos_flint.pc)
 
@@ -488,6 +511,7 @@ tibble(PC=str_c("PC",str_pad(1:5,2,pad="0")),
 ```
 
 Combine PCs with metadata
+
 ```{r}
 mos_flint.pc.dat = data.frame(mos_flint.pc$x)
 
@@ -509,7 +533,6 @@ autoplot(mos_flint.pc, data = flint_all_year_mosavgs,
   theme_classic()
 #high elev seems most similar to low elev in summer months 
 ```
-
 
 ```{r}
 mos_flint_locs.pc_avg <- mos_flint_locs.pc %>%
@@ -591,6 +614,7 @@ str(avgs_flint.pc)
 ```
 
 plot % Variance Explained
+
 ```{r}
 summary(avgs_flint.pc)
 
@@ -602,6 +626,7 @@ tibble(PC=str_c("PC",str_pad(1:5,2,pad="0")),
 ```
 
 Combine PCs with metadata
+
 ```{r}
 avgs_flint.pc.dat = data.frame(avgs_flint.pc$x)
 
@@ -691,12 +716,12 @@ write_csv(bioclim_all_year_avgs, "../output/Climate/fullyear_BioClimAvgs.csv")
 ```
 
 Merge with flint
+
 ```{r}
 bioclim_flint_all_year_avgs <- full_join(flint_all_year_avgs, bioclim_all_year_avgs) %>% 
   select(TimePd, parent.pop:ppt_coldest_quarter)
 head(bioclim_flint_all_year_avgs)
 ```
-
 
 ### Correlations - Recent + Historical
 
@@ -723,6 +748,7 @@ str(all_bioclim_flint_avgs.pc)
 ```
 
 plot % Variance Explained
+
 ```{r}
 summary(all_bioclim_flint_avgs.pc)
 
@@ -734,6 +760,7 @@ tibble(PC=str_c("PC",str_pad(1:7,2,pad="0")),
 ```
 
 Combine PCs with metadata
+
 ```{r}
 all_bioclim_flint_avgs.pc.dat = data.frame(all_bioclim_flint_avgs.pc$x)
 
@@ -767,6 +794,7 @@ autoplot(all_bioclim_flint_avgs.pc, data = bioclim_flint_all_year_avgs,
   geom_vline(xintercept = 0, linetype="dashed") + geom_hline(yintercept = 0, linetype="dashed") +
   theme_classic()
 ```
+
 ```{r}
 autoplot(all_bioclim_flint_avgs.pc, data = bioclim_flint_all_year_avgs,
          x=4, y=5,
@@ -819,7 +847,9 @@ all_bioclim_flint_avgs_locs.pc_avg %>%
 ```
 
 ## LM on PCs
+
 For each PC fit a model with timepd and parent.pop/elev to test for climate change
+
 ```{r}
 lmer_results <- all_bioclim_flint_avgs_locs.pc %>%
   ungroup() %>% 
@@ -843,6 +873,7 @@ PC_anova <- lmer_results %>% select(-data, -glm) %>% unnest(anova) %>%
 
 PC_anova
 ```
+
 ```{r}
 autoplot(all_bioclim_flint_avgs.pc, data = bioclim_flint_all_year_avgs,
          x=1, y=4,
@@ -897,6 +928,7 @@ PC_anova_flint <- lmer_results_flint %>% select(-data, -glm) %>% unnest(anova) %
 
 PC_anova_flint
 ```
+
 TimePd (evidence for climate change) is significant on PC1 with just Flint climate and Flint+Bioclim (dry/warm vs. cool/snowpack)
 
 ```{r}
