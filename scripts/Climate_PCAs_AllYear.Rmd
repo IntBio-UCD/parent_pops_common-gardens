@@ -58,6 +58,22 @@ flint_all_year <- read_csv("../output/Climate/flint_climate_UCDpops.csv")
 head(flint_all_year)
 ```
 
+### Add month numbers
+```{r}
+month_nums <- tibble(month=c("jan","feb","mar","apr","may","jun","jul","aug","sep","oct","nov","dec"),
+                     month_nums=c(1:12))
+month_nums
+
+flint_all_year_mosnums <- left_join(flint_all_year, month_nums) %>% arrange(parent.pop, year, month_nums)
+tail(flint_all_year_mosnums, 12) 
+```
+
+### Water Year
+```{r}
+flint_all_year_wtr_yr <- flint_all_year_mosnums %>% mutate(wtr_yr = year + month_nums %in% c(11:12))
+```
+
+
 ## Generate bioclim for all year
 
 -   annual mean temperature (BIO1)
@@ -74,9 +90,9 @@ head(flint_all_year)
 ### Prep
 
 ```{r}
-bioclim_allyear_prep <- flint_all_year %>% 
+bioclim_allyear_prep <- flint_all_year_wtr_yr %>% 
   filter(parent.pop != "UCD_Garden", parent.pop != "WL2_Garden") %>%  #remove garden sites 
-  rename(tmin=tmn, tmax=tmx) %>% #rename columns to match what calc_biovars expects
+  rename(tmin=tmn, tmax=tmx, year_cal=year, year=wtr_yr) %>% #rename columns to match what calc_biovars expects, also make sure it uses water year 
   filter(year != "1895", year !="2024") %>%  #remove years with less than 12 months of data
   arrange(parent.pop, year, month)
 
@@ -85,7 +101,7 @@ bioclim_all_year
  
 popids <- unique(bioclim_allyear_prep$parent.pop) #list of pop ids for for loop 
 
-pop_elev <- flint_all_year %>% select(parent.pop:Long) %>% distinct()
+pop_elev <- flint_all_year_wtr_yr %>% select(parent.pop:Long) %>% distinct()
 ```
 
 ### Calculation
@@ -117,7 +133,7 @@ head(bioclim_all_year_final)
 pop_elev_bioclim_all_year <- left_join(bioclim_all_year_final, pop_elev) %>% 
   select(parent.pop, elevation.group:Long, year:ppt_coldest_quarter)
 head(pop_elev_bioclim_all_year)
-#write_csv(pop_elev_bioclim_all_year, "../output/Climate/bioclim_all_year_UCD_pops.csv")
+#write_csv(pop_elev_bioclim_all_year, "../output/Climate/bioclim_all_year_UCD_pops_wtr_year.csv")
 ```
 
 ## Calculation of recent (last 30 years) and historical climate (prior 30 years)
@@ -125,27 +141,27 @@ head(pop_elev_bioclim_all_year)
 Note: Removed 2024 to facilitate use of QBMS package (also most of the plants did not experience 2024)
 
 ```{r}
-flint_all_year_recent <- flint_all_year %>% 
+flint_all_year_recent <- flint_all_year_wtr_yr %>% 
   filter(parent.pop != "UCD_Garden", parent.pop != "WL2_Garden") %>%  #remove garden sites 
-  filter(year>1993 & year<=2023) %>% 
-  select(parent.pop:month, cwd, pck, ppt, tmn, tmx)
+  filter(wtr_yr>1993 & wtr_yr<=2023) %>% 
+  select(parent.pop:month, wtr_yr, cwd, pck, ppt, tmn, tmx)
 head(flint_all_year_recent)
 tail(flint_all_year_recent)
 
-flint_all_year_historical <- flint_all_year %>% 
+flint_all_year_historical <- flint_all_year_wtr_yr %>% 
   filter(parent.pop != "UCD_Garden", parent.pop != "WL2_Garden") %>%  #remove garden sites 
-  filter(year<=1993 & year>1963) %>% 
-  select(parent.pop:month, cwd, pck, ppt, tmn, tmx)
+  filter(wtr_yr<=1993 & wtr_yr>1963) %>% 
+  select(parent.pop:month, wtr_yr, cwd, pck, ppt, tmn, tmx)
 head(flint_all_year_historical, 13)
 tail(flint_all_year_historical, 13)
 
-bioclim_all_year_recent <- pop_elev_bioclim_all_year %>% filter(year>1993 & year<=2023)
-head(bioclim_all_year_recent)
-tail(bioclim_all_year_recent)
+bioclim_all_year_recent <- pop_elev_bioclim_all_year %>% filter(year>1993 & year<=2023) #year here means water year (see above code where bioclim vars were calculated)
+#head(bioclim_all_year_recent)
+#tail(bioclim_all_year_recent)
 
 bioclim_all_year_historical <- pop_elev_bioclim_all_year %>% filter(year<=1993 & year>1963)
-head(bioclim_all_year_historical, 13)
-tail(bioclim_all_year_historical, 13)
+#head(bioclim_all_year_historical, 13)
+#tail(bioclim_all_year_historical, 13)
 ```
 
 ## All years and months included (Flint)
@@ -586,7 +602,7 @@ flint_all_year_historical_avgs
 flint_all_year_avgs <- bind_rows(flint_all_year_recent_avgs, flint_all_year_historical_avgs) #combine into 1 dataframe 
 head(flint_all_year_avgs)
 tail(flint_all_year_avgs)
-write_csv(flint_all_year_avgs, "../output/Climate/fullyear_FlintAvgs.csv")
+write_csv(flint_all_year_avgs, "../output/Climate/fullyear_FlintAvgs_wtr_year.csv")
 ```
 
 ### Correlations - Recent + Historical
@@ -712,7 +728,7 @@ bioclim_all_year_historical_avgs
 bioclim_all_year_avgs <- bind_rows(bioclim_all_year_recent_avgs, bioclim_all_year_historical_avgs) #combine into 1 dataframe 
 head(bioclim_all_year_avgs)
 tail(bioclim_all_year_avgs)
-write_csv(bioclim_all_year_avgs, "../output/Climate/fullyear_BioClimAvgs.csv")
+write_csv(bioclim_all_year_avgs, "../output/Climate/fullyear_BioClimAvgs_wtr_year.csv")
 ```
 
 Merge with flint
