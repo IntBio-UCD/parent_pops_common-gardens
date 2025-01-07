@@ -1,22 +1,24 @@
 ---
 title: "WL2_climate_distance"
 author: "Brandie Quarles"
-date: "2024-12-10"
+date: "2025-01-07"
 output: 
   html_document: 
     keep_md: yes
 ---
-To Do: 
-- Change to be full 2023 at WL2
-- If do change it to the full year for the garden environment maybe should add in snowpack 
+
+
+To do:
+
+-   To get confidence intervals could do some bootstrapping - samples
+    some of the 30 years and calculates it and so on - Julin could help
+    with the code
+
+    -   Need a function that does the climate distance calculation
 
 
 
 # Climate Distance at the WL2 Garden
-
-Note, there is no air temperature data for WL2 in July 2023!! 
-Add data for November and December once we get the data after snowmelt? 
-- Reference growth season criteria 
 
 ## Relevant Libraries and Functions
 
@@ -96,7 +98,7 @@ elev_order <- c("High", "Mid", "Low")
 
 
 ``` r
-pops_flint_avgs <- read_csv("../output/Climate/fullyear_FlintAvgs.csv")
+pops_flint_avgs <- read_csv("../output/Climate/fullyear_FlintAvgs_wtr_year.csv")
 ```
 
 ```
@@ -118,12 +120,12 @@ head(pops_flint_avgs)
 ## # A tibble: 6 × 11
 ##   parent.pop elevation.group elev_m   Lat  Long   cwd    pck   ppt    tmn   tmx
 ##   <chr>      <chr>            <dbl> <dbl> <dbl> <dbl>  <dbl> <dbl>  <dbl> <dbl>
-## 1 BH         Low               511.  37.4 -120.  75.9   0     48.5  8.93   23.6
-## 2 CC         Low               313   39.6 -121.  59.9   0     84.3 10.0    23.3
-## 3 CP2        High             2244.  38.7 -120.  62.9 218.   107.   1.18   13.4
-## 4 CP3        High             2266.  38.7 -120.  46.2 236.   103.   0.529  12.6
-## 5 DPR        Mid              1019.  39.2 -121.  27.5   7.63 121.   7.89   20.2
-## 6 FR         Mid               787   40.0 -121.  75.5  14.1   84.9  5.70   20.1
+## 1 BH         Low               511.  37.4 -120.  75.9   0     48.6  8.91   23.6
+## 2 CC         Low               313   39.6 -121.  59.9   0     84.5 10.0    23.3
+## 3 CP2        High             2244.  38.7 -120.  62.9 218.   107.   1.16   13.4
+## 4 CP3        High             2266.  38.7 -120.  46.2 236.   103.   0.512  12.6
+## 5 DPR        Mid              1019.  39.2 -121.  27.5   7.63 121.   7.87   20.2
+## 6 FR         Mid               787   40.0 -121.  75.5  14.1   84.9  5.69   20.1
 ## # ℹ 1 more variable: TimePd <chr>
 ```
 
@@ -154,12 +156,12 @@ head(pops_flint_recent_avgs)
 ## # A tibble: 6 × 11
 ##   parent.pop elevation.group elev_m   Lat  Long   cwd    pck   ppt    tmn   tmx
 ##   <chr>      <chr>            <dbl> <dbl> <dbl> <dbl>  <dbl> <dbl>  <dbl> <dbl>
-## 1 BH         Low               511.  37.4 -120.  75.9   0     48.5  8.93   23.6
-## 2 CC         Low               313   39.6 -121.  59.9   0     84.3 10.0    23.3
-## 3 CP2        High             2244.  38.7 -120.  62.9 218.   107.   1.18   13.4
-## 4 CP3        High             2266.  38.7 -120.  46.2 236.   103.   0.529  12.6
-## 5 DPR        Mid              1019.  39.2 -121.  27.5   7.63 121.   7.89   20.2
-## 6 FR         Mid               787   40.0 -121.  75.5  14.1   84.9  5.70   20.1
+## 1 BH         Low               511.  37.4 -120.  75.9   0     48.6  8.91   23.6
+## 2 CC         Low               313   39.6 -121.  59.9   0     84.5 10.0    23.3
+## 3 CP2        High             2244.  38.7 -120.  62.9 218.   107.   1.16   13.4
+## 4 CP3        High             2266.  38.7 -120.  46.2 236.   103.   0.512  12.6
+## 5 DPR        Mid              1019.  39.2 -121.  27.5   7.63 121.   7.87   20.2
+## 6 FR         Mid               787   40.0 -121.  75.5  14.1   84.9  5.69   20.1
 ## # ℹ 1 more variable: TimePd <chr>
 ```
 
@@ -172,12 +174,12 @@ head(pops_flint_historic_avgs)
 ## # A tibble: 6 × 11
 ##   parent.pop elevation.group elev_m   Lat  Long   cwd     pck   ppt    tmn   tmx
 ##   <chr>      <chr>            <dbl> <dbl> <dbl> <dbl>   <dbl> <dbl>  <dbl> <dbl>
-## 1 BH         Low               511.  37.4 -120.  74.5 1.95e-2  48.3  7.74   22.9
-## 2 CC         Low               313   39.6 -121.  59.7 7.93e-2  81.9  8.90   22.9
-## 3 CP2        High             2244.  38.7 -120.  60.4 2.65e+2 110.  -0.305  12.5
-## 4 CP3        High             2266.  38.7 -120.  43.8 2.82e+2 106.  -0.852  11.8
-## 5 DPR        Mid              1019.  39.2 -121.  26.5 2.05e+1 120.   6.23   19.7
-## 6 FR         Mid               787   40.0 -121.  74.0 1.92e+1  84.2  4.54   20.1
+## 1 BH         Low               511.  37.4 -120.  74.5 1.95e-2  48.4  7.73   22.9
+## 2 CC         Low               313   39.6 -121.  59.6 7.93e-2  82.0  8.90   22.9
+## 3 CP2        High             2244.  38.7 -120.  60.4 2.65e+2 110.  -0.303  12.5
+## 4 CP3        High             2266.  38.7 -120.  43.8 2.82e+2 107.  -0.850  11.8
+## 5 DPR        Mid              1019.  39.2 -121.  26.4 2.05e+1 121.   6.23   19.7
+## 6 FR         Mid               787   40.0 -121.  74.0 1.92e+1  84.3  4.55   20.1
 ## # ℹ 1 more variable: TimePd <chr>
 ```
 
@@ -195,7 +197,7 @@ names(pops_flint_historic_avgs)
 
 
 ``` r
-pops_bioclim_avgs <-  read_csv("../output/Climate/fullyear_BioClimAvgs.csv") 
+pops_bioclim_avgs <-  read_csv("../output/Climate/fullyear_BioClimAvgs_wtr_year.csv") 
 ```
 
 ```
@@ -217,10 +219,10 @@ head(pops_bioclim_avgs)
 ## # A tibble: 6 × 16
 ##   parent.pop elevation.group elev_m   Lat  Long ann_tmean mean_diurnal_range
 ##   <chr>      <chr>            <dbl> <dbl> <dbl>     <dbl>              <dbl>
-## 1 BH         Low               511.  37.4 -120.     16.2                14.6
-## 2 CC         Low               313   39.6 -121.     16.7                13.2
-## 3 CP2        High             2244.  38.7 -120.      7.30               12.2
-## 4 CP3        High             2266.  38.7 -120.      6.59               12.1
+## 1 BH         Low               511.  37.4 -120.     16.2                14.7
+## 2 CC         Low               313   39.6 -121.     16.6                13.3
+## 3 CP2        High             2244.  38.7 -120.      7.28               12.2
+## 4 CP3        High             2266.  38.7 -120.      6.58               12.1
 ## 5 DPR        Mid              1019.  39.2 -121.     14.1                12.4
 ## 6 FR         Mid               787   40.0 -121.     12.9                14.4
 ## # ℹ 9 more variables: temp_seasonality <dbl>, temp_ann_range <dbl>,
@@ -256,10 +258,10 @@ head(pops_bioclim_recent_avgs)
 ## # A tibble: 6 × 16
 ##   parent.pop elevation.group elev_m   Lat  Long ann_tmean mean_diurnal_range
 ##   <chr>      <chr>            <dbl> <dbl> <dbl>     <dbl>              <dbl>
-## 1 BH         Low               511.  37.4 -120.     16.2                14.6
-## 2 CC         Low               313   39.6 -121.     16.7                13.2
-## 3 CP2        High             2244.  38.7 -120.      7.30               12.2
-## 4 CP3        High             2266.  38.7 -120.      6.59               12.1
+## 1 BH         Low               511.  37.4 -120.     16.2                14.7
+## 2 CC         Low               313   39.6 -121.     16.6                13.3
+## 3 CP2        High             2244.  38.7 -120.      7.28               12.2
+## 4 CP3        High             2266.  38.7 -120.      6.58               12.1
 ## 5 DPR        Mid              1019.  39.2 -121.     14.1                12.4
 ## 6 FR         Mid               787   40.0 -121.     12.9                14.4
 ## # ℹ 9 more variables: temp_seasonality <dbl>, temp_ann_range <dbl>,
@@ -280,7 +282,7 @@ head(pops_bioclim_historical_avgs)
 ## 1 BH         Low               511.  37.4 -120.     15.3                15.2
 ## 2 CC         Low               313   39.6 -121.     15.9                14.0
 ## 3 CP2        High             2244.  38.7 -120.      6.11               12.8
-## 4 CP3        High             2266.  38.7 -120.      5.45               12.6
+## 4 CP3        High             2266.  38.7 -120.      5.46               12.6
 ## 5 DPR        Mid              1019.  39.2 -121.     13.0                13.5
 ## 6 FR         Mid               787   40.0 -121.     12.3                15.6
 ## # ℹ 9 more variables: temp_seasonality <dbl>, temp_ann_range <dbl>,
@@ -302,16 +304,17 @@ names(pops_bioclim_historical_avgs)
 ## [16] "TimePd"
 ```
 
-## WL2 Climate Data (July 2023-Oct 2023)
+## WL2 Climate Data Nov 2022 - Oct 2023 (Plants only grown July 2023-Oct 2023)
 
 ### From Flint (changed this from Magney MetStation)
 
-Per growth season code: Last month = snowpack. \> 70 mm OR pck > 0 and min temp < 0 OR min temp < -5 (moderate freeze)
 
 ``` r
 WL2_climate <- read_csv("../output/Climate/flint_climate_UCDpops.csv") %>% 
   filter(parent.pop=="WL2_Garden") %>% 
-  filter(year==2023) %>% 
+  filter(year>=2022, year<2024) %>% 
+  filter(if_else(year==2022, month=="nov" | month=="dec",
+                 month!="nov" & month !="dec")) %>% 
   mutate(tavg = (tmn + tmx)/2, t_diurnal = (tmx-tmn))
 ```
 
@@ -334,12 +337,12 @@ head(WL2_climate)
 ## # A tibble: 6 × 16
 ##   parent.pop elevation.group elev_m   Lat  Long  year month    aet   cwd    pck
 ##   <chr>      <chr>            <dbl> <dbl> <dbl> <dbl> <chr>  <dbl> <dbl>  <dbl>
-## 1 WL2_Garden High              2020  38.8 -120.  2023 apr    41.5   46.4 1787. 
-## 2 WL2_Garden High              2020  38.8 -120.  2023 aug   106.    43.8    0  
-## 3 WL2_Garden High              2020  38.8 -120.  2023 dec     2.78  24.6   16.9
-## 4 WL2_Garden High              2020  38.8 -120.  2023 feb     8.62  22.4 1422. 
-## 5 WL2_Garden High              2020  38.8 -120.  2023 jan     7.23  16.4 1208. 
-## 6 WL2_Garden High              2020  38.8 -120.  2023 jul    75.7  100.     0  
+## 1 WL2_Garden High              2020  38.8 -120.  2022 dec     4     20    610. 
+## 2 WL2_Garden High              2020  38.8 -120.  2022 nov     2.48  29.1   40.4
+## 3 WL2_Garden High              2020  38.8 -120.  2023 apr    41.5   46.4 1787. 
+## 4 WL2_Garden High              2020  38.8 -120.  2023 aug   106.    43.8    0  
+## 5 WL2_Garden High              2020  38.8 -120.  2023 feb     8.62  22.4 1422. 
+## 6 WL2_Garden High              2020  38.8 -120.  2023 jan     7.23  16.4 1208. 
 ## # ℹ 6 more variables: pet <dbl>, ppt <dbl>, tmn <dbl>, tmx <dbl>, tavg <dbl>,
 ## #   t_diurnal <dbl>
 ```
@@ -357,33 +360,29 @@ summary(WL2_climate)
 ##                                        3rd Qu.:2020   3rd Qu.:38.83  
 ##                                        Max.   :2020   Max.   :38.83  
 ##       Long             year         month                aet        
-##  Min.   :-120.3   Min.   :2023   Length:12          Min.   :  2.78  
+##  Min.   :-120.3   Min.   :2022   Length:12          Min.   :  2.48  
 ##  1st Qu.:-120.3   1st Qu.:2023   Class :character   1st Qu.:  6.98  
 ##  Median :-120.3   Median :2023   Mode  :character   Median : 37.69  
-##  Mean   :-120.3   Mean   :2023                      Mean   : 44.95  
+##  Mean   :-120.3   Mean   :2023                      Mean   : 44.94  
 ##  3rd Qu.:-120.3   3rd Qu.:2023                      3rd Qu.: 78.27  
 ##  Max.   :-120.3   Max.   :2023                      Max.   :115.16  
 ##       cwd              pck              pet              ppt        
 ##  Min.   : 14.83   Min.   :   0.0   Min.   : 23.60   Min.   :  0.01  
-##  1st Qu.: 24.06   1st Qu.:   0.0   1st Qu.: 34.08   1st Qu.: 36.49  
-##  Median : 38.83   Median : 292.8   Median : 81.55   Median : 68.33  
-##  Mean   : 42.14   Mean   : 690.0   Mean   : 87.09   Mean   :161.87  
-##  3rd Qu.: 49.56   3rd Qu.:1323.9   3rd Qu.:134.12   3rd Qu.:175.70  
-##  Max.   :100.37   Max.   :1986.3   Max.   :176.10   Max.   :604.81  
-##       tmn              tmx             tavg          t_diurnal    
-##  Min.   :-6.150   Min.   : 2.13   Min.   :-2.010   Min.   : 8.16  
-##  1st Qu.:-2.510   1st Qu.: 6.76   1st Qu.: 2.500   1st Qu.: 9.42  
-##  Median : 1.540   Median :11.87   Median : 6.660   Median :10.24  
-##  Mean   : 2.315   Mean   :12.62   Mean   : 7.465   Mean   :10.30  
-##  3rd Qu.: 6.145   3rd Qu.:17.52   3rd Qu.:11.832   3rd Qu.:11.32  
-##  Max.   :13.220   Max.   :25.95   Max.   :19.585   Max.   :12.73
+##  1st Qu.: 21.79   1st Qu.:   0.0   1st Qu.: 31.45   1st Qu.: 36.49  
+##  Median : 38.83   Median : 589.6   Median : 81.55   Median : 68.33  
+##  Mean   : 41.58   Mean   : 742.9   Mean   : 86.52   Mean   :207.19  
+##  3rd Qu.: 49.56   3rd Qu.:1323.9   3rd Qu.:134.12   3rd Qu.:319.23  
+##  Max.   :100.37   Max.   :1986.3   Max.   :176.10   Max.   :641.41  
+##       tmn              tmx              tavg           t_diurnal    
+##  Min.   :-6.150   Min.   : 2.130   Min.   :-2.0100   Min.   : 8.25  
+##  1st Qu.:-4.258   1st Qu.: 4.165   1st Qu.:-0.1288   1st Qu.: 9.42  
+##  Median : 0.870   Median :11.870   Median : 6.3700   Median :10.30  
+##  Mean   : 1.762   Mean   :12.081   Mean   : 6.9212   Mean   :10.32  
+##  3rd Qu.: 6.145   3rd Qu.:17.520   3rd Qu.:11.8325   3rd Qu.:11.32  
+##  Max.   :13.220   Max.   :25.950   Max.   :19.5850   Max.   :12.73
 ```
 
 ``` r
-WL2_climate_growmos <- WL2_climate %>% 
-  filter(month=="jul" | month=="aug" | month=="sep" | month=="oct" |
-           month=="nov" | month=="dec") #included Dec as the "last month" per growth season code 
-
 WL2_climate_flint <- WL2_climate %>% #get the means for the variables to compare to home sites 
   summarise(cwd_WL2=mean(cwd),ppt_WL2=mean(ppt), pck_WL2=mean(pck), tmn_WL2=mean(tmn), tmx_WL2=mean(tmx))
 WL2_climate_flint
@@ -393,13 +392,13 @@ WL2_climate_flint
 ## # A tibble: 1 × 5
 ##   cwd_WL2 ppt_WL2 pck_WL2 tmn_WL2 tmx_WL2
 ##     <dbl>   <dbl>   <dbl>   <dbl>   <dbl>
-## 1    42.1    162.    690.    2.32    12.6
+## 1    41.6    207.    743.    1.76    12.1
 ```
 
 ## WL2 Climate Trends
 
 ``` r
-WL2_climate$month <- factor(WL2_climate$month, levels = c("jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct","nov","dec"))
+WL2_climate$month <- factor(WL2_climate$month, levels = c("nov","dec","jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct"))
 
 WL2_climate %>% 
   ggplot(aes(x=month,y=cwd)) +
@@ -411,8 +410,7 @@ WL2_climate %>%
 ``` r
 WL2_climate %>% 
   ggplot(aes(x=month,y=pck)) +
-  geom_point() +
-  facet_wrap(~year)
+  geom_point() 
 ```
 
 ![](WL2_climatedist_all_year_files/figure-html/unnamed-chunk-5-2.png)<!-- -->
@@ -448,7 +446,8 @@ WL2_climate %>%
 
 ``` r
 wl2_bioclim_allyear_prep <- WL2_climate %>% 
-  rename(tmin=tmn, tmax=tmx) %>% #rename columns to match what calc_biovars expects
+  mutate(wtr_year="2023") %>% 
+  rename(tmin=tmn, tmax=tmx, year_cal=year, year=wtr_year) %>% #rename columns to match what calc_biovars expects 
   arrange(parent.pop, year, month)
 ```
 
@@ -465,17 +464,18 @@ wl2_bioclim_all_year_final <- wl2_bioclim_all_year %>%
   select(ann_tmean_WL2=bio1, mean_diurnal_range_WL2=bio2, 
          temp_seasonality_WL2=bio4, temp_ann_range_WL2=bio7, tmean_wettest_quarter_WL2=bio8,
          tmean_driest_quarter_WL2=bio9, ann_ppt_WL2=bio12, ppt_seasonality_WL2=bio15,
-         ppt_warmest_quarter_WL2=bio18, ppt_coldest_quarter_WL2=bio19) 
+         ppt_warmest_quarter_WL2=bio18, ppt_coldest_quarter_WL2=bio19) %>% 
+  mutate_if(is.character, as.numeric)
 wl2_bioclim_all_year_final
 ```
 
 ```
 ##   ann_tmean_WL2 mean_diurnal_range_WL2 temp_seasonality_WL2 temp_ann_range_WL2
-## 1      7.465417               10.30083             721.2594               32.1
+## 1       6.92125               10.31917             758.8279               32.1
 ##   tmean_wettest_quarter_WL2 tmean_driest_quarter_WL2 ann_ppt_WL2
-## 1                 -1.256667                 16.93833     1942.41
+## 1                    -0.555                 16.93833     2486.31
 ##   ppt_seasonality_WL2 ppt_warmest_quarter_WL2 ppt_coldest_quarter_WL2
-## 1            128.8321                   88.98                  1413.4
+## 1            119.8368                   88.98                  1413.4
 ```
 
 
@@ -528,76 +528,76 @@ summary(WL2_home_climate_recent)
 ```
 
 ```
-##     cwd_WL2         ppt_WL2         pck_WL2       tmn_WL2         tmx_WL2     
-##  Min.   :42.14   Min.   :161.9   Min.   :690   Min.   :2.315   Min.   :12.62  
-##  1st Qu.:42.14   1st Qu.:161.9   1st Qu.:690   1st Qu.:2.315   1st Qu.:12.62  
-##  Median :42.14   Median :161.9   Median :690   Median :2.315   Median :12.62  
-##  Mean   :42.14   Mean   :161.9   Mean   :690   Mean   :2.315   Mean   :12.62  
-##  3rd Qu.:42.14   3rd Qu.:161.9   3rd Qu.:690   3rd Qu.:2.315   3rd Qu.:12.62  
-##  Max.   :42.14   Max.   :161.9   Max.   :690   Max.   :2.315   Max.   :12.62  
-##  ann_tmean_WL2   mean_diurnal_range_WL2 temp_seasonality_WL2 temp_ann_range_WL2
-##  Min.   :7.465   Min.   :10.3           Min.   :721.3        Min.   :32.1      
-##  1st Qu.:7.465   1st Qu.:10.3           1st Qu.:721.3        1st Qu.:32.1      
-##  Median :7.465   Median :10.3           Median :721.3        Median :32.1      
-##  Mean   :7.465   Mean   :10.3           Mean   :721.3        Mean   :32.1      
-##  3rd Qu.:7.465   3rd Qu.:10.3           3rd Qu.:721.3        3rd Qu.:32.1      
-##  Max.   :7.465   Max.   :10.3           Max.   :721.3        Max.   :32.1      
-##  tmean_wettest_quarter_WL2 tmean_driest_quarter_WL2  ann_ppt_WL2  
-##  Min.   :-1.257            Min.   :16.94            Min.   :1942  
-##  1st Qu.:-1.257            1st Qu.:16.94            1st Qu.:1942  
-##  Median :-1.257            Median :16.94            Median :1942  
-##  Mean   :-1.257            Mean   :16.94            Mean   :1942  
-##  3rd Qu.:-1.257            3rd Qu.:16.94            3rd Qu.:1942  
-##  Max.   :-1.257            Max.   :16.94            Max.   :1942  
-##  ppt_seasonality_WL2 ppt_warmest_quarter_WL2 ppt_coldest_quarter_WL2
-##  Min.   :128.8       Min.   :88.98           Min.   :1413           
-##  1st Qu.:128.8       1st Qu.:88.98           1st Qu.:1413           
-##  Median :128.8       Median :88.98           Median :1413           
-##  Mean   :128.8       Mean   :88.98           Mean   :1413           
-##  3rd Qu.:128.8       3rd Qu.:88.98           3rd Qu.:1413           
-##  Max.   :128.8       Max.   :88.98           Max.   :1413           
-##   parent.pop        elevation.group        elev_m            Lat       
-##  Length:23          Length:23          Min.   : 313.0   Min.   :36.56  
-##  Class :character   Class :character   1st Qu.: 767.9   1st Qu.:37.81  
-##  Mode  :character   Mode  :character   Median :1934.5   Median :38.79  
-##                                        Mean   :1649.7   Mean   :38.74  
-##                                        3rd Qu.:2363.4   3rd Qu.:39.59  
-##                                        Max.   :2872.3   Max.   :40.74  
-##       Long             cwd             pck              ppt        
-##  Min.   :-123.0   Min.   :27.53   Min.   :  0.00   Min.   : 48.50  
-##  1st Qu.:-121.3   1st Qu.:49.57   1st Qu.: 10.88   1st Qu.: 84.64  
-##  Median :-120.3   Median :55.94   Median : 65.18   Median : 94.31  
-##  Mean   :-120.4   Mean   :56.19   Mean   :136.70   Mean   : 99.04  
-##  3rd Qu.:-119.7   3rd Qu.:61.78   3rd Qu.:225.93   3rd Qu.:107.40  
-##  Max.   :-118.8   Max.   :75.87   Max.   :453.99   Max.   :151.23  
-##       tmn                tmx           TimePd            ann_tmean     
-##  Min.   :-2.57564   Min.   :10.42   Length:23          Min.   : 3.923  
-##  1st Qu.:-0.05428   1st Qu.:12.65   Class :character   1st Qu.: 6.298  
-##  Median : 3.41272   Median :15.68   Mode  :character   Median : 9.545  
-##  Mean   : 3.61545   Mean   :16.50                      Mean   :10.059  
-##  3rd Qu.: 7.50051   3rd Qu.:20.18                      3rd Qu.:13.572  
-##  Max.   :10.03667   Max.   :23.57                      Max.   :16.660  
-##  mean_diurnal_range temp_seasonality temp_ann_range  tmean_wettest_quarter
-##  Min.   :11.88      Min.   :647.3    Min.   :30.67   Min.   :-1.6558      
-##  1st Qu.:12.25      1st Qu.:666.4    1st Qu.:31.55   1st Qu.: 0.2719      
-##  Median :12.71      Median :686.0    Median :31.74   Median : 3.4503      
-##  Mean   :12.89      Mean   :681.9    Mean   :31.99   Mean   : 3.9105      
-##  3rd Qu.:13.33      3rd Qu.:694.1    3rd Qu.:32.06   3rd Qu.: 7.3811      
-##  Max.   :14.64      Max.   :719.8    Max.   :34.27   Max.   :10.3001      
-##  tmean_driest_quarter    ann_ppt     ppt_seasonality ppt_warmest_quarter
-##  Min.   : 6.672       Min.   : 582   Min.   :108.1   Min.   : 47.65     
-##  1st Qu.: 9.622       1st Qu.:1016   1st Qu.:115.0   1st Qu.: 91.04     
-##  Median :12.628       Median :1132   Median :122.9   Median :100.25     
-##  Mean   :13.267       Mean   :1188   Mean   :119.7   Mean   :110.72     
-##  3rd Qu.:16.829       3rd Qu.:1289   3rd Qu.:123.9   3rd Qu.:125.81     
-##  Max.   :19.894       Max.   :1815   Max.   :130.2   Max.   :187.23     
-##  ppt_coldest_quarter
-##  Min.   :329.3      
-##  1st Qu.:550.5      
-##  Median :622.8      
-##  Mean   :620.1      
-##  3rd Qu.:656.0      
-##  Max.   :860.6
+##     cwd_WL2         ppt_WL2         pck_WL2         tmn_WL2     
+##  Min.   :41.58   Min.   :207.2   Min.   :742.9   Min.   :1.762  
+##  1st Qu.:41.58   1st Qu.:207.2   1st Qu.:742.9   1st Qu.:1.762  
+##  Median :41.58   Median :207.2   Median :742.9   Median :1.762  
+##  Mean   :41.58   Mean   :207.2   Mean   :742.9   Mean   :1.762  
+##  3rd Qu.:41.58   3rd Qu.:207.2   3rd Qu.:742.9   3rd Qu.:1.762  
+##  Max.   :41.58   Max.   :207.2   Max.   :742.9   Max.   :1.762  
+##     tmx_WL2      ann_tmean_WL2   mean_diurnal_range_WL2 temp_seasonality_WL2
+##  Min.   :12.08   Min.   :6.921   Min.   :10.32          Min.   :758.8       
+##  1st Qu.:12.08   1st Qu.:6.921   1st Qu.:10.32          1st Qu.:758.8       
+##  Median :12.08   Median :6.921   Median :10.32          Median :758.8       
+##  Mean   :12.08   Mean   :6.921   Mean   :10.32          Mean   :758.8       
+##  3rd Qu.:12.08   3rd Qu.:6.921   3rd Qu.:10.32          3rd Qu.:758.8       
+##  Max.   :12.08   Max.   :6.921   Max.   :10.32          Max.   :758.8       
+##  temp_ann_range_WL2 tmean_wettest_quarter_WL2 tmean_driest_quarter_WL2
+##  Min.   :32.1       Min.   :-0.555            Min.   :16.94           
+##  1st Qu.:32.1       1st Qu.:-0.555            1st Qu.:16.94           
+##  Median :32.1       Median :-0.555            Median :16.94           
+##  Mean   :32.1       Mean   :-0.555            Mean   :16.94           
+##  3rd Qu.:32.1       3rd Qu.:-0.555            3rd Qu.:16.94           
+##  Max.   :32.1       Max.   :-0.555            Max.   :16.94           
+##   ann_ppt_WL2   ppt_seasonality_WL2 ppt_warmest_quarter_WL2
+##  Min.   :2486   Min.   :119.8       Min.   :88.98          
+##  1st Qu.:2486   1st Qu.:119.8       1st Qu.:88.98          
+##  Median :2486   Median :119.8       Median :88.98          
+##  Mean   :2486   Mean   :119.8       Mean   :88.98          
+##  3rd Qu.:2486   3rd Qu.:119.8       3rd Qu.:88.98          
+##  Max.   :2486   Max.   :119.8       Max.   :88.98          
+##  ppt_coldest_quarter_WL2  parent.pop        elevation.group        elev_m      
+##  Min.   :1413            Length:23          Length:23          Min.   : 313.0  
+##  1st Qu.:1413            Class :character   Class :character   1st Qu.: 767.9  
+##  Median :1413            Mode  :character   Mode  :character   Median :1934.5  
+##  Mean   :1413                                                  Mean   :1649.7  
+##  3rd Qu.:1413                                                  3rd Qu.:2363.4  
+##  Max.   :1413                                                  Max.   :2872.3  
+##       Lat             Long             cwd             pck        
+##  Min.   :36.56   Min.   :-123.0   Min.   :27.52   Min.   :  0.00  
+##  1st Qu.:37.81   1st Qu.:-121.3   1st Qu.:49.56   1st Qu.: 10.88  
+##  Median :38.79   Median :-120.3   Median :55.93   Median : 65.23  
+##  Mean   :38.74   Mean   :-120.4   Mean   :56.19   Mean   :136.78  
+##  3rd Qu.:39.59   3rd Qu.:-119.7   3rd Qu.:61.77   3rd Qu.:226.07  
+##  Max.   :40.74   Max.   :-118.8   Max.   :75.86   Max.   :454.27  
+##       ppt              tmn                tmx           TimePd         
+##  Min.   : 48.58   Min.   :-2.59814   Min.   :10.42   Length:23         
+##  1st Qu.: 84.71   1st Qu.:-0.06981   1st Qu.:12.65   Class :character  
+##  Median : 94.32   Median : 3.40014   Median :15.67   Mode  :character  
+##  Mean   : 99.07   Mean   : 3.59801   Mean   :16.50                     
+##  3rd Qu.:107.21   3rd Qu.: 7.48090   3rd Qu.:20.18                     
+##  Max.   :151.28   Max.   :10.01417   Max.   :23.56                     
+##    ann_tmean      mean_diurnal_range temp_seasonality temp_ann_range 
+##  Min.   : 3.910   Min.   :11.89      Min.   :647.9    Min.   :30.62  
+##  1st Qu.: 6.288   1st Qu.:12.25      1st Qu.:666.9    1st Qu.:31.57  
+##  Median : 9.535   Median :12.72      Median :685.6    Median :31.82  
+##  Mean   :10.048   Mean   :12.90      Mean   :681.8    Mean   :32.06  
+##  3rd Qu.:13.560   3rd Qu.:13.34      3rd Qu.:694.0    3rd Qu.:32.17  
+##  Max.   :16.646   Max.   :14.65      Max.   :720.1    Max.   :34.40  
+##  tmean_wettest_quarter tmean_driest_quarter    ann_ppt     ppt_seasonality
+##  Min.   :-1.4982       Min.   : 6.575       Min.   : 583   Min.   :109.3  
+##  1st Qu.: 0.4829       1st Qu.: 9.059       1st Qu.:1017   1st Qu.:114.6  
+##  Median : 3.4333       Median :12.232       Median :1132   Median :123.2  
+##  Mean   : 4.0041       Mean   :12.906       Mean   :1189   Mean   :120.2  
+##  3rd Qu.: 7.0698       3rd Qu.:16.764       3rd Qu.:1287   3rd Qu.:124.8  
+##  Max.   :10.3360       Max.   :19.491       Max.   :1815   Max.   :128.9  
+##  ppt_warmest_quarter ppt_coldest_quarter
+##  Min.   : 47.65      Min.   :329.9      
+##  1st Qu.: 91.04      1st Qu.:549.4      
+##  Median :104.76      Median :623.2      
+##  Mean   :111.22      Mean   :620.4      
+##  3rd Qu.:125.64      3rd Qu.:654.9      
+##  Max.   :187.23      Max.   :862.7
 ```
 
 ``` r
@@ -606,76 +606,76 @@ summary(WL2_home_climate_historic)
 ```
 
 ```
-##     cwd_WL2         ppt_WL2         pck_WL2       tmn_WL2         tmx_WL2     
-##  Min.   :42.14   Min.   :161.9   Min.   :690   Min.   :2.315   Min.   :12.62  
-##  1st Qu.:42.14   1st Qu.:161.9   1st Qu.:690   1st Qu.:2.315   1st Qu.:12.62  
-##  Median :42.14   Median :161.9   Median :690   Median :2.315   Median :12.62  
-##  Mean   :42.14   Mean   :161.9   Mean   :690   Mean   :2.315   Mean   :12.62  
-##  3rd Qu.:42.14   3rd Qu.:161.9   3rd Qu.:690   3rd Qu.:2.315   3rd Qu.:12.62  
-##  Max.   :42.14   Max.   :161.9   Max.   :690   Max.   :2.315   Max.   :12.62  
-##  ann_tmean_WL2   mean_diurnal_range_WL2 temp_seasonality_WL2 temp_ann_range_WL2
-##  Min.   :7.465   Min.   :10.3           Min.   :721.3        Min.   :32.1      
-##  1st Qu.:7.465   1st Qu.:10.3           1st Qu.:721.3        1st Qu.:32.1      
-##  Median :7.465   Median :10.3           Median :721.3        Median :32.1      
-##  Mean   :7.465   Mean   :10.3           Mean   :721.3        Mean   :32.1      
-##  3rd Qu.:7.465   3rd Qu.:10.3           3rd Qu.:721.3        3rd Qu.:32.1      
-##  Max.   :7.465   Max.   :10.3           Max.   :721.3        Max.   :32.1      
-##  tmean_wettest_quarter_WL2 tmean_driest_quarter_WL2  ann_ppt_WL2  
-##  Min.   :-1.257            Min.   :16.94            Min.   :1942  
-##  1st Qu.:-1.257            1st Qu.:16.94            1st Qu.:1942  
-##  Median :-1.257            Median :16.94            Median :1942  
-##  Mean   :-1.257            Mean   :16.94            Mean   :1942  
-##  3rd Qu.:-1.257            3rd Qu.:16.94            3rd Qu.:1942  
-##  Max.   :-1.257            Max.   :16.94            Max.   :1942  
-##  ppt_seasonality_WL2 ppt_warmest_quarter_WL2 ppt_coldest_quarter_WL2
-##  Min.   :128.8       Min.   :88.98           Min.   :1413           
-##  1st Qu.:128.8       1st Qu.:88.98           1st Qu.:1413           
-##  Median :128.8       Median :88.98           Median :1413           
-##  Mean   :128.8       Mean   :88.98           Mean   :1413           
-##  3rd Qu.:128.8       3rd Qu.:88.98           3rd Qu.:1413           
-##  Max.   :128.8       Max.   :88.98           Max.   :1413           
-##   parent.pop        elevation.group        elev_m            Lat       
-##  Length:23          Length:23          Min.   : 313.0   Min.   :36.56  
-##  Class :character   Class :character   1st Qu.: 767.9   1st Qu.:37.81  
-##  Mode  :character   Mode  :character   Median :1934.5   Median :38.79  
-##                                        Mean   :1649.7   Mean   :38.74  
-##                                        3rd Qu.:2363.4   3rd Qu.:39.59  
-##                                        Max.   :2872.3   Max.   :40.74  
-##       Long             cwd             pck                ppt        
-##  Min.   :-123.0   Min.   :26.47   Min.   :  0.0195   Min.   : 48.25  
-##  1st Qu.:-121.3   1st Qu.:47.93   1st Qu.: 19.8433   1st Qu.: 84.22  
-##  Median :-120.3   Median :52.70   Median : 86.8927   Median : 94.60  
-##  Mean   :-120.4   Mean   :53.88   Mean   :161.6397   Mean   : 99.71  
-##  3rd Qu.:-119.7   3rd Qu.:60.04   3rd Qu.:266.3463   3rd Qu.:107.97  
-##  Max.   :-118.8   Max.   :74.53   Max.   :529.1297   Max.   :154.83  
-##       tmn              tmx            TimePd            ann_tmean     
-##  Min.   :-4.694   Min.   : 9.685   Length:23          Min.   : 2.496  
-##  1st Qu.:-1.402   1st Qu.:11.708   Class :character   1st Qu.: 5.153  
-##  Median : 2.027   Median :14.359   Mode  :character   Median : 8.193  
-##  Mean   : 2.121   Mean   :15.762                      Mean   : 8.942  
-##  3rd Qu.: 5.722   3rd Qu.:19.896                      3rd Qu.:12.640  
-##  Max.   : 8.898   Max.   :22.948                      Max.   :15.919  
-##  mean_diurnal_range temp_seasonality temp_ann_range  tmean_wettest_quarter
-##  Min.   :12.18      Min.   :638.7    Min.   :30.59   Min.   :-3.350       
-##  1st Qu.:12.73      1st Qu.:650.4    1st Qu.:31.66   1st Qu.:-0.519       
-##  Median :13.79      Median :662.1    Median :32.53   Median : 2.350       
-##  Mean   :13.64      Mean   :663.3    Mean   :32.64   Mean   : 3.045       
-##  3rd Qu.:14.10      3rd Qu.:671.7    3rd Qu.:33.30   3rd Qu.: 6.087       
-##  Max.   :15.56      Max.   :718.9    Max.   :35.29   Max.   : 9.625       
-##  tmean_driest_quarter    ann_ppt     ppt_seasonality ppt_warmest_quarter
-##  Min.   : 5.388       Min.   : 579   Min.   :104.4   Min.   : 64.71     
-##  1st Qu.: 8.519       1st Qu.:1011   1st Qu.:108.1   1st Qu.:103.40     
-##  Median :11.322       Median :1135   Median :115.8   Median :117.04     
-##  Mean   :12.303       Mean   :1197   Mean   :114.0   Mean   :129.93     
-##  3rd Qu.:16.264       3rd Qu.:1296   3rd Qu.:118.9   3rd Qu.:148.38     
-##  Max.   :19.303       Max.   :1858   Max.   :122.8   Max.   :228.91     
-##  ppt_coldest_quarter
-##  Min.   :285.3      
-##  1st Qu.:511.0      
-##  Median :581.0      
-##  Mean   :579.6      
-##  3rd Qu.:627.3      
-##  Max.   :802.3
+##     cwd_WL2         ppt_WL2         pck_WL2         tmn_WL2     
+##  Min.   :41.58   Min.   :207.2   Min.   :742.9   Min.   :1.762  
+##  1st Qu.:41.58   1st Qu.:207.2   1st Qu.:742.9   1st Qu.:1.762  
+##  Median :41.58   Median :207.2   Median :742.9   Median :1.762  
+##  Mean   :41.58   Mean   :207.2   Mean   :742.9   Mean   :1.762  
+##  3rd Qu.:41.58   3rd Qu.:207.2   3rd Qu.:742.9   3rd Qu.:1.762  
+##  Max.   :41.58   Max.   :207.2   Max.   :742.9   Max.   :1.762  
+##     tmx_WL2      ann_tmean_WL2   mean_diurnal_range_WL2 temp_seasonality_WL2
+##  Min.   :12.08   Min.   :6.921   Min.   :10.32          Min.   :758.8       
+##  1st Qu.:12.08   1st Qu.:6.921   1st Qu.:10.32          1st Qu.:758.8       
+##  Median :12.08   Median :6.921   Median :10.32          Median :758.8       
+##  Mean   :12.08   Mean   :6.921   Mean   :10.32          Mean   :758.8       
+##  3rd Qu.:12.08   3rd Qu.:6.921   3rd Qu.:10.32          3rd Qu.:758.8       
+##  Max.   :12.08   Max.   :6.921   Max.   :10.32          Max.   :758.8       
+##  temp_ann_range_WL2 tmean_wettest_quarter_WL2 tmean_driest_quarter_WL2
+##  Min.   :32.1       Min.   :-0.555            Min.   :16.94           
+##  1st Qu.:32.1       1st Qu.:-0.555            1st Qu.:16.94           
+##  Median :32.1       Median :-0.555            Median :16.94           
+##  Mean   :32.1       Mean   :-0.555            Mean   :16.94           
+##  3rd Qu.:32.1       3rd Qu.:-0.555            3rd Qu.:16.94           
+##  Max.   :32.1       Max.   :-0.555            Max.   :16.94           
+##   ann_ppt_WL2   ppt_seasonality_WL2 ppt_warmest_quarter_WL2
+##  Min.   :2486   Min.   :119.8       Min.   :88.98          
+##  1st Qu.:2486   1st Qu.:119.8       1st Qu.:88.98          
+##  Median :2486   Median :119.8       Median :88.98          
+##  Mean   :2486   Mean   :119.8       Mean   :88.98          
+##  3rd Qu.:2486   3rd Qu.:119.8       3rd Qu.:88.98          
+##  Max.   :2486   Max.   :119.8       Max.   :88.98          
+##  ppt_coldest_quarter_WL2  parent.pop        elevation.group        elev_m      
+##  Min.   :1413            Length:23          Length:23          Min.   : 313.0  
+##  1st Qu.:1413            Class :character   Class :character   1st Qu.: 767.9  
+##  Median :1413            Mode  :character   Mode  :character   Median :1934.5  
+##  Mean   :1413                                                  Mean   :1649.7  
+##  3rd Qu.:1413                                                  3rd Qu.:2363.4  
+##  Max.   :1413                                                  Max.   :2872.3  
+##       Lat             Long             cwd             pck          
+##  Min.   :36.56   Min.   :-123.0   Min.   :26.45   Min.   :  0.0195  
+##  1st Qu.:37.81   1st Qu.:-121.3   1st Qu.:47.93   1st Qu.: 19.8433  
+##  Median :38.79   Median :-120.3   Median :52.68   Median : 86.8739  
+##  Mean   :38.74   Mean   :-120.4   Mean   :53.87   Mean   :161.8520  
+##  3rd Qu.:39.59   3rd Qu.:-119.7   3rd Qu.:60.03   3rd Qu.:266.8888  
+##  Max.   :40.74   Max.   :-118.8   Max.   :74.51   Max.   :529.7280  
+##       ppt              tmn              tmx            TimePd         
+##  Min.   : 48.40   Min.   :-4.691   Min.   : 9.689   Length:23         
+##  1st Qu.: 84.43   1st Qu.:-1.400   1st Qu.:11.713   Class :character  
+##  Median : 95.04   Median : 2.023   Median :14.360   Mode  :character  
+##  Mean   : 99.98   Mean   : 2.123   Mean   :15.760                     
+##  3rd Qu.:108.49   3rd Qu.: 5.722   3rd Qu.:19.891                     
+##  Max.   :155.03   Max.   : 8.900   Max.   :22.931                     
+##    ann_tmean      mean_diurnal_range temp_seasonality temp_ann_range 
+##  Min.   : 2.499   Min.   :12.19      Min.   :637.8    Min.   :30.54  
+##  1st Qu.: 5.156   1st Qu.:12.73      1st Qu.:649.3    1st Qu.:31.53  
+##  Median : 8.191   Median :13.78      Median :660.9    Median :32.26  
+##  Mean   : 8.942   Mean   :13.64      Mean   :662.6    Mean   :32.45  
+##  3rd Qu.:12.639   3rd Qu.:14.08      3rd Qu.:671.6    3rd Qu.:33.01  
+##  Max.   :15.914   Max.   :15.56      Max.   :718.6    Max.   :35.12  
+##  tmean_wettest_quarter tmean_driest_quarter    ann_ppt       ppt_seasonality
+##  Min.   :-2.570        Min.   : 5.237       Min.   : 580.8   Min.   :102.5  
+##  1st Qu.:-0.048        1st Qu.: 8.407       1st Qu.:1013.2   1st Qu.:105.4  
+##  Median : 3.043        Median :11.450       Median :1140.4   Median :113.6  
+##  Mean   : 3.429        Mean   :12.176       Mean   :1199.7   Mean   :111.6  
+##  3rd Qu.: 6.479        3rd Qu.:16.116       3rd Qu.:1301.8   3rd Qu.:116.6  
+##  Max.   : 9.818        Max.   :18.947       Max.   :1860.3   Max.   :119.6  
+##  ppt_warmest_quarter ppt_coldest_quarter
+##  Min.   : 64.71      Min.   :283.6      
+##  1st Qu.:103.95      1st Qu.:508.3      
+##  Median :119.45      Median :559.9      
+##  Mean   :132.47      Mean   :570.4      
+##  3rd Qu.:151.90      3rd Qu.:608.0      
+##  Max.   :228.91      Max.   :796.6
 ```
 
 ### Figure out the range for each variable 
@@ -719,43 +719,43 @@ summary(range_merge_recent)
 ##                                        Max.   :2872.3   Max.   :40.74  
 ##                                        NA's   :1        NA's   :1      
 ##       Long             cwd             pck              ppt        
-##  Min.   :-123.0   Min.   :27.53   Min.   :  0.00   Min.   : 48.50  
-##  1st Qu.:-121.3   1st Qu.:48.54   1st Qu.: 12.51   1st Qu.: 84.79  
-##  Median :-120.3   Median :55.85   Median : 98.42   Median : 96.24  
-##  Mean   :-120.4   Mean   :55.61   Mean   :159.76   Mean   :101.65  
-##  3rd Qu.:-119.7   3rd Qu.:61.21   3rd Qu.:234.57   3rd Qu.:110.89  
-##  Max.   :-118.8   Max.   :75.87   Max.   :690.04   Max.   :161.87  
+##  Min.   :-123.0   Min.   :27.52   Min.   :  0.00   Min.   : 48.58  
+##  1st Qu.:-121.3   1st Qu.:48.53   1st Qu.: 12.51   1st Qu.: 84.83  
+##  Median :-120.3   Median :55.84   Median : 98.50   Median : 96.24  
+##  Mean   :-120.4   Mean   :55.58   Mean   :162.03   Mean   :103.57  
+##  3rd Qu.:-119.7   3rd Qu.:61.20   3rd Qu.:234.70   3rd Qu.:110.85  
+##  Max.   :-118.8   Max.   :75.86   Max.   :742.87   Max.   :207.19  
 ##  NA's   :1                                                         
 ##       tmn               tmx           TimePd            ann_tmean     
-##  Min.   :-2.5756   Min.   :10.42   Length:24          Min.   : 3.923  
-##  1st Qu.: 0.2372   1st Qu.:12.64   Class :character   1st Qu.: 6.442  
-##  Median : 3.0166   Median :15.11   Mode  :character   Median : 9.056  
-##  Mean   : 3.5613   Mean   :16.34                      Mean   : 9.951  
-##  3rd Qu.: 7.3072   3rd Qu.:20.15                      3rd Qu.:13.326  
-##  Max.   :10.0367   Max.   :23.57                      Max.   :16.660  
+##  Min.   :-2.5981   Min.   :10.42   Length:24          Min.   : 3.910  
+##  1st Qu.: 0.2213   1st Qu.:12.53   Class :character   1st Qu.: 6.431  
+##  Median : 3.0031   Median :15.10   Mode  :character   Median : 9.046  
+##  Mean   : 3.5215   Mean   :16.31                      Mean   : 9.917  
+##  3rd Qu.: 7.2879   3rd Qu.:20.15                      3rd Qu.:13.314  
+##  Max.   :10.0142   Max.   :23.56                      Max.   :16.646  
 ##                                                                       
 ##  mean_diurnal_range temp_seasonality temp_ann_range  tmean_wettest_quarter
-##  Min.   :10.30      Min.   :647.3    Min.   :30.67   Min.   :-1.65583     
-##  1st Qu.:12.20      1st Qu.:666.6    1st Qu.:31.55   1st Qu.:-0.08265     
-##  Median :12.66      Median :686.7    Median :31.75   Median : 2.98958     
-##  Mean   :12.78      Mean   :683.5    Mean   :31.99   Mean   : 3.69517     
-##  3rd Qu.:13.31      3rd Qu.:696.5    3rd Qu.:32.10   3rd Qu.: 7.12926     
-##  Max.   :14.64      Max.   :721.3    Max.   :34.27   Max.   :10.30006     
+##  Min.   :10.32      Min.   :647.9    Min.   :30.62   Min.   :-1.49822     
+##  1st Qu.:12.21      1st Qu.:666.9    1st Qu.:31.58   1st Qu.:-0.01054     
+##  Median :12.67      Median :686.2    Median :31.83   Median : 3.16244     
+##  Mean   :12.79      Mean   :685.0    Mean   :32.06   Mean   : 3.81412     
+##  3rd Qu.:13.32      3rd Qu.:696.3    3rd Qu.:32.13   3rd Qu.: 6.81633     
+##  Max.   :14.65      Max.   :758.8    Max.   :34.40   Max.   :10.33600     
 ##                                                                           
 ##  tmean_driest_quarter    ann_ppt     ppt_seasonality ppt_warmest_quarter
-##  Min.   : 6.672       Min.   : 582   Min.   :108.1   Min.   : 47.65     
-##  1st Qu.: 9.889       1st Qu.:1017   1st Qu.:115.0   1st Qu.: 89.52     
-##  Median :12.795       Median :1155   Median :123.1   Median : 99.21     
-##  Mean   :13.420       Mean   :1220   Mean   :120.1   Mean   :109.81     
-##  3rd Qu.:17.041       3rd Qu.:1331   3rd Qu.:124.0   3rd Qu.:124.94     
-##  Max.   :19.894       Max.   :1942   Max.   :130.2   Max.   :187.23     
+##  Min.   : 6.575       Min.   : 583   Min.   :109.3   Min.   : 47.65     
+##  1st Qu.: 9.321       1st Qu.:1018   1st Qu.:114.8   1st Qu.: 89.52     
+##  Median :12.319       Median :1155   Median :122.8   Median :103.54     
+##  Mean   :13.074       Mean   :1243   Mean   :120.2   Mean   :110.29     
+##  3rd Qu.:17.014       3rd Qu.:1330   3rd Qu.:124.8   3rd Qu.:124.68     
+##  Max.   :19.491       Max.   :2486   Max.   :128.9   Max.   :187.23     
 ##                                                                         
 ##  ppt_coldest_quarter
-##  Min.   : 329.3     
-##  1st Qu.: 551.7     
-##  Median : 623.5     
-##  Mean   : 653.2     
-##  3rd Qu.: 686.4     
+##  Min.   : 329.9     
+##  1st Qu.: 551.4     
+##  Median : 623.3     
+##  Mean   : 653.5     
+##  3rd Qu.: 686.2     
 ##  Max.   :1413.4     
 ## 
 ```
@@ -796,7 +796,7 @@ WL2_home_climate_ranges_recent
 ## # A tibble: 1 × 15
 ##   cwd_range pck_range ppt_range tmn_range tmx_range ann_tmean_range
 ##       <dbl>     <dbl>     <dbl>     <dbl>     <dbl>           <dbl>
-## 1      48.3      690.      113.      12.6      13.1            12.7
+## 1      48.3      743.      159.      12.6      13.1            12.7
 ## # ℹ 9 more variables: mean_diurnal_range_range <dbl>,
 ## #   temp_seasonality_range <dbl>, temp_ann_range_range <dbl>,
 ## #   tmean_wettest_quarter_range <dbl>, tmean_driest_quarter_range <dbl>,
@@ -869,43 +869,43 @@ summary(range_merge_historic)
 ##                                        Max.   :2872.3   Max.   :40.74  
 ##                                        NA's   :1        NA's   :1      
 ##       Long             cwd             pck                ppt        
-##  Min.   :-123.0   Min.   :26.47   Min.   :  0.0195   Min.   : 48.25  
-##  1st Qu.:-121.3   1st Qu.:45.90   1st Qu.: 20.1582   1st Qu.: 84.22  
-##  Median :-120.3   Median :52.34   Median :119.0351   Median : 97.43  
-##  Mean   :-120.4   Mean   :53.39   Mean   :183.6564   Mean   :102.30  
-##  3rd Qu.:-119.7   3rd Qu.:59.85   3rd Qu.:271.3576   3rd Qu.:112.57  
-##  Max.   :-118.8   Max.   :74.53   Max.   :690.0425   Max.   :161.87  
+##  Min.   :-123.0   Min.   :26.45   Min.   :  0.0195   Min.   : 48.40  
+##  1st Qu.:-121.3   1st Qu.:45.90   1st Qu.: 20.1582   1st Qu.: 84.50  
+##  Median :-120.3   Median :52.32   Median :119.0409   Median : 97.88  
+##  Mean   :-120.4   Mean   :53.36   Mean   :186.0610   Mean   :104.44  
+##  3rd Qu.:-119.7   3rd Qu.:59.84   3rd Qu.:271.9429   3rd Qu.:113.01  
+##  Max.   :-118.8   Max.   :74.51   Max.   :742.8683   Max.   :207.19  
 ##  NA's   :1                                                           
 ##       tmn              tmx            TimePd            ann_tmean     
-##  Min.   :-4.694   Min.   : 9.685   Length:24          Min.   : 2.496  
-##  1st Qu.:-1.127   1st Qu.:11.735   Class :character   1st Qu.: 5.304  
-##  Median : 2.072   Median :14.055   Mode  :character   Median : 7.829  
-##  Mean   : 2.129   Mean   :15.631                      Mean   : 8.880  
-##  3rd Qu.: 5.469   3rd Qu.:19.792                      3rd Qu.:12.481  
-##  Max.   : 8.898   Max.   :22.948                      Max.   :15.919  
+##  Min.   :-4.691   Min.   : 9.689   Length:24          Min.   : 2.499  
+##  1st Qu.:-1.125   1st Qu.:11.740   Class :character   1st Qu.: 5.308  
+##  Median : 1.892   Median :14.057   Mode  :character   Median : 7.815  
+##  Mean   : 2.108   Mean   :15.607                      Mean   : 8.858  
+##  3rd Qu.: 5.469   3rd Qu.:19.787                      3rd Qu.:12.481  
+##  Max.   : 8.900   Max.   :22.931                      Max.   :15.914  
 ##                                                                       
 ##  mean_diurnal_range temp_seasonality temp_ann_range  tmean_wettest_quarter
-##  Min.   :10.30      Min.   :638.7    Min.   :30.59   Min.   :-3.3496      
-##  1st Qu.:12.63      1st Qu.:650.8    1st Qu.:31.69   1st Qu.:-0.8509      
-##  Median :13.70      Median :662.5    Median :32.45   Median : 2.0060      
-##  Mean   :13.50      Mean   :665.7    Mean   :32.61   Mean   : 2.8660      
-##  3rd Qu.:14.07      3rd Qu.:671.9    3rd Qu.:33.28   3rd Qu.: 5.9081      
-##  Max.   :15.56      Max.   :721.3    Max.   :35.29   Max.   : 9.6246      
+##  Min.   :10.32      Min.   :637.8    Min.   :30.54   Min.   :-2.5696      
+##  1st Qu.:12.63      1st Qu.:649.7    1st Qu.:31.56   1st Qu.:-0.3019      
+##  Median :13.69      Median :661.4    Median :32.25   Median : 2.6994      
+##  Mean   :13.50      Mean   :666.6    Mean   :32.44   Mean   : 3.2630      
+##  3rd Qu.:14.06      3rd Qu.:671.6    3rd Qu.:32.99   3rd Qu.: 6.2546      
+##  Max.   :15.56      Max.   :758.8    Max.   :35.12   Max.   : 9.8183      
 ##                                                                           
-##  tmean_driest_quarter    ann_ppt     ppt_seasonality ppt_warmest_quarter
-##  Min.   : 5.388       Min.   : 579   Min.   :104.4   Min.   : 64.71     
-##  1st Qu.: 8.670       1st Qu.:1011   1st Qu.:108.3   1st Qu.: 99.10     
-##  Median :11.347       Median :1169   Median :115.9   Median :116.95     
-##  Mean   :12.496       Mean   :1228   Mean   :114.6   Mean   :128.23     
-##  3rd Qu.:16.634       3rd Qu.:1351   3rd Qu.:118.9   3rd Qu.:148.35     
-##  Max.   :19.303       Max.   :1942   Max.   :128.8   Max.   :228.91     
-##                                                                         
+##  tmean_driest_quarter    ann_ppt       ppt_seasonality ppt_warmest_quarter
+##  Min.   : 5.237       Min.   : 580.8   Min.   :102.5   Min.   : 64.71     
+##  1st Qu.: 8.594       1st Qu.:1014.0   1st Qu.:105.6   1st Qu.: 99.10     
+##  Median :11.453       Median :1174.5   Median :114.3   Median :118.65     
+##  Mean   :12.374       Mean   :1253.3   Mean   :111.9   Mean   :130.66     
+##  3rd Qu.:16.486       3rd Qu.:1356.1   3rd Qu.:116.7   3rd Qu.:150.11     
+##  Max.   :18.947       Max.   :2486.3   Max.   :119.8   Max.   :228.91     
+##                                                                           
 ##  ppt_coldest_quarter
-##  Min.   : 285.3     
-##  1st Qu.: 513.9     
-##  Median : 593.2     
-##  Mean   : 614.4     
-##  3rd Qu.: 659.8     
+##  Min.   : 283.6     
+##  1st Qu.: 511.3     
+##  Median : 574.2     
+##  Mean   : 605.5     
+##  3rd Qu.: 644.7     
 ##  Max.   :1413.4     
 ## 
 ```
@@ -934,7 +934,7 @@ WL2_home_climate_ranges_historic
 ## # A tibble: 1 × 15
 ##   cwd_range pck_range ppt_range tmn_range tmx_range ann_tmean_range
 ##       <dbl>     <dbl>     <dbl>     <dbl>     <dbl>           <dbl>
-## 1      48.1      690.      114.      13.6      13.3            13.4
+## 1      48.1      743.      159.      13.6      13.2            13.4
 ## # ℹ 9 more variables: mean_diurnal_range_range <dbl>,
 ## #   temp_seasonality_range <dbl>, temp_ann_range_range <dbl>,
 ## #   tmean_wettest_quarter_range <dbl>, tmean_driest_quarter_range <dbl>,
@@ -1004,16 +1004,16 @@ WL2_home_climate_with_ranges_recent
 ## # A tibble: 23 × 51
 ##    cwd_WL2 ppt_WL2 pck_WL2 tmn_WL2 tmx_WL2 ann_tmean_WL2 mean_diurnal_range_WL2
 ##      <dbl>   <dbl>   <dbl>   <dbl>   <dbl>         <dbl>                  <dbl>
-##  1    42.1    162.    690.    2.32    12.6          7.47                   10.3
-##  2    42.1    162.    690.    2.32    12.6          7.47                   10.3
-##  3    42.1    162.    690.    2.32    12.6          7.47                   10.3
-##  4    42.1    162.    690.    2.32    12.6          7.47                   10.3
-##  5    42.1    162.    690.    2.32    12.6          7.47                   10.3
-##  6    42.1    162.    690.    2.32    12.6          7.47                   10.3
-##  7    42.1    162.    690.    2.32    12.6          7.47                   10.3
-##  8    42.1    162.    690.    2.32    12.6          7.47                   10.3
-##  9    42.1    162.    690.    2.32    12.6          7.47                   10.3
-## 10    42.1    162.    690.    2.32    12.6          7.47                   10.3
+##  1    41.6    207.    743.    1.76    12.1          6.92                   10.3
+##  2    41.6    207.    743.    1.76    12.1          6.92                   10.3
+##  3    41.6    207.    743.    1.76    12.1          6.92                   10.3
+##  4    41.6    207.    743.    1.76    12.1          6.92                   10.3
+##  5    41.6    207.    743.    1.76    12.1          6.92                   10.3
+##  6    41.6    207.    743.    1.76    12.1          6.92                   10.3
+##  7    41.6    207.    743.    1.76    12.1          6.92                   10.3
+##  8    41.6    207.    743.    1.76    12.1          6.92                   10.3
+##  9    41.6    207.    743.    1.76    12.1          6.92                   10.3
+## 10    41.6    207.    743.    1.76    12.1          6.92                   10.3
 ## # ℹ 13 more rows
 ## # ℹ 44 more variables: temp_seasonality_WL2 <dbl>, temp_ann_range_WL2 <dbl>,
 ## #   tmean_wettest_quarter_WL2 <dbl>, tmean_driest_quarter_WL2 <dbl>,
@@ -1031,16 +1031,16 @@ gowers_calc_each_var_recent
 ## # A tibble: 23 × 18
 ##    parent.pop elevation.group elev_m cwd_gowers pck_gowers ppt_gowers tmn_gowers
 ##    <chr>      <chr>            <dbl>      <dbl>      <dbl>      <dbl>      <dbl>
-##  1 BH         Low               511.     0.698       1         1          0.524 
-##  2 CC         Low               313      0.368       1         0.684      0.612 
-##  3 CP2        High             2244.     0.430       0.684     0.480      0.0898
-##  4 CP3        High             2266.     0.0845      0.658     0.520      0.142 
-##  5 DPR        Mid              1019.     0.302       0.989     0.359      0.442 
-##  6 FR         Mid               787      0.691       0.980     0.679      0.269 
-##  7 IH         Low               454.     0.148       1.00      0.641      0.504 
-##  8 LV1        High             2593.     0.159       0.361     0.137      0.292 
-##  9 LV3        High             2354.     0.0258      0.368     0.160      0.292 
-## 10 LVTR1      High             2741.     0.207       0.342     0.0939     0.308 
+##  1 BH         Low               511.     0.709       1          1         0.567 
+##  2 CC         Low               313      0.379       1          0.774     0.654 
+##  3 CP2        High             2244.     0.441       0.707      0.630     0.0473
+##  4 CP3        High             2266.     0.0960      0.682      0.658     0.0991
+##  5 DPR        Mid              1019.     0.291       0.990      0.541     0.484 
+##  6 FR         Mid               787      0.702       0.981      0.771     0.312 
+##  7 IH         Low               454.     0.160       1.00       0.743     0.547 
+##  8 LV1        High             2593.     0.171       0.406      0.383     0.249 
+##  9 LV3        High             2354.     0.0144      0.413      0.400     0.250 
+## 10 LVTR1      High             2741.     0.218       0.388      0.352     0.266 
 ## # ℹ 13 more rows
 ## # ℹ 11 more variables: tmx_gowers <dbl>, ann_tmean_gowers <dbl>,
 ## #   mean_diurnal_range_gowers <dbl>, temp_seasonality_gowers <dbl>,
@@ -1068,16 +1068,16 @@ gowers_calc_per_pop_recent
 ## # A tibble: 23 × 4
 ##    parent.pop elevation.group elev_m Recent_Gowers_Dist
 ##    <chr>      <chr>            <dbl>              <dbl>
-##  1 BH         Low               511.              0.668
-##  2 CC         Low               313               0.578
-##  3 CP2        High             2244.              0.372
-##  4 CP3        High             2266.              0.353
-##  5 DPR        Mid              1019.              0.436
-##  6 FR         Mid               787               0.519
-##  7 IH         Low               454.              0.522
-##  8 LV1        High             2593.              0.366
-##  9 LV3        High             2354.              0.365
-## 10 LVTR1      High             2741.              0.374
+##  1 BH         Low               511.              0.714
+##  2 CC         Low               313               0.606
+##  3 CP2        High             2244.              0.387
+##  4 CP3        High             2266.              0.364
+##  5 DPR        Mid              1019.              0.468
+##  6 FR         Mid               787               0.559
+##  7 IH         Low               454.              0.551
+##  8 LV1        High             2593.              0.378
+##  9 LV3        High             2354.              0.373
+## 10 LVTR1      High             2741.              0.385
 ## # ℹ 13 more rows
 ```
 
@@ -1120,16 +1120,16 @@ gowers_calc_per_pop_historic
 ## # A tibble: 23 × 4
 ##    parent.pop elevation.group elev_m Historic_Gowers_Dist
 ##    <chr>      <chr>            <dbl>                <dbl>
-##  1 BH         Low               511.                0.643
-##  2 CC         Low               313                 0.565
-##  3 CP2        High             2244.                0.408
-##  4 CP3        High             2266.                0.398
-##  5 DPR        Mid              1019.                0.432
-##  6 FR         Mid               787                 0.534
-##  7 IH         Low               454.                0.523
-##  8 LV1        High             2593.                0.430
-##  9 LV3        High             2354.                0.437
-## 10 LVTR1      High             2741.                0.431
+##  1 BH         Low               511.                0.647
+##  2 CC         Low               313                 0.569
+##  3 CP2        High             2244.                0.437
+##  4 CP3        High             2266.                0.423
+##  5 DPR        Mid              1019.                0.457
+##  6 FR         Mid               787                 0.554
+##  7 IH         Low               454.                0.530
+##  8 LV1        High             2593.                0.463
+##  9 LV3        High             2354.                0.466
+## 10 LVTR1      High             2741.                0.465
 ## # ℹ 13 more rows
 ```
 
@@ -1151,16 +1151,16 @@ gowers_all_time
 ## # A tibble: 23 × 5
 ##    parent.pop elevation.group elev_m Recent_Gowers_Dist Historic_Gowers_Dist
 ##    <chr>      <chr>            <dbl>              <dbl>                <dbl>
-##  1 BH         Low               511.              0.668                0.643
-##  2 CC         Low               313               0.578                0.565
-##  3 CP2        High             2244.              0.372                0.408
-##  4 CP3        High             2266.              0.353                0.398
-##  5 DPR        Mid              1019.              0.436                0.432
-##  6 FR         Mid               787               0.519                0.534
-##  7 IH         Low               454.              0.522                0.523
-##  8 LV1        High             2593.              0.366                0.430
-##  9 LV3        High             2354.              0.365                0.437
-## 10 LVTR1      High             2741.              0.374                0.431
+##  1 BH         Low               511.              0.714                0.647
+##  2 CC         Low               313               0.606                0.569
+##  3 CP2        High             2244.              0.387                0.437
+##  4 CP3        High             2266.              0.364                0.423
+##  5 DPR        Mid              1019.              0.468                0.457
+##  6 FR         Mid               787               0.559                0.554
+##  7 IH         Low               454.              0.551                0.530
+##  8 LV1        High             2593.              0.378                0.463
+##  9 LV3        High             2354.              0.373                0.466
+## 10 LVTR1      High             2741.              0.385                0.465
 ## # ℹ 13 more rows
 ```
 
@@ -1174,7 +1174,7 @@ names(gowers_all_time)
 ```
 
 ``` r
-write_csv(gowers_all_time, "../output/Climate/full_year_GowersEnvtalDist_WL2.csv")
+write_csv(gowers_all_time, "../output/Climate/full_year_GowersEnvtalDist_WL2_wtr_year.csv")
 ```
 
 Figures
@@ -1188,7 +1188,7 @@ gowers_rec_fig <- gowers_all_time %>%
    labs(fill="Elevation (m)",x="Population", title="Recent Climate", y="Gowers Envtal Distance \n from WL2") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/Climate/full_year_Gowers_Recent_fromWL2.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/full_year_Gowers_Recent_fromWL2_wtr_year.png", width = 12, height = 6, units = "in")
 
 gowers_hist_fig <- gowers_all_time %>% 
   ggplot(aes(x=fct_reorder(parent.pop, Historic_Gowers_Dist), y=Historic_Gowers_Dist, group=parent.pop, fill=elev_m)) +
@@ -1198,7 +1198,7 @@ gowers_hist_fig <- gowers_all_time %>%
   labs(fill="Elevation (m)",x="Population", title="Historic Climate", y="Gowers Envtal Distance \n from WL2") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/Climate/full_year_Gowers_Historic_fromWL2.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/full_year_Gowers_Historic_fromWL2_wtr_year.png", width = 12, height = 6, units = "in")
 
 #should combine these into one figure and save that instead
 legend <- get_legend(gowers_rec_fig)
@@ -1241,16 +1241,16 @@ gowers_calc_per_pop_recent_flint
 ## # A tibble: 23 × 4
 ##    parent.pop elevation.group elev_m Recent_Gowers_Dist
 ##    <chr>      <chr>            <dbl>              <dbl>
-##  1 BH         Low               511.              0.811
-##  2 CC         Low               313               0.695
-##  3 CP2        High             2244.              0.349
-##  4 CP3        High             2266.              0.281
-##  5 DPR        Mid              1019.              0.534
-##  6 FR         Mid               787               0.638
-##  7 IH         Low               454.              0.605
-##  8 LV1        High             2593.              0.211
-##  9 LV3        High             2354.              0.190
-## 10 LVTR1      High             2741.              0.213
+##  1 BH         Low               511.              0.830
+##  2 CC         Low               313               0.732
+##  3 CP2        High             2244.              0.385
+##  4 CP3        High             2266.              0.316
+##  5 DPR        Mid              1019.              0.585
+##  6 FR         Mid               787               0.675
+##  7 IH         Low               454.              0.644
+##  8 LV1        High             2593.              0.255
+##  9 LV3        High             2354.              0.228
+## 10 LVTR1      High             2741.              0.259
 ## # ℹ 13 more rows
 ```
 
@@ -1277,16 +1277,16 @@ gowers_calc_per_pop_historic_flint
 ## # A tibble: 23 × 4
 ##    parent.pop elevation.group elev_m Historic_Gowers_Dist
 ##    <chr>      <chr>            <dbl>                <dbl>
-##  1 BH         Low               511.                0.770
-##  2 CC         Low               313                 0.666
-##  3 CP2        High             2244.                0.331
-##  4 CP3        High             2266.                0.283
-##  5 DPR        Mid              1019.                0.496
-##  6 FR         Mid               787                 0.609
-##  7 IH         Low               454.                0.581
-##  8 LV1        High             2593.                0.213
-##  9 LV3        High             2354.                0.219
-## 10 LVTR1      High             2741.                0.213
+##  1 BH         Low               511.                0.789
+##  2 CC         Low               313                 0.702
+##  3 CP2        High             2244.                0.366
+##  4 CP3        High             2266.                0.303
+##  5 DPR        Mid              1019.                0.547
+##  6 FR         Mid               787                 0.647
+##  7 IH         Low               454.                0.620
+##  8 LV1        High             2593.                0.260
+##  9 LV3        High             2354.                0.259
+## 10 LVTR1      High             2741.                0.263
 ## # ℹ 13 more rows
 ```
 
@@ -1308,16 +1308,16 @@ gowers_all_time_flint
 ## # A tibble: 23 × 5
 ##    parent.pop elevation.group elev_m Recent_Gowers_Dist Historic_Gowers_Dist
 ##    <chr>      <chr>            <dbl>              <dbl>                <dbl>
-##  1 BH         Low               511.              0.811                0.770
-##  2 CC         Low               313               0.695                0.666
-##  3 CP2        High             2244.              0.349                0.331
-##  4 CP3        High             2266.              0.281                0.283
-##  5 DPR        Mid              1019.              0.534                0.496
-##  6 FR         Mid               787               0.638                0.609
-##  7 IH         Low               454.              0.605                0.581
-##  8 LV1        High             2593.              0.211                0.213
-##  9 LV3        High             2354.              0.190                0.219
-## 10 LVTR1      High             2741.              0.213                0.213
+##  1 BH         Low               511.              0.830                0.789
+##  2 CC         Low               313               0.732                0.702
+##  3 CP2        High             2244.              0.385                0.366
+##  4 CP3        High             2266.              0.316                0.303
+##  5 DPR        Mid              1019.              0.585                0.547
+##  6 FR         Mid               787               0.675                0.647
+##  7 IH         Low               454.              0.644                0.620
+##  8 LV1        High             2593.              0.255                0.260
+##  9 LV3        High             2354.              0.228                0.259
+## 10 LVTR1      High             2741.              0.259                0.263
 ## # ℹ 13 more rows
 ```
 
@@ -1331,7 +1331,7 @@ names(gowers_all_time_flint)
 ```
 
 ``` r
-write_csv(gowers_all_time_flint, "../output/Climate/full_year_GowersEnvtalDist_WL2Flint.csv")
+write_csv(gowers_all_time_flint, "../output/Climate/full_year_GowersEnvtalDist_WL2Flint_wtr_year.csv")
 ```
 
 Figures
@@ -1345,7 +1345,7 @@ gowers_rec_fig_flint <- gowers_all_time_flint %>%
   labs(y="Gowers Envtal Distance \n from WL2", fill="Elevation (m)", x="Population", title="Recent Climate") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-#ggsave("../output/Climate/full_year_Gowers_RecentFlint_fromWL2.png", width = 12, height = 6, units = "in")
+#ggsave("../output/Climate/full_year_Gowers_RecentFlint_fromWL2_wtr_year.png", width = 12, height = 6, units = "in")
 
 gowers_hist_fig_flint <- gowers_all_time_flint %>% 
   ggplot(aes(x=fct_reorder(parent.pop, Historic_Gowers_Dist), y=Historic_Gowers_Dist, group=parent.pop, fill=elev_m)) +
@@ -1355,7 +1355,7 @@ gowers_hist_fig_flint <- gowers_all_time_flint %>%
   labs(fill="Elevation (m)",x="Population", title="Historic Climate", y="Gowers Envtal Distance \n from WL2") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-#ggsave("../output/Climate/full_year_Gowers_HistoricFlint_fromWL2.png", width = 12, height = 6, units = "in")
+#ggsave("../output/Climate/full_year_Gowers_HistoricFlint_fromWL2_wtr_year.png", width = 12, height = 6, units = "in")
 
 #should combine these into one figure and save that instead
 legend <- get_legend(gowers_rec_fig_flint)
@@ -1432,7 +1432,7 @@ recent_flint_dist %>%
 ![](WL2_climatedist_all_year_files/figure-html/unnamed-chunk-22-1.png)<!-- -->
 
 ``` r
-ggsave("../output/Climate/all-year_MeanCWD_DistfromWL2_RecentClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/all-year_MeanCWD_DistfromWL2_RecentClim_wtr_year.png", width = 12, height = 6, units = "in")
 
 recent_flint_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, pck_dist), y=pck_dist, group=parent.pop, fill=elev_m)) +
@@ -1447,7 +1447,7 @@ recent_flint_dist %>%
 ![](WL2_climatedist_all_year_files/figure-html/unnamed-chunk-22-2.png)<!-- -->
 
 ``` r
-ggsave("../output/Climate/all-year_MeanPCK_DistfromWL2_RecentClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/all-year_MeanPCK_DistfromWL2_RecentClim_wtr_year.png", width = 12, height = 6, units = "in")
 
 recent_flint_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, ppt_dist), y=ppt_dist, group=parent.pop, fill=elev_m)) +
@@ -1462,7 +1462,7 @@ recent_flint_dist %>%
 ![](WL2_climatedist_all_year_files/figure-html/unnamed-chunk-22-3.png)<!-- -->
 
 ``` r
-ggsave("../output/Climate/all-year_MeanPPT_DistfromWL2_RecentClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/all-year_MeanPPT_DistfromWL2_RecentClim_wtr_year.png", width = 12, height = 6, units = "in")
 
 recent_flint_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, tmn_dist), y=tmn_dist, group=parent.pop, fill=elev_m)) +
@@ -1477,7 +1477,7 @@ recent_flint_dist %>%
 ![](WL2_climatedist_all_year_files/figure-html/unnamed-chunk-22-4.png)<!-- -->
 
 ``` r
-ggsave("../output/Climate/all-year_MeanTMN_DistfromWL2_RecentClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/all-year_MeanTMN_DistfromWL2_RecentClim_wtr_year.png", width = 12, height = 6, units = "in")
 
 recent_flint_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, tmx_dist), y=tmx_dist, group=parent.pop, fill=elev_m)) +
@@ -1492,7 +1492,7 @@ recent_flint_dist %>%
 ![](WL2_climatedist_all_year_files/figure-html/unnamed-chunk-22-5.png)<!-- -->
 
 ``` r
-ggsave("../output/Climate/all-year_MeanTMX_DistfromWL2_RecentClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/all-year_MeanTMX_DistfromWL2_RecentClim_wtr_year.png", width = 12, height = 6, units = "in")
 ```
 
 Figures Historical (subtraction distance)
@@ -1512,7 +1512,7 @@ historic_flint_dist %>%
 ![](WL2_climatedist_all_year_files/figure-html/unnamed-chunk-23-1.png)<!-- -->
 
 ``` r
-ggsave("../output/Climate/all-year_MeanCWD_DistfromWL2_HistoricalClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/all-year_MeanCWD_DistfromWL2_HistoricalClim_wtr_year.png", width = 12, height = 6, units = "in")
 
 historic_flint_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, pck_dist), y=pck_dist, group=parent.pop, fill=elev_m)) +
@@ -1527,7 +1527,7 @@ historic_flint_dist %>%
 ![](WL2_climatedist_all_year_files/figure-html/unnamed-chunk-23-2.png)<!-- -->
 
 ``` r
-ggsave("../output/Climate/all-year_MeanPCK_DistfromWL2_HistoricalClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/all-year_MeanPCK_DistfromWL2_HistoricalClim_wtr_year.png", width = 12, height = 6, units = "in")
 
 historic_flint_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, ppt_dist), y=ppt_dist, group=parent.pop, fill=elev_m)) +
@@ -1542,7 +1542,7 @@ historic_flint_dist %>%
 ![](WL2_climatedist_all_year_files/figure-html/unnamed-chunk-23-3.png)<!-- -->
 
 ``` r
-ggsave("../output/Climate/all-year_MeanPPT_DistfromWL2_HistoricalClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/all-year_MeanPPT_DistfromWL2_HistoricalClim_wtr_year.png", width = 12, height = 6, units = "in")
 
 historic_flint_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, tmn_dist), y=tmn_dist, group=parent.pop, fill=elev_m)) +
@@ -1557,7 +1557,7 @@ historic_flint_dist %>%
 ![](WL2_climatedist_all_year_files/figure-html/unnamed-chunk-23-4.png)<!-- -->
 
 ``` r
-ggsave("../output/Climate/all-year_MeanTMN_DistfromWL2_HistoricalClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/all-year_MeanTMN_DistfromWL2_HistoricalClim_wtr_year.png", width = 12, height = 6, units = "in")
 
 historic_flint_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, tmx_dist), y=tmx_dist, group=parent.pop, fill=elev_m)) +
@@ -1572,7 +1572,7 @@ historic_flint_dist %>%
 ![](WL2_climatedist_all_year_files/figure-html/unnamed-chunk-23-5.png)<!-- -->
 
 ``` r
-ggsave("../output/Climate/all-year_MeanTMX_DistfromWL2_HistoricalClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/all-year_MeanTMX_DistfromWL2_HistoricalClim_wtr_year.png", width = 12, height = 6, units = "in")
 ```
 
 ## Bioclim Climate Distance
@@ -1611,16 +1611,16 @@ gowers_calc_per_pop_recent_bioclim
 ## # A tibble: 23 × 4
 ##    parent.pop elevation.group elev_m Recent_Gowers_Dist
 ##    <chr>      <chr>            <dbl>              <dbl>
-##  1 BH         Low               511.              0.596
-##  2 CC         Low               313               0.520
-##  3 CP2        High             2244.              0.383
-##  4 CP3        High             2266.              0.389
-##  5 DPR        Mid              1019.              0.387
-##  6 FR         Mid               787               0.460
-##  7 IH         Low               454.              0.481
-##  8 LV1        High             2593.              0.444
-##  9 LV3        High             2354.              0.453
-## 10 LVTR1      High             2741.              0.454
+##  1 BH         Low               511.              0.656
+##  2 CC         Low               313               0.543
+##  3 CP2        High             2244.              0.387
+##  4 CP3        High             2266.              0.388
+##  5 DPR        Mid              1019.              0.409
+##  6 FR         Mid               787               0.501
+##  7 IH         Low               454.              0.505
+##  8 LV1        High             2593.              0.439
+##  9 LV3        High             2354.              0.446
+## 10 LVTR1      High             2741.              0.448
 ## # ℹ 13 more rows
 ```
 
@@ -1657,16 +1657,16 @@ gowers_calc_per_pop_historic_bioclim
 ## # A tibble: 23 × 4
 ##    parent.pop elevation.group elev_m Historic_Gowers_Dist
 ##    <chr>      <chr>            <dbl>                <dbl>
-##  1 BH         Low               511.                0.580
-##  2 CC         Low               313                 0.514
-##  3 CP2        High             2244.                0.446
-##  4 CP3        High             2266.                0.455
-##  5 DPR        Mid              1019.                0.400
-##  6 FR         Mid               787                 0.496
-##  7 IH         Low               454.                0.494
-##  8 LV1        High             2593.                0.538
-##  9 LV3        High             2354.                0.546
-## 10 LVTR1      High             2741.                0.539
+##  1 BH         Low               511.                0.577
+##  2 CC         Low               313                 0.503
+##  3 CP2        High             2244.                0.472
+##  4 CP3        High             2266.                0.483
+##  5 DPR        Mid              1019.                0.413
+##  6 FR         Mid               787                 0.507
+##  7 IH         Low               454.                0.485
+##  8 LV1        High             2593.                0.564
+##  9 LV3        High             2354.                0.569
+## 10 LVTR1      High             2741.                0.566
 ## # ℹ 13 more rows
 ```
 
@@ -1688,16 +1688,16 @@ gowers_all_time_bioclim
 ## # A tibble: 23 × 5
 ##    parent.pop elevation.group elev_m Recent_Gowers_Dist Historic_Gowers_Dist
 ##    <chr>      <chr>            <dbl>              <dbl>                <dbl>
-##  1 BH         Low               511.              0.596                0.580
-##  2 CC         Low               313               0.520                0.514
-##  3 CP2        High             2244.              0.383                0.446
-##  4 CP3        High             2266.              0.389                0.455
-##  5 DPR        Mid              1019.              0.387                0.400
-##  6 FR         Mid               787               0.460                0.496
-##  7 IH         Low               454.              0.481                0.494
-##  8 LV1        High             2593.              0.444                0.538
-##  9 LV3        High             2354.              0.453                0.546
-## 10 LVTR1      High             2741.              0.454                0.539
+##  1 BH         Low               511.              0.656                0.577
+##  2 CC         Low               313               0.543                0.503
+##  3 CP2        High             2244.              0.387                0.472
+##  4 CP3        High             2266.              0.388                0.483
+##  5 DPR        Mid              1019.              0.409                0.413
+##  6 FR         Mid               787               0.501                0.507
+##  7 IH         Low               454.              0.505                0.485
+##  8 LV1        High             2593.              0.439                0.564
+##  9 LV3        High             2354.              0.446                0.569
+## 10 LVTR1      High             2741.              0.448                0.566
 ## # ℹ 13 more rows
 ```
 
@@ -1711,7 +1711,7 @@ names(gowers_all_time_bioclim)
 ```
 
 ``` r
-write_csv(gowers_all_time_bioclim, "../output/Climate/full_year_GowersEnvtalDist_WL2bioclim.csv")
+write_csv(gowers_all_time_bioclim, "../output/Climate/full_year_GowersEnvtalDist_WL2bioclim_wtr_year.csv")
 ```
 
 Figures
@@ -1725,7 +1725,7 @@ gowers_rec_fig_bioclim <- gowers_all_time_bioclim %>%
   labs(y="Gowers Envtal Distance \n from WL2", fill="Elevation (m)", x="Population", title="Recent Climate") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-#ggsave("../output/Climate/full_year_Gowers_Recentbioclim_fromWL2.png", width = 12, height = 6, units = "in")
+#ggsave("../output/Climate/full_year_Gowers_Recentbioclim_fromWL2_wtr_year.png", width = 12, height = 6, units = "in")
 
 gowers_hist_fig_bioclim <- gowers_all_time_bioclim %>% 
   ggplot(aes(x=fct_reorder(parent.pop, Historic_Gowers_Dist), y=Historic_Gowers_Dist, group=parent.pop, fill=elev_m)) +
@@ -1735,7 +1735,7 @@ gowers_hist_fig_bioclim <- gowers_all_time_bioclim %>%
   labs(fill="Elevation (m)",x="Population", title="Historic Climate", y="Gowers Envtal Distance \n from WL2") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-#ggsave("../output/Climate/full_year_Gowers_Historicbioclim_fromWL2.png", width = 12, height = 6, units = "in")
+#ggsave("../output/Climate/full_year_Gowers_Historicbioclim_fromWL2_wtr_year.png", width = 12, height = 6, units = "in")
 
 #should combine these into one figure and save that instead
 legend <- get_legend(gowers_rec_fig_bioclim)
@@ -1786,101 +1786,101 @@ recent_bioclim_dist
 
 ```
 ##    parent.pop elevation.group    elev_m ann_tmean_dist mean_diurnal_range_dist
-## 1          BH             Low  511.4294    -8.78420833               -4.338528
-## 2          CC             Low  313.0000    -9.19494444               -2.946556
-## 3         CP2            High 2244.1329     0.16936111               -1.927167
-## 4         CP3            High 2266.3822     0.87937500               -1.813972
-## 5         DPR             Mid 1018.5919    -6.59951389               -2.054750
-## 6          FR             Mid  787.0000    -5.44400000               -4.108000
-## 7          IH             Low  454.1298    -7.97690278               -3.232028
-## 8         LV1            High 2593.4166     2.53079167               -2.293639
-## 9         LV3            High 2353.5507     2.52475000               -2.314889
-## 10      LVTR1            High 2741.3898     2.68254167               -2.405528
-## 11         SC             Low  421.5178    -8.27809722               -3.616972
-## 12        SQ1             Mid 1921.0366    -2.28343056               -1.727972
-## 13        SQ2             Mid 1934.4512    -2.07915278               -1.962861
-## 14        SQ3            High 2373.1707     0.05708333               -2.050778
-## 15        TM2             Low  379.1527    -8.84244444               -2.712056
-## 16        WL1             Mid 1613.8372    -3.35887500               -2.467417
-## 17        WL2            High 2020.1158    -1.10194444               -1.634278
-## 18         WR             Mid 1158.0000    -5.61445833               -1.631139
-## 19         WV             Mid  748.8571    -4.77954167               -3.916194
-## 20       YO11            High 2872.2950     3.54269444               -2.695889
-## 21        YO4            High 2157.5739    -1.09701389               -1.582917
-## 22        YO7            High 2469.9787     1.45540278               -2.993583
-## 23        YO8            High 2590.9784     1.93370833               -3.069972
+## 1          BH             Low  511.4294     -9.3131111               -4.333333
+## 2          CC             Low  313.0000     -9.7247361               -2.944472
+## 3         CP2            High 2244.1329     -0.3630556               -1.920000
+## 4         CP3            High 2266.3822      0.3462222               -1.806222
+## 5         DPR             Mid 1018.5919     -7.1314028               -2.052361
+## 6          FR             Mid  787.0000     -5.9816806               -4.104028
+## 7          IH             Low  454.1298     -8.5100556               -3.230111
+## 8         LV1            High 2593.4166      1.9999306               -2.288083
+## 9         LV3            High 2353.5507      1.9939861               -2.309306
+## 10      LVTR1            High 2741.3898      2.1510694               -2.398861
+## 11         SC             Low  421.5178     -8.8104167               -3.606111
+## 12        SQ1             Mid 1921.0366     -2.8149167               -1.716444
+## 13        SQ2             Mid 1934.4512     -2.6137500               -1.950556
+## 14        SQ3            High 2373.1707     -0.4783889               -2.035833
+## 15        TM2             Low  379.1527     -9.3726389               -2.712167
+## 16        WL1             Mid 1613.8372     -3.8918194               -2.458417
+## 17        WL2            High 2020.1158     -1.6352917               -1.624806
+## 18         WR             Mid 1158.0000     -6.1468194               -1.627139
+## 19         WV             Mid  748.8571     -5.3123194               -3.906750
+## 20       YO11            High 2872.2950      3.0110278               -2.697556
+## 21        YO4            High 2157.5739     -1.6302361               -1.571583
+## 22        YO7            High 2469.9787      0.9207917               -2.985639
+## 23        YO8            High 2590.9784      1.3999861               -3.063750
 ##    temp_seasonality_dist temp_ann_range_dist tmean_wettest_quarter_dist
-## 1              23.409870        -1.783000000               -11.00688889
-## 2              55.186942         0.359000000               -11.55672222
-## 3              33.263516         0.558000000                -2.48361111
-## 4              29.674400         0.542000000                -1.75400000
-## 5              29.613732         0.671333333                -9.14138889
-## 6               9.508041        -2.170333333                -7.62238889
-## 7              55.462824        -0.001333333               -10.45605556
-## 8              52.697520         0.467000000                -0.09066667
-## 9              54.488057         0.488666667                -0.11516667
-## 10             56.119246         0.369000000                 0.04844444
-## 11             73.994094         0.095333333               -11.07516667
-## 12             24.787286         0.595666667                -5.01566667
-## 13             24.570880         0.274333333                -4.70694444
-## 14             33.928618         0.264000000                -2.73011111
-## 15             50.150039         0.534666667               -11.17472222
-## 16             39.714300         0.340666667                -6.01038889
-## 17             35.232039         0.999666667                -3.75150000
-## 18             23.773548         0.983666667                -8.13411111
-## 19              1.442689        -2.105666667                -6.59111111
-## 20             30.365411        -0.410000000                 0.39916667
-## 21             52.152769         1.433333333                -3.78555556
-## 22             59.883306         0.071666667                -1.30322222
-## 23             56.482127        -0.042000000                -0.78638889
+## 1               60.12698          -2.0040000                -10.1081111
+## 2               91.94236           0.1646667                -10.8910000
+## 3               71.24699           0.5780000                 -2.1239444
+## 4               67.72248           0.5523333                 -1.4004444
+## 5               67.09243           0.5806667                 -8.1318333
+## 6               47.24314          -2.3043333                 -6.7739444
+## 7               92.70024          -0.2370000                 -9.9497778
+## 8               90.18034           0.4240000                  0.3278889
+## 9               91.93763           0.4423333                  0.2443889
+## 10              93.58073           0.2493333                  0.3952778
+## 11             110.93393          -0.1400000                -10.2697222
+## 12              62.52196           0.5030000                 -4.1563889
+## 13              62.54707           0.2413333                 -3.9883333
+## 14              72.07275           0.2823333                 -2.0042778
+## 15              87.03036           0.3396667                -10.5082222
+## 16              77.62394           0.3550000                 -5.6761111
+## 17              73.25949           1.0186667                 -3.4465556
+## 18              61.41065           0.9270000                 -7.1178333
+## 19              38.67997          -2.2293333                 -6.3482222
+## 20              68.30997          -0.4120000                  0.9432222
+## 21              90.47103           1.4803333                 -3.0478889
+## 22              98.36814           0.1410000                 -0.6753889
+## 23              94.83636           0.0040000                 -0.1516667
 ##    tmean_driest_quarter_dist ann_ppt_dist ppt_seasonality_dist
-## 1                 -2.3846111    1360.3617            -1.368960
-## 2                 -2.9552778     930.3313             4.764490
-## 3                  6.1030556     652.9024            14.131173
-## 4                  6.7819444     707.5197            15.506395
-## 5                 -0.4125556     488.4404             5.979948
-## 6                  0.6705556     923.1410             6.539638
-## 7                 -1.6366667     871.4910             5.578830
-## 8                  8.6933333     185.9670            20.321794
-## 9                  8.7081667     217.6694            20.760235
-## 10                 8.8989444     127.7027            20.426834
-## 11                -1.7316667    1153.1997             5.301720
-## 12                 3.9763889    1003.5120             4.990005
-## 13                 4.3101111     982.4550             4.219720
-## 14                 6.4416111     904.2833             4.040038
-## 15                -2.7223333     812.2957             4.887747
-## 16                 2.9960000     661.2857            11.360764
-## 17                 5.1422222     654.3544            13.964141
-## 18                 0.6321111     331.2030             6.080665
-## 19                 1.4000556     919.6427            12.965700
-## 20                10.2659444    1124.5727            13.732611
-## 21                 5.0397778     810.6730             4.385074
-## 22                 7.8512222     754.0107             5.212663
-## 23                 8.3822222     764.2804             5.395446
+## 1                 -1.9028889    1903.3553            -9.110449
+## 2                 -2.5522222    1472.4147            -6.947168
+## 3                  6.6615556    1198.2757             5.864108
+## 4                  7.3550556    1253.0557             7.199701
+## 5                 -0.3026667    1029.8414            -3.577777
+## 6                  1.1562778    1466.9467            -5.870672
+## 7                 -1.3938333    1413.3157            -4.899665
+## 8                  9.1186667     729.3860            10.098917
+## 9                  9.1310000     761.3737            10.577557
+## 10                 9.3248889     670.8974            10.220148
+## 11                -1.8075000    1696.0340            -4.240618
+## 12                 4.5318333    1544.7580            -4.161716
+## 13                 4.7060556    1523.8407            -5.101853
+## 14                 6.8301667    1445.5947            -5.269255
+## 15                -2.4013889    1354.4123            -7.083399
+## 16                 3.2717222    1207.5217             2.999783
+## 17                 5.4460000    1201.3210             5.603420
+## 18                 0.6517222     872.5587            -3.315078
+## 19                 1.5997222    1467.0617             1.637537
+## 20                10.3630556    1668.6830             4.871678
+## 21                 5.6748889    1355.3087            -3.613782
+## 22                 8.4037222    1298.5924            -2.681381
+## 23                 8.8713333    1308.5564            -2.574380
 ##    ppt_warmest_quarter_dist ppt_coldest_quarter_dist
-## 1                41.3263333                1084.0657
-## 2                10.5470000                 856.6890
-## 3               -39.4723333                 757.5600
-## 4               -33.2660000                 789.1083
-## 5               -38.5873333                 635.8354
-## 6                -5.2143333                 860.4323
-## 7                -3.4016667                 838.8720
-## 8               -86.1206667                 581.7210
-## 9               -83.7860000                 602.1580
-## 10              -98.2480000                 558.6474
-## 11               20.5286667                 990.9417
-## 12              -11.2730000                 908.5723
-## 13               -4.3230000                 895.7920
-## 14               -9.1846667                 852.7673
-## 15               -0.7236667                 790.6487
-## 16              -32.4090000                 757.3397
-## 17              -35.0796667                 761.0500
-## 18              -53.5583333                 552.7644
-## 19                2.2883333                 865.4667
-## 20                2.6050000                 974.6430
-## 21               -8.2146667                 801.3850
-## 22              -17.6413333                 762.8313
-## 23              -16.7233333                 765.5417
+## 1                41.3263333                1083.4730
+## 2                10.5470000                 856.4733
+## 3               -39.6546667                 758.2577
+## 4               -33.7856667                 789.9770
+## 5               -38.5873333                 633.9707
+## 6                -5.2143333                 860.0967
+## 7                -3.4016667                 838.0123
+## 8               -86.1206667                 581.2507
+## 9               -83.7860000                 601.9627
+## 10              -98.2480000                 557.9347
+## 11               20.5286667                 990.6537
+## 12              -15.7820000                 907.3167
+## 13               -8.8176667                 894.6653
+## 14              -13.3300000                 851.5623
+## 15               -0.7236667                 790.1980
+## 16              -31.2276667                 758.7450
+## 17              -34.7400000                 763.0367
+## 18              -53.5583333                 550.7474
+## 19                2.2883333                 867.8673
+## 20                3.1750000                 974.4007
+## 21               -7.6973333                 800.9363
+## 22              -17.6720000                 762.1380
+## 23              -16.9370000                 764.7230
 ```
 
 ``` r
@@ -1916,101 +1916,101 @@ historical_bioclim_dist
 
 ```
 ##    parent.pop elevation.group    elev_m ann_tmean_dist mean_diurnal_range_dist
-## 1          BH             Low  511.4294    -7.87652778               -4.910333
-## 2          CC             Low  313.0000    -8.45376389               -3.741861
-## 3         CP2            High 2244.1329     1.36031944               -2.518583
-## 4         CP3            High 2266.3822     2.01073611               -2.313139
-## 5         DPR             Mid 1018.5919    -5.49236111               -3.159944
-## 6          FR             Mid  787.0000    -4.85705556               -5.262056
-## 7          IH             Low  454.1298    -7.29376389               -3.850972
-## 8         LV1            High 2593.4166     4.06819444               -3.494167
-## 9         LV3            High 2353.5507     4.06441667               -3.512389
-## 10      LVTR1            High 2741.3898     4.21225000               -3.494833
-## 11         SC             Low  421.5178    -7.80679167               -4.655694
-## 12        SQ1             Mid 1921.0366    -0.78969444               -1.974833
-## 13        SQ2             Mid 1934.4512    -0.72751389               -2.031194
-## 14        SQ3            High 2373.1707     1.40465278               -1.883694
-## 15        TM2             Low  379.1527    -8.04340278               -3.643306
-## 16        WL1             Mid 1613.8372    -2.24459722               -3.161028
-## 17        WL2            High 2020.1158     0.02941667               -2.330222
-## 18         WR             Mid 1158.0000    -4.42313889               -3.042667
-## 19         WV             Mid  748.8571    -3.95054167               -4.602472
-## 20       YO11            High 2872.2950     4.96963889               -4.077944
-## 21        YO4            High 2157.5739     0.11931944               -2.251861
-## 22        YO7            High 2469.9787     2.61433333               -3.306333
-## 23        YO8            High 2590.9784     3.15450000               -3.619111
+## 1          BH             Low  511.4294     -8.4101111               -4.880278
+## 2          CC             Low  313.0000     -8.9929167               -3.708556
+## 3         CP2            High 2244.1329      0.8120278               -2.504667
+## 4         CP3            High 2266.3822      1.4619306               -2.298917
+## 5         DPR             Mid 1018.5919     -6.0330417               -3.135806
+## 6          FR             Mid  787.0000     -5.4016111               -5.236444
+## 7          IH             Low  454.1298     -7.8325694               -3.820417
+## 8         LV1            High 2593.4166      3.5136806               -3.459750
+## 9         LV3            High 2353.5507      3.5100139               -3.478472
+## 10      LVTR1            High 2741.3898      3.6590139               -3.460028
+## 11         SC             Low  421.5178     -8.3416528               -4.625250
+## 12        SQ1             Mid 1921.0366     -1.3322639               -1.959472
+## 13        SQ2             Mid 1934.4512     -1.2701944               -2.017889
+## 14        SQ3            High 2373.1707      0.8605139               -1.871972
+## 15        TM2             Low  379.1527     -8.5836667               -3.610944
+## 16        WL1             Mid 1613.8372     -2.7882917               -3.144528
+## 17        WL2            High 2020.1158     -0.5167361               -2.313861
+## 18         WR             Mid 1158.0000     -4.9652778               -3.020333
+## 19         WV             Mid  748.8571     -4.4950556               -4.575889
+## 20       YO11            High 2872.2950      4.4222361               -4.060361
+## 21        YO4            High 2157.5739     -0.4266944               -2.238556
+## 22        YO7            High 2469.9787      2.0677639               -3.287417
+## 23        YO8            High 2590.9784      2.6075833               -3.601167
 ##    temp_seasonality_dist temp_ann_range_dist tmean_wettest_quarter_dist
-## 1              34.977029         -2.32966667               -10.64683333
-## 2              49.670923         -1.01500000               -10.88122222
-## 3              59.151495          0.37833333                -1.64766667
-## 4              58.103060          0.50466667                -1.00738889
-## 5              48.989336         -0.15066667                -7.70105556
-## 6              24.123880         -3.19133333                -6.98594444
-## 7              58.337279         -0.82466667                -9.48794444
-## 8              73.866480         -1.16133333                 0.03155556
-## 9              76.312871         -1.14200000                -0.21938889
-## 10             76.620991         -1.24800000                -0.06844444
-## 11             66.325815         -1.48800000                -9.95722222
-## 12             68.638895          1.27266667                -3.60650000
-## 13             70.001724          1.23900000                -3.84816667
-## 14             82.531211          1.50833333                -1.89094444
-## 15             49.544361         -0.83166667               -10.18750000
-## 16             57.376695         -0.27833333                -4.77005556
-## 17             61.422910          0.61600000                -2.43827778
-## 18             47.849385         -0.04766667                -6.64922222
-## 19              2.328446         -3.19133333                -5.81000000
-## 20             51.441507         -1.32833333                 2.09294444
-## 21             70.098979          0.91800000                -2.91883333
-## 22             74.481892         -0.09733333                -0.46794444
-## 23             71.591862         -0.43033333                 0.12188889
+## 1               71.56214         -2.29466667                -10.0385000
+## 2               87.19835         -0.78933333                -10.3733333
+## 3               97.92445          0.50266667                 -1.3242222
+## 4               96.90821          0.63866667                 -0.6765000
+## 5               87.12842          0.03233333                 -7.4813333
+## 6               62.08451         -2.97266667                 -6.5857222
+## 7               95.93144         -0.63633333                 -9.1192778
+## 8              112.63054         -0.87633333                  0.6493889
+## 9              115.07855         -0.85933333                  0.6277778
+## 10             115.13347         -0.93433333                  0.7672778
+## 11             102.99453         -1.36366667                 -9.8061667
+## 12             106.94249          1.44800000                 -3.6233889
+## 13             108.32565          1.33133333                 -3.5983333
+## 14             120.98057          1.55933333                 -1.5965556
+## 15              87.27145         -0.59633333                -10.1672778
+## 16              95.71314         -0.14266667                 -4.4161667
+## 17             100.01427          0.77700000                 -2.2460000
+## 18              86.14137          0.14100000                 -6.3370556
+## 19              40.24518         -3.02100000                 -5.2930000
+## 20              90.11428         -1.17133333                  2.0145556
+## 21             108.73489          1.14166667                 -2.9103889
+## 22             113.15101          0.18700000                 -0.3375000
+## 23             110.30727         -0.16200000                  0.2391111
 ##    tmean_driest_quarter_dist ann_ppt_dist ppt_seasonality_dist
-## 1                 -1.9350000   1363.36733             6.070604
-## 2                 -2.3650556    959.46400             9.924338
-## 3                  7.4693889    623.17135            21.440378
-## 4                  8.1173333    670.44034            22.460765
-## 5                  0.4060000    496.79436            10.052572
-## 6                  0.9418333    931.99900            12.057627
-## 7                 -1.2444444    886.01534             9.953606
-## 8                 10.3268889    148.56571            24.124431
-## 9                 10.3384444    183.45837            24.399263
-## 10                10.5062778     84.44538            24.129413
-## 11                -1.4561667   1201.52000            12.901989
-## 12                 5.6165556    935.70835             8.116866
-## 13                 5.5663889    909.26901             7.792758
-## 14                 7.6083333    817.18134             8.298011
-## 15                -2.0116667    841.61367             9.954718
-## 16                 3.7419444    721.34335            17.681570
-## 17                 6.0852222    688.92901            20.451785
-## 18                 1.4693889    341.95937            10.397541
-## 19                 1.7726667    931.65900            17.903818
-## 20                11.5506667   1142.96933            20.951084
-## 21                 6.1511111    807.16135            12.987833
-## 22                 8.7222778    729.28201            14.846141
-## 23                 9.2445000    739.43001            14.830166
+## 1                 -1.9880000    1905.5137            0.1930321
+## 2                 -2.0086667    1502.6400            2.1868360
+## 3                  7.5140556    1160.9090           15.0348448
+## 4                  8.1563333    1208.0227           16.0775515
+## 5                  0.6037222    1038.0264            3.2365914
+## 6                  1.0405000    1474.7540            4.8537233
+## 7                 -0.8496667    1428.3607            2.6366144
+## 8                 10.4668333     690.2234           17.0436567
+## 9                 10.4784444     725.0794           17.3333599
+## 10                10.6676667     625.9940           17.1423848
+## 11                -1.2587778    1744.1830            4.6997444
+## 12                 5.4824444    1477.9310            3.3277293
+## 13                 5.4880556    1450.9007            2.9995796
+## 14                 7.6558333    1357.9723            3.4632855
+## 15                -1.7044444    1384.7190            2.1816968
+## 16                 3.9617222    1260.7260           10.8706328
+## 17                 6.2809444    1227.5207           13.9179169
+## 18                 1.7487222     882.3864            3.7810263
+## 19                 1.7430556    1471.4467            9.6751948
+## 20                11.7016111    1683.5047           15.1374811
+## 21                 6.1025000    1345.8883            6.2142378
+## 22                 8.9069444    1267.5780            9.0912423
+## 23                 9.3500556    1277.7307            9.1648775
 ##    ppt_warmest_quarter_dist ppt_coldest_quarter_dist
-## 1                 24.273333                1128.0760
-## 2                 -8.555000                 912.2417
-## 3                -65.101333                 776.6127
-## 4                -59.466667                 803.5587
-## 5                -59.336667                 684.6293
-## 6                 -8.376000                 895.1677
-## 7                -19.302667                 881.8803
-## 8               -139.933000                 654.2130
-## 9               -136.130330                 674.1164
-## 10              -139.577997                 632.9490
-## 11                 6.138333                1048.5723
-## 12               -28.372000                 909.2463
-## 13               -18.186000                 896.6857
-## 14               -28.062000                 832.3923
-## 15               -20.677000                 852.8970
-## 16               -42.813667                 808.0677
-## 17               -46.893667                 803.3480
-## 18               -66.500333                 611.1404
-## 19               -10.644333                 908.1023
-## 20                 0.149000                1029.4530
-## 21               -18.241667                 840.4857
-## 22               -28.443000                 795.5817
-## 23               -27.872000                 797.7417
+## 1                 24.273333                1129.7517
+## 2                 -8.555000                 916.2960
+## 3                -70.518000                 794.9257
+## 4                -66.787667                 821.6800
+## 5                -59.336667                 689.8360
+## 6                 -8.376000                 899.0523
+## 7                -19.302667                 885.5520
+## 8               -139.933000                 660.7384
+## 9               -136.130330                 680.3997
+## 10              -139.577997                 639.7394
+## 11                 6.138333                1050.8350
+## 12               -28.372000                 911.6023
+## 13               -28.876667                 898.9423
+## 14               -30.469667                 853.5327
+## 15               -20.677000                 857.5300
+## 16               -42.813667                 824.7807
+## 17               -53.003667                 821.4010
+## 18               -66.500333                 616.8060
+## 19               -10.644333                 911.1373
+## 20                -2.565000                1030.6650
+## 21               -27.707000                 860.0080
+## 22               -35.585333                 815.8487
+## 23               -34.903333                 817.7073
 ```
 
 Figures Recent (subtraction distance)
@@ -2030,7 +2030,7 @@ recent_bioclim_dist %>%
 ![](WL2_climatedist_all_year_files/figure-html/unnamed-chunk-29-1.png)<!-- -->
 
 ``` r
-ggsave("../output/Climate/all-year_Ann_Tmean_DistfromWL2_RecentClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/all-year_Ann_Tmean_DistfromWL2_RecentClim_wtr_year.png", width = 12, height = 6, units = "in")
 
 recent_bioclim_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, mean_diurnal_range_dist), y=mean_diurnal_range_dist, group=parent.pop, fill=elev_m)) +
@@ -2045,7 +2045,7 @@ recent_bioclim_dist %>%
 ![](WL2_climatedist_all_year_files/figure-html/unnamed-chunk-29-2.png)<!-- -->
 
 ``` r
-ggsave("../output/Climate/all-year_Diurnal_Range_DistfromWL2_RecentClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/all-year_Diurnal_Range_DistfromWL2_RecentClim_wtr_year.png", width = 12, height = 6, units = "in")
 
 recent_bioclim_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, temp_seasonality_dist), y=temp_seasonality_dist, group=parent.pop, fill=elev_m)) +
@@ -2060,7 +2060,7 @@ recent_bioclim_dist %>%
 ![](WL2_climatedist_all_year_files/figure-html/unnamed-chunk-29-3.png)<!-- -->
 
 ``` r
-ggsave("../output/Climate/all-year_Temp_Seasonality_DistfromWL2_RecentClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/all-year_Temp_Seasonality_DistfromWL2_RecentClim_wtr_year.png", width = 12, height = 6, units = "in")
 
 recent_bioclim_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, temp_ann_range_dist), y=temp_ann_range_dist, group=parent.pop, fill=elev_m)) +
@@ -2075,7 +2075,7 @@ recent_bioclim_dist %>%
 ![](WL2_climatedist_all_year_files/figure-html/unnamed-chunk-29-4.png)<!-- -->
 
 ``` r
-ggsave("../output/Climate/all-year_Temp_Ann_Range_DistfromWL2_RecentClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/all-year_Temp_Ann_Range_DistfromWL2_RecentClim_wtr_year.png", width = 12, height = 6, units = "in")
 
 recent_bioclim_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, tmean_wettest_quarter_dist), y=tmean_wettest_quarter_dist, group=parent.pop, fill=elev_m)) +
@@ -2090,7 +2090,7 @@ recent_bioclim_dist %>%
 ![](WL2_climatedist_all_year_files/figure-html/unnamed-chunk-29-5.png)<!-- -->
 
 ``` r
-ggsave("../output/Climate/all-year_Temp_Wet_DistfromWL2_RecentClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/all-year_Temp_Wet_DistfromWL2_RecentClim_wtr_year.png", width = 12, height = 6, units = "in")
 
 recent_bioclim_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, tmean_driest_quarter_dist), y=tmean_driest_quarter_dist, group=parent.pop, fill=elev_m)) +
@@ -2105,7 +2105,7 @@ recent_bioclim_dist %>%
 ![](WL2_climatedist_all_year_files/figure-html/unnamed-chunk-29-6.png)<!-- -->
 
 ``` r
-ggsave("../output/Climate/all-year_Temp_Dry_DistfromWL2_RecentClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/all-year_Temp_Dry_DistfromWL2_RecentClim_wtr_year.png", width = 12, height = 6, units = "in")
 
 recent_bioclim_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, ann_ppt_dist), y=ann_ppt_dist, group=parent.pop, fill=elev_m)) +
@@ -2120,7 +2120,7 @@ recent_bioclim_dist %>%
 ![](WL2_climatedist_all_year_files/figure-html/unnamed-chunk-29-7.png)<!-- -->
 
 ``` r
-ggsave("../output/Climate/all-year_Ann_PPT_DistfromWL2_RecentClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/all-year_Ann_PPT_DistfromWL2_RecentClim_wtr_year.png", width = 12, height = 6, units = "in")
 
 recent_bioclim_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, ppt_seasonality_dist), y=ppt_seasonality_dist, group=parent.pop, fill=elev_m)) +
@@ -2135,7 +2135,7 @@ recent_bioclim_dist %>%
 ![](WL2_climatedist_all_year_files/figure-html/unnamed-chunk-29-8.png)<!-- -->
 
 ``` r
-ggsave("../output/Climate/all-year_PPT_Seasonality_DistfromWL2_RecentClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/all-year_PPT_Seasonality_DistfromWL2_RecentClim_wtr_year.png", width = 12, height = 6, units = "in")
 
 recent_bioclim_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, ppt_warmest_quarter_dist), y=ppt_warmest_quarter_dist, group=parent.pop, fill=elev_m)) +
@@ -2150,7 +2150,7 @@ recent_bioclim_dist %>%
 ![](WL2_climatedist_all_year_files/figure-html/unnamed-chunk-29-9.png)<!-- -->
 
 ``` r
-ggsave("../output/Climate/all-year_PPT_Warm_DistfromWL2_RecentClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/all-year_PPT_Warm_DistfromWL2_RecentClim_wtr_year.png", width = 12, height = 6, units = "in")
 
 recent_bioclim_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, ppt_coldest_quarter_dist), y=ppt_coldest_quarter_dist, group=parent.pop, fill=elev_m)) +
@@ -2165,7 +2165,7 @@ recent_bioclim_dist %>%
 ![](WL2_climatedist_all_year_files/figure-html/unnamed-chunk-29-10.png)<!-- -->
 
 ``` r
-ggsave("../output/Climate/all-year_PPT_Cold_DistfromWL2_RecentClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/all-year_PPT_Cold_DistfromWL2_RecentClim_wtr_year.png", width = 12, height = 6, units = "in")
 ```
 
 Historical (subtraction distance)
@@ -2185,7 +2185,7 @@ historical_bioclim_dist %>%
 ![](WL2_climatedist_all_year_files/figure-html/unnamed-chunk-30-1.png)<!-- -->
 
 ``` r
-ggsave("../output/Climate/all-year_Ann_Tmean_DistfromWL2_HistoricalClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/all-year_Ann_Tmean_DistfromWL2_HistoricalClim_wtr_year.png", width = 12, height = 6, units = "in")
 
 historical_bioclim_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, mean_diurnal_range_dist), y=mean_diurnal_range_dist, group=parent.pop, fill=elev_m)) +
@@ -2200,7 +2200,7 @@ historical_bioclim_dist %>%
 ![](WL2_climatedist_all_year_files/figure-html/unnamed-chunk-30-2.png)<!-- -->
 
 ``` r
-ggsave("../output/Climate/all-year_Diurnal_Range_DistfromWL2_HistoricalClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/all-year_Diurnal_Range_DistfromWL2_HistoricalClim_wtr_year.png", width = 12, height = 6, units = "in")
 
 historical_bioclim_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, temp_seasonality_dist), y=temp_seasonality_dist, group=parent.pop, fill=elev_m)) +
@@ -2215,7 +2215,7 @@ historical_bioclim_dist %>%
 ![](WL2_climatedist_all_year_files/figure-html/unnamed-chunk-30-3.png)<!-- -->
 
 ``` r
-ggsave("../output/Climate/all-year_Temp_Seasonality_DistfromWL2_HistoricalClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/all-year_Temp_Seasonality_DistfromWL2_HistoricalClim_wtr_year.png", width = 12, height = 6, units = "in")
 
 historical_bioclim_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, temp_ann_range_dist), y=temp_ann_range_dist, group=parent.pop, fill=elev_m)) +
@@ -2230,7 +2230,7 @@ historical_bioclim_dist %>%
 ![](WL2_climatedist_all_year_files/figure-html/unnamed-chunk-30-4.png)<!-- -->
 
 ``` r
-ggsave("../output/Climate/all-year_Temp_Ann_Range_DistfromWL2_HistoricalClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/all-year_Temp_Ann_Range_DistfromWL2_HistoricalClim_wtr_year.png", width = 12, height = 6, units = "in")
 
 historical_bioclim_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, tmean_wettest_quarter_dist), y=tmean_wettest_quarter_dist, group=parent.pop, fill=elev_m)) +
@@ -2245,7 +2245,7 @@ historical_bioclim_dist %>%
 ![](WL2_climatedist_all_year_files/figure-html/unnamed-chunk-30-5.png)<!-- -->
 
 ``` r
-ggsave("../output/Climate/all-year_Temp_Wet_DistfromWL2_HistoricalClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/all-year_Temp_Wet_DistfromWL2_HistoricalClim_wtr_year.png", width = 12, height = 6, units = "in")
 
 historical_bioclim_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, tmean_driest_quarter_dist), y=tmean_driest_quarter_dist, group=parent.pop, fill=elev_m)) +
@@ -2260,7 +2260,7 @@ historical_bioclim_dist %>%
 ![](WL2_climatedist_all_year_files/figure-html/unnamed-chunk-30-6.png)<!-- -->
 
 ``` r
-ggsave("../output/Climate/all-year_Temp_Dry_DistfromWL2_HistoricalClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/all-year_Temp_Dry_DistfromWL2_HistoricalClim_wtr_year.png", width = 12, height = 6, units = "in")
 
 historical_bioclim_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, ann_ppt_dist), y=ann_ppt_dist, group=parent.pop, fill=elev_m)) +
@@ -2275,7 +2275,7 @@ historical_bioclim_dist %>%
 ![](WL2_climatedist_all_year_files/figure-html/unnamed-chunk-30-7.png)<!-- -->
 
 ``` r
-ggsave("../output/Climate/all-year_Ann_PPT_DistfromWL2_HistoricalClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/all-year_Ann_PPT_DistfromWL2_HistoricalClim_wtr_year.png", width = 12, height = 6, units = "in")
 
 historical_bioclim_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, ppt_seasonality_dist), y=ppt_seasonality_dist, group=parent.pop, fill=elev_m)) +
@@ -2290,7 +2290,7 @@ historical_bioclim_dist %>%
 ![](WL2_climatedist_all_year_files/figure-html/unnamed-chunk-30-8.png)<!-- -->
 
 ``` r
-ggsave("../output/Climate/all-year_PPT_Seasonality_DistfromWL2_HistoricalClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/all-year_PPT_Seasonality_DistfromWL2_HistoricalClim_wtr_year.png", width = 12, height = 6, units = "in")
 
 historical_bioclim_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, ppt_warmest_quarter_dist), y=ppt_warmest_quarter_dist, group=parent.pop, fill=elev_m)) +
@@ -2305,7 +2305,7 @@ historical_bioclim_dist %>%
 ![](WL2_climatedist_all_year_files/figure-html/unnamed-chunk-30-9.png)<!-- -->
 
 ``` r
-ggsave("../output/Climate/all-year_PPT_Warm_DistfromWL2_HistoricalClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/all-year_PPT_Warm_DistfromWL2_HistoricalClim_wtr_year.png", width = 12, height = 6, units = "in")
 
 historical_bioclim_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, ppt_coldest_quarter_dist), y=ppt_coldest_quarter_dist, group=parent.pop, fill=elev_m)) +
@@ -2320,5 +2320,5 @@ historical_bioclim_dist %>%
 ![](WL2_climatedist_all_year_files/figure-html/unnamed-chunk-30-10.png)<!-- -->
 
 ``` r
-ggsave("../output/Climate/all-year_PPT_Cold_DistfromWL2_HistoricalClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/all-year_PPT_Cold_DistfromWL2_HistoricalClim_wtr_year.png", width = 12, height = 6, units = "in")
 ```

@@ -7,6 +7,15 @@ output:
     keep_md: yes
 ---
 
+
+To do:
+
+-   To get confidence intervals could do some bootstrapping - samples
+    some of the 30 years and calculates it and so on - Julin could help
+    with the code
+
+    -   Need a function that does the climate distance calculation
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
@@ -47,7 +56,7 @@ elev_order <- c("High", "Mid", "Low")
 ### Flint
 
 ```{r}
-pops_flint_avgs <- read_csv("../output/Climate/fullyear_FlintAvgs.csv")
+pops_flint_avgs <- read_csv("../output/Climate/fullyear_FlintAvgs_wtr_year.csv")
 head(pops_flint_avgs)
 unique(pops_flint_avgs$parent.pop) #only home pops
 unique(pops_flint_avgs$TimePd) # recent and historical timeperiod 
@@ -63,7 +72,7 @@ names(pops_flint_historic_avgs)
 ### BioClim
 
 ```{r}
-pops_bioclim_avgs <-  read_csv("../output/Climate/fullyear_BioClimAvgs.csv") 
+pops_bioclim_avgs <-  read_csv("../output/Climate/fullyear_BioClimAvgs_wtr_year.csv") 
 head(pops_bioclim_avgs)
 unique(pops_bioclim_avgs$parent.pop) #only home pops
 unique(pops_bioclim_avgs$TimePd) # recent and historical timeperiod 
@@ -76,22 +85,19 @@ head(pops_bioclim_historical_avgs)
 names(pops_bioclim_historical_avgs)
 ```
 
-## WL2 Climate Data (July 2023-Oct 2023)
+## WL2 Climate Data Nov 2022 - Oct 2023 (Plants only grown July 2023-Oct 2023)
 
 ### From Flint (changed this from Magney MetStation)
 
-Per growth season code: Last month = snowpack. \> 70 mm OR pck > 0 and min temp < 0 OR min temp < -5 (moderate freeze)
 ```{r}
 WL2_climate <- read_csv("../output/Climate/flint_climate_UCDpops.csv") %>% 
   filter(parent.pop=="WL2_Garden") %>% 
-  filter(year==2023) %>% 
+  filter(year>=2022, year<2024) %>% 
+  filter(if_else(year==2022, month=="nov" | month=="dec",
+                 month!="nov" & month !="dec")) %>% 
   mutate(tavg = (tmn + tmx)/2, t_diurnal = (tmx-tmn))
 head(WL2_climate)
 summary(WL2_climate)
-
-WL2_climate_growmos <- WL2_climate %>% 
-  filter(month=="jul" | month=="aug" | month=="sep" | month=="oct" |
-           month=="nov" | month=="dec") #included Dec as the "last month" per growth season code 
 
 WL2_climate_flint <- WL2_climate %>% #get the means for the variables to compare to home sites 
   summarise(cwd_WL2=mean(cwd),ppt_WL2=mean(ppt), pck_WL2=mean(pck), tmn_WL2=mean(tmn), tmx_WL2=mean(tmx))
@@ -100,7 +106,7 @@ WL2_climate_flint
 
 ## WL2 Climate Trends
 ```{r}
-WL2_climate$month <- factor(WL2_climate$month, levels = c("jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct","nov","dec"))
+WL2_climate$month <- factor(WL2_climate$month, levels = c("nov","dec","jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct"))
 
 WL2_climate %>% 
   ggplot(aes(x=month,y=cwd)) +
@@ -108,8 +114,7 @@ WL2_climate %>%
 
 WL2_climate %>% 
   ggplot(aes(x=month,y=pck)) +
-  geom_point() +
-  facet_wrap(~year)
+  geom_point() 
 
 WL2_climate %>% 
   ggplot(aes(x=month,y=tmx)) +
@@ -130,7 +135,8 @@ WL2_climate %>%
 #### Prep
 ```{r}
 wl2_bioclim_allyear_prep <- WL2_climate %>% 
-  rename(tmin=tmn, tmax=tmx) %>% #rename columns to match what calc_biovars expects
+  mutate(wtr_year="2023") %>% 
+  rename(tmin=tmn, tmax=tmx, year_cal=year, year=wtr_year) %>% #rename columns to match what calc_biovars expects 
   arrange(parent.pop, year, month)
 ```
 
@@ -145,7 +151,8 @@ wl2_bioclim_all_year_final <- wl2_bioclim_all_year %>%
   select(ann_tmean_WL2=bio1, mean_diurnal_range_WL2=bio2, 
          temp_seasonality_WL2=bio4, temp_ann_range_WL2=bio7, tmean_wettest_quarter_WL2=bio8,
          tmean_driest_quarter_WL2=bio9, ann_ppt_WL2=bio12, ppt_seasonality_WL2=bio15,
-         ppt_warmest_quarter_WL2=bio18, ppt_coldest_quarter_WL2=bio19) 
+         ppt_warmest_quarter_WL2=bio18, ppt_coldest_quarter_WL2=bio19) %>% 
+  mutate_if(is.character, as.numeric)
 wl2_bioclim_all_year_final
 ```
 
@@ -320,7 +327,7 @@ gowers_calc_per_pop_historic
 gowers_all_time <- full_join(gowers_calc_per_pop_recent, gowers_calc_per_pop_historic)
 gowers_all_time
 names(gowers_all_time)
-write_csv(gowers_all_time, "../output/Climate/full_year_GowersEnvtalDist_WL2.csv")
+write_csv(gowers_all_time, "../output/Climate/full_year_GowersEnvtalDist_WL2_wtr_year.csv")
 ```
 
 Figures
@@ -333,7 +340,7 @@ gowers_rec_fig <- gowers_all_time %>%
    labs(fill="Elevation (m)",x="Population", title="Recent Climate", y="Gowers Envtal Distance \n from WL2") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/Climate/full_year_Gowers_Recent_fromWL2.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/full_year_Gowers_Recent_fromWL2_wtr_year.png", width = 12, height = 6, units = "in")
 
 gowers_hist_fig <- gowers_all_time %>% 
   ggplot(aes(x=fct_reorder(parent.pop, Historic_Gowers_Dist), y=Historic_Gowers_Dist, group=parent.pop, fill=elev_m)) +
@@ -343,7 +350,7 @@ gowers_hist_fig <- gowers_all_time %>%
   labs(fill="Elevation (m)",x="Population", title="Historic Climate", y="Gowers Envtal Distance \n from WL2") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/Climate/full_year_Gowers_Historic_fromWL2.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/full_year_Gowers_Historic_fromWL2_wtr_year.png", width = 12, height = 6, units = "in")
 
 #should combine these into one figure and save that instead
 legend <- get_legend(gowers_rec_fig)
@@ -399,7 +406,7 @@ gowers_calc_per_pop_historic_flint
 gowers_all_time_flint <- full_join(gowers_calc_per_pop_recent_flint, gowers_calc_per_pop_historic_flint)
 gowers_all_time_flint
 names(gowers_all_time_flint)
-write_csv(gowers_all_time_flint, "../output/Climate/full_year_GowersEnvtalDist_WL2Flint.csv")
+write_csv(gowers_all_time_flint, "../output/Climate/full_year_GowersEnvtalDist_WL2Flint_wtr_year.csv")
 ```
 
 Figures
@@ -412,7 +419,7 @@ gowers_rec_fig_flint <- gowers_all_time_flint %>%
   labs(y="Gowers Envtal Distance \n from WL2", fill="Elevation (m)", x="Population", title="Recent Climate") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-#ggsave("../output/Climate/full_year_Gowers_RecentFlint_fromWL2.png", width = 12, height = 6, units = "in")
+#ggsave("../output/Climate/full_year_Gowers_RecentFlint_fromWL2_wtr_year.png", width = 12, height = 6, units = "in")
 
 gowers_hist_fig_flint <- gowers_all_time_flint %>% 
   ggplot(aes(x=fct_reorder(parent.pop, Historic_Gowers_Dist), y=Historic_Gowers_Dist, group=parent.pop, fill=elev_m)) +
@@ -422,7 +429,7 @@ gowers_hist_fig_flint <- gowers_all_time_flint %>%
   labs(fill="Elevation (m)",x="Population", title="Historic Climate", y="Gowers Envtal Distance \n from WL2") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-#ggsave("../output/Climate/full_year_Gowers_HistoricFlint_fromWL2.png", width = 12, height = 6, units = "in")
+#ggsave("../output/Climate/full_year_Gowers_HistoricFlint_fromWL2_wtr_year.png", width = 12, height = 6, units = "in")
 
 #should combine these into one figure and save that instead
 legend <- get_legend(gowers_rec_fig_flint)
@@ -469,7 +476,7 @@ recent_flint_dist %>%
   labs(fill="Elevation (m)",x="Population") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/Climate/all-year_MeanCWD_DistfromWL2_RecentClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/all-year_MeanCWD_DistfromWL2_RecentClim_wtr_year.png", width = 12, height = 6, units = "in")
 
 recent_flint_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, pck_dist), y=pck_dist, group=parent.pop, fill=elev_m)) +
@@ -479,7 +486,7 @@ recent_flint_dist %>%
   labs(fill="Elevation (m)",x="Population") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/Climate/all-year_MeanPCK_DistfromWL2_RecentClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/all-year_MeanPCK_DistfromWL2_RecentClim_wtr_year.png", width = 12, height = 6, units = "in")
 
 recent_flint_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, ppt_dist), y=ppt_dist, group=parent.pop, fill=elev_m)) +
@@ -489,7 +496,7 @@ recent_flint_dist %>%
   labs(fill="Elevation (m)",x="Population") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/Climate/all-year_MeanPPT_DistfromWL2_RecentClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/all-year_MeanPPT_DistfromWL2_RecentClim_wtr_year.png", width = 12, height = 6, units = "in")
 
 recent_flint_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, tmn_dist), y=tmn_dist, group=parent.pop, fill=elev_m)) +
@@ -499,7 +506,7 @@ recent_flint_dist %>%
   labs(fill="Elevation (m)",x="Population") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/Climate/all-year_MeanTMN_DistfromWL2_RecentClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/all-year_MeanTMN_DistfromWL2_RecentClim_wtr_year.png", width = 12, height = 6, units = "in")
 
 recent_flint_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, tmx_dist), y=tmx_dist, group=parent.pop, fill=elev_m)) +
@@ -509,7 +516,7 @@ recent_flint_dist %>%
   labs(fill="Elevation (m)",x="Population") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/Climate/all-year_MeanTMX_DistfromWL2_RecentClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/all-year_MeanTMX_DistfromWL2_RecentClim_wtr_year.png", width = 12, height = 6, units = "in")
 ```
 
 Figures Historical (subtraction distance)
@@ -523,7 +530,7 @@ historic_flint_dist %>%
   labs(fill="Elevation (m)",x="Population") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/Climate/all-year_MeanCWD_DistfromWL2_HistoricalClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/all-year_MeanCWD_DistfromWL2_HistoricalClim_wtr_year.png", width = 12, height = 6, units = "in")
 
 historic_flint_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, pck_dist), y=pck_dist, group=parent.pop, fill=elev_m)) +
@@ -533,7 +540,7 @@ historic_flint_dist %>%
   labs(fill="Elevation (m)",x="Population") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/Climate/all-year_MeanPCK_DistfromWL2_HistoricalClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/all-year_MeanPCK_DistfromWL2_HistoricalClim_wtr_year.png", width = 12, height = 6, units = "in")
 
 historic_flint_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, ppt_dist), y=ppt_dist, group=parent.pop, fill=elev_m)) +
@@ -543,7 +550,7 @@ historic_flint_dist %>%
   labs(fill="Elevation (m)",x="Population") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/Climate/all-year_MeanPPT_DistfromWL2_HistoricalClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/all-year_MeanPPT_DistfromWL2_HistoricalClim_wtr_year.png", width = 12, height = 6, units = "in")
 
 historic_flint_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, tmn_dist), y=tmn_dist, group=parent.pop, fill=elev_m)) +
@@ -553,7 +560,7 @@ historic_flint_dist %>%
   labs(fill="Elevation (m)",x="Population") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/Climate/all-year_MeanTMN_DistfromWL2_HistoricalClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/all-year_MeanTMN_DistfromWL2_HistoricalClim_wtr_year.png", width = 12, height = 6, units = "in")
 
 historic_flint_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, tmx_dist), y=tmx_dist, group=parent.pop, fill=elev_m)) +
@@ -563,7 +570,7 @@ historic_flint_dist %>%
   labs(fill="Elevation (m)",x="Population") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/Climate/all-year_MeanTMX_DistfromWL2_HistoricalClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/all-year_MeanTMX_DistfromWL2_HistoricalClim_wtr_year.png", width = 12, height = 6, units = "in")
 ```
 
 ## Bioclim Climate Distance
@@ -630,7 +637,7 @@ gowers_calc_per_pop_historic_bioclim
 gowers_all_time_bioclim <- full_join(gowers_calc_per_pop_recent_bioclim, gowers_calc_per_pop_historic_bioclim)
 gowers_all_time_bioclim
 names(gowers_all_time_bioclim)
-write_csv(gowers_all_time_bioclim, "../output/Climate/full_year_GowersEnvtalDist_WL2bioclim.csv")
+write_csv(gowers_all_time_bioclim, "../output/Climate/full_year_GowersEnvtalDist_WL2bioclim_wtr_year.csv")
 ```
 
 Figures
@@ -643,7 +650,7 @@ gowers_rec_fig_bioclim <- gowers_all_time_bioclim %>%
   labs(y="Gowers Envtal Distance \n from WL2", fill="Elevation (m)", x="Population", title="Recent Climate") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-#ggsave("../output/Climate/full_year_Gowers_Recentbioclim_fromWL2.png", width = 12, height = 6, units = "in")
+#ggsave("../output/Climate/full_year_Gowers_Recentbioclim_fromWL2_wtr_year.png", width = 12, height = 6, units = "in")
 
 gowers_hist_fig_bioclim <- gowers_all_time_bioclim %>% 
   ggplot(aes(x=fct_reorder(parent.pop, Historic_Gowers_Dist), y=Historic_Gowers_Dist, group=parent.pop, fill=elev_m)) +
@@ -653,7 +660,7 @@ gowers_hist_fig_bioclim <- gowers_all_time_bioclim %>%
   labs(fill="Elevation (m)",x="Population", title="Historic Climate", y="Gowers Envtal Distance \n from WL2") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-#ggsave("../output/Climate/full_year_Gowers_Historicbioclim_fromWL2.png", width = 12, height = 6, units = "in")
+#ggsave("../output/Climate/full_year_Gowers_Historicbioclim_fromWL2_wtr_year.png", width = 12, height = 6, units = "in")
 
 #should combine these into one figure and save that instead
 legend <- get_legend(gowers_rec_fig_bioclim)
@@ -712,7 +719,7 @@ recent_bioclim_dist %>%
   labs(fill="Elevation (m)",x="Population") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/Climate/all-year_Ann_Tmean_DistfromWL2_RecentClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/all-year_Ann_Tmean_DistfromWL2_RecentClim_wtr_year.png", width = 12, height = 6, units = "in")
 
 recent_bioclim_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, mean_diurnal_range_dist), y=mean_diurnal_range_dist, group=parent.pop, fill=elev_m)) +
@@ -722,7 +729,7 @@ recent_bioclim_dist %>%
   labs(fill="Elevation (m)",x="Population") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/Climate/all-year_Diurnal_Range_DistfromWL2_RecentClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/all-year_Diurnal_Range_DistfromWL2_RecentClim_wtr_year.png", width = 12, height = 6, units = "in")
 
 recent_bioclim_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, temp_seasonality_dist), y=temp_seasonality_dist, group=parent.pop, fill=elev_m)) +
@@ -732,7 +739,7 @@ recent_bioclim_dist %>%
   labs(fill="Elevation (m)",x="Population") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/Climate/all-year_Temp_Seasonality_DistfromWL2_RecentClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/all-year_Temp_Seasonality_DistfromWL2_RecentClim_wtr_year.png", width = 12, height = 6, units = "in")
 
 recent_bioclim_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, temp_ann_range_dist), y=temp_ann_range_dist, group=parent.pop, fill=elev_m)) +
@@ -742,7 +749,7 @@ recent_bioclim_dist %>%
   labs(fill="Elevation (m)",x="Population") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/Climate/all-year_Temp_Ann_Range_DistfromWL2_RecentClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/all-year_Temp_Ann_Range_DistfromWL2_RecentClim_wtr_year.png", width = 12, height = 6, units = "in")
 
 recent_bioclim_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, tmean_wettest_quarter_dist), y=tmean_wettest_quarter_dist, group=parent.pop, fill=elev_m)) +
@@ -752,7 +759,7 @@ recent_bioclim_dist %>%
   labs(fill="Elevation (m)",x="Population") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/Climate/all-year_Temp_Wet_DistfromWL2_RecentClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/all-year_Temp_Wet_DistfromWL2_RecentClim_wtr_year.png", width = 12, height = 6, units = "in")
 
 recent_bioclim_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, tmean_driest_quarter_dist), y=tmean_driest_quarter_dist, group=parent.pop, fill=elev_m)) +
@@ -762,7 +769,7 @@ recent_bioclim_dist %>%
   labs(fill="Elevation (m)",x="Population") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/Climate/all-year_Temp_Dry_DistfromWL2_RecentClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/all-year_Temp_Dry_DistfromWL2_RecentClim_wtr_year.png", width = 12, height = 6, units = "in")
 
 recent_bioclim_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, ann_ppt_dist), y=ann_ppt_dist, group=parent.pop, fill=elev_m)) +
@@ -772,7 +779,7 @@ recent_bioclim_dist %>%
   labs(fill="Elevation (m)",x="Population") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/Climate/all-year_Ann_PPT_DistfromWL2_RecentClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/all-year_Ann_PPT_DistfromWL2_RecentClim_wtr_year.png", width = 12, height = 6, units = "in")
 
 recent_bioclim_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, ppt_seasonality_dist), y=ppt_seasonality_dist, group=parent.pop, fill=elev_m)) +
@@ -782,7 +789,7 @@ recent_bioclim_dist %>%
   labs(fill="Elevation (m)",x="Population") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/Climate/all-year_PPT_Seasonality_DistfromWL2_RecentClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/all-year_PPT_Seasonality_DistfromWL2_RecentClim_wtr_year.png", width = 12, height = 6, units = "in")
 
 recent_bioclim_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, ppt_warmest_quarter_dist), y=ppt_warmest_quarter_dist, group=parent.pop, fill=elev_m)) +
@@ -792,7 +799,7 @@ recent_bioclim_dist %>%
   labs(fill="Elevation (m)",x="Population") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/Climate/all-year_PPT_Warm_DistfromWL2_RecentClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/all-year_PPT_Warm_DistfromWL2_RecentClim_wtr_year.png", width = 12, height = 6, units = "in")
 
 recent_bioclim_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, ppt_coldest_quarter_dist), y=ppt_coldest_quarter_dist, group=parent.pop, fill=elev_m)) +
@@ -802,7 +809,7 @@ recent_bioclim_dist %>%
   labs(fill="Elevation (m)",x="Population") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/Climate/all-year_PPT_Cold_DistfromWL2_RecentClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/all-year_PPT_Cold_DistfromWL2_RecentClim_wtr_year.png", width = 12, height = 6, units = "in")
 ```
 
 Historical (subtraction distance)
@@ -816,7 +823,7 @@ historical_bioclim_dist %>%
   labs(fill="Elevation (m)",x="Population") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/Climate/all-year_Ann_Tmean_DistfromWL2_HistoricalClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/all-year_Ann_Tmean_DistfromWL2_HistoricalClim_wtr_year.png", width = 12, height = 6, units = "in")
 
 historical_bioclim_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, mean_diurnal_range_dist), y=mean_diurnal_range_dist, group=parent.pop, fill=elev_m)) +
@@ -826,7 +833,7 @@ historical_bioclim_dist %>%
   labs(fill="Elevation (m)",x="Population") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/Climate/all-year_Diurnal_Range_DistfromWL2_HistoricalClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/all-year_Diurnal_Range_DistfromWL2_HistoricalClim_wtr_year.png", width = 12, height = 6, units = "in")
 
 historical_bioclim_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, temp_seasonality_dist), y=temp_seasonality_dist, group=parent.pop, fill=elev_m)) +
@@ -836,7 +843,7 @@ historical_bioclim_dist %>%
   labs(fill="Elevation (m)",x="Population") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/Climate/all-year_Temp_Seasonality_DistfromWL2_HistoricalClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/all-year_Temp_Seasonality_DistfromWL2_HistoricalClim_wtr_year.png", width = 12, height = 6, units = "in")
 
 historical_bioclim_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, temp_ann_range_dist), y=temp_ann_range_dist, group=parent.pop, fill=elev_m)) +
@@ -846,7 +853,7 @@ historical_bioclim_dist %>%
   labs(fill="Elevation (m)",x="Population") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/Climate/all-year_Temp_Ann_Range_DistfromWL2_HistoricalClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/all-year_Temp_Ann_Range_DistfromWL2_HistoricalClim_wtr_year.png", width = 12, height = 6, units = "in")
 
 historical_bioclim_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, tmean_wettest_quarter_dist), y=tmean_wettest_quarter_dist, group=parent.pop, fill=elev_m)) +
@@ -856,7 +863,7 @@ historical_bioclim_dist %>%
   labs(fill="Elevation (m)",x="Population") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/Climate/all-year_Temp_Wet_DistfromWL2_HistoricalClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/all-year_Temp_Wet_DistfromWL2_HistoricalClim_wtr_year.png", width = 12, height = 6, units = "in")
 
 historical_bioclim_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, tmean_driest_quarter_dist), y=tmean_driest_quarter_dist, group=parent.pop, fill=elev_m)) +
@@ -866,7 +873,7 @@ historical_bioclim_dist %>%
   labs(fill="Elevation (m)",x="Population") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/Climate/all-year_Temp_Dry_DistfromWL2_HistoricalClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/all-year_Temp_Dry_DistfromWL2_HistoricalClim_wtr_year.png", width = 12, height = 6, units = "in")
 
 historical_bioclim_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, ann_ppt_dist), y=ann_ppt_dist, group=parent.pop, fill=elev_m)) +
@@ -876,7 +883,7 @@ historical_bioclim_dist %>%
   labs(fill="Elevation (m)",x="Population") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/Climate/all-year_Ann_PPT_DistfromWL2_HistoricalClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/all-year_Ann_PPT_DistfromWL2_HistoricalClim_wtr_year.png", width = 12, height = 6, units = "in")
 
 historical_bioclim_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, ppt_seasonality_dist), y=ppt_seasonality_dist, group=parent.pop, fill=elev_m)) +
@@ -886,7 +893,7 @@ historical_bioclim_dist %>%
   labs(fill="Elevation (m)",x="Population") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/Climate/all-year_PPT_Seasonality_DistfromWL2_HistoricalClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/all-year_PPT_Seasonality_DistfromWL2_HistoricalClim_wtr_year.png", width = 12, height = 6, units = "in")
 
 historical_bioclim_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, ppt_warmest_quarter_dist), y=ppt_warmest_quarter_dist, group=parent.pop, fill=elev_m)) +
@@ -896,7 +903,7 @@ historical_bioclim_dist %>%
   labs(fill="Elevation (m)",x="Population") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/Climate/all-year_PPT_Warm_DistfromWL2_HistoricalClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/all-year_PPT_Warm_DistfromWL2_HistoricalClim_wtr_year.png", width = 12, height = 6, units = "in")
 
 historical_bioclim_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, ppt_coldest_quarter_dist), y=ppt_coldest_quarter_dist, group=parent.pop, fill=elev_m)) +
@@ -906,5 +913,5 @@ historical_bioclim_dist %>%
   labs(fill="Elevation (m)",x="Population") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/Climate/all-year_PPT_Cold_DistfromWL2_HistoricalClim.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/all-year_PPT_Cold_DistfromWL2_HistoricalClim_wtr_year.png", width = 12, height = 6, units = "in")
 ```
