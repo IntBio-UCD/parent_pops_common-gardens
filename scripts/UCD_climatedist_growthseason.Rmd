@@ -10,7 +10,12 @@ editor_options:
     wrap: 72
 ---
 To Do: 
-- Copy this code and substitute the full year climate data for the growth season inputs used here.
+
+-   To get confidence intervals could do some bootstrapping - samples
+    some of the 30 years and calculates it and so on - Julin could help
+    with the code
+
+    -   Need a function that does the climate distance calculation
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -197,7 +202,7 @@ summary(davis_bioclim_final)
 
 (1/P) \* SUM ((absolute value(Ai - Bi)) / range(i)) for each variable
 
--   P = number of environmental variables = 13 (without CWD)
+-   P = number of environmental variables = 14 (without CWD)
 
 -   Ai = 30 year avg of that variable for the home site
 
@@ -445,7 +450,7 @@ gowers_rec_fig_flint <- gowers_all_time_flint %>%
   labs(y="Gowers Envtal Distance \n from Davis", fill="Elevation (m)", x="Population", title="Recent Climate") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-#ggsave("../output/Climate/growthseason_Gowers_RecentFlint_fromDavis.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/growthseason_Gowers_RecentFlint_fromDavis.png", width = 12, height = 6, units = "in")
 
 gowers_hist_fig_flint <- gowers_all_time_flint %>% 
   ggplot(aes(x=fct_reorder(parent.pop, Historic_Gowers_Dist), y=Historic_Gowers_Dist, group=parent.pop, fill=elev_m)) +
@@ -455,7 +460,7 @@ gowers_hist_fig_flint <- gowers_all_time_flint %>%
   labs(fill="Elevation (m)",x="Population", title="Historic Climate", y="Gowers Envtal Distance \n from Davis") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-#ggsave("../output/Climate/growthseason_Gowers_HistoricFlint_fromDavis.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/growthseason_Gowers_HistoricFlint_fromDavis.png", width = 12, height = 6, units = "in")
 
 #should combine these into one figure and save that instead
 legend <- get_legend(gowers_rec_fig_flint)
@@ -654,7 +659,7 @@ gowers_rec_fig_bioclim <- gowers_all_time_bioclim %>%
   labs(y="Gowers Envtal Distance \n from Davis", fill="Elevation (m)", x="Population", title="Recent Climate") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-#ggsave("../output/Climate/growthseason_Gowers_Recentbioclim_fromDavis.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/growthseason_Gowers_Recentbioclim_fromDavis.png", width = 12, height = 6, units = "in")
 
 gowers_hist_fig_bioclim <- gowers_all_time_bioclim %>% 
   ggplot(aes(x=fct_reorder(parent.pop, Historic_Gowers_Dist), y=Historic_Gowers_Dist, group=parent.pop, fill=elev_m)) +
@@ -664,7 +669,7 @@ gowers_hist_fig_bioclim <- gowers_all_time_bioclim %>%
   labs(fill="Elevation (m)",x="Population", title="Historic Climate", y="Gowers Envtal Distance \n from Davis") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-#ggsave("../output/Climate/growthseason_Gowers_Historicbioclim_fromDavis.png", width = 12, height = 6, units = "in")
+ggsave("../output/Climate/growthseason_Gowers_Historicbioclim_fromDavis.png", width = 12, height = 6, units = "in")
 
 #should combine these into one figure and save that instead
 legend <- get_legend(gowers_rec_fig_bioclim)

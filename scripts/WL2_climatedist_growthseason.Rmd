@@ -7,7 +7,12 @@ output:
     keep_md: yes
 ---
 To Do: 
-- Copy this code and substitute the full year climate data for the growth season inputs used here.
+
+-   To get confidence intervals could do some bootstrapping - samples
+    some of the 30 years and calculates it and so on - Julin could help
+    with the code
+
+    -   Need a function that does the climate distance calculation
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -200,7 +205,7 @@ summary(WL2_bioclim_final)
 
 (1/P) \* SUM ((absolute value(Ai - Bi)) / range(i)) for each variable
 
--   P = number of environmental variables = 13 (without CWD)
+-   P = number of environmental variables = 14
 
 -   Ai = 30 year avg of that variable for the home site
 
