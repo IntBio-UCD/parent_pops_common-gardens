@@ -214,7 +214,7 @@ summary(davis_bioclim_final)
 
 (1/P) \* SUM ((absolute value(Ai - Bi)) / range(i)) for each variable
 
--   P = number of environmental variables = 13 (without CWD)
+-   P = number of environmental variables = 14
 
 -   Ai = 30 year avg of that variable for the home site
 
@@ -247,6 +247,73 @@ names(davis_home_climate_historic)
 davis_range_prep <- davis_climate_all %>% 
   mutate(parent.pop="Davis") %>% 
   rename_with(~str_remove(., "_Davis"), everything())
+```
+
+### Bootstrapping 
+Note: This code combines the code from chunks 14-17 below 
+```{r}
+cwd_calc <- function(data, P) { #function with all of the code necessary for calculating cwd 
+  #data = home_climates_all_ (flint and bioclim for home climates) ; P (14 if includes CWD)
+  #need to make davis_range_prep before running this function 
+  
+  range_merge <- bind_rows(data, davis_range_prep)
+  
+  davis_home_climate_ranges <- range_merge %>% #calculate ranges 
+  summarise(cwd_range=max(cwd)-min(cwd),
+            ppt_range=max(ppt)-min(ppt), 
+            tmn_range=max(tmn)-min(tmn), 
+            tmx_range=max(tmx)-min(tmx), 
+            ann_tmean_range=max(ann_tmean)-min(ann_tmean),
+            mean_diurnal_range_range=max(mean_diurnal_range)-min(mean_diurnal_range),
+            temp_seasonality_range=max(temp_seasonality)-min(temp_seasonality),
+            temp_ann_range_range=max(temp_ann_range)-min(temp_ann_range),
+            tmean_wettest_quarter_range=max(tmean_wettest_quarter)-min(tmean_wettest_quarter),
+            tmean_driest_quarter_range=max(tmean_driest_quarter)-min(tmean_driest_quarter),
+            ann_ppt_range=max(ann_ppt)-min(ann_ppt), 
+            ppt_seasonality_range=max(ppt_seasonality)-min(ppt_seasonality),
+            ppt_warmest_quarter_range=max(ppt_warmest_quarter)-min(ppt_warmest_quarter), 
+            ppt_coldest_quarter_range=max(ppt_coldest_quarter)-min(ppt_coldest_quarter))
+  
+  davis_home_climate <- bind_cols(davis_climate_all, data) #add davis climate data to home climate data 
+  
+  davis_home_climate_with_ranges <- bind_cols(davis_home_climate, davis_home_climate_ranges) #add in ranges 
+  
+  gowers_calc_each_var <- davis_home_climate_with_ranges %>% #variable by variable calc
+  mutate(cwd_gowers=abs(cwd_Davis-cwd) / cwd_range,
+         ppt_gowers=abs(ppt_Davis - ppt) / ppt_range,
+         tmn_gowers=abs(tmn_Davis - tmn) / tmn_range,
+         tmx_gowers=abs(tmx_Davis - tmx) / tmx_range,
+         ann_tmean_gowers=abs(ann_tmean_Davis - ann_tmean) / ann_tmean_range,
+         mean_diurnal_range_gowers=abs(mean_diurnal_range_Davis - mean_diurnal_range) / mean_diurnal_range_range,
+         temp_seasonality_gowers=abs(temp_seasonality_Davis - temp_seasonality) / temp_seasonality_range,
+         temp_ann_range_gowers=abs(temp_ann_range_Davis - temp_ann_range) / temp_ann_range_range,
+         tmean_wettest_quarter_gowers=abs(tmean_wettest_quarter_Davis - tmean_wettest_quarter) / tmean_wettest_quarter_range,
+         tmean_driest_quarter_gowers=abs(tmean_driest_quarter_Davis - tmean_driest_quarter) / tmean_driest_quarter_range,
+         ann_ppt_gowers=abs(ann_ppt_Davis - ann_ppt) / ann_ppt_range,
+         ppt_seasonality_gowers=abs(ppt_seasonality_Davis - ppt_seasonality) / ppt_seasonality_range,
+         ppt_warmest_quarter_gowers=abs(ppt_warmest_quarter_Davis - ppt_warmest_quarter) / ppt_warmest_quarter_range,
+         ppt_coldest_quarter_gowers=abs(ppt_coldest_quarter_Davis - ppt_coldest_quarter) / ppt_coldest_quarter_range) %>% 
+  dplyr::select(parent.pop, elevation.group, elev_m, ends_with("_gowers"))
+
+ gowers_calc_per_pop_recent <- gowers_calc_each_var %>% #final gowers calc 
+  mutate(Recent_Gowers_Dist=(1/P)*(cwd_gowers + ppt_gowers + tmn_gowers + tmx_gowers +
+                                ann_tmean_gowers + mean_diurnal_range_gowers +
+                                temp_seasonality_gowers +temp_ann_range_gowers +
+                                tmean_wettest_quarter_gowers +
+                                tmean_driest_quarter_gowers +ann_ppt_gowers +
+                                ppt_seasonality_gowers + ppt_warmest_quarter_gowers +
+                                ppt_coldest_quarter_gowers)) %>% 
+  dplyr::select(parent.pop, elevation.group, elev_m, Recent_Gowers_Dist)
+ 
+ gowers_calc_per_pop_recent %>% pull(Recent_Gowers_Dist) #make the result a vector 
+
+}
+
+#cwd_calc(home_climates_all_recent, 14) #the function works
+
+cwd.boot <- boot(data=home_climates_all_recent, cwd_calc, R=1000, P=14) #I'm not sure why this isn't working 
+
+boot.ci(cwd.boot)
 ```
 
 #### Recent
