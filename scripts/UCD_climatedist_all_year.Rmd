@@ -252,7 +252,7 @@ davis_range_prep <- davis_climate_all %>%
 ### Bootstrapping 
 Note: This code combines the code from chunks 14-17 below 
 ```{r}
-cwd_calc <- function(data, P) { #function with all of the code necessary for calculating cwd 
+gowers_calc <- function(data, P) { #function with all of the code necessary for calculating gowers distance 
   #data = home_climates_all_ (flint and bioclim for home climates) ; P (14 if includes CWD)
   #need to make davis_range_prep before running this function 
   
@@ -309,11 +309,11 @@ cwd_calc <- function(data, P) { #function with all of the code necessary for cal
 
 }
 
-#cwd_calc(home_climates_all_recent, 14) #the function works
+#gowers_calc(home_climates_all_recent, 14) #the function works
 
-cwd.boot <- boot(data=home_climates_all_recent, cwd_calc, R=1000, P=14) #I'm not sure why this isn't working 
+gowers.boot <- boot(data=home_climates_all_recent, statistic=gowers_calc, R=1000, P=14) #I'm not sure why this isn't working 
 
-boot.ci(cwd.boot)
+boot.ci(gowers.boot)
 ```
 
 #### Recent
