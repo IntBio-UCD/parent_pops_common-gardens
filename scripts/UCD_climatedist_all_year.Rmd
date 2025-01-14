@@ -257,9 +257,9 @@ gowers_calc <- function(data, indices=1:nrow(data), P) { #function with all of t
   #data = home_climates_all_ (flint and bioclim for home climates) ; P (14 if includes CWD)
   #need to make davis_range_prep before running this function 
   
-  range_merge <- bind_rows(data, davis_range_prep)
+  data <- data[indices, ]  # subset per bootstrap indices
   
-  range_merge <- range_merge[indices, ] # subset per bootstrap indices
+  range_merge <- bind_rows(data, davis_range_prep)
   
   davis_home_climate_ranges <- range_merge %>% #calculate ranges 
   summarise(cwd_range=max(cwd)-min(cwd),
