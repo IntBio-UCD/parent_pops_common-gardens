@@ -55,6 +55,7 @@ library(ggrepel)
 library(cowplot)
 library(gridExtra)
 library(naniar) #replaces values with NA
+library(boot)
 
 get_legend<-function(myggplot){
   tmp <- ggplot_gtable(ggplot_build(myggplot))
@@ -252,11 +253,13 @@ davis_range_prep <- davis_climate_all %>%
 ### Bootstrapping 
 Note: This code combines the code from chunks 14-17 below 
 ```{r}
-gowers_calc <- function(data, P) { #function with all of the code necessary for calculating gowers distance 
+gowers_calc <- function(data, indices=1:nrow(data), P) { #function with all of the code necessary for calculating gowers distance 
   #data = home_climates_all_ (flint and bioclim for home climates) ; P (14 if includes CWD)
   #need to make davis_range_prep before running this function 
   
   range_merge <- bind_rows(data, davis_range_prep)
+  
+  range_merge <- range_merge[indices, ] # subset per bootstrap indices
   
   davis_home_climate_ranges <- range_merge %>% #calculate ranges 
   summarise(cwd_range=max(cwd)-min(cwd),
@@ -305,15 +308,16 @@ gowers_calc <- function(data, P) { #function with all of the code necessary for 
                                 ppt_coldest_quarter_gowers)) %>% 
   dplyr::select(parent.pop, elevation.group, elev_m, Recent_Gowers_Dist)
  
- gowers_calc_per_pop_recent %>% pull(Recent_Gowers_Dist) #make the result a vector 
+ gowers_calc_per_pop_recent %>% pull(Recent_Gowers_Dist) %>% #make the result a vector 
+magrittr::extract(1) # get a single value   
+   
+   }
 
-}
-
-#gowers_calc(home_climates_all_recent, 14) #the function works
+#gowers_calc(home_climates_all_recent, P=14) #the function works
 
 gowers.boot <- boot(data=home_climates_all_recent, statistic=gowers_calc, R=1000, P=14) #I'm not sure why this isn't working 
 
-boot.ci(gowers.boot)
+boot.ci(gowers.boot, type="norm")
 ```
 
 #### Recent
