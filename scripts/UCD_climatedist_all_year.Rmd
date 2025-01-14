@@ -308,16 +308,17 @@ gowers_calc <- function(data, indices=1:nrow(data), P) { #function with all of t
                                 ppt_coldest_quarter_gowers)) %>% 
   dplyr::select(parent.pop, elevation.group, elev_m, Recent_Gowers_Dist)
  
- gowers_calc_per_pop_recent %>% pull(Recent_Gowers_Dist) %>% #make the result a vector 
-magrittr::extract(1) # get a single value   
-   
+ gowers_calc_per_pop_recent %>% pull(Recent_Gowers_Dist) #make the result a vector 
    }
 
 #gowers_calc(home_climates_all_recent, P=14) #the function works
 
 gowers.boot <- boot(data=home_climates_all_recent, statistic=gowers_calc, R=1000, P=14) #I'm not sure why this isn't working 
 
-boot.ci(gowers.boot, type="norm")
+boot.ci(gowers.boot, type="norm", index = 1) # for the first pop
+boot.ci(gowers.boot, type="norm", index = 2) # for the second pop
+
+
 ```
 
 #### Recent
