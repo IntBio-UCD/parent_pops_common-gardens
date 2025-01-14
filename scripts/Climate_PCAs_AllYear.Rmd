@@ -17,11 +17,11 @@ To Do:
 
 -   Save linear model results
 
--   Should use this code to check the significance of the PCA: <https://github.com/StatQuest/pca_demo/blob/master/pca_demo.R>
+-   Check the significance of the PCA
 
     -   Remember this paper: Björklund, M. 2019. Be careful with your principal components. Evolution 73: 2151--2158.
 
-# Climate PCAs for Full "Water" Year 
+# Climate PCAs for Full "Water" Year
 
 ## Load necessary libraries
 
@@ -59,6 +59,7 @@ head(flint_all_year)
 ```
 
 ### Add month numbers
+
 ```{r}
 month_nums <- tibble(month=c("jan","feb","mar","apr","may","jun","jul","aug","sep","oct","nov","dec"),
                      month_nums=c(1:12))
@@ -69,10 +70,10 @@ tail(flint_all_year_mosnums, 12)
 ```
 
 ### Water Year
+
 ```{r}
 flint_all_year_wtr_yr <- flint_all_year_mosnums %>% mutate(wtr_yr = year + month_nums %in% c(11:12))
 ```
-
 
 ## Generate bioclim for all year
 
