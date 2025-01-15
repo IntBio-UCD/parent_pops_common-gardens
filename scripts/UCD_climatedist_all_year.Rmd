@@ -251,9 +251,18 @@ davis_range_prep <- davis_climate_all %>%
 ```
 
 ### Bootstrapping 
+Load data with all 30 years
+```{r}
+recent_clim_boot <- read_csv("../output/Climate/fullyear_wtr_year_avgs_Recent.csv")
+
+historical_clim_boot <- read_csv("../output/Climate/fullyear_wtr_year_avgs_Historical.csv")
+```
+
 Note: This code combines the code from chunks 14-17 below 
 ```{r}
-gowers_calc <- function(data, indices=1:nrow(data), P) { #function with all of the code necessary for calculating gowers distance 
+pops <- recent_clim_boot %>% select(parent.pop) %>% unique()
+
+gowers_calc <- function(data, indices=1:nrow(pops), P) { #function with all of the code necessary for calculating gowers distance 
   #data = home_climates_all_ (flint and bioclim for home climates) ; P (14 if includes CWD)
   #need to make davis_range_prep before running this function 
   
@@ -311,9 +320,15 @@ gowers_calc <- function(data, indices=1:nrow(data), P) { #function with all of t
  gowers_calc_per_pop_recent %>% pull(Recent_Gowers_Dist) #make the result a vector 
    }
 
-#gowers_calc(home_climates_all_recent, P=14) #the function works
+gowers_calc(recent_clim_boot, P=14) #the function works
+gowers_calc(home_climates_all_recent, P=14) 
 
-gowers.boot <- boot(data=home_climates_all_recent, statistic=gowers_calc, R=1000, P=14) #I'm not sure why this isn't working 
+gowers.boot <- boot(data=recent_clim_boot, statistic=gowers_calc, R=1000, P=14) 
+summary(gowers.boot, index =1)
+plot(gowers.boot, index = 1)
+plot(gowers.boot, index = 2)
+plot(gowers.boot, index = 3)
+plot(gowers.boot, index = 9)
 
 boot.ci(gowers.boot, type="norm", index = 1) # for the first pop
 boot.ci(gowers.boot, type="norm", index = 2) # for the second pop
