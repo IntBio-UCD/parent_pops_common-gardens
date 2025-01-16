@@ -317,7 +317,7 @@ gowers_calc <- function(data, indices, P) { #function with all of the code neces
          ppt_seasonality_gowers=abs(ppt_seasonality_Davis - ppt_seasonality) / ppt_seasonality_range,
          ppt_warmest_quarter_gowers=abs(ppt_warmest_quarter_Davis - ppt_warmest_quarter) / ppt_warmest_quarter_range,
          ppt_coldest_quarter_gowers=abs(ppt_coldest_quarter_Davis - ppt_coldest_quarter) / ppt_coldest_quarter_range) %>% 
-  dplyr::select(parent.pop, elevation.group, elev_m, ends_with("_gowers"))
+  dplyr::select(parent.pop, elevation.group, elev_m, year, ends_with("_gowers"))
 
  gowers_calc_per_pop_recent <- gowers_calc_each_var %>% #final gowers calc 
   mutate(Recent_Gowers_Dist=(1/P)*(cwd_gowers + ppt_gowers + tmn_gowers + tmx_gowers +
@@ -327,18 +327,22 @@ gowers_calc <- function(data, indices, P) { #function with all of the code neces
                                 tmean_driest_quarter_gowers +ann_ppt_gowers +
                                 ppt_seasonality_gowers + ppt_warmest_quarter_gowers +
                                 ppt_coldest_quarter_gowers)) %>% 
-  dplyr::select(parent.pop, elevation.group, elev_m, Recent_Gowers_Dist)
+  dplyr::select(parent.pop, elevation.group, elev_m, year, Recent_Gowers_Dist)
  
- gowers_calc_per_pop_recent %>% pull(Recent_Gowers_Dist) #make the result a vector 
+ gowers_calc_per_pop_recent_pop_avgs <- gowers_calc_per_pop_recent %>%
+   group_by(parent.pop, elev_m) %>% 
+   summarise(Recent_Gowers_Dist_Avg=mean(Recent_Gowers_Dist))
+ 
+ gowers_calc_per_pop_recent_pop_avgs %>% pull(Recent_Gowers_Dist_Avg) #make the result a vector 
    }
 
-gowers_calc(recent_clim_boot_nest, indices = 1, P=14) #the function works
+#gowers_calc(recent_clim_boot_nest, P=14) #the function works
 #gowers_calc(home_climates_all_recent, P=14) #results with 30-year avgs as input 
 
 #recent_clim_boot %>% filter(parent.pop==pops[1])
 
 gowers.boot <- boot(data=recent_clim_boot_nest, statistic=gowers_calc, R=1000, P=14) #will sample each row (year) with replacement 
-gowers.boot$t[,23]
+gowers.boot$t0
 str(gowers.boot)
 #mean(gowers.boot$t[1,])
 plot(gowers.boot, index = 1)
@@ -348,6 +352,18 @@ plot(gowers.boot, index = 9)
 
 boot.ci(gowers.boot, type="norm", index = 1) # for the first pop
 boot.ci(gowers.boot, type="norm", index = 2) # for the second pop
+```
+```{r}
+pops <- recent_clim_boot %>% select(parent.pop) %>% unique()
+
+boot_gowers_avgs <- as_tibble(gowers.boot$t0) %>% rename(Recent_Gowers_Dist = value)
+
+boot_gowers_avgs_pops <- bind_cols(pops, boot_gowers_avgs) %>% arrange(Recent_Gowers_Dist)
+
+boot_gowers_avgs_pops %>% ggplot(aes(fct_reorder(parent.pop, Recent_Gowers_Dist), y=Recent_Gowers_Dist)) +
+  geom_col()
+
+
 ```
 
 #### Recent
