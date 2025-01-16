@@ -254,19 +254,22 @@ davis_range_prep <- davis_climate_all %>%
 Load data with all 30 years
 ```{r}
 recent_clim_boot <- read_csv("../output/Climate/fullyear_wtr_year_avgs_Recent.csv")
+recent_clim_boot %>% filter(parent.pop=="YO8")
+recent_clim_boot %>% filter(parent.pop==pops[23])
 
 historical_clim_boot <- read_csv("../output/Climate/fullyear_wtr_year_avgs_Historical.csv")
 ```
 
 Note: This code combines the code from chunks 14-17 below 
 ```{r}
-pops <- recent_clim_boot %>% select(parent.pop) %>% unique()
+pops <- recent_clim_boot %>% select(parent.pop) %>% unique() 
+length(pops)
 
-gowers_calc <- function(data, indices=1:nrow(pops), P) { #function with all of the code necessary for calculating gowers distance 
+gowers_calc <- function(data, indices=1:23, P) { #function with all of the code necessary for calculating gowers distance 
   #data = home_climates_all_ (flint and bioclim for home climates) ; P (14 if includes CWD)
   #need to make davis_range_prep before running this function 
   
-  data <- data[indices, ]  # subset per bootstrap indices
+  data <- data %>% filter(parent.pop==pops[indices]) # subset per bootstrap indices
   
   range_merge <- bind_rows(data, davis_range_prep)
   
@@ -317,14 +320,15 @@ gowers_calc <- function(data, indices=1:nrow(pops), P) { #function with all of t
                                 ppt_coldest_quarter_gowers)) %>% 
   dplyr::select(parent.pop, elevation.group, elev_m, Recent_Gowers_Dist)
  
- gowers_calc_per_pop_recent %>% pull(Recent_Gowers_Dist) #make the result a vector 
+ gowers_calc_per_pop_recent #%>% pull(Recent_Gowers_Dist) #make the result a vector 
    }
 
 gowers_calc(recent_clim_boot, P=14) #the function works
-gowers_calc(home_climates_all_recent, P=14) 
+gowers_calc(home_climates_all_recent, P=14) #results with 30-year avgs as input 
 
+recent_clim_boot %>% filter(parent.pop==pops[1])
 gowers.boot <- boot(data=recent_clim_boot, statistic=gowers_calc, R=1000, P=14) 
-summary(gowers.boot, index =1)
+mean(gowers.boot$t[1,])
 plot(gowers.boot, index = 1)
 plot(gowers.boot, index = 2)
 plot(gowers.boot, index = 3)
