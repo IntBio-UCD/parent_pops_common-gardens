@@ -215,6 +215,7 @@ Note: This code combines the code from chunks 14-17 below
 
 gowers_calc <- function(data, indices, P) { #function with all of the code necessary for calculating gowers distance 
   #data = _clim_boot (recent or historical) - needs to be nested by year; P = # climate variables 
+
   #need to make davis_range_prep before running this function 
   
   data <-data[indices,] # subset per bootstrap indices
@@ -278,7 +279,7 @@ gowers_calc <- function(data, indices, P) { #function with all of the code neces
                                 ppt_seasonality_gowers + ppt_warmest_quarter_gowers +
                                 ppt_coldest_quarter_gowers)) %>% 
   dplyr::select(parent.pop, elevation.group, elev_m, Gowers_Dist)
- 
+  
  gowers_calc_per_pop %>% pull(Gowers_Dist) #make the result a vector 
    }
 
@@ -300,6 +301,44 @@ for(i in 1:23) {
 boot_recent_results <- tidy(gowers.boot_recent,conf.int=TRUE,conf.method="norm") %>%  #all pops
   rename(Gowers_Dist = statistic) %>% 
   mutate(TimePd="Recent")
+```
+
+Historical
+```{r}
+gowers.boot_historical <- boot(data=historical_clim_boot_nest, statistic=gowers_calc, R=1000, P=14) #will sample each row (year) with replacement 
+gowers.boot_historical$t0 #looks correct 
+#str(gowers.boot_historical)
+
+for(i in 1:23) {
+  plot(gowers.boot_historical, index=i) #distributions look normal for the most part 
+}
+
+#boot.ci(gowers.boot_historical, type="norm", index = 1) # for the first pop
+boot_historical_results <- tidy(gowers.boot_historical,conf.int=TRUE,conf.method="norm") %>%  #all pops
+  rename(Gowers_Dist = statistic) %>% 
+  mutate(TimePd="Historical")
+```
+
+#### Plot the results 
+```{r}
+pops <- recent_clim_boot %>% select(parent.pop, elevation.group, elev_m, Lat, Long) %>% unique()
+
+boot_gowers_recent_pops <- bind_cols(pops, boot_recent_results) %>% arrange(Gowers_Dist)
+boot_gowers_historical_pops <- bind_cols(pops, boot_historical_results) %>% arrange(Gowers_Dist)
+boot_gowers_results_all <- bind_rows(boot_gowers_recent_pops, boot_gowers_historical_pops)
+
+boot_gowers_results_all %>% 
+  ggplot(aes(x=fct_reorder(parent.pop, Gowers_Dist), y=Gowers_Dist, group=parent.pop, fill=elev_m)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) +
+  geom_errorbar(aes(ymin=conf.low, ymax=conf.high),
+                width=.1, position = position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  labs(y="Gowers Envtal Distance \n from Davis", fill="Elevation (m)", x="Population") +
+  theme_classic() +
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1)) +
+  facet_wrap(~TimePd)
+ggsave("../output/Climate/full_year_Gowers_fromDavis_wtr_year.png", width = 24, height = 8, units = "in")
 ```
 
 Historical
