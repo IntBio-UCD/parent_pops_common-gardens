@@ -174,7 +174,7 @@ summary(davis_bioclim_final)
 
 (1/P) \* SUM ((absolute value(Ai - Bi)) / range(i)) for each variable
 
--   P = number of environmental variables = 14
+-   P = number of environmental variables = 15
 
 -   Ai = 30 year avg of that variable for the home site
 
@@ -208,7 +208,6 @@ historical_clim_boot_nest
 ```
 
 #### Create the gower_calc function 
-Note: This code combines the code from chunks 14-17 below 
 ```{r}
 #data <- recent_clim_boot_nest
 #P=14
@@ -235,6 +234,7 @@ gowers_calc <- function(data, indices, P) { #function with all of the code neces
   davis_home_climate_ranges <- range_merge %>% #calculate ranges
     ungroup() %>% 
   summarise(cwd_range=max(cwd)-min(cwd),
+            pck_range=max(pck)-min(pck),
             ppt_range=max(ppt)-min(ppt), 
             tmn_range=max(tmn)-min(tmn), 
             tmx_range=max(tmx)-min(tmx), 
@@ -255,6 +255,7 @@ gowers_calc <- function(data, indices, P) { #function with all of the code neces
   
   gowers_calc_each_var <- davis_home_climate_with_ranges %>% #variable by variable calc
   mutate(cwd_gowers=abs(cwd_Davis-cwd) / cwd_range,
+         pck_gowers=abs(pck_Davis-pck) / pck_range,
          ppt_gowers=abs(ppt_Davis - ppt) / ppt_range,
          tmn_gowers=abs(tmn_Davis - tmn) / tmn_range,
          tmx_gowers=abs(tmx_Davis - tmx) / tmx_range,
@@ -271,7 +272,7 @@ gowers_calc <- function(data, indices, P) { #function with all of the code neces
   dplyr::select(parent.pop, elevation.group, elev_m, ends_with("_gowers"))
 
  gowers_calc_per_pop <- gowers_calc_each_var %>% #final gowers calc 
-  mutate(Gowers_Dist=(1/P)*(cwd_gowers + ppt_gowers + tmn_gowers + tmx_gowers +
+  mutate(Gowers_Dist=(1/P)*(cwd_gowers + pck_gowers + ppt_gowers + tmn_gowers + tmx_gowers +
                                 ann_tmean_gowers + mean_diurnal_range_gowers +
                                 temp_seasonality_gowers +temp_ann_range_gowers +
                                 tmean_wettest_quarter_gowers +
@@ -283,13 +284,13 @@ gowers_calc <- function(data, indices, P) { #function with all of the code neces
  gowers_calc_per_pop %>% pull(Gowers_Dist) #make the result a vector 
    }
 
-#gowers_calc(recent_clim_boot_nest, P=14) #the function works
+#gowers_calc(recent_clim_boot_nest, P=15) #the function works
 ```
 
 #### Perform the bootstrap sampling 
 Recent
 ```{r}
-gowers.boot_recent <- boot(data=recent_clim_boot_nest, statistic=gowers_calc, R=1000, P=14) #will sample each row (year) with replacement 
+gowers.boot_recent <- boot(data=recent_clim_boot_nest, statistic=gowers_calc, R=1000, P=15) #will sample each row (year) with replacement 
 gowers.boot_recent$t0 #looks correct 
 #str(gowers.boot_recent)
 
@@ -305,45 +306,7 @@ boot_recent_results <- tidy(gowers.boot_recent,conf.int=TRUE,conf.method="norm")
 
 Historical
 ```{r}
-gowers.boot_historical <- boot(data=historical_clim_boot_nest, statistic=gowers_calc, R=1000, P=14) #will sample each row (year) with replacement 
-gowers.boot_historical$t0 #looks correct 
-#str(gowers.boot_historical)
-
-for(i in 1:23) {
-  plot(gowers.boot_historical, index=i) #distributions look normal for the most part 
-}
-
-#boot.ci(gowers.boot_historical, type="norm", index = 1) # for the first pop
-boot_historical_results <- tidy(gowers.boot_historical,conf.int=TRUE,conf.method="norm") %>%  #all pops
-  rename(Gowers_Dist = statistic) %>% 
-  mutate(TimePd="Historical")
-```
-
-#### Plot the results 
-```{r}
-pops <- recent_clim_boot %>% select(parent.pop, elevation.group, elev_m, Lat, Long) %>% unique()
-
-boot_gowers_recent_pops <- bind_cols(pops, boot_recent_results) %>% arrange(Gowers_Dist)
-boot_gowers_historical_pops <- bind_cols(pops, boot_historical_results) %>% arrange(Gowers_Dist)
-boot_gowers_results_all <- bind_rows(boot_gowers_recent_pops, boot_gowers_historical_pops)
-
-boot_gowers_results_all %>% 
-  ggplot(aes(x=fct_reorder(parent.pop, Gowers_Dist), y=Gowers_Dist, group=parent.pop, fill=elev_m)) +
-  geom_col(width = 0.7,position = position_dodge(0.75)) +
-  geom_errorbar(aes(ymin=conf.low, ymax=conf.high),
-                width=.1, position = position_dodge(0.75)) +
-  scale_y_continuous(expand = c(0, 0)) +
-  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
-  labs(y="Gowers Envtal Distance \n from Davis", fill="Elevation (m)", x="Population") +
-  theme_classic() +
-  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1)) +
-  facet_wrap(~TimePd)
-ggsave("../output/Climate/full_year_Gowers_fromDavis_wtr_year.png", width = 24, height = 8, units = "in")
-```
-
-Historical
-```{r}
-gowers.boot_historical <- boot(data=historical_clim_boot_nest, statistic=gowers_calc, R=1000, P=14) #will sample each row (year) with replacement 
+gowers.boot_historical <- boot(data=historical_clim_boot_nest, statistic=gowers_calc, R=1000, P=15) #will sample each row (year) with replacement 
 gowers.boot_historical$t0 #looks correct 
 #str(gowers.boot_historical)
 
@@ -403,6 +366,7 @@ gowers_calc_flint <- function(data, indices, P) { #function with all of the code
   davis_home_climate_ranges <- range_merge %>% #calculate ranges
     ungroup() %>% 
   summarise(cwd_range=max(cwd)-min(cwd),
+            pck_range=max(pck)-min(pck),
             ppt_range=max(ppt)-min(ppt), 
             tmn_range=max(tmn)-min(tmn), 
             tmx_range=max(tmx)-min(tmx))
@@ -413,12 +377,13 @@ gowers_calc_flint <- function(data, indices, P) { #function with all of the code
   
   gowers_calc_each_var <- davis_home_climate_with_ranges %>% #variable by variable calc
   mutate(cwd_gowers=abs(cwd_Davis-cwd) / cwd_range,
+         pck_gowers=abs(pck_Davis-pck) / pck_range,
          ppt_gowers=abs(ppt_Davis - ppt) / ppt_range,
          tmn_gowers=abs(tmn_Davis - tmn) / tmn_range,
          tmx_gowers=abs(tmx_Davis - tmx) / tmx_range)
 
  gowers_calc_per_pop <- gowers_calc_each_var %>% #final gowers calc 
-  mutate(Gowers_Dist=(1/P)*(cwd_gowers + ppt_gowers + tmn_gowers + tmx_gowers)) %>% 
+  mutate(Gowers_Dist=(1/P)*(cwd_gowers + pck_gowers + ppt_gowers + tmn_gowers + tmx_gowers)) %>% 
   dplyr::select(parent.pop, elevation.group, elev_m, Gowers_Dist)
  
  gowers_calc_per_pop %>% pull(Gowers_Dist) #make the result a vector 
@@ -496,6 +461,7 @@ names(recent_flint_dist_prep)
 recent_flint_dist <- recent_flint_dist_prep %>% 
   mutate(cwd_dist=cwd_Davis - cwd,
          ppt_dist=ppt_Davis - ppt,
+         pck_dist=pck_Davis - pck,
          tmn_dist=tmn_Davis - tmn,
          tmx_dist=tmx_Davis - tmx) %>% 
  dplyr::select(parent.pop, elevation.group, elev_m, ends_with("_dist"))
@@ -507,6 +473,7 @@ names(historic_flint_dist_prep)
 historic_flint_dist <- historic_flint_dist_prep %>% 
   mutate(cwd_dist=cwd_Davis - cwd,
          ppt_dist=ppt_Davis - ppt,
+         pck_dist=pck_Davis - pck,
          tmn_dist=tmn_Davis - tmn,
          tmx_dist=tmx_Davis - tmx) %>% 
  dplyr::select(parent.pop, elevation.group, elev_m, ends_with("_dist"))
@@ -524,6 +491,16 @@ recent_flint_dist %>%
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 #ggsave("../output/Climate/all-year_MeanCWD_DistfromDavis_RecentClim_wtr_year.png", width = 12, height = 6, units = "in")
+
+recent_flint_dist %>% 
+  ggplot(aes(x=fct_reorder(parent.pop, pck_dist), y=pck_dist, group=parent.pop, fill=elev_m)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  labs(fill="Elevation (m)",x="Population") +
+  theme_classic() +
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+#ggsave("../output/Climate/all-year_MeanPCK_DistfromDavis_RecentClim_wtr_year.png", width = 12, height = 6, units = "in")
 
 recent_flint_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, ppt_dist), y=ppt_dist, group=parent.pop, fill=elev_m)) +
@@ -568,6 +545,16 @@ historic_flint_dist %>%
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 #ggsave("../output/Climate/all-year_MeanCWD_DistfromDavis_HistoricalClim_wtr_year.png", width = 12, height = 6, units = "in")
+
+historic_flint_dist %>% 
+  ggplot(aes(x=fct_reorder(parent.pop, pck_dist), y=pck_dist, group=parent.pop, fill=elev_m)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  labs(fill="Elevation (m)",x="Population") +
+  theme_classic() +
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+#ggsave("../output/Climate/all-year_MeanPCK_DistfromDavis_HistoricalClim_wtr_year.png", width = 12, height = 6, units = "in")
 
 historic_flint_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, ppt_dist), y=ppt_dist, group=parent.pop, fill=elev_m)) +

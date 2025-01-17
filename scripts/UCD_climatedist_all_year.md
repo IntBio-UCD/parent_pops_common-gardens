@@ -345,7 +345,7 @@ summary(davis_bioclim_final)
 
 (1/P) \* SUM ((absolute value(Ai - Bi)) / range(i)) for each variable
 
--   P = number of environmental variables = 14
+-   P = number of environmental variables = 15
 
 -   Ai = 30 year avg of that variable for the home site
 
@@ -443,7 +443,6 @@ historical_clim_boot_nest
 ```
 
 #### Create the gower_calc function 
-Note: This code combines the code from chunks 14-17 below 
 
 ``` r
 #data <- recent_clim_boot_nest
@@ -451,6 +450,7 @@ Note: This code combines the code from chunks 14-17 below
 
 gowers_calc <- function(data, indices, P) { #function with all of the code necessary for calculating gowers distance 
   #data = _clim_boot (recent or historical) - needs to be nested by year; P = # climate variables 
+
   #need to make davis_range_prep before running this function 
   
   data <-data[indices,] # subset per bootstrap indices
@@ -470,6 +470,7 @@ gowers_calc <- function(data, indices, P) { #function with all of the code neces
   davis_home_climate_ranges <- range_merge %>% #calculate ranges
     ungroup() %>% 
   summarise(cwd_range=max(cwd)-min(cwd),
+            pck_range=max(pck)-min(pck),
             ppt_range=max(ppt)-min(ppt), 
             tmn_range=max(tmn)-min(tmn), 
             tmx_range=max(tmx)-min(tmx), 
@@ -490,6 +491,7 @@ gowers_calc <- function(data, indices, P) { #function with all of the code neces
   
   gowers_calc_each_var <- davis_home_climate_with_ranges %>% #variable by variable calc
   mutate(cwd_gowers=abs(cwd_Davis-cwd) / cwd_range,
+         pck_gowers=abs(pck_Davis-pck) / pck_range,
          ppt_gowers=abs(ppt_Davis - ppt) / ppt_range,
          tmn_gowers=abs(tmn_Davis - tmn) / tmn_range,
          tmx_gowers=abs(tmx_Davis - tmx) / tmx_range,
@@ -506,7 +508,7 @@ gowers_calc <- function(data, indices, P) { #function with all of the code neces
   dplyr::select(parent.pop, elevation.group, elev_m, ends_with("_gowers"))
 
  gowers_calc_per_pop <- gowers_calc_each_var %>% #final gowers calc 
-  mutate(Gowers_Dist=(1/P)*(cwd_gowers + ppt_gowers + tmn_gowers + tmx_gowers +
+  mutate(Gowers_Dist=(1/P)*(cwd_gowers + pck_gowers + ppt_gowers + tmn_gowers + tmx_gowers +
                                 ann_tmean_gowers + mean_diurnal_range_gowers +
                                 temp_seasonality_gowers +temp_ann_range_gowers +
                                 tmean_wettest_quarter_gowers +
@@ -514,26 +516,26 @@ gowers_calc <- function(data, indices, P) { #function with all of the code neces
                                 ppt_seasonality_gowers + ppt_warmest_quarter_gowers +
                                 ppt_coldest_quarter_gowers)) %>% 
   dplyr::select(parent.pop, elevation.group, elev_m, Gowers_Dist)
- 
+  
  gowers_calc_per_pop %>% pull(Gowers_Dist) #make the result a vector 
    }
 
-#gowers_calc(recent_clim_boot_nest, P=14) #the function works
+#gowers_calc(recent_clim_boot_nest, P=15) #the function works
 ```
 
 #### Perform the bootstrap sampling 
 Recent
 
 ``` r
-gowers.boot_recent <- boot(data=recent_clim_boot_nest, statistic=gowers_calc, R=1000, P=14) #will sample each row (year) with replacement 
+gowers.boot_recent <- boot(data=recent_clim_boot_nest, statistic=gowers_calc, R=1000, P=15) #will sample each row (year) with replacement 
 gowers.boot_recent$t0 #looks correct 
 ```
 
 ```
-##  [1] 0.2419658 0.2937407 0.6092606 0.6441945 0.4919482 0.3721370 0.3062365
-##  [8] 0.7785703 0.7837589 0.7870994 0.2057994 0.4502689 0.4676639 0.5306688
-## [15] 0.3271601 0.4941985 0.6000671 0.5464813 0.4352692 0.5898137 0.5573452
-## [22] 0.5832986 0.5735313
+##  [1] 0.2258347 0.2741580 0.6006224 0.6359000 0.4602717 0.3494019 0.2858453
+##  [8] 0.7914464 0.7954913 0.8012928 0.1920826 0.4284632 0.4457962 0.5146283
+## [15] 0.3053494 0.4708242 0.5828742 0.5146265 0.4101416 0.5788534 0.5396814
+## [22] 0.5787872 0.5717606
 ```
 
 ``` r
@@ -556,15 +558,15 @@ boot_recent_results <- tidy(gowers.boot_recent,conf.int=TRUE,conf.method="norm")
 Historical
 
 ``` r
-gowers.boot_historical <- boot(data=historical_clim_boot_nest, statistic=gowers_calc, R=1000, P=14) #will sample each row (year) with replacement 
+gowers.boot_historical <- boot(data=historical_clim_boot_nest, statistic=gowers_calc, R=1000, P=15) #will sample each row (year) with replacement 
 gowers.boot_historical$t0 #looks correct 
 ```
 
 ```
-##  [1] 0.2487508 0.2751724 0.6101477 0.6472534 0.4710794 0.4056978 0.3137724
-##  [8] 0.7763479 0.7796020 0.7872234 0.2389185 0.4854851 0.5099721 0.5812987
-## [15] 0.3004100 0.4807705 0.5819786 0.5107161 0.4677227 0.5972977 0.5425893
-## [22] 0.5957147 0.5845794
+##  [1] 0.2321699 0.2568375 0.6028634 0.6396478 0.4422507 0.3810693 0.2930394
+##  [8] 0.7888906 0.7910061 0.8014085 0.2229969 0.4635438 0.4869071 0.5639142
+## [15] 0.2804400 0.4585796 0.5656480 0.4829103 0.4411298 0.5830731 0.5254463
+## [22] 0.5897844 0.5812688
 ```
 
 ``` r
@@ -637,6 +639,7 @@ gowers_calc_flint <- function(data, indices, P) { #function with all of the code
   davis_home_climate_ranges <- range_merge %>% #calculate ranges
     ungroup() %>% 
   summarise(cwd_range=max(cwd)-min(cwd),
+            pck_range=max(pck)-min(pck),
             ppt_range=max(ppt)-min(ppt), 
             tmn_range=max(tmn)-min(tmn), 
             tmx_range=max(tmx)-min(tmx))
@@ -647,12 +650,13 @@ gowers_calc_flint <- function(data, indices, P) { #function with all of the code
   
   gowers_calc_each_var <- davis_home_climate_with_ranges %>% #variable by variable calc
   mutate(cwd_gowers=abs(cwd_Davis-cwd) / cwd_range,
+         pck_gowers=abs(pck_Davis-pck) / pck_range,
          ppt_gowers=abs(ppt_Davis - ppt) / ppt_range,
          tmn_gowers=abs(tmn_Davis - tmn) / tmn_range,
          tmx_gowers=abs(tmx_Davis - tmx) / tmx_range)
 
  gowers_calc_per_pop <- gowers_calc_each_var %>% #final gowers calc 
-  mutate(Gowers_Dist=(1/P)*(cwd_gowers + ppt_gowers + tmn_gowers + tmx_gowers)) %>% 
+  mutate(Gowers_Dist=(1/P)*(cwd_gowers + pck_gowers + ppt_gowers + tmn_gowers + tmx_gowers)) %>% 
   dplyr::select(parent.pop, elevation.group, elev_m, Gowers_Dist)
  
  gowers_calc_per_pop %>% pull(Gowers_Dist) #make the result a vector 
@@ -670,10 +674,10 @@ gowers.boot_flint_recent$t0 #looks correct
 ```
 
 ```
-##  [1] 0.06148443 0.15976363 0.41067815 0.48752156 0.36282004 0.14500359
-##  [7] 0.18036900 0.61030006 0.63905147 0.61570911 0.05093929 0.23738766
-## [13] 0.31419071 0.37569138 0.18386515 0.32142662 0.40555644 0.35101280
-## [19] 0.28256775 0.46414478 0.37237351 0.47178012 0.42829892
+##  [1] 0.06148443 0.15976363 0.50661555 0.59147692 0.36618020 0.15122582
+##  [7] 0.18044270 0.80464242 0.83100030 0.81570911 0.05094854 0.26202428
+## [13] 0.34212057 0.43370373 0.18386515 0.35014331 0.47399126 0.36474473
+## [19] 0.29423862 0.54922662 0.43085109 0.57490561 0.53769304
 ```
 
 ``` r
@@ -704,10 +708,10 @@ gowers.boot_flint_historical$t0 #looks correct
 ```
 
 ```
-##  [1] 0.06049956 0.12920801 0.44675482 0.52093546 0.38874458 0.16110056
-##  [7] 0.18500379 0.65230478 0.67892531 0.65678635 0.04380442 0.30265113
-## [13] 0.37098950 0.43402484 0.16185002 0.34115746 0.43356200 0.38627025
-## [19] 0.30295677 0.49521521 0.40848932 0.50532752 0.46579398
+##  [1] 0.06050692 0.12923793 0.54693151 0.62756937 0.39647425 0.16835468
+##  [7] 0.18555941 0.84520222 0.86905782 0.85678635 0.04382321 0.33392429
+## [13] 0.40378893 0.49813102 0.16202204 0.37073887 0.50096582 0.40499582
+## [19] 0.31672254 0.57200096 0.46557822 0.60667976 0.57277814
 ```
 
 ``` r
@@ -790,6 +794,7 @@ names(recent_flint_dist_prep)
 recent_flint_dist <- recent_flint_dist_prep %>% 
   mutate(cwd_dist=cwd_Davis - cwd,
          ppt_dist=ppt_Davis - ppt,
+         pck_dist=pck_Davis - pck,
          tmn_dist=tmn_Davis - tmn,
          tmx_dist=tmx_Davis - tmx) %>% 
  dplyr::select(parent.pop, elevation.group, elev_m, ends_with("_dist"))
@@ -810,6 +815,7 @@ names(historic_flint_dist_prep)
 historic_flint_dist <- historic_flint_dist_prep %>% 
   mutate(cwd_dist=cwd_Davis - cwd,
          ppt_dist=ppt_Davis - ppt,
+         pck_dist=pck_Davis - pck,
          tmn_dist=tmn_Davis - tmn,
          tmx_dist=tmx_Davis - tmx) %>% 
  dplyr::select(parent.pop, elevation.group, elev_m, ends_with("_dist"))
@@ -835,7 +841,7 @@ recent_flint_dist %>%
 #ggsave("../output/Climate/all-year_MeanCWD_DistfromDavis_RecentClim_wtr_year.png", width = 12, height = 6, units = "in")
 
 recent_flint_dist %>% 
-  ggplot(aes(x=fct_reorder(parent.pop, ppt_dist), y=ppt_dist, group=parent.pop, fill=elev_m)) +
+  ggplot(aes(x=fct_reorder(parent.pop, pck_dist), y=pck_dist, group=parent.pop, fill=elev_m)) +
   geom_col(width = 0.7,position = position_dodge(0.75)) +
   scale_y_continuous(expand = c(0, 0)) +
   scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
@@ -845,6 +851,21 @@ recent_flint_dist %>%
 ```
 
 ![](UCD_climatedist_all_year_files/figure-html/unnamed-chunk-19-2.png)<!-- -->
+
+``` r
+#ggsave("../output/Climate/all-year_MeanPCK_DistfromDavis_RecentClim_wtr_year.png", width = 12, height = 6, units = "in")
+
+recent_flint_dist %>% 
+  ggplot(aes(x=fct_reorder(parent.pop, ppt_dist), y=ppt_dist, group=parent.pop, fill=elev_m)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  labs(fill="Elevation (m)",x="Population") +
+  theme_classic() +
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+```
+
+![](UCD_climatedist_all_year_files/figure-html/unnamed-chunk-19-3.png)<!-- -->
 
 ``` r
 #ggsave("../output/Climate/all-year_MeanPPT_DistfromDavis_RecentClim_wtr_year.png", width = 12, height = 6, units = "in")
@@ -859,7 +880,7 @@ recent_flint_dist %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 ```
 
-![](UCD_climatedist_all_year_files/figure-html/unnamed-chunk-19-3.png)<!-- -->
+![](UCD_climatedist_all_year_files/figure-html/unnamed-chunk-19-4.png)<!-- -->
 
 ``` r
 #ggsave("../output/Climate/all-year_MeanTMN_DistfromDavis_RecentClim_wtr_year.png", width = 12, height = 6, units = "in")
@@ -874,7 +895,7 @@ recent_flint_dist %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 ```
 
-![](UCD_climatedist_all_year_files/figure-html/unnamed-chunk-19-4.png)<!-- -->
+![](UCD_climatedist_all_year_files/figure-html/unnamed-chunk-19-5.png)<!-- -->
 
 ``` r
 #ggsave("../output/Climate/all-year_MeanTMX_DistfromDavis_RecentClim_wtr_year.png", width = 12, height = 6, units = "in")
@@ -900,7 +921,7 @@ historic_flint_dist %>%
 #ggsave("../output/Climate/all-year_MeanCWD_DistfromDavis_HistoricalClim_wtr_year.png", width = 12, height = 6, units = "in")
 
 historic_flint_dist %>% 
-  ggplot(aes(x=fct_reorder(parent.pop, ppt_dist), y=ppt_dist, group=parent.pop, fill=elev_m)) +
+  ggplot(aes(x=fct_reorder(parent.pop, pck_dist), y=pck_dist, group=parent.pop, fill=elev_m)) +
   geom_col(width = 0.7,position = position_dodge(0.75)) +
   scale_y_continuous(expand = c(0, 0)) +
   scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
@@ -910,6 +931,21 @@ historic_flint_dist %>%
 ```
 
 ![](UCD_climatedist_all_year_files/figure-html/unnamed-chunk-20-2.png)<!-- -->
+
+``` r
+#ggsave("../output/Climate/all-year_MeanPCK_DistfromDavis_HistoricalClim_wtr_year.png", width = 12, height = 6, units = "in")
+
+historic_flint_dist %>% 
+  ggplot(aes(x=fct_reorder(parent.pop, ppt_dist), y=ppt_dist, group=parent.pop, fill=elev_m)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  labs(fill="Elevation (m)",x="Population") +
+  theme_classic() +
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+```
+
+![](UCD_climatedist_all_year_files/figure-html/unnamed-chunk-20-3.png)<!-- -->
 
 ``` r
 #ggsave("../output/Climate/all-year_MeanPPT_DistfromDavis_HistoricalClim_wtr_year.png", width = 12, height = 6, units = "in")
@@ -924,7 +960,7 @@ historic_flint_dist %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 ```
 
-![](UCD_climatedist_all_year_files/figure-html/unnamed-chunk-20-3.png)<!-- -->
+![](UCD_climatedist_all_year_files/figure-html/unnamed-chunk-20-4.png)<!-- -->
 
 ``` r
 #ggsave("../output/Climate/all-year_MeanTMN_DistfromDavis_HistoricalClim_wtr_year.png", width = 12, height = 6, units = "in")
@@ -939,7 +975,7 @@ historic_flint_dist %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 ```
 
-![](UCD_climatedist_all_year_files/figure-html/unnamed-chunk-20-4.png)<!-- -->
+![](UCD_climatedist_all_year_files/figure-html/unnamed-chunk-20-5.png)<!-- -->
 
 ``` r
 #ggsave("../output/Climate/all-year_MeanTMX_DistfromDavis_HistoricalClim_wtr_year.png", width = 12, height = 6, units = "in")
