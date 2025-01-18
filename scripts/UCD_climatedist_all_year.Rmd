@@ -339,7 +339,7 @@ recent_fig <- boot_gowers_results_all %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 
 historical_fig <- boot_gowers_results_all %>% 
-  filter(TimePd=="Recent") %>% 
+  filter(TimePd=="Historical") %>% 
   ggplot(aes(x=fct_reorder(parent.pop, Gowers_Dist), y=Gowers_Dist, group=parent.pop, fill=elev_m)) +
   geom_col(width = 0.7,position = position_dodge(0.75)) +
   geom_errorbar(aes(ymin=conf.low, ymax=conf.high),
@@ -461,7 +461,7 @@ recent_fig <- boot_flint_gowers_results_all %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 
 historical_fig <- boot_flint_gowers_results_all %>% 
-  filter(TimePd=="Recent") %>% 
+  filter(TimePd=="Historical") %>% 
   ggplot(aes(x=fct_reorder(parent.pop, Gowers_Dist), y=Gowers_Dist, group=parent.pop, fill=elev_m)) +
   geom_col(width = 0.7,position = position_dodge(0.75)) +
   geom_errorbar(aes(ymin=conf.low, ymax=conf.high),
@@ -738,7 +738,7 @@ recent_fig <- boot_bioclim_gowers_results_all %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 
 historical_fig <- boot_bioclim_gowers_results_all %>% 
-  filter(TimePd=="Recent") %>% 
+  filter(TimePd=="Historical") %>% 
   ggplot(aes(x=fct_reorder(parent.pop, Gowers_Dist), y=Gowers_Dist, group=parent.pop, fill=elev_m)) +
   geom_col(width = 0.7,position = position_dodge(0.75)) +
   geom_errorbar(aes(ymin=conf.low, ymax=conf.high),
