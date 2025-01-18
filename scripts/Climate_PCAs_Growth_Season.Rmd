@@ -58,7 +58,6 @@ month_order <- c("jan","feb","mar","apr","may","jun","jul","aug","sep","oct","no
 flint_recent_grwseason <- read_csv("../output/Climate/flint_climate_growthseason_recent.csv") %>%
   dplyr::select(month, parent.pop:tmx)
 head(flint_recent_grwseason, 12)
-flint_recent_grwseason %>% filter(parent.pop=="DPR")
 
 flint_historical_grwseason <- read_csv("../output/Climate/flint_climate_growthseason_historical.csv") %>%
   dplyr::select(month, parent.pop:tmx)
@@ -70,6 +69,27 @@ head(flint_historical_grwseason, 12)
 ```{r}
 bioclim_recent_grwseason <- read_csv("../output/Climate/BioClim_growthseason_Recent.csv")
 bioclim_historical_grwseason <- read_csv("../output/Climate/BioClim_growthseason_Historical.csv")
+```
+
+### Yearly averages for Flint
+```{r}
+flint_grwssn_recent_yravgs <- flint_recent_grwseason %>% 
+  group_by(parent.pop, elevation.group, elev_m, Lat, Long, year) %>% 
+  summarise_at(c("cwd",  "pck", "ppt", "tmn", "tmx"), c(mean), na.rm = TRUE)
+flint_grwssn_recent_yravgs
+
+flint_grwssn_historical_yravgs <- flint_historical_grwseason %>% 
+  group_by(parent.pop, elevation.group, elev_m, Lat, Long, year) %>% 
+  summarise_at(c("cwd", "pck", "ppt", "tmn", "tmx"), c(mean), na.rm = TRUE) 
+flint_grwssn_historical_yravgs
+```
+
+### Merge with bioclim
+```{r}
+bioclim_flint_yrly_avgs_recent <- full_join(flint_grwssn_recent_yravgs, bioclim_recent_grwseason) 
+write_csv(bioclim_flint_yrly_avgs_recent, "../output/Climate/growthseason_yrly_avgs_Recent.csv")
+bioclim_flint_yrly_avgs_historical <- full_join(flint_grwssn_historical_yravgs, bioclim_historical_grwseason) 
+write_csv(bioclim_flint_yrly_avgs_historical, "../output/Climate/growthseason_yrly_avgs_Historical.csv")
 ```
 
 ## All years and months included (Flint)
