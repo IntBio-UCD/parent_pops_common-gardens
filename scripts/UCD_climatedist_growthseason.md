@@ -1,7 +1,7 @@
 ---
 title: "UCD Climate Distance"
 author: "Brandie Quarles"
-date: "2025-01-07"
+date: "2025-01-17"
 output: 
   html_document: 
     keep_md: yes
@@ -9,13 +9,6 @@ editor_options:
   markdown: 
     wrap: 72
 ---
-To Do: 
-
--   To get confidence intervals could do some bootstrapping - samples
-    some of the 30 years and calculates it and so on - Julin could help
-    with the code
-
-    -   Need a function that does the climate distance calculation
 
 
 
@@ -85,10 +78,9 @@ conflicts_prefer(dplyr::filter)
 ```
 
 ``` r
-library(ggrepel)
 library(cowplot)
-library(gridExtra)
-library(naniar) #replaces values with NA
+library(boot)
+library(broom)
 
 get_legend<-function(myggplot){
   tmp <- ggplot_gtable(ggplot_build(myggplot))
@@ -99,214 +91,6 @@ get_legend<-function(myggplot){
 
 elev_three_palette <- c("#0043F0", "#C9727F", "#F5A540") #colors from Gremer et al 2019
 elev_order <- c("High", "Mid", "Low")
-```
-
-## Home Climates
-
-### Flint
-
-
-``` r
-pops_flint_avgs <- read_csv("../output/Climate/growthseason_FlintAvgs.csv")
-```
-
-```
-## Rows: 46 Columns: 10
-## ── Column specification ────────────────────────────────────────────────────────
-## Delimiter: ","
-## chr (3): parent.pop, elevation.group, TimePd
-## dbl (7): elev_m, Lat, Long, cwd, ppt, tmn, tmx
-## 
-## ℹ Use `spec()` to retrieve the full column specification for this data.
-## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
-```
-
-``` r
-head(pops_flint_avgs)
-```
-
-```
-## # A tibble: 6 × 10
-##   parent.pop elevation.group elev_m   Lat  Long   cwd   ppt   tmn   tmx TimePd
-##   <chr>      <chr>            <dbl> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl> <chr> 
-## 1 BH         Low               511.  37.4 -120.  50.6  71.0  6.19  19.6 Recent
-## 2 CC         Low               313   39.6 -121.  48.4 105.   8.56  21.0 Recent
-## 3 CP2        High             2244.  38.7 -120.  75.1  78.2  3.94  16.5 Recent
-## 4 CP3        High             2266.  38.7 -120.  57.8  75.4  3.36  15.7 Recent
-## 5 DPR        Mid              1019.  39.2 -121.  30.4  96.9  9.06  21.9 Recent
-## 6 FR         Mid               787   40.0 -121.  89.7  58.1  7.37  22.9 Recent
-```
-
-``` r
-unique(pops_flint_avgs$parent.pop) #only home pops
-```
-
-```
-##  [1] "BH"    "CC"    "CP2"   "CP3"   "DPR"   "FR"    "IH"    "LV1"   "LV3"  
-## [10] "LVTR1" "SC"    "SQ1"   "SQ2"   "SQ3"   "TM2"   "WL1"   "WL2"   "WR"   
-## [19] "WV"    "YO11"  "YO4"   "YO7"   "YO8"
-```
-
-``` r
-unique(pops_flint_avgs$TimePd) # recent and historical timeperiod 
-```
-
-```
-## [1] "Recent"     "Historical"
-```
-
-``` r
-pops_flint_recent_avgs <- pops_flint_avgs %>% filter(TimePd=="Recent")
-head(pops_flint_recent_avgs)
-```
-
-```
-## # A tibble: 6 × 10
-##   parent.pop elevation.group elev_m   Lat  Long   cwd   ppt   tmn   tmx TimePd
-##   <chr>      <chr>            <dbl> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl> <chr> 
-## 1 BH         Low               511.  37.4 -120.  50.6  71.0  6.19  19.6 Recent
-## 2 CC         Low               313   39.6 -121.  48.4 105.   8.56  21.0 Recent
-## 3 CP2        High             2244.  38.7 -120.  75.1  78.2  3.94  16.5 Recent
-## 4 CP3        High             2266.  38.7 -120.  57.8  75.4  3.36  15.7 Recent
-## 5 DPR        Mid              1019.  39.2 -121.  30.4  96.9  9.06  21.9 Recent
-## 6 FR         Mid               787   40.0 -121.  89.7  58.1  7.37  22.9 Recent
-```
-
-``` r
-pops_flint_historic_avgs <-  pops_flint_avgs %>% filter(TimePd=="Historical")
-head(pops_flint_historic_avgs)
-```
-
-```
-## # A tibble: 6 × 10
-##   parent.pop elevation.group elev_m   Lat  Long   cwd   ppt   tmn   tmx TimePd  
-##   <chr>      <chr>            <dbl> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl> <chr>   
-## 1 BH         Low               511.  37.4 -120.  50.6  66.6  5.11  18.8 Histori…
-## 2 CC         Low               313   39.6 -121.  42.5 112.   6.36  18.9 Histori…
-## 3 CP2        High             2244.  38.7 -120.  79.7  69.0  3.99  17.6 Histori…
-## 4 CP3        High             2266.  38.7 -120.  60.3  67.1  3.54  16.8 Histori…
-## 5 DPR        Mid              1019.  39.2 -121.  30.0  82.5  8.02  22.2 Histori…
-## 6 FR         Mid               787   40.0 -121.  87.8  57.8  6.15  23.0 Histori…
-```
-
-``` r
-names(pops_flint_historic_avgs)
-```
-
-```
-##  [1] "parent.pop"      "elevation.group" "elev_m"          "Lat"            
-##  [5] "Long"            "cwd"             "ppt"             "tmn"            
-##  [9] "tmx"             "TimePd"
-```
-
-### BioClim
-
-
-``` r
-pops_bioclim_avgs <-  read_csv("../output/Climate/growthseason_BioClimAvgs.csv") 
-```
-
-```
-## Rows: 46 Columns: 14
-## ── Column specification ────────────────────────────────────────────────────────
-## Delimiter: ","
-## chr  (3): parent.pop, elevation.group, TimePd
-## dbl (11): elev_m, ann_tmean, mean_diurnal_range, temp_seasonality, temp_ann_...
-## 
-## ℹ Use `spec()` to retrieve the full column specification for this data.
-## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
-```
-
-``` r
-head(pops_bioclim_avgs)
-```
-
-```
-## # A tibble: 6 × 14
-##   parent.pop elevation.group elev_m ann_tmean mean_diurnal_range
-##   <chr>      <chr>            <dbl>     <dbl>              <dbl>
-## 1 BH         Low               511.     12.9                13.4
-## 2 CC         Low               313      14.8                12.4
-## 3 CP2        High             2244.     10.2                12.6
-## 4 CP3        High             2266.      9.54               12.4
-## 5 DPR        Mid              1019.     15.5                12.9
-## 6 FR         Mid               787      15.1                15.5
-## # ℹ 9 more variables: temp_seasonality <dbl>, temp_ann_range <dbl>,
-## #   tmean_wettest_month <dbl>, tmean_driest_month <dbl>, ann_ppt <dbl>,
-## #   ppt_seasonality <dbl>, ppt_warmest_month <dbl>, ppt_coldest_month <dbl>,
-## #   TimePd <chr>
-```
-
-``` r
-unique(pops_bioclim_avgs$parent.pop) #only home pops
-```
-
-```
-##  [1] "BH"    "CC"    "CP2"   "CP3"   "DPR"   "FR"    "IH"    "LV1"   "LV3"  
-## [10] "LVTR1" "SC"    "SQ1"   "SQ2"   "SQ3"   "TM2"   "WL1"   "WL2"   "WR"   
-## [19] "WV"    "YO11"  "YO4"   "YO7"   "YO8"
-```
-
-``` r
-unique(pops_bioclim_avgs$TimePd) # recent and historical timeperiod 
-```
-
-```
-## [1] "Recent"     "Historical"
-```
-
-``` r
-pops_bioclim_recent_avgs <- pops_bioclim_avgs %>%  filter(TimePd=="Recent")
-head(pops_bioclim_recent_avgs)
-```
-
-```
-## # A tibble: 6 × 14
-##   parent.pop elevation.group elev_m ann_tmean mean_diurnal_range
-##   <chr>      <chr>            <dbl>     <dbl>              <dbl>
-## 1 BH         Low               511.     12.9                13.4
-## 2 CC         Low               313      14.8                12.4
-## 3 CP2        High             2244.     10.2                12.6
-## 4 CP3        High             2266.      9.54               12.4
-## 5 DPR        Mid              1019.     15.5                12.9
-## 6 FR         Mid               787      15.1                15.5
-## # ℹ 9 more variables: temp_seasonality <dbl>, temp_ann_range <dbl>,
-## #   tmean_wettest_month <dbl>, tmean_driest_month <dbl>, ann_ppt <dbl>,
-## #   ppt_seasonality <dbl>, ppt_warmest_month <dbl>, ppt_coldest_month <dbl>,
-## #   TimePd <chr>
-```
-
-``` r
-pops_bioclim_historical_avgs <- pops_bioclim_avgs %>% filter(TimePd=="Historical")
-head(pops_bioclim_historical_avgs)
-```
-
-```
-## # A tibble: 6 × 14
-##   parent.pop elevation.group elev_m ann_tmean mean_diurnal_range
-##   <chr>      <chr>            <dbl>     <dbl>              <dbl>
-## 1 BH         Low               511.      12.0               13.7
-## 2 CC         Low               313       12.6               12.6
-## 3 CP2        High             2244.      10.8               13.7
-## 4 CP3        High             2266.      10.2               13.3
-## 5 DPR        Mid              1019.      15.1               14.2
-## 6 FR         Mid               787       14.6               16.8
-## # ℹ 9 more variables: temp_seasonality <dbl>, temp_ann_range <dbl>,
-## #   tmean_wettest_month <dbl>, tmean_driest_month <dbl>, ann_ppt <dbl>,
-## #   ppt_seasonality <dbl>, ppt_warmest_month <dbl>, ppt_coldest_month <dbl>,
-## #   TimePd <chr>
-```
-
-``` r
-names(pops_bioclim_historical_avgs)
-```
-
-```
-##  [1] "parent.pop"          "elevation.group"     "elev_m"             
-##  [4] "ann_tmean"           "mean_diurnal_range"  "temp_seasonality"   
-##  [7] "temp_ann_range"      "tmean_wettest_month" "tmean_driest_month" 
-## [10] "ann_ppt"             "ppt_seasonality"     "ppt_warmest_month"  
-## [13] "ppt_coldest_month"   "TimePd"
 ```
 
 ## Davis Climate Data (Nov 2022-Oct 2023)
@@ -409,7 +193,7 @@ davis_climate %>%
   geom_point()
 ```
 
-![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-5-1.png)<!-- -->
+![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-3-1.png)<!-- -->
 
 ``` r
 davis_climate %>% 
@@ -417,7 +201,7 @@ davis_climate %>%
   geom_point()
 ```
 
-![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-5-2.png)<!-- -->
+![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-3-2.png)<!-- -->
 
 ``` r
 davis_climate %>% 
@@ -425,7 +209,7 @@ davis_climate %>%
   geom_point()
 ```
 
-![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-5-3.png)<!-- -->
+![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-3-3.png)<!-- -->
 
 ``` r
 davis_climate %>% 
@@ -433,7 +217,7 @@ davis_climate %>%
   geom_point()
 ```
 
-![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-5-4.png)<!-- -->
+![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-3-4.png)<!-- -->
 
 ### BioClim
 
@@ -556,835 +340,458 @@ summary(davis_bioclim_final)
 -   Range(i) = maximum - minimum of that variable in the whole data set
     (across sites)
 
-### Combine the flint and bioclim variables 
+### Prep Davis data for range calculations 
 
 
 ``` r
 davis_climate_all <- bind_cols(davis_climate_flint, davis_bioclim_final)
-dim(davis_climate_all)
-```
 
-```
-## [1]  1 15
-```
-
-``` r
-home_climates_all_recent <- left_join(pops_flint_recent_avgs, pops_bioclim_recent_avgs)
-```
-
-```
-## Joining with `by = join_by(parent.pop, elevation.group, elev_m, TimePd)`
-```
-
-``` r
-home_climates_all_historic <- left_join(pops_flint_historic_avgs, pops_bioclim_historical_avgs)
-```
-
-```
-## Joining with `by = join_by(parent.pop, elevation.group, elev_m, TimePd)`
-```
-
-``` r
-davis_home_climate_recent <- bind_cols(davis_climate_all, home_climates_all_recent)
-summary(davis_home_climate_recent)
-```
-
-```
-##    cwd_Davis       ppt_Davis       pck_Davis   tmn_Davis       tmx_Davis    
-##  Min.   :79.91   Min.   :60.34   Min.   :0   Min.   :8.487   Min.   :22.48  
-##  1st Qu.:79.91   1st Qu.:60.34   1st Qu.:0   1st Qu.:8.487   1st Qu.:22.48  
-##  Median :79.91   Median :60.34   Median :0   Median :8.487   Median :22.48  
-##  Mean   :79.91   Mean   :60.34   Mean   :0   Mean   :8.487   Mean   :22.48  
-##  3rd Qu.:79.91   3rd Qu.:60.34   3rd Qu.:0   3rd Qu.:8.487   3rd Qu.:22.48  
-##  Max.   :79.91   Max.   :60.34   Max.   :0   Max.   :8.487   Max.   :22.48  
-##  ann_tmean_Davis mean_diurnal_range_Davis temp_seasonality_Davis
-##  Min.   :15.48   Min.   :14               Min.   :6.339         
-##  1st Qu.:15.48   1st Qu.:14               1st Qu.:6.339         
-##  Median :15.48   Median :14               Median :6.339         
-##  Mean   :15.48   Mean   :14               Mean   :6.339         
-##  3rd Qu.:15.48   3rd Qu.:14               3rd Qu.:6.339         
-##  Max.   :15.48   Max.   :14               Max.   :6.339         
-##  temp_ann_range_Davis ann_ppt_Davis   ppt_seasonality_Davis
-##  Min.   :32.01        Min.   :724.1   Min.   :144.2        
-##  1st Qu.:32.01        1st Qu.:724.1   1st Qu.:144.2        
-##  Median :32.01        Median :724.1   Median :144.2        
-##  Mean   :32.01        Mean   :724.1   Mean   :144.2        
-##  3rd Qu.:32.01        3rd Qu.:724.1   3rd Qu.:144.2        
-##  Max.   :32.01        Max.   :724.1   Max.   :144.2        
-##  tmean_wettest_month_Davis tmean_driest_month_Davis ppt_warmest_month_Davis
-##  Min.   :9.305             Min.   :24.5             Min.   :0.16           
-##  1st Qu.:9.305             1st Qu.:24.5             1st Qu.:0.16           
-##  Median :9.305             Median :24.5             Median :0.16           
-##  Mean   :9.305             Mean   :24.5             Mean   :0.16           
-##  3rd Qu.:9.305             3rd Qu.:24.5             3rd Qu.:0.16           
-##  Max.   :9.305             Max.   :24.5             Max.   :0.16           
-##  ppt_coldest_month_Davis  parent.pop        elevation.group        elev_m      
-##  Min.   :258             Length:23          Length:23          Min.   : 313.0  
-##  1st Qu.:258             Class :character   Class :character   1st Qu.: 767.9  
-##  Median :258             Mode  :character   Mode  :character   Median :1934.5  
-##  Mean   :258                                                   Mean   :1649.7  
-##  3rd Qu.:258                                                   3rd Qu.:2363.4  
-##  Max.   :258                                                   Max.   :2872.3  
-##       Lat             Long             cwd             ppt        
-##  Min.   :36.56   Min.   :-123.0   Min.   :30.36   Min.   : 31.34  
-##  1st Qu.:37.81   1st Qu.:-121.3   1st Qu.:51.82   1st Qu.: 59.66  
-##  Median :38.79   Median :-120.3   Median :64.91   Median : 71.02  
-##  Mean   :38.74   Mean   :-120.4   Mean   :61.97   Mean   : 73.80  
-##  3rd Qu.:39.59   3rd Qu.:-119.7   3rd Qu.:74.44   3rd Qu.: 85.61  
-##  Max.   :40.74   Max.   :-118.8   Max.   :90.08   Max.   :131.99  
-##       tmn             tmx           TimePd            ann_tmean     
-##  Min.   :1.597   Min.   :15.14   Length:23          Min.   : 8.368  
-##  1st Qu.:2.855   1st Qu.:16.42   Class :character   1st Qu.: 9.463  
-##  Median :6.187   Median :18.80   Mode  :character   Median :12.599  
-##  Mean   :5.400   Mean   :18.60                      Mean   :11.999  
-##  3rd Qu.:7.004   3rd Qu.:20.75                      3rd Qu.:14.094  
-##  Max.   :9.063   Max.   :22.91                      Max.   :15.490  
-##  mean_diurnal_range temp_seasonality temp_ann_range  tmean_wettest_month
-##  Min.   :11.69      Min.   :5.043    Min.   :27.02   Min.   :-0.4145    
-##  1st Qu.:12.47      1st Qu.:6.071    1st Qu.:28.39   1st Qu.: 2.4417    
-##  Median :12.85      Median :6.613    Median :29.87   Median : 4.2953    
-##  Mean   :13.20      Mean   :6.481    Mean   :29.80   Mean   : 4.4726    
-##  3rd Qu.:13.65      3rd Qu.:6.871    3rd Qu.:30.63   3rd Qu.: 6.9733    
-##  Max.   :15.54      Max.   :7.475    Max.   :33.43   Max.   : 8.8605    
-##  tmean_driest_month    ann_ppt       ppt_seasonality  ppt_warmest_month
-##  Min.   :11.51      Min.   : 156.7   Min.   : 95.43   Min.   : 0.072   
-##  1st Qu.:13.94      1st Qu.: 376.0   1st Qu.:120.96   1st Qu.: 2.686   
-##  Median :16.71      Median : 469.5   Median :131.59   Median : 6.337   
-##  Mean   :17.92      Mean   : 545.6   Mean   :126.03   Mean   : 6.521   
-##  3rd Qu.:20.89      3rd Qu.: 605.4   3rd Qu.:134.21   3rd Qu.: 7.938   
-##  Max.   :25.29      Max.   :1055.9   Max.   :144.46   Max.   :15.376   
-##  ppt_coldest_month
-##  Min.   : 88.19   
-##  1st Qu.:229.40   
-##  Median :246.44   
-##  Mean   :253.39   
-##  3rd Qu.:260.53   
-##  Max.   :380.07
-```
-
-``` r
-davis_home_climate_historic <- bind_cols(davis_climate_all, home_climates_all_historic)
-summary(davis_home_climate_historic)
-```
-
-```
-##    cwd_Davis       ppt_Davis       pck_Davis   tmn_Davis       tmx_Davis    
-##  Min.   :79.91   Min.   :60.34   Min.   :0   Min.   :8.487   Min.   :22.48  
-##  1st Qu.:79.91   1st Qu.:60.34   1st Qu.:0   1st Qu.:8.487   1st Qu.:22.48  
-##  Median :79.91   Median :60.34   Median :0   Median :8.487   Median :22.48  
-##  Mean   :79.91   Mean   :60.34   Mean   :0   Mean   :8.487   Mean   :22.48  
-##  3rd Qu.:79.91   3rd Qu.:60.34   3rd Qu.:0   3rd Qu.:8.487   3rd Qu.:22.48  
-##  Max.   :79.91   Max.   :60.34   Max.   :0   Max.   :8.487   Max.   :22.48  
-##  ann_tmean_Davis mean_diurnal_range_Davis temp_seasonality_Davis
-##  Min.   :15.48   Min.   :14               Min.   :6.339         
-##  1st Qu.:15.48   1st Qu.:14               1st Qu.:6.339         
-##  Median :15.48   Median :14               Median :6.339         
-##  Mean   :15.48   Mean   :14               Mean   :6.339         
-##  3rd Qu.:15.48   3rd Qu.:14               3rd Qu.:6.339         
-##  Max.   :15.48   Max.   :14               Max.   :6.339         
-##  temp_ann_range_Davis ann_ppt_Davis   ppt_seasonality_Davis
-##  Min.   :32.01        Min.   :724.1   Min.   :144.2        
-##  1st Qu.:32.01        1st Qu.:724.1   1st Qu.:144.2        
-##  Median :32.01        Median :724.1   Median :144.2        
-##  Mean   :32.01        Mean   :724.1   Mean   :144.2        
-##  3rd Qu.:32.01        3rd Qu.:724.1   3rd Qu.:144.2        
-##  Max.   :32.01        Max.   :724.1   Max.   :144.2        
-##  tmean_wettest_month_Davis tmean_driest_month_Davis ppt_warmest_month_Davis
-##  Min.   :9.305             Min.   :24.5             Min.   :0.16           
-##  1st Qu.:9.305             1st Qu.:24.5             1st Qu.:0.16           
-##  Median :9.305             Median :24.5             Median :0.16           
-##  Mean   :9.305             Mean   :24.5             Mean   :0.16           
-##  3rd Qu.:9.305             3rd Qu.:24.5             3rd Qu.:0.16           
-##  Max.   :9.305             Max.   :24.5             Max.   :0.16           
-##  ppt_coldest_month_Davis  parent.pop        elevation.group        elev_m      
-##  Min.   :258             Length:23          Length:23          Min.   : 313.0  
-##  1st Qu.:258             Class :character   Class :character   1st Qu.: 767.9  
-##  Median :258             Mode  :character   Mode  :character   Median :1934.5  
-##  Mean   :258                                                   Mean   :1649.7  
-##  3rd Qu.:258                                                   3rd Qu.:2363.4  
-##  Max.   :258                                                   Max.   :2872.3  
-##       Lat             Long             cwd             ppt        
-##  Min.   :36.56   Min.   :-123.0   Min.   :30.02   Min.   : 42.12  
-##  1st Qu.:37.81   1st Qu.:-121.3   1st Qu.:47.63   1st Qu.: 59.91  
-##  Median :38.79   Median :-120.3   Median :60.26   Median : 69.04  
-##  Mean   :38.74   Mean   :-120.4   Mean   :59.42   Mean   : 80.06  
-##  3rd Qu.:39.59   3rd Qu.:-119.7   3rd Qu.:68.55   3rd Qu.: 93.62  
-##  Max.   :40.74   Max.   :-118.8   Max.   :87.76   Max.   :132.53  
-##       tmn              tmx           TimePd            ann_tmean     
-##  Min.   :-1.347   Min.   :13.72   Length:23          Min.   : 6.188  
-##  1st Qu.: 2.690   1st Qu.:16.30   Class :character   1st Qu.: 9.217  
-##  Median : 4.997   Median :17.69   Mode  :character   Median :11.358  
-##  Mean   : 3.991   Mean   :17.95                      Mean   :10.969  
-##  3rd Qu.: 6.027   3rd Qu.:19.43                      3rd Qu.:12.698  
-##  Max.   : 8.018   Max.   :22.97                      Max.   :15.116  
-##  mean_diurnal_range temp_seasonality temp_ann_range  tmean_wettest_month
-##  Min.   :12.05      Min.   :5.092    Min.   :26.44   Min.   :1.232      
-##  1st Qu.:13.08      1st Qu.:5.642    1st Qu.:27.55   1st Qu.:2.552      
-##  Median :13.78      Median :5.750    Median :28.70   Median :3.763      
-##  Mean   :13.96      Mean   :6.018    Mean   :29.28   Mean   :4.756      
-##  3rd Qu.:14.66      3rd Qu.:6.511    3rd Qu.:30.47   3rd Qu.:7.361      
-##  Max.   :16.81      Max.   :6.973    Max.   :34.20   Max.   :9.227      
-##  tmean_driest_month    ann_ppt       ppt_seasonality  ppt_warmest_month
-##  Min.   : 9.098     Min.   : 210.6   Min.   : 90.86   Min.   : 1.571   
-##  1st Qu.:12.945     1st Qu.: 379.7   1st Qu.:109.67   1st Qu.: 6.022   
-##  Median :15.501     Median : 500.0   Median :117.54   Median : 9.263   
-##  Mean   :16.185     Mean   : 530.7   Mean   :116.25   Mean   :10.929   
-##  3rd Qu.:19.492     3rd Qu.: 607.5   3rd Qu.:125.16   3rd Qu.:14.428   
-##  Max.   :22.786     Max.   :1007.3   Max.   :134.72   Max.   :26.356   
-##  ppt_coldest_month
-##  Min.   :116.5    
-##  1st Qu.:197.2    
-##  Median :223.2    
-##  Mean   :242.1    
-##  3rd Qu.:310.5    
-##  Max.   :341.1
-```
-
-``` r
-names(davis_home_climate_historic)
-```
-
-```
-##  [1] "cwd_Davis"                 "ppt_Davis"                
-##  [3] "pck_Davis"                 "tmn_Davis"                
-##  [5] "tmx_Davis"                 "ann_tmean_Davis"          
-##  [7] "mean_diurnal_range_Davis"  "temp_seasonality_Davis"   
-##  [9] "temp_ann_range_Davis"      "ann_ppt_Davis"            
-## [11] "ppt_seasonality_Davis"     "tmean_wettest_month_Davis"
-## [13] "tmean_driest_month_Davis"  "ppt_warmest_month_Davis"  
-## [15] "ppt_coldest_month_Davis"   "parent.pop"               
-## [17] "elevation.group"           "elev_m"                   
-## [19] "Lat"                       "Long"                     
-## [21] "cwd"                       "ppt"                      
-## [23] "tmn"                       "tmx"                      
-## [25] "TimePd"                    "ann_tmean"                
-## [27] "mean_diurnal_range"        "temp_seasonality"         
-## [29] "temp_ann_range"            "tmean_wettest_month"      
-## [31] "tmean_driest_month"        "ann_ppt"                  
-## [33] "ppt_seasonality"           "ppt_warmest_month"        
-## [35] "ppt_coldest_month"
-```
-
-### Figure out the range for each variable 
-
-
-``` r
 davis_range_prep <- davis_climate_all %>% 
   mutate(parent.pop="Davis") %>% 
   rename_with(~str_remove(., "_Davis"), everything())
 ```
 
-#### Recent
+### Bootstrapping 
+#### Load data with all 30 years
 
 ``` r
-range_merge_recent <- bind_rows(home_climates_all_recent, davis_range_prep)
-names(range_merge_recent)
+recent_clim_boot <- read_csv("../output/Climate/growthseason_yrly_avgs_Recent.csv")
 ```
 
 ```
-##  [1] "parent.pop"          "elevation.group"     "elev_m"             
-##  [4] "Lat"                 "Long"                "cwd"                
-##  [7] "ppt"                 "tmn"                 "tmx"                
-## [10] "TimePd"              "ann_tmean"           "mean_diurnal_range" 
-## [13] "temp_seasonality"    "temp_ann_range"      "tmean_wettest_month"
-## [16] "tmean_driest_month"  "ann_ppt"             "ppt_seasonality"    
-## [19] "ppt_warmest_month"   "ppt_coldest_month"   "pck"
-```
-
-``` r
-summary(range_merge_recent)
-```
-
-```
-##   parent.pop        elevation.group        elev_m            Lat       
-##  Length:24          Length:24          Min.   : 313.0   Min.   :36.56  
-##  Class :character   Class :character   1st Qu.: 767.9   1st Qu.:37.81  
-##  Mode  :character   Mode  :character   Median :1934.5   Median :38.79  
-##                                        Mean   :1649.7   Mean   :38.74  
-##                                        3rd Qu.:2363.4   3rd Qu.:39.59  
-##                                        Max.   :2872.3   Max.   :40.74  
-##                                        NA's   :1        NA's   :1      
-##       Long             cwd             ppt              tmn       
-##  Min.   :-123.0   Min.   :30.36   Min.   : 31.34   Min.   :1.597  
-##  1st Qu.:-121.3   1st Qu.:52.44   1st Qu.: 59.79   1st Qu.:3.106  
-##  Median :-120.3   Median :65.21   Median : 70.76   Median :6.255  
-##  Mean   :-120.4   Mean   :62.72   Mean   : 73.24   Mean   :5.529  
-##  3rd Qu.:-119.7   3rd Qu.:75.48   3rd Qu.: 81.93   3rd Qu.:7.182  
-##  Max.   :-118.8   Max.   :90.08   Max.   :131.99   Max.   :9.063  
-##  NA's   :1                                                        
-##       tmx           TimePd            ann_tmean      mean_diurnal_range
-##  Min.   :15.14   Length:24          Min.   : 8.368   Min.   :11.69     
-##  1st Qu.:16.42   Class :character   1st Qu.: 9.503   1st Qu.:12.49     
-##  Median :18.84   Mode  :character   Median :12.683   Median :13.00     
-##  Mean   :18.76                      Mean   :12.144   Mean   :13.23     
-##  3rd Qu.:21.05                      3rd Qu.:14.529   3rd Qu.:13.75     
-##  Max.   :22.91                      Max.   :15.490   Max.   :15.54     
-##                                                                        
-##  temp_seasonality temp_ann_range  tmean_wettest_month tmean_driest_month
-##  Min.   :5.043    Min.   :27.02   Min.   :-0.4145     Min.   :11.51     
-##  1st Qu.:6.075    1st Qu.:28.75   1st Qu.: 2.4449     1st Qu.:14.02     
-##  Median :6.592    Median :29.95   Median : 4.4936     Median :17.14     
-##  Mean   :6.475    Mean   :29.89   Mean   : 4.6739     Mean   :18.19     
-##  3rd Qu.:6.867    3rd Qu.:30.73   3rd Qu.: 7.3548     3rd Qu.:21.54     
-##  Max.   :7.475    Max.   :33.43   Max.   : 9.3050     Max.   :25.29     
-##                                                                         
-##     ann_ppt       ppt_seasonality  ppt_warmest_month ppt_coldest_month
-##  Min.   : 156.7   Min.   : 95.43   Min.   : 0.072    Min.   : 88.19   
-##  1st Qu.: 379.9   1st Qu.:123.59   1st Qu.: 1.779    1st Qu.:230.95   
-##  Median : 475.3   Median :131.79   Median : 6.063    Median :247.21   
-##  Mean   : 553.1   Mean   :126.78   Mean   : 6.256    Mean   :253.58   
-##  3rd Qu.: 676.1   3rd Qu.:134.77   3rd Qu.: 7.830    3rd Qu.:259.93   
-##  Max.   :1055.9   Max.   :144.46   Max.   :15.376    Max.   :380.07   
-##                                                                       
-##       pck    
-##  Min.   :0   
-##  1st Qu.:0   
-##  Median :0   
-##  Mean   :0   
-##  3rd Qu.:0   
-##  Max.   :0   
-##  NA's   :23
+## Rows: 690 Columns: 21
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: ","
+## chr  (2): parent.pop, elevation.group
+## dbl (19): elev_m, Lat, Long, year, cwd, pck, ppt, tmn, tmx, ann_tmean, mean_...
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
 ```
 
 ``` r
-davis_home_climate_ranges_recent <- range_merge_recent %>% 
-  summarise(cwd_range=max(cwd)-min(cwd),
-            ppt_range=max(ppt)-min(ppt), 
-            tmn_range=max(tmn)-min(tmn), 
-            tmx_range=max(tmx)-min(tmx), 
-            ann_tmean_range=max(ann_tmean)-min(ann_tmean),
-            mean_diurnal_range_range=max(mean_diurnal_range)-min(mean_diurnal_range),
-            temp_seasonality_range=max(temp_seasonality)-min(temp_seasonality),
-            temp_ann_range_range=max(temp_ann_range)-min(temp_ann_range),
-            tmean_wettest_month_range=max(tmean_wettest_month)-min(tmean_wettest_month),
-            tmean_driest_month_range=max(tmean_driest_month)-min(tmean_driest_month),
-            ann_ppt_range=max(ann_ppt)-min(ann_ppt), 
-            ppt_seasonality_range=max(ppt_seasonality)-min(ppt_seasonality),
-            ppt_warmest_month_range=max(ppt_warmest_month)-min(ppt_warmest_month), 
-            ppt_coldest_month_range=max(ppt_coldest_month)-min(ppt_coldest_month))
-davis_home_climate_ranges_recent
+recent_clim_boot_nest <- recent_clim_boot %>% nest(.by=year) #nest to prepare for bootstrapping 
+recent_clim_boot_nest
 ```
 
 ```
-## # A tibble: 1 × 14
-##   cwd_range ppt_range tmn_range tmx_range ann_tmean_range mean_diurnal_range_r…¹
-##       <dbl>     <dbl>     <dbl>     <dbl>           <dbl>                  <dbl>
-## 1      59.7      101.      7.47      7.77            7.12                   3.85
-## # ℹ abbreviated name: ¹​mean_diurnal_range_range
-## # ℹ 8 more variables: temp_seasonality_range <dbl>, temp_ann_range_range <dbl>,
-## #   tmean_wettest_month_range <dbl>, tmean_driest_month_range <dbl>,
-## #   ann_ppt_range <dbl>, ppt_seasonality_range <dbl>,
-## #   ppt_warmest_month_range <dbl>, ppt_coldest_month_range <dbl>
+## # A tibble: 30 × 2
+##     year data              
+##    <dbl> <list>            
+##  1  1994 <tibble [23 × 20]>
+##  2  1995 <tibble [23 × 20]>
+##  3  1996 <tibble [23 × 20]>
+##  4  1997 <tibble [23 × 20]>
+##  5  1998 <tibble [23 × 20]>
+##  6  1999 <tibble [23 × 20]>
+##  7  2000 <tibble [23 × 20]>
+##  8  2001 <tibble [23 × 20]>
+##  9  2002 <tibble [23 × 20]>
+## 10  2003 <tibble [23 × 20]>
+## # ℹ 20 more rows
 ```
 
 ``` r
-davis_home_climate_with_ranges_recent <- bind_cols(davis_home_climate_recent, davis_home_climate_ranges_recent)
-names(davis_home_climate_with_ranges_recent)
+historical_clim_boot <- read_csv("../output/Climate/growthseason_yrly_avgs_Historical.csv")
 ```
 
 ```
-##  [1] "cwd_Davis"                 "ppt_Davis"                
-##  [3] "pck_Davis"                 "tmn_Davis"                
-##  [5] "tmx_Davis"                 "ann_tmean_Davis"          
-##  [7] "mean_diurnal_range_Davis"  "temp_seasonality_Davis"   
-##  [9] "temp_ann_range_Davis"      "ann_ppt_Davis"            
-## [11] "ppt_seasonality_Davis"     "tmean_wettest_month_Davis"
-## [13] "tmean_driest_month_Davis"  "ppt_warmest_month_Davis"  
-## [15] "ppt_coldest_month_Davis"   "parent.pop"               
-## [17] "elevation.group"           "elev_m"                   
-## [19] "Lat"                       "Long"                     
-## [21] "cwd"                       "ppt"                      
-## [23] "tmn"                       "tmx"                      
-## [25] "TimePd"                    "ann_tmean"                
-## [27] "mean_diurnal_range"        "temp_seasonality"         
-## [29] "temp_ann_range"            "tmean_wettest_month"      
-## [31] "tmean_driest_month"        "ann_ppt"                  
-## [33] "ppt_seasonality"           "ppt_warmest_month"        
-## [35] "ppt_coldest_month"         "cwd_range"                
-## [37] "ppt_range"                 "tmn_range"                
-## [39] "tmx_range"                 "ann_tmean_range"          
-## [41] "mean_diurnal_range_range"  "temp_seasonality_range"   
-## [43] "temp_ann_range_range"      "tmean_wettest_month_range"
-## [45] "tmean_driest_month_range"  "ann_ppt_range"            
-## [47] "ppt_seasonality_range"     "ppt_warmest_month_range"  
-## [49] "ppt_coldest_month_range"
-```
-
-#### Historic
-
-``` r
-range_merge_historic <- bind_rows(home_climates_all_historic, davis_range_prep)
-names(range_merge_historic)
-```
-
-```
-##  [1] "parent.pop"          "elevation.group"     "elev_m"             
-##  [4] "Lat"                 "Long"                "cwd"                
-##  [7] "ppt"                 "tmn"                 "tmx"                
-## [10] "TimePd"              "ann_tmean"           "mean_diurnal_range" 
-## [13] "temp_seasonality"    "temp_ann_range"      "tmean_wettest_month"
-## [16] "tmean_driest_month"  "ann_ppt"             "ppt_seasonality"    
-## [19] "ppt_warmest_month"   "ppt_coldest_month"   "pck"
+## Rows: 690 Columns: 21
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: ","
+## chr  (2): parent.pop, elevation.group
+## dbl (19): elev_m, Lat, Long, year, cwd, pck, ppt, tmn, tmx, ann_tmean, mean_...
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
 ```
 
 ``` r
-summary(range_merge_historic)
+historical_clim_boot_nest <- historical_clim_boot %>% nest(.by=year)
+historical_clim_boot_nest
 ```
 
 ```
-##   parent.pop        elevation.group        elev_m            Lat       
-##  Length:24          Length:24          Min.   : 313.0   Min.   :36.56  
-##  Class :character   Class :character   1st Qu.: 767.9   1st Qu.:37.81  
-##  Mode  :character   Mode  :character   Median :1934.5   Median :38.79  
-##                                        Mean   :1649.7   Mean   :38.74  
-##                                        3rd Qu.:2363.4   3rd Qu.:39.59  
-##                                        Max.   :2872.3   Max.   :40.74  
-##                                        NA's   :1        NA's   :1      
-##       Long             cwd             ppt              tmn        
-##  Min.   :-123.0   Min.   :30.02   Min.   : 42.12   Min.   :-1.347  
-##  1st Qu.:-121.3   1st Qu.:48.90   1st Qu.: 59.70   1st Qu.: 2.818  
-##  Median :-120.3   Median :60.32   Median : 68.80   Median : 5.026  
-##  Mean   :-120.4   Mean   :60.28   Mean   : 79.24   Mean   : 4.178  
-##  3rd Qu.:-119.7   3rd Qu.:69.89   3rd Qu.: 91.46   3rd Qu.: 6.104  
-##  Max.   :-118.8   Max.   :87.76   Max.   :132.53   Max.   : 8.487  
-##  NA's   :1                                                         
-##       tmx           TimePd            ann_tmean      mean_diurnal_range
-##  Min.   :13.72   Length:24          Min.   : 6.188   Min.   :12.05     
-##  1st Qu.:16.40   Class :character   1st Qu.: 9.341   1st Qu.:13.15     
-##  Median :17.70   Mode  :character   Median :11.365   Median :13.89     
-##  Mean   :18.14                      Mean   :11.157   Mean   :13.96     
-##  3rd Qu.:20.16                      3rd Qu.:13.053   3rd Qu.:14.51     
-##  Max.   :22.97                      Max.   :15.484   Max.   :16.81     
-##                                                                        
-##  temp_seasonality temp_ann_range  tmean_wettest_month tmean_driest_month
-##  Min.   :5.092    Min.   :26.44   Min.   :1.232       Min.   : 9.098    
-##  1st Qu.:5.646    1st Qu.:27.63   1st Qu.:2.626       1st Qu.:12.989    
-##  Median :6.030    Median :28.84   Median :4.043       Median :15.600    
-##  Mean   :6.032    Mean   :29.40   Mean   :4.946       Mean   :16.531    
-##  3rd Qu.:6.501    3rd Qu.:30.97   3rd Qu.:7.919       3rd Qu.:19.771    
-##  Max.   :6.973    Max.   :34.20   Max.   :9.305       Max.   :24.495    
-##                                                                         
-##     ann_ppt       ppt_seasonality  ppt_warmest_month ppt_coldest_month
-##  Min.   : 210.6   Min.   : 90.86   Min.   : 0.160    Min.   :116.5    
-##  1st Qu.: 382.8   1st Qu.:109.68   1st Qu.: 5.310    1st Qu.:197.9    
-##  Median : 503.7   Median :119.21   Median : 8.912    Median :227.8    
-##  Mean   : 538.8   Mean   :117.41   Mean   :10.481    Mean   :242.8    
-##  3rd Qu.: 688.7   3rd Qu.:127.20   3rd Qu.:14.305    3rd Qu.:309.4    
-##  Max.   :1007.3   Max.   :144.17   Max.   :26.356    Max.   :341.1    
-##                                                                       
-##       pck    
-##  Min.   :0   
-##  1st Qu.:0   
-##  Median :0   
-##  Mean   :0   
-##  3rd Qu.:0   
-##  Max.   :0   
-##  NA's   :23
+## # A tibble: 30 × 2
+##     year data              
+##    <dbl> <list>            
+##  1  1964 <tibble [23 × 20]>
+##  2  1965 <tibble [23 × 20]>
+##  3  1966 <tibble [23 × 20]>
+##  4  1967 <tibble [23 × 20]>
+##  5  1968 <tibble [23 × 20]>
+##  6  1969 <tibble [23 × 20]>
+##  7  1970 <tibble [23 × 20]>
+##  8  1971 <tibble [23 × 20]>
+##  9  1972 <tibble [23 × 20]>
+## 10  1973 <tibble [23 × 20]>
+## # ℹ 20 more rows
 ```
+
+#### Create the gower_calc function 
 
 ``` r
-davis_home_climate_ranges_historic <- range_merge_historic %>% 
-  summarise(cwd_range=max(cwd)-min(cwd),
-            ppt_range=max(ppt)-min(ppt), 
-            tmn_range=max(tmn)-min(tmn), 
-            tmx_range=max(tmx)-min(tmx), 
-            ann_tmean_range=max(ann_tmean)-min(ann_tmean),
-            mean_diurnal_range_range=max(mean_diurnal_range)-min(mean_diurnal_range),
-            temp_seasonality_range=max(temp_seasonality)-min(temp_seasonality),
-            temp_ann_range_range=max(temp_ann_range)-min(temp_ann_range),
-            tmean_wettest_month_range=max(tmean_wettest_month)-min(tmean_wettest_month),
-            tmean_driest_month_range=max(tmean_driest_month)-min(tmean_driest_month),
-            ann_ppt_range=max(ann_ppt)-min(ann_ppt), 
-            ppt_seasonality_range=max(ppt_seasonality)-min(ppt_seasonality),
-            ppt_warmest_month_range=max(ppt_warmest_month)-min(ppt_warmest_month), 
-            ppt_coldest_month_range=max(ppt_coldest_month)-min(ppt_coldest_month))
-davis_home_climate_ranges_historic
-```
+#data <- recent_clim_boot_nest
+#P=14
 
-```
-## # A tibble: 1 × 14
-##   cwd_range ppt_range tmn_range tmx_range ann_tmean_range mean_diurnal_range_r…¹
-##       <dbl>     <dbl>     <dbl>     <dbl>           <dbl>                  <dbl>
-## 1      57.7      90.4      9.83      9.24            9.30                   4.77
-## # ℹ abbreviated name: ¹​mean_diurnal_range_range
-## # ℹ 8 more variables: temp_seasonality_range <dbl>, temp_ann_range_range <dbl>,
-## #   tmean_wettest_month_range <dbl>, tmean_driest_month_range <dbl>,
-## #   ann_ppt_range <dbl>, ppt_seasonality_range <dbl>,
-## #   ppt_warmest_month_range <dbl>, ppt_coldest_month_range <dbl>
-```
+gowers_calc <- function(data, indices, P) { #function with all of the code necessary for calculating gowers distance 
+  #data = _clim_boot (recent or historical) - needs to be nested by year; P = # climate variables 
 
-``` r
-davis_home_climate_with_ranges_historic <- bind_cols(davis_home_climate_historic, davis_home_climate_ranges_historic)
-names(davis_home_climate_with_ranges_historic)
-```
-
-```
-##  [1] "cwd_Davis"                 "ppt_Davis"                
-##  [3] "pck_Davis"                 "tmn_Davis"                
-##  [5] "tmx_Davis"                 "ann_tmean_Davis"          
-##  [7] "mean_diurnal_range_Davis"  "temp_seasonality_Davis"   
-##  [9] "temp_ann_range_Davis"      "ann_ppt_Davis"            
-## [11] "ppt_seasonality_Davis"     "tmean_wettest_month_Davis"
-## [13] "tmean_driest_month_Davis"  "ppt_warmest_month_Davis"  
-## [15] "ppt_coldest_month_Davis"   "parent.pop"               
-## [17] "elevation.group"           "elev_m"                   
-## [19] "Lat"                       "Long"                     
-## [21] "cwd"                       "ppt"                      
-## [23] "tmn"                       "tmx"                      
-## [25] "TimePd"                    "ann_tmean"                
-## [27] "mean_diurnal_range"        "temp_seasonality"         
-## [29] "temp_ann_range"            "tmean_wettest_month"      
-## [31] "tmean_driest_month"        "ann_ppt"                  
-## [33] "ppt_seasonality"           "ppt_warmest_month"        
-## [35] "ppt_coldest_month"         "cwd_range"                
-## [37] "ppt_range"                 "tmn_range"                
-## [39] "tmx_range"                 "ann_tmean_range"          
-## [41] "mean_diurnal_range_range"  "temp_seasonality_range"   
-## [43] "temp_ann_range_range"      "tmean_wettest_month_range"
-## [45] "tmean_driest_month_range"  "ann_ppt_range"            
-## [47] "ppt_seasonality_range"     "ppt_warmest_month_range"  
-## [49] "ppt_coldest_month_range"
-```
-
-### Recent Gowers Calc
-
-``` r
-gowers_calc_each_var_recent <- davis_home_climate_with_ranges_recent %>% 
-  mutate(cwd_gowers=abs(cwd_Davis-cwd) / cwd_range,
-         ppt_gowers=abs(ppt_Davis - ppt) / ppt_range,
-         tmn_gowers=abs(tmn_Davis - tmn) / tmn_range,
-         tmx_gowers=abs(tmx_Davis - tmx) / tmx_range,
-         ann_tmean_gowers=abs(ann_tmean_Davis - ann_tmean) / ann_tmean_range,
-         mean_diurnal_range_gowers=abs(mean_diurnal_range_Davis - mean_diurnal_range) / mean_diurnal_range_range,
-         temp_seasonality_gowers=abs(temp_seasonality_Davis - temp_seasonality) / temp_seasonality_range,
-         temp_ann_range_gowers=abs(temp_ann_range_Davis - temp_ann_range) / temp_ann_range_range,
-         tmean_wettest_month_gowers=abs(tmean_wettest_month_Davis - tmean_wettest_month) / tmean_wettest_month_range,
-         tmean_driest_month_gowers=abs(tmean_driest_month_Davis - tmean_driest_month) / tmean_driest_month_range,
-         ann_ppt_gowers=abs(ann_ppt_Davis - ann_ppt) / ann_ppt_range,
-         ppt_seasonality_gowers=abs(ppt_seasonality_Davis - ppt_seasonality) / ppt_seasonality_range,
-         ppt_warmest_month_gowers=abs(ppt_warmest_month_Davis - ppt_warmest_month) / ppt_warmest_month_range,
-         ppt_coldest_month_gowers=abs(ppt_coldest_month_Davis - ppt_coldest_month) / ppt_coldest_month_range) %>% 
-  dplyr::select(parent.pop, elevation.group, elev_m, ends_with("_gowers"))
-
-gowers_calc_per_pop_recent <- gowers_calc_each_var_recent %>% 
-  mutate(Recent_Gowers_Dist=(1/14)*(cwd_gowers + ppt_gowers + tmn_gowers + tmx_gowers +
-                                ann_tmean_gowers + mean_diurnal_range_gowers +
-                                temp_seasonality_gowers +temp_ann_range_gowers +
-                                tmean_wettest_month_gowers +
-                                tmean_driest_month_gowers +ann_ppt_gowers +
-                                ppt_seasonality_gowers + ppt_warmest_month_gowers +
-                                ppt_coldest_month_gowers)) %>% 
-  dplyr::select(parent.pop, elevation.group, elev_m, Recent_Gowers_Dist)
-
-gowers_calc_per_pop_recent
-```
-
-```
-## # A tibble: 23 × 4
-##    parent.pop elevation.group elev_m Recent_Gowers_Dist
-##    <chr>      <chr>            <dbl>              <dbl>
-##  1 BH         Low               511.              0.330
-##  2 CC         Low               313               0.227
-##  3 CP2        High             2244.              0.422
-##  4 CP3        High             2266.              0.484
-##  5 DPR        Mid              1019.              0.236
-##  6 FR         Mid               787               0.170
-##  7 IH         Low               454.              0.229
-##  8 LV1        High             2593.              0.478
-##  9 LV3        High             2354.              0.494
-## 10 LVTR1      High             2741.              0.488
-## # ℹ 13 more rows
-```
-
-### Historic Gowers Calc
-
-``` r
-gowers_calc_each_var_historic <- davis_home_climate_with_ranges_historic %>% 
-  mutate(cwd_gowers=abs(cwd_Davis-cwd) / cwd_range,
-         ppt_gowers=abs(ppt_Davis - ppt) / ppt_range,
-         tmn_gowers=abs(tmn_Davis - tmn) / tmn_range,
-         tmx_gowers=abs(tmx_Davis - tmx) / tmx_range,
-         ann_tmean_gowers=abs(ann_tmean_Davis - ann_tmean) / ann_tmean_range,
-         mean_diurnal_range_gowers=abs(mean_diurnal_range_Davis - mean_diurnal_range) / mean_diurnal_range_range,
-         temp_seasonality_gowers=abs(temp_seasonality_Davis - temp_seasonality) / temp_seasonality_range,
-         temp_ann_range_gowers=abs(temp_ann_range_Davis - temp_ann_range) / temp_ann_range_range,
-         tmean_wettest_month_gowers=abs(tmean_wettest_month_Davis - tmean_wettest_month) / tmean_wettest_month_range,
-         tmean_driest_month_gowers=abs(tmean_driest_month_Davis - tmean_driest_month) / tmean_driest_month_range,
-         ann_ppt_gowers=abs(ann_ppt_Davis - ann_ppt) / ann_ppt_range,
-         ppt_seasonality_gowers=abs(ppt_seasonality_Davis - ppt_seasonality) / ppt_seasonality_range,
-         ppt_warmest_month_gowers=abs(ppt_warmest_month_Davis - ppt_warmest_month) / ppt_warmest_month_range,
-         ppt_coldest_month_gowers=abs(ppt_coldest_month_Davis - ppt_coldest_month) / ppt_coldest_month_range) %>% 
-  dplyr::select(parent.pop, elevation.group, elev_m, ends_with("_gowers"))
-
+  #need to make davis_range_prep before running this function 
   
-gowers_calc_per_pop_historic <- gowers_calc_each_var_historic %>% 
-  mutate(Historic_Gowers_Dist=(1/14)*(cwd_gowers + ppt_gowers + tmn_gowers + tmx_gowers +
+  data <-data[indices,] # subset per bootstrap indices
+  
+  data <- data %>% unnest(data) #unnest so the function can access the climate data
+  
+  data_means <- data %>% 
+    group_by(parent.pop, elevation.group, elev_m, Lat, Long) %>% 
+    summarise_at(c("cwd",  "pck", "ppt", "tmn", "tmx", "ann_tmean", "mean_diurnal_range", 
+                   "temp_seasonality", "temp_ann_range",
+                 "tmean_wettest_month", "tmean_driest_month", "ann_ppt",
+                 "ppt_seasonality","ppt_warmest_month", "ppt_coldest_month"),
+               c(mean), na.rm = TRUE) #get 30 year averages for each climate variable 
+  
+  range_merge <- bind_rows(data_means, davis_range_prep)
+  
+  davis_home_climate_ranges <- range_merge %>% #calculate ranges
+    ungroup() %>% 
+  summarise(cwd_range=max(cwd)-min(cwd),
+            ppt_range=max(ppt)-min(ppt), 
+            tmn_range=max(tmn)-min(tmn), 
+            tmx_range=max(tmx)-min(tmx), 
+            ann_tmean_range=max(ann_tmean)-min(ann_tmean),
+            mean_diurnal_range_range=max(mean_diurnal_range)-min(mean_diurnal_range),
+            temp_seasonality_range=max(temp_seasonality)-min(temp_seasonality),
+            temp_ann_range_range=max(temp_ann_range)-min(temp_ann_range),
+            tmean_wettest_month_range=max(tmean_wettest_month)-min(tmean_wettest_month),
+            tmean_driest_month_range=max(tmean_driest_month)-min(tmean_driest_month),
+            ann_ppt_range=max(ann_ppt)-min(ann_ppt), 
+            ppt_seasonality_range=max(ppt_seasonality)-min(ppt_seasonality),
+            ppt_warmest_month_range=max(ppt_warmest_month)-min(ppt_warmest_month), 
+            ppt_coldest_month_range=max(ppt_coldest_month)-min(ppt_coldest_month))
+  
+  davis_home_climate <- bind_cols(davis_climate_all, data_means) #add davis climate data to home climate data 
+  
+  davis_home_climate_with_ranges <- bind_cols(davis_home_climate, davis_home_climate_ranges) #add in ranges 
+  
+  gowers_calc_each_var <- davis_home_climate_with_ranges %>% #variable by variable calc
+  mutate(cwd_gowers=abs(cwd_Davis-cwd) / cwd_range,
+         ppt_gowers=abs(ppt_Davis - ppt) / ppt_range,
+         tmn_gowers=abs(tmn_Davis - tmn) / tmn_range,
+         tmx_gowers=abs(tmx_Davis - tmx) / tmx_range,
+         ann_tmean_gowers=abs(ann_tmean_Davis - ann_tmean) / ann_tmean_range,
+         mean_diurnal_range_gowers=abs(mean_diurnal_range_Davis - mean_diurnal_range) / mean_diurnal_range_range,
+         temp_seasonality_gowers=abs(temp_seasonality_Davis - temp_seasonality) / temp_seasonality_range,
+         temp_ann_range_gowers=abs(temp_ann_range_Davis - temp_ann_range) / temp_ann_range_range,
+         tmean_wettest_month_gowers=abs(tmean_wettest_month_Davis - tmean_wettest_month) / tmean_wettest_month_range,
+         tmean_driest_month_gowers=abs(tmean_driest_month_Davis - tmean_driest_month) / tmean_driest_month_range,
+         ann_ppt_gowers=abs(ann_ppt_Davis - ann_ppt) / ann_ppt_range,
+         ppt_seasonality_gowers=abs(ppt_seasonality_Davis - ppt_seasonality) / ppt_seasonality_range,
+         ppt_warmest_month_gowers=abs(ppt_warmest_month_Davis - ppt_warmest_month) / ppt_warmest_month_range,
+         ppt_coldest_month_gowers=abs(ppt_coldest_month_Davis - ppt_coldest_month) / ppt_coldest_month_range) %>% 
+  dplyr::select(parent.pop, elevation.group, elev_m, ends_with("_gowers"))
+
+ gowers_calc_per_pop <- gowers_calc_each_var %>% #final gowers calc 
+  mutate(Gowers_Dist=(1/P)*(cwd_gowers + ppt_gowers + tmn_gowers + tmx_gowers +
                                 ann_tmean_gowers + mean_diurnal_range_gowers +
                                 temp_seasonality_gowers +temp_ann_range_gowers +
                                 tmean_wettest_month_gowers +
                                 tmean_driest_month_gowers +ann_ppt_gowers +
                                 ppt_seasonality_gowers + ppt_warmest_month_gowers +
                                 ppt_coldest_month_gowers)) %>% 
-  dplyr::select(parent.pop, elevation.group, elev_m, Historic_Gowers_Dist)
+  dplyr::select(parent.pop, elevation.group, elev_m, Gowers_Dist)
+  
+ gowers_calc_per_pop %>% pull(Gowers_Dist) #make the result a vector 
+   }
 
-gowers_calc_per_pop_historic
+#gowers_calc(recent_clim_boot_nest, P=14) #the function works
 ```
 
-```
-## # A tibble: 23 × 4
-##    parent.pop elevation.group elev_m Historic_Gowers_Dist
-##    <chr>      <chr>            <dbl>                <dbl>
-##  1 BH         Low               511.                0.336
-##  2 CC         Low               313                 0.399
-##  3 CP2        High             2244.                0.404
-##  4 CP3        High             2266.                0.467
-##  5 DPR        Mid              1019.                0.167
-##  6 FR         Mid               787                 0.209
-##  7 IH         Low               454.                0.253
-##  8 LV1        High             2593.                0.660
-##  9 LV3        High             2354.                0.672
-## 10 LVTR1      High             2741.                0.672
-## # ℹ 13 more rows
-```
-
-### Merge recent and historic
+#### Perform the bootstrap sampling 
+Recent
 
 ``` r
-gowers_all_time <- full_join(gowers_calc_per_pop_recent, gowers_calc_per_pop_historic)
+gowers.boot_recent <- boot(data=recent_clim_boot_nest, statistic=gowers_calc, R=1000, P=14) #will sample each row (year) with replacement 
+gowers.boot_recent$t0 #looks correct 
 ```
 
 ```
-## Joining with `by = join_by(parent.pop, elevation.group, elev_m)`
+##  [1] 0.3303202 0.2274032 0.4220350 0.4838182 0.2356113 0.1701746 0.2289458
+##  [8] 0.4780364 0.4943449 0.4878916 0.4023189 0.3170032 0.3083460 0.3827274
+## [15] 0.5458020 0.1931940 0.3331949 0.2070007 0.2198339 0.6131117 0.3366119
+## [22] 0.4596776 0.4667175
 ```
 
 ``` r
-gowers_all_time
+#str(gowers.boot_recent)
+
+for(i in 1:23) {
+  plot(gowers.boot_recent, index=i) #distributions look normal for the most part 
+}
+```
+
+![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-11-1.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-11-2.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-11-3.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-11-4.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-11-5.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-11-6.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-11-7.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-11-8.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-11-9.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-11-10.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-11-11.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-11-12.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-11-13.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-11-14.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-11-15.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-11-16.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-11-17.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-11-18.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-11-19.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-11-20.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-11-21.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-11-22.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-11-23.png)<!-- -->
+
+``` r
+#boot.ci(gowers.boot_recent, type="norm", index = 1) # for the first pop
+boot_recent_results <- tidy(gowers.boot_recent,conf.int=TRUE,conf.method="norm") %>%  #all pops
+  rename(Gowers_Dist = statistic) %>% 
+  mutate(TimePd="Recent")
+```
+
+Historical
+
+``` r
+gowers.boot_historical <- boot(data=historical_clim_boot_nest, statistic=gowers_calc, R=1000, P=14) #will sample each row (year) with replacement 
+gowers.boot_historical$t0 #looks correct 
 ```
 
 ```
-## # A tibble: 23 × 5
-##    parent.pop elevation.group elev_m Recent_Gowers_Dist Historic_Gowers_Dist
-##    <chr>      <chr>            <dbl>              <dbl>                <dbl>
-##  1 BH         Low               511.              0.330                0.336
-##  2 CC         Low               313               0.227                0.399
-##  3 CP2        High             2244.              0.422                0.404
-##  4 CP3        High             2266.              0.484                0.467
-##  5 DPR        Mid              1019.              0.236                0.167
-##  6 FR         Mid               787               0.170                0.209
-##  7 IH         Low               454.              0.229                0.253
-##  8 LV1        High             2593.              0.478                0.660
-##  9 LV3        High             2354.              0.494                0.672
-## 10 LVTR1      High             2741.              0.488                0.672
-## # ℹ 13 more rows
+##  [1] 0.3355416 0.3989703 0.4044148 0.4669527 0.1666015 0.2094856 0.2526664
+##  [8] 0.6598801 0.6724588 0.6716469 0.3614024 0.3434374 0.3540532 0.4572285
+## [15] 0.4695885 0.2417902 0.3710235 0.1763864 0.2514235 0.6186303 0.3662882
+## [22] 0.4657659 0.4846714
 ```
 
 ``` r
-names(gowers_all_time)
+#str(gowers.boot_historical)
+
+for(i in 1:23) {
+  plot(gowers.boot_historical, index=i) #distributions look normal for the most part 
+}
 ```
 
-```
-## [1] "parent.pop"           "elevation.group"      "elev_m"              
-## [4] "Recent_Gowers_Dist"   "Historic_Gowers_Dist"
-```
-
-``` r
-write_csv(gowers_all_time, "../output/Climate/growthseason_GowersEnvtalDist_UCD.csv")
-```
-
-Figures
+![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-12-1.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-12-2.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-12-3.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-12-4.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-12-5.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-12-6.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-12-7.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-12-8.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-12-9.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-12-10.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-12-11.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-12-12.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-12-13.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-12-14.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-12-15.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-12-16.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-12-17.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-12-18.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-12-19.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-12-20.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-12-21.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-12-22.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-12-23.png)<!-- -->
 
 ``` r
-gowers_rec_fig <- gowers_all_time %>% 
-  ggplot(aes(x=fct_reorder(parent.pop, Recent_Gowers_Dist), y=Recent_Gowers_Dist, group=parent.pop, fill=elev_m)) +
+#boot.ci(gowers.boot_historical, type="norm", index = 1) # for the first pop
+boot_historical_results <- tidy(gowers.boot_historical,conf.int=TRUE,conf.method="norm") %>%  #all pops
+  rename(Gowers_Dist = statistic) %>% 
+  mutate(TimePd="Historical")
+```
+
+#### Plot the results 
+
+``` r
+pops <- recent_clim_boot %>% select(parent.pop, elevation.group, elev_m, Lat, Long) %>% unique()
+
+boot_gowers_recent_pops <- bind_cols(pops, boot_recent_results) %>% arrange(Gowers_Dist)
+boot_gowers_historical_pops <- bind_cols(pops, boot_historical_results) %>% arrange(Gowers_Dist)
+boot_gowers_results_all <- bind_rows(boot_gowers_recent_pops, boot_gowers_historical_pops)
+write_csv(boot_gowers_results_all, "../output/Climate/growthseason_GowersEnvtalDist_UCD.csv")
+
+recent_fig <- boot_gowers_results_all %>% 
+  filter(TimePd=="Recent") %>% 
+  ggplot(aes(x=fct_reorder(parent.pop, Gowers_Dist), y=Gowers_Dist, group=parent.pop, fill=elev_m)) +
   geom_col(width = 0.7,position = position_dodge(0.75)) +
+  geom_errorbar(aes(ymin=conf.low, ymax=conf.high),
+                width=.1, position = position_dodge(0.75)) +
   scale_y_continuous(expand = c(0, 0)) +
   scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
-  labs(y="Gowers Envtal Distance \n from Davis", fill="Elevation (m)", x="Population", title="Recent Climate") +
+  labs(y="Gowers Envtal Distance \n from WL2", fill="Elevation (m)", x="Population", title = "Recent Climate") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/Climate/growthseason_Gowers_Recent_fromDavis.png", width = 12, height = 6, units = "in")
 
-gowers_hist_fig <- gowers_all_time %>% 
-  ggplot(aes(x=fct_reorder(parent.pop, Historic_Gowers_Dist), y=Historic_Gowers_Dist, group=parent.pop, fill=elev_m)) +
+historical_fig <- boot_gowers_results_all %>% 
+  filter(TimePd=="Historical") %>% 
+  ggplot(aes(x=fct_reorder(parent.pop, Gowers_Dist), y=Gowers_Dist, group=parent.pop, fill=elev_m)) +
   geom_col(width = 0.7,position = position_dodge(0.75)) +
+  geom_errorbar(aes(ymin=conf.low, ymax=conf.high),
+                width=.1, position = position_dodge(0.75)) +
   scale_y_continuous(expand = c(0, 0)) +
   scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
-  labs(fill="Elevation (m)",x="Population", title="Historic Climate", y="Gowers Envtal Distance \n from Davis") +
+  labs(y="Gowers Envtal Distance \n from WL2", fill="Elevation (m)", x="Population", title="Historic Climate") +
   theme_classic() +
-  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/Climate/growthseason_Gowers_Historic_fromDavis.png", width = 12, height = 6, units = "in")
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1)) 
+  
 
-#should combine these into one figure and save that instead
-legend <- get_legend(gowers_rec_fig)
-gowers_hist_fig <- gowers_hist_fig + theme(legend.position="none")
-gowers_rec_fig <- gowers_rec_fig + theme(legend.position="none")
-grid.arrange(gowers_hist_fig, gowers_rec_fig, legend, ncol=3, widths=c(3.12, 3.12, 1.09))
+plot_grid(historical_fig, recent_fig)
 ```
 
-![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-17-1.png)<!-- -->
+![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-13-1.png)<!-- -->
 
 ``` r
- #2000 x 850
+ggsave("../output/Climate/growthseason_Gowers_fromDavis.png", width = 24, height = 8, units = "in")
 ```
-
 
 ## Flint Climate Distance
 
 ### Gowers
 
-#### Recent
-
 ``` r
-gowers_calc_each_var_recent_flint <- davis_home_climate_with_ranges_recent %>% 
+#need to modify the gowers_calc function to only include Flint variables 
+gowers_calc_flint <- function(data, indices, P) { #function with all of the code necessary for calculating gowers distance 
+  #data = _clim_boot (recent or historical) - needs to be nested by year; P = # climate variables 
+  #need to make davis_range_prep before running this function 
+  
+  data <-data[indices,] # subset per bootstrap indices
+  
+  data <- data %>% unnest(data) #unnest so the function can access the climate data
+  
+  data_means <- data %>% 
+    group_by(parent.pop, elevation.group, elev_m, Lat, Long) %>% 
+    summarise_at(c("cwd",  "pck", "ppt", "tmn", "tmx"),
+               c(mean), na.rm = TRUE) #get 30 year averages for each climate variable 
+  
+  range_merge <- bind_rows(data_means, davis_range_prep)
+  
+  davis_home_climate_ranges <- range_merge %>% #calculate ranges
+    ungroup() %>% 
+  summarise(cwd_range=max(cwd)-min(cwd),
+            ppt_range=max(ppt)-min(ppt), 
+            tmn_range=max(tmn)-min(tmn), 
+            tmx_range=max(tmx)-min(tmx))
+  
+  davis_home_climate <- bind_cols(davis_climate_all, data_means) #add davis climate data to home climate data 
+  
+  davis_home_climate_with_ranges <- bind_cols(davis_home_climate, davis_home_climate_ranges) #add in ranges 
+  
+  gowers_calc_each_var <- davis_home_climate_with_ranges %>% #variable by variable calc
   mutate(cwd_gowers=abs(cwd_Davis-cwd) / cwd_range,
          ppt_gowers=abs(ppt_Davis - ppt) / ppt_range,
          tmn_gowers=abs(tmn_Davis - tmn) / tmn_range,
-         tmx_gowers=abs(tmx_Davis - tmx) / tmx_range) %>% 
-  dplyr::select(parent.pop, elevation.group, elev_m, ends_with("_gowers"))
-  
-gowers_calc_per_pop_recent_flint <- gowers_calc_each_var_recent_flint %>% 
-  mutate(Recent_Gowers_Dist=(1/4)*(cwd_gowers + ppt_gowers + tmn_gowers + tmx_gowers)) %>% 
-  dplyr::select(parent.pop, elevation.group, elev_m, Recent_Gowers_Dist)
+         tmx_gowers=abs(tmx_Davis - tmx) / tmx_range)
 
-gowers_calc_per_pop_recent_flint
+ gowers_calc_per_pop <- gowers_calc_each_var %>% #final gowers calc 
+  mutate(Gowers_Dist=(1/P)*(cwd_gowers + ppt_gowers + tmn_gowers + tmx_gowers)) %>% 
+  dplyr::select(parent.pop, elevation.group, elev_m, Gowers_Dist)
+ 
+ gowers_calc_per_pop %>% pull(Gowers_Dist) #make the result a vector 
+   }
+```
+
+#### Recent
+
+
+``` r
+recent_clim_boot_flint_nest <- recent_clim_boot %>% select(parent.pop:tmx) %>% nest(.by=year)
+
+gowers.boot_flint_recent <- boot(data=recent_clim_boot_flint_nest, statistic=gowers_calc_flint, R=1000, P=4) #will sample each row (year) with replacement 
+gowers.boot_flint_recent$t0 #looks correct 
 ```
 
 ```
-## # A tibble: 23 × 4
-##    parent.pop elevation.group elev_m Recent_Gowers_Dist
-##    <chr>      <chr>            <dbl>              <dbl>
-##  1 BH         Low               511.             0.318 
-##  2 CC         Low               313              0.293 
-##  3 CP2        High             2244.             0.408 
-##  4 CP3        High             2266.             0.519 
-##  5 DPR        Mid              1019.             0.336 
-##  6 FR         Mid               787              0.0974
-##  7 IH         Low               454.             0.319 
-##  8 LV1        High             2593.             0.494 
-##  9 LV3        High             2354.             0.543 
-## 10 LVTR1      High             2741.             0.482 
-## # ℹ 13 more rows
+##  [1] 0.31824913 0.29331510 0.40839550 0.51912259 0.33581834 0.09738751
+##  [7] 0.31851299 0.49395909 0.54274463 0.48211356 0.42839910 0.25758761
+## [13] 0.24239501 0.33255736 0.54633707 0.18522542 0.32604282 0.23955850
+## [19] 0.17070224 0.52678833 0.30489544 0.52376981 0.49531896
+```
+
+``` r
+#str(gowers.boot_flint_recent)
+
+for(i in 1:23) {
+  plot(gowers.boot_flint_recent, index=i) #distributions look normal for the most part 
+}
+```
+
+![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-15-1.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-15-2.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-15-3.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-15-4.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-15-5.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-15-6.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-15-7.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-15-8.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-15-9.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-15-10.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-15-11.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-15-12.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-15-13.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-15-14.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-15-15.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-15-16.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-15-17.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-15-18.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-15-19.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-15-20.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-15-21.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-15-22.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-15-23.png)<!-- -->
+
+``` r
+#boot.ci(gowers.boot_flint_recent, type="norm", index = 1) # for the first pop
+boot_flint_recent_results <- tidy(gowers.boot_flint_recent,conf.int=TRUE,conf.method="norm") %>%  #all pops
+  rename(Gowers_Dist = statistic) %>% 
+  mutate(TimePd="Recent")
 ```
 
 #### Historic
 
-``` r
-gowers_calc_each_var_historic_flint <- davis_home_climate_with_ranges_historic %>% 
-  mutate(cwd_gowers=abs(cwd_Davis-cwd) / cwd_range,
-         ppt_gowers=abs(ppt_Davis - ppt) / ppt_range,
-         tmn_gowers=abs(tmn_Davis - tmn) / tmn_range,
-         tmx_gowers=abs(tmx_Davis - tmx) / tmx_range) %>% 
-  dplyr::select(parent.pop, elevation.group, elev_m, ends_with("_gowers"))
 
+``` r
+historical_clim_boot_flint_nest <- historical_clim_boot %>% select(parent.pop:tmx) %>% nest(.by=year)
+
+gowers.boot_flint_historical <- boot(data=historical_clim_boot_flint_nest, statistic=gowers_calc_flint, R=1000, P=4) #will sample each row (year) with replacement 
+gowers.boot_flint_historical$t0 #looks correct 
+```
+
+```
+##  [1] 0.3289436 0.4559552 0.2702196 0.3827481 0.2964513 0.1134720 0.3499696
+##  [8] 0.7676875 0.8136684 0.7711139 0.3995840 0.2625098 0.3061110 0.4124108
+## [15] 0.5638474 0.2384483 0.3944671 0.2498461 0.1616857 0.5225986 0.3555591
+## [22] 0.3819858 0.3869474
+```
+
+``` r
+#str(gowers.boot_flint_historical)
+
+for(i in 1:23) {
+  plot(gowers.boot_flint_historical, index=i) #distributions look normal for the most part 
+}
+```
+
+![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-16-1.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-16-2.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-16-3.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-16-4.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-16-5.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-16-6.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-16-7.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-16-8.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-16-9.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-16-10.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-16-11.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-16-12.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-16-13.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-16-14.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-16-15.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-16-16.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-16-17.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-16-18.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-16-19.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-16-20.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-16-21.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-16-22.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-16-23.png)<!-- -->
+
+``` r
+#boot.ci(gowers.boot_flint_historical, type="norm", index = 1) # for the first pop
+boot_flint_historical_results <- tidy(gowers.boot_flint_historical,conf.int=TRUE,conf.method="norm") %>%  #all pops
+  rename(Gowers_Dist = statistic) %>% 
+  mutate(TimePd="Historical")
+```
+
+#### Plot the results 
+
+
+``` r
+boot_flint_gowers_recent_pops <- bind_cols(pops, boot_flint_recent_results) %>% arrange(Gowers_Dist)
+boot_flint_gowers_historical_pops <- bind_cols(pops, boot_flint_historical_results) %>% arrange(Gowers_Dist)
+boot_flint_gowers_results_all <- bind_rows(boot_flint_gowers_recent_pops, boot_flint_gowers_historical_pops)
+write_csv(boot_flint_gowers_results_all, "../output/Climate/growthseason_GowersEnvtalDist_UCDFlint.csv")
+
+recent_fig <- boot_flint_gowers_results_all %>% 
+  filter(TimePd=="Recent") %>% 
+  ggplot(aes(x=fct_reorder(parent.pop, Gowers_Dist), y=Gowers_Dist, group=parent.pop, fill=elev_m)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) +
+  geom_errorbar(aes(ymin=conf.low, ymax=conf.high),
+                width=.1, position = position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  labs(y="Gowers Envtal Distance \n from WL2", fill="Elevation (m)", x="Population", title = "Recent Climate") +
+  theme_classic() +
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+
+historical_fig <- boot_flint_gowers_results_all %>% 
+  filter(TimePd=="Historical") %>% 
+  ggplot(aes(x=fct_reorder(parent.pop, Gowers_Dist), y=Gowers_Dist, group=parent.pop, fill=elev_m)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) +
+  geom_errorbar(aes(ymin=conf.low, ymax=conf.high),
+                width=.1, position = position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  labs(y="Gowers Envtal Distance \n from WL2", fill="Elevation (m)", x="Population", title="Historic Climate") +
+  theme_classic() +
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1)) 
   
-gowers_calc_per_pop_historic_flint <- gowers_calc_each_var_historic_flint %>% 
-  mutate(Historic_Gowers_Dist=(1/4)*(cwd_gowers + ppt_gowers + tmn_gowers + tmx_gowers)) %>% 
-  dplyr::select(parent.pop, elevation.group, elev_m, Historic_Gowers_Dist)
 
-gowers_calc_per_pop_historic_flint
+plot_grid(historical_fig, recent_fig)
 ```
 
-```
-## # A tibble: 23 × 4
-##    parent.pop elevation.group elev_m Historic_Gowers_Dist
-##    <chr>      <chr>            <dbl>                <dbl>
-##  1 BH         Low               511.                0.329
-##  2 CC         Low               313                 0.456
-##  3 CP2        High             2244.                0.270
-##  4 CP3        High             2266.                0.383
-##  5 DPR        Mid              1019.                0.296
-##  6 FR         Mid               787                 0.113
-##  7 IH         Low               454.                0.350
-##  8 LV1        High             2593.                0.768
-##  9 LV3        High             2354.                0.814
-## 10 LVTR1      High             2741.                0.771
-## # ℹ 13 more rows
-```
-
-#### Merge recent and historic
+![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-17-1.png)<!-- -->
 
 ``` r
-gowers_all_time_flint <- full_join(gowers_calc_per_pop_recent_flint, gowers_calc_per_pop_historic_flint)
-```
-
-```
-## Joining with `by = join_by(parent.pop, elevation.group, elev_m)`
-```
-
-``` r
-gowers_all_time_flint
-```
-
-```
-## # A tibble: 23 × 5
-##    parent.pop elevation.group elev_m Recent_Gowers_Dist Historic_Gowers_Dist
-##    <chr>      <chr>            <dbl>              <dbl>                <dbl>
-##  1 BH         Low               511.             0.318                 0.329
-##  2 CC         Low               313              0.293                 0.456
-##  3 CP2        High             2244.             0.408                 0.270
-##  4 CP3        High             2266.             0.519                 0.383
-##  5 DPR        Mid              1019.             0.336                 0.296
-##  6 FR         Mid               787              0.0974                0.113
-##  7 IH         Low               454.             0.319                 0.350
-##  8 LV1        High             2593.             0.494                 0.768
-##  9 LV3        High             2354.             0.543                 0.814
-## 10 LVTR1      High             2741.             0.482                 0.771
-## # ℹ 13 more rows
-```
-
-``` r
-names(gowers_all_time_flint)
-```
-
-```
-## [1] "parent.pop"           "elevation.group"      "elev_m"              
-## [4] "Recent_Gowers_Dist"   "Historic_Gowers_Dist"
-```
-
-``` r
-write_csv(gowers_all_time_flint, "../output/Climate/growthseason_GowersEnvtalDist_UCDFlint.csv")
-```
-
-Figures
-
-``` r
-gowers_rec_fig_flint <- gowers_all_time_flint %>% 
-  ggplot(aes(x=fct_reorder(parent.pop, Recent_Gowers_Dist), y=Recent_Gowers_Dist, group=parent.pop, fill=elev_m)) +
-  geom_col(width = 0.7,position = position_dodge(0.75)) +
-  scale_y_continuous(expand = c(0, 0)) +
-  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
-  labs(y="Gowers Envtal Distance \n from Davis", fill="Elevation (m)", x="Population", title="Recent Climate") +
-  theme_classic() +
-  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/Climate/growthseason_Gowers_RecentFlint_fromDavis.png", width = 12, height = 6, units = "in")
-
-gowers_hist_fig_flint <- gowers_all_time_flint %>% 
-  ggplot(aes(x=fct_reorder(parent.pop, Historic_Gowers_Dist), y=Historic_Gowers_Dist, group=parent.pop, fill=elev_m)) +
-  geom_col(width = 0.7,position = position_dodge(0.75)) +
-  scale_y_continuous(expand = c(0, 0)) +
-  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
-  labs(fill="Elevation (m)",x="Population", title="Historic Climate", y="Gowers Envtal Distance \n from Davis") +
-  theme_classic() +
-  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/Climate/growthseason_Gowers_HistoricFlint_fromDavis.png", width = 12, height = 6, units = "in")
-
-#should combine these into one figure and save that instead
-legend <- get_legend(gowers_rec_fig_flint)
-gowers_hist_fig_flint <- gowers_hist_fig_flint + theme(legend.position="none")
-gowers_rec_fig_flint <- gowers_rec_fig_flint + theme(legend.position="none")
-grid.arrange(gowers_hist_fig_flint, gowers_rec_fig_flint, legend, ncol=3, widths=c(3.12, 3.12, 1.09))
-```
-
-![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-21-1.png)<!-- -->
-
-``` r
- #2000 x 850
+ggsave("../output/Climate/growthseason_Gowers_Flint_fromDavis.png", width = 24, height = 8, units = "in")
 ```
 
 ### Subtraction
 
 
 ``` r
+pops_flint_avgs <- read_csv("../output/Climate/growthseason_FlintAvgs.csv")
+```
+
+```
+## Rows: 46 Columns: 10
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: ","
+## chr (3): parent.pop, elevation.group, TimePd
+## dbl (7): elev_m, Lat, Long, cwd, ppt, tmn, tmx
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+```
+
+``` r
+pops_flint_recent_avgs <- pops_flint_avgs %>% filter(TimePd=="Recent")
+
 recent_flint_dist_prep <- bind_cols(davis_climate_flint, pops_flint_recent_avgs)
 names(recent_flint_dist_prep)
 ```
@@ -1404,6 +811,7 @@ recent_flint_dist <- recent_flint_dist_prep %>%
          tmx_dist=tmx_Davis - tmx) %>% 
  dplyr::select(parent.pop, elevation.group, elev_m, ends_with("_dist"))
 
+pops_flint_historic_avgs <-  pops_flint_avgs %>% filter(TimePd=="Historical")
 historic_flint_dist_prep <- bind_cols(davis_climate_flint, pops_flint_historic_avgs)
 names(historic_flint_dist_prep)
 ```
@@ -1438,10 +846,10 @@ recent_flint_dist %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 ```
 
-![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-23-1.png)<!-- -->
+![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-19-1.png)<!-- -->
 
 ``` r
-ggsave("../output/Climate/grwssn_MeanCWD_DistfromDavis_RecentClim.png", width = 12, height = 6, units = "in")
+#ggsave("../output/Climate/grwssn_MeanCWD_DistfromDavis_RecentClim.png", width = 12, height = 6, units = "in")
 
 recent_flint_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, ppt_dist), y=ppt_dist, group=parent.pop, fill=elev_m)) +
@@ -1453,10 +861,10 @@ recent_flint_dist %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 ```
 
-![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-23-2.png)<!-- -->
+![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-19-2.png)<!-- -->
 
 ``` r
-ggsave("../output/Climate/grwssn_MeanPPT_DistfromDavis_RecentClim.png", width = 12, height = 6, units = "in")
+#ggsave("../output/Climate/grwssn_MeanPPT_DistfromDavis_RecentClim.png", width = 12, height = 6, units = "in")
 
 recent_flint_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, tmn_dist), y=tmn_dist, group=parent.pop, fill=elev_m)) +
@@ -1468,10 +876,10 @@ recent_flint_dist %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 ```
 
-![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-23-3.png)<!-- -->
+![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-19-3.png)<!-- -->
 
 ``` r
-ggsave("../output/Climate/grwssn_MeanTMN_DistfromDavis_RecentClim.png", width = 12, height = 6, units = "in")
+#ggsave("../output/Climate/grwssn_MeanTMN_DistfromDavis_RecentClim.png", width = 12, height = 6, units = "in")
 
 recent_flint_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, tmx_dist), y=tmx_dist, group=parent.pop, fill=elev_m)) +
@@ -1483,10 +891,10 @@ recent_flint_dist %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 ```
 
-![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-23-4.png)<!-- -->
+![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-19-4.png)<!-- -->
 
 ``` r
-ggsave("../output/Climate/grwssn_MeanTMX_DistfromDavis_RecentClim.png", width = 12, height = 6, units = "in")
+#ggsave("../output/Climate/grwssn_MeanTMX_DistfromDavis_RecentClim.png", width = 12, height = 6, units = "in")
 ```
 
 Figures Historical (subtraction distance)
@@ -1503,10 +911,10 @@ historic_flint_dist %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 ```
 
-![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-24-1.png)<!-- -->
+![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-20-1.png)<!-- -->
 
 ``` r
-ggsave("../output/Climate/grwssn_MeanCWD_DistfromDavis_HistoricalClim.png", width = 12, height = 6, units = "in")
+#ggsave("../output/Climate/grwssn_MeanCWD_DistfromDavis_HistoricalClim.png", width = 12, height = 6, units = "in")
 
 historic_flint_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, ppt_dist), y=ppt_dist, group=parent.pop, fill=elev_m)) +
@@ -1518,10 +926,10 @@ historic_flint_dist %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 ```
 
-![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-24-2.png)<!-- -->
+![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-20-2.png)<!-- -->
 
 ``` r
-ggsave("../output/Climate/grwssn_MeanPPT_DistfromDavis_HistoricalClim.png", width = 12, height = 6, units = "in")
+#ggsave("../output/Climate/grwssn_MeanPPT_DistfromDavis_HistoricalClim.png", width = 12, height = 6, units = "in")
 
 historic_flint_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, tmn_dist), y=tmn_dist, group=parent.pop, fill=elev_m)) +
@@ -1533,10 +941,10 @@ historic_flint_dist %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 ```
 
-![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-24-3.png)<!-- -->
+![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-20-3.png)<!-- -->
 
 ``` r
-ggsave("../output/Climate/grwssn_MeanTMN_DistfromDavis_HistoricalClim.png", width = 12, height = 6, units = "in")
+#ggsave("../output/Climate/grwssn_MeanTMN_DistfromDavis_HistoricalClim.png", width = 12, height = 6, units = "in")
 
 historic_flint_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, tmx_dist), y=tmx_dist, group=parent.pop, fill=elev_m)) +
@@ -1548,20 +956,54 @@ historic_flint_dist %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 ```
 
-![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-24-4.png)<!-- -->
+![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-20-4.png)<!-- -->
 
 ``` r
-ggsave("../output/Climate/grwssn_MeanTMX_DistfromDavis_HistoricalClim.png", width = 12, height = 6, units = "in")
+#ggsave("../output/Climate/grwssn_MeanTMX_DistfromDavis_HistoricalClim.png", width = 12, height = 6, units = "in")
 ```
 
 ## Bioclim Climate Distance
 
 ### Gowers
 
-#### Recent
-
 ``` r
-gowers_calc_each_var_recent_bioclim <- davis_home_climate_with_ranges_recent %>% 
+#need to modify the gowers_calc function to only include bioclim variables 
+gowers_calc_bioclim <- function(data, indices, P) { #function with all of the code necessary for calculating gowers distance 
+  #data = _clim_boot (recent or historical) - needs to be nested by year; P = # climate variables 
+  #need to make davis_range_prep before running this function 
+  
+  data <-data[indices,] # subset per bootstrap indices
+  
+  data <- data %>% unnest(data) #unnest so the function can access the climate data
+  
+  data_means <- data %>% 
+    group_by(parent.pop, elevation.group, elev_m, Lat, Long) %>% 
+    summarise_at(c("ann_tmean", "mean_diurnal_range", 
+                   "temp_seasonality", "temp_ann_range",
+                 "tmean_wettest_month", "tmean_driest_month", "ann_ppt",
+                 "ppt_seasonality","ppt_warmest_month", "ppt_coldest_month"),
+               c(mean), na.rm = TRUE) #get 30 year averages for each climate variable 
+  
+  range_merge <- bind_rows(data_means, davis_range_prep)
+  
+  davis_home_climate_ranges <- range_merge %>% #calculate ranges
+    ungroup() %>% 
+  summarise(ann_tmean_range=max(ann_tmean)-min(ann_tmean),
+            mean_diurnal_range_range=max(mean_diurnal_range)-min(mean_diurnal_range),
+            temp_seasonality_range=max(temp_seasonality)-min(temp_seasonality),
+            temp_ann_range_range=max(temp_ann_range)-min(temp_ann_range),
+            tmean_wettest_month_range=max(tmean_wettest_month)-min(tmean_wettest_month),
+            tmean_driest_month_range=max(tmean_driest_month)-min(tmean_driest_month),
+            ann_ppt_range=max(ann_ppt)-min(ann_ppt), 
+            ppt_seasonality_range=max(ppt_seasonality)-min(ppt_seasonality),
+            ppt_warmest_month_range=max(ppt_warmest_month)-min(ppt_warmest_month), 
+            ppt_coldest_month_range=max(ppt_coldest_month)-min(ppt_coldest_month))
+  
+  davis_home_climate <- bind_cols(davis_climate_all, data_means) #add davis climate data to home climate data 
+  
+  davis_home_climate_with_ranges <- bind_cols(davis_home_climate, davis_home_climate_ranges) #add in ranges 
+  
+  gowers_calc_each_var <- davis_home_climate_with_ranges %>% #variable by variable calc
   mutate(ann_tmean_gowers=abs(ann_tmean_Davis - ann_tmean) / ann_tmean_range,
          mean_diurnal_range_gowers=abs(mean_diurnal_range_Davis - mean_diurnal_range) / mean_diurnal_range_range,
          temp_seasonality_gowers=abs(temp_seasonality_Davis - temp_seasonality) / temp_seasonality_range,
@@ -1573,179 +1015,152 @@ gowers_calc_each_var_recent_bioclim <- davis_home_climate_with_ranges_recent %>%
          ppt_warmest_month_gowers=abs(ppt_warmest_month_Davis - ppt_warmest_month) / ppt_warmest_month_range,
          ppt_coldest_month_gowers=abs(ppt_coldest_month_Davis - ppt_coldest_month) / ppt_coldest_month_range) %>% 
   dplyr::select(parent.pop, elevation.group, elev_m, ends_with("_gowers"))
-  
-gowers_calc_per_pop_recent_bioclim <- gowers_calc_each_var_recent_bioclim %>% 
-  mutate(Recent_Gowers_Dist=(1/10)*(ann_tmean_gowers + mean_diurnal_range_gowers +
+
+ gowers_calc_per_pop <- gowers_calc_each_var %>% #final gowers calc 
+  mutate(Gowers_Dist=(1/P)*(ann_tmean_gowers + mean_diurnal_range_gowers +
                                 temp_seasonality_gowers +temp_ann_range_gowers +
                                 tmean_wettest_month_gowers +
                                 tmean_driest_month_gowers +ann_ppt_gowers +
                                 ppt_seasonality_gowers + ppt_warmest_month_gowers +
                                 ppt_coldest_month_gowers)) %>% 
-  dplyr::select(parent.pop, elevation.group, elev_m, Recent_Gowers_Dist)
+  dplyr::select(parent.pop, elevation.group, elev_m, Gowers_Dist)
+ 
+ gowers_calc_per_pop %>% pull(Gowers_Dist) #make the result a vector 
+   }
+```
 
-gowers_calc_per_pop_recent_bioclim
+#### Recent
+
+
+``` r
+recent_clim_boot_bioclim_nest <- recent_clim_boot %>% select(parent.pop:year, ann_tmean:ppt_coldest_month) %>% nest(.by=year)
+
+gowers.boot_bioclim_recent <- boot(data=recent_clim_boot_bioclim_nest, statistic=gowers_calc_bioclim, R=1000, P=10) #will sample each row (year) with replacement 
+gowers.boot_bioclim_recent$t0 #looks correct 
 ```
 
 ```
-## # A tibble: 23 × 4
-##    parent.pop elevation.group elev_m Recent_Gowers_Dist
-##    <chr>      <chr>            <dbl>              <dbl>
-##  1 BH         Low               511.              0.335
-##  2 CC         Low               313               0.201
-##  3 CP2        High             2244.              0.427
-##  4 CP3        High             2266.              0.470
-##  5 DPR        Mid              1019.              0.196
-##  6 FR         Mid               787               0.199
-##  7 IH         Low               454.              0.193
-##  8 LV1        High             2593.              0.472
-##  9 LV3        High             2354.              0.475
-## 10 LVTR1      High             2741.              0.490
-## # ℹ 13 more rows
+##  [1] 0.3351487 0.2010384 0.4274908 0.4696964 0.1955285 0.1992895 0.1931189
+##  [8] 0.4716673 0.4749850 0.4902028 0.3918869 0.3407694 0.3347263 0.4027955
+## [15] 0.5455880 0.1963815 0.3360558 0.1939776 0.2394866 0.6476411 0.3492985
+## [22] 0.4340408 0.4552770
+```
+
+``` r
+#str(gowers.boot_bioclim_recent)
+
+for(i in 1:23) {
+  plot(gowers.boot_bioclim_recent, index=i) #distributions look normal for the most part 
+}
+```
+
+![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-22-1.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-22-2.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-22-3.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-22-4.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-22-5.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-22-6.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-22-7.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-22-8.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-22-9.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-22-10.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-22-11.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-22-12.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-22-13.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-22-14.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-22-15.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-22-16.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-22-17.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-22-18.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-22-19.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-22-20.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-22-21.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-22-22.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-22-23.png)<!-- -->
+
+``` r
+#boot.ci(gowers.boot_bioclim_recent, type="norm", index = 1) # for the first pop
+boot_bioclim_recent_results <- tidy(gowers.boot_bioclim_recent,conf.int=TRUE,conf.method="norm") %>%  #all pops
+  rename(Gowers_Dist = statistic) %>% 
+  mutate(TimePd="Recent")
 ```
 
 #### Historic
 
-``` r
-gowers_calc_each_var_historic_bioclim <- davis_home_climate_with_ranges_historic %>% 
-  mutate(ann_tmean_gowers=abs(ann_tmean_Davis - ann_tmean) / ann_tmean_range,
-         mean_diurnal_range_gowers=abs(mean_diurnal_range_Davis - mean_diurnal_range) / mean_diurnal_range_range,
-         temp_seasonality_gowers=abs(temp_seasonality_Davis - temp_seasonality) / temp_seasonality_range,
-         temp_ann_range_gowers=abs(temp_ann_range_Davis - temp_ann_range) / temp_ann_range_range,
-         tmean_wettest_month_gowers=abs(tmean_wettest_month_Davis - tmean_wettest_month) / tmean_wettest_month_range,
-         tmean_driest_month_gowers=abs(tmean_driest_month_Davis - tmean_driest_month) / tmean_driest_month_range,
-         ann_ppt_gowers=abs(ann_ppt_Davis - ann_ppt) / ann_ppt_range,
-         ppt_seasonality_gowers=abs(ppt_seasonality_Davis - ppt_seasonality) / ppt_seasonality_range,
-         ppt_warmest_month_gowers=abs(ppt_warmest_month_Davis - ppt_warmest_month) / ppt_warmest_month_range,
-         ppt_coldest_month_gowers=abs(ppt_coldest_month_Davis - ppt_coldest_month) / ppt_coldest_month_range) %>% 
-  dplyr::select(parent.pop, elevation.group, elev_m, ends_with("_gowers"))
 
+``` r
+historical_clim_boot_bioclim_nest <- historical_clim_boot %>% select(parent.pop:year, ann_tmean:ppt_coldest_month) %>% nest(.by=year)
+
+gowers.boot_bioclim_historical <- boot(data=historical_clim_boot_bioclim_nest, statistic=gowers_calc_bioclim, R=1000, P=10) #will sample each row (year) with replacement 
+gowers.boot_bioclim_historical$t0 #looks correct 
+```
+
+```
+##  [1] 0.3381808 0.3761763 0.4580929 0.5006345 0.1146616 0.2478911 0.2137451
+##  [8] 0.6167572 0.6159749 0.6318601 0.3461297 0.3758085 0.3732301 0.4751556
+## [15] 0.4318850 0.2431269 0.3616461 0.1470025 0.2873186 0.6570430 0.3705798
+## [22] 0.4992779 0.5237611
+```
+
+``` r
+#str(gowers.boot_bioclim_historical)
+
+for(i in 1:23) {
+  plot(gowers.boot_bioclim_historical, index=i) #distributions look normal for the most part 
+}
+```
+
+![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-23-1.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-23-2.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-23-3.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-23-4.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-23-5.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-23-6.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-23-7.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-23-8.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-23-9.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-23-10.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-23-11.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-23-12.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-23-13.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-23-14.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-23-15.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-23-16.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-23-17.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-23-18.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-23-19.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-23-20.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-23-21.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-23-22.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-23-23.png)<!-- -->
+
+``` r
+#boot.ci(gowers.boot_bioclim_historical, type="norm", index = 1) # for the first pop
+boot_bioclim_historical_results <- tidy(gowers.boot_bioclim_historical,conf.int=TRUE,conf.method="norm") %>%  #all pops
+  rename(Gowers_Dist = statistic) %>% 
+  mutate(TimePd="Historical")
+```
+
+#### Plot the results 
+
+
+``` r
+boot_bioclim_gowers_recent_pops <- bind_cols(pops, boot_bioclim_recent_results) %>% arrange(Gowers_Dist)
+boot_bioclim_gowers_historical_pops <- bind_cols(pops, boot_bioclim_historical_results) %>% arrange(Gowers_Dist)
+boot_bioclim_gowers_results_all <- bind_rows(boot_bioclim_gowers_recent_pops, boot_bioclim_gowers_historical_pops)
+write_csv(boot_bioclim_gowers_results_all, "../output/Climate/growthseason_GowersEnvtalDist_UCDbioclim.csv")
+
+recent_fig <- boot_bioclim_gowers_results_all %>% 
+  filter(TimePd=="Recent") %>% 
+  ggplot(aes(x=fct_reorder(parent.pop, Gowers_Dist), y=Gowers_Dist, group=parent.pop, fill=elev_m)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) +
+  geom_errorbar(aes(ymin=conf.low, ymax=conf.high),
+                width=.1, position = position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  labs(y="Gowers Envtal Distance \n from WL2", fill="Elevation (m)", x="Population", title = "Recent Climate") +
+  theme_classic() +
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+
+historical_fig <- boot_bioclim_gowers_results_all %>% 
+  filter(TimePd=="Historical") %>% 
+  ggplot(aes(x=fct_reorder(parent.pop, Gowers_Dist), y=Gowers_Dist, group=parent.pop, fill=elev_m)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) +
+  geom_errorbar(aes(ymin=conf.low, ymax=conf.high),
+                width=.1, position = position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  labs(y="Gowers Envtal Distance \n from WL2", fill="Elevation (m)", x="Population", title="Historic Climate") +
+  theme_classic() +
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1)) 
   
-gowers_calc_per_pop_historic_bioclim <- gowers_calc_each_var_historic_bioclim %>% 
-  mutate(Historic_Gowers_Dist=(1/10)*(ann_tmean_gowers + mean_diurnal_range_gowers +
-                                temp_seasonality_gowers +temp_ann_range_gowers +
-                                tmean_wettest_month_gowers +
-                                tmean_driest_month_gowers +ann_ppt_gowers +
-                                ppt_seasonality_gowers + ppt_warmest_month_gowers +
-                                ppt_coldest_month_gowers)) %>% 
-  dplyr::select(parent.pop, elevation.group, elev_m, Historic_Gowers_Dist)
 
-gowers_calc_per_pop_historic_bioclim
+plot_grid(historical_fig, recent_fig)
 ```
 
-```
-## # A tibble: 23 × 4
-##    parent.pop elevation.group elev_m Historic_Gowers_Dist
-##    <chr>      <chr>            <dbl>                <dbl>
-##  1 BH         Low               511.                0.338
-##  2 CC         Low               313                 0.376
-##  3 CP2        High             2244.                0.458
-##  4 CP3        High             2266.                0.501
-##  5 DPR        Mid              1019.                0.115
-##  6 FR         Mid               787                 0.248
-##  7 IH         Low               454.                0.214
-##  8 LV1        High             2593.                0.617
-##  9 LV3        High             2354.                0.616
-## 10 LVTR1      High             2741.                0.632
-## # ℹ 13 more rows
-```
-
-#### Merge recent and historic
+![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-24-1.png)<!-- -->
 
 ``` r
-gowers_all_time_bioclim <- full_join(gowers_calc_per_pop_recent_bioclim, gowers_calc_per_pop_historic_bioclim)
-```
-
-```
-## Joining with `by = join_by(parent.pop, elevation.group, elev_m)`
-```
-
-``` r
-gowers_all_time_bioclim
-```
-
-```
-## # A tibble: 23 × 5
-##    parent.pop elevation.group elev_m Recent_Gowers_Dist Historic_Gowers_Dist
-##    <chr>      <chr>            <dbl>              <dbl>                <dbl>
-##  1 BH         Low               511.              0.335                0.338
-##  2 CC         Low               313               0.201                0.376
-##  3 CP2        High             2244.              0.427                0.458
-##  4 CP3        High             2266.              0.470                0.501
-##  5 DPR        Mid              1019.              0.196                0.115
-##  6 FR         Mid               787               0.199                0.248
-##  7 IH         Low               454.              0.193                0.214
-##  8 LV1        High             2593.              0.472                0.617
-##  9 LV3        High             2354.              0.475                0.616
-## 10 LVTR1      High             2741.              0.490                0.632
-## # ℹ 13 more rows
-```
-
-``` r
-names(gowers_all_time_bioclim)
-```
-
-```
-## [1] "parent.pop"           "elevation.group"      "elev_m"              
-## [4] "Recent_Gowers_Dist"   "Historic_Gowers_Dist"
-```
-
-``` r
-write_csv(gowers_all_time_bioclim, "../output/Climate/growthseason_GowersEnvtalDist_UCDbioclim.csv")
-```
-
-Figures
-
-``` r
-gowers_rec_fig_bioclim <- gowers_all_time_bioclim %>% 
-  ggplot(aes(x=fct_reorder(parent.pop, Recent_Gowers_Dist), y=Recent_Gowers_Dist, group=parent.pop, fill=elev_m)) +
-  geom_col(width = 0.7,position = position_dodge(0.75)) +
-  scale_y_continuous(expand = c(0, 0)) +
-  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
-  labs(y="Gowers Envtal Distance \n from Davis", fill="Elevation (m)", x="Population", title="Recent Climate") +
-  theme_classic() +
-  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/Climate/growthseason_Gowers_Recentbioclim_fromDavis.png", width = 12, height = 6, units = "in")
-
-gowers_hist_fig_bioclim <- gowers_all_time_bioclim %>% 
-  ggplot(aes(x=fct_reorder(parent.pop, Historic_Gowers_Dist), y=Historic_Gowers_Dist, group=parent.pop, fill=elev_m)) +
-  geom_col(width = 0.7,position = position_dodge(0.75)) +
-  scale_y_continuous(expand = c(0, 0)) +
-  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
-  labs(fill="Elevation (m)",x="Population", title="Historic Climate", y="Gowers Envtal Distance \n from Davis") +
-  theme_classic() +
-  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/Climate/growthseason_Gowers_Historicbioclim_fromDavis.png", width = 12, height = 6, units = "in")
-
-#should combine these into one figure and save that instead
-legend <- get_legend(gowers_rec_fig_bioclim)
-gowers_hist_fig_bioclim <- gowers_hist_fig_bioclim + theme(legend.position="none")
-gowers_rec_fig_bioclim <- gowers_rec_fig_bioclim + theme(legend.position="none")
-grid.arrange(gowers_hist_fig_bioclim, gowers_rec_fig_bioclim, legend, ncol=3, widths=c(3.12, 3.12, 1.09))
-```
-
-![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-28-1.png)<!-- -->
-
-``` r
- #2000 x 850
+ggsave("../output/Climate/growthseason_Gowers_BioClim_fromDavis.png", width = 24, height = 8, units = "in")
 ```
 
 ### Subtraction
 
 
 ``` r
-#Recent
-names(pops_bioclim_recent_avgs)
+pops_bioclim_avgs <-  read_csv("../output/Climate/growthseason_BioClimAvgs.csv") 
 ```
 
 ```
-##  [1] "parent.pop"          "elevation.group"     "elev_m"             
-##  [4] "ann_tmean"           "mean_diurnal_range"  "temp_seasonality"   
-##  [7] "temp_ann_range"      "tmean_wettest_month" "tmean_driest_month" 
-## [10] "ann_ppt"             "ppt_seasonality"     "ppt_warmest_month"  
-## [13] "ppt_coldest_month"   "TimePd"
+## Rows: 46 Columns: 14
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: ","
+## chr  (3): parent.pop, elevation.group, TimePd
+## dbl (11): elev_m, ann_tmean, mean_diurnal_range, temp_seasonality, temp_ann_...
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
 ```
 
 ``` r
+#Recent
+pops_bioclim_recent_avgs <- pops_bioclim_avgs %>%  filter(TimePd=="Recent")
 recent_bioclim_dist_prep <- bind_cols(davis_bioclim_final, pops_bioclim_recent_avgs)
 recent_bioclim_dist <- recent_bioclim_dist_prep %>% 
   mutate(ann_tmean_dist=ann_tmean_Davis - ann_tmean,
@@ -1785,18 +1200,7 @@ recent_bioclim_dist
 
 ``` r
 #Historical
-names(pops_bioclim_historical_avgs)
-```
-
-```
-##  [1] "parent.pop"          "elevation.group"     "elev_m"             
-##  [4] "ann_tmean"           "mean_diurnal_range"  "temp_seasonality"   
-##  [7] "temp_ann_range"      "tmean_wettest_month" "tmean_driest_month" 
-## [10] "ann_ppt"             "ppt_seasonality"     "ppt_warmest_month"  
-## [13] "ppt_coldest_month"   "TimePd"
-```
-
-``` r
+pops_bioclim_historical_avgs <- pops_bioclim_avgs %>% filter(TimePd=="Historical")
 historical_bioclim_dist_prep <- bind_cols(davis_bioclim_final, pops_bioclim_historical_avgs)
 historical_bioclim_dist <- historical_bioclim_dist_prep %>% 
   mutate(ann_tmean_dist=ann_tmean_Davis - ann_tmean,
@@ -1848,10 +1252,10 @@ recent_bioclim_dist %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 ```
 
-![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-30-1.png)<!-- -->
+![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-26-1.png)<!-- -->
 
 ``` r
-ggsave("../output/Climate/grwssn_Ann_Tmean_DistfromDavis_RecentClim.png", width = 12, height = 6, units = "in")
+#ggsave("../output/Climate/grwssn_Ann_Tmean_DistfromDavis_RecentClim.png", width = 12, height = 6, units = "in")
 
 recent_bioclim_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, mean_diurnal_range_dist), y=mean_diurnal_range_dist, group=parent.pop, fill=elev_m)) +
@@ -1863,10 +1267,10 @@ recent_bioclim_dist %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 ```
 
-![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-30-2.png)<!-- -->
+![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-26-2.png)<!-- -->
 
 ``` r
-ggsave("../output/Climate/grwssn_Diurnal_Range_DistfromDavis_RecentClim.png", width = 12, height = 6, units = "in")
+#ggsave("../output/Climate/grwssn_Diurnal_Range_DistfromDavis_RecentClim.png", width = 12, height = 6, units = "in")
 
 recent_bioclim_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, temp_seasonality_dist), y=temp_seasonality_dist, group=parent.pop, fill=elev_m)) +
@@ -1878,10 +1282,10 @@ recent_bioclim_dist %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 ```
 
-![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-30-3.png)<!-- -->
+![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-26-3.png)<!-- -->
 
 ``` r
-ggsave("../output/Climate/grwssn_Temp_Seasonality_DistfromDavis_RecentClim.png", width = 12, height = 6, units = "in")
+#ggsave("../output/Climate/grwssn_Temp_Seasonality_DistfromDavis_RecentClim.png", width = 12, height = 6, units = "in")
 
 recent_bioclim_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, temp_ann_range_dist), y=temp_ann_range_dist, group=parent.pop, fill=elev_m)) +
@@ -1893,10 +1297,10 @@ recent_bioclim_dist %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 ```
 
-![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-30-4.png)<!-- -->
+![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-26-4.png)<!-- -->
 
 ``` r
-ggsave("../output/Climate/grwssn_Temp_Ann_Range_DistfromDavis_RecentClim.png", width = 12, height = 6, units = "in")
+#ggsave("../output/Climate/grwssn_Temp_Ann_Range_DistfromDavis_RecentClim.png", width = 12, height = 6, units = "in")
 
 recent_bioclim_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, tmean_wettest_month_dist), y=tmean_wettest_month_dist, group=parent.pop, fill=elev_m)) +
@@ -1908,10 +1312,10 @@ recent_bioclim_dist %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 ```
 
-![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-30-5.png)<!-- -->
+![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-26-5.png)<!-- -->
 
 ``` r
-ggsave("../output/Climate/grwssn_Temp_Wet_DistfromDavis_RecentClim.png", width = 12, height = 6, units = "in")
+#ggsave("../output/Climate/grwssn_Temp_Wet_DistfromDavis_RecentClim.png", width = 12, height = 6, units = "in")
 
 recent_bioclim_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, tmean_driest_month_dist), y=tmean_driest_month_dist, group=parent.pop, fill=elev_m)) +
@@ -1923,10 +1327,10 @@ recent_bioclim_dist %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 ```
 
-![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-30-6.png)<!-- -->
+![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-26-6.png)<!-- -->
 
 ``` r
-ggsave("../output/Climate/grwssn_Temp_Dry_DistfromDavis_RecentClim.png", width = 12, height = 6, units = "in")
+#ggsave("../output/Climate/grwssn_Temp_Dry_DistfromDavis_RecentClim.png", width = 12, height = 6, units = "in")
 
 recent_bioclim_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, ann_ppt_dist), y=ann_ppt_dist, group=parent.pop, fill=elev_m)) +
@@ -1938,10 +1342,10 @@ recent_bioclim_dist %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 ```
 
-![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-30-7.png)<!-- -->
+![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-26-7.png)<!-- -->
 
 ``` r
-ggsave("../output/Climate/grwssn_Ann_PPT_DistfromDavis_RecentClim.png", width = 12, height = 6, units = "in")
+#ggsave("../output/Climate/grwssn_Ann_PPT_DistfromDavis_RecentClim.png", width = 12, height = 6, units = "in")
 
 recent_bioclim_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, ppt_seasonality_dist), y=ppt_seasonality_dist, group=parent.pop, fill=elev_m)) +
@@ -1953,10 +1357,10 @@ recent_bioclim_dist %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 ```
 
-![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-30-8.png)<!-- -->
+![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-26-8.png)<!-- -->
 
 ``` r
-ggsave("../output/Climate/grwssn_PPT_Seasonality_DistfromDavis_RecentClim.png", width = 12, height = 6, units = "in")
+#ggsave("../output/Climate/grwssn_PPT_Seasonality_DistfromDavis_RecentClim.png", width = 12, height = 6, units = "in")
 
 recent_bioclim_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, ppt_warmest_month_dist), y=ppt_warmest_month_dist, group=parent.pop, fill=elev_m)) +
@@ -1968,10 +1372,10 @@ recent_bioclim_dist %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 ```
 
-![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-30-9.png)<!-- -->
+![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-26-9.png)<!-- -->
 
 ``` r
-ggsave("../output/Climate/grwssn_PPT_Warm_DistfromDavis_RecentClim.png", width = 12, height = 6, units = "in")
+#ggsave("../output/Climate/grwssn_PPT_Warm_DistfromDavis_RecentClim.png", width = 12, height = 6, units = "in")
 
 recent_bioclim_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, ppt_coldest_month_dist), y=ppt_coldest_month_dist, group=parent.pop, fill=elev_m)) +
@@ -1983,10 +1387,10 @@ recent_bioclim_dist %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 ```
 
-![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-30-10.png)<!-- -->
+![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-26-10.png)<!-- -->
 
 ``` r
-ggsave("../output/Climate/grwssn_PPT_Cold_DistfromDavis_RecentClim.png", width = 12, height = 6, units = "in")
+#ggsave("../output/Climate/grwssn_PPT_Cold_DistfromDavis_RecentClim.png", width = 12, height = 6, units = "in")
 ```
 
 Historical (subtraction distance)
@@ -2003,10 +1407,10 @@ historical_bioclim_dist %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 ```
 
-![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-31-1.png)<!-- -->
+![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-27-1.png)<!-- -->
 
 ``` r
-ggsave("../output/Climate/grwssn_Ann_Tmean_DistfromDavis_HistoricalClim.png", width = 12, height = 6, units = "in")
+#ggsave("../output/Climate/grwssn_Ann_Tmean_DistfromDavis_HistoricalClim.png", width = 12, height = 6, units = "in")
 
 historical_bioclim_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, mean_diurnal_range_dist), y=mean_diurnal_range_dist, group=parent.pop, fill=elev_m)) +
@@ -2018,10 +1422,10 @@ historical_bioclim_dist %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 ```
 
-![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-31-2.png)<!-- -->
+![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-27-2.png)<!-- -->
 
 ``` r
-ggsave("../output/Climate/grwssn_Diurnal_Range_DistfromDavis_HistoricalClim.png", width = 12, height = 6, units = "in")
+#ggsave("../output/Climate/grwssn_Diurnal_Range_DistfromDavis_HistoricalClim.png", width = 12, height = 6, units = "in")
 
 historical_bioclim_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, temp_seasonality_dist), y=temp_seasonality_dist, group=parent.pop, fill=elev_m)) +
@@ -2033,10 +1437,10 @@ historical_bioclim_dist %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 ```
 
-![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-31-3.png)<!-- -->
+![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-27-3.png)<!-- -->
 
 ``` r
-ggsave("../output/Climate/grwssn_Temp_Seasonality_DistfromDavis_HistoricalClim.png", width = 12, height = 6, units = "in")
+#ggsave("../output/Climate/grwssn_Temp_Seasonality_DistfromDavis_HistoricalClim.png", width = 12, height = 6, units = "in")
 
 historical_bioclim_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, temp_ann_range_dist), y=temp_ann_range_dist, group=parent.pop, fill=elev_m)) +
@@ -2048,10 +1452,10 @@ historical_bioclim_dist %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 ```
 
-![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-31-4.png)<!-- -->
+![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-27-4.png)<!-- -->
 
 ``` r
-ggsave("../output/Climate/grwssn_Temp_Ann_Range_DistfromDavis_HistoricalClim.png", width = 12, height = 6, units = "in")
+#ggsave("../output/Climate/grwssn_Temp_Ann_Range_DistfromDavis_HistoricalClim.png", width = 12, height = 6, units = "in")
 
 historical_bioclim_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, tmean_wettest_month_dist), y=tmean_wettest_month_dist, group=parent.pop, fill=elev_m)) +
@@ -2063,10 +1467,10 @@ historical_bioclim_dist %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 ```
 
-![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-31-5.png)<!-- -->
+![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-27-5.png)<!-- -->
 
 ``` r
-ggsave("../output/Climate/grwssn_Temp_Wet_DistfromDavis_HistoricalClim.png", width = 12, height = 6, units = "in")
+#ggsave("../output/Climate/grwssn_Temp_Wet_DistfromDavis_HistoricalClim.png", width = 12, height = 6, units = "in")
 
 historical_bioclim_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, tmean_driest_month_dist), y=tmean_driest_month_dist, group=parent.pop, fill=elev_m)) +
@@ -2078,10 +1482,10 @@ historical_bioclim_dist %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 ```
 
-![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-31-6.png)<!-- -->
+![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-27-6.png)<!-- -->
 
 ``` r
-ggsave("../output/Climate/grwssn_Temp_Dry_DistfromDavis_HistoricalClim.png", width = 12, height = 6, units = "in")
+#ggsave("../output/Climate/grwssn_Temp_Dry_DistfromDavis_HistoricalClim.png", width = 12, height = 6, units = "in")
 
 historical_bioclim_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, ann_ppt_dist), y=ann_ppt_dist, group=parent.pop, fill=elev_m)) +
@@ -2093,10 +1497,10 @@ historical_bioclim_dist %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 ```
 
-![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-31-7.png)<!-- -->
+![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-27-7.png)<!-- -->
 
 ``` r
-ggsave("../output/Climate/grwssn_Ann_PPT_DistfromDavis_HistoricalClim.png", width = 12, height = 6, units = "in")
+#ggsave("../output/Climate/grwssn_Ann_PPT_DistfromDavis_HistoricalClim.png", width = 12, height = 6, units = "in")
 
 historical_bioclim_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, ppt_seasonality_dist), y=ppt_seasonality_dist, group=parent.pop, fill=elev_m)) +
@@ -2108,10 +1512,10 @@ historical_bioclim_dist %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 ```
 
-![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-31-8.png)<!-- -->
+![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-27-8.png)<!-- -->
 
 ``` r
-ggsave("../output/Climate/grwssn_PPT_Seasonality_DistfromDavis_HistoricalClim.png", width = 12, height = 6, units = "in")
+#ggsave("../output/Climate/grwssn_PPT_Seasonality_DistfromDavis_HistoricalClim.png", width = 12, height = 6, units = "in")
 
 historical_bioclim_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, ppt_warmest_month_dist), y=ppt_warmest_month_dist, group=parent.pop, fill=elev_m)) +
@@ -2123,10 +1527,10 @@ historical_bioclim_dist %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 ```
 
-![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-31-9.png)<!-- -->
+![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-27-9.png)<!-- -->
 
 ``` r
-ggsave("../output/Climate/grwssn_PPT_Warm_DistfromDavis_HistoricalClim.png", width = 12, height = 6, units = "in")
+#ggsave("../output/Climate/grwssn_PPT_Warm_DistfromDavis_HistoricalClim.png", width = 12, height = 6, units = "in")
 
 historical_bioclim_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, ppt_coldest_month_dist), y=ppt_coldest_month_dist, group=parent.pop, fill=elev_m)) +
@@ -2138,8 +1542,8 @@ historical_bioclim_dist %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 ```
 
-![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-31-10.png)<!-- -->
+![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-27-10.png)<!-- -->
 
 ``` r
-ggsave("../output/Climate/grwssn_PPT_Cold_DistfromDavis_HistoricalClim.png", width = 12, height = 6, units = "in")
+#ggsave("../output/Climate/grwssn_PPT_Cold_DistfromDavis_HistoricalClim.png", width = 12, height = 6, units = "in")
 ```
