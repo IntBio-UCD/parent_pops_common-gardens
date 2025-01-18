@@ -37,7 +37,7 @@ Options:
 
 
 ``` r
-library(raster)
+library(raster) #for cv function 
 ```
 
 ```
@@ -84,10 +84,7 @@ conflicts_prefer(dplyr::filter)
 ```
 
 ``` r
-library(ggrepel)
-library(cowplot)
-library(gridExtra)
-library(naniar) #replaces values with NA
+library(cowplot) #for combining plots 
 library(boot)
 library(broom)
 
@@ -596,17 +593,32 @@ boot_gowers_historical_pops <- bind_cols(pops, boot_historical_results) %>% arra
 boot_gowers_results_all <- bind_rows(boot_gowers_recent_pops, boot_gowers_historical_pops)
 write_csv(boot_gowers_results_all, "../output/Climate/full_year_GowersEnvtalDist_UCD_wtr_year.csv")
 
-boot_gowers_results_all %>% 
+recent_fig <- boot_gowers_results_all %>% 
+  filter(TimePd=="Recent") %>% 
   ggplot(aes(x=fct_reorder(parent.pop, Gowers_Dist), y=Gowers_Dist, group=parent.pop, fill=elev_m)) +
   geom_col(width = 0.7,position = position_dodge(0.75)) +
   geom_errorbar(aes(ymin=conf.low, ymax=conf.high),
                 width=.1, position = position_dodge(0.75)) +
   scale_y_continuous(expand = c(0, 0)) +
   scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
-  labs(y="Gowers Envtal Distance \n from Davis", fill="Elevation (m)", x="Population") +
+  labs(y="Gowers Envtal Distance \n from Davis", fill="Elevation (m)", x="Population", title = "Recent Climate") +
   theme_classic() +
-  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1)) +
-  facet_wrap(~TimePd)
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+
+historical_fig <- boot_gowers_results_all %>% 
+  filter(TimePd=="Recent") %>% 
+  ggplot(aes(x=fct_reorder(parent.pop, Gowers_Dist), y=Gowers_Dist, group=parent.pop, fill=elev_m)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) +
+  geom_errorbar(aes(ymin=conf.low, ymax=conf.high),
+                width=.1, position = position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  labs(y="Gowers Envtal Distance \n from Davis", fill="Elevation (m)", x="Population", title="Historic Climate") +
+  theme_classic() +
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1)) 
+  
+
+plot_grid(historical_fig, recent_fig)
 ```
 
 ![](UCD_climatedist_all_year_files/figure-html/unnamed-chunk-13-1.png)<!-- -->
@@ -740,17 +752,31 @@ boot_flint_gowers_historical_pops <- bind_cols(pops, boot_flint_historical_resul
 boot_flint_gowers_results_all <- bind_rows(boot_flint_gowers_recent_pops, boot_flint_gowers_historical_pops)
 write_csv(boot_flint_gowers_results_all, "../output/Climate/full_year_GowersEnvtalDist_UCDFlint_wtr_year.csv")
 
-boot_flint_gowers_results_all %>% 
+recent_fig <- boot_flint_gowers_results_all %>% 
+  filter(TimePd=="Recent") %>% 
   ggplot(aes(x=fct_reorder(parent.pop, Gowers_Dist), y=Gowers_Dist, group=parent.pop, fill=elev_m)) +
   geom_col(width = 0.7,position = position_dodge(0.75)) +
   geom_errorbar(aes(ymin=conf.low, ymax=conf.high),
                 width=.1, position = position_dodge(0.75)) +
   scale_y_continuous(expand = c(0, 0)) +
   scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
-  labs(y="Gowers Envtal Distance \n from Davis", fill="Elevation (m)", x="Population") +
+  labs(y="Gowers Envtal Distance \n from Davis", fill="Elevation (m)", x="Population", title = "Recent Climate") +
   theme_classic() +
-  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1)) +
-  facet_wrap(~TimePd)
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+
+historical_fig <- boot_flint_gowers_results_all %>% 
+  filter(TimePd=="Recent") %>% 
+  ggplot(aes(x=fct_reorder(parent.pop, Gowers_Dist), y=Gowers_Dist, group=parent.pop, fill=elev_m)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) +
+  geom_errorbar(aes(ymin=conf.low, ymax=conf.high),
+                width=.1, position = position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  labs(y="Gowers Envtal Distance \n from Davis", fill="Elevation (m)", x="Population", title="Historic Climate") +
+  theme_classic() +
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1)) 
+
+plot_grid(historical_fig, recent_fig)
 ```
 
 ![](UCD_climatedist_all_year_files/figure-html/unnamed-chunk-17-1.png)<!-- -->
@@ -1125,17 +1151,31 @@ boot_bioclim_gowers_historical_pops <- bind_cols(pops, boot_bioclim_historical_r
 boot_bioclim_gowers_results_all <- bind_rows(boot_bioclim_gowers_recent_pops, boot_bioclim_gowers_historical_pops)
 write_csv(boot_bioclim_gowers_results_all, "../output/Climate/full_year_GowersEnvtalDist_UCDbioclim_wtr_year.csv")
 
-boot_bioclim_gowers_results_all %>% 
+recent_fig <- boot_bioclim_gowers_results_all %>% 
+  filter(TimePd=="Recent") %>% 
   ggplot(aes(x=fct_reorder(parent.pop, Gowers_Dist), y=Gowers_Dist, group=parent.pop, fill=elev_m)) +
   geom_col(width = 0.7,position = position_dodge(0.75)) +
   geom_errorbar(aes(ymin=conf.low, ymax=conf.high),
                 width=.1, position = position_dodge(0.75)) +
   scale_y_continuous(expand = c(0, 0)) +
   scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
-  labs(y="Gowers Envtal Distance \n from Davis", fill="Elevation (m)", x="Population") +
+  labs(y="Gowers Envtal Distance \n from Davis", fill="Elevation (m)", x="Population", title = "Recent Climate") +
   theme_classic() +
-  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1)) +
-  facet_wrap(~TimePd)
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+
+historical_fig <- boot_bioclim_gowers_results_all %>% 
+  filter(TimePd=="Recent") %>% 
+  ggplot(aes(x=fct_reorder(parent.pop, Gowers_Dist), y=Gowers_Dist, group=parent.pop, fill=elev_m)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) +
+  geom_errorbar(aes(ymin=conf.low, ymax=conf.high),
+                width=.1, position = position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  labs(y="Gowers Envtal Distance \n from Davis", fill="Elevation (m)", x="Population", title="Historic Climate") +
+  theme_classic() +
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1)) 
+
+plot_grid(historical_fig, recent_fig)
 ```
 
 ![](UCD_climatedist_all_year_files/figure-html/unnamed-chunk-24-1.png)<!-- -->
