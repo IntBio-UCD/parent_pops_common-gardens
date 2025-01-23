@@ -1,7 +1,7 @@
 ---
 title: "UCD Climate Distance"
 author: "Brandie Quarles"
-date: "2025-01-17"
+date: "2025-01-23"
 output: 
   html_document: 
     keep_md: yes
@@ -588,7 +588,7 @@ recent_fig <- boot_gowers_results_all %>%
                 width=.1, position = position_dodge(0.75)) +
   scale_y_continuous(expand = c(0, 0)) +
   scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
-  labs(y="Gowers Envtal Distance \n from WL2", fill="Elevation (m)", x="Population", title = "Recent Climate") +
+  labs(y="Gowers Envtal Distance \n from UCD", fill="Elevation (m)", x="Population", title = "Recent Climate") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 
@@ -600,7 +600,7 @@ historical_fig <- boot_gowers_results_all %>%
                 width=.1, position = position_dodge(0.75)) +
   scale_y_continuous(expand = c(0, 0)) +
   scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
-  labs(y="Gowers Envtal Distance \n from WL2", fill="Elevation (m)", x="Population", title="Historic Climate") +
+  labs(y="Gowers Envtal Distance \n from UCD", fill="Elevation (m)", x="Population", title="Historic Climate") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1)) 
   
@@ -745,7 +745,7 @@ recent_fig <- boot_flint_gowers_results_all %>%
                 width=.1, position = position_dodge(0.75)) +
   scale_y_continuous(expand = c(0, 0)) +
   scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
-  labs(y="Gowers Envtal Distance \n from WL2", fill="Elevation (m)", x="Population", title = "Recent Climate") +
+  labs(y="Gowers Envtal Distance \n from UCD", fill="Elevation (m)", x="Population", title = "Recent Climate") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 
@@ -757,7 +757,7 @@ historical_fig <- boot_flint_gowers_results_all %>%
                 width=.1, position = position_dodge(0.75)) +
   scale_y_continuous(expand = c(0, 0)) +
   scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
-  labs(y="Gowers Envtal Distance \n from WL2", fill="Elevation (m)", x="Population", title="Historic Climate") +
+  labs(y="Gowers Envtal Distance \n from UCD", fill="Elevation (m)", x="Population", title="Historic Climate") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1)) 
   
@@ -1114,7 +1114,7 @@ recent_fig <- boot_bioclim_gowers_results_all %>%
                 width=.1, position = position_dodge(0.75)) +
   scale_y_continuous(expand = c(0, 0)) +
   scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
-  labs(y="Gowers Envtal Distance \n from WL2", fill="Elevation (m)", x="Population", title = "Recent Climate") +
+  labs(y="Gowers Envtal Distance \n from UCD", fill="Elevation (m)", x="Population", title = "Recent Climate") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 
@@ -1126,7 +1126,7 @@ historical_fig <- boot_bioclim_gowers_results_all %>%
                 width=.1, position = position_dodge(0.75)) +
   scale_y_continuous(expand = c(0, 0)) +
   scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
-  labs(y="Gowers Envtal Distance \n from WL2", fill="Elevation (m)", x="Population", title="Historic Climate") +
+  labs(y="Gowers Envtal Distance \n from UCD", fill="Elevation (m)", x="Population", title="Historic Climate") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1)) 
   
