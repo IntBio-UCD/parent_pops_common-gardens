@@ -51,6 +51,7 @@ wl2_surv %>% filter(Genotype=="IH_4_5") #there are 2 IH_4_5 plants (in different
 wl2_surv %>% rowwise() %>%  #checking if mf and rep can be converted to numeric 
   filter(!is.na(rep)) %>%  
   filter(is.na(as.numeric(rep)))
+write_csv(wl2_surv, "../output/WL2_Traits/WL2_Mortality.csv")
 ```
 
 As weeks

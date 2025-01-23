@@ -63,7 +63,7 @@ all_wl2_size2
 
 
 Check for merging issues
-```{r, eval=FALSE}
+```{r}
 map(all_wl2_size2$sheets, colnames) %>% #get unique column names 
   unlist() %>%
   unique() %>%
@@ -126,12 +126,13 @@ all_wl2_size_all %>% filter(!str_detect(rep, "buff")) %>% rowwise() %>%
 
 all_wl2_size_all_nobuffers <- all_wl2_size_all %>% 
   filter(!str_detect(mf, "buff")) %>% 
-  mutate(mf=as.double(mf), rep=as.double(rep))
+  mutate(mf=as.double(mf), rep=as.double(rep)) %>% 
+  select(!DNA)
 unique(all_wl2_size_all_nobuffers$parent.pop) #buffers removed!
 unique(all_wl2_size_all_nobuffers$survey_date) 
 tail(all_wl2_size_all_nobuffers)
 
-#write_csv(all_wl2_size_all_nobuffers, "../output/WL2_Traits/WL2_Size_Combined.csv")
+write_csv(all_wl2_size_all_nobuffers, "../output/WL2_Traits/WL2-2023_Size_Combined.csv")
 ```
 
 ## Pop Location Info
