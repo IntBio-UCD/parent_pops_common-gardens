@@ -16,6 +16,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ## Libraries 
 ```{r}
 library(tidyverse)
+library(brms)
 ```
 
 ## Need to make a csv file with all survey data for each plant 
@@ -62,7 +63,7 @@ all_wl2_size2
 
 
 Check for merging issues
-```{r}
+```{r, eval=FALSE}
 map(all_wl2_size2$sheets, colnames) %>% #get unique column names 
   unlist() %>%
   unique() %>%
@@ -74,6 +75,9 @@ map(all_wl2_size2$sheets, colnames) %>% #get unique column names
 #Notes are "Notes", survey-notes, and survey.notes
 
 map(all_wl2_size2$sheets, head,10) #look at first 10 lines of each sheet 
+
+all_ucd_size2$sheets[[3]] %>% rowwise() %>% filter(!is.na(mf)) %>%  filter(is.na(as.numeric(mf))) #all chars = NA
+all_ucd_size2$sheets[[3]] %>% rowwise() %>% filter(!is.na(rep)) %>%  filter(is.na(as.numeric(rep))) #all chars = NA
 
 all_wl2_size2$sheets[[1]] <- all_wl2_size2$sheets[[1]] %>% 
   rename(pop=Pop, height.cm=`height (cm)`, long.leaf.cm=`longest leaf (cm)`, survey.notes=Notes) %>% 
@@ -132,23 +136,40 @@ tail(all_wl2_size_all_nobuffers)
 
 ## Pop Location Info
 ```{r}
-gowersdist_UCD <- read_csv("../output/Climate/Pops_GowersEnvtalDist_UCD.csv") %>% 
-  rename(Recent_Gowers_Dist_UCD = Recent_Gowers_Dist, Historic_Gowers_Dist_UCD = Historic_Gowers_Dist)
-head(gowersdist_UCD)
-gowersdist_WL2 <- read_csv("../output/Climate/Pops_GowersEnvtalDist_WL2.csv") %>% 
-  rename(Recent_Gowers_Dist_WL2 = Recent_Gowers_Dist, Historic_Gowers_Dist_WL2 = Historic_Gowers_Dist)
-head(gowersdist_WL2)
+gowersdist_WL2 <- read_csv("../output/Climate/Gowers_WL2.csv")
 
-gowersdist_all <- full_join(gowersdist_UCD, gowersdist_WL2)
-head(gowersdist_all)
+gowersdist_WL2_wider <- gowersdist_WL2 %>% 
+  pivot_wider(names_from = TimePd, values_from = c(GrwSsn_GD, GrwSsn_FLINT_GD, GrwSsn_BIOCLIM_GD, Wtr_Year_GD, Wtr_Year_FLINT_GD, Wtr_Year_BIOCLIM_GD))
+head(gowersdist_WL2_wider)
 ```
 
 Merge
 ```{r}
-all_wl2_size_loc <- left_join(all_wl2_size_all_nobuffers, gowersdist_all)
+all_wl2_size_loc <- left_join(all_wl2_size_all_nobuffers, gowersdist_WL2_wider) %>% 
+  mutate(day=if_else(survey_date=="2023-07-03" | survey_date=="2023-07-06", 0, #day 0 = pre-transplant
+                 as.numeric(survey_date-min(survey_date)-7))) #days in the field starts on 7/11 (day all plants taken to the field) rather than the exact planting date 
 head(all_wl2_size_loc)
+
+all_wl2_size_loc %>% select(survey_date, day) %>% unique()
 ```
 
+## Check Sample Sizes
+```{r}
+all_wl2_size_loc %>% 
+  filter(!is.na(height.cm)) %>% 
+  group_by(parent.pop, day) %>% 
+  summarise(Sample_Size=n()) %>% 
+  filter(day==0) %>% 
+  arrange(Sample_Size)
+
+#WV only has 3 individuals, none survived transplant 
+
+all_wl2_size_for_models <- all_wl2_size_loc %>% 
+  filter(parent.pop != "WV") %>% 
+  filter(!is.na(height.cm))
+
+#Sam said that you want 10x the number of parameters (4) you are estimating. So should I remove everything with a sample size of less than ~35?
+```
 
 ## Quick figure
 Height
@@ -159,10 +180,7 @@ all_wl2_size_loc %>%
   ggplot(aes(group=Genotype, x=survey_date, y=height.cm, col=elev_m)) + 
   scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
   geom_line() + facet_wrap(~parent.pop, scales = "free")
-ggsave("../output/WL2_Traits/Growth_AllPops.png", width = 14, height = 8, units = "in")
-
-#Check strange lines
-all_wl2_size_loc %>% filter(parent.pop=="CP3") %>% filter(height.cm > 8)
+#ggsave("../output/WL2_Traits/Growth_AllPops.png", width = 14, height = 8, units = "in")
 ```
 
 Leaf Length
@@ -171,4 +189,369 @@ all_wl2_size_loc %>%
   ggplot(aes(group=Genotype, x=survey_date, y=long.leaf.cm, col=elev_m)) + 
   scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
   geom_line() + facet_wrap(~parent.pop, scales = "free")
+```
+
+### Check weird cases
+```{r, eval=FALSE}
+#Check strange lines
+all_wl2_size_loc %>% filter(parent.pop=="WL2") %>% filter(height.cm>7) #data entry error, fixed on csv
+all_wl2_size_loc %>% filter(parent.pop=="YO4") %>% filter(Genotype=="YO4_2_1") #data entry error, fixed on csv
+all_wl2_size_loc %>% filter(parent.pop=="CP2") %>% filter(Genotype=="CP2_2_11") #data entry error, fixed on csv
+all_wl2_size_loc %>% filter(parent.pop=="CP2") %>% filter(Genotype=="CP2_4_14") #data entry error, fixed on csv
+all_wl2_size_loc %>% filter(parent.pop=="CP3") %>% filter(Genotype=="CP3_4_8") #data entry error, fixed on csv
+all_wl2_size_loc %>% filter(parent.pop=="CP3") %>% filter(Genotype=="CP3_4_2") #data entry error, fixed on csv
+all_wl2_size_loc %>% filter(parent.pop=="LV3") %>% filter(height.cm>6) #data entry error, fixed on csv
+all_wl2_size_loc %>% filter(parent.pop=="LV3") %>% filter(Genotype=="LV3_7_7") #not an error, the plant had a long leaf that week 
+all_wl2_size_loc %>% filter(parent.pop=="SQ3") %>% arrange(Genotype, survey_date) #data entry error, fixed on csv
+all_wl2_size_loc %>% filter(parent.pop=="SQ3") %>% filter(Genotype=="SQ3_4_7") #not an error, the plant had a long leaf that week 
+all_wl2_size_loc %>% filter(parent.pop=="YO8") %>% filter(height.cm>7) #data entry error, fixed on csv
+all_wl2_size_loc %>% filter(parent.pop=="YO8") %>% filter(Genotype=="YO8_3_8") #no error, the plant grew then died 
+all_wl2_size_loc %>% filter(parent.pop=="YO8") %>% filter(Genotype=="YO8_2_8") #no error, the plant grew then shrinked
+all_wl2_size_loc %>% filter(parent.pop=="LV1") %>% filter(height.cm>10) #data entry error, fixed on csv
+all_wl2_size_loc %>% filter(parent.pop=="LV1") %>% filter(Genotype=="LV1_6_1") #no error, the plant grew then shrinked
+all_wl2_size_loc %>% filter(parent.pop=="LV1") %>% filter(Genotype=="LV1_2_1") #no error, herbivory caused no leaves one week in Sept
+
+all_wl2_size_loc %>% filter(parent.pop=="FR") %>% filter(Genotype=="FR_7_3") #no error, the plant grew and then started dying
+all_wl2_size_loc %>% filter(parent.pop=="BH") %>% filter(long.leaf.cm>7.5) #no error, the plant grew and then shrinked 
+```
+
+## Model growth with the Weibull model 
+
+```{r}
+weibull <- function (t, alpha, beta, k, delta) {
+  result <- alpha - (alpha - beta) * exp(-(k * t)^delta)
+  return(result)
+}
+
+growth <- tibble(time = seq(0,100,.1)) %>%
+  mutate(model1 = weibull(t = time,
+                          alpha = 40,
+                          beta = 10,
+                          k = 0.1,
+                          delta = 3))
+
+growth %>%  ggplot(aes(x=time, y=model1)) +
+  geom_line()
+```
+
+
+### Base Model
+```{r}
+f1_WL2 <- brmsformula(height.cm ~ Hmax - (Hmax - Hmin) * exp(-(k/100 * day)^delta), #Weibull formula, divide k by 100 to get it on a more reasonable scale
+    Hmax + Hmin + k + delta ~ 1, # how each parameter should be fit with respect to the predictors 
+    #we want a single parameter value (Intercept) for each of the four parameters
+   nl=TRUE) #tells brms that this is a non-linear formula
+```
+
+### Set Priors
+```{r}
+prior1_WL2 <- c(set_prior("normal(4,3)", nlpar="Hmin"), #(mean, sd)
+            set_prior("normal(25,10)",  nlpar="Hmax"),
+            set_prior("gamma(2,2)", nlpar = "k"), #gamma constrains to be > 0 
+            set_prior("gamma(20,3)", nlpar = "delta")
+)
+
+#Hmax = alpha -  Sets the asymptote (max growth)
+#Hmin = beta - Changes the y intercept (the lower limit)
+#k - Often described as the growth rate --\> related to the slope of the line
+#delta - Sets the inflection point - when you shift b/t concave to convex
+```
+
+Code for plotting different normal distributions 
+```{r}
+#define population mean and standard deviation
+population_mean <- 4
+population_sd <- 3
+
+#define upper and lower bound
+lower_bound <- population_mean - population_sd
+upper_bound <- population_mean + population_sd
+
+#Create a sequence of 1000 x values based on population mean and standard deviation
+x <- seq(-4, 4, length = 1000) * population_sd + population_mean
+
+#create a vector of values that shows the height of the probability distribution
+#for each value in x
+y <- dnorm(x, population_mean, population_sd)
+
+#plot normal distribution with customized x-axis labels
+plot(x,y, type = "l", lwd = 2, axes = FALSE, xlab = "", ylab = "")
+sd_axis_bounds = 5
+axis_bounds <- seq(-sd_axis_bounds * population_sd + population_mean,
+                    sd_axis_bounds * population_sd + population_mean,
+                    by = population_sd)
+axis(side = 1, at = axis_bounds, pos = 0)
+```
+Gamma dist:
+```{r}
+#define population mean and standard deviation
+population_mean <- 20
+population_sd <- 3
+
+#define upper and lower bound
+lower_bound <- population_mean - population_sd
+upper_bound <- population_mean + population_sd
+
+#Create a sequence of 1000 x values based on population mean and standard deviation
+x <- seq(-4, 4, length = 1000) * population_sd + population_mean
+
+#create a vector of values that shows the height of the probability distribution
+#for each value in x
+y <- dgamma(x, population_mean, population_sd)
+
+#plot normal distribution with customized x-axis labels
+plot(x,y, type = "l", lwd = 2, axes = FALSE, xlab = "", ylab = "")
+sd_axis_bounds = 5
+axis_bounds <- seq(-sd_axis_bounds * population_sd + population_mean,
+                    sd_axis_bounds * population_sd + population_mean,
+                    by = population_sd)
+axis(side = 1, at = axis_bounds, pos = 0)
+```
+
+### Fit the model
+```{r}
+fit1_WL2 <- brm(formula=f1_WL2, data=all_wl2_size_for_models, prior=prior1_WL2, cores = 4)
+```
+
+Summary
+```{r}
+summary(fit1_WL2)
+#Rhat and ESS are fine 
+```
+
+Plots
+```{r}
+plot(fit1_WL2, nvariables = 3, ask=FALSE)
+#posterior distributions look fine 
+```
+
+### Predictions
+```{r}
+fit1_WL2.prediction <- cbind(all_wl2_size_for_models, pred1=predict(fit1_WL2)[,"Estimate"])
+
+fit1_WL2.prediction %>% ggplot(aes(x=day)) +
+  geom_line(aes(group=Genotype, y=height.cm), alpha=.1) +
+  geom_line(aes(y=pred1), color="blue") +
+  facet_wrap(. ~parent.pop)
+
+#Predictions are clearly off, esp for TM2, good for BH 
+```
+
+## Let Hmax vary 
+```{r}
+random_f2_WL2 <- brmsformula(height.cm ~ Hmax - (Hmax - Hmin) * exp(-(k/100 * day)^delta),
+                  Hmin + k + delta ~ 1,
+                  Hmax ~ (1|parent.pop), #different hmax for each pop + random effect of pop
+                  nl=TRUE)
+```
+
+Default Priors
+```{r}
+get_prior(random_f2_WL2, data = all_wl2_size_for_models)
+#there's now a prior for sd of Hmax due to pop
+#don't need a specific prior for each pop now 
+
+prior2_WL2 <- c(set_prior("normal(5,3)", nlpar="Hmin"),
+            set_prior("normal(60,15)",  nlpar="Hmax"),
+            set_prior("gamma(2,2)", nlpar = "k"), #gamma constrains to be > 0 
+            set_prior("gamma(20,3)", nlpar = "delta")
+) #same as prior 1 for now 
+```
+
+### Fit the model
+```{r}
+random_fit2_WL2 <- brm(formula=random_f2_WL2, data=all_wl2_size_for_models, prior=prior2_WL2, cores = 4, iter = 3000) #increase iterations b/c more complex (helps with Rhat and ESS)
+```
+
+Summary
+```{r}
+summary(random_fit2_WL2)
+#rhat and ESS look good
+```
+
+```{r}
+plot(random_fit2_WL2, nvariables = 3, ask=FALSE)
+```
+
+### Predictions
+The function expand_grid creates a data frame with all combinations of the items it is given (days and pops in this case).
+```{r}
+pred.df <- expand_grid(day=min(all_wl2_size_for_models$day):max(all_wl2_size_for_models$day),
+                       parent.pop=unique(all_wl2_size_for_models$parent.pop))
+pred.df
+```
+
+```{r}
+random_fit2_WL2.predictions <- cbind(pred.df, prediction=predict(random_fit2_WL2, newdata = pred.df)[,"Estimate"]) %>%
+  full_join(all_wl2_size_for_models, by=c("day", "parent.pop"))
+
+random_fit2_WL2.predictions %>% ggplot(aes(x=day)) +
+  geom_line(aes(group=Genotype, y=height.cm, color=parent.pop), alpha=.2) +
+  geom_line(aes(y=prediction, color=parent.pop)) +
+  #scale_color_brewer(type="qual", palette = "Set2", guide="none") +
+  facet_wrap(~parent.pop)
+
+random_fit2_WL2.predictions %>% filter(parent.pop=="BH") %>% 
+  ggplot(aes(x=day)) +
+  geom_line(aes(group=Genotype, y=height.cm, color=parent.pop), alpha=.2) +
+  geom_line(aes(y=prediction, color=parent.pop)) +
+  facet_wrap(~parent.pop)
+
+#not really capturing the curve well for any parent.pop
+```
+
+## Vary slope (k) and asymptote (Hmax) by pop
+```{r}
+random_f3_WL2 <- brmsformula(height.cm ~ Hmax - (Hmax - Hmin) * exp(-(k/100 * day)^delta),
+                  Hmin + delta ~ 1,
+                  Hmax ~ (1|parent.pop), #different hmax for each pop 
+                  #could also do Hmax + k  ~pop
+                  k ~ (1|parent.pop), #different k for each pop
+                  nl=TRUE)
+```
+
+### Priors
+```{r}
+get_prior(random_f3_WL2, data=all_wl2_size_for_models)
+
+prior3_WL2 <- c(set_prior("normal(5,3)", nlpar="Hmin"),
+            set_prior("normal(60,15)",  nlpar="Hmax"),
+            set_prior("normal(0,1)", nlpar = "k"), #gamma constrains to be > 0 
+            set_prior("gamma(20,3)", nlpar = "delta")
+)
+```
+
+### Fit the model
+```{r}
+random_fit3_WL2 <- brm(formula=random_f3_WL2, data=all_wl2_size_for_models, prior=prior3_WL2, cores = 4, iter = 4000)
+#Warning: There were 1299 divergent transitions after warmup. See
+#https://mc-stan.org/misc/warnings.html#divergent-transitions-after-warmup
+#to find out why this is a problem and how to eliminate them.Warning: There were 181 transitions after warmup that exceeded #the maximum treedepth. Increase max_treedepth above 10. See
+#https://mc-stan.org/misc/warnings.html#maximum-treedepth-exceededWarning: Examine the pairs() plot to diagnose sampling #problems
+```
+
+Summary
+```{r}
+summary(random_fit3_WL2)
+#Rhat is high, but ESS is low for sd(k_Intercept) and k_Intercept
+#Warning: There were 2350 divergent transitions after warmup. Increasing adapt_delta above 0.8 may help.
+```
+
+Plots
+```{r}
+plot(random_fit3_WL2, N = 3, ask=FALSE)
+#some weirdness with the chains 
+```
+
+### Pairs 
+```{r}
+pairs(random_fit3_WL2, variable = "TM2", regex = TRUE) 
+#look at correlation b/t hmax and k for each pop 
+```
+
+Predictions 
+```{r}
+random_fit3_WL2.predictions <- cbind(pred.df, prediction=predict(random_fit3_WL2, newdata = pred.df)[,"Estimate"]) %>%
+  full_join(all_wl2_size_for_models, by=c("day", "parent.pop"))
+
+random_fit3_WL2.predictions %>% ggplot(aes(x=day)) +
+  geom_line(aes(group=Genotype, y=height.cm, color=parent.pop), alpha=.2) +
+  geom_line(aes(y=prediction, color=parent.pop)) +
+  facet_wrap(~parent.pop)
+#looks better even though the fit diagnostics aren't perfect
+```
+
+## Let delta and hmax vary 
+```{r}
+random_f4_WL2 <- brmsformula(height.cm ~ Hmax - (Hmax - Hmin) * exp(-(k/100 * day)^delta),
+                  Hmin + k ~ 1,
+                  Hmax ~ (1|parent.pop), #different hmax for each pop #could also do Hmax + k  ~pop
+                  delta ~ (1|parent.pop), #different hmax for each pop
+                  nl=TRUE)
+```
+
+```{r}
+prior4_WL2 <- c(set_prior("normal(5,3)", nlpar="Hmin"),
+            set_prior("normal(60,15)",  nlpar="Hmax"),
+            set_prior("gamma(2,2)", nlpar = "k"), #gamma constrains to be > 0 
+            set_prior("gamma(20,3)", nlpar = "delta")
+)
+```
+
+```{r}
+random_fit4_WL2 <- brm(formula=random_f4_WL2, data=all_wl2_size_for_models, prior=prior4_WL2, cores = 4, iter = 4000)
+```
+
+```{r}
+summary(random_fit4_WL2)
+```
+
+```{r}
+plot(random_fit4_WL2, N = 3, ask=FALSE)
+```
+
+Predictions 
+```{r}
+random_fit4_WL2.predictions <- cbind(pred.df, prediction=predict(random_fit4_WL2, newdata = pred.df)[,"Estimate"]) %>%
+  full_join(all_wl2_size_for_models, by=c("day", "parent.pop"))
+
+random_fit4_WL2.predictions %>% ggplot(aes(x=day)) +
+  geom_line(aes(group=Genotype, y=height.cm, color=parent.pop), alpha=.2) +
+  geom_line(aes(y=prediction, color=parent.pop)) +
+  facet_wrap(~parent.pop)
+```
+
+
+## Let delta, k, and hmax vary
+```{r}
+random_f5_WL2 <- brmsformula(height.cm ~ Hmax - (Hmax - Hmin) * exp(-(k/100 * day)^delta),
+                  Hmin ~ 1,
+                  Hmax ~ (1|parent.pop), #different hmax for each pop #could also do Hmax + k  ~pop
+                  k ~ (1|parent.pop), #different hmax for each pop
+                  delta ~ (1|parent.pop),
+                  nl=TRUE)
+```
+
+```{r}
+prior5_WL2 <- c(set_prior("normal(5,3)", nlpar="Hmin"),
+            set_prior("normal(60,15)",  nlpar="Hmax"),
+            set_prior("gamma(2,2)", nlpar = "k"), #gamma constrains to be > 0 
+            set_prior("gamma(20,3)", nlpar = "delta")
+)
+            #first number = avg, second number = the space around that average to search 
+```
+
+```{r}
+random_fit5_WL2 <- brm(formula=random_f5_WL2, data=all_wl2_size_for_models, prior=prior5_WL2, cores = 4, iter = 4000)
+```
+
+```{r}
+summary(random_fit5_WL2)
+```
+
+```{r}
+plot(random_fit5_WL2, N = 3, ask=FALSE)
+
+pairs(random_fit5_WL2, variable = "DPR", regex = TRUE) #Want the correlations to be more cloud like (no obvious correlations among parameters)
+```
+
+Predictions 
+```{r}
+random_fit5_WL2.predictions <- cbind(pred.df, prediction=predict(random_fit5_WL2, newdata = pred.df)[,"Estimate"]) %>%
+  full_join(all_wl2_size_for_models, by=c("day", "parent.pop"))
+
+random_fit5_WL2.predictions %>% ggplot(aes(x=day)) +
+  geom_line(aes(group=Genotype, y=height.cm, color=parent.pop), alpha=.2) +
+  geom_line(aes(y=prediction, color=parent.pop)) +
+  facet_wrap(~parent.pop)
+```
+
+## Model Comparison 
+```{r}
+fit1_WL2 <- add_criterion(fit1_WL2, "loo")
+random_fit2_WL2 <- add_criterion(random_fit2_WL2, "loo")
+random_fit3_WL2 <- add_criterion(random_fit3_WL2, "loo")
+random_fit4_WL2 <- add_criterion(random_fit4_WL2, "loo")
+random_fit5_WL2 <- add_criterion(random_fit5_WL2, "loo")
+loo_compare(fit1_WL2, random_fit2_WL2, random_fit3_WL2, random_fit4_WL2, random_fit5_WL2)
 ```
