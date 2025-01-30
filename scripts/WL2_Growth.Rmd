@@ -76,8 +76,8 @@ map(all_wl2_size2$sheets, colnames) %>% #get unique column names
 
 map(all_wl2_size2$sheets, head,10) #look at first 10 lines of each sheet 
 
-all_ucd_size2$sheets[[3]] %>% rowwise() %>% filter(!is.na(mf)) %>%  filter(is.na(as.numeric(mf))) #all chars = NA
-all_ucd_size2$sheets[[3]] %>% rowwise() %>% filter(!is.na(rep)) %>%  filter(is.na(as.numeric(rep))) #all chars = NA
+all_wl2_size2$sheets[[3]] %>% rowwise() %>% filter(!is.na(mf)) %>%  filter(is.na(as.numeric(mf))) #all buffers
+all_wl2_size2$sheets[[3]] %>% rowwise() %>% filter(!is.na(rep)) %>%  filter(is.na(as.numeric(rep))) #all buffers
 
 all_wl2_size2$sheets[[1]] <- all_wl2_size2$sheets[[1]] %>% 
   rename(pop=Pop, height.cm=`height (cm)`, long.leaf.cm=`longest leaf (cm)`, survey.notes=Notes) %>% 
@@ -132,7 +132,9 @@ unique(all_wl2_size_all_nobuffers$parent.pop) #buffers removed!
 unique(all_wl2_size_all_nobuffers$survey_date) 
 tail(all_wl2_size_all_nobuffers)
 
-write_csv(all_wl2_size_all_nobuffers, "../output/WL2_Traits/WL2-2023_Size_Combined.csv")
+unique(all_wl2_size_all_nobuffers$block)
+
+#write_csv(all_wl2_size_all_nobuffers, "../output/WL2_Traits/WL2-2023_Size_Combined.csv")
 ```
 
 ## Pop Location Info
@@ -169,7 +171,8 @@ all_wl2_size_for_models <- all_wl2_size_loc %>%
   filter(parent.pop != "WV") %>% 
   filter(!is.na(height.cm))
 
-#Sam said that you want 10x the number of parameters (4) you are estimating. So should I remove everything with a sample size of less than ~35?
+#Sam said that you want 10x the number of parameters (4) you are estimating. So should I remove everything with a sample size of less than ~35? 
+#That would be pretty conservative so let's set 5 as a minimum sample size 
 ```
 
 ## Quick figure
@@ -226,10 +229,10 @@ weibull <- function (t, alpha, beta, k, delta) {
 
 growth <- tibble(time = seq(0,100,.1)) %>%
   mutate(model1 = weibull(t = time,
-                          alpha = 40,
-                          beta = 10,
-                          k = 0.1,
-                          delta = 3))
+                          alpha = 40, #Hmax = alpha -  Sets the asymptote (max growth)
+                          beta = 0.5, #Hmin = beta - Changes the y intercept (the lower limit)
+                          k = 0.01, #k - Often described as the growth rate --\> related to the slope of the line
+                          delta = 0.5)) #delta - Sets the inflection point - when you shift b/t concave to convex
 
 growth %>%  ggplot(aes(x=time, y=model1)) +
   geom_line()
@@ -248,8 +251,8 @@ f1_WL2 <- brmsformula(height.cm ~ Hmax - (Hmax - Hmin) * exp(-(k/100 * day)^delt
 ```{r}
 prior1_WL2 <- c(set_prior("normal(4,3)", nlpar="Hmin"), #(mean, sd)
             set_prior("normal(25,10)",  nlpar="Hmax"),
-            set_prior("gamma(2,2)", nlpar = "k"), #gamma constrains to be > 0 
-            set_prior("gamma(20,3)", nlpar = "delta")
+            set_prior("gamma(1,2)", nlpar = "k"), #gamma constrains to be > 0 
+            set_prior("gamma(4,2)", nlpar = "delta")
 )
 
 #Hmax = alpha -  Sets the asymptote (max growth)
@@ -261,8 +264,8 @@ prior1_WL2 <- c(set_prior("normal(4,3)", nlpar="Hmin"), #(mean, sd)
 Code for plotting different normal distributions 
 ```{r}
 #define population mean and standard deviation
-population_mean <- 4
-population_sd <- 3
+population_mean <- 25
+population_sd <- 10
 
 #define upper and lower bound
 lower_bound <- population_mean - population_sd
@@ -286,8 +289,8 @@ axis(side = 1, at = axis_bounds, pos = 0)
 Gamma dist:
 ```{r}
 #define population mean and standard deviation
-population_mean <- 20
-population_sd <- 3
+population_mean <- 4
+population_sd <- 2
 
 #define upper and lower bound
 lower_bound <- population_mean - population_sd
@@ -311,19 +314,24 @@ axis(side = 1, at = axis_bounds, pos = 0)
 
 ### Fit the model
 ```{r}
-fit1_WL2 <- brm(formula=f1_WL2, data=all_wl2_size_for_models, prior=prior1_WL2, cores = 4)
+fit1_WL2 <- brm(formula=f1_WL2, data=all_wl2_size_for_models, prior=prior1_WL2, cores = 4,  iter = 4000)
+
+#Warning: There were 2722 divergent transitions after warmup.
+#Warning: The largest R-hat is 1.69, indicating chains have not mixed.
+#Bulk Effective Samples Size (ESS) is too low, indicating posterior means and medians may be unreliable
+#Tail Effective Samples Size (ESS) is too low, indicating posterior variances and tail quantiles may be unreliable.
 ```
 
 Summary
 ```{r}
 summary(fit1_WL2)
-#Rhat and ESS are fine 
+#Rhat and ESS are terrible  
 ```
 
 Plots
 ```{r}
 plot(fit1_WL2, nvariables = 3, ask=FALSE)
-#posterior distributions look fine 
+#posterior distributions look bad
 ```
 
 ### Predictions
