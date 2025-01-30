@@ -326,6 +326,8 @@ Summary
 ```{r}
 summary(fit1_WL2)
 #Rhat and ESS are terrible  
+
+pairs(fit1_WL2, regex = TRUE) #doesn't look great, these should be more cloud like than show patterns, I think...
 ```
 
 Plots
@@ -375,7 +377,7 @@ random_fit2_WL2 <- brm(formula=random_f2_WL2, data=all_wl2_size_for_models, prio
 Summary
 ```{r}
 summary(random_fit2_WL2)
-#rhat and ESS look good
+
 ```
 
 ```{r}
@@ -406,7 +408,7 @@ random_fit2_WL2.predictions %>% filter(parent.pop=="BH") %>%
   geom_line(aes(y=prediction, color=parent.pop)) +
   facet_wrap(~parent.pop)
 
-#not really capturing the curve well for any parent.pop
+
 ```
 
 ## Vary slope (k) and asymptote (Hmax) by pop
@@ -433,23 +435,19 @@ prior3_WL2 <- c(set_prior("normal(5,3)", nlpar="Hmin"),
 ### Fit the model
 ```{r}
 random_fit3_WL2 <- brm(formula=random_f3_WL2, data=all_wl2_size_for_models, prior=prior3_WL2, cores = 4, iter = 4000)
-#Warning: There were 1299 divergent transitions after warmup. See
-#https://mc-stan.org/misc/warnings.html#divergent-transitions-after-warmup
-#to find out why this is a problem and how to eliminate them.Warning: There were 181 transitions after warmup that exceeded #the maximum treedepth. Increase max_treedepth above 10. See
-#https://mc-stan.org/misc/warnings.html#maximum-treedepth-exceededWarning: Examine the pairs() plot to diagnose sampling #problems
+
 ```
 
 Summary
 ```{r}
 summary(random_fit3_WL2)
-#Rhat is high, but ESS is low for sd(k_Intercept) and k_Intercept
-#Warning: There were 2350 divergent transitions after warmup. Increasing adapt_delta above 0.8 may help.
+
 ```
 
 Plots
 ```{r}
 plot(random_fit3_WL2, N = 3, ask=FALSE)
-#some weirdness with the chains 
+
 ```
 
 ### Pairs 
@@ -467,7 +465,7 @@ random_fit3_WL2.predictions %>% ggplot(aes(x=day)) +
   geom_line(aes(group=Genotype, y=height.cm, color=parent.pop), alpha=.2) +
   geom_line(aes(y=prediction, color=parent.pop)) +
   facet_wrap(~parent.pop)
-#looks better even though the fit diagnostics aren't perfect
+
 ```
 
 ## Let delta and hmax vary 
