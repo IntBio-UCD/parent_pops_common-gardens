@@ -32,7 +32,99 @@ wl2_fruits <- wl2_ann_cens %>% select(block:rep, flowers=num.flw, fruits=num.fru
 ```{r}
 ucd_surv <- read_csv("../input/UCD_Data/CorrectedCSVs/UCD_transplants_pheno_mort_20231016_corrected.csv")
 
-wl2_surv_y1 <- read_csv("../input/WL2_Data/CorrectedCSVs/WL2_mort_pheno_20231020_corrected.csv") #need to add in 10/27 mortality 
-wl2_surv_y2 <- read_csv() #used "WL2_status_check_20240603_corrected.csv" for over-winter survival script. Should use final mort/pheno from Oct 2024...
+wl2_surv_1020 <- read_csv("../input/WL2_Data/CorrectedCSVs/WL2_mort_pheno_20231020_corrected.csv") #need to add in 10/27 mortality 
+wl2_surv_1027 <- wl2_ann_cens %>% 
+  filter(pheno=="X") %>% 
+  select(death.date_2=date, block:bed, bed.row=`bed-row`, bed.col=`bed-col`, pop:rep) 
+wl2_surv_y1 <- left_join(wl2_surv_1020, wl2_surv_1027) %>% 
+  mutate(death.date=if_else(is.na(death.date), death.date_2, death.date)) %>% 
+  unite(Genotype, pop:rep, sep="_", remove = FALSE) %>% 
+  filter(!is.na(pop), !str_detect(Genotype, ".*buff*")) %>%  #remove buffers 
+  select(block:survey.notes)
+
+wl2_20241023 <- read_csv("../input/WL2_Data/WL2_mort_pheno_20241023_corrected.csv") %>% #note this has 2023 and 2024 plants
+  select(-block)
+wl2_y2_pops <- read_csv("../input/WL2_Data/Final_2023_2024_Pop_Loc_Info.csv") %>%
+  select(Pop.Type:unique.ID) %>% 
+  filter(Pop.Type=="2023-survivor") %>% 
+  select(Pop.Type, loc:bed, row=bedrow, col=bedcol, pop:unique.ID)
+wl2_surv_y2 <- left_join(wl2_y2_pops, wl2_20241023)
+```
+
+## Gower's Distance
+```{r}
+ucd_gowers <- read_csv("../output/Climate/Gowers_UCD.csv") %>% 
+  select(parent.pop:GrwSsn_GD, Wtr_Year_GD) %>% 
+  pivot_wider(names_from = TimePd, values_from = c(GrwSsn_GD, Wtr_Year_GD))
+
+wl2_gowers_2023 <- read_csv("../output/Climate/Gowers_WL2.csv") %>% 
+  select(parent.pop:GrwSsn_GD, Wtr_Year_GD) %>% 
+  pivot_wider(names_from = TimePd, values_from = c(GrwSsn_GD, Wtr_Year_GD))
+
+wl2_gowers_2024 
+```
+
+
+## p(Establishment)
+Davis
+```{r}
+ucd_surv
+```
+
+WL2 - 3 weeks based off survival curve
+```{r}
+wl2_establishment <- wl2_surv_y1 %>% 
+  select(block:rep, death.date) %>% 
+  mutate(death.date=mdy(death.date)) %>% 
+  mutate(Establishment=if_else(is.na(death.date), 1,
+                               if_else(death.date=="2023-07-26" | death.date=="2023-08-02" | death.date=="2023-08-09", 0,
+                                       1)))
+  
+wl2_establishment %>% 
+  group_by(pop) %>% 
+  summarise(meanEst=mean(Establishment, na.rm = TRUE), semEst=sem(Establishment, na.rm=TRUE)) %>% 
+  ggplot(aes(x=fct_reorder(pop, meanEst), y=meanEst)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.2, position = 
+                  position_dodge(0.75)) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) 
+```
+
+
+## p(Surv to Rep - y1)
+```{r}
+
+```
+
+
+## Fruits(y1) 
+```{r}
+
+```
+
+
+## p(Winter Surv)
+```{r}
+
+```
+
+
+## p(Surv to Rep - y2)
+```{r}
+
+```
+
+
+## Fruits(y2)
+```{r}
+
+```
+
+
+## Total fitness
+p(Establishment)*p(Surv to Rep - y1)*Fruits(y1) + p(Winter Surv)*p(Surv to Rep - y2)*Fruits(y2)
+```{r}
+
 ```
 
