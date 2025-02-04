@@ -87,12 +87,14 @@ names(anncensustrans.0522) <- gsub(" ", "", colnames(anncensustrans.0522))
 anncensustrans.0522 %>% rowwise() %>% filter(!is.na(mf)) %>% filter(is.na(as.numeric(mf))) #mf = X when pop = buffer
 anncensustrans.0522 %>% rowwise() %>% filter(!is.na(rep)) %>% filter(is.na(as.numeric(rep)))
 anncensustrans.0522 %>% filter(pheno != "X" & is.na(diam_mm)) #no living plants without a diameter
+anncensustrans.0522 %>% filter(fruits>=0, is.na(diam_mm)) #2 dead plants with 0 fruits 
 anncensustrans.0522_alive <- anncensustrans.0522 %>% filter(!is.na(diam_mm)) %>% mutate_at(c("mf", "rep"), as.double) #used diameter instead of pheno to filter b/c some dying plants were measured 
 summary(anncensustrans.0522_alive)
 
 anncensustrans.0626 <- read_csv("../input/UCD_Data/CorrectedCSVs/Annual_Census_transplants_20230626_corrected.csv")
 names(anncensustrans.0626) <- gsub(" ", "", colnames(anncensustrans.0626))
 anncensustrans.0626 %>% filter(pheno == "X" & !is.na(diam_mm)) #no dead plants that have size info
+anncensustrans.0626 %>% filter(fruits>=0, pheno =="X")
 anncensustrans.0626_alive <- anncensustrans.0626 %>% filter(pheno != "X")
 summary(anncensustrans.0626_alive) #56 plants alive 
 
@@ -158,9 +160,19 @@ anncensustrans_all_alive_max_elev_noinf <- anncensustrans_all_alive_max_elev %>%
   mutate_if(is.double, list(~na_if(., -Inf))) %>%  #replace -INf with NAs
   filter(parent.pop != "WL1") %>%                  #take out pops with only 1 individual alive 
   filter(parent.pop != "SQ3") %>% 
-  mutate(longest_fruit = na_if(longest_fruit, 0)) %>%  #change 0 branches to NA
+  mutate(longest_fruit = na_if(longest_fruit, 0)) %>%  #change 0 to NA for plants with 0 fruits 
   filter(rep != 100) #get rid of individuals that germinated in the field 
 summary(anncensustrans_all_alive_max_elev_noinf)
+
+anncensustrans_all_alive_max_elev %>% filter(longest_fruit==0)
+
+anncensustrans_all_alive_max_to_export <-  anncensustrans_all_alive_max_elev %>% 
+  ungroup() %>% 
+  mutate_if(is.double, list(~na_if(., -Inf))) %>% 
+  mutate(longest_fruit = na_if(longest_fruit, 0)) %>%  #change 0 to NA for plants with 0 fruits 
+  filter(rep != 100) #get rid of individuals that germinated in the field 
+head(anncensustrans_all_alive_max_to_export)
+write_csv(anncensustrans_all_alive_max_to_export, "../output/UCD_Traits/UCD2023_Annual_Census_Combined.csv")
 ```
 
 ## Summary plots
