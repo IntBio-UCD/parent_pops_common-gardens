@@ -10,11 +10,17 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 # Total Fitness at both sites 
+To Do:
+- add in annual census/fruit number for WL2 2024
+- add in gowers_distance for WL2 2024 
+- add in geographic distance 
+
 Total Fitness: p(Establishment)*p(Surv to Rep - y1)*Fruits(y1) + p(Winter Surv)*p(Surv to Rep - y2)*Fruits(y2)
 
 ## Libraries
 ```{r}
 library(tidyverse)
+library(sp) #for calculating geographic distance 
 ```
 
 
@@ -24,18 +30,27 @@ ucd_ann_cens <- read_csv("../output/UCD_Traits/UCD2023_Annual_Census_Combined.cs
 ucd_fruits <- ucd_ann_cens %>% select(block:rep, elevation.group, elev_m, Lat:Long, flowers, fruits)
 
 wl2_ann_cens <- read_csv("../input/WL2_Data/CorrectedCSVs/WL2_annual_census_20231027_corrected.csv")
-wl2_fruits <- wl2_ann_cens %>% select(block:rep, flowers=num.flw, fruits=num.fruit)
+wl2_fruits_y1 <- wl2_ann_cens %>% select(block:rep, flowers=num.flw, fruits=num.fruit)
+
+#wl2_ann_cens_2024
+#wl2_fruits_y2
 ```
 
 
 ## Need surv post-transplant shock, surv to rep both years, and winter survival
 ```{r}
-ucd_surv <- read_csv("../input/UCD_Data/CorrectedCSVs/UCD_transplants_pheno_mort_20231016_corrected.csv")
+ucd_surv <- read_csv("../input/UCD_Data/CorrectedCSVs/UCD_transplants_pheno_mort_20231016_corrected.csv") %>% 
+  rename(death.date=`Death Date`, bud.date=`Date First Bud`, flower.date=`Date First Flower`, 
+         fruit.date=`Date First Fruit`, last.flower.date=`Date Last Flower`, last.fruit.date=`Date Last Fruit`) %>% 
+  filter(!is.na(pop)) %>% 
+  filter(rep != 100) %>% #get rid of individuals that germinated in the field 
+  unite(Genotype, pop:rep, sep="_", remove = FALSE) 
 
 wl2_surv_1020 <- read_csv("../input/WL2_Data/CorrectedCSVs/WL2_mort_pheno_20231020_corrected.csv") #need to add in 10/27 mortality 
 wl2_surv_1027 <- wl2_ann_cens %>% 
   filter(pheno=="X") %>% 
-  select(death.date_2=date, block:bed, bed.row=`bed-row`, bed.col=`bed-col`, pop:rep) 
+  select(death.date_2=date, block:bed, bed.row=`bed-row`, bed.col=`bed-col`, pop:rep) #add in 10/27 death dates
+#note: 10/27 pheno dates (like flowering), not updated with this code 
 wl2_surv_y1 <- left_join(wl2_surv_1020, wl2_surv_1027) %>% 
   mutate(death.date=if_else(is.na(death.date), death.date_2, death.date)) %>% 
   unite(Genotype, pop:rep, sep="_", remove = FALSE) %>% 
@@ -55,76 +70,226 @@ wl2_surv_y2 <- left_join(wl2_y2_pops, wl2_20241023)
 ```{r}
 ucd_gowers <- read_csv("../output/Climate/Gowers_UCD.csv") %>% 
   select(parent.pop:GrwSsn_GD, Wtr_Year_GD) %>% 
-  pivot_wider(names_from = TimePd, values_from = c(GrwSsn_GD, Wtr_Year_GD))
+  pivot_wider(names_from = TimePd, values_from = c(GrwSsn_GD, Wtr_Year_GD)) %>% 
+  rename(pop=parent.pop)
 
 wl2_gowers_2023 <- read_csv("../output/Climate/Gowers_WL2.csv") %>% 
   select(parent.pop:GrwSsn_GD, Wtr_Year_GD) %>% 
-  pivot_wider(names_from = TimePd, values_from = c(GrwSsn_GD, Wtr_Year_GD))
+  pivot_wider(names_from = TimePd, values_from = c(GrwSsn_GD, Wtr_Year_GD)) %>% 
+  rename(pop=parent.pop)
 
-wl2_gowers_2024 
+#wl2_gowers_2024 
 ```
 
 
 ## p(Establishment)
-Davis
+Davis - used 3 weeks to match WL2
 ```{r}
-ucd_surv
+unique(ucd_surv$pop)
+ucd_establishment <- ucd_surv %>% 
+  left_join(ucd_gowers) %>% 
+  select(block:rep, elevation.group:Wtr_Year_GD_Historical, death.date) %>% 
+  mutate(death.date=mdy(death.date)) %>% 
+  mutate(Establishment=if_else(is.na(death.date), 1,
+                               if_else(death.date=="2022-11-30" | death.date=="2022-12-13" | death.date=="2022-12-21", 0,
+                                       1)))
+
+ucd_establishment %>% 
+  group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
+  summarise(meanEst=mean(Establishment, na.rm = TRUE), semEst=sem(Establishment, na.rm=TRUE)) %>% 
+  ggplot(aes(x=fct_reorder(pop, meanEst), y=meanEst, fill=GrwSsn_GD_Recent)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.2, position = 
+                  position_dodge(0.75)) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="p(Establishment)", x="Parent Population", fill="Growth Season Gowers") +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+
+ucd_establishment %>% 
+  group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
+  summarise(meanEst=mean(Establishment, na.rm = TRUE), semEst=sem(Establishment, na.rm=TRUE)) %>% 
+  ggplot(aes(x=fct_reorder(pop, meanEst), y=meanEst, fill=Wtr_Year_GD_Recent)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.2, position = 
+                  position_dodge(0.75)) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="p(Establishment)", x="Parent Population", fill="Water Year Gowers") +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 ```
 
 WL2 - 3 weeks based off survival curve
 ```{r}
 wl2_establishment <- wl2_surv_y1 %>% 
-  select(block:rep, death.date) %>% 
+  left_join(wl2_gowers_2023) %>% 
+  select(block:rep, elevation.group:Wtr_Year_GD_Historical, death.date) %>% 
   mutate(death.date=mdy(death.date)) %>% 
   mutate(Establishment=if_else(is.na(death.date), 1,
                                if_else(death.date=="2023-07-26" | death.date=="2023-08-02" | death.date=="2023-08-09", 0,
                                        1)))
   
 wl2_establishment %>% 
-  group_by(pop) %>% 
+  group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
   summarise(meanEst=mean(Establishment, na.rm = TRUE), semEst=sem(Establishment, na.rm=TRUE)) %>% 
-  ggplot(aes(x=fct_reorder(pop, meanEst), y=meanEst)) +
+  ggplot(aes(x=fct_reorder(pop, meanEst), y=meanEst, fill=GrwSsn_GD_Recent)) +
   geom_col(width = 0.7,position = position_dodge(0.75)) + 
   geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.2, position = 
                   position_dodge(0.75)) +
   theme_classic() + 
-  scale_y_continuous(expand = c(0.01, 0)) 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="p(Establishment)", x="Parent Population", fill="Growth Season Gowers") +
+  scale_fill_gradient(low = "#0043F0", high = "#F5A540") +
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+
+wl2_establishment %>% 
+  group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
+  summarise(meanEst=mean(Establishment, na.rm = TRUE), semEst=sem(Establishment, na.rm=TRUE)) %>% 
+  ggplot(aes(x=fct_reorder(pop, meanEst), y=meanEst, fill=Wtr_Year_GD_Recent)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.2, position = 
+                  position_dodge(0.75)) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="p(Establishment)", x="Parent Population", fill="Water Year Gowers") +
+  scale_fill_gradient(low = "#0043F0", high = "#F5A540") +
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 ```
 
 
 ## p(Surv to Rep - y1)
+Davis
 ```{r}
+ucd_surv %>% filter(!is.na(bud.date), is.na(fruit.date)) #all plants that initiated reproduction, but did not finish, have a death date 
+ucd_surv %>% filter(!is.na(fruit.date), !is.na(death.date)) #many plants with a fruit date, have a later death date 
+ucd_surv %>% filter(!is.na(fruit.date), is.na(death.date)) #some fruit plants do not have a death date
+ucd_surv %>% filter(is.na(fruit.date), !is.na(last.flower.date)) #did not miss any fruiting plants
+ucd_surv %>% filter(is.na(fruit.date), !is.na(last.fruit.date)) #did not miss any fruiting plants 
 
+ucd_surv_to_rep <- ucd_surv %>% 
+  left_join(ucd_gowers) %>% 
+  mutate(SurvtoRep_Y1=if_else(is.na(fruit.date), 0, 1)) %>% 
+  select(block:rep, elevation.group:Wtr_Year_GD_Historical, fruit.date, death.date, SurvtoRep_Y1) 
+
+ucd_surv_to_rep %>% 
+  group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
+  summarise(meanSurv=mean(SurvtoRep_Y1, na.rm = TRUE), semSurv=sem(SurvtoRep_Y1, na.rm=TRUE)) %>% 
+  ggplot(aes(x=fct_reorder(pop, meanSurv), y=meanSurv, fill=GrwSsn_GD_Recent)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) + 
+  geom_errorbar(aes(ymin=meanSurv-semSurv,ymax=meanSurv+semSurv),width=.2, position = 
+                  position_dodge(0.75)) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="p(Surv-to-Rep Y1)", x="Parent Population", fill="Growth Season Gowers") +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+
+ucd_surv_to_rep %>% 
+  group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
+  summarise(meanSurv=mean(SurvtoRep_Y1, na.rm = TRUE), semSurv=sem(SurvtoRep_Y1, na.rm=TRUE)) %>% 
+  ggplot(aes(x=fct_reorder(pop, meanSurv), y=meanSurv, fill=Wtr_Year_GD_Recent)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) + 
+  geom_errorbar(aes(ymin=meanSurv-semSurv,ymax=meanSurv+semSurv),width=.2, position = 
+                  position_dodge(0.75)) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="p(Surv-to-Rep Y1)", x="Parent Population", fill="Water Year Gowers") +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+```
+
+WL2
+```{r}
+wl2_surv_y1 %>% filter(!is.na(bud.date), is.na(fruit.date)) #some plants initiated reproduction but did not make fruits
+wl2_surv_y1 %>% filter(!is.na(bud.date), !is.na(death.date))  #some of above died, some lived
+wl2_surv_y1 %>% filter(!is.na(fruit.date), !is.na(death.date)) #no plants that made fruits have a death date 
+wl2_surv_y1 %>% filter(!is.na(last.flower.date)) #NAs
+wl2_surv_y1 %>% filter(!is.na(last.fruit.date)) #none 
+wl2_surv_y1 %>% filter(!is.na(fruit.date)) 
+
+wl2_surv_to_rep_y1 <- wl2_surv_y1 %>% 
+  left_join(wl2_gowers_2023) %>% 
+  mutate(fruit.date=if_else(Genotype=="TM2_1_12", "10/27/23", fruit.date)) %>% #add in fruit date for plant that started fruiting the week of the annual census 
+  mutate(SurvtoRep_Y1=if_else(is.na(fruit.date), 0, 1)) %>% 
+  select(block:rep, elevation.group:Wtr_Year_GD_Historical, fruit.date, death.date, SurvtoRep_Y1) 
+#this is quite uninteresting since only TM2 reproduced in year 1 
+
+wl2_surv_to_rep_y1 %>% 
+  group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
+  summarise(meanSurv=mean(SurvtoRep_Y1, na.rm = TRUE), semSurv=sem(SurvtoRep_Y1, na.rm=TRUE)) %>% 
+  ggplot(aes(x=fct_reorder(pop, meanSurv), y=meanSurv, fill=GrwSsn_GD_Recent)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) + 
+  geom_errorbar(aes(ymin=meanSurv-semSurv,ymax=meanSurv+semSurv),width=.2, position = 
+                  position_dodge(0.75)) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="p(Surv-to-Rep Y1)", x="Parent Population", fill="Growth Season Gowers") +
+  scale_fill_gradient(low = "#0043F0", high = "#F5A540") +
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+
+wl2_surv_to_rep_y1 %>% 
+  group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
+  summarise(meanSurv=mean(SurvtoRep_Y1, na.rm = TRUE), semSurv=sem(SurvtoRep_Y1, na.rm=TRUE)) %>% 
+  ggplot(aes(x=fct_reorder(pop, meanSurv), y=meanSurv, fill=Wtr_Year_GD_Recent)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) + 
+  geom_errorbar(aes(ymin=meanSurv-semSurv,ymax=meanSurv+semSurv),width=.2, position = 
+                  position_dodge(0.75)) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="p(Surv-to-Rep Y1)", x="Parent Population", fill="Water Year Gowers") +
+  scale_fill_gradient(low = "#0043F0", high = "#F5A540") +
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 ```
 
 
 ## Fruits(y1) 
+Davis
 ```{r}
+ucd_fruits
+```
 
+WL2
+```{r}
+wl2_fruits_y1
 ```
 
 
 ## p(Winter Surv)
+WL2
 ```{r}
 
 ```
 
 
 ## p(Surv to Rep - y2)
+WL2
 ```{r}
 
 ```
 
 
 ## Fruits(y2)
+WL2
 ```{r}
 
 ```
 
 
 ## Total fitness
+
+Davis - No Year 2
+p(Establishment)*p(Surv to Rep - y1)*Fruits(y1) 
+```{r}
+ucd_establishment
+ucd_surv_to_rep
+```
+
+WL2
 p(Establishment)*p(Surv to Rep - y1)*Fruits(y1) + p(Winter Surv)*p(Surv to Rep - y2)*Fruits(y2)
 ```{r}
-
+wl2_establishment
+wl2_surv_to_rep_y1
 ```
 
