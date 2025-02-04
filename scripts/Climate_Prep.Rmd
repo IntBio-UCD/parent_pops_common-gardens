@@ -230,7 +230,7 @@ Note: changed the input file from "Dimensions_All_1895-2022.csv" to
 "Flint_AllSites_Aug2024.csv"
 
 ```{r}
-climate_data <- read_csv("../output/Climate/Flint_AllSites_Aug2024.csv") %>% select(!rowid) %>% mutate(Lat=as.character(Lat), Long=as.character(Long))
+climate_data <- read_csv("../output/Climate/Flint_AllSites_Dec2024.csv") %>% select(!rowid) %>% mutate(Lat=as.character(Lat), Long=as.character(Long))
 head(climate_data)
 names(climate_data)
 unique(climate_data$parent.pop)
@@ -245,14 +245,13 @@ pop_elev_climate <- left_join(climate_data, pop_elev) %>%
   filter(parent.pop!="YO1") %>% #remove YO1 from the dataset 
   mutate(elevation.group=if_else(parent.pop=="UCD_Garden", "Low", 
                                  if_else(parent.pop=="WL2_Garden", "High", elevation.group)))
-#write_csv(pop_elev_climate, "../output/Climate/flint_climate_UCDpops.csv") #this is the file used in "Flint_Growth_Season.Rmd"
+write_csv(pop_elev_climate, "../output/Climate/flint_climate_UCDpops.csv") #this is the file used in "Flint_Growth_Season.Rmd"
 unique(pop_elev_climate$parent.pop)
 head(pop_elev_climate, 30)
 ```
 
 ## Calculation of recent (last 30 years) and historical climate (prior 30 years)
 
-Note: this does not include Sept-Dec 2024
 
 ```{r}
 pop_elev_climate_recent <- pop_elev_climate %>% filter(year>1994 & year<=2024) %>% select(parent.pop:month, cwd, pck, ppt, tmn, tmx)

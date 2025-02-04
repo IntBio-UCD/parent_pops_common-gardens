@@ -542,11 +542,11 @@ Note: changed the input file from "Dimensions_All_1895-2022.csv" to
 
 
 ``` r
-climate_data <- read_csv("../output/Climate/Flint_AllSites_Aug2024.csv") %>% select(!rowid) %>% mutate(Lat=as.character(Lat), Long=as.character(Long))
+climate_data <- read_csv("../output/Climate/Flint_AllSites_Dec2024.csv") %>% select(!rowid) %>% mutate(Lat=as.character(Lat), Long=as.character(Long))
 ```
 
 ```
-## Rows: 40222 Columns: 15
+## Rows: 40326 Columns: 15
 ## ── Column specification ────────────────────────────────────────────────────────
 ## Delimiter: ","
 ## chr  (2): parent.pop, month
@@ -616,7 +616,7 @@ pop_elev_climate <- left_join(climate_data, pop_elev) %>%
 ```
 
 ``` r
-#write_csv(pop_elev_climate, "../output/Climate/flint_climate_UCDpops.csv") #this is the file used in "Flint_Growth_Season.Rmd"
+write_csv(pop_elev_climate, "../output/Climate/flint_climate_UCDpops.csv") #this is the file used in "Flint_Growth_Season.Rmd"
 unique(pop_elev_climate$parent.pop)
 ```
 
@@ -652,7 +652,6 @@ head(pop_elev_climate, 30)
 
 ## Calculation of recent (last 30 years) and historical climate (prior 30 years)
 
-Note: this does not include Sept-Dec 2024
 
 
 ``` r
@@ -679,14 +678,14 @@ tail(pop_elev_climate_recent)
 
 ```
 ## # A tibble: 6 × 12
-##   parent.pop elevation.group elev_m Lat     Long  year  month   cwd   pck    ppt
-##   <chr>      <chr>            <dbl> <chr>   <chr> <chr> <chr> <dbl> <dbl>  <dbl>
-## 1 WL2_Garden High              2020 38.825… -120… 2024  feb    25.6  406. 226.  
-## 2 WL2_Garden High              2020 38.825… -120… 2024  jan    19.8  209. 239.  
-## 3 WL2_Garden High              2020 38.825… -120… 2024  jul   105.     0    5.62
-## 4 WL2_Garden High              2020 38.825… -120… 2024  jun    94.5    0    0.53
-## 5 WL2_Garden High              2020 38.825… -120… 2024  mar    15.6  614. 322.  
-## 6 WL2_Garden High              2020 38.825… -120… 2024  may    55.5    0   47.5 
+##   parent.pop elevation.group elev_m Lat      Long  year  month   cwd   pck   ppt
+##   <chr>      <chr>            <dbl> <chr>    <chr> <chr> <chr> <dbl> <dbl> <dbl>
+## 1 WL2_Garden High              2020 38.82599 -120… 2024  mar    15.6 614.  322. 
+## 2 WL2_Garden High              2020 38.82599 -120… 2024  may    55.5   0    47.5
+## 3 WL2_Garden High              2020 38.82599 -120… 2024  sep    91.5   0    14.3
+## 4 WL2_Garden High              2020 38.82599 -120… 2024  oct    74.3   0    26.3
+## 5 WL2_Garden High              2020 38.82599 -120… 2024  nov    28.6  40.3 145. 
+## 6 WL2_Garden High              2020 38.82599 -120… 2024  dec    24.6  79.2 238. 
 ## # ℹ 2 more variables: tmn <dbl>, tmx <dbl>
 ```
 
@@ -696,25 +695,25 @@ summary(pop_elev_climate_recent)
 
 ```
 ##   parent.pop        elevation.group        elev_m           Lat           
-##  Length:8900        Length:8900        Min.   :  16.0   Length:8900       
+##  Length:9000        Length:9000        Min.   :  16.0   Length:9000       
 ##  Class :character   Class :character   1st Qu.: 748.9   Class :character  
 ##  Mode  :character   Mode  :character   Median :1934.5   Mode  :character  
 ##                                        Mean   :1599.2                     
 ##                                        3rd Qu.:2353.6                     
 ##                                        Max.   :2872.3                     
 ##      Long               year              month                cwd        
-##  Length:8900        Length:8900        Length:8900        Min.   :  0.00  
-##  Class :character   Class :character   Class :character   1st Qu.: 25.74  
+##  Length:9000        Length:9000        Length:9000        Min.   :  0.00  
+##  Class :character   Class :character   Class :character   1st Qu.: 25.73  
 ##  Mode  :character   Mode  :character   Mode  :character   Median : 47.28  
-##                                                           Mean   : 56.92  
-##                                                           3rd Qu.: 84.35  
+##                                                           Mean   : 56.91  
+##                                                           3rd Qu.: 84.32  
 ##                                                           Max.   :194.73  
 ##       pck               ppt               tmn               tmx        
 ##  Min.   :   0.00   Min.   :  0.000   Min.   :-13.180   Min.   :-3.570  
-##  1st Qu.:   0.00   1st Qu.:  6.662   1st Qu.: -1.610   1st Qu.: 9.588  
-##  Median :   0.00   Median : 44.615   Median :  3.810   Median :15.905  
-##  Mean   : 134.69   Mean   : 97.932   Mean   :  3.857   Mean   :16.720  
-##  3rd Qu.:  82.44   3rd Qu.:140.575   3rd Qu.:  9.002   3rd Qu.:23.310  
+##  1st Qu.:   0.00   1st Qu.:  6.718   1st Qu.: -1.580   1st Qu.: 9.568  
+##  Median :   0.00   Median : 44.615   Median :  3.825   Median :15.890  
+##  Mean   : 133.82   Mean   : 98.096   Mean   :  3.867   Mean   :16.713  
+##  3rd Qu.:  79.81   3rd Qu.:140.905   3rd Qu.:  9.030   3rd Qu.:23.310  
 ##  Max.   :2183.62   Max.   :981.420   Max.   : 22.410   Max.   :37.580
 ```
 
@@ -725,31 +724,31 @@ xtabs(~parent.pop+month, data=pop_elev_climate_recent)
 ```
 ##             month
 ## parent.pop   apr aug dec feb jan jul jun mar may nov oct sep
-##   BH          30  30  29  30  30  30  30  30  30  29  29  29
-##   CC          30  30  29  30  30  30  30  30  30  29  29  29
-##   CP2         30  30  29  30  30  30  30  30  30  29  29  29
-##   CP3         30  30  29  30  30  30  30  30  30  29  29  29
-##   DPR         30  30  29  30  30  30  30  30  30  29  29  29
-##   FR          30  30  29  30  30  30  30  30  30  29  29  29
-##   IH          30  30  29  30  30  30  30  30  30  29  29  29
-##   LV1         30  30  29  30  30  30  30  30  30  29  29  29
-##   LV3         30  30  29  30  30  30  30  30  30  29  29  29
-##   LVTR1       30  30  29  30  30  30  30  30  30  29  29  29
-##   SC          30  30  29  30  30  30  30  30  30  29  29  29
-##   SQ1         30  30  29  30  30  30  30  30  30  29  29  29
-##   SQ2         30  30  29  30  30  30  30  30  30  29  29  29
-##   SQ3         30  30  29  30  30  30  30  30  30  29  29  29
-##   TM2         30  30  29  30  30  30  30  30  30  29  29  29
-##   UCD_Garden  30  30  29  30  30  30  30  30  30  29  29  29
-##   WL1         30  30  29  30  30  30  30  30  30  29  29  29
-##   WL2         30  30  29  30  30  30  30  30  30  29  29  29
-##   WL2_Garden  30  30  29  30  30  30  30  30  30  29  29  29
-##   WR          30  30  29  30  30  30  30  30  30  29  29  29
-##   WV          30  30  29  30  30  30  30  30  30  29  29  29
-##   YO11        30  30  29  30  30  30  30  30  30  29  29  29
-##   YO4         30  30  29  30  30  30  30  30  30  29  29  29
-##   YO7         30  30  29  30  30  30  30  30  30  29  29  29
-##   YO8         30  30  29  30  30  30  30  30  30  29  29  29
+##   BH          30  30  30  30  30  30  30  30  30  30  30  30
+##   CC          30  30  30  30  30  30  30  30  30  30  30  30
+##   CP2         30  30  30  30  30  30  30  30  30  30  30  30
+##   CP3         30  30  30  30  30  30  30  30  30  30  30  30
+##   DPR         30  30  30  30  30  30  30  30  30  30  30  30
+##   FR          30  30  30  30  30  30  30  30  30  30  30  30
+##   IH          30  30  30  30  30  30  30  30  30  30  30  30
+##   LV1         30  30  30  30  30  30  30  30  30  30  30  30
+##   LV3         30  30  30  30  30  30  30  30  30  30  30  30
+##   LVTR1       30  30  30  30  30  30  30  30  30  30  30  30
+##   SC          30  30  30  30  30  30  30  30  30  30  30  30
+##   SQ1         30  30  30  30  30  30  30  30  30  30  30  30
+##   SQ2         30  30  30  30  30  30  30  30  30  30  30  30
+##   SQ3         30  30  30  30  30  30  30  30  30  30  30  30
+##   TM2         30  30  30  30  30  30  30  30  30  30  30  30
+##   UCD_Garden  30  30  30  30  30  30  30  30  30  30  30  30
+##   WL1         30  30  30  30  30  30  30  30  30  30  30  30
+##   WL2         30  30  30  30  30  30  30  30  30  30  30  30
+##   WL2_Garden  30  30  30  30  30  30  30  30  30  30  30  30
+##   WR          30  30  30  30  30  30  30  30  30  30  30  30
+##   WV          30  30  30  30  30  30  30  30  30  30  30  30
+##   YO11        30  30  30  30  30  30  30  30  30  30  30  30
+##   YO4         30  30  30  30  30  30  30  30  30  30  30  30
+##   YO7         30  30  30  30  30  30  30  30  30  30  30  30
+##   YO8         30  30  30  30  30  30  30  30  30  30  30  30
 ```
 
 ``` r
@@ -863,16 +862,16 @@ recent_climate_avgs #30 year averages
 ## # Groups:   parent.pop, elevation.group [25]
 ##    parent.pop elevation.group elev_m cwd_mean pck_mean ppt_mean tmn_mean
 ##    <chr>      <chr>            <dbl>    <dbl>    <dbl>    <dbl>    <dbl>
-##  1 BH         Low               511.     75.6    0         49.1    9.02 
-##  2 CC         Low               313      59.8    0         85.0   10.1  
-##  3 CP2        High             2244.     63.0  222.       108.     1.24 
-##  4 CP3        High             2266.     46.2  241.       104.     0.583
-##  5 DPR        Mid              1019.     27.3    7.57     122.     7.96 
-##  6 FR         Mid               787      75.7   14.2       85.8    5.78 
-##  7 IH         Low               454.     49.1    0.169     89.8    8.75 
-##  8 LV1        High             2593.     49.9  451.       148.    -1.29 
-##  9 LV3        High             2354.     40.9  446.       146.    -1.30 
-## 10 LVTR1      High             2741.     52.2  464.       153.    -1.50 
+##  1 BH         Low               511.     75.6    0         48.9    9.04 
+##  2 CC         Low               313      59.8    0         85.6   10.1  
+##  3 CP2        High             2244.     62.9  220.       108.     1.26 
+##  4 CP3        High             2266.     46.2  239.       104.     0.596
+##  5 DPR        Mid              1019.     27.4    7.48     122.     7.98 
+##  6 FR         Mid               787      75.5   14.1       86.4    5.78 
+##  7 IH         Low               454.     49.3    0.167     90.1    8.77 
+##  8 LV1        High             2593.     49.8  450.       149.    -1.29 
+##  9 LV3        High             2354.     40.9  445.       147.    -1.30 
+## 10 LVTR1      High             2741.     52.1  463.       154.    -1.50 
 ## # ℹ 15 more rows
 ## # ℹ 6 more variables: tmx_mean <dbl>, cwd_sem <dbl>, pck_sem <dbl>,
 ## #   ppt_sem <dbl>, tmn_sem <dbl>, tmx_sem <dbl>
@@ -1055,14 +1054,14 @@ monthly_cwd
 ##    <chr>       <dbl> <chr>    <dbl>   <dbl>
 ##  1 BH           511. apr       58.4   2.99 
 ##  2 BH           511. aug      153.    3.32 
-##  3 BH           511. dec       30.0   0.376
+##  3 BH           511. dec       30.1   0.373
 ##  4 BH           511. feb       41.0   0.514
 ##  5 BH           511. jan       29.4   0.433
 ##  6 BH           511. jul      137.    3.73 
 ##  7 BH           511. jun       88.9   5.12 
 ##  8 BH           511. mar       53.3   1.63 
 ##  9 BH           511. may       51.6   5.33 
-## 10 BH           511. nov       45.8   0.540
+## 10 BH           511. nov       45.8   0.524
 ## # ℹ 290 more rows
 ```
 
@@ -1114,16 +1113,16 @@ pop_elev_climate_avgs #30 year averages of all climate variables
 ## # Groups:   parent.pop [25]
 ##    parent.pop elevation.group   cwd     pck   ppt    tmn   tmx
 ##    <chr>      <chr>           <dbl>   <dbl> <dbl>  <dbl> <dbl>
-##  1 BH         Low              75.7   0      49.0  8.96   23.6
-##  2 CC         Low              59.6   0      85.1 10.1    23.3
-##  3 CP2        High             63.0 224.    107.   1.16   13.4
-##  4 CP3        High             46.3 241.    103.   0.502  12.6
-##  5 DPR        Mid              27.4   9.06  121.   7.88   20.2
-##  6 FR         Mid              75.6  15.9    85.8  5.72   20.1
-##  7 IH         Low              49.0   0.173  89.5  8.70   22.2
-##  8 LV1        High             49.8 449.    147.  -1.41   11.2
-##  9 LV3        High             40.8 444.    145.  -1.41   11.2
-## 10 LVTR1      High             52.0 462.    152.  -1.61   11.1
+##  1 BH         Low              75.7   0      48.8  8.98   23.6
+##  2 CC         Low              59.6   0      85.6 10.1    23.3
+##  3 CP2        High             62.9 222.    107.   1.18   13.3
+##  4 CP3        High             46.3 239.    103.   0.514  12.6
+##  5 DPR        Mid              27.4   8.97  122.   7.90   20.2
+##  6 FR         Mid              75.4  15.8    86.3  5.73   20.1
+##  7 IH         Low              49.2   0.171  89.8  8.71   22.2
+##  8 LV1        High             49.7 448.    148.  -1.41   11.2
+##  9 LV3        High             40.8 443.    146.  -1.41   11.2
+## 10 LVTR1      High             51.9 461.    153.  -1.61   11.1
 ## # ℹ 15 more rows
 ```
 
