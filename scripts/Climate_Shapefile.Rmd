@@ -70,10 +70,15 @@ pops_gardens_locs_rowids <- pops_gardens_locs %>% rowid_to_column() %>% mutate(r
 ```
 
 ### import new data 
-Note: This only goes through Aug 2024 - will need to reach back out to get Sept and Oct 2024 probably in December 2024?
 ```{r}
-new_flint_data <- read_csv("../input/Updated_Flint_Climate_Oct2024.csv")
-new_flint_data
+new_flint_data <- read_csv("../input/Updated_Flint_Climate_Oct2024.csv") #This only goes through Aug 2024
+#new_flint_data
+
+new_flint_data2 <- read_csv("../input/Updated_Flint_Sept-Dec2024.csv") #Sept-Dec 2024
+#new_flint_data2
+
+#merge 
+new_flint_data <- bind_rows(new_flint_data, new_flint_data2)
 ```
 
 ```{r}
@@ -167,6 +172,7 @@ head(new_flint_long)
 
 new_flint_pops <- full_join(pops_gardens_locs_rowids, new_flint_long)
 head(new_flint_pops)
+write_csv(new_flint_pops, "../output/Climate/Flint_AllSites_Dec2024.csv")
 #write_csv(new_flint_pops, "../output/Climate/Flint_AllSites_Aug2024.csv")
 ```
 
