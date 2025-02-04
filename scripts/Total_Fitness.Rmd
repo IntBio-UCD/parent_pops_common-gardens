@@ -1,0 +1,38 @@
+---
+title: "Total Fitness"
+author: "Brandie QC"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Total Fitness at both sites 
+Total Fitness: p(Establishment)*p(Surv to Rep - y1)*Fruits(y1) + p(Winter Surv)*p(Surv to Rep - y2)*Fruits(y2)
+
+## Libraries
+```{r}
+library(tidyverse)
+```
+
+
+## Need the UCD 2023 and WL2 2023 & 2024 annual census data sheets (for fruit number)
+```{r}
+ucd_ann_cens <- read_csv("../output/UCD_Traits/UCD2023_Annual_Census_Combined.csv") #note this is only for plants that survived to rep 
+ucd_fruits <- ucd_ann_cens %>% select(block:rep, elevation.group, elev_m, Lat:Long, flowers, fruits)
+
+wl2_ann_cens <- read_csv("../input/WL2_Data/CorrectedCSVs/WL2_annual_census_20231027_corrected.csv")
+wl2_fruits <- wl2_ann_cens %>% select(block:rep, flowers=num.flw, fruits=num.fruit)
+```
+
+
+## Need surv post-transplant shock, surv to rep both years, and winter survival
+```{r}
+ucd_surv <- read_csv("../input/UCD_Data/CorrectedCSVs/UCD_transplants_pheno_mort_20231016_corrected.csv")
+
+wl2_surv_y1 <- read_csv("../input/WL2_Data/CorrectedCSVs/WL2_mort_pheno_20231020_corrected.csv") #need to add in 10/27 mortality 
+wl2_surv_y2 <- read_csv() #used "WL2_status_check_20240603_corrected.csv" for over-winter survival script. Should use final mort/pheno from Oct 2024...
+```
+
