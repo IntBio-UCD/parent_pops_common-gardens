@@ -226,6 +226,44 @@ wl2_obs.elev.0 <- wl2_obs.elev.0 %>% mutate(n=n.newly.dead + surviving,
 
 wl2_obs.elev.0
 ```
+Create a plotting function for plotting the fits below:
+
+```{r}
+plot_fit_elev <- function(m, mname=NA, d=wl2_obs.elev.0, dsum=wl2_obs_elev.summary, include.week0=FALSE) {
+  if(is.na(mname)) mname <- deparse(substitute(m)) 
+  title = str_c(mname, ": ", {formula(m) %>% as.character %>% magrittr::extract2(1)})
+  
+  if(!include.week0) d <- d %>% filter(os_weeks > 0)
+  
+  d %>% 
+    data_grid(os_weeks, elevation.group, n=1) %>%
+    mutate(os_weeks_f = factor(str_pad(round(os_weeks, 1), 2, pad = "0")), # padding so it will sort correctly
+           os_weeks_elev = factor(str_c(elevation.group,"_", os_weeks_f))) %>%
+    
+    # Add the discrete hazard probabilities
+    add_epred_draws(m) %>% 
+    
+    # convert hazard to survival probability (1 - hazard)
+    mutate(point.survivorship = 1 - .epred) %>%
+    
+    # calculate the cumulative survivorship
+    arrange(elevation.group, .draw, os_weeks) %>% 
+    group_by(elevation.group, .draw) %>%
+    mutate(cum.survivorship = cumprod(point.survivorship)) %>%
+    
+    # calculate Bayesian highest density 95% credible intervals
+    group_by(elevation.group, os_weeks) %>%
+    point_interval(point.survivorship, cum.survivorship, .interval = hdci) %>%
+    
+    ggplot(aes(x = os_weeks, y = cum.survivorship, ymin = cum.survivorship.lower, ymax = cum.survivorship.upper, group = elevation.group)) +
+    geom_ribbon(fill="grey50", alpha = .5) +
+    geom_line(aes(color=elevation.group), lwd=1.5) +
+    geom_point(aes(x=os_weeks, y = prop.surviving, color = elevation.group), data = dsum, inherit.aes = FALSE) +
+    scale_color_viridis_d() + 
+    ggtitle(title) +
+    theme(plot.title = element_text(size = 10))
+}
+```
 
 ### simple: time only
 
@@ -391,172 +429,26 @@ To make the plots, we start with posterior draws of the hazards, convert to surv
 
 ### m4
 ```{r}
-m4.plot.df <- as_draws_df(m4) %>%
-  select(starts_with("b_")) %>%
-  rename_with( ~ str_remove(.x, "b_os_weeks_elev")) %>%
-  
-  # transform hazards from logit to probability
-  mutate(across(everything(), .fns = inv_logit_scaled)) %>%
-  
-  # convert hazard to survival probability (1 - hazard)
-  mutate(across(everything(), .fns = ~ 1- .)) %>%
-  
-  # label the draws and pivot
-  mutate(draw = 1:n()) %>%
-  pivot_longer(-draw, names_to = c("elevation", "week"), names_sep = "_", values_to = "point.survivorship") %>%
-  
-  # calculate the cumulative survivorship
-  arrange(elevation, draw, week) %>% 
-  group_by(elevation, draw) %>%
-  mutate(cum.survivorship = cumprod(point.survivorship)) %>%
-  
-  # calculate Bayesian highest density 95% credible intervals
-  group_by(elevation, week) %>%
-  point_interval(point.survivorship, cum.survivorship, .interval = hdci) %>%
-  mutate(week = as.numeric(week))
-```
-
-```{r}
-m4.plot.df %>%
-  ggplot(aes(x = week, y = cum.survivorship, ymin = cum.survivorship.lower, ymax = cum.survivorship.upper, group = elevation)) +
-  geom_ribbon(fill="grey50", alpha = .5) +
-  geom_line(aes(color=elevation), lwd=1.5) +
-  geom_point(aes(x=os_weeks, y = prop.surviving, color = elevation.group), data = wl2_obs_elev.summary, inherit.aes = FALSE) +
-  scale_color_viridis_d() + 
-  ggtitle("m4: n.dead ~ time*elevation")
+plot_fit_elev(m4)
 ```
 
 ### m4 week 0
 
 ```{r}
-m4.w0.plot.df <- as_draws_df(m4.w0) %>%
-  select(starts_with("b_")) %>%
-  rename_with( ~ str_remove(.x, "b_os_weeks_elev")) %>%
-  
-  # transform hazards from logit to probability
-  mutate(across(everything(), .fns = inv_logit_scaled)) %>%
-  
-  # convert hazard to survival probability (1 - hazard)
-  mutate(across(everything(), .fns = ~ 1- .)) %>%
-  
-  # label the draws and pivot
-  mutate(draw = 1:n()) %>%
-  pivot_longer(-draw, names_to = c("elevation", "week"), names_sep = "_", values_to = "point.survivorship") %>%
-  
-  # calculate the cumulative survivorship
-  arrange(elevation, draw, week) %>% 
-  group_by(elevation, draw) %>%
-  mutate(cum.survivorship = cumprod(point.survivorship)) %>%
-  
-  # calculate Bayesian highest density 95% credible intervals
-  group_by(elevation, week) %>%
-  point_interval(point.survivorship, cum.survivorship, .interval = hdci) %>%
-  mutate(week = as.numeric(week))
-```
-
-```{r}
-m4.w0.plot.df %>%
-  ggplot(aes(x = week, y = cum.survivorship, ymin = cum.survivorship.lower, ymax = cum.survivorship.upper, group = elevation)) +
-  geom_ribbon(fill="grey50", alpha = .5) +
-  geom_line(aes(color=elevation), lwd=1.5) +
-  geom_point(aes(x=os_weeks, y = prop.surviving, color = elevation.group), data = wl2_obs_elev.summary, inherit.aes = FALSE) +
-  scale_color_viridis_d() + 
-  ggtitle("m4: n.dead ~ time*elevation")
+plot_fit_elev(m4.w0, include.week0 = TRUE)
 ```
 
 ### m2
 
 ```{r}
-m2.plot.df <- 
-as_draws_df(m2) %>%
-  select(starts_with("b_")) %>%
-  rename_with( ~ str_remove(.x, "b_")) %>%
-  
-# Add coefficients to get estimates for each elevation at each week.
-  
-  mutate(across(starts_with("os_weeks"), 
-                .fns = list(Mid = ~ . + elevation.groupMid, High = ~ . + elevation.groupHigh)
-  )) %>%
-  rename_with( ~ str_c(., "_Low"), matches("[0-9]$")) %>% # the original week estimates are from the Low elevation
-  select(-elevation.groupMid, - elevation.groupHigh) %>%
-  
-  
-  # transform hazards from logit to probability
-  mutate(across(everything(), .fns = inv_logit_scaled)) %>%
-  
-  # Convert hazard to probability of survivorship (1 - hazard)
-  mutate(across(everything(), .fns = ~ 1- .)) %>%
-  
-  # label the draws and pivot
-  mutate(draw = 1:n()) %>%
-  pivot_longer(-draw, names_to = c("week", "elevation"), names_sep = "_", values_to = "point.survivorship", names_prefix = "os_weeks_f") %>%
-  
-  # calculate the cumulative survivorship
-  arrange(elevation, draw, week) %>% 
-  group_by(elevation, draw) %>%
-  mutate(cum.survivorship = cumprod(point.survivorship)) %>%
-  
-  # calculalte Bayesian highest density 95% credible interval
-  group_by(elevation, week) %>%
-  point_interval(point.survivorship, cum.survivorship, .interval = hdci) %>%
-  mutate(week = as.numeric(week))
+plot_fit_elev(m2)
 ```
 
-```{r}
-m2.plot.df %>%
-  ggplot(aes(x = week, y = cum.survivorship, ymin = cum.survivorship.lower, ymax = cum.survivorship.upper, group = elevation)) +
-  geom_ribbon(fill="grey50", alpha = .5) +
-  geom_line(aes(color=elevation), lwd=1.5) +
-  geom_point(aes(x=os_weeks, y = prop.surviving, color = elevation.group), data = wl2_obs_elev.summary, inherit.aes = FALSE) +
-  scale_color_viridis_d() +
-  ggtitle("m2: n.dead ~ time + elevation")
-```
 
 ### m2 with week 0
-```{r}
-m2.w0.plot.df <- 
-as_draws_df(m2.w0) %>%
-  select(starts_with("b_")) %>%
-  rename_with( ~ str_remove(.x, "b_")) %>%
-  
-# Add coefficients to get estimates for each elevation at each week.
-  
-  mutate(across(starts_with("os_weeks"), 
-                .fns = list(Mid = ~ . + elevation.groupMid, High = ~ . + elevation.groupHigh)
-  )) %>%
-  rename_with( ~ str_c(., "_Low"), matches("[0-9]$")) %>% # the original week estimates are from the Low elevation
-  select(-elevation.groupMid, - elevation.groupHigh) %>%
-  
-  
-  # transform hazards from logit to probability
-  mutate(across(everything(), .fns = inv_logit_scaled)) %>%
-  
-  # Convert hazard to probability of survivorship (1 - hazard)
-  mutate(across(everything(), .fns = ~ 1- .)) %>%
-  
-  # label the draws and pivot
-  mutate(draw = 1:n()) %>%
-  pivot_longer(-draw, names_to = c("week", "elevation"), names_sep = "_", values_to = "point.survivorship", names_prefix = "os_weeks_f") %>%
-  
-  # calculate the cumulative survivorship
-  arrange(elevation, draw, week) %>% 
-  group_by(elevation, draw) %>%
-  mutate(cum.survivorship = cumprod(point.survivorship)) %>%
-  
-  # calculate Bayesian highest density 95% credible interval
-  group_by(elevation, week) %>%
-  point_interval(point.survivorship, cum.survivorship, .interval = hdci) %>%
-  mutate(week = as.numeric(week))
-```
 
 ```{r}
-m2.w0.plot.df %>%
-  ggplot(aes(x = week, y = cum.survivorship, ymin = cum.survivorship.lower, ymax = cum.survivorship.upper, group = elevation)) +
-  geom_ribbon(fill="grey50", alpha = .5) +
-  geom_line(aes(color=elevation), lwd=1.5) +
-  geom_point(aes(x=os_weeks, y = prop.surviving, color = elevation.group), data = wl2_obs_elev.summary, inherit.aes = FALSE) +
-  scale_color_viridis_d() +
-  ggtitle("m2: n.dead ~ time + elevation")
+plot_fit_elev(m2.w0, include.week0 = TRUE)
 ```
 
 
@@ -702,40 +594,12 @@ loo_compare(m1.w0, m2.w0, m3.w0, m4.w0, m5.w0, m6.w0, m7.w0)
 ```
 
 
-### Extracting and plotting from m7
-
-This is somewhat different than m1 - m4 because now we have a function of time.
-
-Tidybayes can help.  See https://cran.r-project.org/web/packages/tidybayes/vignettes/tidy-brms.html
+### plotting
 
 One thing I can't figure out is how to do cumulative survivorship if we use something other than the original intervals.  But I haven't looked at the book yet.
 
 ```{r}
-wl2_obs.elev %>% 
-  na.omit() %>% #get rid of week 0
-  data_grid(os_weeks, elevation.group, n=1) %>%
-  
-  # Add the discrete hazard probabilities
-  add_epred_draws(m7) %>% 
-
-  # convert hazard to survival probability (1 - hazard)
-  mutate(point.survivorship = 1 - .epred) %>%
-  
-  # calculate the cumulative survivorship
-  arrange(elevation.group, .draw, os_weeks) %>% 
-  group_by(elevation.group, .draw) %>%
-  mutate(cum.survivorship = cumprod(point.survivorship)) %>%
-  
-  # calculate Bayesian highest density 95% credible intervals
-  group_by(elevation.group, os_weeks) %>%
-  point_interval(point.survivorship, cum.survivorship, .interval = hdci) %>%
-  
-    ggplot(aes(x = os_weeks, y = cum.survivorship, ymin = cum.survivorship.lower, ymax = cum.survivorship.upper, group = elevation.group)) +
-  geom_ribbon(fill="grey50", alpha = .5) +
-  geom_line(aes(color=elevation.group), lwd=1.5) +
-  geom_point(aes(x=os_weeks, y = prop.surviving, color = elevation.group), data = wl2_obs_elev.summary, inherit.aes = FALSE) +
-  scale_color_viridis_d() + 
-  ggtitle("m7: n.newly.dead | trials(n) ~ os_weeks + elevation.group + I(os_weeks^2) * elevation.group ")
+plot_fit_elev(m7)
 ```
 
 ### Cubic
@@ -813,59 +677,11 @@ loo_compare(m1.w0, m2.w0, m3.w0, m4.w0, m5.w0, m6.w0, m7.w0, m8.w0, m8.w0.1)
 ### Extracting and plotting from m8
 
 ```{r}
-wl2_obs.elev %>% 
-  na.omit() %>% #get rid of week 0
-  data_grid(os_weeks, elevation.group, n=1) %>%
-  
-  # Add the discrete hazard probabilities
-  add_epred_draws(m8) %>% 
-
-  # convert hazard to survival probability (1 - hazard)
-  mutate(point.survivorship = 1 - .epred) %>%
-  
-  # calculate the cumulative survivorship
-  arrange(elevation.group, .draw, os_weeks) %>% 
-  group_by(elevation.group, .draw) %>%
-  mutate(cum.survivorship = cumprod(point.survivorship)) %>%
-  
-  # calculate Bayesian highest density 95% credible intervals
-  group_by(elevation.group, os_weeks) %>%
-  point_interval(point.survivorship, cum.survivorship, .interval = hdci) %>%
-  
-    ggplot(aes(x = os_weeks, y = cum.survivorship, ymin = cum.survivorship.lower, ymax = cum.survivorship.upper, group = elevation.group)) +
-  geom_ribbon(fill="grey50", alpha = .5) +
-  geom_line(aes(color=elevation.group), lwd=1.5) +
-  geom_point(aes(x=os_weeks, y = prop.surviving, color = elevation.group), data = wl2_obs_elev.summary, inherit.aes = FALSE) +
-  scale_color_viridis_d() + 
-  ggtitle("m8: n.newly.dead | trials(n) ~ os_weeks + elevation.group + I(os_weeks^2) * elevation.group + I(os_weeks^3) ")
+plot_fit_elev(m8)
 ```
 
 ```{r}
-wl2_obs.elev.0 %>% 
-  data_grid(os_weeks, elevation.group, n=1) %>%
-  
-  # Add the discrete hazard probabilities
-  add_epred_draws(m8.w0) %>% 
-
-  # convert hazard to survival probability (1 - hazard)
-  mutate(point.survivorship = 1 - .epred) %>%
-  
-  # calculate the cumulative survivorship
-  arrange(elevation.group, .draw, os_weeks) %>% 
-  group_by(elevation.group, .draw) %>%
-  mutate(cum.survivorship = cumprod(point.survivorship)) %>%
-  
-  # calculate Bayesian highest density 95% credible intervals
-  group_by(elevation.group, os_weeks) %>%
-  point_interval(point.survivorship, cum.survivorship, .interval = hdci) %>%
-  
-    ggplot(aes(x = os_weeks, y = cum.survivorship, ymin = cum.survivorship.lower, ymax = cum.survivorship.upper, group = elevation.group)) +
-  geom_ribbon(fill="grey50", alpha = .5) +
-  geom_line(aes(color=elevation.group), lwd=1.5) +
-  geom_point(aes(x=os_weeks, y = prop.surviving, color = elevation.group), data = wl2_obs_elev.summary, inherit.aes = FALSE) +
-  scale_color_viridis_d() + 
-  ggtitle("m8: n.newly.dead | trials(n) ~ os_weeks + elevation.group + I(os_weeks^2) * elevation.group + I(os_weeks^3) ") +
-  ylim(c(0,1))
+plot_fit_elev(m8.w0, include.week0 = TRUE)
 ```
 
 ### Smoothed, no interaction, default
@@ -916,59 +732,11 @@ not the best but better than any of the linear / polynomial models
 ### Extracting and plotting from m9
 
 ```{r}
-wl2_obs.elev %>% 
-  na.omit() %>% #get rid of week 0
-  data_grid(os_weeks, elevation.group, n=1) %>%
-  
-  # Add the discrete hazard probabilities
-  add_epred_draws(m9) %>% 
-
-  # convert hazard to survival probability (1 - hazard)
-  mutate(point.survivorship = 1 - .epred) %>%
-  
-  # calculate the cumulative survivorship
-  arrange(elevation.group, .draw, os_weeks) %>% 
-  group_by(elevation.group, .draw) %>%
-  mutate(cum.survivorship = cumprod(point.survivorship)) %>%
-  
-  # calculate Bayesian highest density 95% credible intervals
-  group_by(elevation.group, os_weeks) %>%
-  point_interval(point.survivorship, cum.survivorship, .interval = hdci) %>%
-  
-  ggplot(aes(x = os_weeks, y = cum.survivorship, ymin = cum.survivorship.lower, ymax = cum.survivorship.upper, group = elevation.group)) +
-  geom_ribbon(fill="grey50", alpha = .5) +
-  geom_line(aes(color=elevation.group), lwd=1.5) +
-  geom_point(aes(x=os_weeks, y = prop.surviving, color = elevation.group), data = wl2_obs_elev.summary, inherit.aes = FALSE) +
-  scale_color_viridis_d() + 
-  ggtitle("m9: brm(n.newly.dead | trials(n)  ~  elevation.group + s(os_weeks)")
+plot_fit_elev(m9)
 ```
 
 ```{r}
-wl2_obs.elev.0 %>% 
-  na.omit() %>% #get rid of week 0
-  data_grid(os_weeks, elevation.group, n=1) %>%
-  
-  # Add the discrete hazard probabilities
-  add_epred_draws(m9.w0) %>% 
-
-  # convert hazard to survival probability (1 - hazard)
-  mutate(point.survivorship = 1 - .epred) %>%
-  
-  # calculate the cumulative survivorship
-  arrange(elevation.group, .draw, os_weeks) %>% 
-  group_by(elevation.group, .draw) %>%
-  mutate(cum.survivorship = cumprod(point.survivorship)) %>%
-  
-  # calculate Bayesian highest density 95% credible intervals
-  group_by(elevation.group, os_weeks) %>%
-  point_interval(point.survivorship, cum.survivorship, .interval = hdci) %>%
-  
-  ggplot(aes(x = os_weeks, y = cum.survivorship, ymin = cum.survivorship.lower, ymax = cum.survivorship.upper, group = elevation.group)) +
-  geom_ribbon(fill="grey50", alpha = .5) +
-  geom_line(aes(color=elevation.group), lwd=1.5) +
-  geom_point(aes(x=os_weeks, y = prop.surviving, color = elevation.group), data = wl2_obs_elev.summary, inherit.aes = FALSE) +
-  scale_color_viridis_d() + 
-  ggtitle("m9: brm(n.newly.dead | trials(n)  ~  elevation.group + s(os_weeks)")
+plot_fit_elev(m9.w0, include.week0 = TRUE)
 ```
 
 ### smoothed, with interaction, default
@@ -1100,60 +868,13 @@ loo_compare(m4.w0, m9.w0, m10.w0, m10.w0.1, m10.w0.2, m10.w0.3, m10.w0.4)
 ### Extracting and plotting from m10
 
 ```{r}
-wl2_obs.elev %>% 
-  na.omit() %>% #get rid of week 0
-  data_grid(os_weeks, elevation.group, n=1) %>%
-  
-  # Add the discrete hazard probabilities
-  add_epred_draws(m10) %>% 
-
-  # convert hazard to survival probability (1 - hazard)
-  mutate(point.survivorship = 1 - .epred) %>%
-  
-  # calculate the cumulative survivorship
-  arrange(elevation.group, .draw, os_weeks) %>% 
-  group_by(elevation.group, .draw) %>%
-  mutate(cum.survivorship = cumprod(point.survivorship)) %>%
-  
-  # calculate Bayesian highest density 95% credible intervals
-  group_by(elevation.group, os_weeks) %>%
-  point_interval(point.survivorship, cum.survivorship, .interval = hdci) %>%
-  
-    ggplot(aes(x = os_weeks, y = cum.survivorship, ymin = cum.survivorship.lower, ymax = cum.survivorship.upper, group = elevation.group)) +
-  geom_ribbon(fill="grey50", alpha = .5) +
-  geom_line(aes(color=elevation.group), lwd=1.5) +
-  geom_point(aes(x=os_weeks, y = prop.surviving, color = elevation.group), data = wl2_obs_elev.summary, inherit.aes = FALSE) +
-  scale_color_viridis_d() + 
-  ggtitle("m10: brm(n.newly.dead | trials(n)  ~  elevation.group + s(os_weeks), by = elevation.group")
+plot_fit_elev(m10)
 ```
 
 
 
 ```{r}
-wl2_obs.elev.0 %>% 
-  data_grid(os_weeks, elevation.group, n=1) %>%
-  
-  # Add the discrete hazard probabilities
-  add_epred_draws(m10.w0.3) %>% 
-
-  # convert hazard to survival probability (1 - hazard)
-  mutate(point.survivorship = 1 - .epred) %>%
-  
-  # calculate the cumulative survivorship
-  arrange(elevation.group, .draw, os_weeks) %>% 
-  group_by(elevation.group, .draw) %>%
-  mutate(cum.survivorship = cumprod(point.survivorship)) %>%
-  
-  # calculate Bayesian highest density 95% credible intervals
-  group_by(elevation.group, os_weeks) %>%
-  point_interval(point.survivorship, cum.survivorship, .interval = hdci) %>%
-  
-    ggplot(aes(x = os_weeks, y = cum.survivorship, ymin = cum.survivorship.lower, ymax = cum.survivorship.upper, group = elevation.group)) +
-  geom_ribbon(fill="grey50", alpha = .5) +
-  geom_line(aes(color=elevation.group), lwd=1.5) +
-  geom_point(aes(x=os_weeks, y = prop.surviving, color = elevation.group), data = wl2_obs_elev.summary, inherit.aes = FALSE) +
-  scale_color_viridis_d() + 
-  ggtitle("m10: brm(n.newly.dead | trials(n)  ~  elevation.group + s(os_weeks), by = elevation.group")
+plot_fit_elev(m10.w0, include.week0 = TRUE)
 ```
 
 ```{r}
@@ -1194,7 +915,7 @@ m12.w0 <- brm(n.newly.dead | trials(n)  ~  s(os_weeks, by=elevation.group) ,
 ```
 
 ```{r}
-loo_compare(m4.w0, m9.w0, m10.w0, m11.w0, m12.w0)
+loo_compare(m3.w0, m4.w0, m9.w0, m10.w0, m11.w0, m12.w0)
 ```
 
 
@@ -1203,6 +924,11 @@ save.image(file = "../output/WL2_Surv_BRMS_Fits.Rdata")
 ```
 
 # Summary
+
+```{r}
+load(file = "../output/WL2_Surv_BRMS_Fits.Rdata")
+```
+
 
 ## With week 0
 
@@ -1218,24 +944,41 @@ w0.models <- tibble(mname=w0.tmpname) %>%
 ```
 
 ```{r}
-w0.models %>%
-  mutate(elpd_loo=map_dbl(model, \(x) loo(x)$estimates["elpd_loo", "Estimate"]),
-         elpd_loo_SE=map_dbl(model, \(x) loo(x)$estimates["elpd_loo", "SE"])) %>%
-  select(mname, elpd_loo, elpd_loo_SE, formula) %>%
-  arrange(desc(elpd_loo))
+w0.models <- w0.models %>%
+  mutate(loo = map(model, loo)) %>%
+  pull(loo, name = mname) %>% 
+  loo_compare() %>%
+  as_tibble(rownames = "mname") %>%
+  select(mname, elpd_diff, se_diff) %>%
+  full_join(w0.models)
+
+w0.models
 ```
 
-The best fit is `m4.w0`, a binomial model with a separate coefficient for each combination of week and elevation.
+The best fit is `m3.w0`, closely followed by `m4.w0`.  These are binomial models with separate fits for each week and elevation group.  The parameterization in m4.w0 makes the summary a bit easier to digest.
 
-The next best fit, by eye, is 
+For the models with continuous time, best is `m9.w0` an additive model with time and elevation.  More complex models with continuous time actually fit the data better (by eye) but are being penalized because of the large number of parameters.
+
+
+plots, ordered by elpd_loo
+```{r, fig.width=8}
+w0.models <- w0.models %>% mutate(plot=map2(model, mname, plot_fit_elev, include.week0 = TRUE))
+w0.models$plot
+```
+
+plots, orderd by name
+```{r, fig.width=8}
+w0.models %>% 
+  arrange( order=as.numeric(str_extract(mname, "[0-9]+"))) %>%
+  pull(plot)
+```
+
 
 ## without w0
 
-## With week 0
-
 Let's get the formula used
 ```{r}
-w1.tmpname <- ls(pattern="m[1-9]+$") 
+w1.tmpname <- ls(pattern="m[0-9]+$") 
   
 w1.models <- tibble(mname=w1.tmpname) %>%
     mutate(model=map(mname, get),
@@ -1246,8 +989,23 @@ w1.models <- tibble(mname=w1.tmpname) %>%
 
 ```{r}
 w1.models %>%
-  mutate(elpd_loo=map_dbl(model, \(x) loo(x)$estimates["elpd_loo", "Estimate"]),
-         elpd_loo_SE=map_dbl(model, \(x) loo(x)$estimates["elpd_loo", "SE"])) %>%
-  select(mname, elpd_loo, elpd_loo_SE, formula) %>%
-  arrange(desc(elpd_loo))
+  mutate(loo = map(model, loo)) %>%
+  pull(loo, name = mname) %>% 
+  loo_compare() %>%
+  as_tibble(rownames = "mname") %>%
+  select(mname, elpd_diff, se_diff) %>%
+  full_join(w1.models)
+```
+
+plots, ordered by elpd_loo
+```{r, fig.width=8}
+w1.models <- w1.models %>% mutate(plot=map2(model, mname, plot_fit_elev, include.week0 = FALSE))
+w1.models$plot
+```
+
+plots, orderd by name
+```{r, fig.width=8}
+w1.models %>% 
+  arrange( order=as.numeric(str_extract(mname, "[0-9]+"))) %>%
+  pull(plot)
 ```
