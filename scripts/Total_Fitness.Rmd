@@ -26,14 +26,18 @@ library(sp) #for calculating geographic distance
 
 ## Need the UCD 2023 and WL2 2023 & 2024 annual census data sheets (for fruit number)
 ```{r}
-ucd_ann_cens <- read_csv("../output/UCD_Traits/UCD2023_Annual_Census_Combined.csv") #note this is only for plants that survived to rep 
-ucd_fruits <- ucd_ann_cens %>% select(block:rep, elevation.group, elev_m, Lat:Long, flowers, fruits)
+ucd_ann_cens <- read_csv("../output/UCD_Traits/UCD2023_Annual_Census_Combined.csv") %>%  #note this is only for plants that survived to rep 
+  rename(pop=parent.pop) %>% 
+  filter(!is.na(pop)) %>% 
+  filter(rep != 100) %>% #get rid of individuals that germinated in the field 
+  unite(Genotype, pop:rep, sep="_", remove = FALSE) 
 
-wl2_ann_cens <- read_csv("../input/WL2_Data/CorrectedCSVs/WL2_annual_census_20231027_corrected.csv")
-wl2_fruits_y1 <- wl2_ann_cens %>% select(block:rep, flowers=num.flw, fruits=num.fruit)
+wl2_ann_cens <- read_csv("../input/WL2_Data/CorrectedCSVs/WL2_annual_census_20231027_corrected.csv") %>% 
+  unite(Genotype, pop:rep, sep="_", remove = FALSE) %>% 
+  filter(!is.na(pop), !str_detect(Genotype, ".*buff*")) #remove buffers 
 
 #wl2_ann_cens_2024
-#wl2_fruits_y2
+
 ```
 
 
@@ -245,19 +249,80 @@ wl2_surv_to_rep_y1 %>%
 
 
 ## Fruits(y1) 
+*What to do about flower #?
+
 Davis
 ```{r}
-ucd_fruits
+ucd_fruits <- ucd_ann_cens %>% select(block:rep, elevation.group, elev_m, Lat:Long, flowers, fruits)  #note this is only for plants that survived to rep 
+
+ucd_fruits %>% 
+  left_join(ucd_gowers) %>% 
+  group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
+  summarise(meanFruits=mean(fruits, na.rm = TRUE), semFruits=sem(fruits, na.rm=TRUE)) %>% 
+  ggplot(aes(x=fct_reorder(pop, meanFruits), y=meanFruits, fill=GrwSsn_GD_Recent)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) + 
+  geom_errorbar(aes(ymin=meanFruits-semFruits,ymax=meanFruits+semFruits),width=.2, position = 
+                  position_dodge(0.75)) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Fruit Number", x="Parent Population", fill="Growth Season Gowers") +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+
+ucd_fruits %>% 
+  left_join(ucd_gowers) %>% 
+  group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
+  summarise(meanFruits=mean(fruits, na.rm = TRUE), semFruits=sem(fruits, na.rm=TRUE)) %>% 
+  ggplot(aes(x=fct_reorder(pop, meanFruits), y=meanFruits, fill=Wtr_Year_GD_Recent)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) + 
+  geom_errorbar(aes(ymin=meanFruits-semFruits,ymax=meanFruits+semFruits),width=.2, position = 
+                  position_dodge(0.75)) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Fruit Number", x="Parent Population", fill="Water Year Gowers") +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 ```
 
 WL2
 ```{r}
-wl2_fruits_y1
+wl2_fruits_y1 <- wl2_ann_cens %>% select(block:rep, flowers=num.flw, fruits=num.fruit)
+
+wl2_fruits_y1 %>% 
+  left_join(wl2_gowers_2023) %>% 
+  group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
+  summarise(meanFruits=mean(fruits, na.rm = TRUE), semFruits=sem(fruits, na.rm=TRUE)) %>%
+  filter(pop!="WV") %>% 
+  ggplot(aes(x=fct_reorder(pop, meanFruits), y=meanFruits, fill=GrwSsn_GD_Recent)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) + 
+  geom_errorbar(aes(ymin=meanFruits-semFruits,ymax=meanFruits+semFruits),width=.2, position = 
+                  position_dodge(0.75)) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Fruit Number", x="Parent Population", fill="Growth Season Gowers") +
+  scale_fill_gradient(low = "#0043F0", high = "#F5A540") +
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+
+wl2_fruits_y1 %>% 
+  left_join(wl2_gowers_2023) %>% 
+  group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
+  summarise(meanFruits=mean(fruits, na.rm = TRUE), semFruits=sem(fruits, na.rm=TRUE)) %>% 
+  filter(pop!="WV") %>% 
+  ggplot(aes(x=fct_reorder(pop, meanFruits), y=meanFruits, fill=Wtr_Year_GD_Recent)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) + 
+  geom_errorbar(aes(ymin=meanFruits-semFruits,ymax=meanFruits+semFruits),width=.2, position = 
+                  position_dodge(0.75)) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Fruit Number", x="Parent Population", fill="Water Year Gowers") +
+  scale_fill_gradient(low = "#0043F0", high = "#F5A540") +
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 ```
 
 
 ## p(Winter Surv)
 WL2
+*What gowers distance should I use for this?
 ```{r}
 
 ```
@@ -273,7 +338,7 @@ WL2
 ## Fruits(y2)
 WL2
 ```{r}
-
+#wl2_fruits_y2
 ```
 
 
@@ -287,6 +352,8 @@ ucd_surv_to_rep
 ```
 
 WL2
+*Use average Gowers?
+
 p(Establishment)*p(Surv to Rep - y1)*Fruits(y1) + p(Winter Surv)*p(Surv to Rep - y2)*Fruits(y2)
 ```{r}
 wl2_establishment
