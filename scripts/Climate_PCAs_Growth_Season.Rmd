@@ -64,11 +64,29 @@ flint_historical_grwseason <- read_csv("../output/Climate/flint_climate_growthse
 head(flint_historical_grwseason, 12)
 ```
 
+For 2024
+```{r}
+flint_recent_grwseason_2024 <- read_csv("../output/Climate/flint_climate_growthseason_recent_2024.csv") %>%
+  dplyr::select(month, parent.pop:tmx)
+head(flint_recent_grwseason_2024, 12)
+
+flint_historical_grwseason_2024 <- read_csv("../output/Climate/flint_climate_growthseason_historical_2024.csv") %>%
+  dplyr::select(month, parent.pop:tmx)
+head(flint_historical_grwseason_2024, 12)
+```
+
+
 ## Load the Bioclim growth season data (from "BioClim_Growth_Season.Rmd")
 
 ```{r}
 bioclim_recent_grwseason <- read_csv("../output/Climate/BioClim_growthseason_Recent.csv")
 bioclim_historical_grwseason <- read_csv("../output/Climate/BioClim_growthseason_Historical.csv")
+```
+
+For 2024
+```{r}
+bioclim_recent_grwseason_2024 <- read_csv("../output/Climate/BioClim_growthseason_Recent_2024.csv")
+bioclim_historical_grwseason_2024 <- read_csv("../output/Climate/BioClim_growthseason_Historical_2024.csv")
 ```
 
 ### Yearly averages for Flint
@@ -84,6 +102,19 @@ flint_grwssn_historical_yravgs <- flint_historical_grwseason %>%
 flint_grwssn_historical_yravgs
 ```
 
+For 2024
+```{r}
+flint_grwssn_recent_yravgs_2024 <- flint_recent_grwseason_2024 %>% 
+  group_by(parent.pop, elevation.group, elev_m, Lat, Long, year) %>% 
+  summarise_at(c("cwd",  "pck", "ppt", "tmn", "tmx"), c(mean), na.rm = TRUE)
+flint_grwssn_recent_yravgs_2024
+
+flint_grwssn_historical_yravgs_2024 <- flint_historical_grwseason_2024 %>% 
+  group_by(parent.pop, elevation.group, elev_m, Lat, Long, year) %>% 
+  summarise_at(c("cwd", "pck", "ppt", "tmn", "tmx"), c(mean), na.rm = TRUE) 
+flint_grwssn_historical_yravgs_2024
+```
+
 ### Merge with bioclim
 ```{r}
 bioclim_flint_yrly_avgs_recent <- full_join(flint_grwssn_recent_yravgs, bioclim_recent_grwseason) 
@@ -91,6 +122,15 @@ write_csv(bioclim_flint_yrly_avgs_recent, "../output/Climate/growthseason_yrly_a
 bioclim_flint_yrly_avgs_historical <- full_join(flint_grwssn_historical_yravgs, bioclim_historical_grwseason) 
 write_csv(bioclim_flint_yrly_avgs_historical, "../output/Climate/growthseason_yrly_avgs_Historical.csv")
 ```
+
+For 2024
+```{r}
+bioclim_flint_yrly_avgs_recent_2024 <- full_join(flint_grwssn_recent_yravgs_2024, bioclim_recent_grwseason_2024) 
+write_csv(bioclim_flint_yrly_avgs_recent_2024, "../output/Climate/growthseason_yrly_avgs_Recent_2024.csv")
+bioclim_flint_yrly_avgs_historical_2024 <- full_join(flint_grwssn_historical_yravgs_2024, bioclim_historical_grwseason_2024) 
+write_csv(bioclim_flint_yrly_avgs_historical_2024, "../output/Climate/growthseason_yrly_avgs_Historical_2024.csv")
+```
+
 
 ## All years and months included (Flint)
 
