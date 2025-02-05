@@ -57,6 +57,9 @@ wl2_surv_1027 <- wl2_ann_cens %>%
 #note: 10/27 pheno dates (like flowering), not updated with this code 
 wl2_surv_y1 <- left_join(wl2_surv_1020, wl2_surv_1027) %>% 
   mutate(death.date=if_else(is.na(death.date), death.date_2, death.date)) %>% 
+  unite(BedLoc, bed:bed.col, sep="_", remove = FALSE) %>% 
+  filter(BedLoc!="K_5_C") %>% 
+  filter(BedLoc!="B_32_A") %>% 
   unite(Genotype, pop:rep, sep="_", remove = FALSE) %>% 
   filter(!is.na(pop), !str_detect(Genotype, ".*buff*")) %>%  #remove buffers 
   select(block:survey.notes)
