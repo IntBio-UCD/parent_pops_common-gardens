@@ -174,6 +174,7 @@ ucd_surv %>% filter(is.na(fruit.date), !is.na(last.fruit.date)) #did not miss an
 
 ucd_surv_to_rep <- ucd_surv %>% 
   left_join(ucd_gowers) %>% 
+  mutate(death.date=mdy(death.date)) %>% 
   mutate(SurvtoRep_Y1=if_else(is.na(fruit.date), 0, 1)) %>% 
   select(block:rep, elevation.group:Wtr_Year_GD_Historical, fruit.date, death.date, SurvtoRep_Y1) 
 
@@ -215,6 +216,7 @@ wl2_surv_y1 %>% filter(!is.na(fruit.date))
 
 wl2_surv_to_rep_y1 <- wl2_surv_y1 %>% 
   left_join(wl2_gowers_2023) %>% 
+  mutate(death.date=mdy(death.date)) %>% 
   mutate(fruit.date=if_else(Genotype=="TM2_1_12", "10/27/23", fruit.date)) %>% #add in fruit date for plant that started fruiting the week of the annual census 
   mutate(SurvtoRep_Y1=if_else(is.na(fruit.date), 0, 1)) %>% 
   select(block:rep, elevation.group:Wtr_Year_GD_Historical, fruit.date, death.date, SurvtoRep_Y1) 
@@ -253,10 +255,10 @@ wl2_surv_to_rep_y1 %>%
 
 Davis
 ```{r}
-ucd_fruits <- ucd_ann_cens %>% select(block:rep, elevation.group, elev_m, Lat:Long, flowers, fruits)  #note this is only for plants that survived to rep 
+ucd_fruits <- ucd_ann_cens %>% select(block:rep, elevation.group, elev_m, Lat:Long, flowers, fruits) %>%  #note this is only for plants that survived to rep 
+  left_join(ucd_gowers)
 
 ucd_fruits %>% 
-  left_join(ucd_gowers) %>% 
   group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
   summarise(meanFruits=mean(fruits, na.rm = TRUE), semFruits=sem(fruits, na.rm=TRUE)) %>% 
   ggplot(aes(x=fct_reorder(pop, meanFruits), y=meanFruits, fill=GrwSsn_GD_Recent)) +
@@ -270,7 +272,6 @@ ucd_fruits %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 
 ucd_fruits %>% 
-  left_join(ucd_gowers) %>% 
   group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
   summarise(meanFruits=mean(fruits, na.rm = TRUE), semFruits=sem(fruits, na.rm=TRUE)) %>% 
   ggplot(aes(x=fct_reorder(pop, meanFruits), y=meanFruits, fill=Wtr_Year_GD_Recent)) +
@@ -286,10 +287,10 @@ ucd_fruits %>%
 
 WL2
 ```{r}
-wl2_fruits_y1 <- wl2_ann_cens %>% select(block:rep, flowers=num.flw, fruits=num.fruit)
+wl2_fruits_y1 <- wl2_ann_cens %>% select(block:rep, flowers=num.flw, fruits=num.fruit) %>% 
+  left_join(wl2_gowers_2023)
 
 wl2_fruits_y1 %>% 
-  left_join(wl2_gowers_2023) %>% 
   group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
   summarise(meanFruits=mean(fruits, na.rm = TRUE), semFruits=sem(fruits, na.rm=TRUE)) %>%
   filter(pop!="WV") %>% 
@@ -304,7 +305,6 @@ wl2_fruits_y1 %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 
 wl2_fruits_y1 %>% 
-  left_join(wl2_gowers_2023) %>% 
   group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
   summarise(meanFruits=mean(fruits, na.rm = TRUE), semFruits=sem(fruits, na.rm=TRUE)) %>% 
   filter(pop!="WV") %>% 
@@ -347,8 +347,45 @@ WL2
 Davis - No Year 2
 p(Establishment)*p(Surv to Rep - y1)*Fruits(y1) 
 ```{r}
-ucd_establishment
-ucd_surv_to_rep
+names(ucd_establishment)
+names(ucd_surv_to_rep)
+names(ucd_fruits)
+
+#per individual:
+ucd_total_fitness <- left_join(ucd_establishment, ucd_surv_to_rep) %>% 
+  left_join(ucd_fruits) %>% 
+  select(block:Wtr_Year_GD_Historical, Establishment, SurvtoRep_Y1:fruits) %>% 
+  mutate(fruits=if_else(is.na(fruits), 0, fruits)) %>% 
+  mutate(Total_Fitness=Establishment*SurvtoRep_Y1*fruits)
+head(ucd_total_fitness)
+ucd_total_fitness %>% filter(Total_Fitness>0)
+
+ucd_total_fitness %>% 
+  group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
+  summarise(meanFruits=mean(Total_Fitness, na.rm = TRUE), semFruits=sem(Total_Fitness, na.rm=TRUE)) %>% 
+  ggplot(aes(x=fct_reorder(pop, meanFruits), y=meanFruits, fill=GrwSsn_GD_Recent)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) + 
+  geom_errorbar(aes(ymin=meanFruits-semFruits,ymax=meanFruits+semFruits),width=.2, position = 
+                  position_dodge(0.75)) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Total Fitness", x="Parent Population", fill="Growth Season Gowers") +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+
+ucd_total_fitness %>% 
+  group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
+  summarise(meanFruits=mean(Total_Fitness, na.rm = TRUE), semFruits=sem(Total_Fitness, na.rm=TRUE)) %>% 
+  ggplot(aes(x=fct_reorder(pop, meanFruits), y=meanFruits, fill=Wtr_Year_GD_Recent)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) + 
+  geom_errorbar(aes(ymin=meanFruits-semFruits,ymax=meanFruits+semFruits),width=.2, position = 
+                  position_dodge(0.75)) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Total Fitness", x="Parent Population", fill="Water Year Gowers") +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+#could also calculate it for each treatment from avg probabilities?
 ```
 
 WL2
