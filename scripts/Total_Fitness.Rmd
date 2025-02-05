@@ -60,6 +60,8 @@ wl2_surv_y1 <- left_join(wl2_surv_1020, wl2_surv_1027) %>%
   unite(Genotype, pop:rep, sep="_", remove = FALSE) %>% 
   filter(!is.na(pop), !str_detect(Genotype, ".*buff*")) %>%  #remove buffers 
   select(block:survey.notes)
+wl2_surv_y1_to_export <- wl2_surv_y1 %>% select(block:rep, death.date, survey.notes)
+write_csv(wl2_surv_y1_to_export, "../output/WL2_Traits/WL2_Mortality.csv")
 
 wl2_20241023 <- read_csv("../input/WL2_Data/WL2_mort_pheno_20241023_corrected.csv") %>% #note this has 2023 and 2024 plants
   select(-block)
