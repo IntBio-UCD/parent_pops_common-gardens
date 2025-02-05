@@ -74,6 +74,18 @@ flint_historical_grwseason <- read_csv("../output/Climate/flint_climate_growthse
 head(flint_historical_grwseason, 12)
 ```
 
+### For 2024
+```{r}
+flint_recent_grwseason_2024 <- read_csv("../output/Climate/flint_climate_growthseason_recent_2024.csv") %>%
+  dplyr::select(month, parent.pop:tmx)
+head(flint_recent_grwseason_2024, 12)
+flint_recent_grwseason_2024 %>% filter(parent.pop=="DPR")
+
+flint_historical_grwseason_2024 <- read_csv("../output/Climate/flint_climate_growthseason_historical_2024.csv") %>%
+  dplyr::select(month, parent.pop:tmx)
+head(flint_historical_grwseason_2024, 12)
+```
+
 ## Manually Calculate BioClim Variables
 
 Referenced this r code: https://github.com/rspatial/dismo/blob/master/R/biovars.R 
@@ -158,6 +170,85 @@ summary(bioclim_recent)
 write_csv(bioclim_recent, "../output/Climate/BioClim_growthseason_Recent.csv")
 ```
 
+### For 2024
+#### Prep
+
+Calculating average temp and diurnal range for each month 
+```{r}
+bioclim_recent_meantemp_prep_2024 <- flint_recent_grwseason_2024 %>% 
+  mutate(tavg = (tmn + tmx)/2, t_diurnal = (tmx-tmn))
+```
+
+Calculating wettest, driest, warmest, and coldest months 
+
+```{r}
+recent_wettest_month_2024 <- bioclim_recent_meantemp_prep_2024 %>%  #there's one wettest month per pop/year
+  group_by(parent.pop, elevation.group, elev_m, year) %>% 
+  slice_max(ppt)
+
+recent_driest_month_2024 <- bioclim_recent_meantemp_prep_2024 %>%  #there's more than one driest month for some pops and years 
+  group_by(parent.pop, elevation.group, elev_m, year) %>% 
+  slice_min(ppt)
+
+recent_warmest_month_2024 <- bioclim_recent_meantemp_prep_2024 %>% #there's more than one warmest month for 1 pop/year
+  group_by(parent.pop, elevation.group, elev_m, year) %>% 
+  slice_max(tavg)
+
+recent_coldest_month_2024 <- bioclim_recent_meantemp_prep_2024 %>% #there's one coldest month per pop/year
+  group_by(parent.pop, elevation.group, elev_m, year) %>% 
+  slice_min(tavg)
+```
+
+
+#### Calculations 
+
+Bio 1, 2, 4, 7, 12, 15
+```{r}
+bioclim_recent_calc_2024 <- bioclim_recent_meantemp_prep_2024 %>% 
+  group_by(parent.pop, elevation.group, elev_m, year) %>% 
+  summarise(ann_tmean=mean(tavg),  #Bio1 - Annual Mean Temperature
+            mean_diurnal_range=mean(t_diurnal), #Bio2 - Mean Diurnal Range
+            temp_seasonality=sd(tavg), #Bio4 - Temperature Seasonality
+            temp_ann_range=(max(tmx))-(min(tmn)), #bio7 - temp annual range
+            ann_ppt=sum(ppt), #bio12 - annual precip
+            ppt_seasonality=cv(ppt+1)) #bio15 - Precipitation Seasonality (+1 to avoid strange CVs for areas where mean rainfaill is < 1)
+bioclim_recent_calc_2024
+```
+
+Bio 8(Q), 9(Q), 18(Q), 19(Q)
+```{r}
+#bio8 = tmean_wettest_month
+bio8_recent_2024 <- recent_wettest_month_2024 %>% 
+  dplyr::select(parent.pop, elevation.group, elev_m, year, tmean_wettest_month=tavg)
+
+#bio9 = tmean_driest_month
+bio9_recent_2024 <- recent_driest_month_2024 %>% 
+  group_by(parent.pop, elevation.group, elev_m, year) %>% 
+  summarise(tmean_driest_month=mean(tavg)) #taking the average b/c some years where there are multiple driest months 
+
+bio8_9_recent_2024 <- full_join(bio8_recent_2024, bio9_recent_2024)
+
+#bio18 = ppt_warmest_month
+bio18_recent_2024 <- recent_warmest_month_2024 %>% 
+  group_by(parent.pop, elevation.group, elev_m, year) %>% 
+  summarise(ppt_warmest_month=mean(ppt)) #taking the avg b/c more than one warmest month for one pop/year
+
+#bio19 = ppt_coldest_month
+bio19_recent_2024 <- recent_wettest_month_2024 %>% 
+  dplyr::select(parent.pop, elevation.group, elev_m, year, ppt_coldest_month=ppt)
+
+bio18_19_recent_2024 <- full_join(bio18_recent_2024, bio19_recent_2024)
+
+all_periods_recent_2024 <- full_join(bio8_9_recent_2024, bio18_19_recent_2024)
+```
+
+Merge all bioclims
+```{r}
+bioclim_recent_2024 <- full_join(bioclim_recent_calc_2024, all_periods_recent_2024)
+summary(bioclim_recent_2024)
+write_csv(bioclim_recent_2024, "../output/Climate/BioClim_growthseason_Recent_2024.csv")
+```
+
 ### Historical Climate
 #### Prep
 
@@ -236,6 +327,83 @@ summary(bioclim_historical)
 write_csv(bioclim_historical, "../output/Climate/BioClim_growthseason_Historical.csv")
 ```
 
+### For 2024
+#### Prep
+
+Calculating average temp and diurnal range for each month 
+```{r}
+bioclim_historical_meantemp_prep_2024 <- flint_historical_grwseason_2024 %>% 
+  mutate(tavg = (tmn + tmx)/2, t_diurnal = (tmx-tmn))
+```
+
+Calculating wettest, driest, warmest, and coldest months 
+
+```{r}
+historical_wettest_month_2024 <- bioclim_historical_meantemp_prep_2024 %>%  
+  group_by(parent.pop, elevation.group, elev_m, year) %>% 
+  slice_max(ppt)
+
+historical_driest_month_2024 <- bioclim_historical_meantemp_prep_2024 %>%  #there's more than one driest month for some pops and years 
+  group_by(parent.pop, elevation.group, elev_m, year) %>% 
+  slice_min(ppt)
+
+historical_warmest_month_2024 <- bioclim_historical_meantemp_prep_2024 %>% #there's one warmest month per pop/year
+  group_by(parent.pop, elevation.group, elev_m, year) %>% 
+  slice_max(tavg)
+
+historical_coldest_month_2024 <- bioclim_historical_meantemp_prep_2024 %>% #there's one coldest month per pop/year
+  group_by(parent.pop, elevation.group, elev_m, year) %>% 
+  slice_min(tavg)
+```
+
+
+#### Calculations 
+
+Bio 1, 2, 4, 7, 12, 15
+```{r}
+bioclim_historical_calc_2024 <- bioclim_historical_meantemp_prep_2024 %>% 
+  group_by(parent.pop, elevation.group, elev_m, year) %>% 
+  summarise(ann_tmean=mean(tavg),  #Bio1 - Annual Mean Temperature
+            mean_diurnal_range=mean(t_diurnal), #Bio2 - Mean Diurnal Range
+            temp_seasonality=sd(tavg), #Bio4 - Temperature Seasonality
+            temp_ann_range=(max(tmx))-(min(tmn)), #bio7 - temp annual range
+            ann_ppt=sum(ppt), #bio12 - annual precip
+            ppt_seasonality=cv(ppt+1)) #bio15 - Precipitation Seasonality (+1 to avoid strange CVs for areas where mean rainfaill is < 1)
+bioclim_historical_calc_2024
+```
+
+Bio 8(Q), 9(Q), 18(Q), 19(Q)
+```{r}
+#bio8 = tmean_wettest_month
+bio8_historical_2024 <- historical_wettest_month_2024 %>% 
+  dplyr::select(parent.pop, elevation.group, elev_m, year, tmean_wettest_month=tavg)
+
+#bio9 = tmean_driest_month
+bio9_historical_2024 <- historical_driest_month_2024 %>% 
+  group_by(parent.pop, elevation.group, elev_m, year) %>% 
+  summarise(tmean_driest_month=mean(tavg)) #taking the average b/c some years where there are multiple driest months 
+
+bio8_9_historical_2024 <- full_join(bio8_historical_2024, bio9_historical_2024)
+
+#bio18 = ppt_warmest_month
+bio18_historical_2024 <- historical_warmest_month_2024 %>% 
+  dplyr::select(parent.pop, elevation.group, elev_m, year, ppt_warmest_month=ppt)
+
+#bio19 = ppt_coldest_month
+bio19_historical_2024 <- historical_wettest_month_2024 %>% 
+  dplyr::select(parent.pop, elevation.group, elev_m, year, ppt_coldest_month=ppt)
+
+bio18_19_historical_2024 <- full_join(bio18_historical_2024, bio19_historical_2024)
+
+all_periods_historical_2024 <- full_join(bio8_9_historical_2024, bio18_19_historical_2024)
+```
+
+Merge all bioclims
+```{r}
+bioclim_historical_2024 <- full_join(bioclim_historical_calc_2024, all_periods_historical_2024)
+summary(bioclim_historical_2024)
+write_csv(bioclim_historical_2024, "../output/Climate/BioClim_growthseason_Historical_2024.csv")
+```
 
 ## Bioclim trends
 ```{r}
