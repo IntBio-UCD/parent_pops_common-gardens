@@ -77,7 +77,7 @@ pop_elev_climate <- read_csv("../output/Climate/flint_climate_UCDpops.csv")
 
 ## Calculation of recent (last 30 years) and historical climate (prior 30 years)
 
-For 2023 (annuals-only analysis)
+### For 2023 (annuals-only analysis)
 
 ```{r}
 unique(pop_elev_climate$parent.pop) #double check all 23 populations and garden sites are in the data set 
@@ -127,6 +127,54 @@ summary(pop_elev_climate_historical)
 xtabs(~parent.pop+month, data=pop_elev_climate_historical) #check that there's 30 years for all pops and months 
 ```
 
+### For 2024
+
+```{r}
+pop_elev_climate_recent_2024 <- pop_elev_climate %>% 
+  filter(parent.pop != "UCD_Garden", parent.pop != "WL2_Garden") %>% #remove garden sites since we don't need their historic growth seasons 
+  filter(year>1994 & year<=2024) %>% 
+  select(parent.pop:month, cwd, pck, ppt, tmn, tmx) %>% 
+  mutate(month = recode(month, #convert months to numbers 
+  jan = 1,
+  feb = 2,
+  mar = 3,
+  apr = 4,
+  may = 5,
+  jun = 6,
+  jul = 7,
+  aug = 8,
+  sep = 9,
+  oct = 10,
+  nov = 11,
+  dec = 12
+))
+head(pop_elev_climate_recent_2024)
+xtabs(~parent.pop+month, data=pop_elev_climate_recent_2024) #check that there's 30 years for all pops and months 
+unique(pop_elev_climate_recent_2024$month)
+
+pop_elev_climate_historical_2024 <- pop_elev_climate %>% 
+  filter(parent.pop != "UCD_Garden", parent.pop != "WL2_Garden") %>% #remove garden sites since we don't need their historic growth seasons 
+  filter(year<=1994 & year>1964) %>% 
+  select(parent.pop:month, cwd, pck, ppt, tmn, tmx) %>% 
+  mutate(month = recode(month, #convert months to numbers 
+  jan = 1,
+  feb = 2,
+  mar = 3,
+  apr = 4,
+  may = 5,
+  jun = 6,
+  jul = 7,
+  aug = 8,
+  sep = 9,
+  oct = 10,
+  nov = 11,
+  dec = 12
+))
+head(pop_elev_climate_historical_2024, 13)
+summary(pop_elev_climate_historical_2024)
+xtabs(~parent.pop+month, data=pop_elev_climate_historical_2024) #check that there's 30 years for all pops and months 
+```
+
 ## Averages and Preliminary Calcs
 
 ### Recent climate
@@ -153,6 +201,18 @@ pop_elev_climate_recent %>% filter(parent.pop=="IH") %>% filter(pck >0) #snow pa
 pop_elev_climate_recent %>% filter(parent.pop=="SQ3") %>% filter(pck==0, ppt < 10) #high elev pops get very little rain and high cwd during growth season ...
 ```
 
+### For 2024
+```{r}
+pop_elev_climate_recent_2024_avgs <- pop_elev_climate_recent_2024 %>% 
+  group_by(parent.pop, elevation.group, elev_m, month) %>% 
+  summarise_at(c("cwd", "pck", "ppt", "tmn", "tmx"), c(mean, sem), na.rm = TRUE)
+names(pop_elev_climate_recent_2024_avgs) <- gsub("fn2", "sem", colnames(pop_elev_climate_recent_2024_avgs))
+names(pop_elev_climate_recent_2024_avgs) <-gsub("fn1", "mean", colnames(pop_elev_climate_recent_2024_avgs))
+pop_elev_climate_recent_2024_avgs #30 year averages per month for each pop
+
+pop_elev_climate_recent_2024_avgs <- pop_elev_climate_recent_2024_avgs %>% mutate(PckSum=sum(pck_mean)) #estimate of average total snowpack in a year 
+```
+
 ### Historical climate
 
 ```{r}
@@ -173,6 +233,20 @@ pop_elev_climate_historical %>% filter(parent.pop=="SC") %>% filter(pck >0) #sno
 pop_elev_climate_historical %>% filter(parent.pop=="CC") %>% filter(pck >0) #snow pack in Jan 1969 and 1973
 pop_elev_climate_historical %>% filter(parent.pop=="TM2") %>% filter(pck >0) #snow pack in Dec '68, Jan-Feb '69, Dec '71, Dec '72, Jan '73, Jan '82
 pop_elev_climate_historical %>% filter(parent.pop=="IH") %>% filter(pck >0) #snow pack in Dec '68, Jan-Feb '69, Dec '70, Dec '71, Jan & Dec '72, Jan-Feb '73, Jan '79
+```
+
+### For 2024
+```{r}
+pop_elev_climate_historical_2024_avgs <- pop_elev_climate_historical_2024 %>% 
+  group_by(parent.pop, elevation.group, elev_m, month) %>% 
+  summarise_at(c("cwd", "pck", "ppt", "tmn", "tmx"), c(mean, sem), na.rm = TRUE)
+names(pop_elev_climate_historical_2024_avgs) <- gsub("fn2", "sem", colnames(pop_elev_climate_historical_2024_avgs))
+names(pop_elev_climate_historical_2024_avgs) <-gsub("fn1", "mean", colnames(pop_elev_climate_historical_2024_avgs))
+pop_elev_climate_historical_2024_avgs #30 year averages per month for each pop
+
+pop_elev_climate_historical_2024_avgs <- pop_elev_climate_historical_2024_avgs %>%
+  mutate(PckSum=sum(pck_mean)) #estimate of average total snowpack in a year 
+pop_elev_climate_historical_2024_avgs %>% arrange(PckSum)
 ```
 
 ### Simpler version (similar results to above calcs)
@@ -346,6 +420,136 @@ nosnow_grwseason_recent %>% ggplot(aes(x=month)) + geom_histogram() +
   facet_wrap(~parent.pop)
 ```
 
+### For 2024
+Prep
+```{r}
+nosnow_pops_recent_2024 <- pop_elev_climate_recent_2024_avgs %>% filter(PckSum < 70)
+unique(nosnow_pops_recent_2024$parent.pop) #BH, CC, TM2, SC, IH 
+summary(nosnow_pops_recent_2024) #3rd quartile of CWD = 89
+
+nosnow_pops_recent_2024_tojoin <- nosnow_pops_recent_2024 %>% select(parent.pop:elev_m, PckSum) %>% distinct()
+
+nosnow_pops_recent_2024_years <- left_join(nosnow_pops_recent_2024_tojoin, pop_elev_climate_recent_2024) 
+
+nosnow_pops_recent_2024_years %>% filter(month=="7", ppt>=25) #never get >=25mm of ppt in July 
+nosnow_pops_recent_2024_years %>% filter(month=="8", ppt>=25) #sometimes get >= 25 mm of ppt in Aug
+#going to start the "grow year" in Sept though due to after ripening requirements 
+
+growyear_months <- tibble(month=c(1:12), growmonth=c(5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4))
+
+nosnow_recent_2024_growyear_months <- full_join(growyear_months, nosnow_pops_recent_2024_years)
+dim(nosnow_recent_2024_growyear_months)
+
+#nosnow_recent_2024_growyear_months %>% filter(ppt==0, cwd<89)
+```
+
+First month 
+```{r}
+nosnow_recent_2024_first_month <- nosnow_recent_2024_growyear_months %>%
+  group_by(parent.pop, elevation.group, elev_m, year) %>% 
+  filter(ppt>=25) %>% 
+  arrange(growmonth) %>% 
+  filter(row_number()==1) #get first month for each pop and year with germinating inducing rain 
+
+#nosnow_recent_2024_first_month %>% filter(parent.pop=="IH") %>% arrange(year)
+
+nosnow_recent_2024_first_month_tomerge <- nosnow_recent_2024_first_month %>% 
+  select(parent.pop:elev_m, year, firstmonth=growmonth) #first month is in grow month not calendar month format
+
+nosnow_recent_2024_first_month_col <- full_join(nosnow_recent_2024_growyear_months, nosnow_recent_2024_first_month_tomerge)
+dim(nosnow_recent_2024_first_month_col)
+```
+
+Last month
+```{r}
+nosnow_recent_2024_last_month <- nosnow_recent_2024_growyear_months %>%
+  group_by(parent.pop, elevation.group, elev_m, year) %>% 
+  filter(cwd>89) %>% #last month is when cwd gets too high 
+  arrange(month) %>% 
+  filter(row_number()==1)
+
+nosnow_recent_2024_last_month_tomerge <- nosnow_recent_2024_last_month %>% 
+  select(parent.pop:elev_m, year, lastmonth=growmonth) #last month is in grow month not calendar month format
+
+nosnow_recent_2024_last_month_col <- full_join(nosnow_recent_2024_first_month_col, nosnow_recent_2024_last_month_tomerge) %>% 
+  select(firstmonth, lastmonth, month:tmx)
+dim(nosnow_recent_2024_last_month_col)
+```
+
+Checking for weird cases 
+```{r}
+summary(nosnow_recent_2024_last_month_col)
+
+nosnow_recent_2024_last_month_col %>% filter(is.na(lastmonth)) %>% arrange(year) #3 years (1998, 2005, 2019) when IH doesn't have a last month based on these criteria (cwd never goes above 89 in those years)
+#****CAN EXCLUDE THESE CASES
+nosnow_recent_2024_last_month_col %>% filter(is.na(firstmonth)) %>% arrange(year) #1 year (2013) when BH doesn't have a first month based on these criteria (ppt never above 25)
+#****CAN EXCLUDE THIS CASE 
+nosnow_recent_2024_last_month_col %>% filter(lastmonth<4) %>% arrange(parent.pop, year) #some cases where last month is less than 4 (earlier than December)
+nosnow_recent_2024_last_month_col %>% filter(lastmonth<firstmonth, lastmonth<4) %>% arrange(parent.pop, year) #all of the above are when the last month is before the first month (in growyear, not calendar year)
+#****NEED TO CONVERT LAST MONTH TO CALENDAR YEAR FORMAT FOR AVG CALCS 
+nosnow_recent_2024_last_month_col %>% filter(lastmonth>firstmonth & lastmonth<4) %>% arrange(parent.pop, year) #0 cases where last month is after the first month 
+
+nosnow_recent_2024_last_month_col %>% filter(lastmonth==1) %>% arrange(parent.pop, year) #10 cases where Sept is last month 
+nosnow_recent_2024_last_month_col %>% filter(lastmonth==2) #0 cases where Oct-Dec is the last month
+nosnow_recent_2024_last_month_col %>% filter(firstmonth>4) #0 cases where first month is after December
+nosnow_recent_2024_last_month_col %>% filter(lastmonth==firstmonth) %>% arrange(parent.pop, year) #first month and last month are never the same 
+nosnow_recent_2024_last_month_col %>% filter(growmonth==firstmonth+1, cwd>89) %>% arrange(parent.pop, year) 
+
+#nosnow_recent_2024_last_month_col %>% filter(growmonth==lastmonth) %>% arrange(cwd, ppt)
+```
+
+Average first and last month
+```{r}
+#remove IH: 1998, 2005, 2019
+#remove BH: 2013
+#convert last month to cal year for avg calc 
+
+nosnow_recent_2024first_last_month_for_calc <- nosnow_recent_2024_last_month_col %>% 
+  filter(!(parent.pop=="IH" & year==1998)) %>% 
+  filter(!(parent.pop=="IH" & year==2005)) %>% 
+  filter(!(parent.pop=="IH" & year==2019)) %>% 
+  filter(!(parent.pop=="BH" & year==2013)) %>% 
+  mutate(lastmonth_cal=if_else(lastmonth<=4, lastmonth+8, lastmonth-4)) %>% 
+  select(firstmonth:lastmonth, lastmonth_cal, parent.pop, elevation.group, elev_m, year) %>% 
+  distinct()
+
+nosnow_recent_2024_avg_first_last_month <- nosnow_recent_2024first_last_month_for_calc %>% 
+  group_by(parent.pop, elevation.group, elev_m) %>% 
+  summarise(AvgFirstMonth=mean(firstmonth), First_sem=sem(firstmonth),
+            AvgLastMonth=mean(lastmonth), Last_sem=sem(lastmonth),
+            AvgLastMonth_cal=mean(lastmonth_cal), Last_cal_sem=sem(lastmonth_cal))
+nosnow_recent_2024_avg_first_last_month
+#2 in growmonth = October 
+#8 in growmonth = April - w/o converting last month to calendar year format, the cases where growmonth=1 is pulling the last month much earlier and with a much greater standard error --> wrong!
+#8 in lastmonth_cal = August 
+
+#Used Standard Rounding
+nosnow_avg_first_last_month_recent_2024 <- nosnow_recent_2024_avg_first_last_month %>% 
+  mutate(AvgFirstMonth=true_round(AvgFirstMonth, 0), 
+          AvgLastMonth=true_round(AvgLastMonth_cal, 0) + 4) %>% #avg in calendar year first to account for cases where CC and TM2 had a last month of Sept, then convert back to grow month format
+  select(parent.pop:elev_m, AvgFirstMonth, AvgLastMonth)
+nosnow_recent_2024_avg_first_last_month
+nosnow_avg_first_last_month_recent_2024
+
+nosnow_recent_2024_avg_first_last_month_allmonths <- left_join(nosnow_recent_2024_growyear_months, nosnow_avg_first_last_month_recent_2024)
+```
+Apriori Assumption for growth season: Low: Oct-July
+
+Fill in all the months b/t the first and last for the full growth season 
+```{r}
+nosnow_grwseason_recent_2024 <- nosnow_recent_2024_avg_first_last_month_allmonths %>% 
+  group_by(parent.pop, elevation.group, elev_m, year) %>% 
+  filter(growmonth>AvgFirstMonth) %>% #first and last month are in grow month format not calendar year 
+  filter(growmonth<=AvgLastMonth) %>% 
+  arrange(year,parent.pop, growmonth)
+summary(nosnow_grwseason_recent_2024) 
+
+xtabs(~parent.pop+month, data=nosnow_grwseason_recent_2024)
+
+nosnow_grwseason_recent_2024 %>% ggplot(aes(x=month)) + geom_histogram() +
+  scale_x_continuous(breaks=c(1, 2, 3, 4, 5,6,7,8,9,10, 11, 12)) +
+  facet_wrap(~parent.pop)
+```
 
 ### Historical Climate
 
@@ -453,8 +657,8 @@ nosnow_avg_first_last_month_historical <- nosnow_historical_avg_first_last_month
   mutate(AvgFirstMonth=true_round(AvgFirstMonth, 0), 
          AvgLastMonth=true_round(AvgLastMonth_cal, 0) + 4) %>% #avg in calendar year first to account for cases where CC and TM2 had a last month of Sept, then convert back to grow month format
   select(parent.pop:elev_m, AvgFirstMonth, AvgLastMonth)
-nosnow_historical_avg_first_last_month
-nosnow_avg_first_last_month_historical
+#nosnow_historical_avg_first_last_month
+#nosnow_avg_first_last_month_historical
 
 nosnow_historical_avg_first_last_month_allmonths <- left_join(nosnow_historical_growyear_months, nosnow_avg_first_last_month_historical)
 ```
@@ -471,6 +675,134 @@ summary(nosnow_grwseason_historical)
 xtabs(~parent.pop+month, data=nosnow_grwseason_historical)
 
 nosnow_grwseason_historical %>% ggplot(aes(x=month)) + geom_histogram() +
+  scale_x_continuous(breaks=c(1, 2, 3, 4, 5,6,7,8,9,10, 11, 12)) +
+  facet_wrap(~parent.pop)
+#note this includes a UCD_Garden growing season that uses the same season criteria as the other low elevation pops, but CWD is higher at UCD so the last month of the growing season is probably later than this indicates
+```
+
+### For 2024
+Prep
+```{r}
+nosnow_pops_historical_2024 <- pop_elev_climate_historical_2024_avgs %>% filter(PckSum < 70)
+unique(nosnow_pops_historical_2024$parent.pop)
+summary(nosnow_pops_historical_2024) #3rd quartile of CWD = 84
+
+nosnow_pops_historical_2024_tojoin <- nosnow_pops_historical_2024 %>% select(parent.pop:elev_m, PckSum) %>% distinct()
+
+nosnow_pops_historical_2024_years <- left_join(nosnow_pops_historical_2024_tojoin, pop_elev_climate_historical_2024) 
+
+nosnow_pops_historical_2024_years %>% filter(month=="7", ppt>=25) #in 1974, ppt>25 for 4 pops in July + BH in 1992... unlikely seeds would have after ripened enough 
+nosnow_pops_historical_2024_years %>% filter(month=="8", ppt>=25) %>% arrange(year, parent.pop) #11 cases of ppt>25 in Aug 
+nosnow_pops_historical_2024_years %>% filter(year==1965) %>% arrange(parent.pop)
+nosnow_pops_historical_2024_years %>% filter(year==1968) %>% arrange(parent.pop) 
+nosnow_pops_historical_2024_years %>% filter(year==1975) %>% arrange(parent.pop) 
+nosnow_pops_historical_2024_years %>% filter(year==1976) %>% arrange(parent.pop)
+#some cases where ppt remains high in following month 
+
+#going to start in Sept though due to afterripening requirements 
+growyear_months <- tibble(month=c(1:12), growmonth=c(5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4))
+
+nosnow_historical_2024_growyear_months <- full_join(growyear_months, nosnow_pops_historical_2024_years)
+dim(nosnow_historical_2024_growyear_months)
+```
+
+First month 
+```{r}
+nosnow_historical_2024_first_month <- nosnow_historical_2024_growyear_months %>%
+  group_by(parent.pop, elevation.group, elev_m, year) %>% 
+  filter(ppt>=25) %>% 
+  arrange(growmonth) %>% 
+  filter(row_number()==1) #get first month for each pop and year with germinating inducing rain 
+
+nosnow_historical_2024_first_month_tomerge <- nosnow_historical_2024_first_month %>% 
+  select(parent.pop:elev_m, year, firstmonth=growmonth)
+
+nosnow_historical_2024_first_month_col <- full_join(nosnow_historical_2024_growyear_months, nosnow_historical_2024_first_month_tomerge)
+dim(nosnow_historical_2024_first_month_col)
+```
+
+Last month 
+```{r}
+nosnow_historical_2024_last_month <- nosnow_historical_2024_growyear_months %>%
+  group_by(parent.pop, elevation.group, elev_m, year) %>% 
+  filter(cwd>84) %>% #adjusted for the historical 3rd quartile of cwd
+  arrange(month) %>% 
+  filter(row_number()==1)
+
+nosnow_historical_2024_last_month_tomerge <- nosnow_historical_2024_last_month %>% 
+  select(parent.pop:elev_m, year, lastmonth=growmonth) #last month is in grow month not calendar month format
+
+nosnow_historical_2024_last_month_col <- full_join(nosnow_historical_2024_first_month_col, nosnow_historical_2024_last_month_tomerge)  %>% 
+  select(firstmonth, lastmonth, month:tmx)
+dim(nosnow_historical_2024_last_month_col)
+```
+
+Checking for weird cases
+```{r}
+summary(nosnow_historical_2024_last_month_col)
+
+nosnow_historical_2024_last_month_col %>% filter(is.na(lastmonth)) %>% arrange(year) #0 years where there isn't a last month
+nosnow_historical_2024_last_month_col %>% filter(is.na(firstmonth)) %>% arrange(year) #0 years where there isn't a first month
+nosnow_historical_2024_last_month_col %>% filter(lastmonth<4) %>% arrange(parent.pop, year) #some cases where last month is less than 4 (earlier than December)
+nosnow_historical_2024_last_month_col %>% filter(lastmonth<firstmonth, lastmonth<4) %>% arrange(parent.pop, year) #most of the above are when the last month is before the first month (in growyear, not calendar year)
+#****NEED TO CONVERT LAST MONTH TO CALENDAR YEAR FORMAT FOR AVG CALCS 
+nosnow_historical_2024_last_month_col %>% filter(lastmonth>firstmonth & lastmonth<4) %>% arrange(parent.pop, year) #0 cases where the last month is after the first month before Dec
+nosnow_historical_2024_last_month_col %>% filter(lastmonth==firstmonth) %>% arrange(parent.pop, year) #first month and last month are the same for IH in 1 year ('89)
+#****CAN DROP THIS CASE 
+
+nosnow_historical_2024_last_month_col %>% filter(lastmonth==1) %>% arrange(parent.pop, year) #6 cases where Sept is last month 
+nosnow_historical_2024_last_month_col %>% filter(lastmonth==2) #0 cases where Oct-Dec is the last month
+nosnow_historical_2024_last_month_col %>% filter(firstmonth>4) #0 cases where first month is after December
+
+nosnow_historical_2024_last_month_col %>% filter(growmonth==firstmonth+1, cwd>84) %>% arrange(parent.pop, year) #3 cases at BH where cwd is high in the second growth month 
+
+#nosnow_historical_2024_last_month_col %>% filter(growmonth==lastmonth) %>% arrange(cwd, ppt)
+```
+
+Average first and last month
+```{r}
+#remove IH: 1989
+#convert last month to cal year for avg calc 
+
+nosnow_historical_2024first_last_month_for_calc <- nosnow_historical_2024_last_month_col %>% 
+  filter(!(parent.pop=="IH" & year==1989)) %>% 
+  mutate(lastmonth_cal=if_else(lastmonth<=4, lastmonth+8, lastmonth-4)) %>% 
+  select(firstmonth:lastmonth, lastmonth_cal, parent.pop, elevation.group, elev_m, year) %>% 
+  distinct()
+
+nosnow_historical_2024_avg_first_last_month <- nosnow_historical_2024first_last_month_for_calc %>% 
+  group_by(parent.pop, elevation.group, elev_m) %>% 
+  summarise(AvgFirstMonth=mean(firstmonth), First_sem=sem(firstmonth),
+            AvgLastMonth=mean(lastmonth), Last_sem=sem(lastmonth),
+            AvgLastMonth_cal=mean(lastmonth_cal), Last_cal_sem=sem(lastmonth_cal))
+nosnow_historical_2024_avg_first_last_month
+#2 in growmonth = October 
+#10 in growmonth = June - w/o converting last month to calendar year format, the cases where growmonth=1 is pulling the last month much earlier and with a much greater standard error --> wrong!
+#8 in lastmonth_cal = August 
+
+#Used Standard Rounding
+nosnow_avg_first_last_month_historical_2024 <- nosnow_historical_2024_avg_first_last_month %>% 
+  mutate(AvgFirstMonth=true_round(AvgFirstMonth, 0), 
+         AvgLastMonth=true_round(AvgLastMonth_cal, 0) + 4) %>% #avg in calendar year first to account for cases where CC and TM2 had a last month of Sept, then convert back to grow month format
+  select(parent.pop:elev_m, AvgFirstMonth, AvgLastMonth)
+#nosnow_historical_2024_avg_first_last_month
+#nosnow_avg_first_last_month_historical_2024
+
+nosnow_historical_2024_avg_first_last_month_allmonths <- left_join(nosnow_historical_2024_growyear_months, nosnow_avg_first_last_month_historical_2024)
+```
+
+Fill in all the months b/t the first and last for the full growth season 
+```{r}
+nosnow_grwseason_historical_2024 <- nosnow_historical_2024_avg_first_last_month_allmonths %>% 
+  group_by(parent.pop, elevation.group, elev_m, year) %>% 
+  filter(growmonth>AvgFirstMonth) %>% #first and last month are in grow month format not calendar year 
+  filter(growmonth<=AvgLastMonth) %>% 
+  arrange(year,parent.pop, growmonth)
+summary(nosnow_grwseason_historical_2024) 
+
+xtabs(~parent.pop+month, data=nosnow_grwseason_historical_2024)
+
+nosnow_grwseason_historical_2024 %>% ggplot(aes(x=month)) + geom_histogram() +
   scale_x_continuous(breaks=c(1, 2, 3, 4, 5,6,7,8,9,10, 11, 12)) +
   facet_wrap(~parent.pop)
 #note this includes a UCD_Garden growing season that uses the same season criteria as the other low elevation pops, but CWD is higher at UCD so the last month of the growing season is probably later than this indicates
@@ -608,6 +940,127 @@ snow_grwseason_recent %>% ggplot(aes(x=month)) + geom_histogram() +
   facet_wrap(~parent.pop)
 ```
 
+### For 2024
+Prep
+```{r}
+snow_pops_recent_2024 <- pop_elev_climate_recent_2024_avgs %>% filter(PckSum >= 70)
+unique(snow_pops_recent_2024$parent.pop) #18 pops get some significant snowpack per year 
+summary(snow_pops_recent_2024)
+
+snow_pops_recent_2024_tojoin <- snow_pops_recent_2024 %>% select(parent.pop:elev_m, PckSum) %>% distinct()
+
+snow_pops_recent_2024_years <- left_join(snow_pops_recent_2024_tojoin, pop_elev_climate_recent_2024) 
+summary(snow_pops_recent_2024_years)
+```
+
+First month 
+```{r}
+snow_recent_2024_first_month <- snow_pops_recent_2024_years %>%
+  group_by(parent.pop, elevation.group, elev_m, year) %>% 
+  filter(pck==0) %>% 
+  filter(tmn > 0) %>% 
+  arrange(month) %>% 
+  filter(row_number()==1) #get first month for each pop and year with no snowpack for germ
+
+snow_recent_2024_first_month_tomerge <- snow_recent_2024_first_month %>% 
+  select(parent.pop:elev_m, year, firstmonth=month)
+
+snow_recent_2024_first_month_col <- full_join(snow_pops_recent_2024_years, snow_recent_2024_first_month_tomerge)
+dim(snow_recent_2024_first_month_col)
+```
+
+Last month
+```{r}
+snow_recent_2024_last_month <- snow_recent_2024_first_month_col %>%
+  group_by(parent.pop, elevation.group, elev_m, year) %>% 
+  filter(month>firstmonth) %>% 
+  filter(if_else(pck>70, pck>70, 
+                 if_else(pck>0, tmn < 0, tmn <= -5))) %>%  #-5 is moderate freeze (Pardee et al. 2017)
+  arrange(month) %>% 
+  filter(row_number()==1) #get first month after growstart for each pop and year with pck >70 OR pck>0 & tmn <0 OR tmn <-5
+
+#snow_recent_2024_last_month %>% filter(tmn <=-5, pck <=0)
+#snow_recent_2024_last_month %>% filter(pck >0, tmn < 0)
+
+snow_recent_2024_last_month_tomerge <- snow_recent_2024_last_month %>% 
+  select(parent.pop:elev_m, year, firstmonth,lastmonth=month)
+
+snow_recent_2024_last_month_col <- full_join(snow_recent_2024_first_month_col, snow_recent_2024_last_month_tomerge) %>% 
+  select(firstmonth, lastmonth, year:tmx)
+dim(snow_recent_2024_last_month_col)
+```
+
+Check weird cases
+```{r}
+summary(snow_recent_2024_last_month_col)
+
+snow_recent_2024_last_month_col %>% filter(is.na(firstmonth)) #no cases where there isn't a firstmonth
+snow_recent_2024_last_month_col %>% filter(is.na(lastmonth)) #124 cases where there isn't a lastmonth 
+#***WHAT TO DO FOR THESE CASES? Make the last month 12 (Dec)
+#*no snow_pack, or min temp > -5 
+
+snow_recent_2024_last_month_col %>% filter(lastmonth==firstmonth) %>% arrange(parent.pop, year) #no cases where last month is first month 
+
+snow_recent_2024_last_month_col %>% filter(lastmonth==firstmonth+1) %>% arrange(parent.pop, year) 
+#***I added a temperature requirement for temp >0 for the first month and still get 9 cases where there is heavy snow in the month after the first month 
+snow_recent_2024_last_month_col %>% filter(lastmonth==firstmonth+2) #1 case where there was sig snowpack in the second month after the first month of 0 snowpack (WL1 - 2018)
+
+heavysnow_recent_2024 <- snow_recent_2024_last_month_col %>% filter(lastmonth==firstmonth+1) %>% filter(month==firstmonth)
+summary(heavysnow_recent_2024)
+unique(heavysnow_recent_2024$parent.pop)
+heavysnow_recent_2024 %>% filter(elev_m>1800)
+#"DPR" "WL1" "WL2" "WR", "YO4" 
+#*Temps range from just above freezing (0.080) to 2.9 (which seems like an acceptable temp given we vernalize at 4C)
+#*OR START THE CHECK IN FEB FOR POPS > 6000 FT (ONLY 2 ABOVE 6000 FEET, both in 2014)
+#*OR just take these cases out
+```
+
+Average first and last month
+```{r}
+#for cases with no last month - make last month 12
+#remove cases where last month is first month +1 or 2 
+
+snow_recent_2024first_last_month_for_calc <- snow_recent_2024_last_month_col %>% 
+  mutate(lastmonth=if_else(is.na(lastmonth), 12, lastmonth)) %>% 
+  filter(lastmonth > firstmonth+2) %>% 
+  select(firstmonth:lastmonth, parent.pop, elevation.group, elev_m, year) %>% 
+  distinct()
+#snow_recent_2024first_last_month_for_calc %>% filter(parent.pop=="CP2", year=="2011") #converting last month to 12 worked for the cases where it was NA before 
+
+snow_recent_2024_avg_first_last_month <- snow_recent_2024first_last_month_for_calc %>% 
+  group_by(parent.pop, elevation.group, elev_m) %>% 
+  summarise(AvgFirstMonth=mean(firstmonth), First_sem=sem(firstmonth),
+            AvgLastMonth=mean(lastmonth), Last_sem=sem(lastmonth)) %>% 
+  arrange(elevation.group, elev_m)
+snow_recent_2024_avg_first_last_month
+#Start = May-June for "high" elev, Feb-May for "mid" elevation 
+#End = Nov-Dec
+
+#Used Standard Rounding
+snow_avg_first_last_month_recent_2024 <- snow_recent_2024_avg_first_last_month %>% 
+  mutate(AvgFirstMonth=true_round(AvgFirstMonth, 0), AvgLastMonth=true_round(AvgLastMonth, 0)) %>% 
+  select(parent.pop:elev_m, AvgFirstMonth, AvgLastMonth)
+#snow_recent_2024_avg_first_last_month
+#snow_avg_first_last_month_recent_2024
+
+snow_recent_2024_avg_first_last_month_allmonths <- left_join(snow_pops_recent_2024_years, snow_avg_first_last_month_recent_2024)
+```
+
+Fill in months b/t start and stop 
+```{r}
+snow_grwseason_recent_2024 <- snow_recent_2024_avg_first_last_month_allmonths %>% 
+  group_by(parent.pop, elevation.group, elev_m, year) %>% 
+  filter(month>AvgFirstMonth) %>% 
+  filter(month<=AvgLastMonth)
+summary(snow_grwseason_recent_2024) 
+
+xtabs(~parent.pop+month, data=snow_grwseason_recent_2024)
+
+snow_grwseason_recent_2024 %>% ggplot(aes(x=month)) + geom_histogram() +
+  scale_x_continuous(breaks=c(1, 2, 3, 4, 5,6,7,8,9,10, 11, 12)) +
+  facet_wrap(~parent.pop)
+```
+
 ### Historical climate
 
 Prep
@@ -736,6 +1189,133 @@ snow_grwseason_historical %>% ggplot(aes(x=month)) + geom_histogram() +
   facet_wrap(~parent.pop)
 ```
 
+### For 2024
+Prep
+```{r}
+snow_pops_historical_2024 <- pop_elev_climate_historical_2024_avgs %>% filter(PckSum >= 70)
+unique(snow_pops_historical_2024$parent.pop) #18 pops get some significant snowpack per year 
+summary(snow_pops_historical_2024)
+
+snow_pops_historical_2024_tojoin <- snow_pops_historical_2024 %>% select(parent.pop:elev_m, PckSum) %>% distinct()
+
+snow_pops_historical_2024_years <- left_join(snow_pops_historical_2024_tojoin, pop_elev_climate_historical_2024) 
+summary(snow_pops_historical_2024_years)
+snow_pops_historical_2024_years %>% filter(pck < 2, pck >0) %>% arrange(parent.pop, pck) #What about when snowpack is 1 mm? This mostly occurs Nov-Jan, 
+#one case in Feb (SQ3), one case in March (FR) and one case in July (LV1)
+```
+
+First month 
+```{r}
+snow_historical_2024_first_month <- snow_pops_historical_2024_years %>%
+  group_by(parent.pop, elevation.group, elev_m, year) %>% 
+  filter(pck==0) %>% 
+  filter(tmn > 0) %>% 
+  arrange(month) %>% 
+  filter(row_number()==1) #get first month for each pop and year with no snowpack for germ
+
+snow_historical_2024_first_month_tomerge <- snow_historical_2024_first_month %>% 
+  select(parent.pop:elev_m, year, firstmonth=month)
+
+snow_historical_2024_first_month_col <- full_join(snow_pops_historical_2024_years, snow_historical_2024_first_month_tomerge)
+dim(snow_historical_2024_first_month_col)
+```
+
+Last month
+```{r}
+snow_historical_2024_last_month <- snow_historical_2024_first_month_col %>%
+  group_by(parent.pop, elevation.group, elev_m, year) %>% 
+  filter(month>firstmonth) %>% 
+  filter(if_else(pck>70, pck>70, 
+                 if_else(pck>0, tmn < 0, tmn <= -5))) %>%  #-5 is moderate freeze (Pardee et al. 2017) 
+  arrange(month) %>% 
+  filter(row_number()==1) #get first month after growstart for each pop and year with pck >70 OR PCK > 0 & TMN <0 OR TMN <-5
+
+#snow_historical_2024_last_month %>% filter(tmn <= -5, pck <=0)
+
+snow_historical_2024_last_month_tomerge <- snow_historical_2024_last_month %>% 
+  select(parent.pop:elev_m, year, firstmonth,lastmonth=month)
+
+snow_historical_2024_last_month_col <- full_join(snow_historical_2024_first_month_col, snow_historical_2024_last_month_tomerge) %>% 
+  select(firstmonth, lastmonth, year:tmx)
+dim(snow_historical_2024_last_month_col)
+```
+
+check weird cases
+```{r}
+snow_historical_2024_last_month_col %>% filter(is.na(firstmonth)) #no cases where there isn't a firstmonth
+snow_historical_2024_last_month_col %>% filter(is.na(lastmonth)) %>% arrange(elev_m) #99 cases where there isn't a lastmonth 
+#****range of elevations 
+
+snow_historical_2024_last_month_col %>% filter(lastmonth==firstmonth) #no cases where last month is first month 
+
+snow_historical_2024_last_month_col %>% filter(lastmonth==firstmonth+1) #7 cases where there was sig snowpack in the month after the first month of 0 snowpack
+snow_historical_2024_last_month_col %>% filter(lastmonth==firstmonth+2) #7 cases where there was sig snowpack in the second month after the first month of 0 snowpack
+
+
+heavysnow_historical_2024 <- snow_historical_2024_last_month_col %>% filter(lastmonth==firstmonth+1) %>% filter(month==firstmonth)
+summary(heavysnow_historical_2024)
+unique(heavysnow_historical_2024$parent.pop)
+heavysnow_historical_2024 %>% filter(elev_m>1800)
+#"DPR" "FR" "WL1" "WR"  
+#****CHECK TEMPS FOR THESE CASES 
+#*Temps range from 1.640 to 3.3 (which seems like an acceptable temp given we vernalize at 4C)
+#*OR START THE CHECK IN FEB FOR POPS > 6000 FT (ALL BELOW 6000 FT)
+#*OR just take these cases out
+
+#snow_historical_2024_last_month_col %>% filter(year==1991)
+#snow_historical_2024_last_month_col %>% filter(parent.pop=="DPR") %>% filter(year==1962|year==1975)
+#snow_historical_2024_last_month_col %>% filter(parent.pop=="WR") %>% filter(year==1975|year==1986)
+#snow_historical_2024_last_month_col %>% filter(parent.pop=="YO7") %>% filter(year==1976)
+#snow_historical_2024_last_month_col %>% filter(parent.pop=="FR") %>% filter(year==1975)
+#snow_historical_2024_last_month_col %>% filter(parent.pop=="SQ3") %>% filter(year==1976)
+```
+
+Average first and last month 
+```{r}
+#for cases with no last month - make last month 12
+#remove cases where last month is first month +1 or 2 
+
+snow_historical_2024first_last_month_for_calc <- snow_historical_2024_last_month_col %>% 
+  mutate(lastmonth=if_else(is.na(lastmonth), 12, lastmonth)) %>% 
+  filter(lastmonth > firstmonth+2) %>% 
+  select(firstmonth:lastmonth, parent.pop, elevation.group, elev_m, year) %>% 
+  distinct()
+
+snow_historical_2024_avg_first_last_month <- snow_historical_2024first_last_month_for_calc %>% 
+  group_by(parent.pop, elevation.group, elev_m) %>% 
+  summarise(AvgFirstMonth=mean(firstmonth), First_sem=sem(firstmonth),
+            AvgLastMonth=mean(lastmonth), Last_sem=sem(lastmonth)) %>% 
+  arrange(elevation.group, elev_m)
+snow_historical_2024_avg_first_last_month
+#Start = May-July for "high" elev, March-May for "mid" elevation 
+#End = Nov-Dec
+#interestingly, the starts are later than recent climate and ends are earlier in some cases 
+
+#Used Standard Rounding
+snow_avg_first_last_month_historical_2024 <- snow_historical_2024_avg_first_last_month %>% 
+  mutate(AvgFirstMonth=true_round(AvgFirstMonth, 0), AvgLastMonth=true_round(AvgLastMonth, 0)) %>% 
+  select(parent.pop:elev_m, AvgFirstMonth, AvgLastMonth)
+#snow_historical_2024_avg_first_last_month
+#snow_avg_first_last_month_historical_2024
+
+snow_historical_2024_avg_first_last_month_allmonths <- left_join(snow_pops_historical_2024_years, snow_avg_first_last_month_historical_2024)
+```
+
+Fill in months b/t start and stop
+```{r}
+snow_grwseason_historical_2024 <- snow_historical_2024_avg_first_last_month_allmonths %>%
+  group_by(parent.pop, elevation.group, elev_m, year) %>% 
+  filter(month>AvgFirstMonth) %>% 
+  filter(month<=AvgLastMonth)
+summary(snow_grwseason_historical_2024) 
+
+xtabs(~parent.pop+month, data=snow_grwseason_historical_2024)
+
+snow_grwseason_historical_2024 %>% ggplot(aes(x=month)) + geom_histogram() +
+  scale_x_continuous(breaks=c(1, 2, 3, 4, 5,6,7,8,9,10, 11, 12)) +
+  facet_wrap(~parent.pop)
+```
+
 ## Bind snow and no_snow pops together
 
 ```{r}
@@ -753,6 +1333,24 @@ summary(allpops_historical_grwseason)
 unique(allpops_historical_grwseason$parent.pop)
 write_csv(allpops_historical_grwseason, "../output/Climate/flint_climate_growthseason_historical.csv")
 ```
+
+### For 2024
+```{r}
+unique(nosnow_grwseason_recent_2024$parent.pop)
+unique(snow_grwseason_recent_2024$parent.pop)
+allpops_recent_2024_grwseason <- rbind(nosnow_grwseason_recent_2024, snow_grwseason_recent_2024)
+summary(allpops_recent_2024_grwseason)
+unique(allpops_recent_2024_grwseason$parent.pop)
+write_csv(allpops_recent_2024_grwseason, "../output/Climate/flint_climate_growthseason_recent_2024.csv")
+
+unique(nosnow_grwseason_historical_2024$parent.pop)
+unique(snow_grwseason_historical_2024$parent.pop)
+allpops_historical_2024_grwseason <- rbind(nosnow_grwseason_historical_2024, snow_grwseason_historical_2024)
+summary(allpops_historical_2024_grwseason)
+unique(allpops_historical_2024_grwseason$parent.pop)
+write_csv(allpops_historical_2024_grwseason, "../output/Climate/flint_climate_growthseason_historical_2024.csv")
+```
+
 
 
 ## Climate traits across pops
