@@ -20,6 +20,11 @@ Total Fitness: p(Establishment)*p(Surv to Rep - y1)*Fruits(y1) + p(Winter Surv)*
 library(tidyverse)
 library(sp) #for calculating geographic distance 
 
+library(brms)
+conflicts_prefer(brms::ar)
+library(tidybayes) #for extracting and visiaulizing brms model output 
+library(modelr) #for data grid
+
 sem <- function(x, na.rm=FALSE) {           #for caclulating standard error
   sd(x,na.rm=na.rm)/sqrt(length(na.omit(x)))
 } 
@@ -134,6 +139,18 @@ wl2_gowers_2024 <- read_csv("../output/Climate/Gowers_WL2_2024.csv") %>%
   rename(pop=parent.pop)
 ```
 
+### WL2 Avg Gowers
+```{r}
+wl2_gowers_2023_prep <- wl2_gowers_2023 %>% rename_with(~paste0(., "_2023"), 6:9)
+wl2_gowers_2024_prep <- wl2_gowers_2024 %>% rename_with(~paste0(., "_2024"), 6:9)
+
+wl2_gowers_avg <- bind_rows(wl2_gowers_2023, wl2_gowers_2024) %>% 
+  group_by(pop, elevation.group, elev_m, Lat, Long) %>% 
+  summarise_at(c("GrwSsn_GD_Recent",  "GrwSsn_GD_Historical", "Wtr_Year_GD_Recent", "Wtr_Year_GD_Historical"), c(mean), na.rm = TRUE)
+wl2_gowers_avg
+```
+
+
 
 ## p(Establishment)
 Davis - used 3 weeks to match WL2
@@ -159,6 +176,7 @@ ucd_establishment %>%
   labs(y="p(Establishment)", x="Parent Population", fill="Growth Season Gowers") +
   scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+ggsave("../output/UCD_Traits/UCD_Establishment_GrwSsn_GD_Recent.png", width = 12, height = 8, units = "in")
 
 ucd_establishment %>% 
   group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
@@ -172,7 +190,9 @@ ucd_establishment %>%
   labs(y="p(Establishment)", x="Parent Population", fill="Water Year Gowers") +
   scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+ggsave("../output/UCD_Traits/UCD_Establishment_Wtr_Year_GD_Recent.png", width = 12, height = 8, units = "in")
 ```
+
 
 WL2 - 3 weeks based off survival curve
 ```{r}
@@ -211,6 +231,87 @@ wl2_establishment %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 ```
 
+### Stats
+```{r}
+
+est_UCD_bf1 <- brmsformula(Establishment ~ Wtr_Year_GD_Recent + (1|pop))
+
+get_prior(est_UCD_bf1, family = "bernoulli", data = ucd_establishment)
+prior1 <- c(set_prior(prior = 'normal(0, 1)', class='Intercept'),
+            set_prior(prior = 'normal(0, 1)', class='sd'))
+```
+
+```{r}
+est_UCD_m1 <- brm(est_UCD_bf1, 
+                             family = "bernoulli",
+                             data = ucd_establishment,
+                             cores=4,
+                             iter = 5000, #increased iterations b/c complex model
+                             sample_prior = "yes", # needed for hypothesis testing
+                             control = list(adapt_delta = 0.9),
+                             prior=prior1) #increased adapt_delta to help with divergent transitions
+```
+
+
+```{r}
+prior_summary(est_UCD_m1)
+summary(est_UCD_m1)
+#Rhat <1.05 (good!)
+#ESS > 1000 (good!)
+```
+
+```{r}
+plot(est_UCD_m1,  nvariables = 3, ask=FALSE) #plots look a little better with prior distribution adjustments 
+
+#pairs(est_UCD_m1)
+
+pp_check(est_UCD_m1)  # posterior predictive checks
+#The main use of this function is to check if you model predicts your data accurately (using the estimates). If it does, then you can use that model to generate new data and make accurate predictions.
+#light blue = 10 random draws or distributions created by the model
+#dark blue = posterior distribution
+#some diffs between draws 
+```
+
+To calcualte the stats we need to extract the posterior samples, and add the Intercept to each pop random effect, and then compute the stats.
+
+```{r}
+intercept <- as_draws_df(est_UCD_m1, variable = "b_Intercept") %>% as_tibble() %>% select(starts_with("b"))
+
+r_pops_raw <- as_draws_df(est_UCD_m1, variable = "*r_", regex = TRUE) %>% as_tibble() %>% select(starts_with("r"))
+
+r_pops <- r_pops_raw %>% mutate(across(everything(), ~ .x + intercept$b_Intercept))
+
+```
+
+#### Hypothesis Testing 
+
+```{r}
+hypothesis(est_UCD_m1,
+           class = NULL,
+           hypothesis = "r_pop[BH,Intercept] > 0",
+           scope = "standard")
+```
+
+test whether WV increases survival probability *more* than other pops
+```{r}
+hypothesis(est_UCD_m1,
+           class = NULL,
+           hypothesis = "r_pop[TM2,Intercept] > r_pop[WL2,Intercept]",
+           scope = "standard")
+#Posterior probability that TM2 establishment is higher than WL2 is 81%
+```
+
+#### Tidy Plot 
+```{r}
+ucd_establishment %>% 
+  data_grid(pop, Wtr_Year_GD_Recent) %>%
+  add_epred_draws(est_UCD_m1) %>%
+  ggplot(aes(y = pop, x = .epred)) +
+  stat_slab() +
+  theme_classic() +
+  labs(x="Posterior Survival Predictions", y="Parent Population", title="UCD p(Establishment)") #+
+ # theme(text=element_text(size=25)) 
+```
 
 ## p(Surv to Rep - y1)
 Davis
@@ -418,7 +519,7 @@ wl2_surv_y2 %>% filter(is.na(fruit.date), !is.na(last.FR.date)) #none
 wl2_surv_to_rep_y2 <- wl2_surv_y2 %>% 
   left_join(wl2_gowers_2023) %>% 
   mutate(SurvtoRep_y2=if_else(is.na(fruit.date), 0, 1)) %>% 
-  select(Pop.Type:rep, elevation.group:Wtr_Year_GD_Historical, fruit.date, death.date, SurvtoRep_y2) 
+  select(Pop.Type:Genotype, elevation.group:Wtr_Year_GD_Historical, fruit.date, death.date, SurvtoRep_y2) 
 
 wl2_surv_to_rep_y2 %>% group_by(pop) %>% summarise(n=n()) %>% arrange(n)
 #LV1, SQ1, and WR only have 1 indiv alive in 2024
@@ -542,12 +643,58 @@ WL2
 
 p(Establishment)*p(Surv to Rep - y1)*Fruits(y1) + p(Winter Surv)*p(Surv to Rep - y2)*Fruits(y2)
 ```{r}
-wl2_establishment
-wl2_surv_to_rep_y1
-wl2_fruits_y1
+wl2_fruits_y1_prep <- wl2_fruits_y1 %>% 
+  select(block:BedLoc, Genotype:rep, elevation.group:Long, y1_flowers=flowers, y1_fruits=fruits)
 
-winter_surv
-wl2_surv_to_rep_y2
-wl2_fruits_y2
+winter_surv_prep <- winter_surv %>% select(block:BedLoc, Genotype:Long, WinterSurv) %>% 
+  mutate(mf=as.character(mf), rep=as.character(rep))
+wl2_surv_to_rep_y2_prep <- wl2_surv_to_rep_y2 %>% select(pop:Long, SurvtoRep_y2) %>% 
+  mutate(mf=as.character(mf), rep=as.character(rep))
+wl2_fruits_y2_prep <- wl2_fruits_y2 %>% 
+  select(pop:Genotype, elevation.group:Long, y2_flowers=flowers, y2_fruits=fruits) %>% 
+  mutate(mf=as.character(mf), rep=as.character(rep))
+
+wl2_total_fitness <- left_join(wl2_establishment, wl2_surv_to_rep_y1) %>% 
+  left_join(wl2_fruits_y1_prep) %>% 
+  left_join(winter_surv_prep) %>% 
+  left_join(wl2_surv_to_rep_y2_prep) %>% 
+  left_join(wl2_fruits_y2_prep) %>% 
+  left_join(wl2_gowers_avg) %>% 
+  select(block:Wtr_Year_GD_Historical, Establishment, SurvtoRep_Y1:y2_fruits) %>% 
+  mutate(y1_fruits=if_else(is.na(y1_fruits), 0, y1_fruits),
+         y2_fruits=if_else(is.na(y2_fruits), 0, y2_fruits),
+         WinterSurv=if_else(is.na(WinterSurv), 0, WinterSurv),
+         SurvtoRep_y2=if_else(is.na(SurvtoRep_y2), 0, SurvtoRep_y2)) %>% 
+  mutate(Total_Fitness=(Establishment*SurvtoRep_Y1*y1_fruits) + (WinterSurv*SurvtoRep_y2*y2_fruits))
+wl2_total_fitness
+
+wl2_total_fitness %>% 
+  group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
+  summarise(meanFruits=mean(Total_Fitness, na.rm = TRUE), semFruits=sem(Total_Fitness, na.rm=TRUE)) %>% 
+  ggplot(aes(x=fct_reorder(pop, meanFruits), y=meanFruits, fill=GrwSsn_GD_Recent)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) + 
+  geom_errorbar(aes(ymin=meanFruits-semFruits,ymax=meanFruits+semFruits, color=GrwSsn_GD_Recent),
+                show.legend = FALSE, width=.2, position = position_dodge(0.75)) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Total Fitness", x="Parent Population", fill="Growth Season Gowers") +
+  scale_fill_gradient(low = "#0043F0", high = "#F5A540") +
+  scale_colour_gradient(low = "#0043F0", high = "#F5A540") +
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+ggsave("../output/WL2_Traits/WL2_Total_Fitness_GrwSsn_GD_Recent.png", width = 12, height = 8, units = "in")
+
+wl2_total_fitness %>% 
+  group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
+  summarise(meanFruits=mean(Total_Fitness, na.rm = TRUE), semFruits=sem(Total_Fitness, na.rm=TRUE)) %>% 
+  ggplot(aes(x=fct_reorder(pop, meanFruits), y=meanFruits, fill=Wtr_Year_GD_Recent)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) + 
+  geom_errorbar(aes(ymin=meanFruits-semFruits,ymax=meanFruits+semFruits),width=.2, position = 
+                  position_dodge(0.75)) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Total Fitness", x="Parent Population", fill="Water Year Gowers") +
+  scale_fill_gradient(low = "#0043F0", high = "#F5A540") +
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+ggsave("../output/WL2_Traits/WL2_Total_Fitness_Wtr_Year_GD_Recent.png", width = 12, height = 8, units = "in")
 ```
 
