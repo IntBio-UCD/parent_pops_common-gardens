@@ -829,3 +829,30 @@ loo_compare(s.m2, s.m3, s.m4, s.m6, s.m9, s.m10, s.m11, s.m12, s.m13, s.m14, s.m
 # Summary
 
 The best survival model is linear with respect time, with random intercept and slope for each population.
+
+# What about random effect for block?
+
+To look at random effect for block we need to use Bernoulli instead of binomial (so we can use one observation per plant).
+
+We can start with `wl2_surv_dates_loc` but we have to fill it in for data points before each plant died.
+
+```{r}
+x <- wl2_surv_dates_loc %>% 
+  complete(Genotype, last_fup_date) %>%
+  filter(Genotype == "BH_1_1") %>% 
+  pull(block)
+
+x
+
+is.na(unique(x))
+```
+
+
+```{r}
+wl2_surv_dates %>% 
+  complete(Genotype, last_fup_date) %>%
+  group_by(Genotype) %>%
+  mutate(across(c(-status, -last_fup_date, -os_weeks, -planting.date), \(x) ifelse(all(is.na(unique(x))), NA,unique(na.omit(x)))))
+```
+
+
