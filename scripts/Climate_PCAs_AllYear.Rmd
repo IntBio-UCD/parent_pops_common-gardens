@@ -188,6 +188,105 @@ bioclim_flint_yrly_avgs_historical <- full_join(flint_all_year_historical_yravgs
 write_csv(bioclim_flint_yrly_avgs_historical, "../output/Climate/fullyear_wtr_year_avgs_Historical.csv")
 ```
 
+## For 2024 (Water Year Avgs)
+### Prep
+
+```{r}
+bioclim_2024_allyear_prep <- flint_all_year_wtr_yr %>% 
+  filter(parent.pop != "UCD_Garden", parent.pop != "WL2_Garden") %>%  #remove garden sites 
+  rename(tmin=tmn, tmax=tmx, year_cal=year, year=wtr_yr) %>% #rename columns to match what calc_biovars expects, also make sure it uses water year 
+  filter(year != "1895", year !="2025") %>%  #remove years with less than 12 months of data
+  arrange(parent.pop, year, month)
+
+bioclim_2024_all_year <- tibble(bio1=NA, bio2=NA, bio4=NA, bio7=NA, bio8=NA, bio9=NA, bio12=NA, bio15=NA, bio18=NA, bio19=NA, year=2025) #blank tibble to bind calculations to
+ 
+popids <- unique(bioclim_2024_allyear_prep$parent.pop) #list of pop ids for for loop 
+
+pop_elev <- flint_all_year_wtr_yr %>% select(parent.pop:Long) %>% distinct()
+```
+
+### Calculation
+
+```{r}
+for(i in popids) {
+  A <- bioclim_2024_allyear_prep %>% filter(parent.pop==i) %>% calc_biovars() %>% mutate(parent.pop=i)
+  #print(A)
+  bioclim_2024_all_year <- bind_rows(bioclim_2024_all_year, A)
+}
+unique(bioclim_2024_all_year$parent.pop) #has all the populations in there!
+```
+
+### SUBSET
+
+```{r}
+bioclim_2024_all_year_final <- bioclim_2024_all_year %>% 
+  select(parent.pop, year, ann_tmean=bio1, mean_diurnal_range=bio2, 
+         temp_seasonality=bio4, temp_ann_range=bio7, tmean_wettest_quarter=bio8,
+         tmean_driest_quarter=bio9, ann_ppt=bio12, ppt_seasonality=bio15,
+         ppt_warmest_quarter=bio18, ppt_coldest_quarter=bio19) %>%
+  filter(year!=2025)
+head(bioclim_2024_all_year_final)
+```
+
+### Merge with pop info
+
+```{r}
+pop_elev_bioclim_2024_all_year <- left_join(bioclim_2024_all_year_final, pop_elev) %>% 
+  select(parent.pop, elevation.group:Long, year:ppt_coldest_quarter)
+head(pop_elev_bioclim_2024_all_year)
+#write_csv(pop_elev_bioclim_2024_all_year, "../output/Climate/bioclim_all_year_UCD_pops_wtr_year_2024.csv")
+```
+
+## Calculation of recent (last 30 years) and historical climate (prior 30 years)
+
+Note: Removed 2024 to facilitate use of QBMS package (also most of the plants did not experience 2024)
+
+```{r}
+flint_all_year_recent_2024 <- flint_all_year_wtr_yr %>% 
+  filter(parent.pop != "UCD_Garden", parent.pop != "WL2_Garden") %>%  #remove garden sites 
+  filter(wtr_yr>1994 & wtr_yr<=2024) %>% 
+  select(parent.pop:month, wtr_yr, cwd, pck, ppt, tmn, tmx)
+head(flint_all_year_recent_2024)
+tail(flint_all_year_recent_2024)
+
+flint_all_year_historical_2024 <- flint_all_year_wtr_yr %>% 
+  filter(parent.pop != "UCD_Garden", parent.pop != "WL2_Garden") %>%  #remove garden sites 
+  filter(wtr_yr<=1994 & wtr_yr>1964) %>% 
+  select(parent.pop:month, wtr_yr, cwd, pck, ppt, tmn, tmx)
+head(flint_all_year_historical_2024, 13)
+tail(flint_all_year_historical_2024, 13)
+
+bioclim_2024_all_year_recent <- pop_elev_bioclim_2024_all_year %>% filter(year>1994 & year<=2024) #year here means water year (see above code where bioclim vars were calculated)
+#head(bioclim_2024_all_year_recent)
+#tail(bioclim_2024_all_year_recent)
+
+bioclim_2024_all_year_historical <- pop_elev_bioclim_2024_all_year %>% filter(year<=1994 & year>1964)
+#head(bioclim_2024_all_year_historical, 13)
+#tail(bioclim_2024_all_year_historical, 13)
+```
+
+### Yearly averages for Flint
+```{r}
+flint_all_year_recent_yravgs_2024 <- flint_all_year_recent_2024 %>% 
+  group_by(parent.pop, elevation.group, elev_m, Lat, Long, wtr_yr) %>% 
+  summarise_at(c("cwd",  "pck", "ppt", "tmn", "tmx"), c(mean), na.rm = TRUE) %>% 
+  rename(year=wtr_yr)
+flint_all_year_recent_yravgs_2024
+
+flint_all_year_historical_yravgs_2024 <- flint_all_year_historical_2024 %>% 
+  group_by(parent.pop, elevation.group, elev_m, Lat, Long, wtr_yr) %>% 
+  summarise_at(c("cwd", "pck", "ppt", "tmn", "tmx"), c(mean), na.rm = TRUE) %>% 
+  rename(year=wtr_yr)
+flint_all_year_historical_yravgs_2024
+```
+
+### Merge with bioclim
+```{r}
+bioclim_2024_flint_yrly_avgs_recent <- full_join(flint_all_year_recent_yravgs_2024, bioclim_2024_all_year_recent) 
+write_csv(bioclim_2024_flint_yrly_avgs_recent, "../output/Climate/fullyear_wtr_year_avgs_Recent_2024.csv")
+bioclim_2024_flint_yrly_avgs_historical <- full_join(flint_all_year_historical_yravgs_2024, bioclim_2024_all_year_historical) 
+write_csv(bioclim_2024_flint_yrly_avgs_historical, "../output/Climate/fullyear_wtr_year_avgs_Historical_2024.csv")
+```
 
 ## All years and months included (Flint)
 
