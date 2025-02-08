@@ -130,6 +130,70 @@ wl2_obs.pop.0 %>%
 ```
 
 
+## Alternative data wrangling to get separate estimates for each block.  This works but then hangs brms.
+
+### population-level summary
+```{r,eval=FALSE}
+wl2_obs.pop <- 
+  wl2_surv_dates %>% select(parent.pop, block, death.date, os_weeks, status) %>%
+  group_by(parent.pop, block) %>%
+  mutate(total=n()) %>%
+  group_by(parent.pop, os_weeks, block) %>%
+  summarize(n.newly.dead=sum(status),
+            total=unique(total)) %>%
+  ungroup() %>%
+  complete(parent.pop, os_weeks, block, fill = list(n.newly.dead=0)) %>% # we have missing data for weeks where nobody died and we need to fill that in
+  group_by(parent.pop, block) %>%
+  arrange(os_weeks) %>%
+  mutate(total=ifelse(length(unique(na.omit(total))) == 0, NA, unique(na.omit(total))), 
+         total.dead=cumsum(n.newly.dead),
+         surviving = total - total.dead,
+         prop.surviving = surviving/total) %>%
+  ungroup() %>%
+  na.omit() %>%
+  #  bind_rows(week0.pop) %>%
+  #  select(parent.pop, elevation.group, os_weeks, prop.surviving) %>%
+  arrange(parent.pop, os_weeks)
+
+## Add in location info
+
+wl2_obs.pop <- left_join(wl2_obs.pop, gowersdist_WL2 %>% filter(TimePd == "Historical")) %>%
+  mutate(elevation.group = factor(elevation.group, levels= c("Low", "Mid", "High")))
+
+# Add a week 0 with all plants
+
+wl2_obs.pop.0 <- wl2_obs.pop %>%
+  filter(os_weeks==1) %>%
+  mutate(os_weeks = 0,
+         n.newly.dead = 0,
+         total.dead = 0,
+         surviving = total,
+         prop.surviving = 1) %>%
+  rbind(wl2_obs.pop) %>%
+  arrange(parent.pop, os_weeks)
+
+wl2_obs.pop.0 %>%
+  # because this is split up by block I have to combine and recompute proportion surviving
+  group_by(elevation.group, os_weeks) %>%
+  summarize(surviving=sum(surviving),
+            total=sum(total),
+            total.dead=sum(sum(total.dead))) %>%
+  mutate(prop.surviving=surviving / total) %>%
+  ggplot(aes(x=os_weeks, y = prop.surviving, color = elevation.group)) +
+  geom_smooth() +
+  geom_point()
+
+wl2_obs.pop.0 %>% # because this is split up by block I have to combine and recompute proportion surviving
+  group_by(parent.pop, os_weeks) %>%
+  summarize(surviving=sum(surviving),
+            total=sum(total),
+            total.dead=sum(sum(total.dead))) %>%
+  mutate(prop.surviving=surviving / total) %>%
+  ggplot(aes(x=os_weeks, y = prop.surviving, color = parent.pop)) +
+  geom_line() +
+  geom_point()
+```
+
 # Modeling probability of event rather than event time
 
 An alternative approach to hazard analysis is to model the probably of death as a function of each time interval.
@@ -680,7 +744,7 @@ loo_compare(s.m2, s.m3, s.m4, s.m6, s.m9, s.m10, s.m11)
 s.m12 <- brm(n.newly.dead | trials(n)  ~ (os_weeks|parent.pop), 
          # prior(normal(0, 4), class = b),
           family = "binomial",
-          chains = 4, cores = 4, refresh = 0,
+          chains = 4, cores = 4, #refresh = 0,
           data = wl2_obs.pop.surv,
           save_pars = save_pars(all = TRUE),
           control = list(adapt_delta = 0.9)) %>%
@@ -694,6 +758,7 @@ plot(s.m12, ask = FALSE, nvariables = 3)
 
 ```{r}
 summary(s.m12)
+summary(s.m12.original)
 ```
 
 ```{r, fig.height=10}
@@ -847,12 +912,52 @@ x
 is.na(unique(x))
 ```
 
+## NOT WORKING CORRECTION
+```{r, eval=FALSE}
 
-```{r}
-wl2_surv_dates %>% 
+wl2_surv_dates_ind <- wl2_surv_dates %>% 
   complete(Genotype, last_fup_date) %>%
   group_by(Genotype) %>%
-  mutate(across(c(-status, -last_fup_date, -os_weeks, -planting.date), \(x) ifelse(all(is.na(unique(x))), NA,unique(na.omit(x)))))
+  mutate(across(c(-status, -last_fup_date, -os_weeks, -planting.date), \(x) ifelse(all(is.na(unique(x))), NA,unique(na.omit(x))))) %>%
+  mutate(planting.date = unique(na.omit(planting.date)),
+         os_weeks=as.duration(planting.date %--% last_fup_date) / dweeks(1),
+           status = ifelse((is.na(death.date) | mdy(death.date) > last_fup_date), 0, 1)) %>% # 0 is alive, 1 is dead
+  filter(cumsum(status) < 2) %>% # you can't die more than once
+  ungroup() %>%  
+  left_join(gowersdist_WL2 %>% filter(TimePd == "Historical"))
+
+wl2_surv_dates_ind %>% select(Genotype, last_fup_date, os_weeks, status)
 ```
 
+
+```{r}
+wl2_surv_dates_ind %>% group_by(Genotype) %>% summarise(status=sum(status)) %>% arrange(desc(status))
+```
+
+Redo s.m12 to make sure results are the same
+
+```{r}
+s.m12.bern <- brm(status  ~ (os_weeks|parent.pop), 
+         # prior(normal(0, 4), class = b),
+          family = "bernoulli",
+          chains = 4, cores = 4, refresh = 0,
+          data = wl2_surv_dates_ind,
+          save_pars = save_pars(all = TRUE),
+          control = list(adapt_delta = 0.9)) %>%
+  add_criterion("loo", moment_match = TRUE)
+```
+
+```{r}
+plot(s.m12.bern, ask = FALSE, nvariables = 3)
+```
+
+
+```{r}
+summary(s.m12)
+summary(s.m12.bern)
+```
+
+```{r, fig.height=10}
+plot_fit_pop(s.m12.bern) + facet_wrap(~parent.pop) +   theme(legend.position = "none")
+```
 
