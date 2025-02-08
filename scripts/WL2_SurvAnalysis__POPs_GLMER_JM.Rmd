@@ -11,7 +11,7 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-This script focuses on using populations as random effects.  See other script for analysis by elevation
+This script focuses on using populations as random effects.  See other scripts for analysis by elevation
 
 # Survival Analysis 
 
@@ -19,16 +19,15 @@ See chapters 9 - 13 in tutorial: https://bookdown.org/content/4253/extending-the
 
 ## Libraries
 ```{r}
-# install.packages(c("ggsurvfit", "gtsummary"))
+# install.packages("multilevelmod")
 library(tidyverse) #includes lubridate, which we need 
 library(ggrepel)
-#library(ggsurvfit)
-#library(gtsummary)
-library(brms)
+library(lme4)
 library(ggdist)
-library(tidybayes)
-library(modelr)
-#library(bayesplot)
+library(tidymodels)
+library(multilevelmod)
+library(broom.mixed)
+tidymodels_prefer()
 options(mc.cores = parallel::detectCores())
 ```
 
@@ -130,109 +129,52 @@ wl2_obs.pop.0 %>%
 ```
 
 
-## Alternative data wrangling to get separate estimates for each block.  This works but then hangs brms.
+## Reformat to be one row per plant per week
 
-### population-level summary
-```{r,eval=FALSE}
-wl2_obs.pop <- 
-  wl2_surv_dates %>% select(parent.pop, block, death.date, os_weeks, status) %>%
-  group_by(parent.pop, block) %>%
-  mutate(total=n()) %>%
-  group_by(parent.pop, os_weeks, block) %>%
-  summarize(n.newly.dead=sum(status),
-            total=unique(total)) %>%
-  ungroup() %>%
-  complete(parent.pop, os_weeks, block, fill = list(n.newly.dead=0)) %>% # we have missing data for weeks where nobody died and we need to fill that in
-  group_by(parent.pop, block) %>%
-  arrange(os_weeks) %>%
-  mutate(total=ifelse(length(unique(na.omit(total))) == 0, NA, unique(na.omit(total))), 
-         total.dead=cumsum(n.newly.dead),
-         surviving = total - total.dead,
-         prop.surviving = surviving/total) %>%
-  ungroup() %>%
-  na.omit() %>%
-  #  bind_rows(week0.pop) %>%
-  #  select(parent.pop, elevation.group, os_weeks, prop.surviving) %>%
-  arrange(parent.pop, os_weeks)
+```{r, eval=TRUE}
+wl2_ind <- wl2_surv_dates %>% 
+  complete(Genotype, last_fup_date) %>%
+  group_by(Genotype) %>%
+  mutate(across(c(-status, -last_fup_date, -os_weeks, -planting.date), \(x) ifelse(all(is.na(unique(x))), NA,unique(na.omit(x))))) %>%
+  mutate(planting.date = unique(na.omit(planting.date)),
+         os_weeks=as.duration(planting.date %--% last_fup_date) / dweeks(1),
+           dead = ifelse((is.na(death.date) | mdy(death.date) > last_fup_date), 0, 1)) %>% # 0 is alive, 1 is dead
+  filter(cumsum(dead) < 2) %>% # you can't die more than once
+  ungroup() %>%  
+  left_join(gowersdist_WL2 %>% filter(TimePd == "Historical"))
 
-## Add in location info
-
-wl2_obs.pop <- left_join(wl2_obs.pop, gowersdist_WL2 %>% filter(TimePd == "Historical")) %>%
-  mutate(elevation.group = factor(elevation.group, levels= c("Low", "Mid", "High")))
-
-# Add a week 0 with all plants
-
-wl2_obs.pop.0 <- wl2_obs.pop %>%
-  filter(os_weeks==1) %>%
-  mutate(os_weeks = 0,
-         n.newly.dead = 0,
-         total.dead = 0,
-         surviving = total,
-         prop.surviving = 1) %>%
-  rbind(wl2_obs.pop) %>%
-  arrange(parent.pop, os_weeks)
-
-wl2_obs.pop.0 %>%
-  # because this is split up by block I have to combine and recompute proportion surviving
-  group_by(elevation.group, os_weeks) %>%
-  summarize(surviving=sum(surviving),
-            total=sum(total),
-            total.dead=sum(sum(total.dead))) %>%
-  mutate(prop.surviving=surviving / total) %>%
-  ggplot(aes(x=os_weeks, y = prop.surviving, color = elevation.group)) +
-  geom_smooth() +
-  geom_point()
-
-wl2_obs.pop.0 %>% # because this is split up by block I have to combine and recompute proportion surviving
-  group_by(parent.pop, os_weeks) %>%
-  summarize(surviving=sum(surviving),
-            total=sum(total),
-            total.dead=sum(sum(total.dead))) %>%
-  mutate(prop.surviving=surviving / total) %>%
-  ggplot(aes(x=os_weeks, y = prop.surviving, color = parent.pop)) +
-  geom_line() +
-  geom_point()
+wl2_ind %>% select(Genotype, last_fup_date, os_weeks, dead)
 ```
 
 # Modeling probability of event rather than event time
 
-An alternative approach to hazard analysis is to model the probably of death as a function of each time interval.
+An alternative approach to hazard analysis is to model the probably of death as a function of time.  This is approach taken here.
 
 ## Discrete intervals
 
-Modify the input data to add some factor variables and to compute the total number of plants during each time period.
+Modify the input data to add some factor variables
 ```{r}
-wl2_obs.pop <- wl2_obs.pop %>% mutate(n=n.newly.dead + surviving,
-                                        os_weeks_f = factor(str_pad(round(os_weeks, 1), 2, pad = "0")), # padding so it will sort correctly
-                                        os_weeks_pop = factor(str_c(parent.pop,"_", os_weeks_f))
+wl2_ind <- wl2_ind %>% mutate(
+  os_weeks_f = factor(str_pad(round(os_weeks, 1), 2, pad = "0")), # padding so it will sort correctly
+  os_weeks_pop = factor(str_c(parent.pop,"_", os_weeks_f))
 )
-wl2_obs.pop
-
-wl2_obs.pop.0 <- wl2_obs.pop.0 %>% mutate(n=n.newly.dead + surviving,
-                                        os_weeks_f = factor(str_pad(round(os_weeks, 1), 2, pad = "0")), # padding so it will sort correctly
-                                        os_weeks_elev = factor(str_c(parent.pop,"_", os_weeks_f))
-)
-
-wl2_obs.pop.0
+wl2_ind
 ```
 
 Split data into establishment and survival data sets
 ```{r}
-wl2_obs.pop.estab <- wl2_obs.pop.0 %>% filter(os_weeks <= 3 & os_weeks > 0) # don't model week 0, we know that survivorship is 1 by definition 
+wl2_ind_estab <- wl2_ind %>% filter(os_weeks <= 3) %>%
+  # compute status at week 3 for each plant
+  group_by(Genotype) %>%
+  summarize(dead=max(dead),
+            across(c(block, bed, parent.pop, mf, ends_with("GD")), unique))
 
-# For survival after establishment need to recalculate total plants surviving at week 3 as the baseline
-wl2_obs.pop.surv <- wl2_obs.pop.0 %>% filter(os_weeks >= 3) %>%
-  group_by(parent.pop) %>%
-  mutate(total.w3=max(surviving)) %>% # this gets us week 3
-  ungroup() %>%
-  mutate(prop.surviving.w3 = surviving/total.w3) %>%
-  filter(os_weeks > 3)
-  
+wl2_ind_surv <- wl2_ind %>% filter(os_weeks > 3) 
 ```
 
 
 Create a plotting function for plotting the fits below:
-
+FIXME
 ```{r, eval=FALSE}
 # only fixed to work with survival models, not establishment
 plot_fit_pop <- function(m, mname=NA, d=wl2_obs.pop.surv) {
@@ -272,14 +214,49 @@ plot_fit_pop <- function(m, mname=NA, d=wl2_obs.pop.surv) {
 
 ### Null model
 
-For models without time we need to just summarize the data for week 3
+```{r}
+glmer.model <- 
+  linear_reg() %>%
+  set_engine("glmer", family = binomial)
+```
 
 ```{r}
-wl2_obs.pop.estab_w3 <- wl2_obs.pop.estab %>%
-  filter(os_weeks==3) %>%
-  mutate(n=total.dead + surviving)
+estab_wflow <- workflow() %>%
+  add_variables(outcomes = dead, predictors = c(parent.pop, mf, block)) 
 
-wl2_obs.pop.estab_w3
+estab_fits <- tibble(wflow=list(
+  pop = {estab_wflow %>% 
+      add_model(glmer.model, formula = dead ~ (1|parent.pop))},
+  
+  pop.mf = {estab_wflow %>% 
+      add_model(glmer.model, formula = dead ~ (1|parent.pop/mf))},
+  
+  pop.block = {estab_wflow %>% 
+      add_model(glmer.model, formula = dead ~ (1|parent.pop) + (1|block))},
+  
+  pop.mf.block = {estab_wflow %>% 
+      add_model(glmer.model, formula = dead ~ (1|parent.pop/mf) + (1|block))}
+),
+name=names(wflow)
+) %>% 
+  select(name,wflow)
+estab_fits
+```
+
+```{r}
+estab_fits <- estab_fits %>%
+  mutate(fit = map(wflow, fit, data = wl2_ind_estab))
+```
+
+```{r}
+estab_fits %>% mutate(glance=map(fit, glance)) %>% unnest(glance) %>% arrange(AIC) %>% select(-wflow:-sigma)
+```
+
+Keep block but not mf
+
+```{r}
+estab_best_fit <- estab_fits %>% filter(name=="pop.block") %>% pull(fit) %>% magrittr::extract2(1)
+estab_best_fit
 ```
 
 
