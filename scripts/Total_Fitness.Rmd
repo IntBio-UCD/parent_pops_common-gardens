@@ -2,7 +2,9 @@
 title: "Total Fitness"
 author: "Brandie QC"
 date: "`r Sys.Date()`"
-output: html_document
+output: 
+  html_document: 
+    keep_md: true
 ---
 
 ```{r setup, include=FALSE}
@@ -216,6 +218,7 @@ wl2_establishment %>%
   labs(y="p(Establishment)", x="Parent Population", fill="Growth Season Gowers") +
   scale_fill_gradient(low = "#0043F0", high = "#F5A540") +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+ggsave("../output/WL2_Traits/WL2_Establishment_GrwSsn_GD_Recent.png", width = 12, height = 8, units = "in")
 
 wl2_establishment %>% 
   group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
@@ -229,6 +232,7 @@ wl2_establishment %>%
   labs(y="p(Establishment)", x="Parent Population", fill="Water Year Gowers") +
   scale_fill_gradient(low = "#0043F0", high = "#F5A540") +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+ggsave("../output/WL2_Traits/WL2_Establishment_Wtr_Year_GD_Recent.png", width = 12, height = 8, units = "in")
 ```
 
 ### Stats
@@ -340,6 +344,7 @@ ucd_surv_to_rep %>%
   labs(y="p(Surv-to-Rep Y1)", x="Parent Population", fill="Growth Season Gowers") +
   scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+ggsave("../output/UCD_Traits/UCD_SurvtoRepY1_GrwSsn_GD_Recent.png", width = 12, height = 8, units = "in")
 
 ucd_surv_to_rep %>% 
   group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
@@ -353,6 +358,7 @@ ucd_surv_to_rep %>%
   labs(y="p(Surv-to-Rep Y1)", x="Parent Population", fill="Water Year Gowers") +
   scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+ggsave("../output/UCD_Traits/UCD_SurvtoRepY1_Wtr_Year_GD_Recent.png", width = 12, height = 8, units = "in")
 ```
 
 WL2
@@ -384,6 +390,7 @@ wl2_surv_to_rep_y1 %>%
   labs(y="p(Surv-to-Rep Y1)", x="Parent Population", fill="Growth Season Gowers") +
   scale_fill_gradient(low = "#0043F0", high = "#F5A540") +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+ggsave("../output/WL2_Traits/WL2_SurvtoRepY1_GrwSsn_GD_Recent.png", width = 12, height = 8, units = "in")
 
 wl2_surv_to_rep_y1 %>% 
   group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
@@ -397,6 +404,7 @@ wl2_surv_to_rep_y1 %>%
   labs(y="p(Surv-to-Rep Y1)", x="Parent Population", fill="Water Year Gowers") +
   scale_fill_gradient(low = "#0043F0", high = "#F5A540") +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+ggsave("../output/WL2_Traits/WL2_SurvtoRepY1_Wtr_Year_GD_Recent.png", width = 12, height = 8, units = "in")
 ```
 
 
@@ -420,6 +428,7 @@ ucd_fruits %>%
   labs(y="Fruit Number", x="Parent Population", fill="Growth Season Gowers") +
   scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+ggsave("../output/UCD_Traits/UCD_Fruits_GrwSsn_GD_Recent.png", width = 12, height = 8, units = "in")
 
 ucd_fruits %>% 
   group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
@@ -433,6 +442,7 @@ ucd_fruits %>%
   labs(y="Fruit Number", x="Parent Population", fill="Water Year Gowers") +
   scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+ggsave("../output/UCD_Traits/UCD_Fruits_Wtr_Year_GD_Recent.png", width = 12, height = 8, units = "in")
 ```
 
 WL2
@@ -453,6 +463,7 @@ wl2_fruits_y1 %>%
   labs(y="Fruit Number", x="Parent Population", fill="Growth Season Gowers") +
   scale_fill_gradient(low = "#0043F0", high = "#F5A540") +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+ggsave("../output/WL2_Traits/WL2_FruitsY1_GrwSsn_GD_Recent.png", width = 12, height = 8, units = "in")
 
 wl2_fruits_y1 %>% 
   group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
@@ -467,6 +478,7 @@ wl2_fruits_y1 %>%
   labs(y="Fruit Number", x="Parent Population", fill="Water Year Gowers") +
   scale_fill_gradient(low = "#0043F0", high = "#F5A540") +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+ggsave("../output/WL2_Traits/WL2_FruitsY1_Wtr_Year_GD_Recent.png", width = 12, height = 8, units = "in")
 ```
 
 
@@ -500,6 +512,7 @@ winter_surv %>%
   labs(y="p(Winter Surv)", x="Parent Population", fill="Water Year Gowers") +
   scale_fill_gradient(low = "#0043F0", high = "#F5A540") +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+ggsave("../output/WL2_Traits/WL2_WinterSurv_Wtr_Year_GD_Recent.png", width = 12, height = 8, units = "in")
 ```
 
 
@@ -537,6 +550,7 @@ wl2_surv_to_rep_y2 %>%
   labs(y="p(Surv-to-Rep Y2)", x="Parent Population", fill="Growth Season Gowers") +
   scale_fill_gradient(low = "#0043F0", high = "#F5A540") +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+ggsave("../output/WL2_Traits/WL2_SurvtoRepY2_GrwSsn_GD_Recent.png", width = 12, height = 8, units = "in")
 
 wl2_surv_to_rep_y2 %>% 
   group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
@@ -551,6 +565,7 @@ wl2_surv_to_rep_y2 %>%
   labs(y="p(Surv-to-Rep Y2)", x="Parent Population", fill="Water Year Gowers") +
   scale_fill_gradient(low = "#0043F0", high = "#F5A540") +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+ggsave("../output/WL2_Traits/WL2_SurvtoRepY2_Wtr_Year_GD_Recent.png", width = 12, height = 8, units = "in")
 ```
 
 
@@ -573,6 +588,7 @@ wl2_fruits_y2 %>%
   labs(y="Fruit Number", x="Parent Population", fill="Growth Season Gowers") +
   scale_fill_gradient(low = "#0043F0", high = "#F5A540") +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+ggsave("../output/WL2_Traits/WL2_FruitsY2_GrwSsn_GD_Recent.png", width = 12, height = 8, units = "in")
 
 wl2_fruits_y2 %>% 
   group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
@@ -587,6 +603,7 @@ wl2_fruits_y2 %>%
   labs(y="Fruit Number", x="Parent Population", fill="Water Year Gowers") +
   scale_fill_gradient(low = "#0043F0", high = "#F5A540") +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+ggsave("../output/WL2_Traits/WL2_FruitsY2_Wtr_Year_GD_Recent.png", width = 12, height = 8, units = "in")
 
 wl2_fruits_y2 %>% filter(pop=="TM2") #only 3 of the 6 made fruits and those 3 had wide variation (2, 19, 125)
 ```
@@ -622,6 +639,7 @@ ucd_total_fitness %>%
   labs(y="Total Fitness", x="Parent Population", fill="Growth Season Gowers") +
   scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+ggsave("../output/UCD_Traits/UCD_Total_Fitness_GrwSsn_GD_Recent.png", width = 12, height = 8, units = "in")
 
 ucd_total_fitness %>% 
   group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
@@ -635,6 +653,8 @@ ucd_total_fitness %>%
   labs(y="Total Fitness", x="Parent Population", fill="Water Year Gowers") +
   scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+ggsave("../output/UCD_Traits/UCD_Total_Fitness_Wtr_Year_GD_Recent.png", width = 12, height = 8, units = "in")
+
 #could also calculate it for each treatment from avg probabilities?
 ```
 
@@ -673,6 +693,21 @@ wl2_total_fitness %>%
   summarise(meanFruits=mean(Total_Fitness, na.rm = TRUE), semFruits=sem(Total_Fitness, na.rm=TRUE)) %>% 
   ggplot(aes(x=fct_reorder(pop, meanFruits), y=meanFruits, fill=GrwSsn_GD_Recent)) +
   geom_col(width = 0.7,position = position_dodge(0.75)) + 
+  geom_errorbar(aes(ymin=meanFruits-semFruits,ymax=meanFruits+semFruits),
+                width=.2, position = position_dodge(0.75)) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Total Fitness", x="Parent Population", fill="Growth Season Gowers") +
+  scale_fill_gradient(low = "#0043F0", high = "#F5A540") +
+  scale_colour_gradient(low = "#0043F0", high = "#F5A540") +
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+ggsave("../output/WL2_Traits/WL2_Total_Fitness_GrwSsn_GD_Recent.png", width = 12, height = 8, units = "in")
+
+wl2_total_fitness %>% 
+  group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
+  summarise(meanFruits=mean(Total_Fitness, na.rm = TRUE), semFruits=sem(Total_Fitness, na.rm=TRUE)) %>% 
+  ggplot(aes(x=fct_reorder(pop, meanFruits), y=meanFruits, fill=GrwSsn_GD_Recent)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) + 
   geom_errorbar(aes(ymin=meanFruits-semFruits,ymax=meanFruits+semFruits, color=GrwSsn_GD_Recent),
                 show.legend = FALSE, width=.2, position = position_dodge(0.75)) +
   theme_classic() + 
@@ -681,7 +716,7 @@ wl2_total_fitness %>%
   scale_fill_gradient(low = "#0043F0", high = "#F5A540") +
   scale_colour_gradient(low = "#0043F0", high = "#F5A540") +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/WL2_Traits/WL2_Total_Fitness_GrwSsn_GD_Recent.png", width = 12, height = 8, units = "in")
+ggsave("../output/WL2_Traits/WL2_Total_Fitness_GrwSsn_GD_Recent2.png", width = 12, height = 8, units = "in")
 
 wl2_total_fitness %>% 
   group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
