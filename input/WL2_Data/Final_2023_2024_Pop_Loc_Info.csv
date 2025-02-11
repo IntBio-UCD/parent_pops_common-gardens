@@ -1,0 +1,1218 @@
+bed.block.order,bed.order,AB.CD.order,column.order,Pop.Type,status,block,loc,bed,bedrow,bedcol,pop,mf,rep,unique.ID
+1,1,1,1,2023-TM2-fruit,2023-TM2-fruit,NA,A_1_A,A,1,A,TM2,6,11,TM2_6_11
+22,12,1,1,2023-survivor,2023-survivor,NA,A_6_B,A,6,B,CC,3,3,CC_3_3
+62,32,1,1,2023-survivor,2023-survivor,NA,A_16_B,A,16,B,BH,3,3,BH_3_3
+65,33,1,1,2023-survivor,2023-survivor,NA,A_17_A,A,17,A,BH,7,3,BH_7_3
+69,35,1,1,2023-survivor,2023-survivor,NA,A_18_A,A,18,A,BH,4,3,BH_4_3
+93,47,1,1,2023-survivor,2023-survivor,NA,A_24_A,A,24,A,WL2,7,9,WL2_7_9
+126,64,1,1,2023-survivor,2023-survivor,NA,A_32_B,A,32,B,IH,7,4,IH_7_4
+137,69,1,1,2023-survivor,2023-survivor,NA,A_35_A,A,35,A,SC,8,4,SC_8_4
+141,71,1,1,2023-survivor,2023-survivor,NA,A_36_A,A,36,A,BH,3,4,BH_3_4
+154,78,1,1,2023-survivor,2023-survivor,NA,A_39_B,A,39,B,WL2,7,10,WL2_7_10
+169,85,1,1,2023-TM2-fruit,2023-TM2-fruit,NA,A_43_A,A,43,A,TM2,6,1,TM2_6_1
+178,90,1,1,2023-survivor,2023-survivor,NA,A_45_B,A,45,B,IH,2,4,IH_2_4
+190,96,1,1,2023-survivor,2023-survivor,NA,A_49_A,A,49,A,YO7,7,23,YO7_7_23
+206,104,1,1,2023-survivor,2023-survivor,NA,A_53_A,A,53,A,CC,4,4,CC_4_4
+213,107,1,1,2023-survivor,2023-survivor,NA,A_53_B,A,53,B,BH,7,4,BH_7_4
+225,113,1,1,2023-TM2-fruit,2023-TM2-fruit,NA,A_56_B,A,56,B,TM2,2,12,TM2_2_12
+55,147,2,2,2023-survivor,2023-survivor,NA,A_14_D,A,14,D,CC,8,3,CC_8_3
+56,148,2,2,2023-survivor,2023-survivor,NA,A_15_C,A,15,C,CC,1,3,CC_1_3
+67,153,2,2,2023-survivor,2023-survivor,NA,A_17_D,A,17,D,BH,2,3,BH_2_3
+87,163,2,2,2023-survivor,2023-survivor,NA,A_22_D,A,22,D,SC,8,3,SC_8_3
+91,165,2,2,2023-TM2-fruit,2023-TM2-fruit,NA,A_23_D,A,23,D,TM2,3,3,TM2_3_3
+140,190,2,2,2023-survivor,2023-survivor,NA,A_36_C,A,36,C,SC,2,4,SC_2_4
+172,206,2,2,2023-TM2-fruit,2023-TM2-fruit,NA,A_44_C,A,44,C,TM2,6,3,TM2_6_3
+179,209,2,2,2023-survivor,2023-survivor,NA,A_45_D,A,45,D,SC,4,4,SC_4_4
+184,212,2,2,2023-survivor,2023-survivor,NA,A_46_D,A,46,D,SQ1,5,10,SQ1_5_10
+200,220,2,2,2023-survivor,2023-survivor,NA,A_50_D,A,50,D,IH,6,4,IH_6_4
+219,229,2,2,2023-survivor,2023-survivor,NA,A_56_C,A,56,C,IH,1,4,IH_1_4
+232,236,2,2,2023-survivor,2023-survivor,NA,A_58_D,A,58,D,YO7,7,13,YO7_7_13
+322,281,3,1,2023-survivor,2023-survivor,NA,B_22_A,B,22,A,IH,3,5,IH_3_5
+334,287,3,1,2023-survivor,2023-survivor,NA,B_25_A,B,25,A,IH,6,5,IH_6_5
+382,311,3,1,2023-TM2-fruit,2023-TM2-fruit,NA,B_37_A,B,37,A,TM2,1,16,TM2_1_16
+402,321,3,1,2023-survivor,2023-survivor,NA,B_42_A,B,42,A,BH,2,5,BH_2_5
+406,323,3,1,2023-survivor,2023-survivor,NA,B_43_A,B,43,A,BH,5,5,BH_5_5
+458,349,3,1,2023-survivor,2023-survivor,NA,B_56_A,B,56,A,SC,6,15,SC_6_15
+462,351,3,1,2023-survivor,2023-survivor,NA,B_57_A,B,57,A,IH,4,4,IH_4_4
+312,396,4,2,2023-survivor,2023-survivor,NA,B_19_D,B,19,D,CC,2,6,CC_2_6
+339,409,4,2,2023-survivor,2023-survivor,NA,B_26_C,B,26,C,IH,5,5,IH_5_5
+347,413,4,2,2023-survivor,2023-survivor,NA,B_28_C,B,28,C,BH,4,5,BH_4_5
+380,430,4,2,2023-TM2-fruit,2023-TM2-fruit,NA,B_36_D,B,36,D,TM2,1,4,TM2_1_4
+408,444,4,2,2023-TM2-fruit,2023-TM2-fruit,NA,B_43_D,B,43,D,TM2,7,10,TM2_7_10
+415,447,4,2,2023-survivor,2023-survivor,NA,B_45_C,B,45,C,WL2,1,11,WL2_1_11
+423,451,4,2,2023-survivor,2023-survivor,NA,B_47_C,B,47,C,YO7,4,6,YO7_4_6
+459,469,4,2,2023-survivor,2023-survivor,NA,B_56_C,B,56,C,TM2,1,3,TM2_1_3
+464,472,4,2,2023-survivor,2023-survivor,NA,B_57_D,B,57,D,BH,2,4,BH_2_4
+685,479,5,1,,buffer,A,C_1_A,C,1,A,,,,buffer
+686,480,5,1,,buffer,A,C_1_B,C,1,B,,,,buffer
+687,481,5,1,,buffer,A,C_2_A,C,2,A,,,,buffer
+688,482,5,1,,buffer,A,C_2_B,C,2,B,,,,buffer
+689,483,5,1,,buffer,A,C_3_A,C,3,A,,,,buffer
+690,484,5,1,,buffer,A,C_3_B,C,3,B,,,,buffer
+490,485,5,1,F2,available,A,C_4_A,C,4,A,(WV x WL2) x (WV),,13,280
+491,486,5,1,F2,available,A,C_4_B,C,4,B,(LV1 x WL2) x (TM2 x WL2),,7,949
+492,487,5,1,Parent,available,A,C_5_A,C,5,A,TM2,,70,540
+493,488,5,1,F2,available,A,C_5_B,C,5,B,(TM2 x WL2) x (SQ3 x WL2),,13,317
+695,489,5,1,2023-survivor,2023-survivor,NA,C_6_A,C,6,A,CC,1,6,CC_1_6
+494,490,5,1,F2,available,A,C_6_B,C,6,B,(WL2 x BH) x (SQ3 x WL2),,14,1175
+495,491,5,1,F2,available,A,C_7_A,C,7,A,(TM2 x WL2) x (TM2 x WL2),,10,1091
+496,492,5,1,F2,available,A,C_7_B,C,7,B,(LV1 x WL2) x (WL2 x DPR),,13,968
+497,493,5,1,F2,available,A,C_8_A,C,8,A,(WL1 x WL2) x (BH x WL2),,2,333
+498,494,5,1,F2,available,A,C_8_B,C,8,B,(TM2 x WL2) x (YO11 x WL2),,2,374
+499,495,5,1,Parent,available,A,C_9_B,C,9,B,TM2,,51,521
+500,496,5,1,Parent,available,A,C_10_A,C,10,A,BH,,6,392
+501,497,5,1,F2,available,A,C_10_B,C,10,B,(WL1 x WL2) x (WL2 x TM2),,15,1160
+502,498,5,1,Parent,available,A,C_11_A,C,11,A,TM2,,9,479
+503,499,5,1,F2,available,A,C_11_B,C,11,B,(WL2 x TM2) x (CC x TM2),,13,264
+504,500,5,1,F1,available,A,C_12_A,C,12,A,WV x TM2,,7,199
+505,501,5,1,F2,available,A,C_12_B,C,12,B,(WL2 x DPR) x (WL2),,5,1102
+506,502,5,1,F2,available,A,C_13_A,C,13,A,(TM2 x WL2) x (TM2),,2,344
+507,503,5,1,F2,available,A,C_13_B,C,13,B,(SQ3 x WL2) x (YO11 x WL2),,12,1511
+508,504,5,1,Parent,available,A,C_14_A,C,14,A,WL2,,3,98
+509,505,5,1,F2,available,A,C_14_B,C,14,B,(SQ3 x WL2) x (SQ3 x WL2),,4,868
+510,506,5,1,Parent,available,A,C_15_A,C,15,A,WL2,,30,125
+511,507,5,1,F2,available,A,C_15_B,C,15,B,(YO11 x WL2) x (SQ3 x WL2),,6,1007
+512,508,5,1,F2,available,A,C_16_A,C,16,A,(WL1 x WL2) x (WL2 x CC),,6,1119
+513,509,5,1,Parent,available,A,C_16_B,C,16,B,WL2,,94,189
+514,510,5,1,F2,available,A,C_17_A,C,17,A,(LV1 x WL2) x (WL2),,8,71
+515,511,5,1,Parent,available,A,C_17_B,C,17,B,TM2,,37,507
+516,512,5,1,F2,available,A,C_18_A,C,18,A,(TM2 x BH) x (TM2 x BH),,2,1336
+517,513,5,1,F2,available,A,C_18_B,C,18,B,(LV1 x WL2) x (SQ3 x WL2),,9,980
+518,514,5,1,,available,A,C_19_A,C,19,A,,,,NA
+519,515,5,1,,available,A,C_19_B,C,19,B,,,,NA
+549,516,5,1,Parent,available,B,C_20_A,C,20,A,CC,,6,413
+550,517,5,1,F2,available,B,C_20_B,C,20,B,(DPR x WL2) x (YO11 x WL2),,4,698
+551,518,5,1,F1,available,B,C_21_A,C,21,A,WV x TM2,,22,215
+552,519,5,1,Parent,available,B,C_21_B,C,21,B,BH,,21,407
+553,520,5,1,Parent,available,B,C_22_A,C,22,A,TM2,,62,532
+696,521,5,1,2023-survivor,2023-survivor,NA,C_22_B,C,22,B,BH,6,7,BH_6_7
+554,522,5,1,Parent,available,B,C_23_A,C,23,A,WV,,20,469
+555,523,5,1,Parent,available,B,C_23_B,C,23,B,WL2,,23,118
+556,524,5,1,F2,available,B,C_24_A,C,24,A,(WV x WL2) x (WV),,14,281
+557,525,5,1,F2,available,B,C_24_B,C,24,B,(DPR x WL2) x (WV x WL2),,3,1459
+558,526,5,1,F1,available,B,C_25_A,C,25,A,LV1 x WL2,,25,1275
+559,527,5,1,F2,available,B,C_25_B,C,25,B,(LV1 x WL2) x (WL2),,9,72
+560,528,5,1,Parent,available,B,C_26_A,C,26,A,TM2,,24,494
+561,529,5,1,Parent,available,B,C_26_B,C,26,B,WL2,,59,154
+562,530,5,1,F2,available,B,C_27_A,C,27,A,(WV) x (WV x WL2),,12,1398
+563,531,5,1,F1,available,B,C_27_B,C,27,B,WV x TM2,,8,200
+564,532,5,1,Parent,available,B,C_28_A,C,28,A,TM2,,10,480
+565,533,5,1,F2,available,B,C_28_B,C,28,B,(TM2 x WL2) x (TM2),,5,347
+566,534,5,1,Parent,available,B,C_29_A,C,29,A,LV1,,17,17
+567,535,5,1,F2,available,B,C_29_B,C,29,B,(WL1 x WL2) x (BH x WL2),,10,341
+568,536,5,1,F1,available,B,C_30_A,C,30,A,LV1 x TM2,,4,1228
+569,537,5,1,Parent,available,B,C_30_B,C,30,B,TM2,,43,513
+570,538,5,1,F2,available,B,C_31_A,C,31,A,(YO11 x WL2) x (WL2),,13,939
+571,539,5,1,Parent,available,B,C_31_B,C,31,B,TM2,,73,543
+572,540,5,1,F2,available,B,C_32_A,C,32,A,(TM2 x BH) x (TM2),,4,1053
+573,541,5,1,F1,available,B,C_32_B,C,32,B,TM2 x WL2,,3,1279
+574,542,5,1,Parent,available,B,C_33_B,C,33,B,WL2,,88,183
+575,543,5,1,F2,available,B,C_34_A,C,34,A,(YO11 x WL2) x (DPR x WL2),,4,776
+576,544,5,1,Parent,available,B,C_34_B,C,34,B,LV1,,2,2
+577,545,5,1,Parent,available,B,C_35_A,C,35,A,WL2,,41,136
+578,546,5,1,F2,available,B,C_35_B,C,35,B,(TM2 x BH) x (TM2 x BH),,14,1348
+579,547,5,1,,available,B,C_36_A,C,36,A,,,,NA
+697,548,5,1,2023-survivor,2023-survivor,NA,C_36_B,C,36,B,SC,2,19,SC_2_19
+607,549,5,1,Parent,available,C,C_37_A,C,37,A,WL2,,50,145
+608,550,5,1,F1,available,C,C_37_B,C,37,B,TM2 x WL2,,13,1289
+609,551,5,1,F1,available,C,C_38_A,C,38,A,CC x TM2,,12,1362
+610,552,5,1,Parent,available,C,C_38_B,C,38,B,WL2,,33,128
+611,553,5,1,F2,available,C,C_39_A,C,39,A,(TM2 x BH) x (TM2 x BH),,13,1347
+612,554,5,1,F2,available,C,C_39_B,C,39,B,(YO11 x WL2) x (SQ3 x WL2),,2,1003
+613,555,5,1,F2,available,C,C_40_A,C,40,A,(WL2 x BH) x (SQ3 x WL2),,1,1162
+698,556,5,1,2023-survivor,2023-survivor,NA,C_40_B,C,40,B,BH,1,7,BH_1_7
+614,557,5,1,F2,available,C,C_41_A,C,41,A,(DPR) x (WL2 x DPR),,12,738
+615,558,5,1,Parent,available,C,C_41_B,C,41,B,WL2,,5,100
+616,559,5,1,F2,available,C,C_42_A,C,42,A,(WL2 x DPR) x (TM2 x WL2),,1,1314
+617,560,5,1,F2,available,C,C_42_B,C,42,B,(SQ3 x WL2) x (TM2 x WL2),,10,888
+618,561,5,1,F2,available,C,C_43_A,C,43,A,(LV1 x WL2) x (WL2),,10,73
+619,562,5,1,F2,available,C,C_43_B,C,43,B,(TM2 x WL2) x (TM2),,13,355
+620,563,5,1,Parent,available,C,C_44_A,C,44,A,TM2,,11,481
+621,564,5,1,F1,available,C,C_44_B,C,44,B,LV1 x TM2,,5,1229
+699,565,5,1,2023-survivor,2023-survivor,NA,C_45_A,C,45,A,BH,7,7,BH_7_7
+622,566,5,1,F2,available,C,C_45_B,C,45,B,(WL1 x WL2) x (WL2 x CC),,8,1121
+623,567,5,1,Parent,available,C,C_46_A,C,46,A,WV,,3,452
+624,568,5,1,Parent,available,C,C_46_B,C,46,B,LV1,,20,20
+625,569,5,1,Parent,available,C,C_47_A,C,47,A,WL2,,92,187
+700,570,5,1,2023-survivor,2023-survivor,NA,C_47_B,C,47,B,IH,2,7,IH_2_7
+626,571,5,1,F2,available,C,C_48_A,C,48,A,(TM2 x WL2) x (WL2),,5,361
+627,572,5,1,F2,available,C,C_48_B,C,48,B,(WL2 x BH) x (WL2 x TM2),,8,243
+628,573,5,1,F2,available,C,C_49_A,C,49,A,(WL2 x CC) x (WL2 x TM2),,10,1187
+629,574,5,1,F1,available,C,C_49_B,C,49,B,WV x TM2,,9,201
+630,575,5,1,F2,available,C,C_50_A,C,50,A,(WL2) x (DPR x WL2),,13,907
+631,576,5,1,Parent,available,C,C_50_B,C,50,B,BH,,18,404
+632,577,5,1,,available,C,C_51_A,C,51,A,,,,NA
+633,578,5,1,,available,C,C_51_B,C,51,B,,,,NA
+663,579,5,1,F1,available,D,C_52_A,C,52,A,WV x WL2,,7,1409
+664,580,5,1,F2,available,D,C_52_B,C,52,B,(LV1 x WL2) x (WL2),,11,74
+665,581,5,1,F2,available,D,C_53_A,C,53,A,(WL2 x BH) x (WL2 x TM2),,13,248
+701,582,5,1,2023-survivor,2023-survivor,NA,C_53_B,C,53,B,IH,3,8,IH_3_8
+666,583,5,1,F1,available,D,C_54_A,C,54,A,LV1 x WL2,,5,1255
+702,584,5,1,2023-TM2-fruit,2023-TM2-fruit,NA,C_54_B,C,54,B,TM2,1,14,TM2_1_14
+703,585,5,1,2023-survivor,2023-survivor,NA,C_55_A,C,55,A,YO7,1,4,YO7_1_4
+667,586,5,1,F2,available,D,C_55_B,C,55,B,(WL1 x WL2) x (WL2 x CC),,11,1124
+668,587,5,1,F2,available,D,C_56_A,C,56,A,(DPR) x (WL2 x DPR),,13,739
+669,588,5,1,F1,available,D,C_56_B,C,56,B,LV1 x TM2,,17,1241
+670,589,5,1,Parent,available,D,C_57_A,C,57,A,SQ3,,13,34
+671,590,5,1,Parent,available,D,C_57_B,C,57,B,WV,,4,453
+672,591,5,1,Parent,available,D,C_58_A,C,58,A,BH,,9,395
+673,592,5,1,F2,available,D,C_58_B,C,58,B,(WL2 x TM2) x (CC x TM2),,16,267
+674,593,5,1,,buffer,D,C_59_A,C,59,A,,,,buffer
+675,594,5,1,,buffer,D,C_59_B,C,59,B,,,,buffer
+676,595,5,1,,buffer,D,C_60_A,C,60,A,,,,buffer
+677,596,5,1,,buffer,D,C_60_B,C,60,B,,,,buffer
+704,597,6,2,,buffer,A,C_1_C,C,1,C,,,,buffer
+705,598,6,2,,buffer,A,C_1_D,C,1,D,,,,buffer
+706,599,6,2,2023-survivor,2023-survivor,NA,C_2_C,C,2,C,SC,5,6,SC_5_6
+707,600,6,2,2023-survivor,2023-survivor,NA,C_2_D,C,2,D,CC,9,6,CC_9_6
+708,601,6,2,,buffer,A,C_3_C,C,3,C,,,,buffer
+520,602,6,2,F2,available,A,C_3_D,C,3,D,(SQ3 x WL2) x (WL2),,8,87
+521,603,6,2,F2,available,A,C_4_C,C,4,C,(LV1 x WL2) x (YO11 x WL2),,2,987
+709,604,6,2,,buffer,A,C_4_D,C,4,D,,,,buffer
+522,605,6,2,F2,available,A,C_5_C,C,5,C,(BH) x (TM2 x BH),,4,666
+523,606,6,2,F2,available,A,C_5_D,C,5,D,(WL2 x CC) x (WL2 x TM2),,8,1185
+524,607,6,2,F1,available,A,C_6_C,C,6,C,LV1 x TM2,,3,1227
+525,608,6,2,,NA,A,C_6_D,C,6,D,,,,NA
+526,609,6,2,F2,available,A,C_7_C,C,7,C,(WL2 x BH) x (SQ3 x WL2),,11,1172
+527,610,6,2,Parent,available,A,C_7_D,C,7,D,TM2,,17,487
+528,611,6,2,Parent,available,A,C_8_C,C,8,C,WL2,,72,167
+529,612,6,2,F2,available,A,C_8_D,C,8,D,(WL1 x WL2) x (WL2 x CC),,14,1127
+530,613,6,2,F2,available,A,C_9_C,C,9,C,(TM2 x BH) x (BH),,10,752
+531,614,6,2,F2,available,A,C_9_D,C,9,D,(SQ3 x WL2) x (TM2 x WL2),,8,886
+532,615,6,2,Parent,available,A,C_10_C,C,10,C,WL1,,20,303
+704,616,6,2,2023-survivor,2023-survivor,NA,C_10_D,C,10,D,BH,3,6,BH_3_6
+533,617,6,2,F2,available,A,C_11_C,C,11,C,(WL2) x (WV x WL2),,5,763
+534,618,6,2,F2,available,A,C_11_D,C,11,D,(WV) x (WV x WL2),,11,1397
+535,619,6,2,F1,available,A,C_12_C,C,12,C,TM2 x WL2,,10,1286
+536,620,6,2,Parent,available,A,C_12_D,C,12,D,LV1,,1,1
+537,621,6,2,F2,available,A,C_13_C,C,13,C,(DPR) x (WL2 x DPR),,10,736
+538,622,6,2,F1,available,A,C_13_D,C,13,D,LV1 x TM2,,21,1245
+539,623,6,2,Parent,available,A,C_14_C,C,14,C,WL2,,54,149
+540,624,6,2,F1,available,A,C_14_D,C,14,D,WV x WL2,,21,1423
+541,625,6,2,Parent,available,A,C_15_C,C,15,C,SQ3,,20,41
+542,626,6,2,Parent,available,A,C_15_D,C,15,D,TM2,,90,560
+543,627,6,2,Parent,available,A,C_16_C,C,16,C,WL2,,35,130
+544,628,6,2,F2,available,A,C_16_D,C,16,D,(YO11 x WL2) x (WL2),,6,932
+545,629,6,2,F2,available,A,C_17_C,C,17,C,(TM2 x WL2) x (WL2),,15,371
+546,630,6,2,F1,available,A,C_17_D,C,17,D,BH x TM2,,16,600
+547,631,6,2,,available,A,C_18_C,C,18,C,,,,NA
+548,632,6,2,,available,A,C_18_D,C,18,D,,,,NA
+580,633,6,2,F2,available,B,C_19_C,C,19,C,(TM2 x WL2) x (SQ3 x WL2),,5,309
+581,634,6,2,Parent,available,B,C_19_D,C,19,D,WL1,,15,298
+582,635,6,2,F2,available,B,C_20_C,C,20,C,(YO11 x WL2) x (WL2 x TM2),,3,790
+583,636,6,2,F2,available,B,C_20_D,C,20,D,(WL1 x WL2) x (WL2 x CC),,10,1123
+584,637,6,2,F2,available,B,C_21_C,C,21,C,(WL2 x CC) x (SQ3 x WL2),,7,1311
+585,638,6,2,F2,available,B,C_21_D,C,21,D,(WL2 x CC) x (WL2 x TM2),,9,1186
+586,639,6,2,F2,available,B,C_22_C,C,22,C,(SQ3 x WL2) x (WL2),,9,88
+587,640,6,2,F2,available,B,C_22_D,C,22,D,(DPR) x (WL2 x DPR),,11,737
+588,641,6,2,Parent,available,B,C_23_C,C,23,C,WL2,,75,170
+705,642,6,2,2023-survivor,2023-survivor,NA,C_23_D,C,23,D,TM2,4,12,TM2_4_12
+589,643,6,2,F1,available,B,C_24_C,C,24,C,LV1 x TM2,,19,1243
+590,644,6,2,Parent,available,B,C_24_D,C,24,D,WL2,,4,99
+591,645,6,2,F2,available,B,C_25_C,C,25,C,(TM2 x WL2) x (WL2),,8,364
+592,646,6,2,F2,available,B,C_25_D,C,25,D,(WL2 x DPR) x (WL2),,11,1108
+593,647,6,2,F2,available,B,C_28_C,C,28,C,(WL2 x BH) x (WL2 x TM2),,16,251
+594,648,6,2,F2,available,B,C_28_D,C,28,D,(WL2 x TM2) x (CC x TM2),,14,265
+595,649,6,2,F2,available,B,C_29_C,C,29,C,(DPR) x (DPR x WL2),,1,711
+596,650,6,2,Parent,available,B,C_29_D,C,29,D,BH,,7,393
+706,651,6,2,2023-survivor,2023-survivor,NA,C_30_C,C,30,C,BH,4,7,BH_4_7
+597,652,6,2,F2,available,B,C_30_D,C,30,D,(LV1 x WL2) x (WL2 x DPR),,6,961
+598,653,6,2,F2,available,B,C_31_C,C,31,C,(LV1 x WL2) x (SQ3 x WL2),,3,974
+599,654,6,2,F2,available,B,C_31_D,C,31,D,(SQ3 x WL2) x (LV1 x WL2),,5,853
+600,655,6,2,F2,available,B,C_32_C,C,32,C,(SQ3 x WL2) x (LV1 x WL2),,11,859
+707,656,6,2,2023-TM2-fruit,2023-TM2-fruit,NA,C_32_D,C,32,D,TM2,7,12,TM2_7_12
+708,657,6,2,2023-TM2-fruit,2023-TM2-fruit,NA,C_33_C,C,33,C,TM2,2,5,TM2_2_5
+601,658,6,2,F1,available,B,C_33_D,C,33,D,WL2 x BH,,3,832
+602,659,6,2,Parent,available,B,C_34_C,C,34,C,TM2,,94,564
+603,660,6,2,F2,available,B,C_34_D,C,34,D,(LV1 x WL2) x (YO11 x WL2),,5,990
+604,661,6,2,,available,B,C_35_C,C,35,C,,,,NA
+605,662,6,2,,available,B,C_35_D,C,35,D,,,,NA
+606,663,6,2,,available,B,C_36_C,C,36,C,,,,NA
+634,664,6,2,F1,available,C,C_36_D,C,36,D,WV x TM2,,21,214
+709,665,6,2,2023-survivor,2023-survivor,NA,C_37_C,C,37,C,CC,2,7,CC_2_7
+635,666,6,2,F2,available,C,C_37_D,C,37,D,(DPR) x (DPR x WL2),,4,714
+710,667,6,2,2023-survivor,2023-survivor,NA,C_38_C,C,38,C,YO7,1,3,YO7_1_3
+636,668,6,2,Parent,available,C,C_38_D,C,38,D,TM2,,69,539
+637,669,6,2,F2,available,C,C_39_C,C,39,C,(WV x WL2) x (WV),,15,282
+638,670,6,2,F2,available,C,C_39_D,C,39,D,(WL2 x DPR) x (WL2),,1,1098
+639,671,6,2,Parent,available,C,C_40_C,C,40,C,TM2,,19,489
+640,672,6,2,Parent,available,C,C_40_D,C,40,D,WL2,,31,126
+641,673,6,2,F2,available,C,C_41_C,C,41,C,(WL2 x TM2) x (CC x TM2),,15,266
+642,674,6,2,F2,available,C,C_41_D,C,41,D,(LV1 x WL2) x (YO11 x WL2),,4,989
+643,675,6,2,Parent,available,C,C_42_C,C,42,C,WL2,,79,174
+644,676,6,2,Parent,available,C,C_42_D,C,42,D,TM2,,83,553
+645,677,6,2,F2,available,C,C_43_C,C,43,C,(WL1 x WL2) x (WL2 x TM2),,11,1156
+646,678,6,2,F2,available,C,C_43_D,C,43,D,(TM2 x BH) x (TM2 x WL2),,15,1048
+647,679,6,2,F1,available,C,C_44_C,C,44,C,LV1 x WL2,,2,1252
+648,680,6,2,F2,available,C,C_44_D,C,44,D,(TM2 x WL2) x (TM2 x WL2),,4,1085
+649,681,6,2,,available,C,C_45_C,C,45,C,NA,,,NA
+650,682,6,2,Parent,available,C,C_45_D,C,45,D,BH,,8,394
+651,683,6,2,Parent,available,C,C_46_C,C,46,C,TM2,,58,528
+652,684,6,2,Parent,available,C,C_46_D,C,46,D,DPR,,1,429
+653,685,6,2,Parent,available,C,C_47_C,C,47,C,LV1,,3,3
+654,686,6,2,F2,available,C,C_47_D,C,47,D,(WV) x (WV x WL2),,13,1399
+655,687,6,2,F2,available,C,C_48_C,C,48,C,(SQ3 x WL2) x (WL2),,10,89
+656,688,6,2,F2,available,C,C_48_D,C,48,D,(LV1 x WL2) x (TM2 x WL2),,4,946
+657,689,6,2,Parent,available,C,C_49_C,C,49,C,SQ3,,16,37
+658,690,6,2,Parent,available,C,C_49_D,C,49,D,TM2,,48,518
+659,691,6,2,,available,C,C_50_C,C,50,C,,,,NA
+660,692,6,2,,available,C,C_50_D,C,50,D,,,,NA
+661,693,6,2,,available,C,C_51_C,C,51,C,,,,NA
+662,694,6,2,F2,available,C,C_51_D,C,51,D,(TM2 x BH) x (BH),,12,754
+678,695,6,2,F2,available,D,C_52_C,C,52,C,(TM2 x BH) x (TM2),,13,1062
+711,696,6,2,2023-TM2-fruit,2023-TM2-fruit,NA,C_52_D,C,52,D,TM2,7,13,TM2_7_13
+679,697,6,2,Parent,available,D,C_53_C,C,53,C,LV1,,4,4
+680,698,6,2,F2,available,D,C_53_D,C,53,D,(WL2 x CC) x (WL2 x TM2),,11,1188
+681,699,6,2,F2,available,D,C_54_C,C,54,C,(SQ3 x WL2) x (TM2 x WL2),,7,885
+682,700,6,2,Parent,available,D,C_54_D,C,54,D,TM2,,56,526
+683,701,6,2,F1,available,D,C_55_C,C,55,C,WV x TM2,,10,202
+684,702,6,2,F2,available,D,C_55_D,C,55,D,(WL1 x TM2) x (WL2 x TM2),,1,321
+685,703,6,2,F2,available,D,C_56_C,C,56,C,(YO11 x WL2) x (WV x WL2),,4,842
+686,704,6,2,F2,available,D,C_56_D,C,56,D,(TM2 x WL2) x (YO11 x WL2),,4,376
+687,705,6,2,F2,available,D,C_57_C,C,57,C,(LV1 x WL2) x (WL2 x DPR),,2,957
+688,706,6,2,F2,available,D,C_57_D,C,57,D,(WL1 x WL2) x (WL2 x TM2),,3,1148
+689,707,6,2,Parent,available,D,C_58_C,C,58,C,LV1,,21,21
+690,708,6,2,Parent,available,D,C_58_D,C,58,D,WL2,,81,176
+691,709,6,2,,buffer,D,C_59_C,C,59,C,,,,buffer
+692,710,6,2,,buffer,D,C_59_D,C,59,D,,,,buffer
+693,711,6,2,,buffer,D,C_60_C,C,60,C,,,,buffer
+694,712,6,2,,buffer,D,C_60_D,C,60,D,,,,buffer
+712,713,7,1,,buffer,D,D_1_A,D,1,A,,,,buffer
+713,714,7,1,,buffer,D,D_1_B,D,1,B,,,,buffer
+714,715,7,1,,buffer,D,D_2_A,D,2,A,,,,buffer
+715,716,7,1,,buffer,D,D_2_B,D,2,B,,,,buffer
+716,717,7,1,,buffer,D,D_3_A,D,3,A,,,,buffer
+717,718,7,1,2023-survivor,2023-survivor,NA,D_3_B,D,3,B,IH,5,9,IH_5_9
+718,719,7,1,F2,available,D,D_4_A,D,4,A,(DPR) x (DPR x WL2),,14,724
+719,720,7,1,F2,available,D,D_4_B,D,4,B,(WL2) x (DPR x WL2),,12,906
+720,721,7,1,F1,available,D,D_5_A,D,5,A,LV1 x TM2,,6,1230
+721,722,7,1,F2,available,D,D_6_B,D,6,B,(SQ3 x WL2) x (WL2),,11,90
+722,723,7,1,Parent,available,D,D_8_A,D,8,A,WL2,,6,101
+723,724,7,1,F2,available,D,D_9_A,D,9,A,(TM2 x BH) x (TM2 x BH),,16,1350
+724,725,7,1,F2,available,D,D_9_B,D,9,B,(YO11 x WL2) x (WL2),,11,937
+725,726,7,1,F2,available,D,D_10_A,D,10,A,(WV x WL2) x (WV),,16,283
+726,727,7,1,Parent,available,D,D_10_B,D,10,B,DPR,,8,436
+727,728,7,1,Parent,available,D,D_11_A,D,11,A,WL2,,18,113
+728,729,7,1,Parent,available,D,D_11_B,D,11,B,TM2,,76,546
+729,730,7,1,,NA,D,D_12_A,D,12,A,,,,NA
+730,731,7,1,,available,D,D_12_B,D,12,B,,,,NA
+731,732,7,1,,available,D,D_13_A,D,13,A,,,,NA
+732,733,7,1,Parent,available,D,D_13_B,D,13,B,WL1,,21,304
+926,734,7,1,2023-survivor,2023-survivor,NA,D_14_A,D,14,A,IH,7,9,IH_7_9
+754,735,7,1,Parent,available,E,D_14_B,D,14,B,LV1,,5,5
+755,736,7,1,Parent,available,E,D_15_A,D,15,A,WL2,,24,119
+756,737,7,1,F2,available,E,D_15_B,D,15,B,(SQ3 x WL2) x (WL2),,12,91
+757,738,7,1,F2,available,E,D_16_A,D,16,A,(WV x WL2) x (WV),,1,268
+758,739,7,1,F2,available,E,D_16_B,D,16,B,(WL2 x DPR) x (WL2),,10,1107
+927,740,7,1,2023-survivor,2023-survivor,NA,D_17_A,D,17,A,CC,9,9,CC_9_9
+759,741,7,1,Parent,available,E,D_17_B,D,17,B,WL2,,67,162
+760,742,7,1,F1,available,E,D_18_A,D,18,A,WV x TM2,,11,203
+761,743,7,1,Parent,available,E,D_18_B,D,18,B,BH,,17,403
+928,744,7,1,2023-survivor,2023-survivor,NA,D_19_A,D,19,A,TM2,7,18,TM2_7_18
+929,745,7,1,2023-survivor,2023-survivor,NA,D_19_B,D,19,B,CC,4,9,CC_4_9
+762,746,7,1,F2,available,E,D_20_A,D,20,A,(LV1 x WL2) x (YO11 x WL2),,3,988
+763,747,7,1,Parent,available,E,D_20_B,D,20,B,WL2,,46,141
+930,748,7,1,2023-survivor,2023-survivor,NA,D_21_A,D,21,A,SC,5,9,SC_5_9
+764,749,7,1,F2,available,E,D_21_B,D,21,B,(YO11 x WL2) x (WL2 x TM2),,11,798
+765,750,7,1,Parent,available,E,D_22_A,D,22,A,WV,,18,467
+766,751,7,1,F1,available,E,D_22_B,D,22,B,BH x TM2,,23,607
+767,752,7,1,F1,available,E,D_23_A,D,23,A,LV1 x TM2,,7,1231
+768,753,7,1,Parent,available,E,D_23_B,D,23,B,SQ3,,1,22
+769,754,7,1,F2,available,E,D_24_A,D,24,A,(LV1 x WL2) x (WL2 x DPR),,14,969
+931,755,7,1,2023-survivor,2023-survivor,NA,D_24_B,D,24,B,IH,1,9,IH_1_9
+770,756,7,1,Parent,available,E,D_25_A,D,25,A,DPR,,19,447
+771,757,7,1,F2,available,E,D_25_B,D,25,B,(TM2 x WL2) x (WL2),,2,358
+772,758,7,1,F2,available,E,D_26_A,D,26,A,(LV1 x WL2) x (TM2 x WL2),,8,950
+773,759,7,1,Parent,available,E,D_26_B,D,26,B,WL2,,53,148
+774,760,7,1,F2,available,E,D_27_A,D,27,A,(WV) x (WV x WL2),,15,1401
+775,761,7,1,F2,available,E,D_27_B,D,27,B,(TM2 x BH) x (BH),,14,756
+776,762,7,1,Parent,available,E,D_28_A,D,28,A,TM2,,25,495
+777,763,7,1,F1,available,E,D_28_B,D,28,B,LV1 x TM2,,20,1244
+778,764,7,1,F2,available,E,D_29_A,D,29,A,(LV1 x WL2) x (WL2),,12,75
+779,765,7,1,F2,available,E,D_29_B,D,29,B,(TM2 x WL2) x (SQ3 x WL2),,11,315
+780,766,7,1,,available,E,D_30_A,D,30,A,,,,NA
+781,767,7,1,,available,E,D_30_B,D,30,B,,,,NA
+815,768,7,1,Parent,available,F,D_31_A,D,31,A,WL2,,8,103
+816,769,7,1,F2,available,F,D_31_B,D,31,B,(SQ3 x WL2) x (DPR x WL2),,11,813
+817,770,7,1,F2,available,F,D_32_A,D,32,A,(SQ3 x WL2) x (WL2),,13,92
+818,771,7,1,Parent,available,F,D_32_B,D,32,B,TM2,,68,538
+819,772,7,1,F2,available,F,D_33_A,D,33,A,(WV x WL2) x (WV),,2,269
+820,773,7,1,F2,available,F,D_33_B,D,33,B,(DPR) x (WL2 x DPR),,15,741
+821,774,7,1,F1,available,F,D_34_A,D,34,A,TM2 x WL2,,4,1280
+822,775,7,1,F2,available,F,D_34_B,D,34,B,(WL2 x BH) x (WL2 x TM2),,11,246
+823,776,7,1,F2,available,F,D_35_A,D,35,A,(WL2 x DPR) x (WL2),,4,1101
+824,777,7,1,Parent,available,F,D_36_A,D,36,A,TM2,,33,503
+825,778,7,1,Parent,available,F,D_36_B,D,36,B,WL2,,95,190
+826,779,7,1,F2,available,F,D_37_A,D,37,A,(SQ3 x WL2) x (YO11 x WL2),,15,1514
+827,780,7,1,Parent,available,F,D_37_B,D,37,B,TM2,,61,531
+828,781,7,1,F2,available,F,D_38_A,D,38,A,(DPR) x (DPR x WL2),,3,713
+829,782,7,1,Parent,available,F,D_38_B,D,38,B,LV1,,6,6
+830,783,7,1,F2,available,F,D_39_A,D,39,A,(TM2 x WL2) x (TM2),,8,350
+831,784,7,1,Parent,available,F,D_39_B,D,39,B,TM2,,14,484
+832,785,7,1,F1,available,F,D_40_A,D,40,A,DPR x WL2,,5,1214
+932,786,7,1,2023-survivor,2023-survivor,NA,D_40_B,D,40,B,BH,7,8,BH_7_8
+833,787,7,1,F2,available,F,D_41_A,D,41,A,(TM2 x BH) x (BH),,15,757
+834,788,7,1,Parent,available,F,D_41_B,D,41,B,TM2,,89,559
+835,789,7,1,F1,available,F,D_42_A,D,42,A,LV1 x TM2,,8,1232
+836,790,7,1,F2,available,F,D_42_B,D,42,B,(WL2) x (DPR x WL2),,3,897
+837,791,7,1,F2,available,F,D_43_A,D,43,A,(WL2 x CC) x (WL2 x TM2),,13,1190
+838,792,7,1,Parent,available,F,D_43_B,D,43,B,SQ3,,19,40
+839,793,7,1,F2,available,F,D_44_A,D,44,A,(WL2) x (DPR x WL2),,1,895
+840,794,7,1,,available,F,D_44_B,D,44,B,,,,NA
+868,795,7,1,F1,available,G,D_45_A,D,45,A,WV x TM2,,13,205
+869,796,7,1,F2,available,G,D_45_B,D,45,B,(LV1 x WL2) x (WL2 x DPR),,5,960
+870,797,7,1,F2,available,G,D_46_A,D,46,A,(LV1 x WL2) x (LV1 x WL2),,6,1023
+871,798,7,1,Parent,available,G,D_46_B,D,46,B,BH,,12,398
+872,799,7,1,,available,G,D_47_A,D,47,A,,,,NA
+873,800,7,1,Parent,available,G,D_47_B,D,47,B,WL2,,62,157
+874,801,7,1,Parent,available,G,D_48_A,D,48,A,TM2,,15,485
+875,802,7,1,F1,available,G,D_48_B,D,48,B,WV x WL2,,1,1403
+876,803,7,1,Parent,available,G,D_49_A,D,49,A,LV1,,7,7
+877,804,7,1,F2,available,G,D_49_B,D,49,B,(YO11 x WL2) x (DPR x WL2),,6,778
+878,805,7,1,F2,available,G,D_50_A,D,50,A,(WV x WL2) x (WV),,3,270
+879,806,7,1,Parent,available,G,D_50_B,D,50,B,TM2,,20,490
+880,807,7,1,F2,available,G,D_51_A,D,51,A,(LV1 x WL2) x (WL2),,14,77
+881,808,7,1,F1,available,G,D_51_B,D,51,B,BH x WL2,,22,632
+882,809,7,1,Parent,available,G,D_52_A,D,52,A,WL1,,16,299
+883,810,7,1,F2,available,G,D_52_B,D,52,B,(WL1 x TM2) x (WL2 x TM2),,6,326
+884,811,7,1,Parent,available,G,D_53_A,D,53,A,TM2,,52,522
+885,812,7,1,,available,G,D_53_B,D,53,B,,,,NA
+886,813,7,1,F2,available,G,D_54_A,D,54,A,(WL1 x WL2) x (WL2 x CC),,4,1117
+887,814,7,1,F2,available,G,D_54_B,D,54,B,(WV) x (WV x WL2),,1,1387
+888,815,7,1,F2,available,G,D_55_A,D,55,A,(WL2 x TM2) x (CC x TM2),,3,254
+889,816,7,1,Parent,available,G,D_55_B,D,55,B,WL2,,86,181
+890,817,7,1,Parent,available,G,D_56_A,D,56,A,TM2,,88,558
+891,818,7,1,,available,G,D_56_B,D,56,B,,,,NA
+892,819,7,1,F1,available,G,D_57_A,D,57,A,LV1 x TM2,,18,1242
+893,820,7,1,F2,available,G,D_57_B,D,57,B,(TM2 x BH) x (TM2 x BH),,10,1344
+894,821,7,1,,buffer,G,D_58_A,D,58,A,,,,buffer
+895,822,7,1,F2,available,G,D_58_B,D,58,B,(WV x WL2) x (WL2 x DPR),,3,1327
+896,823,7,1,Parent,available,G,D_59_A,D,59,A,WL2,,19,114
+897,824,7,1,,buffer,G,D_59_B,D,59,B,,,,buffer
+733,825,8,2,,buffer,D,D_1_C,D,1,C,,,,buffer
+734,826,8,2,,buffer,D,D_1_D,D,1,D,,,,buffer
+735,827,8,2,,buffer,D,D_2_C,D,2,C,,,,buffer
+736,828,8,2,,buffer,D,D_2_D,D,2,D,,,,buffer
+737,829,8,2,,buffer,D,D_3_C,D,3,C,,,,buffer
+738,830,8,2,,buffer,D,D_3_D,D,3,D,,,,buffer
+739,831,8,2,Parent,available,D,D_4_C,D,4,C,TM2,,18,488
+740,832,8,2,Parent,available,D,D_4_D,D,4,D,TM2,,34,504
+741,833,8,2,F2,available,D,D_5_C,D,5,C,(WL2) x (WV x WL2),,14,772
+742,834,8,2,Parent,available,D,D_5_D,D,5,D,WL2,,70,165
+743,835,8,2,F1,available,D,D_7_C,D,7,C,WV x TM2,,20,213
+744,836,8,2,F2,available,D,D_8_D,D,8,D,(TM2 x WL2) x (TM2),,3,345
+745,837,8,2,F2,available,D,D_9_C,D,9,C,(WV) x (WV x WL2),,14,1400
+746,838,8,2,Parent,available,D,D_9_D,D,9,D,WL2,,40,135
+747,839,8,2,F2,available,D,D_10_C,D,10,C,(LV1 x WL2) x (YO11 x WL2),,1,986
+748,840,8,2,Parent,available,D,D_10_D,D,10,D,TM2,,82,552
+749,841,8,2,Parent,available,D,D_11_C,D,11,C,TM2,,12,482
+750,842,8,2,F2,available,D,D_11_D,D,11,D,(TM2 x WL2) x (WL2),,3,359
+751,843,8,2,Parent,available,D,D_12_C,D,12,C,WL2,,49,144
+752,844,8,2,,available,D,D_12_D,D,12,D,,,,NA
+753,845,8,2,F2,available,D,D_13_C,D,13,C,(TM2 x BH) x (BH),,13,755
+782,846,8,2,F2,available,E,D_13_D,D,13,D,(WL1 x WL2) x (WL2 x TM2),,14,1159
+783,847,8,2,F2,available,E,D_14_C,D,14,C,(YO11 x WL2) x (WL2),,8,934
+784,848,8,2,Parent,available,E,D_14_D,D,14,D,WL2,,85,180
+785,849,8,2,F2,available,E,D_15_C,D,15,C,(WL1 x TM2) x (WL2 x TM2),,4,324
+786,850,8,2,Parent,available,E,D_15_D,D,15,D,WL2,,7,102
+787,851,8,2,F2,available,E,D_16_C,D,16,C,(SQ3 x WL2) x (YO11 x WL2),,11,1510
+788,852,8,2,Parent,available,E,D_16_D,D,16,D,BH,,10,396
+789,853,8,2,F2,available,E,D_17_C,D,17,C,(WL2 x BH) x (SQ3 x WL2),,15,1176
+790,854,8,2,F2,available,E,D_17_D,D,17,D,(TM2 x WL2) x (TM2 x WL2),,3,1084
+791,855,8,2,F1,available,E,D_18_C,D,18,C,TM2 x WL2,,5,1281
+792,856,8,2,Parent,available,E,D_18_D,D,18,D,TM2,,78,548
+793,857,8,2,F2,available,E,D_19_C,D,19,C,(WL2 x DPR) x (YO11 x WL2),,10,578
+794,858,8,2,F2,available,E,D_19_D,D,19,D,(YO11 x WL2) x (SQ3 x WL2),,4,1005
+795,859,8,2,Parent,available,E,D_20_C,D,20,C,TM2,,39,509
+796,860,8,2,Parent,available,E,D_20_D,D,20,D,TM2,,55,525
+797,861,8,2,Parent,available,E,D_21_C,D,21,C,YO11,,11,53
+798,862,8,2,F2,available,E,D_21_D,D,21,D,(WL2 x TM2) x (CC x TM2),,1,252
+799,863,8,2,F2,available,E,D_22_C,D,22,C,(TM2 x BH) x (TM2 x BH),,11,1345
+800,864,8,2,F2,available,E,D_22_D,D,22,D,(SQ3 x WL2) x (DPR x WL2),,13,815
+801,865,8,2,F2,available,E,D_23_C,D,23,C,(WL1 x WL2) x (BH x WL2),,7,338
+802,866,8,2,F2,available,E,D_23_D,D,23,D,(DPR x WL2) x (YO11 x WL2),,10,704
+803,867,8,2,F2,available,E,D_24_C,D,24,C,(TM2 x WL2) x (TM2),,6,348
+804,868,8,2,Parent,available,E,D_24_D,D,24,D,WL1,,18,301
+933,869,8,2,2023-survivor,2023-survivor,NA,D_25_C,D,25,C,CC,2,9,CC_2_9
+805,870,8,2,F2,available,E,D_25_D,D,25,D,(SQ3 x WL2) x (TM2 x WL2),,4,882
+934,871,8,2,2023-survivor,2023-survivor,NA,D_26_C,D,26,C,SC,8,15,SC_8_15
+806,872,8,2,F2,available,E,D_26_D,D,26,D,(WL2) x (TM2 x WL2),,1,911
+807,873,8,2,Parent,available,E,D_27_C,D,27,C,TM2,,92,562
+808,874,8,2,F2,available,E,D_27_D,D,27,D,(WL1 x WL2) x (WL2 x CC),,1,1114
+809,875,8,2,F2,available,E,D_28_C,D,28,C,(DPR) x (WL2 x DPR),,14,740
+810,876,8,2,Parent,available,E,D_28_D,D,28,D,TM2,,13,483
+811,877,8,2,,available,E,D_29_C,D,29,C,,,,NA
+812,878,8,2,,available,E,D_29_D,D,29,D,,,,NA
+813,879,8,2,F2,available,E,D_30_C,D,30,C,(DPR x WL2) x (WV x WL2),,13,1469
+814,880,8,2,,NA,E,D_30_D,D,30,D,,,,NA
+841,881,8,2,,available,F,D_31_C,D,31,C,,,,NA
+842,882,8,2,,available,F,D_31_D,D,31,D,,,,NA
+843,883,8,2,F2,available,F,D_32_C,D,32,C,(WL2) x (WV x WL2),,9,767
+844,884,8,2,F2,available,F,D_32_D,D,32,D,(WV) x (WV x WL2),,16,1402
+845,885,8,2,Parent,available,F,D_33_C,D,33,C,WL2,,55,150
+846,886,8,2,Parent,available,F,D_33_D,D,33,D,WL2,,34,129
+847,887,8,2,F2,available,F,D_34_C,D,34,C,(SQ3 x WL2) x (TM2 x WL2),,1,879
+848,888,8,2,F1,available,F,D_34_D,D,34,D,BH x TM2,,17,601
+849,889,8,2,Parent,available,F,D_35_C,D,35,C,WL2,,32,127
+850,890,8,2,F2,available,F,D_35_D,D,35,D,(TM2) x (TM2 x WL2),,9,228
+851,891,8,2,F1,available,F,D_36_C,D,36,C,WV x TM2,,12,204
+852,892,8,2,F1,available,F,D_36_D,D,36,D,SQ3 x WL2,,4,640
+853,893,8,2,F2,available,F,D_37_C,D,37,C,(WL2 x CC) x (WL2 x TM2),,12,1189
+854,894,8,2,F2,available,F,D_37_D,D,37,D,(TM2 x WL2) x (SQ3 x WL2),,8,312
+855,895,8,2,F1,available,F,D_38_C,D,38,C,LV1 x WL2,,19,1269
+856,896,8,2,F2,available,F,D_38_D,D,38,D,(TM2 x BH) x (TM2 x BH),,5,1339
+857,897,8,2,Parent,available,F,D_39_C,D,39,C,BH,,11,397
+858,898,8,2,F2,available,F,D_39_D,D,39,D,(WL2 x TM2) x (CC x TM2),,2,253
+935,899,8,2,2023-survivor,2023-survivor,NA,D_40_C,D,40,C,IH,5,8,IH_5_8
+859,900,8,2,F2,available,F,D_40_D,D,40,D,(CC x TM2) x (WL2 x TM2),,2,1430
+860,901,8,2,F2,available,F,D_41_C,D,41,C,(WL2 x BH) x (SQ3 x WL2),,4,1165
+861,902,8,2,F1,available,F,D_41_D,D,41,D,WV x WL2,,2,1404
+862,903,8,2,Parent,available,F,D_42_C,D,42,C,WL2,,66,161
+863,904,8,2,F2,available,F,D_42_D,D,42,D,(YO11 x WL2) x (WL2 x TM2),,8,795
+864,905,8,2,Parent,available,F,D_43_C,D,43,C,TM2,,21,491
+865,906,8,2,F2,available,F,D_43_D,D,43,D,(LV1 x WL2) x (WL2),,13,76
+866,907,8,2,F2,available,F,D_44_C,D,44,C,(TM2 x WL2) x (WL2),,7,363
+867,908,8,2,Parent,available,F,D_44_D,D,44,D,WL1,,14,297
+898,909,8,2,F2,available,G,D_45_C,D,45,C,(TM2 x WL2) x (YO11 x WL2),,13,385
+899,910,8,2,F1,available,G,D_45_D,D,45,D,LV1 x TM2,,9,1233
+900,911,8,2,Parent,available,G,D_46_C,D,46,C,TM2,,72,542
+901,912,8,2,F2,available,G,D_46_D,D,46,D,(WL2) x (TM2 x WL2),,7,917
+902,913,8,2,Parent,available,G,D_47_C,D,47,C,WL2,,9,104
+903,914,8,2,F2,available,G,D_47_D,D,47,D,(TM2 x BH) x (BH),,16,758
+904,915,8,2,F1,available,G,D_48_C,D,48,C,DPR x WL2,,2,1211
+905,916,8,2,Parent,available,G,D_48_D,D,48,D,WL2,,38,133
+906,917,8,2,F1,available,G,D_49_C,D,49,C,WV x TM2,,19,212
+907,918,8,2,F2,available,G,D_49_D,D,49,D,(WL2 x CC) x (SQ3 x WL2),,9,1313
+908,919,8,2,F2,available,G,D_50_C,D,50,C,(LV1 x WL2) x (YO11 x WL2),,7,992
+909,920,8,2,F2,available,G,D_50_D,D,50,D,(WL1 x WL2) x (WL2 x TM2),,9,1154
+936,921,8,2,2023-survivor,2023-survivor,NA,D_51_C,D,51,C,IH,1,8,IH_1_8
+910,922,8,2,Parent,available,G,D_51_D,D,51,D,WL2,,80,175
+911,923,8,2,F1,available,G,D_52_C,D,52,C,LV1 x WL2,,21,1271
+912,924,8,2,F2,available,G,D_52_D,D,52,D,(SQ3 x WL2) x (WL2),,14,93
+913,925,8,2,F2,available,G,D_53_C,D,53,C,(TM2 x WL2) x (SQ3 x WL2),,6,310
+914,926,8,2,F2,available,G,D_53_D,D,53,D,(DPR) x (WL2 x DPR),,16,742
+915,927,8,2,F2,available,G,D_54_C,D,54,C,(WL2 x CC) x (WL2 x TM2),,14,1191
+916,928,8,2,F2,available,G,D_54_D,D,54,D,(WL2) x (WV x WL2),,4,762
+937,929,8,2,2023-survivor,2023-survivor,NA,D_55_C,D,55,C,SC,4,8,SC_4_8
+917,930,8,2,F2,available,G,D_55_D,D,55,D,(YO11 x WL2) x (WL2),,10,936
+918,931,8,2,Parent,available,G,D_56_C,D,56,C,TM2,,41,511
+919,932,8,2,F1,available,G,D_56_D,D,56,D,BH x TM2,,24,608
+920,933,8,2,,available,G,D_57_C,D,57,C,,,,NA
+921,934,8,2,,available,G,D_57_D,D,57,D,,,,NA
+922,935,8,2,,buffer,G,D_58_C,D,58,C,,,,buffer
+923,936,8,2,,buffer,G,D_58_D,D,58,D,,,,buffer
+924,937,8,2,,buffer,G,D_59_C,D,59,C,,,,buffer
+925,938,8,2,,buffer,G,D_59_D,D,59,D,,,,buffer
+938,939,9,1,,buffer,H,E_1_A,E,1,A,,,,buffer
+939,940,9,1,,buffer,H,E_1_B,E,1,B,,,,buffer
+940,941,9,1,,buffer,H,E_2_A,E,2,A,,,,buffer
+941,942,9,1,,buffer,H,E_2_B,E,2,B,,,,buffer
+942,943,9,1,,buffer,H,E_3_A,E,3,A,,,,buffer
+943,944,9,1,,buffer,H,E_3_B,E,3,B,,,,buffer
+944,945,9,1,,available,H,E_4_A,E,4,A,,,,NA
+945,946,9,1,,available,H,E_4_B,E,4,B,,,,NA
+946,947,9,1,F2,available,H,E_5_A,E,5,A,(LV1 x WL2) x (WL2 x DPR),,3,958
+947,948,9,1,F1,available,H,E_5_B,E,5,B,WV x TM2,,25,218
+948,949,9,1,Parent,available,H,E_6_B,E,6,B,TM2,,28,498
+949,950,9,1,F2,available,H,E_7_A,E,7,A,(DPR x WL2) x (YO11 x WL2),,6,700
+950,951,9,1,F2,available,H,E_7_B,E,7,B,(TM2 x WL2) x (LV1 x WL2),,4,1496
+951,952,9,1,F2,available,H,E_8_A,E,8,A,(SQ3 x WL2) x (TM2 x WL2),,5,883
+1081,953,9,1,2023-TM2-fruit,2023-TM2-fruit,NA,E_8_B,E,8,B,TM2,6,2,TM2_6_2
+952,954,9,1,F2,available,H,E_9_A,E,9,A,(YO11 x WL2) x (WL2),,2,928
+953,955,9,1,Parent,available,H,E_10_A,E,10,A,BH,,13,399
+954,956,9,1,F2,available,H,E_10_B,E,10,B,(DPR) x (WL2 x DPR),,1,727
+955,957,9,1,Parent,available,H,E_11_A,E,11,A,TM2,,96,566
+956,958,9,1,F2,available,H,E_11_B,E,11,B,(LV1 x WL2) x (YO11 x WL2),,13,998
+957,959,9,1,Parent,available,H,E_12_A,E,12,A,WL2,,63,158
+958,960,9,1,F1,available,H,E_12_B,E,12,B,LV1 x WL2,,3,1253
+959,961,9,1,Parent,available,H,E_13_A,E,13,A,WV,,5,454
+960,962,9,1,Parent,available,H,E_14_A,E,14,A,WL2,,78,173
+961,963,9,1,Parent,available,H,E_14_B,E,14,B,SQ3,,4,25
+962,964,9,1,Parent,available,H,E_15_A,E,15,A,LV1,,8,8
+963,965,9,1,F2,available,H,E_15_B,E,15,B,(YO11 x WL2) x (DPR x WL2),,5,777
+964,966,9,1,F2,available,H,E_16_A,E,16,A,(DPR x WL2) x (SQ3 x WL2),,12,690
+965,967,9,1,F1,available,H,E_16_B,E,16,B,WV x TM2,,14,206
+966,968,9,1,F2,available,H,E_17_A,E,17,A,(WL2) x (WV x WL2),,12,770
+967,969,9,1,F2,available,H,E_17_B,E,17,B,(LV1 x WL2) x (TM2 x WL2),,2,944
+968,970,9,1,F2,available,H,E_18_A,E,18,A,(WL2) x (TM2 x WL2),,6,916
+969,971,9,1,F2,available,H,E_18_B,E,18,B,(TM2 x WL2) x (WL2),,16,372
+970,972,9,1,F2,available,H,E_19_A,E,19,A,(LV1 x WL2) x (WL2),,15,78
+971,973,9,1,Parent,available,H,E_19_B,E,19,B,WL2,,10,105
+972,974,9,1,F2,available,H,E_20_A,E,20,A,(WV x WL2) x (WV),,4,271
+973,975,9,1,F2,available,H,E_20_B,E,20,B,(SQ3 x WL2) x (WL2),,15,94
+1082,976,9,1,2023-survivor,2023-survivor,NA,E_21_A,E,21,A,CC,5,10,CC_5_10
+974,977,9,1,,available,H,E_21_B,E,21,B,,,,NA
+1083,978,9,1,2023-survivor,2023-survivor,NA,E_22_A,E,22,A,IH,2,10,IH_2_10
+975,979,9,1,,available,H,E_22_B,E,22,B,,,,NA
+1014,980,9,1,Parent,available,I,E_23_A,E,23,A,BH,,14,400
+1084,981,9,1,2023-survivor,2023-survivor,NA,E_23_B,E,23,B,WR,3,2,WR_3_2
+1015,982,9,1,F2,available,I,E_24_A,E,24,A,(WL2) x (WV x WL2),,3,761
+1016,983,9,1,Parent,available,I,E_24_B,E,24,B,DPR,,3,431
+1017,984,9,1,F2,available,I,E_25_A,E,25,A,(CC x TM2) x (WL2 x TM2),,1,1429
+1085,985,9,1,2023-TM2-fruit,2023-TM2-fruit,NA,E_25_B,E,25,B,TM2,1,15,TM2_1_15
+1018,986,9,1,Parent,available,I,E_26_A,E,26,A,WL1,,13,296
+1019,987,9,1,Parent,available,I,E_26_B,E,26,B,TM2,,93,563
+1020,988,9,1,F2,available,I,E_27_A,E,27,A,(SQ3 x WL2) x (WL2),,16,95
+1021,989,9,1,F2,available,I,E_27_B,E,27,B,(WL2 x DPR) x (TM2 x WL2),,6,1319
+1022,990,9,1,F2,available,I,E_28_A,E,28,A,(DPR) x (DPR x WL2),,5,715
+1023,991,9,1,Parent,available,I,E_28_B,E,28,B,WL2,,56,151
+1086,992,9,1,2023-TM2-fruit,2023-TM2-fruit,NA,E_29_A,E,29,A,TM2,1,9,TM2_1_9
+1024,993,9,1,F2,available,I,E_29_B,E,29,B,(DPR x WL2) x (YO11 x WL2),,13,707
+1025,994,9,1,F2,available,I,E_41_A,E,41,A,(TM2 x BH) x (TM2 x BH),,8,1342
+1026,995,9,1,F2,available,I,E_41_B,E,41,B,(SQ3 x WL2) x (LV1 x WL2),,3,851
+1027,996,9,1,F1,available,I,E_42_A,E,42,A,WV x TM2,,3,207
+1028,997,9,1,F1,available,I,E_42_B,E,42,B,LV1 x TM2,,24,1248
+1029,998,9,1,F2,available,I,E_43_A,E,43,A,(TM2 x WL2) x (WL2),,13,369
+1030,999,9,1,F2,available,I,E_43_B,E,43,B,(WV) x (WV x WL2),,3,1389
+1031,1000,9,1,Parent,available,I,E_44_A,E,44,A,WL2,,73,168
+1087,1001,9,1,2023-survivor,2023-survivor,NA,E_44_B,E,44,B,SC,4,10,SC_4_10
+1032,1002,9,1,F2,available,I,E_45_A,E,45,A,(LV1 x WL2) x (LV1 x WL2),,8,1025
+1033,1003,9,1,Parent,available,I,E_45_B,E,45,B,WL2,,47,142
+1034,1004,9,1,F2,available,I,E_46_A,E,46,A,(WL1 x WL2) x (WL2 x TM2),,2,1147
+1088,1005,9,1,2023-survivor,2023-survivor,NA,E_46_B,E,46,B,IH,3,11,IH_3_11
+1089,1006,9,1,2023-survivor,2023-survivor,NA,E_47_A,E,47,A,BH,4,11,BH_4_11
+1035,1007,9,1,Parent,available,I,E_47_B,E,47,B,TM2,,35,505
+1090,1008,9,1,2023-survivor,2023-survivor,NA,E_48_A,E,48,A,SC,5,11,SC_5_11
+1036,1009,9,1,F2,available,I,E_48_B,E,48,B,(TM2 x BH) x (TM2 x WL2),,4,1037
+1091,1010,9,1,2023-survivor,2023-survivor,NA,E_49_A,E,49,A,YO7,4,3,YO7_4_3
+1092,1011,9,1,2023-survivor,2023-survivor,NA,E_49_B,E,49,B,TM2,6,4,TM2_6_4
+1037,1012,9,1,F2,available,I,E_50_A,E,50,A,(YO11 x WL2) x (DPR x WL2),,2,774
+1038,1013,9,1,F2,available,I,E_50_B,E,50,B,(WL2 x CC) x (WL2 x TM2),,16,1193
+1039,1014,9,1,F2,available,I,E_51_A,E,51,A,(WL1 x WL2) x (BH x WL2),,3,334
+1040,1015,9,1,,available,I,E_51_B,E,51,B,,,,NA
+1041,1016,9,1,,buffer,I,E_52_A,E,52,A,,,,buffer
+1042,1017,9,1,,buffer,I,E_52_B,E,52,B,,,,buffer
+1043,1018,9,1,,buffer,I,E_53_A,E,53,A,,,,buffer
+1044,1019,9,1,,buffer,I,E_53_B,E,53,B,,,,buffer
+976,1020,10,2,,buffer,H,E_1_C,E,1,C,,,,buffer
+977,1021,10,2,,buffer,H,E_1_D,E,1,D,,,,buffer
+978,1022,10,2,,buffer,H,E_2_C,E,2,C,,,,buffer
+979,1023,10,2,,buffer,H,E_2_D,E,2,D,,,,buffer
+980,1024,10,2,,buffer,H,E_3_C,E,3,C,,,,buffer
+981,1025,10,2,,buffer,H,E_3_D,E,3,D,,,,buffer
+982,1026,10,2,F2,available,H,E_4_C,E,4,C,(DPR x WL2) x (WV x WL2),,1,1457
+983,1027,10,2,F1,available,H,E_4_D,E,4,D,LV1 x TM2,,10,1234
+984,1028,10,2,F2,available,H,E_5_C,E,5,C,(WL2 x BH) x (WL2 x TM2),,15,250
+985,1029,10,2,F2,available,H,E_5_D,E,5,D,(SQ3 x WL2) x (SQ3 x WL2),,11,875
+986,1030,10,2,Parent,available,H,E_6_C,E,6,C,TM2,,57,527
+987,1031,10,2,F2,available,H,E_6_D,E,6,D,(TM2 x BH) x (BH),,1,743
+988,1032,10,2,F2,available,H,E_7_C,E,7,C,(WL2 x DPR) x (WL2),,6,1103
+989,1033,10,2,F1,available,H,E_7_D,E,7,D,WV x WL2,,4,1406
+990,1034,10,2,F1,available,H,E_8_C,E,8,C,DPR x WL2,,3,1212
+991,1035,10,2,Parent,available,H,E_8_D,E,8,D,TM2,,16,486
+992,1036,10,2,Parent,available,H,E_9_C,E,9,C,WL1,,10,293
+993,1037,10,2,F2,available,H,E_9_D,E,9,D,(TM2 x BH) x (TM2 x BH),,1,1335
+994,1038,10,2,F1,available,H,E_10_C,E,10,C,LV1 x TM2,,23,1247
+995,1039,10,2,F2,available,H,E_10_D,E,10,D,(WL2 x CC) x (WL2 x TM2),,15,1192
+996,1040,10,2,F2,available,H,E_11_C,E,11,C,(DPR x WL2) x (SQ3 x WL2),,4,682
+997,1041,10,2,F2,available,H,E_11_D,E,11,D,(TM2 x WL2) x (YO11 x WL2),,6,378
+998,1042,10,2,F2,available,H,E_12_C,E,12,C,(TM2) x (TM2 x WL2),,16,235
+999,1043,10,2,F2,available,H,E_12_D,E,12,D,(WL2) x (DPR x WL2),,15,909
+1000,1044,10,2,F1,available,H,E_13_C,E,13,C,BH x TM2,,21,605
+1001,1045,10,2,F2,available,H,E_13_D,E,13,D,(TM2 x WL2) x (DPR x WL2),,2,1490
+1002,1046,10,2,F2,available,H,E_14_C,E,14,C,(TM2 x WL2) x (SQ3 x WL2),,4,308
+1003,1047,10,2,Parent,available,H,E_14_D,E,14,D,DPR,,9,437
+1004,1048,10,2,Parent,available,H,E_15_C,E,15,C,TM2,,47,517
+1005,1049,10,2,Parent,available,H,E_16_C,E,16,C,WL2,,45,140
+1006,1050,10,2,Parent,available,H,E_17_C,E,17,C,WL2,,21,116
+1007,1051,10,2,Parent,available,H,E_17_D,E,17,D,TM2,,75,545
+1008,1052,10,2,F2,available,H,E_18_C,E,18,C,(WL2 x BH) x (SQ3 x WL2),,6,1167
+1009,1053,10,2,Parent,available,H,E_18_D,E,18,D,WL2,,83,178
+1010,1054,10,2,F2,available,H,E_19_C,E,19,C,(WV) x (WV x WL2),,2,1388
+1011,1055,10,2,F2,available,H,E_19_D,E,19,D,(WL2 x TM2) x (CC x TM2),,4,255
+1012,1056,10,2,,available,H,E_20_C,E,20,C,,,,NA
+1093,1057,10,2,2023-survivor,2023-survivor,NA,E_20_D,E,20,D,BH,2,10,BH_2_10
+1094,1058,10,2,2023-survivor,2023-survivor,NA,E_21_C,E,21,C,YO7,5,5,YO7_5_5
+1013,1059,10,2,,available,H,E_21_D,E,21,D,,,,NA
+1045,1060,10,2,Parent,available,I,E_22_C,E,22,C,TM2,,98,568
+1046,1061,10,2,F1,available,I,E_22_D,E,22,D,LV1 x TM2,,11,1235
+1095,1062,10,2,2023-survivor,2023-survivor,NA,E_23_C,E,23,C,BH,1,10,BH_1_10
+1096,1063,10,2,2023-survivor,2023-survivor,NA,E_23_D,E,23,D,IH,5,10,IH_5_10
+1047,1064,10,2,F2,available,I,E_24_C,E,24,C,(WV x WL2) x (WV),,5,272
+1048,1065,10,2,Parent,available,I,E_24_D,E,24,D,WL2,,22,117
+1049,1066,10,2,F2,available,I,E_25_C,E,25,C,(WL2 x BH) x (WL2 x TM2),,9,244
+1050,1067,10,2,F1,available,I,E_25_D,E,25,D,SQ3 x WL2,,1,637
+1051,1068,10,2,Parent,available,I,E_26_C,E,26,C,WL2,,11,106
+1052,1069,10,2,Parent,available,I,E_26_D,E,26,D,SQ3,,5,26
+1097,1070,10,2,2023-survivor,2023-survivor,NA,E_27_C,E,27,C,BH,4,10,BH_4_10
+1053,1071,10,2,F2,available,I,E_27_D,E,27,D,(LV1 x WL2) x (WL2),,16,79
+1054,1072,10,2,F2,available,I,E_28_C,E,28,C,(TM2 x BH) x (BH),,2,744
+1055,1073,10,2,Parent,available,I,E_28_D,E,28,D,LV1,,9,9
+1056,1074,10,2,Parent,available,I,E_29_C,E,29,C,WL2,,87,182
+1098,1075,10,2,2023-survivor,2023-survivor,NA,E_29_D,E,29,D,IH,4,10,IH_4_10
+1057,1076,10,2,F2,available,I,E_41_C,E,41,C,(LV1 x WL2) x (WL2 x DPR),,1,956
+1058,1077,10,2,F2,available,I,E_41_D,E,41,D,(WL2) x (DPR x WL2),,10,904
+1059,1078,10,2,F1,available,I,E_42_C,E,42,C,WV x WL2,,22,1424
+1060,1079,10,2,F2,available,I,E_42_D,E,42,D,(WL2 x TM2) x (CC x TM2),,5,256
+1061,1080,10,2,F1,available,I,E_43_C,E,43,C,LV1 x WL2,,9,1259
+1099,1081,10,2,2023-survivor,2023-survivor,NA,E_43_D,E,43,D,IH,1,10,IH_1_10
+1062,1082,10,2,Parent,available,I,E_44_C,E,44,C,WV,,21,470
+1063,1083,10,2,F2,available,I,E_44_D,E,44,D,(YO11 x WL2) x (WL2),,14,940
+1064,1084,10,2,F2,available,I,E_45_C,E,45,C,(WL1 x WL2) x (WL2 x CC),,7,1120
+1065,1085,10,2,Parent,available,I,E_45_D,E,45,D,TM2,,1,471
+1066,1086,10,2,F1,available,I,E_46_C,E,46,C,BH x TM2,,10,594
+1067,1087,10,2,Parent,available,I,E_46_D,E,46,D,TM2,,79,549
+1068,1088,10,2,F1,available,I,E_47_C,E,47,C,WV x TM2,,23,216
+1069,1089,10,2,Parent,available,I,E_47_D,E,47,D,TM2,,30,500
+1070,1090,10,2,F2,available,I,E_48_C,E,48,C,(WL1 x TM2) x (WL2 x TM2),,8,328
+1071,1091,10,2,F2,available,I,E_48_D,E,48,D,(DPR) x (WL2 x DPR),,2,728
+1072,1092,10,2,F2,available,I,E_49_C,E,49,C,(TM2 x WL2) x (YO11 x WL2),,8,380
+1073,1093,10,2,Parent,available,I,E_49_D,E,49,D,TM2,,49,519
+1074,1094,10,2,F2,available,I,E_50_C,E,50,C,(TM2 x WL2) x (SQ3 x WL2),,14,318
+1100,1095,10,2,2023-survivor,2023-survivor,NA,E_50_D,E,50,D,IH,5,11,IH_5_11
+1075,1096,10,2,,available,I,E_51_C,E,51,C,,,,NA
+1076,1097,10,2,,available,I,E_51_D,E,51,D,,,,NA
+1077,1098,10,2,,buffer,I,E_52_C,E,52,C,,,,buffer
+1078,1099,10,2,,buffer,I,E_52_D,E,52,D,,,,buffer
+1079,1100,10,2,,buffer,I,E_53_C,E,53,C,,,,buffer
+1080,1101,10,2,,buffer,I,E_53_D,E,53,D,,,,buffer
+1101,1102,11,1,,buffer,J,F_1_A,F,1,A,,,,buffer
+1102,1103,11,1,,buffer,J,F_1_B,F,1,B,,,,buffer
+1103,1104,11,1,,buffer,J,F_2_A,F,2,A,,,,buffer
+1104,1105,11,1,,buffer,J,F_2_B,F,2,B,,,,buffer
+1105,1106,11,1,,buffer,J,F_3_A,F,3,A,,,,buffer
+1106,1107,11,1,,buffer,J,F_3_B,F,3,B,,,,buffer
+1107,1108,11,1,,available,J,F_4_A,F,4,A,,,,NA
+1108,1109,11,1,Parent,available,J,F_4_B,F,4,B,LV1,,12,12
+1109,1110,11,1,F2,available,J,F_5_A,F,5,A,(LV1 x WL2) x (TM2 x WL2),,10,952
+1110,1111,11,1,F2,available,J,F_6_A,F,6,A,(WL2) x (WV x WL2),,10,768
+1111,1112,11,1,F2,available,J,F_6_B,F,6,B,(WL1 x WL2) x (WL2 x CC),,5,1118
+1112,1113,11,1,F2,available,J,F_7_A,F,7,A,(LV1 x WL2) x (YO11 x WL2),,8,993
+1236,1114,11,1,2023-survivor,2023-survivor,NA,F_7_B,F,7,B,IH,1,12,IH_1_12
+1113,1115,11,1,Parent,available,J,F_8_A,F,8,A,TM2,,65,535
+1114,1116,11,1,F2,available,J,F_8_B,F,8,B,(DPR) x (WL2 x DPR),,3,729
+1115,1117,11,1,F2,available,J,F_9_A,F,9,A,(WV x WL2) x (WV),,6,273
+1116,1118,11,1,F2,available,J,F_9_B,F,9,B,(WV) x (WV x WL2),,4,1390
+1117,1119,11,1,F2,available,J,F_10_A,F,10,A,(WL2 x BH) x (SQ3 x WL2),,8,1169
+1118,1120,11,1,F2,available,J,F_10_B,F,10,B,(WL1 x WL2) x (WL2 x TM2),,1,1146
+1119,1121,11,1,Parent,available,J,F_11_A,F,11,A,SQ3,,2,23
+1120,1122,11,1,Parent,available,J,F_11_B,F,11,B,TM2,,40,510
+1121,1123,11,1,F2,available,J,F_12_A,F,12,A,(SQ3 x WL2) x (WL2),,1,80
+1122,1124,11,1,F2,available,J,F_12_B,F,12,B,(WL2 x CC) x (WL2 x TM2),,1,1178
+1123,1125,11,1,F1,available,J,F_13_A,F,13,A,SQ3 x WL2,,9,645
+1124,1126,11,1,Parent,available,J,F_13_B,F,13,B,WL2,,65,160
+1125,1127,11,1,Parent,available,J,F_14_A,F,14,A,TM2,,59,529
+1126,1128,11,1,F1,available,J,F_14_B,F,14,B,LV1 x WL2,,1,1251
+1127,1129,11,1,F2,available,J,F_15_A,F,15,A,(DPR) x (DPR x WL2),,2,712
+1128,1130,11,1,F2,available,J,F_15_B,F,15,B,(WL2 x DPR) x (DPR),,7,1200
+1129,1131,11,1,F2,available,J,F_16_A,F,16,A,(DPR x WL2) x (WV x WL2),,7,1463
+1130,1132,11,1,Parent,available,J,F_16_B,F,16,B,BH,,15,401
+1131,1133,11,1,Parent,available,J,F_17_A,F,17,A,WL2,,51,146
+1132,1134,11,1,F2,available,J,F_17_B,F,17,B,(TM2 x WL2) x (YO11 x WL2),,5,377
+1133,1135,11,1,Parent,available,J,F_18_A,F,18,A,WL2,,36,131
+1134,1136,11,1,F1,available,J,F_18_B,F,18,B,WV x TM2,,15,208
+1171,1137,11,1,F2,available,K,F_19_A,F,19,A,(TM2 x BH) x (TM2),,12,1061
+1172,1138,11,1,,available,K,F_19_B,F,19,B,,,,NA
+1173,1139,11,1,F2,available,K,F_20_A,F,20,A,(WL2 x DPR) x (TM2 x WL2),,8,1321
+1174,1140,11,1,F2,available,K,F_20_B,F,20,B,(TM2 x BH) x (TM2 x BH),,4,1338
+1175,1141,11,1,F1,available,K,F_21_A,F,21,A,LV1 x WL2,,20,1270
+1176,1142,11,1,Parent,available,K,F_21_B,F,21,B,TM2,,50,520
+1177,1143,11,1,Parent,available,K,F_22_A,F,22,A,TM2,,22,492
+1178,1144,11,1,Parent,available,K,F_22_B,F,22,B,TM2,,45,515
+1179,1145,11,1,F2,available,K,F_23_A,F,23,A,(WL2 x BH) x (SQ3 x WL2),,9,1170
+1180,1146,11,1,Parent,available,K,F_23_B,F,23,B,WL2,,13,108
+1237,1147,11,1,2023-survivor,2023-survivor,NA,F_24_A,F,24,A,TM2,2,4,TM2_2_4
+1181,1148,11,1,F2,available,K,F_24_B,F,24,B,(SQ3 x WL2) x (WL2),,2,81
+1182,1149,11,1,Parent,available,K,F_25_A,F,25,A,BH,,16,402
+1183,1150,11,1,F2,available,K,F_25_B,F,25,B,(TM2 x WL2) x (WL2),,11,367
+1238,1151,11,1,2023-survivor,2023-survivor,NA,F_26_A,F,26,A,WL2,8,4,WL2_8_4
+1184,1152,11,1,Parent,available,K,F_26_B,F,26,B,LV1,,13,13
+1185,1153,11,1,F2,available,K,F_27_A,F,27,A,(WV) x (WV x WL2),,5,1391
+1186,1154,11,1,Parent,available,K,F_27_B,F,27,B,WL2,,43,138
+1187,1155,11,1,F2,available,K,F_39_A,F,39,A,(SQ3 x WL2) x (LV1 x WL2),,13,861
+1188,1156,11,1,F1,available,K,F_39_B,F,39,B,LV1 x TM2,,13,1237
+1189,1157,11,1,F2,available,K,F_40_A,F,40,A,(YO11 x WL2) x (SQ3 x WL2),,8,1009
+1190,1158,11,1,,,K,F_40_B,F,40,B,,,,NA
+1191,1159,11,1,Parent,available,K,F_41_A,F,41,A,CC,,18,425
+1192,1160,11,1,Parent,available,K,F_41_B,F,41,B,TM2,,77,547
+1193,1161,11,1,F2,available,K,F_42_A,F,42,A,(WL2 x CC) x (WL2 x TM2),,2,1179
+1239,1162,11,1,2023-survivor,2023-survivor,NA,F_42_B,F,42,B,CC,3,11,CC_3_11
+1194,1163,11,1,F2,available,K,F_43_A,F,43,A,(BH) x (TM2 x BH),,16,678
+1240,1164,11,1,2023-survivor,2023-survivor,NA,F_43_B,F,43,B,CC,8,11,CC_8_11
+1195,1165,11,1,,buffer,K,F_44_A,F,44,A,Buffer,,,NA
+1196,1166,11,1,,buffer,K,F_44_B,F,44,B,Buffer,,,NA
+1197,1167,11,1,Parent,available,K,F_45_A,F,45,A,WL2,,77,172
+1226,1168,11,1,F2,available,L,F_45_B,F,45,B,(WL2) x (DPR x WL2),,2,896
+1227,1169,11,1,,buffer,L,F_46_A,F,46,A,,,,buffer
+1228,1170,11,1,,buffer,L,F_46_B,F,46,B,,,,buffer
+1229,1171,11,1,,buffer,L,F_47_A,F,47,A,,,,buffer
+1230,1172,11,1,,buffer,L,F_47_B,F,47,B,,,,buffer
+1135,1173,12,2,,buffer,J,F_1_C,F,1,C,,,,buffer
+1136,1174,12,2,,buffer,J,F_1_D,F,1,D,,,,buffer
+1137,1175,12,2,,buffer,J,F_2_C,F,2,C,,,,buffer
+1138,1176,12,2,,buffer,J,F_2_D,F,2,D,,,,buffer
+1139,1177,12,2,,buffer,J,F_3_C,F,3,C,,,,buffer
+1140,1178,12,2,,buffer,J,F_3_D,F,3,D,,,,buffer
+1141,1179,12,2,F2,available,J,F_4_C,F,4,C,(TM2 x BH) x (TM2 x WL2),,14,1047
+1142,1180,12,2,Parent,available,J,F_4_D,F,4,D,TM2,,2,472
+1143,1181,12,2,,available,J,F_5_C,F,5,C,,,,NA
+1144,1182,12,2,F2,available,J,F_5_D,F,5,D,(YO11 x WL2) x (TM2 x WL2),,4,820
+1145,1183,12,2,F2,available,J,F_6_C,F,6,C,(TM2 x BH) x (BH),,3,745
+1146,1184,12,2,Parent,available,J,F_6_D,F,6,D,TM2,,95,565
+1147,1185,12,2,F1,available,J,F_7_C,F,7,C,LV1 x TM2,,12,1236
+1148,1186,12,2,F1,available,J,F_7_D,F,7,D,LV1 x TM2,,25,1249
+1241,1187,12,2,2023-survivor,2023-survivor,NA,F_8_C,F,8,C,SC,6,12,SC_6_12
+1149,1188,12,2,Parent,available,J,F_8_D,F,8,D,TM2,,26,496
+1150,1189,12,2,F2,available,J,F_9_C,F,9,C,(YO11 x WL2) x (WL2),,4,930
+1151,1190,12,2,F2,available,J,F_9_D,F,9,D,(TM2 x BH) x (TM2),,16,1065
+1152,1191,12,2,,,J,F_10_C,F,10,C,,,,NA
+1153,1192,12,2,Parent,available,J,F_10_D,F,10,D,WL2,,20,115
+1154,1193,12,2,F2,available,J,F_11_C,F,11,C,(LV1 x WL2) x (WL2 x DPR),,10,965
+1155,1194,12,2,F2,available,J,F_11_D,F,11,D,(WL2 x TM2) x (CC x TM2),,6,257
+1156,1195,12,2,F2,available,J,F_12_C,F,12,C,(DPR x WL2) x (DPR x WL2),,9,1440
+1157,1196,12,2,Parent,available,J,F_12_D,F,12,D,WL2,,12,107
+1158,1197,12,2,Parent,available,J,F_13_C,F,13,C,DPR,,4,432
+1159,1198,12,2,Parent,available,J,F_13_D,F,13,D,WL2,,93,188
+1160,1199,12,2,F2,available,J,F_14_C,F,14,C,(TM2 x WL2) x (WL2),,1,357
+1161,1200,12,2,Parent,available,J,F_14_D,F,14,D,WL1,,19,302
+1162,1201,12,2,Parent,available,J,F_15_C,F,15,C,WV,,6,455
+1163,1202,12,2,F2,available,J,F_15_D,F,15,D,(DPR x WL2) x (SQ3 x WL2),,11,689
+1164,1203,12,2,F2,available,J,F_16_C,F,16,C,(TM2 x WL2) x (SQ3 x WL2),,12,316
+1165,1204,12,2,,available,J,F_16_D,F,16,D,,,,NA
+1166,1205,12,2,F2,available,J,F_17_C,F,17,C,(YO11 x WL2) x (SQ3 x WL2),,7,1008
+1167,1206,12,2,,,J,F_17_D,F,17,D,,,,NA
+1168,1207,12,2,F2,available,J,F_18_C,F,18,C,(DPR x WL2) x (TM2 x WL2),,11,1453
+1169,1208,12,2,F2,available,J,F_18_D,F,18,D,(LV1 x WL2) x (WL2),,1,64
+1170,1209,12,2,,available,J,F_19_C,F,19,C,,,,NA
+1198,1210,12,2,F1,available,K,F_19_D,F,19,D,WV x TM2,,24,217
+1199,1211,12,2,F1,available,K,F_20_C,F,20,C,TM2 x YO11,,5,1222
+1200,1212,12,2,F2,available,K,F_20_D,F,20,D,(TM2 x WL2) x (YO11 x WL2),,9,381
+1201,1213,12,2,F2,available,K,F_21_C,F,21,C,(WL2 x TM2) x (CC x TM2),,7,258
+1202,1214,12,2,F2,available,K,F_21_D,F,21,D,(DPR) x (WL2 x DPR),,4,730
+1203,1215,12,2,Parent,available,K,F_22_C,F,22,C,WL1,,12,295
+1204,1216,12,2,F1,available,K,F_22_D,F,22,D,WV x TM2,,16,209
+1242,1217,12,2,2023-survivor,2023-survivor,NA,F_23_C,F,23,C,SC,2,23,SC_2_23
+1205,1218,12,2,Parent,available,K,F_23_D,F,23,D,TM2,,3,473
+1206,1219,12,2,F2,available,K,F_24_C,F,24,C,(WV x WL2) x (WV),,7,274
+1207,1220,12,2,F1,available,K,F_24_D,F,24,D,TM2 x WL2,,21,1297
+1208,1221,12,2,F2,available,K,F_25_C,F,25,C,(TM2 x BH) x (BH),,4,746
+1209,1222,12,2,F2,available,K,F_25_D,F,25,D,(LV1 x WL2) x (YO11 x WL2),,6,991
+1210,1223,12,2,Parent,available,K,F_26_C,F,26,C,WL2,,27,122
+1211,1224,12,2,F2,available,K,F_26_D,F,26,D,(TM2 x WL2) x (TM2),,4,346
+1212,1225,12,2,F1,available,K,F_27_C,F,27,C,WV x WL2,,3,1405
+1213,1226,12,2,F2,available,K,F_27_D,F,27,D,(WL2) x (DPR x WL2),,14,908
+1214,1227,12,2,F2,available,K,F_38_D,F,38,D,(DPR x WL2) x (YO11 x WL2),,15,709
+1215,1228,12,2,F2,available,K,F_39_C,F,39,C,(WL2 x DPR) x (YO11 x WL2),,3,571
+1216,1229,12,2,Parent,available,K,F_39_D,F,39,D,WL2,,84,179
+1217,1230,12,2,F2,available,K,F_40_C,F,40,C,(LV1 x WL2) x (WL2),,2,65
+1218,1231,12,2,Parent,available,K,F_40_D,F,40,D,TM2,,84,554
+1219,1232,12,2,F2,available,K,F_41_C,F,41,C,(WL1 x TM2) x (WL2 x TM2),,9,329
+1220,1233,12,2,F2,available,K,F_41_D,F,41,D,(TM2 x WL2) x (SQ3 x WL2),,10,314
+1221,1234,12,2,Parent,available,K,F_42_C,F,42,C,WL2,,52,147
+1222,1235,12,2,F2,available,K,F_42_D,F,42,D,(YO11 x WL2) x (WL2),,1,927
+1243,1236,12,2,2023-survivor,2023-survivor,NA,F_43_C,F,43,C,CC,9,11,CC_9_11
+1223,1237,12,2,F1,available,K,F_43_D,F,43,D,SQ3 x WL2,,16,652
+1244,1238,12,2,2023-survivor,2023-survivor,NA,F_44_C,F,44,C,IH,4,11,IH_4_11
+1224,1239,12,2,,available,K,F_44_D,F,44,D,,,,NA
+1225,1240,12,2,F2,available,K,F_45_C,F,45,C,(DPR) x (DPR x WL2),,7,717
+1231,1241,12,2,,buffer,L,F_45_D,F,45,D,,,,buffer
+1232,1242,12,2,F2,available,L,F_46_C,F,46,C,(LV1 x WL2) x (WL2),,3,66
+1233,1243,12,2,F2,available,L,F_46_D,F,46,D,(DPR x WL2) x (WV x WL2),,4,1460
+1234,1244,12,2,,buffer,L,F_47_C,F,47,C,,,,buffer
+1235,1245,12,2,,buffer,L,F_47_D,F,47,D,,,,buffer
+1245,1246,13,1,,buffer,L,G_1_A,G,1,A,,,,buffer
+1246,1247,13,1,,buffer,L,G_1_B,G,1,B,,,,buffer
+1247,1248,13,1,,buffer,L,G_2_A,G,2,A,,,,buffer
+1248,1249,13,1,,buffer,L,G_2_B,G,2,B,,,,buffer
+1249,1250,13,1,,buffer,L,G_3_A,G,3,A,,,,buffer
+1250,1251,13,1,,buffer,L,G_3_B,G,3,B,,,,buffer
+1251,1252,13,1,F1,available,L,G_4_A,G,4,A,LV1 x TM2,,14,1238
+1252,1253,13,1,Parent,available,L,G_4_B,G,4,B,WV,,7,456
+1253,1254,13,1,F2,available,L,G_5_A,G,5,A,(WV) x (WV x WL2),,6,1392
+1406,1255,13,1,2023-survivor,2023-survivor,NA,G_5_B,G,5,B,IH,4,12,IH_4_12
+1254,1256,13,1,F2,available,L,G_6_A,G,6,A,(SQ3 x WL2) x (WL2),,3,82
+1255,1257,13,1,Parent,available,L,G_6_B,G,6,B,LV1,,14,14
+1256,1258,13,1,Parent,available,L,G_7_A,G,7,A,TM2,,67,537
+1257,1259,13,1,F2,available,L,G_7_B,G,7,B,(YO11 x WL2) x (WL2),,7,933
+1407,1260,13,1,2023-survivor,2023-survivor,NA,G_8_A,G,8,A,YO7,6,15,YO7_6_15
+1258,1261,13,1,Parent,available,L,G_8_B,G,8,B,TM2,,29,499
+1259,1262,13,1,Parent,available,L,G_9_A,G,9,A,WL2,,68,163
+1260,1263,13,1,F2,available,L,G_9_B,G,9,B,(TM2 x WL2) x (SQ3 x WL2),,1,305
+1261,1264,13,1,Parent,available,L,G_10_A,G,10,A,BH,,1,387
+1262,1265,13,1,Parent,available,L,G_10_B,G,10,B,WL2,,58,153
+1263,1266,13,1,F2,available,L,G_11_A,G,11,A,(WL2 x BH) x (WL2 x TM2),,14,249
+1264,1267,13,1,F2,available,L,G_11_B,G,11,B,(TM2 x BH) x (BH),,5,747
+1265,1268,13,1,F2,available,L,G_12_A,G,12,A,(SQ3 x WL2) x (TM2 x WL2),,14,892
+1266,1269,13,1,F2,available,L,G_12_B,G,12,B,(DPR) x (WL2 x DPR),,5,731
+1267,1270,13,1,F1,available,L,G_13_A,G,13,A,BH x TM2,,22,606
+1268,1271,13,1,F2,available,L,G_13_B,G,13,B,(SQ3 x WL2) x (YO11 x WL2),,2,1501
+1269,1272,13,1,F2,available,L,G_14_A,G,14,A,(TM2 x WL2) x (WL2),,9,365
+1270,1273,13,1,Parent,available,L,G_14_B,G,14,B,WV,,12,461
+1271,1274,13,1,F2,available,L,G_15_A,G,15,A,(WV x WL2) x (WV),,8,275
+1272,1275,13,1,F2,available,L,G_15_B,G,15,B,(LV1 x WL2) x (YO11 x WL2),,12,997
+1273,1276,13,1,F2,available,L,G_16_A,G,16,A,(DPR x WL2) x (TM2 x WL2),,3,1445
+1274,1277,13,1,Parent,available,L,G_16_B,G,16,B,WL2,,39,134
+1275,1278,13,1,,buffer,L,G_17_A,G,17,A,buffer,,,NA
+1276,1279,13,1,,buffer,L,G_17_B,G,17,B,Buffer,,,NA
+1305,1280,13,1,Parent,available,M,G_18_A,G,18,A,TM2,,5,475
+1306,1281,13,1,F1,available,M,G_18_B,G,18,B,WL2 x BH,,4,833
+1307,1282,13,1,F2,available,M,G_19_A,G,19,A,(YO11 x WL2) x (WL2 x TM2),,15,802
+1308,1283,13,1,F1,available,M,G_19_B,G,19,B,LV1 x WL2,,15,1265
+1309,1284,13,1,Parent,available,M,G_20_A,G,20,A,WL2,,74,169
+1310,1285,13,1,Parent,available,M,G_20_B,G,20,B,WV,,11,460
+1311,1286,13,1,F1,available,M,G_21_A,G,21,A,LV1 x TM2,,15,1239
+1312,1287,13,1,F2,available,M,G_21_B,G,21,B,(DPR x WL2) x (YO11 x WL2),,16,710
+1313,1288,13,1,F1,available,M,G_22_A,G,22,A,WV x WL2,,16,1418
+1314,1289,13,1,F2,available,M,G_22_B,G,22,B,(DPR x WL2) x (TM2 x WL2),,14,1456
+1315,1290,13,1,F2,available,M,G_23_A,G,23,A,(LV1 x WL2) x (YO11 x WL2),,9,994
+1316,1291,13,1,Parent,available,M,G_23_B,G,23,B,TM2,,80,550
+1317,1292,13,1,F1,available,M,G_24_A,G,24,A,TM2 x WL2,,1,1277
+1318,1293,13,1,Parent,available,M,G_24_B,G,24,B,TM2,,32,502
+1319,1294,13,1,F2,available,M,G_25_A,G,25,A,(WL1 x WL2) x (WL2 x CC),,2,1115
+1320,1295,13,1,Parent,available,M,G_25_B,G,25,B,TM2,,42,512
+1321,1296,13,1,Parent,available,M,G_26_A,G,26,A,TM2,,91,561
+1322,1297,13,1,F2,available,M,G_26_B,G,26,B,(WV x WL2) x (WV),,9,276
+1323,1298,13,1,Parent,available,M,G_27_A,G,27,A,BH,,2,388
+1324,1299,13,1,F2,available,M,G_27_B,G,27,B,(TM2 x BH) x (BH),,6,748
+1325,1300,13,1,Parent,available,M,G_28_A,G,28,A,WL2,,57,152
+1326,1301,13,1,Parent,available,M,G_28_B,G,28,B,DPR,,12,440
+1327,1302,13,1,F2,available,M,G_29_A,G,29,A,(WV) x (WV x WL2),,7,1393
+1328,1303,13,1,F2,available,M,G_29_B,G,29,B,(DPR) x (WL2 x DPR),,6,732
+1329,1304,13,1,F1,available,M,G_30_A,G,30,A,WV x TM2,,2,195
+1330,1305,13,1,,available,M,G_30_B,G,30,B,,,,NA
+1408,1306,13,1,2023-survivor,2023-survivor,NA,G_31_A,G,31,A,BH,7,13,BH_7_13
+1331,1307,13,1,,available,M,G_31_B,G,31,B,,,,NA
+1356,1308,13,1,F1,available,N,G_32_A,G,32,A,LV1 x WL2,,4,1254
+1357,1309,13,1,Parent,available,N,G_32_B,G,32,B,YO11,,1,43
+1358,1310,13,1,Parent,available,N,G_33_A,G,33,A,TM2,,86,556
+1359,1311,13,1,F2,available,N,G_33_B,G,33,B,(SQ3 x WL2) x (WL2),,5,84
+1360,1312,13,1,Parent,available,N,G_34_A,G,34,A,WL2,,48,143
+1361,1313,13,1,F2,available,N,G_34_B,G,34,B,(LV1 x WL2) x (WL2),,5,68
+1362,1314,13,1,F2,available,N,G_35_A,G,35,A,(TM2 x BH) x (TM2),,8,1057
+1363,1315,13,1,F2,available,N,G_35_B,G,35,B,(SQ3 x WL2) x (TM2 x WL2),,2,880
+1364,1316,13,1,Parent,available,N,G_36_A,G,36,A,WV,,1,450
+1365,1317,13,1,F1,available,N,G_36_B,G,36,B,WV x WL2,,8,1410
+1409,1318,13,1,2023-survivor,2023-survivor,NA,G_37_A,G,37,A,YO7,7,9,YO7_7_9
+1366,1319,13,1,F1,available,N,G_37_B,G,37,B,WL2 x BH,,7,836
+1367,1320,13,1,Parent,available,N,G_38_A,G,38,A,WL2,,16,111
+1368,1321,13,1,F2,available,N,G_38_B,G,38,B,(WV x WL2) x (WL2 x DPR),,6,1330
+1410,1322,13,1,2023-TM2-fruit,2023-TM2-fruit,NA,G_39_A,G,39,A,TM2,7,17,TM2_7_17
+1369,1323,13,1,Parent,available,N,G_39_B,G,39,B,WL2,,76,171
+1411,1324,13,1,2023-TM2-fruit,2023-TM2-fruit,NA,G_40_A,G,40,A,TM2,3,7,TM2_3_7
+1370,1325,13,1,Parent,available,N,G_40_B,G,40,B,TM2,,6,476
+1371,1326,13,1,F2,available,N,G_41_A,G,41,A,(YO11 x WL2) x (SQ3 x WL2),,16,1017
+1372,1327,13,1,F2,available,N,G_41_B,G,41,B,(DPR x WL2) x (YO11 x WL2),,12,706
+1373,1328,13,1,F2,available,N,G_42_A,G,42,A,(YO11 x WL2) x (WV x WL2),,3,841
+1374,1329,13,1,F2,available,N,G_42_B,G,42,B,(DPR x WL2) x (WV x WL2),,8,1464
+1412,1330,13,1,2023-survivor,2023-survivor,NA,G_43_A,G,43,A,IH,6,13,IH_6_13
+1375,1331,13,1,Parent,available,N,G_43_B,G,43,B,TM2,,64,534
+1376,1332,13,1,,buffer,N,G_44_A,G,44,A,,,,buffer
+1377,1333,13,1,,buffer,N,G_44_B,G,44,B,,,,buffer
+1378,1334,13,1,,buffer,N,G_45_A,G,45,A,,,,buffer
+1379,1335,13,1,,buffer,N,G_45_B,G,45,B,,,,buffer
+1277,1336,14,2,,buffer,L,G_1_C,G,1,C,,,,buffer
+1278,1337,14,2,,buffer,L,G_1_D,G,1,D,,,,buffer
+1279,1338,14,2,,buffer,L,G_2_C,G,2,C,,,,buffer
+1280,1339,14,2,,buffer,L,G_2_D,G,2,D,,,,buffer
+1281,1340,14,2,,buffer,L,G_3_C,G,3,C,,,,buffer
+1282,1341,14,2,,buffer,L,G_3_D,G,3,D,,,,buffer
+1283,1342,14,2,F2,available,L,G_4_C,G,4,C,(DPR) x (DPR x WL2),,11,721
+1284,1343,14,2,F2,available,L,G_4_D,G,4,D,(WL2 x DPR) x (WL2),,3,1100
+1285,1344,14,2,F2,available,L,G_5_C,G,5,C,(WL2 x DPR) x (YO11 x WL2),,2,570
+1413,1345,14,2,2023-survivor,2023-survivor,NA,G_5_D,G,5,D,YO7,5,7,YO7_5_7
+1286,1346,14,2,F2,available,L,G_6_C,G,6,C,(WL2 x CC) x (WL2 x TM2),,3,1180
+1414,1347,14,2,2023-survivor,2023-survivor,NA,G_6_D,G,6,D,IH,2,12,IH_2_12
+1287,1348,14,2,Parent,available,L,G_7_C,G,7,C,TM2,,46,516
+1415,1349,14,2,2023-survivor,2023-survivor,NA,G_7_D,G,7,D,BH,4,12,BH_4_12
+1288,1350,14,2,F2,available,L,G_8_C,G,8,C,(WL1 x WL2) x (WL2 x CC),,3,1116
+1289,1351,14,2,Parent,available,L,G_8_D,G,8,D,TM2,,60,530
+1290,1352,14,2,Parent,available,L,G_9_C,G,9,C,TM2,,4,474
+1291,1353,14,2,Parent,available,L,G_9_D,G,9,D,TM2,,85,555
+1292,1354,14,2,F2,available,L,G_10_C,G,10,C,(TM2 x BH) x (TM2 x WL2),,6,1039
+1293,1355,14,2,F1,available,L,G_10_D,G,10,D,WV x TM2,,17,210
+1294,1356,14,2,F2,available,L,G_11_C,G,11,C,(LV1 x WL2) x (WL2 x DPR),,15,970
+1295,1357,14,2,Parent,available,L,G_11_D,G,11,D,SQ3,,12,33
+1296,1358,14,2,F1,available,L,G_12_C,G,12,C,WV x TM2,,1,194
+1416,1359,14,2,2023-survivor,2023-survivor,NA,G_12_D,G,12,D,CC,5,12,CC_5_12
+1297,1360,14,2,Parent,available,L,G_13_C,G,13,C,WL2,,89,184
+1298,1361,14,2,F2,available,L,G_13_D,G,13,D,(WL2 x TM2) x (CC x TM2),,8,259
+1299,1362,14,2,Parent,available,L,G_14_C,G,14,C,WL2,,14,109
+1300,1363,14,2,Parent,available,L,G_14_D,G,14,D,WL2,,25,120
+1301,1364,14,2,F2,available,L,G_15_C,G,15,C,(WL2 x BH) x (SQ3 x WL2),,5,1166
+1302,1365,14,2,F1,available,L,G_15_D,G,15,D,SQ3 x WL2,,8,644
+1303,1366,14,2,,buffer,L,G_16_C,G,16,C,Buffer,,,NA
+1304,1367,14,2,,buffer,L,G_16_D,G,16,D,Buffer,,,NA
+1332,1368,14,2,F2,available,M,G_17_C,G,17,C,(WL1 x WL2) x (WL2 x TM2),,7,1152
+1333,1369,14,2,F2,available,M,G_17_D,G,17,D,(SQ3 x WL2) x (WL2),,4,83
+1334,1370,14,2,F1,available,M,G_18_C,G,18,C,CC x TM2,,11,1361
+1335,1371,14,2,Parent,available,M,G_18_D,G,18,D,TM2,,63,533
+1336,1372,14,2,F2,available,M,G_19_C,G,19,C,(WL2) x (WV x WL2),,7,765
+1337,1373,14,2,F2,available,M,G_19_D,G,19,D,(LV1 x WL2) x (WL2),,4,67
+1338,1374,14,2,Parent,available,M,G_20_C,G,20,C,WL2,,26,121
+1339,1375,14,2,F2,available,M,G_20_D,G,20,D,(SQ3 x WL2) x (TM2 x WL2),,13,891
+1340,1376,14,2,Parent,available,M,G_21_C,G,21,C,WL2,,98,193
+1341,1377,14,2,F2,available,M,G_21_D,G,21,D,(WL2) x (TM2 x WL2),,16,926
+1342,1378,14,2,F2,available,M,G_22_C,G,22,C,(WL2 x CC) x (WL2 x TM2),,4,1181
+1343,1379,14,2,F2,available,M,G_24_C,G,24,C,(TM2 x BH) x (TM2 x BH),,9,1343
+1344,1380,14,2,F2,available,M,G_24_D,G,24,D,(WL2 x TM2) x (CC x TM2),,9,260
+1345,1381,14,2,Parent,available,M,G_25_C,G,25,C,WL2,,15,110
+1346,1382,14,2,F2,available,M,G_25_D,G,25,D,(DPR) x (DPR x WL2),,9,719
+1347,1383,14,2,F2,available,M,G_26_C,G,26,C,(WL2 x DPR) x (DPR),,2,1195
+1348,1384,14,2,Parent,available,M,G_26_D,G,26,D,WL2,,37,132
+1417,1385,14,2,2023-survivor,2023-survivor,NA,G_27_C,G,27,C,YO7,6,9,YO7_6_9
+1349,1386,14,2,F2,available,M,G_27_D,G,27,D,(TM2 x WL2) x (SQ3 x WL2),,9,313
+1350,1387,14,2,F2,available,M,G_28_C,G,28,C,(WL2 x DPR) x (WL2),,14,1111
+1351,1388,14,2,Parent,available,M,G_28_D,G,28,D,LV1,,15,15
+1352,1389,14,2,F2,available,M,G_29_C,G,29,C,(TM2 x BH) x (TM2 x WL2),,8,1041
+1353,1390,14,2,F1,available,M,G_29_D,G,29,D,WV x TM2,,26,219
+1354,1391,14,2,,available,M,G_30_C,G,30,C,,,,NA
+1355,1392,14,2,,available,M,G_30_D,G,30,D,,,,NA
+1418,1393,14,2,2023-TM2-fruit,2023-TM2-fruit,NA,G_31_C,G,31,C,TM2,7,5,TM2_7_5
+1380,1394,14,2,F2,available,N,G_31_D,G,31,D,(WL2 x BH) x (SQ3 x WL2),,13,1174
+1381,1395,14,2,F2,available,N,G_32_C,G,32,C,(WL2) x (DPR x WL2),,7,901
+1419,1396,14,2,2023-survivor,2023-survivor,NA,G_32_D,G,32,D,WL2,7,6,WL2_7_6
+1382,1397,14,2,F2,available,N,G_33_C,G,33,C,(TM2 x WL2) x (TM2 x WL2),,9,1090
+1383,1398,14,2,F2,available,N,G_33_D,G,33,D,(WV x WL2) x (WV),,10,277
+1384,1399,14,2,F2,available,N,G_34_C,G,34,C,(WL2 x BH) x (WL2 x TM2),,3,238
+1385,1400,14,2,F1,available,N,G_34_D,G,34,D,WV x TM2,,4,196
+1386,1401,14,2,F2,available,N,G_35_C,G,35,C,(WV) x (WV x WL2),,8,1394
+1387,1402,14,2,Parent,available,N,G_35_D,G,35,D,WL1,,17,300
+1388,1403,14,2,F1,available,N,G_36_C,G,36,C,LV1 x TM2,,16,1240
+1389,1404,14,2,F2,available,N,G_36_D,G,36,D,(DPR) x (WL2 x DPR),,7,733
+1390,1405,14,2,F2,available,N,G_37_C,G,37,C,(WL1 x WL2) x (WL2 x CC),,9,1122
+1391,1406,14,2,F2,available,N,G_37_D,G,37,D,(WL2 x TM2) x (CC x TM2),,10,261
+1392,1407,14,2,Parent,available,N,G_38_C,G,38,C,WL2,,28,123
+1393,1408,14,2,F2,available,N,G_38_D,G,38,D,(DPR x WL2) x (TM2 x WL2),,5,1447
+1394,1409,14,2,Parent,available,N,G_39_C,G,39,C,DPR,,5,433
+1395,1410,14,2,Parent,available,N,G_39_D,G,39,D,BH,,3,389
+1420,1411,14,2,2023-survivor,2023-survivor,NA,G_40_C,G,40,C,BH,2,13,BH_2_13
+1396,1412,14,2,Parent,available,N,G_40_D,G,40,D,TM2,,71,541
+1397,1413,14,2,F2,available,N,G_41_C,G,41,C,(YO11 x WL2) x (WL2),,12,938
+1398,1414,14,2,F2,available,N,G_41_D,G,41,D,(WL2 x DPR) x (DPR),,4,1197
+1421,1415,14,2,2023-survivor,2023-survivor,NA,G_42_C,G,42,C,SC,2,27,SC_2_27
+1399,1416,14,2,,available,N,G_42_D,G,42,D,,,,NA
+1400,1417,14,2,Parent,available,N,G_43_C,G,43,C,TM2,,44,514
+1401,1418,14,2,Parent,available,N,G_43_D,G,43,D,LV1,,19,19
+1402,1419,14,2,,buffer,N,G_44_C,G,44,C,,,,buffer
+1403,1420,14,2,F2,available,N,G_44_D,G,44,D,(WL1 x WL2) x (BH x WL2),,8,339
+1404,1421,14,2,,buffer,N,G_45_C,G,45,C,,,,buffer
+1405,1422,14,2,,buffer,N,G_45_D,G,45,D,,,,buffer
+1422,1423,15,1,,buffer,N,H_1_A,H,1,A,,,,buffer
+1423,1424,15,1,,buffer,N,H_1_B,H,1,B,,,,buffer
+1424,1425,15,1,,buffer,N,H_2_A,H,2,A,,,,buffer
+1425,1426,15,1,,buffer,N,H_2_B,H,2,B,,,,buffer
+1426,1427,15,1,,buffer,N,H_3_A,H,3,A,,,,buffer
+1427,1428,15,1,,buffer,N,H_3_B,H,3,B,,,,buffer
+1428,1429,15,1,F2,available,N,H_4_A,H,4,A,(SQ3 x WL2) x (YO11 x WL2),,1,1500
+1429,1430,15,1,Parent,available,N,H_4_B,H,4,B,LV1,,16,16
+1450,1431,15,1,2023-survivor,2023-survivor,NA,H_5_A,H,5,A,SC,4,1,SC_4_1
+1430,1432,15,1,Parent,available,N,H_5_B,H,5,B,SQ3,,7,28
+1431,1433,15,1,Parent,available,N,H_6_A,H,6,A,TM2,,27,497
+1451,1434,15,1,2023-survivor,2023-survivor,NA,H_6_B,H,6,B,SC,2,26,SC_2_26
+1432,1435,15,1,F2,available,N,H_7_A,H,7,A,(DPR) x (DPR x WL2),,13,723
+1433,1436,15,1,Parent,available,N,H_8_A,H,8,A,WL2,,60,155
+1434,1437,15,1,F2,available,N,H_8_B,H,8,B,(TM2 x WL2) x (WL2),,6,362
+1435,1438,15,1,,available,N,H_9_B,H,9,B,,,,NA
+1464,1439,15,1,Parent,available,O,H_10_B,H,10,B,TM2,,53,523
+1452,1440,15,1,2023-survivor,2023-survivor,NA,H_11_B,H,11,B,IH,2,1,IH_2_1
+1453,1441,15,1,2023-survivor,2023-survivor,NA,H_12_B,H,12,B,SC,2,1,SC_2_1
+1454,1442,15,1,2023-survivor,2023-survivor,NA,H_13_A,H,13,A,TM2,2,6,TM2_2_6
+1465,1443,15,1,Parent,available,O,H_13_B,H,13,B,WL2,,71,166
+1466,1444,15,1,F1,available,O,H_15_B,H,15,B,LV1 x WL2,,13,1263
+1467,1445,15,1,Parent,available,O,H_17_A,H,17,A,TM2,,87,557
+1468,1446,15,1,F2,available,O,H_17_B,H,17,B,(WL1 x TM2) x (WL2 x TM2),,7,327
+1469,1447,15,1,F2,available,O,H_18_A,H,18,A,(TM2) x (TM2 x BH),,3,1132
+1470,1448,15,1,Parent,available,O,H_18_B,H,18,B,BH,,20,406
+1471,1449,15,1,F2,available,O,H_19_A,H,19,A,(WL1 x WL2) x (WL2 x TM2),,4,1149
+1472,1450,15,1,F2,available,O,H_19_B,H,19,B,(WL2 x DPR) x (TM2 x WL2),,4,1317
+1473,1451,15,1,Parent,available,O,H_20_A,H,20,A,TM2,,31,501
+1474,1452,15,1,F2,available,O,H_20_B,H,20,B,(WL1 x WL2) x (BH x WL2),,11,342
+1475,1453,15,1,F2,available,O,H_21_A,H,21,A,(TM2 x WL2) x (TM2),,1,343
+1455,1454,15,1,2023-TM2-fruit,2023-TM2-fruit,NA,H_21_B,H,21,B,TM2,1,12,TM2_1_12
+1476,1455,15,1,Parent,available,O,H_22_A,H,22,A,TM2,,66,536
+1477,1456,15,1,F2,available,O,H_22_B,H,22,B,(TM2) x (TM2 x WL2),,15,234
+1478,1457,15,1,F2,available,O,H_23_A,H,23,A,(TM2 x WL2) x (WL2),,4,360
+1479,1458,15,1,F2,available,O,H_23_B,H,23,B,(DPR) x (WL2 x DPR),,8,734
+1480,1459,15,1,F2,available,O,H_24_A,H,24,A,(TM2 x WL2) x (TM2 x BH),,11,1076
+1481,1460,15,1,Parent,available,O,H_24_B,H,24,B,SQ3,,3,24
+1482,1461,15,1,F2,available,O,H_25_A,H,25,A,(WL2 x TM2) x (WL2),,2,1323
+1456,1462,15,1,2023-survivor,2023-survivor,NA,H_25_B,H,25,B,SC,4,14,SC_4_14
+1483,1463,15,1,F2,available,O,H_26_A,H,26,A,(LV1 x WL2) x (LV1 x WL2),,3,1020
+1484,1464,15,1,F2,available,O,H_26_B,H,26,B,(WV x WL2) x (WV),,11,278
+1457,1465,15,1,2023-TM2-fruit,2023-TM2-fruit,NA,H_27_A,H,27,A,TM2,6,10,TM2_6_10
+1485,1466,15,1,F2,available,O,H_27_B,H,27,B,(LV1 x WL2) x (WL2 x DPR),,11,966
+1486,1467,15,1,F2,available,O,H_28_A,H,28,A,(YO11 x WL2) x (WL2),,9,935
+1487,1468,15,1,Parent,available,O,H_28_B,H,28,B,TM2,,7,477
+1488,1469,15,1,Parent,available,O,H_29_A,H,29,A,TM2,,36,506
+1489,1470,15,1,,available,O,H_29_B,H,29,B,,,,NA
+1490,1471,15,1,,available,O,H_30_A,H,30,A,,,,NA
+1523,1472,15,1,F1,available,P,H_30_B,H,30,B,BH x TM2,,3,587
+1458,1473,15,1,2023-survivor,2023-survivor,NA,H_31_A,H,31,A,YO7,4,11,YO7_4_11
+1524,1474,15,1,F2,available,P,H_31_B,H,31,B,(WL1 x WL2) x (WL2 x TM2),,6,1151
+1525,1475,15,1,F2,available,P,H_32_A,H,32,A,(LV1 x WL2) x (WL2),,7,70
+1526,1476,15,1,Parent,available,P,H_32_B,H,32,B,TM2,,23,493
+1527,1477,15,1,,buffer,P,H_33_A,H,33,A,,,,buffer
+1528,1478,15,1,,buffer,P,H_33_B,H,33,B,,,,buffer
+1459,1479,15,1,2023-survivor,2023-survivor,NA,H_34_A,H,34,A,WL2,2,7,WL2_2_7
+1529,1480,15,1,,buffer,P,H_34_B,H,34,B,,,,buffer
+1436,1481,16,2,,buffer,N,H_1_C,H,1,C,,,,buffer
+1437,1482,16,2,,buffer,N,H_1_D,H,1,D,,,,buffer
+1438,1483,16,2,,buffer,N,H_2_C,H,2,C,,,,buffer
+1439,1484,16,2,,buffer,N,H_2_D,H,2,D,,,,buffer
+1440,1485,16,2,2023-survivor,2023-survivor,NA,H_3_C,H,3,C,YO7,7,15,YO7_7_15
+1441,1486,16,2,,buffer,N,H_3_D,H,3,D,,,,buffer
+1442,1487,16,2,F2,available,N,H_4_D,H,4,D,(TM2 x WL2) x (WV x WL2),,1,1303
+1443,1488,16,2,F2,available,N,H_5_D,H,5,D,(TM2 x BH) x (BH),,7,749
+1444,1489,16,2,Parent,available,N,H_6_C,H,6,C,WL2,,82,177
+1445,1490,16,2,F2,available,N,H_6_D,H,6,D,(TM2 x BH) x (TM2 x BH),,6,1340
+1446,1491,16,2,F2,available,N,H_7_D,H,7,D,(TM2 x BH) x (TM2 x WL2),,7,1040
+1447,1492,16,2,,available,N,H_8_C,H,8,C,,,,NA
+1448,1493,16,2,,available,N,H_8_D,H,8,D,,,,NA
+1449,1494,16,2,,available,N,H_9_C,H,9,C,,,,NA
+1491,1495,16,2,F1,available,O,H_9_D,H,9,D,WV x TM2,,5,197
+1492,1496,16,2,F1,available,O,H_10_C,H,10,C,LV1 x TM2,,1,1225
+1493,1497,16,2,F2,available,O,H_10_D,H,10,D,(WL2) x (WV x WL2),,8,766
+1460,1498,16,2,2023-survivor,2023-survivor,NA,H_11_C,H,11,C,IH,4,1,IH_4_1
+1461,1499,16,2,2023-survivor,2023-survivor,NA,H_12_C,H,12,C,YO7,4,1,YO7_4_1
+1494,1500,16,2,Parent,available,O,H_13_C,H,13,C,WL2,,1,96
+1495,1501,16,2,Parent,available,O,H_14_D,H,14,D,WV,,14,463
+1496,1502,16,2,F1,available,O,H_15_C,H,15,C,LV1 x TM2,,22,1246
+1497,1503,16,2,F2,available,O,H_15_D,H,15,D,(DPR) x (DPR x WL2),,6,716
+1498,1504,16,2,F1,available,O,H_16_D,H,16,D,TM2 x WL2,,2,1278
+1499,1505,16,2,F2,available,O,H_17_D,H,17,D,(TM2 x BH) x (BH),,8,750
+1500,1506,16,2,F2,available,O,H_18_C,H,18,C,(LV1 x WL2) x (WL2),,6,69
+1501,1507,16,2,F2,available,O,H_18_D,H,18,D,(WL2 x DPR) x (WL2),,2,1099
+1502,1508,16,2,F2,available,O,H_19_C,H,19,C,(SQ3 x WL2) x (WL2),,6,85
+1503,1509,16,2,F1,available,O,H_19_D,H,19,D,BH x WL2,,1,611
+1504,1510,16,2,F2,available,O,H_20_C,H,20,C,(WL2) x (DPR x WL2),,9,903
+1505,1511,16,2,F2,available,O,H_20_D,H,20,D,(WL1 x WL2) x (WL2 x CC),,15,1128
+1506,1512,16,2,Parent,available,O,H_21_C,H,21,C,TM2,,97,567
+1507,1513,16,2,F1,available,O,H_21_D,H,21,D,WL2 x BH,,9,838
+1508,1514,16,2,F2,available,O,H_22_C,H,22,C,(SQ3 x WL2) x (TM2 x WL2),,15,893
+1509,1515,16,2,Parent,available,O,H_22_D,H,22,D,WL2,,17,112
+1510,1516,16,2,F2,available,O,H_23_C,H,23,C,(TM2 x WL2) x (SQ3 x WL2),,16,320
+1511,1517,16,2,Parent,available,O,H_23_D,H,23,D,WL2,,42,137
+1512,1518,16,2,Parent,available,O,H_24_C,H,24,C,WL2,,64,159
+1462,1519,16,2,2023-survivor,2023-survivor,NA,H_24_D,H,24,D,SC,6,13,SC_6_13
+1513,1520,16,2,Parent,available,O,H_25_C,H,25,C,WL2,,97,192
+1514,1521,16,2,Parent,available,O,H_25_D,H,25,D,WL1,,9,292
+1515,1522,16,2,F1,available,O,H_26_C,H,26,C,WV x TM2,,18,211
+1516,1523,16,2,F2,available,O,H_26_D,H,26,D,(WL2 x CC) x (WL2 x TM2),,6,1183
+1517,1524,16,2,Parent,available,O,H_27_C,H,27,C,BH,,4,390
+1518,1525,16,2,F2,available,O,H_27_D,H,27,D,(WV) x (WV x WL2),,9,1395
+1519,1526,16,2,F2,available,O,H_28_C,H,28,C,(WL2 x TM2) x (CC x TM2),,11,262
+1520,1527,16,2,F2,available,O,H_28_D,H,28,D,(TM2 x BH) x (TM2 x BH),,3,1337
+1521,1528,16,2,,available,O,H_29_C,H,29,C,,,,NA
+1522,1529,16,2,,available,O,H_29_D,H,29,D,,,,NA
+1530,1530,16,2,Parent,available,P,H_30_C,H,30,C,TM2,,8,478
+1531,1531,16,2,F2,available,P,H_30_D,H,30,D,(WL2 x TM2) x (CC x TM2),,12,263
+1463,1532,16,2,2023-survivor,2023-survivor,NA,H_31_C,H,31,C,IH,5,13,IH_5_13
+1532,1533,16,2,Parent,available,P,H_31_D,H,31,D,WL2,,61,156
+1533,1534,16,2,F2,available,P,H_32_C,H,32,C,(YO11 x WL2) x (DPR x WL2),,1,773
+1534,1535,16,2,F2,available,P,H_32_D,H,32,D,(WL2 x BH) x (SQ3 x WL2),,7,1168
+1535,1536,16,2,,buffer,P,H_33_C,H,33,C,,,,buffer
+1536,1537,16,2,,buffer,P,H_33_D,H,33,D,,,,buffer
+1537,1538,16,2,,buffer,P,H_34_C,H,34,C,,,,buffer
+1538,1539,16,2,,buffer,P,H_34_D,H,34,D,,,,buffer
+1579,1540,17,1,,buffer,P,I_1_A,I,1,A,,,,buffer
+1580,1541,17,1,,buffer,P,I_1_B,I,1,B,,,,buffer
+1581,1542,17,1,,buffer,P,I_2_A,I,2,A,,,,buffer
+1582,1543,17,1,,buffer,P,I_2_B,I,2,B,,,,buffer
+1583,1544,17,1,F2,available,P,I_3_B,I,3,B,(LV1 x WL2) x (YO11 x WL2),,15,1000
+1584,1545,17,1,F1,available,P,I_4_A,I,4,A,LV1 x TM2,,2,1226
+1585,1546,17,1,F2,available,P,I_4_B,I,4,B,(WL2) x (DPR x WL2),,4,898
+1586,1547,17,1,F2,available,P,I_5_A,I,5,A,(TM2 x BH) x (TM2 x BH),,7,1341
+1587,1548,17,1,F2,available,P,I_5_B,I,5,B,(YO11 x WL2) x (WL2 x TM2),,10,797
+1588,1549,17,1,F2,available,P,I_6_A,I,6,A,(TM2 x BH) x (BH),,9,751
+1589,1550,17,1,F2,available,P,I_6_B,I,6,B,(SQ3 x WL2) x (WL2),,7,86
+1590,1551,17,1,Parent,available,P,I_7_A,I,7,A,TM2,,74,544
+1591,1552,17,1,F2,available,P,I_7_B,I,7,B,(WL1 x WL2) x (WL2 x CC),,12,1125
+1592,1553,17,1,Parent,available,P,I_8_A,I,8,A,WL2,,96,191
+1593,1554,17,1,Parent,available,P,I_8_B,I,8,B,TM2,,38,508
+1594,1555,17,1,F2,available,P,I_9_A,I,9,A,(DPR x WL2) x (TM2 x WL2),,12,1454
+1595,1556,17,1,Parent,available,P,I_9_B,I,9,B,BH,,5,391
+1596,1557,17,1,F1,available,P,I_10_A,I,10,A,LV1 x WL2,,22,1272
+1597,1558,17,1,Parent,available,P,I_10_B,I,10,B,WL2,,29,124
+1598,1559,17,1,F1,available,P,I_11_A,I,11,A,LV1 x TM2,,26,1250
+1599,1560,17,1,F2,available,P,I_11_B,I,11,B,(WL2 x CC) x (WL2 x TM2),,7,1184
+1539,1561,17,1,2023-survivor,2023-survivor,NA,I_12_A,I,12,A,IH,1,1,IH_1_1
+1600,1562,17,1,F2,available,P,I_12_B,I,12,B,(TM2 x WL2) x (SQ3 x WL2),,3,307
+1601,1563,17,1,Parent,available,P,I_13_A,I,13,A,TM2,,54,524
+1602,1564,17,1,F2,available,P,I_13_B,I,13,B,(SQ3 x WL2) x (LV1 x WL2),,15,863
+1603,1565,17,1,F2,available,P,I_14_A,I,14,A,(LV1 x WL2) x (TM2 x WL2),,12,954
+1604,1566,17,1,F2,available,P,I_14_B,I,14,B,(DPR x WL2) x (SQ3 x WL2),,8,686
+1605,1567,17,1,,available,P,I_15_A,I,15,A,,,,NA
+1606,1568,17,1,,available,P,I_15_B,I,15,B,,,,NA
+1540,1569,17,1,,available,NA,I_16_A,I,16,A,,,,NA
+1541,1570,17,1,2023-survivor,2023-survivor,NA,I_16_B,I,16,B,BH,2,1,BH_2_1
+1542,1571,17,1,,available,NA,I_17_A,I,17,A,,,,NA
+1543,1572,17,1,,available,NA,I_17_B,I,17,B,,,,NA
+1544,1573,17,1,2023-survivor,2023-survivor,NA,I_18_A,I,18,A,BH,1,1,BH_1_1
+1545,1574,17,1,,available,NA,I_18_B,I,18,B,,,,NA
+1546,1575,17,1,,available,NA,I_19_A,I,19,A,,,,NA
+1547,1576,17,1,,available,NA,I_19_B,I,19,B,,,,NA
+1548,1577,17,1,,available,NA,I_20_A,I,20,A,,,,NA
+1549,1578,17,1,,available,NA,I_20_B,I,20,B,,,,NA
+1550,1579,17,1,,available,NA,I_21_A,I,21,A,,,,NA
+1551,1580,17,1,,available,NA,I_21_B,I,21,B,,,,NA
+1552,1581,17,1,,available,NA,I_22_A,I,22,A,,,,NA
+1553,1582,17,1,,available,NA,I_22_B,I,22,B,,,,NA
+1554,1583,17,1,,buffer,NA,I_23_A,I,23,A,,,,buffer
+1555,1584,17,1,,buffer,NA,I_23_B,I,23,B,,,,buffer
+1556,1585,17,1,,buffer,NA,I_24_A,I,24,A,,,,buffer
+1557,1586,17,1,,buffer,NA,I_24_B,I,24,B,,,,buffer
+1607,1587,18,2,,buffer,P,I_1_C,I,1,C,,,,buffer
+1608,1588,18,2,,buffer,P,I_1_D,I,1,D,,,,buffer
+1609,1589,18,2,,buffer,P,I_2_C,I,2,C,,,,buffer
+1610,1590,18,2,,buffer,P,I_2_D,I,2,D,,,,buffer
+1611,1591,18,2,F2,available,P,I_3_C,I,3,C,(WV x WL2) x (WV),,12,279
+1558,1592,18,2,2023-survivor,2023-survivor,NA,I_3_D,I,3,D,BH,4,1,BH_4_1
+1612,1593,18,2,Parent,available,P,I_4_D,I,4,D,WL2,,69,164
+1613,1594,18,2,F2,available,P,I_5_C,I,5,C,(TM2 x WL2) x (WL2),,14,370
+1614,1595,18,2,Parent,available,P,I_6_C,I,6,C,WL2,,2,97
+1615,1596,18,2,F2,available,P,I_6_D,I,6,D,(WL1 x WL2) x (BH x WL2),,4,335
+1616,1597,18,2,F2,available,P,I_7_C,I,7,C,(DPR) x (WL2 x DPR),,9,735
+1617,1598,18,2,F1,available,P,I_7_D,I,7,D,WV x TM2,,6,198
+1618,1599,18,2,Parent,available,P,I_8_C,I,8,C,BH,,19,405
+1619,1600,18,2,Parent,available,P,I_8_D,I,8,D,WL2,,44,139
+1620,1601,18,2,Parent,available,P,I_9_C,I,9,C,TM2,,81,551
+1621,1602,18,2,F2,available,P,I_9_D,I,9,D,(WV) x (WV x WL2),,10,1396
+1622,1603,18,2,F1,available,P,I_10_C,I,10,C,DPR x WL2,,1,1210
+1623,1604,18,2,Parent,available,P,I_10_D,I,10,D,DPR,,15,443
+1624,1605,18,2,F2,available,P,I_11_C,I,11,C,(WL2 x DPR) x (TM2 x WL2),,5,1318
+1625,1606,18,2,Parent,available,P,I_11_D,I,11,D,WL1,,11,294
+1626,1607,18,2,Parent,available,P,I_12_C,I,12,C,WV,,10,459
+1627,1608,18,2,F2,available,P,I_12_D,I,12,D,(DPR x WL2) x (YO11 x WL2),,14,708
+1628,1609,18,2,F1,available,P,I_13_C,I,13,C,TM2 x WL2,,12,1288
+1629,1610,18,2,F2,available,P,I_13_D,I,13,D,(TM2 x BH) x (TM2 x WL2),,2,1035
+1630,1611,18,2,,available,P,I_14_C,I,14,C,,,,NA
+1631,1612,18,2,,available,P,I_14_D,I,14,D,,,,NA
+1559,1613,18,2,,available,NA,I_15_C,I,15,C,,,,NA
+1560,1614,18,2,,available,NA,I_15_D,I,15,D,,,,NA
+1561,1615,18,2,,available,NA,I_16_C,I,16,C,,,,NA
+1562,1616,18,2,,available,NA,I_16_D,I,16,D,,,,NA
+1563,1617,18,2,,available,NA,I_17_C,I,17,C,,,,NA
+1564,1618,18,2,,available,NA,I_17_D,I,17,D,,,,NA
+1565,1619,18,2,,available,NA,I_18_C,I,18,C,,,,NA
+1566,1620,18,2,,available,NA,I_18_D,I,18,D,,,,NA
+1567,1621,18,2,,available,NA,I_19_C,I,19,C,,,,NA
+1568,1622,18,2,,available,NA,I_19_D,I,19,D,,,,NA
+1569,1623,18,2,,available,NA,I_20_C,I,20,C,,,,NA
+1570,1624,18,2,,available,NA,I_20_D,I,20,D,,,,NA
+1571,1625,18,2,,available,NA,I_21_C,I,21,C,,,,NA
+1572,1626,18,2,,available,NA,I_21_D,I,21,D,,,,NA
+1573,1627,18,2,,available,NA,I_22_C,I,22,C,,,,NA
+1574,1628,18,2,,available,NA,I_22_D,I,22,D,,,,NA
+1575,1629,18,2,,buffer,NA,I_23_C,I,23,C,,,,buffer
+1576,1630,18,2,,buffer,NA,I_23_D,I,23,D,,,,buffer
+1577,1631,18,2,,buffer,NA,I_24_C,I,24,C,,,,buffer
+1578,1632,18,2,,buffer,NA,I_24_D,I,24,D,,,,buffer
+1632,1633,19,1,2023-survivor,2023-survivor,NA,J_4_A,J,4,A,YO7,3,8,YO7_3_8
+1633,1634,19,1,2023-TM2-fruit,2023-TM2-fruit,NA,J_5_A,J,5,A,TM2,2,11,TM2_2_11
+1634,1635,19,1,2023-survivor,2023-survivor,NA,J_8_A,J,8,A,BH,5,2,BH_5_2
+1635,1636,19,1,2023-survivor,2023-survivor,NA,J_10_A,J,10,A,BH,4,2,BH_4_2
+1636,1637,19,1,2023-survivor,2023-survivor,NA,J_15_A,J,15,A,YO7,7,11,YO7_7_11
+1637,1638,19,1,2023-TM2-fruit,2023-TM2-fruit,NA,J_17_B,J,17,B,TM2,5,12,TM2_5_12
+1638,1639,19,1,2023-survivor,2023-survivor,NA,J_18_B,J,18,B,SC,8,2,SC_8_2
+1639,1640,20,2,2023-TM2-fruit,2023-TM2-fruit,NA,J_4_D,J,4,D,TM2,7,7,TM2_7_7
+1640,1641,20,2,2023-survivor,2023-survivor,NA,J_11_D,J,11,D,IH,5,2,IH_5_2
+1641,1642,20,2,2023-survivor,2023-survivor,NA,J_13_C,J,13,C,BH,6,2,BH_6_2
+1642,1643,20,2,2023-survivor,2023-survivor,NA,J_17_D,J,17,D,LV1,8,1,LV1_8_1
+1643,1644,21,1,2023-survivor,2023-survivor,NA,K_2_B,K,2,B,IH,4,14,IH_4_14
+1644,1645,21,1,2023-survivor,2023-survivor,NA,K_4_B,K,4,B,IH,6,2,IH_6_2
+1645,1646,21,1,2023-survivor,2023-survivor,NA,K_10_A,K,10,A,YO7,1,2,YO7_1_2
+1646,1647,21,1,2023-survivor,2023-survivor,NA,K_13_A,K,13,A,CC,1,2,CC_1_2
+1647,1648,22,2,2023-survivor,2023-survivor,NA,K_2_C,K,2,C,YO7,5,13,YO7_5_13
+1648,1649,22,2,2023-survivor,2023-survivor,NA,K_7_C,K,7,C,SC,6,2,SC_6_2
+1649,1650,22,2,2023-survivor,2023-survivor,NA,K_8_C,K,8,C,IH,1,2,IH_1_2
+1816,1822,22,2,2023-TM2-fruit,2023-TM2-fruit,NA,K_12_D,K,12,D,TM2,6,12,TM2_6_12
