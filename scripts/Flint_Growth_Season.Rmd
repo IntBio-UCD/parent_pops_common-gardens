@@ -32,7 +32,6 @@ knitr::opts_chunk$set(echo = TRUE)
 Mean height at WL2 in Oct was 7 cm --\> 70 mm
 
 ## Notes: 
- - Need to come back and do this to include 2024 months for biennials 
  - Calculate grow season for gardens in the specific year of the garden (2022-2023)
 
 ## Relevant Libraries and Functions
