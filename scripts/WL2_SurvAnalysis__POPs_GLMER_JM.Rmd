@@ -21,12 +21,14 @@ See chapters 9 - 13 in tutorial: https://bookdown.org/content/4253/extending-the
 ```{r}
 # install.packages("multilevelmod")
 library(tidyverse) #includes lubridate, which we need 
+library(magrittr)
 library(ggrepel)
 library(lme4)
 library(ggdist)
 library(tidymodels)
 library(multilevelmod)
 library(broom.mixed)
+library(modelr)
 tidymodels_prefer()
 options(mc.cores = parallel::detectCores())
 ```
@@ -175,6 +177,10 @@ wl2_ind_estab <- wl2_ind %>% filter(os_weeks <= 3) %>%
             across(c(block, bed, parent.pop, mf, contains("GD")), unique))
 
 wl2_ind_surv <- wl2_ind %>% filter(os_weeks > 3) 
+
+wl2_estab_means <- wl2_ind_estab %>% # summary for plotting
+  group_by(parent.pop) %>%
+  summarize(survivorship = 1-mean(dead))
 ```
 
 
@@ -257,11 +263,94 @@ estab_fits <- estab_fits %>%
 estab_fits %>% mutate(glance=map(fit, glance)) %>% unnest(glance) %>% arrange(AIC) %>% select(-wflow:-sigma)
 ```
 
+model with pop and block (but excluding mf) is best by AIC and BIC
+
+get bootstrap predictions and plot
+```{r}
+estab_nd <- data_grid(wl2_ind_estab, parent.pop)
+
+estab_predict_fun <- function(m, nd = estab_nd) {
+  predict(m, 
+          newdata = nd,
+          type = "response",
+          re.form = ~(1|parent.pop)
+  ) %>%
+    subtract(1, .) # convert hazard to survivorship
+}
+
+# 100 seconds
+system.time (estab_fits <- estab_fits %>% 
+               mutate(
+                 bootstrap = map(fit, \(x) {
+                   extract_fit_engine(x) %>% 
+                     bootMer(FUN = estab_predict_fun,
+                             re.form = ~ (1|parent.pop),
+                             nsim = 1000,
+                             parallel = "multicore",
+                             ncpus = 7
+                     ) } #bootMer
+                 ),  
+                 tidyboot = map(bootstrap, tidy, conf.int = TRUE),
+                 tidyboot = map(tidyboot, \(x) cbind(estab_nd, x))
+               ) # mutate
+) # system.time
+```
+
+
+```{r}
+estab_fits %>%
+  select(name, tidyboot) %>%
+  unnest(tidyboot) %>%
+  ggplot(aes(x=parent.pop)) +
+  geom_col(aes(y=survivorship), data = wl2_estab_means, fill="skyblue") +
+  geom_pointrange(aes(y=statistic, ymax = conf.high, ymin = conf.low, color=name), position = position_dodge(width = .75)) +
+  scale_color_viridis_d() +
+  theme(axis.text.x = element_text(angle=90, hjust=1, vjust=.5))
+  
+
+# NOTE: need bootmer for standard errors on predictions
+```
+
+```{r}
+estab_fits %>%
+  select(name, bootstrap) %>%
+  mutate(tidyboot = map(bootstrap, tidy, conf.int = TRUE)) %>%
+  unnest(tidyboot)
+```
+
+
+
+```{r}
+test <- extract_fit_engine(estab_fits$fit[[1]])
+
+predict(test, newdata = estab_nd, type = "response", re.form = ~ (1|parent.pop))
+
+test.boot <- bootMer(test,
+        FUN = \(y) predict(y, newdata = estab_nd, type = "response"),
+        re.form = ~ (1|parent.pop),
+        nsim = 100)
+
+dim(test.boot)
+
+str(test.boot)
+
+test.boot
+
+boot::boot.ci(test.boot, type = c("norm", "basic", "perc"), index = 1)
+```
+
+
 Keep block but not mf
+
+
 
 ```{r}
 estab_best_fit <- estab_fits %>% filter(name=="pop.block") %>% pull(fit) %>% magrittr::extract2(1)
 estab_best_fit
+```
+
+```{r}
+predict(estab_best_fit, new_data = )
 ```
 
 
