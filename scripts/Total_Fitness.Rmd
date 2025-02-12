@@ -2,7 +2,9 @@
 title: "Total Fitness"
 author: "Brandie QC"
 date: "`r Sys.Date()`"
-output: html_document
+output: 
+  html_document: 
+    keep_md: true
 ---
 
 ```{r setup, include=FALSE}
@@ -18,10 +20,15 @@ Total Fitness: p(Establishment)*p(Surv to Rep - y1)*Fruits(y1) + p(Winter Surv)*
 ## Libraries
 ```{r}
 library(tidyverse)
+#conflicted::conflicts_prefer(dplyr::filter)
+library(viridis) #for pretty colors
+
 library(sp) #for calculating geographic distance 
 
 library(brms)
-conflicts_prefer(brms::ar)
+#conflicted::conflicts_prefer(brms::ar)
+#conflicted::conflicts_prefer(dplyr::combine)
+#conflicted::conflicts_prefer(brms::dstudent_t)
 library(tidybayes) #for extracting and visiaulizing brms model output 
 library(modelr) #for data grid
 
@@ -173,8 +180,8 @@ ucd_establishment %>%
                   position_dodge(0.75)) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
-  labs(y="p(Establishment)", x="Parent Population", fill="Growth Season Gowers") +
-  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  labs(y="Establishment", x="Parent Population", fill="Growth Season Gowers") +
+  scale_fill_viridis(option="mako", direction = -1) +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 ggsave("../output/UCD_Traits/UCD_Establishment_GrwSsn_GD_Recent.png", width = 12, height = 8, units = "in")
 
@@ -187,8 +194,8 @@ ucd_establishment %>%
                   position_dodge(0.75)) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
-  labs(y="p(Establishment)", x="Parent Population", fill="Water Year Gowers") +
-  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  labs(y="Establishment", x="Parent Population", fill="Water Year Gowers") +
+  scale_fill_viridis(option="mako", direction = -1) +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 ggsave("../output/UCD_Traits/UCD_Establishment_Wtr_Year_GD_Recent.png", width = 12, height = 8, units = "in")
 ```
@@ -213,9 +220,10 @@ wl2_establishment %>%
                   position_dodge(0.75)) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
-  labs(y="p(Establishment)", x="Parent Population", fill="Growth Season Gowers") +
-  scale_fill_gradient(low = "#0043F0", high = "#F5A540") +
+  labs(y="Establishment", x="Parent Population", fill="Growth Season Gowers") +
+  scale_fill_viridis(option="mako", direction = -1) +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+ggsave("../output/WL2_Traits/WL2_Establishment_GrwSsn_GD_Recent.png", width = 12, height = 8, units = "in")
 
 wl2_establishment %>% 
   group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
@@ -226,9 +234,10 @@ wl2_establishment %>%
                   position_dodge(0.75)) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
-  labs(y="p(Establishment)", x="Parent Population", fill="Water Year Gowers") +
-  scale_fill_gradient(low = "#0043F0", high = "#F5A540") +
+  labs(y="Establishment", x="Parent Population", fill="Water Year Gowers") +
+  scale_fill_viridis(option="mako", direction = -1) +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+ggsave("../output/WL2_Traits/WL2_Establishment_Wtr_Year_GD_Recent.png", width = 12, height = 8, units = "in")
 ```
 
 ### Stats
@@ -309,7 +318,7 @@ ucd_establishment %>%
   ggplot(aes(y = pop, x = .epred)) +
   stat_slab() +
   theme_classic() +
-  labs(x="Posterior Survival Predictions", y="Parent Population", title="UCD p(Establishment)") #+
+  labs(x="Posterior Survival Predictions", y="Parent Population", title="UCD Establishment") #+
  # theme(text=element_text(size=25)) 
 ```
 
@@ -317,16 +326,16 @@ ucd_establishment %>%
 Davis
 ```{r}
 ucd_surv %>% filter(!is.na(bud.date), is.na(fruit.date)) #all plants that initiated reproduction, but did not finish, have a death date 
-ucd_surv %>% filter(!is.na(fruit.date), !is.na(death.date)) #many plants with a fruit date, have a later death date 
-ucd_surv %>% filter(!is.na(fruit.date), is.na(death.date)) #some fruit plants do not have a death date
-ucd_surv %>% filter(is.na(fruit.date), !is.na(last.flower.date)) #did not miss any fruiting plants
-ucd_surv %>% filter(is.na(fruit.date), !is.na(last.fruit.date)) #did not miss any fruiting plants 
+ucd_surv %>% filter(!is.na(bud.date), !is.na(death.date)) #many plants with a bud date, have a later death date 
+ucd_surv %>% filter(!is.na(bud.date), is.na(death.date)) #some budding plants do not have a death date
+ucd_surv %>% filter(is.na(bud.date), !is.na(flower.date)) #did not miss any budding plants
+ucd_surv %>% filter(is.na(bud.date), !is.na(fruit.date)) #did not miss any budding plants 
 
 ucd_surv_to_rep <- ucd_surv %>% 
   left_join(ucd_gowers) %>% 
   mutate(death.date=mdy(death.date)) %>% 
-  mutate(SurvtoRep_Y1=if_else(is.na(fruit.date), 0, 1)) %>% 
-  select(block:rep, elevation.group:Wtr_Year_GD_Historical, fruit.date, death.date, SurvtoRep_Y1) 
+  mutate(SurvtoRep_Y1=if_else(is.na(bud.date), 0, 1)) %>% 
+  select(block:rep, elevation.group:Wtr_Year_GD_Historical, bud.date, death.date, SurvtoRep_Y1) 
 
 ucd_surv_to_rep %>% 
   group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
@@ -337,9 +346,10 @@ ucd_surv_to_rep %>%
                   position_dodge(0.75)) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
-  labs(y="p(Surv-to-Rep Y1)", x="Parent Population", fill="Growth Season Gowers") +
-  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  labs(y="Surv-to-Rep Y1", x="Parent Population", fill="Growth Season Gowers") +
+  scale_fill_viridis(option="mako", direction = -1) +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+ggsave("../output/UCD_Traits/UCD_SurvtoRepY1_GrwSsn_GD_Recent.png", width = 12, height = 8, units = "in")
 
 ucd_surv_to_rep %>% 
   group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
@@ -350,27 +360,34 @@ ucd_surv_to_rep %>%
                   position_dodge(0.75)) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
-  labs(y="p(Surv-to-Rep Y1)", x="Parent Population", fill="Water Year Gowers") +
-  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  labs(y="Surv-to-Rep Y1", x="Parent Population", fill="Water Year Gowers") +
+  scale_fill_viridis(option="mako", direction = -1) +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+ggsave("../output/UCD_Traits/UCD_SurvtoRepY1_Wtr_Year_GD_Recent.png", width = 12, height = 8, units = "in")
 ```
+
 
 WL2
 ```{r}
+wl2_ann_cens %>% filter(pheno=="B") #check for any plants that started budding the week of the annual census 
+```
+
+```{r}
 wl2_surv_y1 %>% filter(!is.na(bud.date), is.na(fruit.date)) #some plants initiated reproduction but did not make fruits
-wl2_surv_y1 %>% filter(!is.na(bud.date), !is.na(death.date))  #some of above died, some lived
-wl2_surv_y1 %>% filter(!is.na(fruit.date), !is.na(death.date)) #no plants that made fruits have a death date 
+wl2_surv_y1 %>% filter(!is.na(bud.date), !is.na(death.date))  #most of above lived
+wl2_surv_y1 %>% filter(is.na(bud.date), !is.na(flower.date)) #didn't miss any budding plants
+wl2_surv_y1 %>% filter(is.na(bud.date), !is.na(fruit.date)) #didn't miss any budding plants 
 wl2_surv_y1 %>% filter(!is.na(last.flower.date)) #NAs
 wl2_surv_y1 %>% filter(!is.na(last.fruit.date)) #none 
-wl2_surv_y1 %>% filter(!is.na(fruit.date)) 
+wl2_surv_y1 %>% filter(is.na(bud.date))
 
 wl2_surv_to_rep_y1 <- wl2_surv_y1 %>% 
   left_join(wl2_gowers_2023) %>% 
   mutate(death.date=mdy(death.date)) %>% 
-  mutate(fruit.date=if_else(Genotype=="TM2_1_12", "10/27/23", fruit.date)) %>% #add in fruit date for plant that started fruiting the week of the annual census 
-  mutate(SurvtoRep_Y1=if_else(is.na(fruit.date), 0, 1)) %>% 
-  select(block:rep, elevation.group:Wtr_Year_GD_Historical, fruit.date, death.date, SurvtoRep_Y1) 
-#this is quite uninteresting since only TM2 reproduced in year 1 
+  mutate(bud.date=if_else(Genotype=="TM2_1_11", "10/27/23", bud.date)) %>% #add in bud date for plant that started budding the week of the annual census 
+  mutate(SurvtoRep_Y1=if_else(is.na(bud.date), 0, 1)) %>% 
+  select(block:rep, elevation.group:Wtr_Year_GD_Historical, bud.date, death.date, SurvtoRep_Y1) 
+#this is quite uninteresting since only TM2 and FR budded in year 1 
 
 wl2_surv_to_rep_y1 %>% 
   group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
@@ -381,9 +398,10 @@ wl2_surv_to_rep_y1 %>%
                   position_dodge(0.75)) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
-  labs(y="p(Surv-to-Rep Y1)", x="Parent Population", fill="Growth Season Gowers") +
-  scale_fill_gradient(low = "#0043F0", high = "#F5A540") +
+  labs(y="Surv-to-Rep Y1", x="Parent Population", fill="Growth Season Gowers") +
+  scale_fill_viridis(option="mako", direction = -1) +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+ggsave("../output/WL2_Traits/WL2_SurvtoRepY1_GrwSsn_GD_Recent.png", width = 12, height = 8, units = "in")
 
 wl2_surv_to_rep_y1 %>% 
   group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
@@ -394,11 +412,100 @@ wl2_surv_to_rep_y1 %>%
                   position_dodge(0.75)) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
-  labs(y="p(Surv-to-Rep Y1)", x="Parent Population", fill="Water Year Gowers") +
-  scale_fill_gradient(low = "#0043F0", high = "#F5A540") +
+  labs(y="Surv-to-Rep Y1", x="Parent Population", fill="Water Year Gowers") +
+  scale_fill_viridis(option="mako", direction = -1) +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+ggsave("../output/WL2_Traits/WL2_SurvtoRepY1_Wtr_Year_GD_Recent.png", width = 12, height = 8, units = "in")
 ```
 
+### Scatterplots
+Davis
+```{r}
+#scatter plots
+ucd_surv_to_rep %>% 
+  group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
+  summarise(meanSurv=mean(SurvtoRep_Y1, na.rm = TRUE), semSurv=sem(SurvtoRep_Y1, na.rm=TRUE)) %>% 
+  ggplot(aes(x=GrwSsn_GD_Recent, y=meanSurv, color=GrwSsn_GD_Recent, group = pop)) +
+  geom_point(size=3) + 
+  geom_errorbar(aes(ymin=meanSurv-semSurv,ymax=meanSurv+semSurv),width=.01, position = 
+                  position_dodge(0.75)) +
+  #geom_text_repel(aes(x = GrwSsn_GD_Recent, y = meanSurv,
+  #          label = `pop`),
+  #      min.segment.length = 0.8,
+  #      max.overlaps = 100,
+  #      #label.padding = 1,
+  #      #point.padding = 0.8,
+  #      size = 4) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Surv-to-Rep Y1", x="Growth Season Gowers", color="Growth Season Gowers") +
+  scale_color_viridis(option="mako", direction = -1) #+
+  #theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+
+ucd_surv_to_rep %>% 
+  group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
+  summarise(meanSurv=mean(SurvtoRep_Y1, na.rm = TRUE), semSurv=sem(SurvtoRep_Y1, na.rm=TRUE)) %>% 
+  ggplot(aes(x=Wtr_Year_GD_Recent, y=meanSurv, color=Wtr_Year_GD_Recent, group = pop)) +
+  geom_point(size=3) + 
+  geom_errorbar(aes(ymin=meanSurv-semSurv,ymax=meanSurv+semSurv),width=.01, position = 
+                  position_dodge(0.75)) +
+  #geom_text_repel(aes(x = Wtr_Year_GD_Recent, y = meanSurv,
+  #          label = `pop`),
+  #      min.segment.length = 0.8,
+  #      max.overlaps = 100,
+  #      #label.padding = 1,
+  #      #point.padding = 0.8,
+  #      size = 4) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Surv-to-Rep Y1", x="Growth Season Gowers", color="Water Year Gowers") +
+  scale_color_viridis(option="mako", direction = -1) #+
+  #theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+```
+
+WL2
+```{r}
+#scatter plots
+wl2_surv_to_rep_y1 %>% 
+  group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
+  summarise(meanSurv=mean(SurvtoRep_Y1, na.rm = TRUE), semSurv=sem(SurvtoRep_Y1, na.rm=TRUE)) %>% 
+  ggplot(aes(x=GrwSsn_GD_Recent, y=meanSurv, color=GrwSsn_GD_Recent, group = pop)) +
+  geom_point(size=3) + 
+  geom_errorbar(aes(ymin=meanSurv-semSurv,ymax=meanSurv+semSurv),width=.01, position = 
+                  position_dodge(0.75)) +
+  #geom_text_repel(aes(x = GrwSsn_GD_Recent, y = meanSurv,
+  #          label = `pop`),
+  #      min.segment.length = 0.8,
+  #      max.overlaps = 100,
+  #      #label.padding = 1,
+  #      #point.padding = 0.8,
+  #      size = 4) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Surv-to-Rep Y1", x="Growth Season Gowers", color="Growth Season Gowers") +
+  scale_color_viridis(option="mako", direction = -1) #+
+  #theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+
+wl2_surv_to_rep_y1 %>% 
+  group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
+  summarise(meanSurv=mean(SurvtoRep_Y1, na.rm = TRUE), semSurv=sem(SurvtoRep_Y1, na.rm=TRUE)) %>% 
+  ggplot(aes(x=Wtr_Year_GD_Recent, y=meanSurv, color=Wtr_Year_GD_Recent, group = pop)) +
+  geom_point(size=3) + 
+  geom_errorbar(aes(ymin=meanSurv-semSurv,ymax=meanSurv+semSurv),width=.01, position = 
+                  position_dodge(0.75)) +
+  #geom_text_repel(aes(x = Wtr_Year_GD_Recent, y = meanSurv,
+  #          label = `pop`),
+  #      min.segment.length = 0.8,
+  #      max.overlaps = 100,
+  #      #label.padding = 1,
+  #      #point.padding = 0.8,
+  #      size = 4) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Surv-to-Rep Y1", x="Growth Season Gowers", color="Water Year Gowers") +
+  scale_color_viridis(option="mako", direction = -1) #+
+  #theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+```
 
 ## Fruits(y1) 
 *What to do about flower #?
@@ -418,8 +525,9 @@ ucd_fruits %>%
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
   labs(y="Fruit Number", x="Parent Population", fill="Growth Season Gowers") +
-  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  scale_fill_viridis(option="mako", direction = -1) +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+ggsave("../output/UCD_Traits/UCD_Fruits_GrwSsn_GD_Recent.png", width = 12, height = 8, units = "in")
 
 ucd_fruits %>% 
   group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
@@ -431,8 +539,9 @@ ucd_fruits %>%
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
   labs(y="Fruit Number", x="Parent Population", fill="Water Year Gowers") +
-  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  scale_fill_viridis(option="mako", direction = -1) +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+ggsave("../output/UCD_Traits/UCD_Fruits_Wtr_Year_GD_Recent.png", width = 12, height = 8, units = "in")
 ```
 
 WL2
@@ -451,8 +560,9 @@ wl2_fruits_y1 %>%
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
   labs(y="Fruit Number", x="Parent Population", fill="Growth Season Gowers") +
-  scale_fill_gradient(low = "#0043F0", high = "#F5A540") +
+  scale_fill_viridis(option="mako", direction = -1) +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+ggsave("../output/WL2_Traits/WL2_FruitsY1_GrwSsn_GD_Recent.png", width = 12, height = 8, units = "in")
 
 wl2_fruits_y1 %>% 
   group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
@@ -465,8 +575,9 @@ wl2_fruits_y1 %>%
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
   labs(y="Fruit Number", x="Parent Population", fill="Water Year Gowers") +
-  scale_fill_gradient(low = "#0043F0", high = "#F5A540") +
+  scale_fill_viridis(option="mako", direction = -1) +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+ggsave("../output/WL2_Traits/WL2_FruitsY1_Wtr_Year_GD_Recent.png", width = 12, height = 8, units = "in")
 ```
 
 
@@ -497,9 +608,10 @@ winter_surv %>%
                   position_dodge(0.75)) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
-  labs(y="p(Winter Surv)", x="Parent Population", fill="Water Year Gowers") +
-  scale_fill_gradient(low = "#0043F0", high = "#F5A540") +
+  labs(y="Winter Surv", x="Parent Population", fill="Water Year Gowers") +
+  scale_fill_viridis(option="mako", direction = -1) +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+ggsave("../output/WL2_Traits/WL2_WinterSurv_Wtr_Year_GD_Recent.png", width = 12, height = 8, units = "in")
 ```
 
 
@@ -508,18 +620,19 @@ WL2
 ```{r}
 wl2_surv_y2 %>% filter(!is.na(bud.date), is.na(fruit.date)) #some plants initiated reproduction but did not make fruits
 #1 plant with a last flower date, but no fruit date, this plant did not make any fruits per the notes 
-wl2_surv_y2 %>% filter(!is.na(bud.date), !is.na(death.date))  #some of above died, some lived
-#some rep plants have a death date 
-wl2_surv_y2 %>% filter(!is.na(fruit.date), !is.na(death.date)) 
-wl2_surv_y2 %>% filter(!is.na(fruit.date), is.na(last.FL.date)) #not all fruiting plants have a last flower date
-wl2_surv_y2 %>% filter(!is.na(fruit.date), is.na(last.FR.date)) #not all fruiting plants have a last fruit date
-wl2_surv_y2 %>% filter(is.na(fruit.date), !is.na(last.FL.date)) #see note above about this one plant
-wl2_surv_y2 %>% filter(is.na(fruit.date), !is.na(last.FR.date)) #none 
+wl2_surv_y2 %>% filter(!is.na(bud.date), !is.na(death.date))  #bud date and death date for a lot of plants
+wl2_surv_y2 %>% filter(is.na(bud.date), !is.na(flower.date)) #3 plants without a bud date, but with a flower date
+wl2_surv_y2 %>% filter(is.na(bud.date), !is.na(fruit.date)) #4 plants without a bud date, but with a fruit date  
+wl2_surv_y2 %>% filter(is.na(bud.date), !is.na(last.FL.date)) #same plants as above
+wl2_surv_y2 %>% filter(is.na(bud.date), !is.na(last.FR.date)) #same plants as above 
 
 wl2_surv_to_rep_y2 <- wl2_surv_y2 %>% 
   left_join(wl2_gowers_2023) %>% 
-  mutate(SurvtoRep_y2=if_else(is.na(fruit.date), 0, 1)) %>% 
-  select(Pop.Type:Genotype, elevation.group:Wtr_Year_GD_Historical, fruit.date, death.date, SurvtoRep_y2) 
+  mutate(bud.date=if_else(Genotype=="SC_6_15" | Genotype=="SC_5_6" | 
+                            Genotype=="CC_9_6" | Genotype=="WL2_8_4",
+                          "Missed", bud.date)) %>% #add in bud date for plants with a later rep date 
+  mutate(SurvtoRep_y2=if_else(is.na(bud.date), 0, 1)) %>% 
+  select(Pop.Type:Genotype, elevation.group:Wtr_Year_GD_Historical, bud.date, death.date, SurvtoRep_y2) 
 
 wl2_surv_to_rep_y2 %>% group_by(pop) %>% summarise(n=n()) %>% arrange(n)
 #LV1, SQ1, and WR only have 1 indiv alive in 2024
@@ -534,9 +647,10 @@ wl2_surv_to_rep_y2 %>%
                   position_dodge(0.75)) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
-  labs(y="p(Surv-to-Rep Y2)", x="Parent Population", fill="Growth Season Gowers") +
-  scale_fill_gradient(low = "#0043F0", high = "#F5A540") +
+  labs(y="Surv-to-Rep Y2", x="Parent Population", fill="Growth Season Gowers") +
+  scale_fill_viridis(option="mako", direction = -1) +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+ggsave("../output/WL2_Traits/WL2_SurvtoRepY2_GrwSsn_GD_Recent.png", width = 12, height = 8, units = "in")
 
 wl2_surv_to_rep_y2 %>% 
   group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
@@ -548,9 +662,10 @@ wl2_surv_to_rep_y2 %>%
                   position_dodge(0.75)) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
-  labs(y="p(Surv-to-Rep Y2)", x="Parent Population", fill="Water Year Gowers") +
-  scale_fill_gradient(low = "#0043F0", high = "#F5A540") +
+  labs(y="Surv-to-Rep Y2", x="Parent Population", fill="Water Year Gowers") +
+  scale_fill_viridis(option="mako", direction = -1) +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+ggsave("../output/WL2_Traits/WL2_SurvtoRepY2_Wtr_Year_GD_Recent.png", width = 12, height = 8, units = "in")
 ```
 
 
@@ -571,8 +686,9 @@ wl2_fruits_y2 %>%
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
   labs(y="Fruit Number", x="Parent Population", fill="Growth Season Gowers") +
-  scale_fill_gradient(low = "#0043F0", high = "#F5A540") +
+  scale_fill_viridis(option="mako", direction = -1) +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+ggsave("../output/WL2_Traits/WL2_FruitsY2_GrwSsn_GD_Recent.png", width = 12, height = 8, units = "in")
 
 wl2_fruits_y2 %>% 
   group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
@@ -585,8 +701,9 @@ wl2_fruits_y2 %>%
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
   labs(y="Fruit Number", x="Parent Population", fill="Water Year Gowers") +
-  scale_fill_gradient(low = "#0043F0", high = "#F5A540") +
+  scale_fill_viridis(option="mako", direction = -1) +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+ggsave("../output/WL2_Traits/WL2_FruitsY2_Wtr_Year_GD_Recent.png", width = 12, height = 8, units = "in")
 
 wl2_fruits_y2 %>% filter(pop=="TM2") #only 3 of the 6 made fruits and those 3 had wide variation (2, 19, 125)
 ```
@@ -610,6 +727,9 @@ ucd_total_fitness <- left_join(ucd_establishment, ucd_surv_to_rep) %>%
 head(ucd_total_fitness)
 ucd_total_fitness %>% filter(Total_Fitness>0)
 
+ucd_total_fitness %>% group_by(pop) %>% summarise(n=n()) %>% arrange(n)
+#only 2 WV plants 
+
 ucd_total_fitness %>% 
   group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
   summarise(meanFruits=mean(Total_Fitness, na.rm = TRUE), semFruits=sem(Total_Fitness, na.rm=TRUE)) %>% 
@@ -620,8 +740,9 @@ ucd_total_fitness %>%
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
   labs(y="Total Fitness", x="Parent Population", fill="Growth Season Gowers") +
-  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  scale_fill_viridis(option="mako", direction = -1) +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+ggsave("../output/UCD_Traits/UCD_Total_Fitness_GrwSsn_GD_Recent.png", width = 12, height = 8, units = "in")
 
 ucd_total_fitness %>% 
   group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
@@ -633,13 +754,14 @@ ucd_total_fitness %>%
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
   labs(y="Total Fitness", x="Parent Population", fill="Water Year Gowers") +
-  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  scale_fill_viridis(option="mako", direction = -1) +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-#could also calculate it for each treatment from avg probabilities?
+ggsave("../output/UCD_Traits/UCD_Total_Fitness_Wtr_Year_GD_Recent.png", width = 12, height = 8, units = "in")
+
 ```
 
 WL2
-*Use average Gowers?
+*Used average Gowers
 
 p(Establishment)*p(Surv to Rep - y1)*Fruits(y1) + p(Winter Surv)*p(Surv to Rep - y2)*Fruits(y2)
 ```{r}
@@ -666,20 +788,20 @@ wl2_total_fitness <- left_join(wl2_establishment, wl2_surv_to_rep_y1) %>%
          WinterSurv=if_else(is.na(WinterSurv), 0, WinterSurv),
          SurvtoRep_y2=if_else(is.na(SurvtoRep_y2), 0, SurvtoRep_y2)) %>% 
   mutate(Total_Fitness=(Establishment*SurvtoRep_Y1*y1_fruits) + (WinterSurv*SurvtoRep_y2*y2_fruits))
-wl2_total_fitness
+
+wl2_total_fitness %>% group_by(pop) %>% summarise(n=n()) %>% arrange(n)
 
 wl2_total_fitness %>% 
   group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
   summarise(meanFruits=mean(Total_Fitness, na.rm = TRUE), semFruits=sem(Total_Fitness, na.rm=TRUE)) %>% 
   ggplot(aes(x=fct_reorder(pop, meanFruits), y=meanFruits, fill=GrwSsn_GD_Recent)) +
   geom_col(width = 0.7,position = position_dodge(0.75)) + 
-  geom_errorbar(aes(ymin=meanFruits-semFruits,ymax=meanFruits+semFruits, color=GrwSsn_GD_Recent),
-                show.legend = FALSE, width=.2, position = position_dodge(0.75)) +
+  geom_errorbar(aes(ymin=meanFruits-semFruits,ymax=meanFruits+semFruits),
+                width=.2, position = position_dodge(0.75)) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
   labs(y="Total Fitness", x="Parent Population", fill="Growth Season Gowers") +
-  scale_fill_gradient(low = "#0043F0", high = "#F5A540") +
-  scale_colour_gradient(low = "#0043F0", high = "#F5A540") +
+  scale_fill_viridis(option="mako", direction = -1) +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 ggsave("../output/WL2_Traits/WL2_Total_Fitness_GrwSsn_GD_Recent.png", width = 12, height = 8, units = "in")
 
@@ -693,8 +815,98 @@ wl2_total_fitness %>%
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
   labs(y="Total Fitness", x="Parent Population", fill="Water Year Gowers") +
-  scale_fill_gradient(low = "#0043F0", high = "#F5A540") +
+  scale_fill_viridis(option="mako", direction = -1) +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 ggsave("../output/WL2_Traits/WL2_Total_Fitness_Wtr_Year_GD_Recent.png", width = 12, height = 8, units = "in")
+
+wl2_total_fitness %>% filter(pop=="WR") #Only 1 WR plant with fitness > 0 
 ```
 
+### Scatterplots
+Davis
+```{r}
+#scatter plots
+ucd_total_fitness %>% 
+  group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
+  summarise(meanFruits=mean(Total_Fitness, na.rm = TRUE), semFruits=sem(Total_Fitness, na.rm=TRUE)) %>% 
+  ggplot(aes(x=GrwSsn_GD_Recent, y=meanFruits, color=GrwSsn_GD_Recent, group = pop)) +
+  geom_point(size=3) + 
+  geom_errorbar(aes(ymin=meanFruits-semFruits,ymax=meanFruits+semFruits),width=.01, position = 
+                  position_dodge(0.75)) +
+  #geom_text_repel(aes(x = GrwSsn_GD_Recent, y = meanFruits,
+  #          label = `pop`),
+  #      min.segment.length = 0.8,
+  #      max.overlaps = 100,
+  #      #label.padding = 1,
+  #      #point.padding = 0.8,
+  #      size = 4) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Total Fitness", x="Growth Season Gowers", color="Growth Season Gowers") +
+  scale_color_viridis(option="mako", direction = -1) #+
+  #theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+
+ucd_total_fitness %>% 
+  group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
+  summarise(meanFruits=mean(Total_Fitness, na.rm = TRUE), semFruits=sem(Total_Fitness, na.rm=TRUE)) %>% 
+  ggplot(aes(x=Wtr_Year_GD_Recent, y=meanFruits, color=Wtr_Year_GD_Recent, group = pop)) +
+  geom_point(size=3) + 
+  geom_errorbar(aes(ymin=meanFruits-semFruits,ymax=meanFruits+semFruits),width=.01, position = 
+                  position_dodge(0.75)) +
+  #geom_text_repel(aes(x = Wtr_Year_GD_Recent, y = meanFruits,
+  #          label = `pop`),
+  #      min.segment.length = 0.8,
+  #      max.overlaps = 100,
+  #      #label.padding = 1,
+  #      #point.padding = 0.8,
+  #      size = 4) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Total Fitness", x="Growth Season Gowers", color="Water Year Gowers") +
+  scale_color_viridis(option="mako", direction = -1) #+
+  #theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+```
+
+WL2
+```{r}
+#scatter plots
+wl2_total_fitness %>% 
+  group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
+  summarise(meanFruits=mean(Total_Fitness, na.rm = TRUE), semFruits=sem(Total_Fitness, na.rm=TRUE)) %>% 
+  ggplot(aes(x=GrwSsn_GD_Recent, y=meanFruits, color=GrwSsn_GD_Recent, group = pop)) +
+  geom_point(size=3) + 
+  geom_errorbar(aes(ymin=meanFruits-semFruits,ymax=meanFruits+semFruits),width=.01, position = 
+                  position_dodge(0.75)) +
+  #geom_text_repel(aes(x = GrwSsn_GD_Recent, y = meanFruits,
+  #          label = `pop`),
+  #      min.segment.length = 0.8,
+  #      max.overlaps = 100,
+  #      #label.padding = 1,
+  #      #point.padding = 0.8,
+  #      size = 4) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Total Fitness", x="Growth Season Gowers", color="Growth Season Gowers") +
+  scale_color_viridis(option="mako", direction = -1) #+
+  #theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+
+wl2_total_fitness %>% 
+  group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
+  summarise(meanFruits=mean(Total_Fitness, na.rm = TRUE), semFruits=sem(Total_Fitness, na.rm=TRUE)) %>% 
+  ggplot(aes(x=Wtr_Year_GD_Recent, y=meanFruits, color=Wtr_Year_GD_Recent, group = pop)) +
+  geom_point(size=3) + 
+  geom_errorbar(aes(ymin=meanFruits-semFruits,ymax=meanFruits+semFruits),width=.01, position = 
+                  position_dodge(0.75)) +
+  #geom_text_repel(aes(x = Wtr_Year_GD_Recent, y = meanFruits,
+  #          label = `pop`),
+  #      min.segment.length = 0.8,
+  #      max.overlaps = 100,
+  #      #label.padding = 1,
+  #      #point.padding = 0.8,
+  #      size = 4) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Total Fitness", x="Growth Season Gowers", color="Water Year Gowers") +
+  scale_color_viridis(option="mako", direction = -1) #+
+  #theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+```

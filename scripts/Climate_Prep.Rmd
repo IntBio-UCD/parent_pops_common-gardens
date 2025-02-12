@@ -109,23 +109,25 @@ pops_locs_no_labels <- ggplot() +
 #with labels 
 ggplot() +
   geom_polygon(data = states, aes(x = long, y = lat, group = group), fill = "gray") +
-  coord_quickmap(xlim = c(-125, -114), ylim = c(35, 43))+
+  coord_quickmap(xlim = c(-125, -114), ylim = c(35.8, 41))+
   geom_point(data = pops_gardens_locs,
              aes(x = Long, y = Lat, color=elev_m),
-             size = 4) +
-  geom_text_repel(data = pops_gardens_locs,
+             size = 3) +
+  geom_label_repel(data = pops_gardens_locs,
          aes(x = Long, y = Lat,
              label = `parent.pop`),
          min.segment.length = 0,
          max.overlaps = 100,
-        # label.padding = 1,
-        # point.padding = 0.5,
-         size = 4) +
+         #force = 3,
+         box.padding = 0.4,
+         label.padding = 0.15,
+         label.size = 0.1,
+         size = 3) +
   labs(x="Long", y="Lat", color="Elevation (m)") +
   scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
   theme_classic() +
   theme(text=element_text(size=25))
-#ggsave("../output/Pop_Map_Labels.png", width = 12, height = 8, units = "in")
+ggsave("../output/Pop_Map_Labels2.png", width = 10, height = 10, units = "in")
 ```
 
 ### Map with elevation
@@ -164,7 +166,7 @@ pops_locs_labels_topo <- ggplot() +
   geom_point(data = pops_gardens_locs,
              aes(x = Long, y = Lat, color=elev_m),
              size = 4) +
-  geom_text_repel(data = pops_gardens_locs,
+  geom_label_repel(data = pops_gardens_locs,
          aes(x = Long, y = Lat,
              label = `parent.pop`),
          min.segment.length = 0,
