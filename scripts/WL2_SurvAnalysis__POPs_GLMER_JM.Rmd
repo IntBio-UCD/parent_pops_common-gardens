@@ -71,9 +71,14 @@ gowersdist_WL2 %>%
   GGally::ggpairs(progress = FALSE)
 ```
 
+```{r}
+gowersdist_WL2_wide <- gowersdist_WL2 %>% select(-matches("BIOCLIM|FLINT")) %>%
+  pivot_wider(values_from=c(GrwSsn_GD, Wtr_Year_GD), names_from = TimePd)
+```
+
 
 ```{r}
-wl2_surv_dates_loc <- left_join(wl2_surv_dates, gowersdist_WL2 %>% filter(TimePd == "Historical")) %>%
+wl2_surv_dates_loc <- left_join(wl2_surv_dates, gowersdist_WL2_wide)  %>%
   mutate(elevation.group = factor(elevation.group, levels= c("Low", "Mid", "High")))
 wl2_surv_dates_loc 
 ```
@@ -141,7 +146,7 @@ wl2_ind <- wl2_surv_dates %>%
            dead = ifelse((is.na(death.date) | mdy(death.date) > last_fup_date), 0, 1)) %>% # 0 is alive, 1 is dead
   filter(cumsum(dead) < 2) %>% # you can't die more than once
   ungroup() %>%  
-  left_join(gowersdist_WL2 %>% filter(TimePd == "Historical"))
+  left_join(gowersdist_WL2_wide)
 
 wl2_ind %>% select(Genotype, last_fup_date, os_weeks, dead)
 ```
@@ -167,7 +172,7 @@ wl2_ind_estab <- wl2_ind %>% filter(os_weeks <= 3) %>%
   # compute status at week 3 for each plant
   group_by(Genotype) %>%
   summarize(dead=max(dead),
-            across(c(block, bed, parent.pop, mf, ends_with("GD")), unique))
+            across(c(block, bed, parent.pop, mf, contains("GD")), unique))
 
 wl2_ind_surv <- wl2_ind %>% filter(os_weeks > 3) 
 ```
@@ -260,232 +265,48 @@ estab_best_fit
 ```
 
 
-```{r}
-e.m0 <- brm(total.dead | trials(n)  ~ 1, 
-          family = "binomial",
-          chains = 4, cores = 4, refresh = 0,
-          data = wl2_obs.pop.estab_w3,
-          save_pars = save_pars(all = TRUE)) %>%
-  add_criterion("loo", moment_match = TRUE, reloo = TRUE)
-```
-
-```{r}
-summary(e.m0)
-```
-The estimates above are on the logit scale.  Transform them back to hazard probabilities
-```{r}
-fixef(e.m0) %>% inv_logit_scaled()
-```
-
-```{r}
-plot(e.m0, ask = FALSE, nvariables = 3)
-```
-
-### simple: pop only
-
-See default priors
-
-```{r}
-get_prior(total.dead | trials(n)  ~ (1|parent.pop), 
-          family = "binomial",
-          data = wl2_obs.pop.estab_w3)
-```
-
-```{r}
-e.m1 <- brm(total.dead | trials(n)  ~ (1|parent.pop), 
-          family = "binomial",
-          chains = 4, cores = 4, refresh = 0,
-          data = wl2_obs.pop.estab_w3,
-          save_pars = save_pars(all = TRUE)) %>%
-  add_criterion("loo", moment_match = TRUE)
-```
-
-```{r}
-summary(e.m1)
-```
-
-
-```{r}
-wl2_obs.pop.estab_w3 %>% data_grid(parent.pop, n=1) %>%
-  add_epred_draws(e.m1) %>% 
-  mutate(survivorship = 1 - .epred) %>%
-  group_by(parent.pop) %>%
-  summarise(survivorship=mean(survivorship)) %>%
-  arrange(desc(survivorship))
-```
-
-
-```{r}
-plot(e.m1, ask = FALSE, nvariables = 3)
-```
-```{r}
-loo_compare(e.m0, e.m1)
-```
-
-pops matter
-
-### simple2: time only
-
-```{r}
-e.m2 <- brm(n.newly.dead | trials(n)  ~ 0 + os_weeks_f, 
-          prior(normal(0, 4), class = b),
-          family = "binomial",
-          chains = 4, cores = 4, refresh = 0,
-          data = na.omit(wl2_obs.pop.estab),
-          save_pars = save_pars(all = TRUE)) %>%
-  add_criterion("loo", moment_match = TRUE)
-```
-
-```{r}
-summary(e.m2)
-```
-
-The estimates above are on the logit scale.  Transform them back to hazard probabilities
-```{r}
-fixef(e.m2) %>% inv_logit_scaled()
-```
-
-```{r}
-plot(e.m2, ask = FALSE, nvariables = 3)
-```
-
-### time and pop
-
-```{r}
-e.m3 <- brm(n.newly.dead | trials(n)  ~ 0 + os_weeks_f + (1|parent.pop), 
-          prior(normal(0, 4), class = b),
-          family = "binomial",
-          chains = 4, cores = 4, refresh = 0,
-          data = wl2_obs.pop.estab,
-          save_pars = save_pars(all = TRUE)) %>%
-  add_criterion("loo", moment_match = TRUE)
-```
-
-```{r}
-summary(e.m3)
-```
-```{r}
-plot(e.m3, ask = FALSE, nvariables = 3)
-```
-
-
-from logit to hazard probabilities:
-```{r}
-fixef(e.m3) %>% inv_logit_scaled()
-```
-survivorship
-```{r}
-wl2_obs.pop.estab %>% droplevels() %>% data_grid(os_weeks_f, parent.pop, n=1) %>%
-  add_epred_draws(e.m3) %>% 
-  # convert hazard to survival probability (1 - hazard)
-  mutate(point.survivorship = 1 - .epred) %>%
-  
-  # calculate the cumulative survivorship
-  arrange(parent.pop, .draw, os_weeks_f) %>% 
-  group_by(parent.pop, .draw) %>%
-  mutate(cum.survivorship = cumprod(point.survivorship)) %>%
-  group_by(parent.pop, os_weeks_f) %>%
-  point_interval(point.survivorship, cum.survivorship, .interval = hdci) 
-```
-
-```{r}
-loo_compare(e.m2, e.m3)
-```
-
-pop still matters
-
-### week and pop interaction
-
-```{r}
-e.m4 <- brm(n.newly.dead | trials(n)  ~ 0 + os_weeks_f + (os_weeks_f|parent.pop), 
-          prior(normal(0, 4), class = b),
-          family = "binomial",
-          chains = 4, cores = 4, refresh = 0,
-          data = wl2_obs.pop.estab,
-          save_pars = save_pars(all = TRUE)) %>%
-  add_criterion("loo", moment_match = TRUE)
-```
-
-```{r}
-summary(e.m4)
-```
-
-```{r}
-plot(e.m4, ask = FALSE, nvariables = 3)
-```
-
-
-from logit to hazard probabilities:
-```{r}
-fixef(e.m3) %>% inv_logit_scaled()
-```
-survivorship
-```{r}
-wl2_obs.pop.estab %>% droplevels() %>% data_grid(os_weeks_f, parent.pop, n=1) %>%
-  add_epred_draws(e.m4) %>% 
-  # convert hazard to survival probability (1 - hazard)
-  mutate(point.survivorship = 1 - .epred) %>%
-  
-  # calculate the cumulative survivorship
-  arrange(parent.pop, .draw, os_weeks_f) %>% 
-  group_by(parent.pop, .draw) %>%
-  mutate(cum.survivorship = cumprod(point.survivorship)) %>%
-  group_by(parent.pop, os_weeks_f) %>%
-  point_interval(point.survivorship, cum.survivorship, .interval = hdci) 
-```
-
-```{r}
-loo_compare(e.m2, e.m3, e.m4)
-```
-e.m3 preferred
-
-Can't use loo to compare +/- time.  
-
-## TODO: Maybe just do R2 on week3 observed vs predicted
-
-
 ### is Gower's distance an important predictor?
 
-#### model without time
 
 ```{r}
-# Compare to e.m1
-e.m5 <- brm(total.dead | trials(n)  ~ Wtr_Year_GD + (1|parent.pop), 
-          family = "binomial",
-          prior(normal(0, 4), class = b),
-          chains = 4, cores = 4, refresh = 0,
-          data = wl2_obs.pop.estab_w3,
-          save_pars = save_pars(all = TRUE)) %>%
-  add_criterion("loo", moment_match = TRUE)
-```
-```{r}
-summary(e.m5)
-```
+estab_GD_wflow <- workflow() %>%
+  add_variables(outcomes = dead, predictors = c(parent.pop, mf, block, contains("GD"))) 
 
-```{r}
-plot(e.m5, ask = FALSE, nvariables=3 )
-```
+estab_GD_fits <- tibble(wflow=list(
+  pop.block = {estab_GD_wflow %>% 
+      add_model(glmer.model, formula = dead ~ (1|parent.pop) + (1|block))},
+  
+  GS_Recent = {estab_GD_wflow %>% 
+      add_model(glmer.model, formula = dead ~ GrwSsn_GD_Recent + (1|parent.pop) + (1|block))},
+  
+  GS_Historical = {estab_GD_wflow %>% 
+      add_model(glmer.model, formula = dead ~ GrwSsn_GD_Historical + (1|parent.pop) + (1|block))},
+  
+  WY_Recent = {estab_GD_wflow %>% 
+      add_model(glmer.model, formula = dead ~ Wtr_Year_GD_Recent + (1|parent.pop) + (1|block))},
+  
+  WY_Historical = {estab_GD_wflow %>% 
+      add_model(glmer.model, formula = dead ~ Wtr_Year_GD_Historical + (1|parent.pop) + (1|block))}
+  
+),
+name=names(wflow)
+) %>% 
+  select(name,wflow) %>%
+  mutate(fit = map(wflow, fit, data = wl2_ind_estab))
 
 
-#### model with time
 
-
-```{r}
-e.m6 <- brm(n.newly.dead | trials(n)  ~ 0 + os_weeks_f + (1|parent.pop) + Wtr_Year_GD, 
-          prior(normal(0, 4), class = b),
-          family = "binomial",
-          chains = 4, cores = 4, refresh = 0,
-          data = wl2_obs.pop.estab,
-          save_pars = save_pars(all = TRUE)) %>%
-  add_criterion("loo", moment_match = TRUE)
 ```
 
 ```{r}
-summary(e.m6)
+estab_GD_fits %>% mutate(glance=map(fit, glance)) %>% unnest(glance) %>% arrange(AIC) %>% select(-wflow:-sigma)
 ```
 
 ```{r}
-plot(e.m6, ask = FALSE, nvariables = 3)
+estab_GD_fits %>% mutate(tidy=map(fit, tidy)) %>% unnest(tidy) %>%
+  filter(str_detect(term, "GD")) %>%
+  select(-wflow:-group)
+
 ```
 
 ## Survivor data set
