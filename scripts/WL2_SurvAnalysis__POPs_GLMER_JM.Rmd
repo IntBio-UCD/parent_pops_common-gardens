@@ -176,7 +176,8 @@ wl2_ind_estab <- wl2_ind %>% filter(os_weeks <= 3) %>%
   summarize(dead=max(dead),
             across(c(block, bed, parent.pop, mf, contains("GD")), unique))
 
-wl2_ind_surv <- wl2_ind %>% filter(os_weeks > 3) 
+wl2_ind_surv <- wl2_ind %>% filter(os_weeks > 3) %>%
+  mutate(os_weeks_f = factor(os_weeks))
 
 wl2_estab_means <- wl2_ind_estab %>% # summary for plotting
   group_by(parent.pop) %>%
@@ -222,8 +223,6 @@ plot_fit_pop <- function(m, mname=NA, d=wl2_obs.pop.surv) {
 ```
 
 # Establishment data set
-
-### Null model
 
 ```{r}
 glmer.model <- 
@@ -318,41 +317,7 @@ estab_fits %>%
   unnest(tidyboot)
 ```
 
-
-
-```{r}
-test <- extract_fit_engine(estab_fits$fit[[1]])
-
-predict(test, newdata = estab_nd, type = "response", re.form = ~ (1|parent.pop))
-
-test.boot <- bootMer(test,
-        FUN = \(y) predict(y, newdata = estab_nd, type = "response"),
-        re.form = ~ (1|parent.pop),
-        nsim = 100)
-
-dim(test.boot)
-
-str(test.boot)
-
-test.boot
-
-boot::boot.ci(test.boot, type = c("norm", "basic", "perc"), index = 1)
-```
-
-
 Keep block but not mf
-
-
-
-```{r}
-estab_best_fit <- estab_fits %>% filter(name=="pop.block") %>% pull(fit) %>% magrittr::extract2(1)
-estab_best_fit
-```
-
-```{r}
-predict(estab_best_fit, new_data = )
-```
-
 
 ### is Gower's distance an important predictor?
 
@@ -375,7 +340,19 @@ estab_GD_fits <- tibble(wflow=list(
       add_model(glmer.model, formula = dead ~ Wtr_Year_GD_Recent + (1|parent.pop) + (1|block))},
   
   WY_Historical = {estab_GD_wflow %>% 
-      add_model(glmer.model, formula = dead ~ Wtr_Year_GD_Historical + (1|parent.pop) + (1|block))}
+      add_model(glmer.model, formula = dead ~ Wtr_Year_GD_Historical + (1|parent.pop) + (1|block))},
+  
+  GS_Recent_pop = {estab_GD_wflow %>% 
+      add_model(glmer.model, formula = dead ~ GrwSsn_GD_Recent + (GrwSsn_GD_Recent|parent.pop) + (1|block))},
+  
+  GS_Historical_pop = {estab_GD_wflow %>% 
+      add_model(glmer.model, formula = dead ~ GrwSsn_GD_Historical + (GrwSsn_GD_Historical|parent.pop) + (1|block))},
+  
+  WY_Recent_pop = {estab_GD_wflow %>% 
+      add_model(glmer.model, formula = dead ~ Wtr_Year_GD_Recent + (Wtr_Year_GD_Recent|parent.pop) + (1|block))},
+  
+  WY_Historical_pop = {estab_GD_wflow %>% 
+      add_model(glmer.model, formula = dead ~ Wtr_Year_GD_Historical + (Wtr_Year_GD_Historical|parent.pop) + (1|block))}
   
 ),
 name=names(wflow)
@@ -390,15 +367,230 @@ name=names(wflow)
 ```{r}
 estab_GD_fits %>% mutate(glance=map(fit, glance)) %>% unnest(glance) %>% arrange(AIC) %>% select(-wflow:-sigma)
 ```
+For any given GD, including a random effect for (GD | parent.pop) fits worse
 
 ```{r}
 estab_GD_fits %>% mutate(tidy=map(fit, tidy)) %>% unnest(tidy) %>%
   filter(str_detect(term, "GD")) %>%
-  select(-wflow:-group)
+  drop_na(p.value) %>%
+  select(-wflow:-group) %>%
+  arrange(p.value)
 
 ```
 
-## Survivor data set
+# Survival data set
+
+check basic model forms
+```{r}
+surv_wflow <- workflow() %>%
+  add_variables(outcomes = dead, predictors = c(parent.pop, mf, block, os_weeks, os_weeks_f)) 
+
+surv_fits_1 <- tibble(wflow=list(
+  pop = {surv_wflow %>% 
+      add_model(glmer.model, formula = dead ~ (1|parent.pop))},
+  
+  pop.block = {surv_wflow %>% 
+      add_model(glmer.model, formula = dead ~ (1|parent.pop) + (1|block))},
+  
+  pop.weeks_f ={surv_wflow %>% 
+      add_model(glmer.model, formula = dead ~ os_weeks_f + (1|parent.pop))},
+  
+  pop.weeks_f.block ={surv_wflow %>% 
+      add_model(glmer.model, formula = dead ~ os_weeks_f + (1|parent.pop) + (1|block))},
+  
+  pop.weeks_f.int ={surv_wflow %>% 
+      add_model(glmer.model, formula = dead ~ os_weeks_f + (os_weeks_f|parent.pop))},
+  
+  pop.weeks_f.int.block ={surv_wflow %>% 
+      add_model(glmer.model, formula = dead ~ os_weeks_f + (os_weeks_f|parent.pop) + (1|block))},
+  
+  pop.weeks ={surv_wflow %>% 
+      add_model(glmer.model, formula = dead ~ os_weeks + (1|parent.pop))},
+  
+  pop.weeks.block ={surv_wflow %>% 
+      add_model(glmer.model, formula = dead ~ os_weeks + (1|parent.pop) + (1|block))},
+  
+  pop.weeks.int ={surv_wflow %>% 
+      add_model(glmer.model, formula = dead ~ os_weeks + (os_weeks_f|parent.pop))},
+  
+  pop.weeks.int.block ={surv_wflow %>% 
+      add_model(glmer.model, formula = dead ~ os_weeks + (os_weeks_f|parent.pop) + (1|block))},
+  
+  pop.weeks.quad ={surv_wflow %>% 
+      add_model(glmer.model, formula = dead ~ os_weeks + I(os_weeks^2) + (1|parent.pop))},
+  
+  pop.weeks.quad.block ={surv_wflow %>% 
+      add_model(glmer.model, formula = dead ~ os_weeks + I(os_weeks^2) + (1|parent.pop) + (1|block))},
+  
+  pop.weeks.quad.int ={surv_wflow %>% 
+      add_model(glmer.model, formula = dead ~ os_weeks + I(os_weeks^2) + (os_weeks_f|parent.pop))},
+  
+  pop.weeks.quad.quad.int ={surv_wflow %>% 
+      add_model(glmer.model, formula = dead ~ os_weeks + I(os_weeks^2) + (os_weeks_f + I(os_weeks^2)|parent.pop))},
+  
+  pop.weeks.quad.int.block ={surv_wflow %>% 
+      add_model(glmer.model, formula = dead ~ os_weeks + I(os_weeks^2) + (os_weeks_f|parent.pop) + (1|block))},
+  
+    pop.weeks.quad.quad.int.block ={surv_wflow %>% 
+      add_model(glmer.model, formula = dead ~ os_weeks + I(os_weeks^2) + (os_weeks_f + I(os_weeks^2)|parent.pop) + (1|block))}
+    
+),
+name=names(wflow)
+) %>% 
+  select(name,wflow)
+surv_fits_1
+```
+
+This is slow!!
+```{r}
+system.time(
+  surv_fits_1 <- surv_fits_1 %>%
+  mutate(fit = map(wflow, fit, data = wl2_ind_surv))
+)
+```
+get warnings
+```{r}
+surv_fits_1 <- surv_fits_1 %>%
+  mutate(message=map_chr(fit, \(x) {extract_fit_engine(x) %>% .@optinfo %>% magrittr::extract2("message")}))
+
+surv_fits_1 %>% select(name, message) %>%
+  arrange(message, name)
+```
+No models where I had a time slope random effect for each pop converged.
+
+```{r}
+surv_fits_1 %>% 
+  filter(!str_detect(message, "failure")) %>%
+  mutate(glance=map(fit, glance)) %>% 
+  unnest(glance) %>% 
+  arrange(AIC) %>%
+  select(-wflow:-sigma)
+```
+
+What if no time main-effect in RE interaction models?
+
+```{r}
+surv_wflow <- workflow() %>%
+  add_variables(outcomes = dead, predictors = c(parent.pop, mf, block, os_weeks, os_weeks_f)) 
+
+surv_fits_2 <- tibble(wflow=list(
+  pop = {surv_wflow %>% 
+      add_model(glmer.model, formula = dead ~ (1|parent.pop))},
+  
+  pop.block = {surv_wflow %>% 
+      add_model(glmer.model, formula = dead ~ (1|parent.pop) + (1|block))},
+  
+  pop.weeks_f ={surv_wflow %>% 
+      add_model(glmer.model, formula = dead ~ os_weeks_f + (1|parent.pop))},
+  
+  pop.weeks_f.block ={surv_wflow %>% 
+      add_model(glmer.model, formula = dead ~ os_weeks_f + (1|parent.pop) + (1|block))},
+  
+  pop.weeks_f.int ={surv_wflow %>% 
+      add_model(glmer.model, formula = dead ~  (os_weeks_f|parent.pop))},
+  
+  pop.weeks_f.int.block ={surv_wflow %>% 
+      add_model(glmer.model, formula = dead ~  (os_weeks_f|parent.pop) + (1|block))},
+  
+  pop.weeks ={surv_wflow %>% 
+      add_model(glmer.model, formula = dead ~ os_weeks + (1|parent.pop))},
+  
+  pop.weeks.block ={surv_wflow %>% 
+      add_model(glmer.model, formula = dead ~ os_weeks + (1|parent.pop) + (1|block))},
+  
+  pop.weeks.int ={surv_wflow %>% 
+      add_model(glmer.model, formula = dead ~  (os_weeks_f|parent.pop))},
+  
+  pop.weeks.int.block ={surv_wflow %>% 
+      add_model(glmer.model, formula = dead ~  (os_weeks_f|parent.pop) + (1|block))},
+  
+  pop.weeks.quad ={surv_wflow %>% 
+      add_model(glmer.model, formula = dead ~ os_weeks + I(os_weeks^2) + (1|parent.pop))},
+  
+  pop.weeks.quad.block ={surv_wflow %>% 
+      add_model(glmer.model, formula = dead ~ os_weeks + I(os_weeks^2) + (1|parent.pop) + (1|block))},
+  
+  pop.weeks.quad.int ={surv_wflow %>% 
+      add_model(glmer.model, formula = dead ~  I(os_weeks^2) + (os_weeks_f|parent.pop))},
+  
+  pop.weeks.quad.quad.int ={surv_wflow %>% 
+      add_model(glmer.model, formula = dead ~  (os_weeks_f + I(os_weeks^2)|parent.pop))},
+  
+  pop.weeks.quad.int.block ={surv_wflow %>% 
+      add_model(glmer.model, formula = dead ~  I(os_weeks^2) + (os_weeks_f|parent.pop) + (1|block))},
+  
+    pop.weeks.quad.quad.int.block ={surv_wflow %>% 
+      add_model(glmer.model, formula = dead ~  (os_weeks_f + I(os_weeks^2)|parent.pop) + (1|block))}
+    
+),
+name=names(wflow)
+) %>% 
+  select(name,wflow)
+surv_fits_2
+```
+
+This is slow!!
+```{r}
+system.time(
+  surv_fits_2 <- surv_fits_2 %>%
+  mutate(fit = map(wflow, fit, data = wl2_ind_surv))
+)
+```
+get warnings
+```{r}
+surv_fits_1 <- surv_fits_1 %>%
+  mutate(message=map_chr(fit, \(x) {extract_fit_engine(x) %>% .@optinfo %>% magrittr::extract2("message")}))
+
+surv_fits_1 %>% select(name, message) %>%
+  arrange(message, name)
+```
+
+
+get bootstrap predictions and plot
+```{r}
+surv_nd <- data_grid(wl2_ind_surv, parent.pop)
+
+surv_predict_fun <- function(m, nd = surv_nd) {
+  predict(m, 
+          newdata = nd,
+          type = "response",
+          re.form = ~(1|parent.pop)
+  ) %>%
+    subtract(1, .) # convert hazard to survivorship
+}
+
+# 100 seconds
+system.time (surv_fits <- surv_fits %>% 
+               mutate(
+                 bootstrap = map(fit, \(x) {
+                   extract_fit_engine(x) %>% 
+                     bootMer(FUN = surv_predict_fun,
+                             re.form = ~ (1|parent.pop),
+                             nsim = 1000,
+                             parallel = "multicore",
+                             ncpus = 7
+                     ) } #bootMer
+                 ),  
+                 tidyboot = map(bootstrap, tidy, conf.int = TRUE),
+                 tidyboot = map(tidyboot, \(x) cbind(surv_nd, x))
+               ) # mutate
+) # system.time
+```
+
+
+```{r}
+surv_fits %>%
+  select(name, tidyboot) %>%
+  unnest(tidyboot) %>%
+  ggplot(aes(x=parent.pop)) +
+  geom_col(aes(y=survivorship), data = wl2_surv_means, fill="skyblue") +
+  geom_pointrange(aes(y=statistic, ymax = conf.high, ymin = conf.low, color=name), position = position_dodge(width = .75)) +
+  scale_color_viridis_d() +
+  theme(axis.text.x = element_text(angle=90, hjust=1, vjust=.5))
+  
+
+# NOTE: need bootmer for standard errors on predictions
+```
 
 ### simple2: time only
 
