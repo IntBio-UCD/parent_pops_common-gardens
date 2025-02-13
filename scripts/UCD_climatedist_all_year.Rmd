@@ -299,6 +299,10 @@ for(i in 1:23) {
 boot_recent_results <- tidy(gowers.boot_recent,conf.int=TRUE,conf.method="norm") %>%  #all pops
   rename(Gowers_Dist = statistic) %>% 
   mutate(TimePd="Recent")
+
+boot.ci(gowers.boot_recent, index=2)
+tidy(gowers.boot_recent,conf.int=TRUE,conf.method="perc")
+confint(gowers.boot_recent)
 ```
 
 Historical
