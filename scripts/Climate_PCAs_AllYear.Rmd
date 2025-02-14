@@ -94,7 +94,7 @@ flint_all_year_wtr_yr <- flint_all_year_mosnums %>% mutate(wtr_yr = year + month
 bioclim_allyear_prep <- flint_all_year_wtr_yr %>% 
   filter(parent.pop != "UCD_Garden", parent.pop != "WL2_Garden") %>%  #remove garden sites 
   rename(tmin=tmn, tmax=tmx, year_cal=year, year=wtr_yr) %>% #rename columns to match what calc_biovars expects, also make sure it uses water year 
-  filter(year != "1895", year !="2024") %>%  #remove years with less than 12 months of data
+  filter(year != "1895", year < "2024") %>%  #remove years with less than 12 months of data
   arrange(parent.pop, year, month)
 
 bioclim_all_year <- tibble(bio1=NA, bio2=NA, bio4=NA, bio7=NA, bio8=NA, bio9=NA, bio12=NA, bio15=NA, bio18=NA, bio19=NA, year=2025) #blank tibble to bind calculations to
@@ -114,6 +114,8 @@ for(i in popids) {
   bioclim_all_year <- bind_rows(bioclim_all_year, A)
 }
 unique(bioclim_all_year$parent.pop) #has all the populations in there!
+
+unique(bioclim_allyear_prep$year)
 ```
 
 ### SUBSET
