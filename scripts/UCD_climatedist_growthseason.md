@@ -1,7 +1,7 @@
 ---
 title: "UCD Climate Distance"
 author: "Brandie Quarles"
-date: "2025-01-23"
+date: "2025-02-14"
 output: 
   html_document: 
     keep_md: yes
@@ -95,8 +95,98 @@ elev_order <- c("High", "Mid", "Low")
 
 ## Davis Climate Data (Nov 2022-Oct 2023)
 
-### From Flint (changed this from CIMIS)
 
+``` r
+davis_climate_longitudinal <- read_csv("../output/Climate/flint_climate_UCDpops.csv") %>% 
+  filter(parent.pop=="UCD_Garden") 
+```
+
+```
+## Rows: 38775 Columns: 14
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: ","
+## chr  (3): parent.pop, elevation.group, month
+## dbl (11): elev_m, Lat, Long, year, aet, cwd, pck, pet, ppt, tmn, tmx
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+```
+
+``` r
+davis_climate_recent <- davis_climate_longitudinal %>% 
+  filter(year>1993 & year<2024)
+summary(davis_climate_recent) #CWD 3rd quartile = 123
+```
+
+```
+##   parent.pop        elevation.group        elev_m        Lat       
+##  Length:360         Length:360         Min.   :16   Min.   :38.53  
+##  Class :character   Class :character   1st Qu.:16   1st Qu.:38.53  
+##  Mode  :character   Mode  :character   Median :16   Median :38.53  
+##                                        Mean   :16   Mean   :38.53  
+##                                        3rd Qu.:16   3rd Qu.:38.53  
+##                                        Max.   :16   Max.   :38.53  
+##       Long             year         month                aet        
+##  Min.   :-121.8   Min.   :1994   Length:360         Min.   : 2.600  
+##  1st Qu.:-121.8   1st Qu.:2001   Class :character   1st Qu.: 5.105  
+##  Median :-121.8   Median :2008   Mode  :character   Median :20.020  
+##  Mean   :-121.8   Mean   :2008                      Mean   :26.104  
+##  3rd Qu.:-121.8   3rd Qu.:2016                      3rd Qu.:45.050  
+##  Max.   :-121.8   Max.   :2023                      Max.   :63.080  
+##       cwd              pck         pet             ppt              tmn        
+##  Min.   : 19.62   Min.   :0   Min.   : 23.4   Min.   :  0.00   Min.   :-0.260  
+##  1st Qu.: 32.97   1st Qu.:0   1st Qu.: 39.6   1st Qu.:  0.13   1st Qu.: 5.668  
+##  Median : 84.19   Median :0   Median :100.4   Median : 14.33   Median : 8.800  
+##  Mean   : 81.16   Mean   :0   Mean   :107.3   Mean   : 41.41   Mean   : 9.080  
+##  3rd Qu.:122.69   3rd Qu.:0   3rd Qu.:176.4   3rd Qu.: 58.17   3rd Qu.:13.242  
+##  Max.   :151.82   Max.   :0   Max.   :209.8   Max.   :337.63   Max.   :16.550  
+##       tmx       
+##  Min.   :10.16  
+##  1st Qu.:16.90  
+##  Median :23.69  
+##  Mean   :23.70  
+##  3rd Qu.:31.49  
+##  Max.   :35.81
+```
+
+``` r
+davis_climate_historical <- davis_climate_longitudinal %>% 
+  filter(year<=1993 & year>1963)
+summary(davis_climate_historical) #CWD 3rd quartile = 122
+```
+
+```
+##   parent.pop        elevation.group        elev_m        Lat       
+##  Length:360         Length:360         Min.   :16   Min.   :38.53  
+##  Class :character   Class :character   1st Qu.:16   1st Qu.:38.53  
+##  Mode  :character   Mode  :character   Median :16   Median :38.53  
+##                                        Mean   :16   Mean   :38.53  
+##                                        3rd Qu.:16   3rd Qu.:38.53  
+##                                        Max.   :16   Max.   :38.53  
+##       Long             year         month                aet        
+##  Min.   :-121.8   Min.   :1964   Length:360         Min.   : 1.720  
+##  1st Qu.:-121.8   1st Qu.:1971   Class :character   1st Qu.: 5.037  
+##  Median :-121.8   Median :1978   Mode  :character   Median :19.870  
+##  Mean   :-121.8   Mean   :1978                      Mean   :25.720  
+##  3rd Qu.:-121.8   3rd Qu.:1986                      3rd Qu.:43.165  
+##  Max.   :-121.8   Max.   :1993                      Max.   :64.310  
+##       cwd              pck         pet              ppt         
+##  Min.   : 18.95   Min.   :0   Min.   : 22.60   Min.   :  0.000  
+##  1st Qu.: 33.07   1st Qu.:0   1st Qu.: 39.27   1st Qu.:  1.045  
+##  Median : 83.48   Median :0   Median : 97.10   Median : 14.745  
+##  Mean   : 80.90   Mean   :0   Mean   :106.62   Mean   : 40.931  
+##  3rd Qu.:121.91   3rd Qu.:0   3rd Qu.:174.53   3rd Qu.: 58.590  
+##  Max.   :160.79   Max.   :0   Max.   :209.50   Max.   :279.480  
+##       tmn              tmx       
+##  Min.   :-1.370   Min.   : 8.89  
+##  1st Qu.: 4.875   1st Qu.:16.19  
+##  Median : 8.705   Median :24.22  
+##  Mean   : 8.504   Mean   :23.39  
+##  3rd Qu.:12.553   3rd Qu.:31.14  
+##  Max.   :15.860   Max.   :36.93
+```
+
+### From Flint (changed this from CIMIS)
 
 ``` r
 davis_climate <- read_csv("../output/Climate/flint_climate_UCDpops.csv") %>% 
@@ -108,7 +198,7 @@ davis_climate <- read_csv("../output/Climate/flint_climate_UCDpops.csv") %>%
 ```
 
 ```
-## Rows: 38675 Columns: 14
+## Rows: 38775 Columns: 14
 ## ── Column specification ────────────────────────────────────────────────────────
 ## Delimiter: ","
 ## chr  (3): parent.pop, elevation.group, month
@@ -172,7 +262,29 @@ summary(davis_climate)
 ```
 
 ``` r
-davis_climate_flint <- davis_climate %>% #get the means for the variables to compare to home sites 
+davis_climate %>% filter(cwd>122) 
+```
+
+```
+## # A tibble: 3 × 16
+##   parent.pop elevation.group elev_m   Lat  Long  year month   aet   cwd   pck
+##   <chr>      <chr>            <dbl> <dbl> <dbl> <dbl> <chr> <dbl> <dbl> <dbl>
+## 1 UCD_Garden Low                 16  38.5 -122.  2023 aug    42.4  139.     0
+## 2 UCD_Garden Low                 16  38.5 -122.  2023 jul    60.5  145.     0
+## 3 UCD_Garden Low                 16  38.5 -122.  2023 jun    59.4  123.     0
+## # ℹ 6 more variables: pet <dbl>, ppt <dbl>, tmn <dbl>, tmx <dbl>, tavg <dbl>,
+## #   t_diurnal <dbl>
+```
+
+``` r
+#CWD reached 122 in June, got above 122 in July in 2023
+#recent and historical avg last month = June (see Flint_Growth_Season.Rmd)
+
+davis_climate_growmos <- davis_climate %>% 
+  filter(month=="nov" | month=="dec" | month== "jan" | month=="feb" | month=="mar" | 
+           month=="apr" | month=="may" | month=="jun" | month=="jul") #based on last month criteria 
+
+davis_climate_flint <- davis_climate_growmos %>% #get the means for the variables to compare to home sites 
   summarise(cwd_Davis=mean(cwd),ppt_Davis=mean(ppt), pck_Davis=mean(pck), tmn_Davis=mean(tmn), tmx_Davis=mean(tmx))
 davis_climate_flint
 ```
@@ -181,7 +293,7 @@ davis_climate_flint
 ## # A tibble: 1 × 5
 ##   cwd_Davis ppt_Davis pck_Davis tmn_Davis tmx_Davis
 ##       <dbl>     <dbl>     <dbl>     <dbl>     <dbl>
-## 1      79.9      60.3         0      8.49      22.5
+## 1      69.6      78.5         0      6.94      20.1
 ```
 ## Davis Climate Trends
 
@@ -193,7 +305,7 @@ davis_climate %>%
   geom_point()
 ```
 
-![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-3-1.png)<!-- -->
+![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-4-1.png)<!-- -->
 
 ``` r
 davis_climate %>% 
@@ -201,7 +313,7 @@ davis_climate %>%
   geom_point()
 ```
 
-![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-3-2.png)<!-- -->
+![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-4-2.png)<!-- -->
 
 ``` r
 davis_climate %>% 
@@ -209,7 +321,7 @@ davis_climate %>%
   geom_point()
 ```
 
-![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-3-3.png)<!-- -->
+![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-4-3.png)<!-- -->
 
 ``` r
 davis_climate %>% 
@@ -217,7 +329,7 @@ davis_climate %>%
   geom_point()
 ```
 
-![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-3-4.png)<!-- -->
+![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-4-4.png)<!-- -->
 
 ### BioClim
 
@@ -225,16 +337,16 @@ Calculating wettest, driest, warmest, and coldest months
 
 
 ``` r
-davis_wettest_month <- davis_climate %>%  
+davis_wettest_month <- davis_climate_growmos %>%  
   slice_max(ppt)
 
-davis_driest_month <- davis_climate %>% 
+davis_driest_month <- davis_climate_growmos %>% 
   slice_min(ppt)
 
-davis_warmest_month <- davis_climate %>% 
+davis_warmest_month <- davis_climate_growmos %>% 
   slice_max(tavg)
 
-davis_coldest_month <- davis_climate %>%
+davis_coldest_month <- davis_climate_growmos %>%
   slice_min(tavg)
 ```
 
@@ -242,7 +354,7 @@ Bio 1, 2, 4, 7, 12, 15
 
 
 ``` r
-bioclim_davis_calc <- davis_climate %>% 
+bioclim_davis_calc <- davis_climate_growmos %>% 
   summarise(ann_tmean=mean(tavg),  #Bio1 - Annual Mean Temperature
             mean_diurnal_range=mean(t_diurnal), #Bio2 - Mean Diurnal Range
             temp_seasonality=sd(tavg), #Bio4 - Temperature Seasonality
@@ -256,7 +368,7 @@ bioclim_davis_calc
 ## # A tibble: 1 × 6
 ##   ann_tmean mean_diurnal_range temp_seasonality temp_ann_range ann_ppt
 ##       <dbl>              <dbl>            <dbl>          <dbl>   <dbl>
-## 1      15.5               14.0             6.34           32.0    724.
+## 1      13.5               13.2             5.97           32.0    706.
 ## # ℹ 1 more variable: ppt_seasonality <dbl>
 ```
 
@@ -298,26 +410,26 @@ summary(davis_bioclim_final)
 
 ```
 ##  ann_tmean_Davis mean_diurnal_range_Davis temp_seasonality_Davis
-##  Min.   :15.48   Min.   :14               Min.   :6.339         
-##  1st Qu.:15.48   1st Qu.:14               1st Qu.:6.339         
-##  Median :15.48   Median :14               Median :6.339         
-##  Mean   :15.48   Mean   :14               Mean   :6.339         
-##  3rd Qu.:15.48   3rd Qu.:14               3rd Qu.:6.339         
-##  Max.   :15.48   Max.   :14               Max.   :6.339         
+##  Min.   :13.52   Min.   :13.17            Min.   :5.969         
+##  1st Qu.:13.52   1st Qu.:13.17            1st Qu.:5.969         
+##  Median :13.52   Median :13.17            Median :5.969         
+##  Mean   :13.52   Mean   :13.17            Mean   :5.969         
+##  3rd Qu.:13.52   3rd Qu.:13.17            3rd Qu.:5.969         
+##  Max.   :13.52   Max.   :13.17            Max.   :5.969         
 ##  temp_ann_range_Davis ann_ppt_Davis   ppt_seasonality_Davis
-##  Min.   :32.01        Min.   :724.1   Min.   :144.2        
-##  1st Qu.:32.01        1st Qu.:724.1   1st Qu.:144.2        
-##  Median :32.01        Median :724.1   Median :144.2        
-##  Mean   :32.01        Mean   :724.1   Mean   :144.2        
-##  3rd Qu.:32.01        3rd Qu.:724.1   3rd Qu.:144.2        
-##  Max.   :32.01        Max.   :724.1   Max.   :144.2        
+##  Min.   :32.01        Min.   :706.4   Min.   :121          
+##  1st Qu.:32.01        1st Qu.:706.4   1st Qu.:121          
+##  Median :32.01        Median :706.4   Median :121          
+##  Mean   :32.01        Mean   :706.4   Mean   :121          
+##  3rd Qu.:32.01        3rd Qu.:706.4   3rd Qu.:121          
+##  Max.   :32.01        Max.   :706.4   Max.   :121          
 ##  tmean_wettest_month_Davis tmean_driest_month_Davis ppt_warmest_month_Davis
-##  Min.   :9.305             Min.   :24.5             Min.   :0.16           
-##  1st Qu.:9.305             1st Qu.:24.5             1st Qu.:0.16           
-##  Median :9.305             Median :24.5             Median :0.16           
-##  Mean   :9.305             Mean   :24.5             Mean   :0.16           
-##  3rd Qu.:9.305             3rd Qu.:24.5             3rd Qu.:0.16           
-##  Max.   :9.305             Max.   :24.5             Max.   :0.16           
+##  Min.   :9.305             Min.   :24.5             Min.   :0              
+##  1st Qu.:9.305             1st Qu.:24.5             1st Qu.:0              
+##  Median :9.305             Median :24.5             Median :0              
+##  Mean   :9.305             Mean   :24.5             Mean   :0              
+##  3rd Qu.:9.305             3rd Qu.:24.5             3rd Qu.:0              
+##  Max.   :9.305             Max.   :24.5             Max.   :0              
 ##  ppt_coldest_month_Davis
 ##  Min.   :258            
 ##  1st Qu.:258            
@@ -516,10 +628,10 @@ gowers.boot_recent$t0 #looks correct
 ```
 
 ```
-##  [1] 0.3303202 0.2274032 0.4220350 0.4838182 0.2356113 0.1701746 0.2289458
-##  [8] 0.4780364 0.4943449 0.4878916 0.4023189 0.3170032 0.3083460 0.3827274
-## [15] 0.5458020 0.1931940 0.3331949 0.2070007 0.2198339 0.6131117 0.3366119
-## [22] 0.4596776 0.4667175
+##  [1] 0.2086315 0.1809453 0.3363268 0.3828511 0.2429127 0.2391514 0.1754607
+##  [8] 0.4184802 0.4345349 0.4299070 0.2599069 0.2988229 0.2811340 0.3721242
+## [15] 0.4094735 0.1474534 0.2707708 0.2127985 0.2406939 0.5356393 0.3062702
+## [22] 0.3980615 0.4290221
 ```
 
 ``` r
@@ -530,7 +642,7 @@ for(i in 1:23) {
 }
 ```
 
-![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-11-1.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-11-2.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-11-3.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-11-4.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-11-5.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-11-6.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-11-7.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-11-8.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-11-9.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-11-10.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-11-11.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-11-12.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-11-13.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-11-14.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-11-15.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-11-16.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-11-17.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-11-18.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-11-19.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-11-20.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-11-21.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-11-22.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-11-23.png)<!-- -->
+![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-12-1.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-12-2.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-12-3.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-12-4.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-12-5.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-12-6.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-12-7.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-12-8.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-12-9.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-12-10.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-12-11.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-12-12.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-12-13.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-12-14.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-12-15.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-12-16.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-12-17.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-12-18.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-12-19.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-12-20.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-12-21.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-12-22.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-12-23.png)<!-- -->
 
 ``` r
 #boot.ci(gowers.boot_recent, type="norm", index = 1) # for the first pop
@@ -547,10 +659,10 @@ gowers.boot_historical$t0 #looks correct
 ```
 
 ```
-##  [1] 0.3355416 0.3989703 0.4044148 0.4669527 0.1666015 0.2094856 0.2526664
-##  [8] 0.6598801 0.6724588 0.6716469 0.3614024 0.3434374 0.3540532 0.4572285
-## [15] 0.4695885 0.2417902 0.3710235 0.1763864 0.2514235 0.6186303 0.3662882
-## [22] 0.4657659 0.4846714
+##  [1] 0.2480782 0.2794450 0.3311172 0.3612651 0.1895683 0.2555858 0.1944905
+##  [8] 0.5623140 0.5749353 0.5742049 0.2472018 0.3247653 0.3101753 0.3789304
+## [15] 0.3503590 0.1836748 0.2768081 0.1956455 0.2736167 0.5558687 0.2971479
+## [22] 0.3945893 0.4363059
 ```
 
 ``` r
@@ -561,7 +673,7 @@ for(i in 1:23) {
 }
 ```
 
-![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-12-1.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-12-2.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-12-3.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-12-4.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-12-5.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-12-6.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-12-7.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-12-8.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-12-9.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-12-10.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-12-11.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-12-12.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-12-13.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-12-14.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-12-15.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-12-16.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-12-17.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-12-18.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-12-19.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-12-20.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-12-21.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-12-22.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-12-23.png)<!-- -->
+![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-13-1.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-13-2.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-13-3.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-13-4.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-13-5.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-13-6.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-13-7.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-13-8.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-13-9.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-13-10.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-13-11.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-13-12.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-13-13.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-13-14.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-13-15.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-13-16.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-13-17.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-13-18.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-13-19.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-13-20.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-13-21.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-13-22.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-13-23.png)<!-- -->
 
 ``` r
 #boot.ci(gowers.boot_historical, type="norm", index = 1) # for the first pop
@@ -608,7 +720,7 @@ historical_fig <- boot_gowers_results_all %>%
 plot_grid(historical_fig, recent_fig)
 ```
 
-![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-13-1.png)<!-- -->
+![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-14-1.png)<!-- -->
 
 ``` r
 ggsave("../output/Climate/growthseason_Gowers_fromDavis.png", width = 24, height = 8, units = "in")
@@ -671,10 +783,10 @@ gowers.boot_flint_recent$t0 #looks correct
 ```
 
 ```
-##  [1] 0.31824913 0.29331510 0.40839550 0.51912259 0.33581834 0.09738751
-##  [7] 0.31851299 0.49395909 0.54274463 0.48211356 0.42839910 0.25758761
-## [13] 0.24239501 0.33255736 0.54633707 0.18522542 0.32604282 0.23955850
-## [19] 0.17070224 0.52678833 0.30489544 0.52376981 0.49531896
+##  [1] 0.13896951 0.23791644 0.23922771 0.31802002 0.33963492 0.23910324
+##  [7] 0.25033907 0.30167843 0.35494733 0.30871037 0.21200201 0.21735411
+## [13] 0.11616707 0.27487578 0.34197091 0.04648345 0.15809772 0.22231832
+## [19] 0.17836763 0.45802994 0.17866750 0.34702915 0.40635775
 ```
 
 ``` r
@@ -685,7 +797,7 @@ for(i in 1:23) {
 }
 ```
 
-![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-15-1.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-15-2.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-15-3.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-15-4.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-15-5.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-15-6.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-15-7.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-15-8.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-15-9.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-15-10.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-15-11.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-15-12.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-15-13.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-15-14.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-15-15.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-15-16.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-15-17.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-15-18.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-15-19.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-15-20.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-15-21.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-15-22.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-15-23.png)<!-- -->
+![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-16-1.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-16-2.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-16-3.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-16-4.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-16-5.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-16-6.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-16-7.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-16-8.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-16-9.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-16-10.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-16-11.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-16-12.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-16-13.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-16-14.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-16-15.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-16-16.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-16-17.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-16-18.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-16-19.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-16-20.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-16-21.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-16-22.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-16-23.png)<!-- -->
 
 ``` r
 #boot.ci(gowers.boot_flint_recent, type="norm", index = 1) # for the first pop
@@ -705,10 +817,10 @@ gowers.boot_flint_historical$t0 #looks correct
 ```
 
 ```
-##  [1] 0.3289436 0.4559552 0.2702196 0.3827481 0.2964513 0.1134720 0.3499696
-##  [8] 0.7676875 0.8136684 0.7711139 0.3995840 0.2625098 0.3061110 0.4124108
-## [15] 0.5638474 0.2384483 0.3944671 0.2498461 0.1616857 0.5225986 0.3555591
-## [22] 0.3819858 0.3869474
+##  [1] 0.19854276 0.25838394 0.21498099 0.25153258 0.26846752 0.23408282
+##  [7] 0.19934179 0.57969290 0.62571947 0.58335166 0.20328444 0.25600055
+## [13] 0.21057588 0.27408399 0.36677421 0.08110194 0.21157905 0.17772050
+## [19] 0.18255429 0.45298044 0.24004429 0.28978708 0.38457859
 ```
 
 ``` r
@@ -719,7 +831,7 @@ for(i in 1:23) {
 }
 ```
 
-![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-16-1.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-16-2.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-16-3.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-16-4.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-16-5.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-16-6.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-16-7.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-16-8.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-16-9.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-16-10.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-16-11.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-16-12.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-16-13.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-16-14.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-16-15.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-16-16.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-16-17.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-16-18.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-16-19.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-16-20.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-16-21.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-16-22.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-16-23.png)<!-- -->
+![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-17-1.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-17-2.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-17-3.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-17-4.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-17-5.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-17-6.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-17-7.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-17-8.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-17-9.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-17-10.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-17-11.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-17-12.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-17-13.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-17-14.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-17-15.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-17-16.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-17-17.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-17-18.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-17-19.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-17-20.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-17-21.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-17-22.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-17-23.png)<!-- -->
 
 ``` r
 #boot.ci(gowers.boot_flint_historical, type="norm", index = 1) # for the first pop
@@ -765,7 +877,7 @@ historical_fig <- boot_flint_gowers_results_all %>%
 plot_grid(historical_fig, recent_fig)
 ```
 
-![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-17-1.png)<!-- -->
+![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-18-1.png)<!-- -->
 
 ``` r
 ggsave("../output/Climate/growthseason_Gowers_Flint_fromDavis.png", width = 24, height = 8, units = "in")
@@ -846,7 +958,7 @@ recent_flint_dist %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 ```
 
-![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-19-1.png)<!-- -->
+![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-20-1.png)<!-- -->
 
 ``` r
 #ggsave("../output/Climate/grwssn_MeanCWD_DistfromDavis_RecentClim.png", width = 12, height = 6, units = "in")
@@ -861,7 +973,7 @@ recent_flint_dist %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 ```
 
-![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-19-2.png)<!-- -->
+![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-20-2.png)<!-- -->
 
 ``` r
 #ggsave("../output/Climate/grwssn_MeanPPT_DistfromDavis_RecentClim.png", width = 12, height = 6, units = "in")
@@ -876,7 +988,7 @@ recent_flint_dist %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 ```
 
-![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-19-3.png)<!-- -->
+![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-20-3.png)<!-- -->
 
 ``` r
 #ggsave("../output/Climate/grwssn_MeanTMN_DistfromDavis_RecentClim.png", width = 12, height = 6, units = "in")
@@ -891,7 +1003,7 @@ recent_flint_dist %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 ```
 
-![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-19-4.png)<!-- -->
+![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-20-4.png)<!-- -->
 
 ``` r
 #ggsave("../output/Climate/grwssn_MeanTMX_DistfromDavis_RecentClim.png", width = 12, height = 6, units = "in")
@@ -911,7 +1023,7 @@ historic_flint_dist %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 ```
 
-![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-20-1.png)<!-- -->
+![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-21-1.png)<!-- -->
 
 ``` r
 #ggsave("../output/Climate/grwssn_MeanCWD_DistfromDavis_HistoricalClim.png", width = 12, height = 6, units = "in")
@@ -926,7 +1038,7 @@ historic_flint_dist %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 ```
 
-![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-20-2.png)<!-- -->
+![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-21-2.png)<!-- -->
 
 ``` r
 #ggsave("../output/Climate/grwssn_MeanPPT_DistfromDavis_HistoricalClim.png", width = 12, height = 6, units = "in")
@@ -941,7 +1053,7 @@ historic_flint_dist %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 ```
 
-![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-20-3.png)<!-- -->
+![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-21-3.png)<!-- -->
 
 ``` r
 #ggsave("../output/Climate/grwssn_MeanTMN_DistfromDavis_HistoricalClim.png", width = 12, height = 6, units = "in")
@@ -956,7 +1068,7 @@ historic_flint_dist %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 ```
 
-![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-20-4.png)<!-- -->
+![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-21-4.png)<!-- -->
 
 ``` r
 #ggsave("../output/Climate/grwssn_MeanTMX_DistfromDavis_HistoricalClim.png", width = 12, height = 6, units = "in")
@@ -1040,10 +1152,10 @@ gowers.boot_bioclim_recent$t0 #looks correct
 ```
 
 ```
-##  [1] 0.3351487 0.2010384 0.4274908 0.4696964 0.1955285 0.1992895 0.1931189
-##  [8] 0.4716673 0.4749850 0.4902028 0.3918869 0.3407694 0.3347263 0.4027955
-## [15] 0.5455880 0.1963815 0.3360558 0.1939776 0.2394866 0.6476411 0.3492985
-## [22] 0.4340408 0.4552770
+##  [1] 0.2364963 0.1581568 0.3751664 0.4087835 0.2042239 0.2391707 0.1455094
+##  [8] 0.4652009 0.4663699 0.4783856 0.2790688 0.3314105 0.3471207 0.4110235
+## [15] 0.4364745 0.1878414 0.3158400 0.2089906 0.2656244 0.5666830 0.3573113
+## [22] 0.4184745 0.4380879
 ```
 
 ``` r
@@ -1054,7 +1166,7 @@ for(i in 1:23) {
 }
 ```
 
-![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-22-1.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-22-2.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-22-3.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-22-4.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-22-5.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-22-6.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-22-7.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-22-8.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-22-9.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-22-10.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-22-11.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-22-12.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-22-13.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-22-14.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-22-15.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-22-16.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-22-17.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-22-18.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-22-19.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-22-20.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-22-21.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-22-22.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-22-23.png)<!-- -->
+![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-23-1.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-23-2.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-23-3.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-23-4.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-23-5.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-23-6.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-23-7.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-23-8.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-23-9.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-23-10.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-23-11.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-23-12.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-23-13.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-23-14.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-23-15.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-23-16.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-23-17.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-23-18.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-23-19.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-23-20.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-23-21.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-23-22.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-23-23.png)<!-- -->
 
 ``` r
 #boot.ci(gowers.boot_bioclim_recent, type="norm", index = 1) # for the first pop
@@ -1074,10 +1186,10 @@ gowers.boot_bioclim_historical$t0 #looks correct
 ```
 
 ```
-##  [1] 0.3381808 0.3761763 0.4580929 0.5006345 0.1146616 0.2478911 0.2137451
-##  [8] 0.6167572 0.6159749 0.6318601 0.3461297 0.3758085 0.3732301 0.4751556
-## [15] 0.4318850 0.2431269 0.3616461 0.1470025 0.2873186 0.6570430 0.3705798
-## [22] 0.4992779 0.5237611
+##  [1] 0.2678923 0.2878694 0.3775717 0.4051581 0.1580086 0.2641869 0.1925500
+##  [8] 0.5553625 0.5546216 0.5705461 0.2647688 0.3522711 0.3500150 0.4208690
+## [15] 0.3437929 0.2247039 0.3028998 0.2028155 0.3100417 0.5970239 0.3199893
+## [22] 0.4365102 0.4569968
 ```
 
 ``` r
@@ -1088,7 +1200,7 @@ for(i in 1:23) {
 }
 ```
 
-![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-23-1.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-23-2.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-23-3.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-23-4.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-23-5.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-23-6.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-23-7.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-23-8.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-23-9.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-23-10.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-23-11.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-23-12.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-23-13.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-23-14.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-23-15.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-23-16.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-23-17.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-23-18.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-23-19.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-23-20.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-23-21.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-23-22.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-23-23.png)<!-- -->
+![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-24-1.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-24-2.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-24-3.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-24-4.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-24-5.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-24-6.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-24-7.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-24-8.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-24-9.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-24-10.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-24-11.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-24-12.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-24-13.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-24-14.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-24-15.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-24-16.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-24-17.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-24-18.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-24-19.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-24-20.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-24-21.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-24-22.png)<!-- -->![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-24-23.png)<!-- -->
 
 ``` r
 #boot.ci(gowers.boot_bioclim_historical, type="norm", index = 1) # for the first pop
@@ -1134,7 +1246,7 @@ historical_fig <- boot_bioclim_gowers_results_all %>%
 plot_grid(historical_fig, recent_fig)
 ```
 
-![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-24-1.png)<!-- -->
+![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-25-1.png)<!-- -->
 
 ``` r
 ggsave("../output/Climate/growthseason_Gowers_BioClim_fromDavis.png", width = 24, height = 8, units = "in")
@@ -1181,16 +1293,16 @@ recent_bioclim_dist
 ## # A tibble: 23 × 13
 ##    parent.pop elevation.group elev_m ann_tmean_dist mean_diurnal_range_dist
 ##    <chr>      <chr>            <dbl>          <dbl>                   <dbl>
-##  1 BH         Low               511.        2.58                     0.558 
-##  2 CC         Low               313         0.706                    1.56  
-##  3 CP2        High             2244.        5.25                     1.42  
-##  4 CP3        High             2266.        5.94                     1.62  
-##  5 DPR        Mid              1019.       -0.00542                  1.14  
-##  6 FR         Mid               787         0.344                   -1.54  
-##  7 IH         Low               454.        0.834                    0.841 
-##  8 LV1        High             2593.        6.10                    -0.0611
-##  9 LV3        High             2354.        6.12                    -0.117 
-## 10 LVTR1      High             2741.        6.33                    -0.261 
+##  1 BH         Low               511.          0.616                 -0.272 
+##  2 CC         Low               313          -1.26                   0.732 
+##  3 CP2        High             2244.          3.29                   0.588 
+##  4 CP3        High             2266.          3.98                   0.793 
+##  5 DPR        Mid              1019.         -1.97                   0.313 
+##  6 FR         Mid               787          -1.62                  -2.37  
+##  7 IH         Low               454.         -1.13                   0.0119
+##  8 LV1        High             2593.          4.14                  -0.891 
+##  9 LV3        High             2354.          4.15                  -0.946 
+## 10 LVTR1      High             2741.          4.36                  -1.09  
 ## # ℹ 13 more rows
 ## # ℹ 8 more variables: temp_seasonality_dist <dbl>, temp_ann_range_dist <dbl>,
 ## #   tmean_wettest_month_dist <dbl>, tmean_driest_month_dist <dbl>,
@@ -1221,16 +1333,16 @@ historical_bioclim_dist
 ## # A tibble: 23 × 13
 ##    parent.pop elevation.group elev_m ann_tmean_dist mean_diurnal_range_dist
 ##    <chr>      <chr>            <dbl>          <dbl>                   <dbl>
-##  1 BH         Low               511.          3.52                    0.276
-##  2 CC         Low               313           2.84                    1.42 
-##  3 CP2        High             2244.          4.67                    0.339
-##  4 CP3        High             2266.          5.30                    0.717
-##  5 DPR        Mid              1019.          0.368                  -0.201
-##  6 FR         Mid               787           0.924                  -2.82 
-##  7 IH         Low               454.          1.52                    0.214
-##  8 LV1        High             2593.          9.12                   -1.05 
-##  9 LV3        High             2354.          9.14                   -1.10 
-## 10 LVTR1      High             2741.          9.30                   -1.07 
+##  1 BH         Low               511.          1.55                   -0.553
+##  2 CC         Low               313           0.876                   0.591
+##  3 CP2        High             2244.          2.71                   -0.490
+##  4 CP3        High             2266.          3.34                   -0.112
+##  5 DPR        Mid              1019.         -1.59                   -1.03 
+##  6 FR         Mid               787          -1.04                   -3.65 
+##  7 IH         Low               454.         -0.443                  -0.615
+##  8 LV1        High             2593.          7.16                   -1.88 
+##  9 LV3        High             2354.          7.18                   -1.93 
+## 10 LVTR1      High             2741.          7.33                   -1.90 
 ## # ℹ 13 more rows
 ## # ℹ 8 more variables: temp_seasonality_dist <dbl>, temp_ann_range_dist <dbl>,
 ## #   tmean_wettest_month_dist <dbl>, tmean_driest_month_dist <dbl>,
@@ -1252,7 +1364,7 @@ recent_bioclim_dist %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 ```
 
-![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-26-1.png)<!-- -->
+![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-27-1.png)<!-- -->
 
 ``` r
 #ggsave("../output/Climate/grwssn_Ann_Tmean_DistfromDavis_RecentClim.png", width = 12, height = 6, units = "in")
@@ -1267,7 +1379,7 @@ recent_bioclim_dist %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 ```
 
-![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-26-2.png)<!-- -->
+![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-27-2.png)<!-- -->
 
 ``` r
 #ggsave("../output/Climate/grwssn_Diurnal_Range_DistfromDavis_RecentClim.png", width = 12, height = 6, units = "in")
@@ -1282,7 +1394,7 @@ recent_bioclim_dist %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 ```
 
-![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-26-3.png)<!-- -->
+![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-27-3.png)<!-- -->
 
 ``` r
 #ggsave("../output/Climate/grwssn_Temp_Seasonality_DistfromDavis_RecentClim.png", width = 12, height = 6, units = "in")
@@ -1297,7 +1409,7 @@ recent_bioclim_dist %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 ```
 
-![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-26-4.png)<!-- -->
+![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-27-4.png)<!-- -->
 
 ``` r
 #ggsave("../output/Climate/grwssn_Temp_Ann_Range_DistfromDavis_RecentClim.png", width = 12, height = 6, units = "in")
@@ -1312,7 +1424,7 @@ recent_bioclim_dist %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 ```
 
-![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-26-5.png)<!-- -->
+![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-27-5.png)<!-- -->
 
 ``` r
 #ggsave("../output/Climate/grwssn_Temp_Wet_DistfromDavis_RecentClim.png", width = 12, height = 6, units = "in")
@@ -1327,7 +1439,7 @@ recent_bioclim_dist %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 ```
 
-![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-26-6.png)<!-- -->
+![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-27-6.png)<!-- -->
 
 ``` r
 #ggsave("../output/Climate/grwssn_Temp_Dry_DistfromDavis_RecentClim.png", width = 12, height = 6, units = "in")
@@ -1342,7 +1454,7 @@ recent_bioclim_dist %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 ```
 
-![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-26-7.png)<!-- -->
+![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-27-7.png)<!-- -->
 
 ``` r
 #ggsave("../output/Climate/grwssn_Ann_PPT_DistfromDavis_RecentClim.png", width = 12, height = 6, units = "in")
@@ -1357,7 +1469,7 @@ recent_bioclim_dist %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 ```
 
-![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-26-8.png)<!-- -->
+![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-27-8.png)<!-- -->
 
 ``` r
 #ggsave("../output/Climate/grwssn_PPT_Seasonality_DistfromDavis_RecentClim.png", width = 12, height = 6, units = "in")
@@ -1372,7 +1484,7 @@ recent_bioclim_dist %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 ```
 
-![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-26-9.png)<!-- -->
+![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-27-9.png)<!-- -->
 
 ``` r
 #ggsave("../output/Climate/grwssn_PPT_Warm_DistfromDavis_RecentClim.png", width = 12, height = 6, units = "in")
@@ -1387,7 +1499,7 @@ recent_bioclim_dist %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 ```
 
-![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-26-10.png)<!-- -->
+![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-27-10.png)<!-- -->
 
 ``` r
 #ggsave("../output/Climate/grwssn_PPT_Cold_DistfromDavis_RecentClim.png", width = 12, height = 6, units = "in")
@@ -1407,7 +1519,7 @@ historical_bioclim_dist %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 ```
 
-![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-27-1.png)<!-- -->
+![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-28-1.png)<!-- -->
 
 ``` r
 #ggsave("../output/Climate/grwssn_Ann_Tmean_DistfromDavis_HistoricalClim.png", width = 12, height = 6, units = "in")
@@ -1422,7 +1534,7 @@ historical_bioclim_dist %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 ```
 
-![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-27-2.png)<!-- -->
+![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-28-2.png)<!-- -->
 
 ``` r
 #ggsave("../output/Climate/grwssn_Diurnal_Range_DistfromDavis_HistoricalClim.png", width = 12, height = 6, units = "in")
@@ -1437,7 +1549,7 @@ historical_bioclim_dist %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 ```
 
-![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-27-3.png)<!-- -->
+![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-28-3.png)<!-- -->
 
 ``` r
 #ggsave("../output/Climate/grwssn_Temp_Seasonality_DistfromDavis_HistoricalClim.png", width = 12, height = 6, units = "in")
@@ -1452,7 +1564,7 @@ historical_bioclim_dist %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 ```
 
-![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-27-4.png)<!-- -->
+![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-28-4.png)<!-- -->
 
 ``` r
 #ggsave("../output/Climate/grwssn_Temp_Ann_Range_DistfromDavis_HistoricalClim.png", width = 12, height = 6, units = "in")
@@ -1467,7 +1579,7 @@ historical_bioclim_dist %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 ```
 
-![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-27-5.png)<!-- -->
+![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-28-5.png)<!-- -->
 
 ``` r
 #ggsave("../output/Climate/grwssn_Temp_Wet_DistfromDavis_HistoricalClim.png", width = 12, height = 6, units = "in")
@@ -1482,7 +1594,7 @@ historical_bioclim_dist %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 ```
 
-![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-27-6.png)<!-- -->
+![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-28-6.png)<!-- -->
 
 ``` r
 #ggsave("../output/Climate/grwssn_Temp_Dry_DistfromDavis_HistoricalClim.png", width = 12, height = 6, units = "in")
@@ -1497,7 +1609,7 @@ historical_bioclim_dist %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 ```
 
-![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-27-7.png)<!-- -->
+![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-28-7.png)<!-- -->
 
 ``` r
 #ggsave("../output/Climate/grwssn_Ann_PPT_DistfromDavis_HistoricalClim.png", width = 12, height = 6, units = "in")
@@ -1512,7 +1624,7 @@ historical_bioclim_dist %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 ```
 
-![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-27-8.png)<!-- -->
+![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-28-8.png)<!-- -->
 
 ``` r
 #ggsave("../output/Climate/grwssn_PPT_Seasonality_DistfromDavis_HistoricalClim.png", width = 12, height = 6, units = "in")
@@ -1527,7 +1639,7 @@ historical_bioclim_dist %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 ```
 
-![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-27-9.png)<!-- -->
+![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-28-9.png)<!-- -->
 
 ``` r
 #ggsave("../output/Climate/grwssn_PPT_Warm_DistfromDavis_HistoricalClim.png", width = 12, height = 6, units = "in")
@@ -1542,7 +1654,7 @@ historical_bioclim_dist %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 ```
 
-![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-27-10.png)<!-- -->
+![](UCD_climatedist_growthseason_files/figure-html/unnamed-chunk-28-10.png)<!-- -->
 
 ``` r
 #ggsave("../output/Climate/grwssn_PPT_Cold_DistfromDavis_HistoricalClim.png", width = 12, height = 6, units = "in")

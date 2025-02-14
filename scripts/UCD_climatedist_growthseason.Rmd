@@ -54,8 +54,20 @@ elev_order <- c("High", "Mid", "Low")
 
 ## Davis Climate Data (Nov 2022-Oct 2023)
 
-### From Flint (changed this from CIMIS)
+```{r}
+davis_climate_longitudinal <- read_csv("../output/Climate/flint_climate_UCDpops.csv") %>% 
+  filter(parent.pop=="UCD_Garden") 
 
+davis_climate_recent <- davis_climate_longitudinal %>% 
+  filter(year>1993 & year<2024)
+summary(davis_climate_recent) #CWD 3rd quartile = 123
+
+davis_climate_historical <- davis_climate_longitudinal %>% 
+  filter(year<=1993 & year>1963)
+summary(davis_climate_historical) #CWD 3rd quartile = 122
+```
+
+### From Flint (changed this from CIMIS)
 ```{r}
 davis_climate <- read_csv("../output/Climate/flint_climate_UCDpops.csv") %>% 
   filter(parent.pop=="UCD_Garden") %>% 
@@ -66,7 +78,15 @@ davis_climate <- read_csv("../output/Climate/flint_climate_UCDpops.csv") %>%
 head(davis_climate)
 summary(davis_climate)
 
-davis_climate_flint <- davis_climate %>% #get the means for the variables to compare to home sites 
+davis_climate %>% filter(cwd>122) 
+#CWD reached 122 in June, got above 122 in July in 2023
+#recent and historical avg last month = June (see Flint_Growth_Season.Rmd)
+
+davis_climate_growmos <- davis_climate %>% 
+  filter(month=="nov" | month=="dec" | month== "jan" | month=="feb" | month=="mar" | 
+           month=="apr" | month=="may" | month=="jun" | month=="jul") #based on last month criteria 
+
+davis_climate_flint <- davis_climate_growmos %>% #get the means for the variables to compare to home sites 
   summarise(cwd_Davis=mean(cwd),ppt_Davis=mean(ppt), pck_Davis=mean(pck), tmn_Davis=mean(tmn), tmx_Davis=mean(tmx))
 davis_climate_flint
 ```
@@ -96,23 +116,23 @@ davis_climate %>%
 Calculating wettest, driest, warmest, and coldest months
 
 ```{r}
-davis_wettest_month <- davis_climate %>%  
+davis_wettest_month <- davis_climate_growmos %>%  
   slice_max(ppt)
 
-davis_driest_month <- davis_climate %>% 
+davis_driest_month <- davis_climate_growmos %>% 
   slice_min(ppt)
 
-davis_warmest_month <- davis_climate %>% 
+davis_warmest_month <- davis_climate_growmos %>% 
   slice_max(tavg)
 
-davis_coldest_month <- davis_climate %>%
+davis_coldest_month <- davis_climate_growmos %>%
   slice_min(tavg)
 ```
 
 Bio 1, 2, 4, 7, 12, 15
 
 ```{r}
-bioclim_davis_calc <- davis_climate %>% 
+bioclim_davis_calc <- davis_climate_growmos %>% 
   summarise(ann_tmean=mean(tavg),  #Bio1 - Annual Mean Temperature
             mean_diurnal_range=mean(t_diurnal), #Bio2 - Mean Diurnal Range
             temp_seasonality=sd(tavg), #Bio4 - Temperature Seasonality
