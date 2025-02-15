@@ -121,17 +121,19 @@ Merge
 all_ucd_size_loc <- left_join(all_ucd_size_all, gowersdist_UCD_wider) %>% 
   mutate(day=as.numeric(survey_date-min(survey_date)))
 head(all_ucd_size_loc)
+unique(all_ucd_size_loc$day)
 ```
 
 ## Check Sample Sizes
 ```{r}
 all_ucd_size_loc %>% 
   filter(!is.na(height.cm)) %>% 
-  group_by(parent.pop, day) %>% 
+  group_by(survey_date, parent.pop) %>% 
   summarise(Sample_Size=n()) %>% 
-  filter(day==0) %>% 
-  arrange(Sample_Size)
+  #filter(day==0) %>% 
+  arrange(desc(survey_date))
 
+all_ucd_size_loc %>% filter(day==0) 
 #WV only has 2 individuals so going to remove it 
 #LV1 only has 3 individuals, still keep it?
 
