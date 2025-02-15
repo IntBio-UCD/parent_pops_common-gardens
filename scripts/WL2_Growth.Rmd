@@ -8,6 +8,7 @@ output:
 ---
 
 # Analyze Growth
+To Do: Truncate analysis to only grow months (model likely cannot handle shrinkage)
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -371,7 +372,12 @@ prior2_WL2 <- c(set_prior("normal(5,3)", nlpar="Hmin"),
 
 ### Fit the model
 ```{r}
-random_fit2_WL2 <- brm(formula=random_f2_WL2, data=all_wl2_size_for_models, prior=prior2_WL2, cores = 4, iter = 3000) #increase iterations b/c more complex (helps with Rhat and ESS)
+random_fit2_WL2 <- brm(formula=random_f2_WL2, data=all_wl2_size_for_models, prior=prior1_WL2, cores = 4, iter = 3000) #increase iterations b/c more complex (helps with Rhat and ESS)
+#Warning: There were 2482 divergent transitions after warmup. 
+#Warning: There were 1 chains where the estimated Bayesian Fraction of Missing Information was low. Examine the pairs() plot to diagnose sampling problems
+#Warning: The largest R-hat is 1.95, indicating chains have not mixed. Running the chains for more iterations may help.
+#Bulk Effective Samples Size (ESS) is too low, indicating posterior means and medians may be unreliable.
+#Tail Effective Samples Size (ESS) is too low, indicating posterior variances and tail quantiles may be unreliable.
 ```
 
 Summary
