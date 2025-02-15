@@ -42,6 +42,9 @@ library(modelr) #for data grid
 sem <- function(x, na.rm=FALSE) {           #for caclulating standard error
   sd(x,na.rm=na.rm)/sqrt(length(na.omit(x)))
 } 
+
+cbbPalette2 <- c("#E69F00","#000000", "#56B4E9","#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+timepd_palette <- c("#56B4E9","#D55E00")
 ```
 
 ## Year 2 Pop Info
@@ -137,23 +140,26 @@ garden_climate
 ucd_gowers <- read_csv("../output/Climate/Gowers_UCD.csv") %>% 
   select(parent.pop:GrwSsn_GD, Wtr_Year_GD) %>% 
   pivot_wider(names_from = TimePd, values_from = c(GrwSsn_GD, Wtr_Year_GD)) %>% 
-  mutate(UCD_Lat=38.53250, UCD_Long=-121.7830) %>% 
-  mutate(Geographic_Dist=distHaversine(cbind(UCD_Long, UCD_Lat), cbind(Long, Lat))) %>% # Calculate the distance using the haversine formula (dist in meters)
+  mutate(UCD_Lat=38.53250, UCD_Long=-121.7830, UCD_Elev=16) %>% 
+  mutate(Geographic_Dist=distHaversine(cbind(UCD_Long, UCD_Lat), cbind(Long, Lat)),
+         Elev_Dist=UCD_Elev-elev_m) %>% # Calculate the distance using the haversine formula (dist in meters)
   #mutate(Lat_Dist=UCD_Lat-Lat, Long_Dist=UCD_Long-Long) %>% #Garden-Home - lat and long per Gerst et al 2011 which kept them separate for some directionality
   rename(pop=parent.pop)
 
 wl2_gowers_2023 <- read_csv("../output/Climate/Gowers_WL2.csv") %>% 
   select(parent.pop:GrwSsn_GD, Wtr_Year_GD) %>% 
   pivot_wider(names_from = TimePd, values_from = c(GrwSsn_GD, Wtr_Year_GD)) %>% 
-  mutate(WL2_Lat=38.82599, WL2_Long=-120.2509) %>% 
-  mutate(Geographic_Dist=distHaversine(cbind(WL2_Long, WL2_Lat), cbind(Long, Lat))) %>% # Calculate the distance using the haversine formula
+  mutate(WL2_Lat=38.82599, WL2_Long=-120.2509, WL2_Elev=2020) %>% 
+  mutate(Geographic_Dist=distHaversine(cbind(WL2_Long, WL2_Lat), cbind(Long, Lat)),
+         Elev_Dist=WL2_Elev-elev_m) %>% # Calculate the distance using the haversine formula
   #mutate(Lat_Dist=WL2_Lat-Lat, Long_Dist=WL2_Long-Long) %>% #Garden-Home - lat and long per Gerst et al 2011 which kept them separate for some directionality
   rename(pop=parent.pop)
 
 wl2_gowers_2024 <- read_csv("../output/Climate/Gowers_WL2_2024.csv") %>% 
   pivot_wider(names_from = TimePd, values_from = c(GrwSsn_GD, Wtr_Year_GD)) %>% 
-  mutate(WL2_Lat=38.82599, WL2_Long=-120.2509) %>% 
-  mutate(Geographic_Dist=distHaversine(cbind(WL2_Long, WL2_Lat), cbind(Long, Lat))) %>% # Calculate the distance using the haversine formula
+  mutate(WL2_Lat=38.82599, WL2_Long=-120.2509, WL2_Elev=2020) %>% 
+  mutate(Geographic_Dist=distHaversine(cbind(WL2_Long, WL2_Lat), cbind(Long, Lat)),
+         Elev_Dist=WL2_Elev-elev_m) %>% # Calculate the distance using the haversine formula
   rename(pop=parent.pop)
 ```
 
@@ -182,8 +188,47 @@ ggsave("../output/WL2_GeoDist.png", width = 12, height = 8, units = "in")
 ## Correlation between geo distance and climate distance
 dist_normalized_ucd <- ucd_gowers %>% select(GrwSsn_GD_Recent:Wtr_Year_GD_Historical, Geographic_Dist) %>% scale() #normalize the data so they're all on the same scale
 head(dist_normalized_ucd)
-cor.norm = cor(dist_normalized_ucd) #test correlations among the traits
-corrplot(cor.norm) #geo dist not strongly correlated to any of the climate distances, yay!
+cor.norm_ucd = cor(dist_normalized_ucd) #test correlations among the traits
+corrplot(cor.norm_ucd) #geo dist not strongly correlated to any of the climate distances, yay!
+
+dist_normalized_wl2 <- wl2_gowers_2023 %>% select(GrwSsn_GD_Recent:Wtr_Year_GD_Historical, Geographic_Dist) %>% scale() #normalize the data so they're all on the same scale
+head(dist_normalized_wl2)
+cor.norm_wl2 = cor(dist_normalized_wl2) #test correlations among the traits
+corrplot(cor.norm_wl2) #geo dist not strongly correlated to any of the climate distances, yay!
+```
+
+### Checking elevation distance
+```{r}
+ucd_gowers %>% 
+  ggplot(aes(x=fct_reorder(pop, Elev_Dist), y=Elev_Dist, fill=Wtr_Year_GD_Recent)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) + 
+  labs(y="Elevation Distance (m)", x="Population", fill="Water Year \n Climate Distance") +
+  theme_classic() +
+  scale_fill_viridis(option="mako", direction = -1) +
+  scale_y_continuous(expand = c(0, 0)) +
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1)) 
+ggsave("../output/UCD_ElevDist.png", width = 12, height = 8, units = "in")
+
+wl2_gowers_2023 %>% 
+  ggplot(aes(x=fct_reorder(pop, Elev_Dist), y=Elev_Dist, fill=Wtr_Year_GD_Recent)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) + 
+  labs(y="Elevation Distance (m)", x="Population", fill="Water Year \n Climate Distance") +
+  theme_classic() +
+  scale_fill_viridis(option="mako", direction = -1) +
+  scale_y_continuous(expand = c(0, 0)) +
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1)) 
+ggsave("../output/WL2_ElevDist.png", width = 12, height = 8, units = "in")
+
+## Correlation between elev distance and climate distance
+dist_normalized_ucd <- ucd_gowers %>% select(GrwSsn_GD_Recent:Wtr_Year_GD_Historical, Elev_Dist) %>% scale() #normalize the data so they're all on the same scale
+head(dist_normalized_ucd)
+cor.norm_ucd = cor(dist_normalized_ucd) #test correlations among the traits
+corrplot(cor.norm_ucd) ##elev dist strongly neg correlated w/ water year climate distances
+
+dist_normalized_wl2 <- wl2_gowers_2023 %>% select(GrwSsn_GD_Recent:Wtr_Year_GD_Historical, Elev_Dist) %>% scale() #normalize the data so they're all on the same scale
+head(dist_normalized_wl2)
+cor.norm_wl2 = cor(dist_normalized_wl2) #test correlations among the traits
+corrplot(cor.norm_wl2) #elev positively correlated with recent water year climate distance 
 ```
 
 
@@ -205,14 +250,14 @@ Davis - used 3 weeks to match WL2
 unique(ucd_surv$pop)
 ucd_establishment <- ucd_surv %>% 
   left_join(ucd_gowers) %>% 
-  select(block:rep, elevation.group:Wtr_Year_GD_Historical, Geographic_Dist, death.date) %>% 
+  select(block:rep, elevation.group:Wtr_Year_GD_Historical, Geographic_Dist, Elev_Dist, death.date) %>% 
   mutate(death.date=mdy(death.date)) %>% 
   mutate(Establishment=if_else(is.na(death.date), 1,
                                if_else(death.date=="2022-11-30" | death.date=="2022-12-13" | death.date=="2022-12-21", 0,
                                        1)))
 
 ucd_establishment %>% 
-  group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
+  group_by(pop, elev_m, GrwSsn_GD_Recent, GrwSsn_GD_Historical) %>% 
   summarise(meanEst=mean(Establishment, na.rm = TRUE), semEst=sem(Establishment, na.rm=TRUE)) %>% 
   ggplot(aes(x=fct_reorder(pop, meanEst), y=meanEst, fill=GrwSsn_GD_Recent)) +
   geom_col(width = 0.7,position = position_dodge(0.75)) + 
@@ -245,7 +290,7 @@ WL2 - 3 weeks based off survival curve
 ```{r}
 wl2_establishment <- wl2_surv_y1 %>% 
   left_join(wl2_gowers_2023) %>% 
-  select(block:rep, elevation.group:Wtr_Year_GD_Historical, Geographic_Dist, death.date) %>% 
+  select(block:rep, elevation.group:Wtr_Year_GD_Historical, Geographic_Dist, Elev_Dist, death.date) %>% 
   mutate(death.date=mdy(death.date)) %>% 
   mutate(Establishment=if_else(is.na(death.date), 1,
                                if_else(death.date=="2023-07-26" | death.date=="2023-08-02" | death.date=="2023-08-09", 0,
@@ -285,12 +330,14 @@ Davis
 ```{r}
 #scatter plots
 GSCD <- ucd_establishment %>% 
-  group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
+  group_by(pop, elev_m, GrwSsn_GD_Recent, GrwSsn_GD_Historical) %>% 
   summarise(meanEst=mean(Establishment, na.rm = TRUE), semEst=sem(Establishment, na.rm=TRUE)) %>% 
-  ggplot(aes(x=GrwSsn_GD_Recent, y=meanEst, color=GrwSsn_GD_Recent, group = pop)) +
-  geom_point(size=6) + 
+  pivot_longer(cols = starts_with("GrwSsn"), names_to = "TimePd", values_to = "GrwSsn_CD") %>% 
+  mutate(TimePd=str_replace(TimePd, "GrwSsn_GD_", "")) %>% 
+  ggplot(aes(x=GrwSsn_CD, y=meanEst, color=TimePd, group = pop)) +
+  geom_point(size=6, alpha=0.7) + 
   geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.02, linewidth = 2) +
-  #geom_text_repel(aes(x = GrwSsn_GD_Recent, y = meanEst,
+  #geom_text_repel(aes(x = GrwSsn_CD, y = meanEst,
   #          label = `pop`),
   #      min.segment.length = 0.8,
   #      max.overlaps = 100,
@@ -299,17 +346,19 @@ GSCD <- ucd_establishment %>%
   #      size = 4) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
-  labs(y="Establishment", x="Growth Season CD", color="Growth Season \n Climate Distance") +
-  scale_color_viridis(option="mako", direction = -1) +
+  labs(y="Establishment", x="Growth Season CD", color="Time Period") +
+  scale_color_manual(values=timepd_palette) +
   theme(text=element_text(size=25))
 
 WYCD <- ucd_establishment %>% 
-  group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
-  summarise(meanEst=mean(Establishment, na.rm = TRUE), semEst=sem(Establishment, na.rm=TRUE)) %>% 
-  ggplot(aes(x=Wtr_Year_GD_Recent, y=meanEst, color=Wtr_Year_GD_Recent, group = pop)) +
-  geom_point(size=6) + 
+  group_by(pop, elev_m, Wtr_Year_GD_Recent, Wtr_Year_GD_Historical) %>% 
+  summarise(meanEst=mean(Establishment, na.rm = TRUE), semEst=sem(Establishment, na.rm=TRUE)) %>%
+  pivot_longer(cols = starts_with("Wtr_Year"), names_to = "TimePd", values_to = "Wtr_Year_CD") %>% 
+  mutate(TimePd=str_replace(TimePd, "Wtr_Year_GD_", "")) %>% 
+  ggplot(aes(x=Wtr_Year_CD, y=meanEst, color=TimePd, group = pop)) +
+  geom_point(size=6, alpha=0.7) + 
   geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.02, linewidth = 2) +
-  #geom_text_repel(aes(x = Wtr_Year_GD_Recent, y = meanEst,
+  #geom_text_repel(aes(x = Wtr_Year_CD, y = meanEst,
   #          label = `pop`),
   #      min.segment.length = 0.8,
   #      max.overlaps = 100,
@@ -318,14 +367,14 @@ WYCD <- ucd_establishment %>%
   #      size = 4) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
-  labs(y="Establishment", x="Water Year CD", color="Water Year \n Climate Distance") +
-  scale_color_viridis(option="mako", direction = -1) +
+  labs(y="Establishment", x="Water Year CD", color="Time Period") +
+  scale_color_manual(values=timepd_palette) +
   theme(text=element_text(size=25))
 
 GD <- ucd_establishment %>% 
   group_by(pop, elev_m, Geographic_Dist) %>% 
   summarise(meanEst=mean(Establishment, na.rm = TRUE), semEst=sem(Establishment, na.rm=TRUE)) %>% 
-  ggplot(aes(x=Geographic_Dist, y=meanEst, color=Geographic_Dist, group = pop)) +
+  ggplot(aes(x=Geographic_Dist, y=meanEst, group = pop)) +
   geom_point(size=6) + 
   geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.02, linewidth = 2) +
   #geom_text_repel(aes(x = Geographic_Dist, y = meanEst,
@@ -337,11 +386,29 @@ GD <- ucd_establishment %>%
   #      size = 4) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
-  labs(y="Establishment", x="Geographic Distance (m)", color="Geographic Distance") +
-  scale_color_viridis(option="mako", direction = -1) +
+  labs(y="Establishment", x="Geographic Distance (m)") +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 
-ucd_establishment_FIG <- ggarrange(GSCD, WYCD, GD, ncol=2, nrow=2) 
+
+ED <- ucd_establishment %>% 
+  group_by(pop, elev_m, Elev_Dist) %>% 
+  summarise(meanEst=mean(Establishment, na.rm = TRUE), semEst=sem(Establishment, na.rm=TRUE)) %>% 
+  ggplot(aes(x=Elev_Dist, y=meanEst, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.02, linewidth = 2) +
+  #geom_text_repel(aes(x = Elev_Dist, y = meanEst,
+  #          label = `pop`),
+  #      min.segment.length = 0.8,
+  #      max.overlaps = 100,
+  #      #label.padding = 1,
+  #      #point.padding = 0.8,
+  #      size = 4) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Establishment", x="Elevation Distance (m)") +
+  theme(text=element_text(size=25))
+
+ucd_establishment_FIG <- ggarrange(GSCD, WYCD, GD, ED, ncol=2, nrow=2) 
 ggsave("../output/UCD_Traits/UCD_Establishment_SCATTERS.png", width = 24, height = 18, units = "in")
 ```
 
@@ -349,12 +416,14 @@ WL2
 ```{r}
 #scatter plots
 GSCD <- wl2_establishment %>% 
-  group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
+  group_by(pop, elev_m, GrwSsn_GD_Recent, GrwSsn_GD_Historical) %>% 
   summarise(meanEst=mean(Establishment, na.rm = TRUE), semEst=sem(Establishment, na.rm=TRUE)) %>% 
-  ggplot(aes(x=GrwSsn_GD_Recent, y=meanEst, color=GrwSsn_GD_Recent, group = pop)) +
+  pivot_longer(cols = starts_with("GrwSsn"), names_to = "TimePd", values_to = "GrwSsn_CD") %>% 
+  mutate(TimePd=str_replace(TimePd, "GrwSsn_GD_", "")) %>% 
+  ggplot(aes(x=GrwSsn_CD, y=meanEst, color=TimePd, group = pop)) +
   geom_point(size=6) + 
   geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.02, linewidth = 2) +
-  #geom_text_repel(aes(x = GrwSsn_GD_Recent, y = meanEst,
+  #geom_text_repel(aes(x = GrwSsn_CD, y = meanEst,
   #          label = `pop`),
   #      min.segment.length = 0.8,
   #      max.overlaps = 100,
@@ -364,16 +433,18 @@ GSCD <- wl2_establishment %>%
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
   labs(y="Establishment", x="Growth Season CD", color="Growth Season \n Climate Distance") +
-  scale_color_viridis(option="mako", direction = -1) +
+  scale_color_manual(values=timepd_palette) +
   theme(text=element_text(size=25))
 
 WYCD <- wl2_establishment %>% 
-  group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
+  group_by(pop, elev_m, Wtr_Year_GD_Recent, Wtr_Year_GD_Historical) %>% 
   summarise(meanEst=mean(Establishment, na.rm = TRUE), semEst=sem(Establishment, na.rm=TRUE)) %>% 
-  ggplot(aes(x=Wtr_Year_GD_Recent, y=meanEst, color=Wtr_Year_GD_Recent, group = pop)) +
+  pivot_longer(cols = starts_with("Wtr_Year"), names_to = "TimePd", values_to = "Wtr_Year_CD") %>% 
+  mutate(TimePd=str_replace(TimePd, "Wtr_Year_GD_", "")) %>% 
+  ggplot(aes(x=Wtr_Year_CD, y=meanEst, color=TimePd, group = pop)) +
   geom_point(size=6) + 
   geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.02,linewidth = 2) +
-  #geom_text_repel(aes(x = Wtr_Year_GD_Recent, y = meanEst,
+  #geom_text_repel(aes(x = Wtr_Year_CD, y = meanEst,
   #          label = `pop`),
   #      min.segment.length = 0.8,
   #      max.overlaps = 100,
@@ -383,13 +454,13 @@ WYCD <- wl2_establishment %>%
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
   labs(y="Establishment", x="Water Year CD", color="Water Year \n Climate Distance") +
-  scale_color_viridis(option="mako", direction = -1) +
+  scale_color_manual(values=timepd_palette) +
   theme(text=element_text(size=25))
 
 GD <- wl2_establishment %>% 
   group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent, Geographic_Dist) %>% 
   summarise(meanEst=mean(Establishment, na.rm = TRUE), semEst=sem(Establishment, na.rm=TRUE)) %>% 
-  ggplot(aes(x=Geographic_Dist, y=meanEst, color=Geographic_Dist, group = pop)) +
+  ggplot(aes(x=Geographic_Dist, y=meanEst, group = pop)) +
   geom_point(size=6) + 
   geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.02, linewidth = 2) +
   #geom_text_repel(aes(x = Geographic_Dist, y = meanEst,
@@ -401,11 +472,28 @@ GD <- wl2_establishment %>%
   #      size = 4) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
-  labs(y="Establishment", x="Geographic Distance (m)", color="Geographic Distance") +
-  scale_color_viridis(option="mako", direction = -1) +
+  labs(y="Establishment", x="Geographic Distance (m)") +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 
-WL2_establishment_FIG <- ggarrange(GSCD, WYCD, GD, ncol=2, nrow=2) 
+ED <- wl2_establishment %>% 
+  group_by(pop, elev_m, Elev_Dist) %>% 
+  summarise(meanEst=mean(Establishment, na.rm = TRUE), semEst=sem(Establishment, na.rm=TRUE)) %>% 
+  ggplot(aes(x=Elev_Dist, y=meanEst, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.02, linewidth = 2) +
+  #geom_text_repel(aes(x = Elev_Dist, y = meanEst,
+  #          label = `pop`),
+  #      min.segment.length = 0.8,
+  #      max.overlaps = 100,
+  #      #label.padding = 1,
+  #      #point.padding = 0.8,
+  #      size = 4) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Establishment", x="Elevation Distance (m)") +
+  theme(text=element_text(size=25))
+
+WL2_establishment_FIG <- ggarrange(GSCD, WYCD, GD, ED, ncol=2, nrow=2) 
 ggsave("../output/WL2_Traits/WL2_Establishment_SCATTERS.png", width = 24, height = 18, units = "in")
 ```
 
@@ -422,7 +510,7 @@ ucd_surv_to_rep <- ucd_surv %>%
   left_join(ucd_gowers) %>% 
   mutate(death.date=mdy(death.date)) %>% 
   mutate(SurvtoRep_Y1=if_else(is.na(bud.date), 0, 1)) %>% 
-  select(block:rep, elevation.group:Wtr_Year_GD_Historical, Geographic_Dist, bud.date, death.date, SurvtoRep_Y1) 
+  select(block:rep, elevation.group:Wtr_Year_GD_Historical, Geographic_Dist, Elev_Dist, bud.date, death.date, SurvtoRep_Y1) 
 
 ucd_surv_to_rep %>% 
   group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
@@ -473,7 +561,7 @@ wl2_surv_to_rep_y1 <- wl2_surv_y1 %>%
   mutate(death.date=mdy(death.date)) %>% 
   mutate(bud.date=if_else(Genotype=="TM2_1_11", "10/27/23", bud.date)) %>% #add in bud date for plant that started budding the week of the annual census 
   mutate(SurvtoRep_Y1=if_else(is.na(bud.date), 0, 1)) %>% 
-  select(block:rep, elevation.group:Wtr_Year_GD_Historical, Geographic_Dist, bud.date, death.date, SurvtoRep_Y1) 
+  select(block:rep, elevation.group:Wtr_Year_GD_Historical, Geographic_Dist, Elev_Dist, bud.date, death.date, SurvtoRep_Y1) 
 #this is quite uninteresting since only TM2 and FR budded in year 1 
 
 wl2_surv_to_rep_y1 %>% 
@@ -848,7 +936,7 @@ winter_surv <- post_winter_clean %>%
   left_join(wl2_gowers_2024) %>% 
   filter(death.date == "A" | death.date == "B" | death.date == "C" | death.date == "D") %>% 
   mutate(WinterSurv=if_else(death.date=="D", 0, 1)) %>% 
-  select(block:rep, elevation.group:Wtr_Year_GD_Historical, Geographic_Dist, death.date, WinterSurv) 
+  select(block:rep, elevation.group:Wtr_Year_GD_Historical, Geographic_Dist, Elev_Dist, death.date, WinterSurv) 
 dim(winter_surv) #only 469 rows because A_37_B not included 
 
 #winter_surv %>% filter(death.date!="D") #135 plants survived 
@@ -951,7 +1039,7 @@ wl2_surv_to_rep_y2 <- wl2_surv_y2 %>%
                             Genotype=="CC_9_6" | Genotype=="WL2_8_4",
                           "Missed", bud.date)) %>% #add in bud date for plants with a later rep date 
   mutate(SurvtoRep_y2=if_else(is.na(bud.date), 0, 1)) %>% 
-  select(Pop.Type:Genotype, elevation.group:Wtr_Year_GD_Historical, Geographic_Dist, bud.date, death.date, SurvtoRep_y2) 
+  select(Pop.Type:Genotype, elevation.group:Wtr_Year_GD_Historical, Geographic_Dist, Elev_Dist, bud.date, death.date, SurvtoRep_y2) 
 
 wl2_surv_to_rep_y2 %>% group_by(pop) %>% summarise(n=n()) %>% arrange(n)
 #LV1, SQ1, and WR only have 1 indiv alive in 2024
@@ -1168,7 +1256,7 @@ names(ucd_fruits)
 #per individual:
 ucd_total_fitness <- left_join(ucd_establishment, ucd_surv_to_rep) %>% 
   left_join(ucd_fruits) %>% 
-  select(block:Wtr_Year_GD_Historical, Geographic_Dist, Establishment, SurvtoRep_Y1:fruits) %>% 
+  select(block:Wtr_Year_GD_Historical, Geographic_Dist, Elev_Dist, Establishment, SurvtoRep_Y1:fruits) %>% 
   mutate(fruits=if_else(is.na(fruits), 0, fruits)) %>% 
   mutate(Total_Fitness=Establishment*SurvtoRep_Y1*fruits)
 head(ucd_total_fitness)
@@ -1229,7 +1317,7 @@ wl2_total_fitness <- left_join(wl2_establishment, wl2_surv_to_rep_y1) %>%
   left_join(wl2_surv_to_rep_y2_prep) %>% 
   left_join(wl2_fruits_y2_prep) %>% 
   left_join(wl2_gowers_avg) %>% 
-  select(block:Wtr_Year_GD_Historical, Geographic_Dist, Establishment, SurvtoRep_Y1:y2_fruits) %>% 
+  select(block:Wtr_Year_GD_Historical, Geographic_Dist, Elev_Dist, Establishment, SurvtoRep_Y1:y2_fruits) %>% 
   mutate(y1_fruits=if_else(is.na(y1_fruits), 0, y1_fruits),
          y2_fruits=if_else(is.na(y2_fruits), 0, y2_fruits),
          WinterSurv=if_else(is.na(WinterSurv), 0, WinterSurv),
@@ -1274,12 +1362,14 @@ Davis
 ```{r}
 #scatter plots
 GSCD <- ucd_total_fitness %>% 
-  group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
-  summarise(meanFruits=mean(Total_Fitness, na.rm = TRUE), semFruits=sem(Total_Fitness, na.rm=TRUE)) %>% 
-  ggplot(aes(x=GrwSsn_GD_Recent, y=meanFruits, color=GrwSsn_GD_Recent, group = pop)) +
-  geom_point(size=6) + 
-  geom_errorbar(aes(ymin=meanFruits-semFruits,ymax=meanFruits+semFruits),width=.02, linewidth = 2) +
-  #geom_text_repel(aes(x = GrwSsn_GD_Recent, y = meanFruits,
+  group_by(pop, elev_m, GrwSsn_GD_Recent, GrwSsn_GD_Historical) %>% 
+  summarise(meanEst=mean(Total_Fitness, na.rm = TRUE), semEst=sem(Total_Fitness, na.rm=TRUE)) %>% 
+  pivot_longer(cols = starts_with("GrwSsn"), names_to = "TimePd", values_to = "GrwSsn_CD") %>% 
+  mutate(TimePd=str_replace(TimePd, "GrwSsn_GD_", "")) %>% 
+  ggplot(aes(x=GrwSsn_CD, y=meanEst, color=TimePd, group = pop)) +
+  geom_point(size=6, alpha=0.7) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.02, linewidth = 2) +
+  #geom_text_repel(aes(x = GrwSsn_CD, y = meanEst,
   #          label = `pop`),
   #      min.segment.length = 0.8,
   #      max.overlaps = 100,
@@ -1288,17 +1378,19 @@ GSCD <- ucd_total_fitness %>%
   #      size = 4) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
-  labs(y="Total Fitness", x="Growth Season CD", color="Growth Season \n Climate Distance") +
-  scale_color_viridis(option="mako", direction = -1) +
+  labs(y="Total Fitness", x="Growth Season CD", color="Time Period") +
+  scale_color_manual(values=timepd_palette) +
   theme(text=element_text(size=25))
 
 WYCD <- ucd_total_fitness %>% 
-  group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
-  summarise(meanFruits=mean(Total_Fitness, na.rm = TRUE), semFruits=sem(Total_Fitness, na.rm=TRUE)) %>% 
-  ggplot(aes(x=Wtr_Year_GD_Recent, y=meanFruits, color=Wtr_Year_GD_Recent, group = pop)) +
-  geom_point(size=6) + 
-  geom_errorbar(aes(ymin=meanFruits-semFruits,ymax=meanFruits+semFruits),width=.02, linewidth = 2) +
-  #geom_text_repel(aes(x = Wtr_Year_GD_Recent, y = meanFruits,
+  group_by(pop, elev_m, Wtr_Year_GD_Recent, Wtr_Year_GD_Historical) %>% 
+  summarise(meanEst=mean(Total_Fitness, na.rm = TRUE), semEst=sem(Total_Fitness, na.rm=TRUE)) %>%
+  pivot_longer(cols = starts_with("Wtr_Year"), names_to = "TimePd", values_to = "Wtr_Year_CD") %>% 
+  mutate(TimePd=str_replace(TimePd, "Wtr_Year_GD_", "")) %>% 
+  ggplot(aes(x=Wtr_Year_CD, y=meanEst, color=TimePd, group = pop)) +
+  geom_point(size=6, alpha=0.7) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.02, linewidth = 2) +
+  #geom_text_repel(aes(x = Wtr_Year_CD, y = meanEst,
   #          label = `pop`),
   #      min.segment.length = 0.8,
   #      max.overlaps = 100,
@@ -1307,17 +1399,17 @@ WYCD <- ucd_total_fitness %>%
   #      size = 4) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
-  labs(y="Total Fitness", x="Water Year CD", color="Water Year \n Climate Distance") +
-  scale_color_viridis(option="mako", direction = -1) +
+  labs(y="Total Fitness", x="Water Year CD", color="Time Period") +
+  scale_color_manual(values=timepd_palette) +
   theme(text=element_text(size=25))
 
 GD <- ucd_total_fitness %>% 
   group_by(pop, elev_m, Geographic_Dist) %>% 
-  summarise(meanFruits=mean(Total_Fitness, na.rm = TRUE), semFruits=sem(Total_Fitness, na.rm=TRUE)) %>% 
-  ggplot(aes(x=Geographic_Dist, y=meanFruits, color=Geographic_Dist, group = pop)) +
+  summarise(meanEst=mean(Total_Fitness, na.rm = TRUE), semEst=sem(Total_Fitness, na.rm=TRUE)) %>% 
+  ggplot(aes(x=Geographic_Dist, y=meanEst, group = pop)) +
   geom_point(size=6) + 
-  geom_errorbar(aes(ymin=meanFruits-semFruits,ymax=meanFruits+semFruits),width=.02, linewidth = 2) +
-  #geom_text_repel(aes(x = Geographic_Dist, y = meanFruits,
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.02, linewidth = 2) +
+  #geom_text_repel(aes(x = Geographic_Dist, y = meanEst,
   #          label = `pop`),
   #      min.segment.length = 0.8,
   #      max.overlaps = 100,
@@ -1326,11 +1418,29 @@ GD <- ucd_total_fitness %>%
   #      size = 4) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
-  labs(y="Total Fitness", x="Geographic Distance (m)", color="Geographic Distance") +
-  scale_color_viridis(option="mako", direction = -1) +
+  labs(y="Total Fitness", x="Geographic Distance (m)") +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 
-ucd_total_fitness_FIG <- ggarrange(GSCD, WYCD, GD, ncol=2, nrow=2) 
+
+ED <- ucd_total_fitness %>% 
+  group_by(pop, elev_m, Elev_Dist) %>% 
+  summarise(meanEst=mean(Total_Fitness, na.rm = TRUE), semEst=sem(Total_Fitness, na.rm=TRUE)) %>% 
+  ggplot(aes(x=Elev_Dist, y=meanEst, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.02, linewidth = 2) +
+  #geom_text_repel(aes(x = Elev_Dist, y = meanEst,
+  #          label = `pop`),
+  #      min.segment.length = 0.8,
+  #      max.overlaps = 100,
+  #      #label.padding = 1,
+  #      #point.padding = 0.8,
+  #      size = 4) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Total Fitness", x="Elevation Distance (m)") +
+  theme(text=element_text(size=25))
+
+ucd_total_fitness_FIG <- ggarrange(GSCD, WYCD, GD, ED, ncol=2, nrow=2) 
 ggsave("../output/UCD_Traits/UCD_Total_Fitness_SCATTERS.png", width = 24, height = 18, units = "in")
 ```
 
@@ -1338,12 +1448,14 @@ WL2
 ```{r}
 #scatter plots
 GSCD <- wl2_total_fitness %>% 
-  group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
-  summarise(meanFruits=mean(Total_Fitness, na.rm = TRUE), semFruits=sem(Total_Fitness, na.rm=TRUE)) %>% 
-  ggplot(aes(x=GrwSsn_GD_Recent, y=meanFruits, color=GrwSsn_GD_Recent, group = pop)) +
+  group_by(pop, elev_m, GrwSsn_GD_Recent, GrwSsn_GD_Historical) %>% 
+  summarise(meanEst=mean(Total_Fitness, na.rm = TRUE), semEst=sem(Total_Fitness, na.rm=TRUE)) %>% 
+  pivot_longer(cols = starts_with("GrwSsn"), names_to = "TimePd", values_to = "GrwSsn_CD") %>% 
+  mutate(TimePd=str_replace(TimePd, "GrwSsn_GD_", "")) %>% 
+  ggplot(aes(x=GrwSsn_CD, y=meanEst, color=TimePd, group = pop)) +
   geom_point(size=6) + 
-  geom_errorbar(aes(ymin=meanFruits-semFruits,ymax=meanFruits+semFruits),width=.02, linewidth = 2) +
-  #geom_text_repel(aes(x = GrwSsn_GD_Recent, y = meanFruits,
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.02, linewidth = 2) +
+  #geom_text_repel(aes(x = GrwSsn_CD, y = meanEst,
   #          label = `pop`),
   #      min.segment.length = 0.8,
   #      max.overlaps = 100,
@@ -1353,16 +1465,18 @@ GSCD <- wl2_total_fitness %>%
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
   labs(y="Total Fitness", x="Growth Season CD", color="Growth Season \n Climate Distance") +
-  scale_color_viridis(option="mako", direction = -1) +
+  scale_color_manual(values=timepd_palette) +
   theme(text=element_text(size=25))
 
 WYCD <- wl2_total_fitness %>% 
-  group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
-  summarise(meanFruits=mean(Total_Fitness, na.rm = TRUE), semFruits=sem(Total_Fitness, na.rm=TRUE)) %>% 
-  ggplot(aes(x=Wtr_Year_GD_Recent, y=meanFruits, color=Wtr_Year_GD_Recent, group = pop)) +
+  group_by(pop, elev_m, Wtr_Year_GD_Recent, Wtr_Year_GD_Historical) %>% 
+  summarise(meanEst=mean(Total_Fitness, na.rm = TRUE), semEst=sem(Total_Fitness, na.rm=TRUE)) %>% 
+  pivot_longer(cols = starts_with("Wtr_Year"), names_to = "TimePd", values_to = "Wtr_Year_CD") %>% 
+  mutate(TimePd=str_replace(TimePd, "Wtr_Year_GD_", "")) %>% 
+  ggplot(aes(x=Wtr_Year_CD, y=meanEst, color=TimePd, group = pop)) +
   geom_point(size=6) + 
-  geom_errorbar(aes(ymin=meanFruits-semFruits,ymax=meanFruits+semFruits),width=.02,linewidth = 2) +
-  #geom_text_repel(aes(x = Wtr_Year_GD_Recent, y = meanFruits,
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.02,linewidth = 2) +
+  #geom_text_repel(aes(x = Wtr_Year_CD, y = meanEst,
   #          label = `pop`),
   #      min.segment.length = 0.8,
   #      max.overlaps = 100,
@@ -1372,16 +1486,16 @@ WYCD <- wl2_total_fitness %>%
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
   labs(y="Total Fitness", x="Water Year CD", color="Water Year \n Climate Distance") +
-  scale_color_viridis(option="mako", direction = -1) +
+  scale_color_manual(values=timepd_palette) +
   theme(text=element_text(size=25))
 
 GD <- wl2_total_fitness %>% 
   group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent, Geographic_Dist) %>% 
-  summarise(meanFruits=mean(Total_Fitness, na.rm = TRUE), semFruits=sem(Total_Fitness, na.rm=TRUE)) %>% 
-  ggplot(aes(x=Geographic_Dist, y=meanFruits, color=Geographic_Dist, group = pop)) +
+  summarise(meanEst=mean(Total_Fitness, na.rm = TRUE), semEst=sem(Total_Fitness, na.rm=TRUE)) %>% 
+  ggplot(aes(x=Geographic_Dist, y=meanEst, group = pop)) +
   geom_point(size=6) + 
-  geom_errorbar(aes(ymin=meanFruits-semFruits,ymax=meanFruits+semFruits),width=.02, linewidth = 2) +
-  #geom_text_repel(aes(x = Geographic_Dist, y = meanFruits,
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.02, linewidth = 2) +
+  #geom_text_repel(aes(x = Geographic_Dist, y = meanEst,
   #          label = `pop`),
   #      min.segment.length = 0.8,
   #      max.overlaps = 100,
@@ -1390,38 +1504,57 @@ GD <- wl2_total_fitness %>%
   #      size = 4) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
-  labs(y="Total Fitness", x="Geographic Distance (m)", color="Geographic Distance") +
-  scale_color_viridis(option="mako", direction = -1) +
+  labs(y="Total Fitness", x="Geographic Distance (m)") +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 
-WL2_total_fitness_FIG <- ggarrange(GSCD, WYCD, GD, ncol=2, nrow=2) 
+ED <- wl2_total_fitness %>% 
+  group_by(pop, elev_m, Elev_Dist) %>% 
+  summarise(meanEst=mean(Total_Fitness, na.rm = TRUE), semEst=sem(Total_Fitness, na.rm=TRUE)) %>% 
+  ggplot(aes(x=Elev_Dist, y=meanEst, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.02, linewidth = 2) +
+  #geom_text_repel(aes(x = Elev_Dist, y = meanEst,
+  #          label = `pop`),
+  #      min.segment.length = 0.8,
+  #      max.overlaps = 100,
+  #      #label.padding = 1,
+  #      #point.padding = 0.8,
+  #      size = 4) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Total Fitness", x="Elevation Distance (m)") +
+  theme(text=element_text(size=25))
+
+WL2_total_fitness_FIG <- ggarrange(GSCD, WYCD, GD, ED, ncol=2, nrow=2) 
 ggsave("../output/WL2_Traits/WL2_Total_Fitness_SCATTERS.png", width = 24, height = 18, units = "in")
 ```
 
-### Stats
+### Stats - Do these need to have a poisson distribution b/c so zero inflated?
 ```{r}
-wl2_total_fitness_scaled <- wl2_total_fitness %>% mutate_at(c("GrwSsn_GD_Recent","Wtr_Year_GD_Recent","Geographic_Dist"), scale)
-wl2_total_fitness_gs_mod1 <- lmer(Total_Fitness ~ GrwSsn_GD_Recent + Geographic_Dist + (1|pop) + (1|block), data=wl2_total_fitness_scaled)
+wl2_total_fitness_scaled <- wl2_total_fitness %>% mutate_at(c("GrwSsn_GD_Recent","Wtr_Year_GD_Recent",
+                                                              "GrwSsn_GD_Historical","Wtr_Year_GD_Historical","Geographic_Dist"), scale)
+wl2_total_fitness_gs_mod1 <- lmer(Total_Fitness ~ GrwSsn_GD_Recent + GrwSsn_GD_Historical + Geographic_Dist + (1|pop) + (1|block), data=wl2_total_fitness_scaled)
 summary(wl2_total_fitness_gs_mod1)
 ranova(wl2_total_fitness_gs_mod1)
 anova(wl2_total_fitness_gs_mod1)
 tidy(wl2_total_fitness_gs_mod1)
 
-wl2_total_fitness_wy_mod1 <- lmer(Total_Fitness ~ Wtr_Year_GD_Recent + Geographic_Dist + (1|pop) + (1|block), data=wl2_total_fitness_scaled)
+wl2_total_fitness_wy_mod1 <- lmer(Total_Fitness ~ Wtr_Year_GD_Recent + Wtr_Year_GD_Historical + Geographic_Dist + (1|pop) + (1|block), data=wl2_total_fitness_scaled)
 summary(wl2_total_fitness_wy_mod1)
 ranova(wl2_total_fitness_wy_mod1)
 anova(wl2_total_fitness_wy_mod1)
 tidy(wl2_total_fitness_wy_mod1)
 
 
-ucd_total_fitness_scaled <- ucd_total_fitness %>% mutate_at(c("GrwSsn_GD_Recent","Wtr_Year_GD_Recent","Geographic_Dist"), scale)
-ucd_total_fitness_gs_mod1 <- lmer(Total_Fitness ~ GrwSsn_GD_Recent + Geographic_Dist + (1|pop) + (1|block), data=ucd_total_fitness_scaled)
+ucd_total_fitness_scaled <- ucd_total_fitness %>% mutate_at(c("GrwSsn_GD_Recent","Wtr_Year_GD_Recent",
+                                                              "GrwSsn_GD_Historical","Wtr_Year_GD_Historical", "Geographic_Dist"), scale)
+ucd_total_fitness_gs_mod1 <- lmer(Total_Fitness ~ GrwSsn_GD_Recent + GrwSsn_GD_Historical + Geographic_Dist + (1|pop) + (1|block), data=ucd_total_fitness_scaled)
 summary(ucd_total_fitness_gs_mod1)
 ranova(ucd_total_fitness_gs_mod1)
 anova(ucd_total_fitness_gs_mod1)
 tidy(ucd_total_fitness_gs_mod1)
 
-ucd_total_fitness_wy_mod1 <- lmer(Total_Fitness ~ Wtr_Year_GD_Recent + Geographic_Dist + (1|pop) + (1|block), data=ucd_total_fitness_scaled)
+ucd_total_fitness_wy_mod1 <- lmer(Total_Fitness ~ Wtr_Year_GD_Recent + Wtr_Year_GD_Historical + Geographic_Dist + (1|pop) + (1|block), data=ucd_total_fitness_scaled)
 summary(ucd_total_fitness_wy_mod1)
 ranova(ucd_total_fitness_wy_mod1)
 anova(ucd_total_fitness_wy_mod1)
