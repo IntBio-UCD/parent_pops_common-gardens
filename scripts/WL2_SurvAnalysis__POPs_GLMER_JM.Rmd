@@ -29,6 +29,7 @@ library(tidymodels)
 library(multilevelmod)
 library(broom.mixed)
 library(modelr)
+library(furrr)
 tidymodels_prefer()
 options(mc.cores = parallel::detectCores())
 ```
@@ -182,6 +183,10 @@ wl2_ind_surv <- wl2_ind %>% filter(os_weeks > 3) %>%
 wl2_estab_means <- wl2_ind_estab %>% # summary for plotting
   group_by(parent.pop) %>%
   summarize(survivorship = 1-mean(dead))
+
+wl2_surv_means <- wl2_ind_surv %>%
+  group_by(parent.pop, os_weeks) %>%
+  summarize(survivorship = 1-mean(dead))
 ```
 
 
@@ -257,6 +262,17 @@ estab_fits
 estab_fits <- estab_fits %>%
   mutate(fit = map(wflow, fit, data = wl2_ind_estab))
 ```
+
+Trying out multicore mapping
+```{r, eval=FALSE}
+estab_fits_test <- estab_fits %>%
+  select(-fit) %>%
+  mutate(fit = future_map(wflow, fit, data = wl2_ind_estab,
+                          .options = furrr_options(
+                            packages = c("tidymodels", "multilevelmod")
+                          )))
+```
+
 
 ```{r}
 estab_fits %>% mutate(glance=map(fit, glance)) %>% unnest(glance) %>% arrange(AIC) %>% select(-wflow:-sigma)
@@ -340,27 +356,13 @@ estab_GD_fits <- tibble(wflow=list(
       add_model(glmer.model, formula = dead ~ Wtr_Year_GD_Recent + (1|parent.pop) + (1|block))},
   
   WY_Historical = {estab_GD_wflow %>% 
-      add_model(glmer.model, formula = dead ~ Wtr_Year_GD_Historical + (1|parent.pop) + (1|block))},
-  
-  GS_Recent_pop = {estab_GD_wflow %>% 
-      add_model(glmer.model, formula = dead ~ GrwSsn_GD_Recent + (GrwSsn_GD_Recent|parent.pop) + (1|block))},
-  
-  GS_Historical_pop = {estab_GD_wflow %>% 
-      add_model(glmer.model, formula = dead ~ GrwSsn_GD_Historical + (GrwSsn_GD_Historical|parent.pop) + (1|block))},
-  
-  WY_Recent_pop = {estab_GD_wflow %>% 
-      add_model(glmer.model, formula = dead ~ Wtr_Year_GD_Recent + (Wtr_Year_GD_Recent|parent.pop) + (1|block))},
-  
-  WY_Historical_pop = {estab_GD_wflow %>% 
-      add_model(glmer.model, formula = dead ~ Wtr_Year_GD_Historical + (Wtr_Year_GD_Historical|parent.pop) + (1|block))}
+      add_model(glmer.model, formula = dead ~ Wtr_Year_GD_Historical + (1|parent.pop) + (1|block))}
   
 ),
 name=names(wflow)
 ) %>% 
   select(name,wflow) %>%
   mutate(fit = map(wflow, fit, data = wl2_ind_estab))
-
-
 
 ```
 
@@ -382,57 +384,56 @@ estab_GD_fits %>% mutate(tidy=map(fit, tidy)) %>% unnest(tidy) %>%
 
 check basic model forms
 ```{r}
+# Note: StdDev due to mf withint parent.pop is essentially zero, so I am omitting this.
+
 surv_wflow <- workflow() %>%
   add_variables(outcomes = dead, predictors = c(parent.pop, mf, block, os_weeks, os_weeks_f)) 
 
 surv_fits_1 <- tibble(wflow=list(
-  pop = {surv_wflow %>% 
-      add_model(glmer.model, formula = dead ~ (1|parent.pop))},
-  
+
   pop.block = {surv_wflow %>% 
       add_model(glmer.model, formula = dead ~ (1|parent.pop) + (1|block))},
   
-  pop.weeks_f ={surv_wflow %>% 
-      add_model(glmer.model, formula = dead ~ os_weeks_f + (1|parent.pop))},
-  
   pop.weeks_f.block ={surv_wflow %>% 
       add_model(glmer.model, formula = dead ~ os_weeks_f + (1|parent.pop) + (1|block))},
-  
-  pop.weeks_f.int ={surv_wflow %>% 
-      add_model(glmer.model, formula = dead ~ os_weeks_f + (os_weeks_f|parent.pop))},
-  
-  pop.weeks_f.int.block ={surv_wflow %>% 
-      add_model(glmer.model, formula = dead ~ os_weeks_f + (os_weeks_f|parent.pop) + (1|block))},
-  
-  pop.weeks ={surv_wflow %>% 
-      add_model(glmer.model, formula = dead ~ os_weeks + (1|parent.pop))},
-  
+
   pop.weeks.block ={surv_wflow %>% 
       add_model(glmer.model, formula = dead ~ os_weeks + (1|parent.pop) + (1|block))},
-  
-  pop.weeks.int ={surv_wflow %>% 
-      add_model(glmer.model, formula = dead ~ os_weeks + (os_weeks_f|parent.pop))},
-  
-  pop.weeks.int.block ={surv_wflow %>% 
-      add_model(glmer.model, formula = dead ~ os_weeks + (os_weeks_f|parent.pop) + (1|block))},
-  
-  pop.weeks.quad ={surv_wflow %>% 
-      add_model(glmer.model, formula = dead ~ os_weeks + I(os_weeks^2) + (1|parent.pop))},
-  
+
   pop.weeks.quad.block ={surv_wflow %>% 
-      add_model(glmer.model, formula = dead ~ os_weeks + I(os_weeks^2) + (1|parent.pop) + (1|block))},
+      add_model(glmer.model, formula = dead ~ os_weeks + I(os_weeks^2) + (1|parent.pop) + (1|block))}
+      
+  # Models commented out fail to converge, so not running them.
+  # Any model that has a RE slope temer for weeks fails.
+  # Note:only having os_weeks as RE slope does not fix this.
   
-  pop.weeks.quad.int ={surv_wflow %>% 
-      add_model(glmer.model, formula = dead ~ os_weeks + I(os_weeks^2) + (os_weeks_f|parent.pop))},
+  # pop.weeks_f.int ={surv_wflow %>% 
+  #     add_model(glmer.model, formula = dead ~ os_weeks_f + (os_weeks_f|parent.pop))},
+  # 
+  # pop.weeks_f.int.block ={surv_wflow %>% 
+  #     add_model(glmer.model, formula = dead ~ os_weeks_f + (os_weeks_f|parent.pop) + (1|block))},
+  # 
+
+  # pop.weeks.int ={surv_wflow %>% 
+  #     add_model(glmer.model, formula = dead ~ os_weeks + (os_weeks_f|parent.pop))},
+  # 
+  # pop.weeks.int.block ={surv_wflow %>% 
+  #     add_model(glmer.model, formula = dead ~ os_weeks + (os_weeks_f|parent.pop) + (1|block))},
+
+  # Models below fail to converge, so not running them.
+  # Note:only having os_weeks as RE slope does not fix this.
   
-  pop.weeks.quad.quad.int ={surv_wflow %>% 
-      add_model(glmer.model, formula = dead ~ os_weeks + I(os_weeks^2) + (os_weeks_f + I(os_weeks^2)|parent.pop))},
-  
-  pop.weeks.quad.int.block ={surv_wflow %>% 
-      add_model(glmer.model, formula = dead ~ os_weeks + I(os_weeks^2) + (os_weeks_f|parent.pop) + (1|block))},
-  
-    pop.weeks.quad.quad.int.block ={surv_wflow %>% 
-      add_model(glmer.model, formula = dead ~ os_weeks + I(os_weeks^2) + (os_weeks_f + I(os_weeks^2)|parent.pop) + (1|block))}
+  # pop.weeks.quad.int ={surv_wflow %>% 
+  #     add_model(glmer.model, formula = dead ~ os_weeks + I(os_weeks^2) + (os_weeks_f|parent.pop))},
+  # 
+  # pop.weeks.quad.quad.int ={surv_wflow %>% 
+  #     add_model(glmer.model, formula = dead ~ os_weeks + I(os_weeks^2) + (os_weeks_f + I(os_weeks^2)|parent.pop))},
+  # 
+  # pop.weeks.quad.int.block ={surv_wflow %>% 
+  #     add_model(glmer.model, formula = dead ~ os_weeks + I(os_weeks^2) + (os_weeks_f|parent.pop) + (1|block))},
+  # 
+  # pop.weeks.quad.quad.int.block ={surv_wflow %>% 
+  #     add_model(glmer.model, formula = dead ~ os_weeks + I(os_weeks^2) + (os_weeks_f + I(os_weeks^2)|parent.pop) + (1|block))}
     
 ),
 name=names(wflow)
@@ -441,7 +442,6 @@ name=names(wflow)
 surv_fits_1
 ```
 
-This is slow!!
 ```{r}
 system.time(
   surv_fits_1 <- surv_fits_1 %>%
@@ -456,99 +456,27 @@ surv_fits_1 <- surv_fits_1 %>%
 surv_fits_1 %>% select(name, message) %>%
   arrange(message, name)
 ```
-No models where I had a time slope random effect for each pop converged.
+A little strange since I get a warning when running about failure to converge for the model with os_weeks_f
+
+```{r}
+surv_fits_1 %>% pull(fit)
+```
 
 ```{r}
 surv_fits_1 %>% 
   filter(!str_detect(message, "failure")) %>%
   mutate(glance=map(fit, glance)) %>% 
   unnest(glance) %>% 
-  arrange(AIC) %>%
+  arrange(BIC) %>%
   select(-wflow:-sigma)
 ```
 
-What if no time main-effect in RE interaction models?
-
-```{r}
-surv_wflow <- workflow() %>%
-  add_variables(outcomes = dead, predictors = c(parent.pop, mf, block, os_weeks, os_weeks_f)) 
-
-surv_fits_2 <- tibble(wflow=list(
-  pop = {surv_wflow %>% 
-      add_model(glmer.model, formula = dead ~ (1|parent.pop))},
-  
-  pop.block = {surv_wflow %>% 
-      add_model(glmer.model, formula = dead ~ (1|parent.pop) + (1|block))},
-  
-  pop.weeks_f ={surv_wflow %>% 
-      add_model(glmer.model, formula = dead ~ os_weeks_f + (1|parent.pop))},
-  
-  pop.weeks_f.block ={surv_wflow %>% 
-      add_model(glmer.model, formula = dead ~ os_weeks_f + (1|parent.pop) + (1|block))},
-  
-  pop.weeks_f.int ={surv_wflow %>% 
-      add_model(glmer.model, formula = dead ~  (os_weeks_f|parent.pop))},
-  
-  pop.weeks_f.int.block ={surv_wflow %>% 
-      add_model(glmer.model, formula = dead ~  (os_weeks_f|parent.pop) + (1|block))},
-  
-  pop.weeks ={surv_wflow %>% 
-      add_model(glmer.model, formula = dead ~ os_weeks + (1|parent.pop))},
-  
-  pop.weeks.block ={surv_wflow %>% 
-      add_model(glmer.model, formula = dead ~ os_weeks + (1|parent.pop) + (1|block))},
-  
-  pop.weeks.int ={surv_wflow %>% 
-      add_model(glmer.model, formula = dead ~  (os_weeks_f|parent.pop))},
-  
-  pop.weeks.int.block ={surv_wflow %>% 
-      add_model(glmer.model, formula = dead ~  (os_weeks_f|parent.pop) + (1|block))},
-  
-  pop.weeks.quad ={surv_wflow %>% 
-      add_model(glmer.model, formula = dead ~ os_weeks + I(os_weeks^2) + (1|parent.pop))},
-  
-  pop.weeks.quad.block ={surv_wflow %>% 
-      add_model(glmer.model, formula = dead ~ os_weeks + I(os_weeks^2) + (1|parent.pop) + (1|block))},
-  
-  pop.weeks.quad.int ={surv_wflow %>% 
-      add_model(glmer.model, formula = dead ~  I(os_weeks^2) + (os_weeks_f|parent.pop))},
-  
-  pop.weeks.quad.quad.int ={surv_wflow %>% 
-      add_model(glmer.model, formula = dead ~  (os_weeks_f + I(os_weeks^2)|parent.pop))},
-  
-  pop.weeks.quad.int.block ={surv_wflow %>% 
-      add_model(glmer.model, formula = dead ~  I(os_weeks^2) + (os_weeks_f|parent.pop) + (1|block))},
-  
-    pop.weeks.quad.quad.int.block ={surv_wflow %>% 
-      add_model(glmer.model, formula = dead ~  (os_weeks_f + I(os_weeks^2)|parent.pop) + (1|block))}
-    
-),
-name=names(wflow)
-) %>% 
-  select(name,wflow)
-surv_fits_2
-```
-
-This is slow!!
-```{r}
-system.time(
-  surv_fits_2 <- surv_fits_2 %>%
-  mutate(fit = map(wflow, fit, data = wl2_ind_surv))
-)
-```
-get warnings
-```{r}
-surv_fits_1 <- surv_fits_1 %>%
-  mutate(message=map_chr(fit, \(x) {extract_fit_engine(x) %>% .@optinfo %>% magrittr::extract2("message")}))
-
-surv_fits_1 %>% select(name, message) %>%
-  arrange(message, name)
-```
-
+All models with a random slope for time for each pop don't converge.
 
 get bootstrap predictions and plot
 ```{r}
-surv_nd <- data_grid(wl2_ind_surv, parent.pop)
+surv_nd <- data_grid(wl2_ind_surv, parent.pop, os_weeks) %>%
+  mutate(os_weeks_f = factor(os_weeks))
 
 surv_predict_fun <- function(m, nd = surv_nd) {
   predict(m, 
@@ -559,14 +487,15 @@ surv_predict_fun <- function(m, nd = surv_nd) {
     subtract(1, .) # convert hazard to survivorship
 }
 
-# 100 seconds
-system.time (surv_fits <- surv_fits %>% 
+# ~975 seconds for 100.  Need to go somewhere other than my laptop for more
+system.time (surv_fits_1 <- surv_fits_1 %>% 
+                 filter(!str_detect(message, "failure")) %>%
                mutate(
                  bootstrap = map(fit, \(x) {
                    extract_fit_engine(x) %>% 
                      bootMer(FUN = surv_predict_fun,
                              re.form = ~ (1|parent.pop),
-                             nsim = 1000,
+                             nsim = 100,
                              parallel = "multicore",
                              ncpus = 7
                      ) } #bootMer
@@ -577,481 +506,81 @@ system.time (surv_fits <- surv_fits %>%
 ) # system.time
 ```
 
+```{r}
+save.image("../output/JM_GLMER.Rdata")
+```
 
 ```{r}
-surv_fits %>%
+surv_fits_1 %>%
   select(name, tidyboot) %>%
   unnest(tidyboot) %>%
-  ggplot(aes(x=parent.pop)) +
-  geom_col(aes(y=survivorship), data = wl2_surv_means, fill="skyblue") +
-  geom_pointrange(aes(y=statistic, ymax = conf.high, ymin = conf.low, color=name), position = position_dodge(width = .75)) +
-  scale_color_viridis_d() +
-  theme(axis.text.x = element_text(angle=90, hjust=1, vjust=.5))
-  
-
-# NOTE: need bootmer for standard errors on predictions
-```
-
-### simple2: time only
-
-```{r}
-s.m2 <- brm(n.newly.dead | trials(n)  ~ 0 + os_weeks_f, 
-          prior(normal(0, 4), class = b),
-          family = "binomial",
-          chains = 4, cores = 4, refresh = 0,
-          data = na.omit(wl2_obs.pop.surv),
-          save_pars = save_pars(all = TRUE)) %>%
-  add_criterion("loo", moment_match = TRUE)
-```
-
-```{r}
-summary(s.m2)
-```
-
-The estimates above are on the logit scale.  Transform them back to hazard probabilities
-```{r}
-fixef(s.m2) %>% inv_logit_scaled()
-```
-
-```{r}
-plot(s.m2, ask = FALSE, nvariables = 3)
-```
-```{r}
-plot_fit_pop(s.m2)
-```
-
-
-### time and pop
-
-```{r}
-s.m3 <- brm(n.newly.dead | trials(n)  ~ 0 + os_weeks_f + (1|parent.pop), 
-          prior(normal(0, 4), class = b),
-          family = "binomial",
-          chains = 4, cores = 4, refresh = 0,
-          data = wl2_obs.pop.surv,
-          save_pars = save_pars(all = TRUE)) %>%
-  add_criterion("loo", moment_match = TRUE)
-```
-
-```{r}
-summary(s.m3)
-```
-```{r}
-plot(s.m3, ask = FALSE, nvariables = 3)
-```
-
-
-from logit to hazard probabilities:
-```{r}
-fixef(s.m3) %>% inv_logit_scaled()
-```
-survivorship
-```{r}
-wl2_obs.pop.surv %>% droplevels() %>% data_grid(os_weeks_f, parent.pop, n=1) %>%
-  add_epred_draws(s.m3) %>% 
-  # convert hazard to survival probability (1 - hazard)
-  mutate(point.survivorship = 1 - .epred) %>%
-  
-  # calculate the cumulative survivorship
-  arrange(parent.pop, .draw, os_weeks_f) %>% 
-  group_by(parent.pop, .draw) %>%
-  mutate(cum.survivorship = cumprod(point.survivorship)) %>%
-  group_by(parent.pop, os_weeks_f) %>%
-  point_interval(point.survivorship, cum.survivorship, .interval = hdci) 
-```
-
-```{r}
-plot_fit_pop(s.m3)
-```
-
-
-```{r}
-loo_compare(s.m2, s.m3)
-```
-
-pop still matters
-
-### week and pop interaction
-
-```{r}
-s.m4 <- brm(n.newly.dead | trials(n)  ~ 0 + os_weeks_f + (os_weeks_f|parent.pop), 
-          prior(normal(0, 4), class = b),
-          family = "binomial",
-          chains = 4, cores = 4, refresh = 0,
-          data = wl2_obs.pop.surv,
-          save_pars = save_pars(all = TRUE)) %>%
-  add_criterion("loo", moment_match = TRUE)
-```
-
-```{r}
-summary(s.m4)
-```
-
-```{r}
-plot(s.m4, ask = FALSE, nvariables = 3)
-```
-
-
-from logit to hazard probabilities:
-```{r}
-fixef(s.m4) %>% inv_logit_scaled()
-```
-survivorship
-```{r}
-wl2_obs.pop.surv %>% droplevels() %>% data_grid(os_weeks_f, parent.pop, n=1) %>%
-  add_epred_draws(s.m4) %>% 
-  # convert hazard to survival probability (1 - hazard)
-  mutate(point.survivorship = 1 - .epred) %>%
-  
-  # calculate the cumulative survivorship
-  arrange(parent.pop, .draw, os_weeks_f) %>% 
-  group_by(parent.pop, .draw) %>%
-  mutate(cum.survivorship = cumprod(point.survivorship)) %>%
-  group_by(parent.pop, os_weeks_f) %>%
-  point_interval(point.survivorship, cum.survivorship, .interval = hdci) 
-```
-
-```{r, fig.height=10}
-plot_fit_pop(s.m4) + facet_wrap(~parent.pop) + theme(legend.position = "none")
-```
-
-
-```{r}
-loo_compare(s.m2, s.m3, s.m4)
-```
-s.m4 preferred
-
-## Continuous time
-
-### linear
-
-#### linear time only
-```{r}
-s.m9 <- brm(n.newly.dead | trials(n)  ~ os_weeks, 
-          prior(normal(0, 4), class = b),
-          family = "binomial",
-          chains = 4, cores = 4, refresh = 0,
-          data = wl2_obs.pop.surv,
-          save_pars = save_pars(all = TRUE)) %>%
-  add_criterion("loo", moment_match = TRUE)
-```
-
-```{r}
-summary(s.m9)
-```
-
-```{r}
-plot(s.m9, nvariables=3, ask=FALSE)
-```
-
-
-logit to hazard probabilities
-```{r}
-fixef(s.m9) %>% inv_logit_scaled()
-```
-
-```{r}
-plot_fit_pop(s.m9)
-
-```
-
-
-#### linear with time and pops
-
-```{r}
-s.m10 <- brm(n.newly.dead | trials(n)  ~ os_weeks + (1|parent.pop), 
-          prior(normal(0, 4), class = b),
-          family = "binomial",
-          chains = 4, cores = 4, refresh = 0,
-          data = wl2_obs.pop.surv,
-          save_pars = save_pars(all = TRUE)) %>%
-  add_criterion("loo", moment_match = TRUE)
-```
-
-```{r}
-plot(s.m10, ask = FALSE, nvariables = 3)
-```
-
-```{r}
-summary(s.m10)
-```
-
-```{r, fig.height=10}
-plot_fit_pop(s.m10) + facet_wrap(~parent.pop) +   theme(legend.position = "none")
-```
-
-
-```{r}
-loo_compare(s.m2, s.m3, s.m4, s.m6, s.m9, s.m10)
-```
-
-pops matter
-
-#### linear with time and random slope for each pop
-
-```{r}
-s.m11 <- brm(n.newly.dead | trials(n)  ~ os_weeks +(os_weeks|parent.pop), 
-          prior(normal(0, 4), class = b),
-          family = "binomial",
-          chains = 4, cores = 4, refresh = 0,
-          data = wl2_obs.pop.surv,
-          save_pars = save_pars(all = TRUE),
-          control = list(adapt_delta = 0.9)) %>%
-  add_criterion("loo", moment_match = TRUE)
-```
-
-```{r}
-plot(s.m11, ask = FALSE, nvariables = 3)
-```
-
-
-```{r}
-summary(s.m11)
-```
-
-```{r, fig.height=10}
-plot_fit_pop(s.m11) + facet_wrap(~parent.pop) +   theme(legend.position = "none")
-```
-
-
-```{r}
-loo_compare(s.m2, s.m3, s.m4, s.m6, s.m9, s.m10, s.m11)
-```
-
-#### Linear without a main effect for os_weeks
-```{r}
-s.m12 <- brm(n.newly.dead | trials(n)  ~ (os_weeks|parent.pop), 
-         # prior(normal(0, 4), class = b),
-          family = "binomial",
-          chains = 4, cores = 4, #refresh = 0,
-          data = wl2_obs.pop.surv,
-          save_pars = save_pars(all = TRUE),
-          control = list(adapt_delta = 0.9)) %>%
-  add_criterion("loo", moment_match = TRUE)
-```
-
-```{r}
-plot(s.m12, ask = FALSE, nvariables = 3)
-```
-
-
-```{r}
-summary(s.m12)
-summary(s.m12.original)
-```
-
-```{r, fig.height=10}
-plot_fit_pop(s.m12) + facet_wrap(~parent.pop) +   theme(legend.position = "none")
-```
-
-```{r}
-ranef(s.m12)
-```
-
-
-```{r}
-loo_compare(s.m2, s.m3, s.m4, s.m6, s.m9, s.m10, s.m11, s.m12)
-```
-
-Fits as well as m11
-
-
-### quadratic
-
-```{r}
-s.m13 <- brm(n.newly.dead | trials(n)  ~ os_weeks + I(os_weeks^2) + (1|parent.pop), 
-          prior(normal(0, 4), class = b),
-          family = "binomial",
-          chains = 4, cores = 4, refresh = 0,
-          data = wl2_obs.pop.surv,
-          save_pars = save_pars(all = TRUE)) %>%
-  add_criterion("loo", moment_match = TRUE)
-```
-
-```{r}
-plot(s.m13, ask = FALSE, nvariables = 3)
-```
-
-```{r}
-summary(s.m13)
-```
-
-```{r, fig.height=10}
-plot_fit_pop(s.m13) + facet_wrap(~parent.pop) +   theme(legend.position = "none")
-```
-
-```{r}
-loo_compare(s.m2, s.m3, s.m4, s.m6, s.m9, s.m10, s.m11, s.m12, s.m13)
-```
-The linear is preferred
-
-#### Quadratic with linear slope for pop
-
-```{r}
-s.m14 <- brm(n.newly.dead | trials(n)  ~ os_weeks + I(os_weeks^2) + (os_weeks|parent.pop), 
-          prior(normal(0, 4), class = b),
-          family = "binomial",
-          chains = 4, cores = 4, refresh = 0,
-          data = wl2_obs.pop.surv,
-          save_pars = save_pars(all = TRUE)) %>%
-  add_criterion("loo", moment_match = TRUE)
-```
-
-```{r}
-plot(s.m14, ask = FALSE, nvariables = 3)
-```
-
-```{r}
-summary(s.m14)
-```
-
-```{r, fig.height=10}
-plot_fit_pop(s.m14) + facet_wrap(~parent.pop) +   theme(legend.position = "none")
-```
-
-```{r}
-loo_compare(s.m2, s.m3, s.m4, s.m6, s.m9, s.m10, s.m11, s.m12, s.m13, s.m14)
-```
-Quadratic and linear equivalent
-
-
-#### Quadratic with quadratic slope for pop
-```{r}
-s.m15 <- brm(n.newly.dead | trials(n)  ~ os_weeks + I(os_weeks^2) + (os_weeks + I(os_weeks^2)|parent.pop), 
-          prior(normal(0, 4), class = b),
-          family = "binomial",
-          chains = 4, cores = 4, refresh = 0,
-          data = wl2_obs.pop.surv,
-          save_pars = save_pars(all = TRUE)) %>%
-  add_criterion("loo", moment_match = TRUE)
-```
-
-```{r}
-plot(s.m15, ask = FALSE, nvariables = 3)
-```
-
-```{r}
-summary(s.m15)
-```
-
-```{r, fig.height=10}
-plot_fit_pop(s.m15) + facet_wrap(~parent.pop) +   theme(legend.position = "none")
-```
-
-```{r}
-loo_compare(s.m2, s.m3, s.m4, s.m6, s.m9, s.m10, s.m11, s.m12, s.m13, s.m14, s.m15)
-```
-
-#### Quadratic, no fixed time effects
-
-```{r}
-s.m16 <- brm(n.newly.dead | trials(n)  ~   (os_weeks + I(os_weeks^2)|parent.pop), 
-         # prior(normal(0, 4), class = b),
-          family = "binomial",
-          chains = 4, cores = 4, refresh = 0,
-          data = wl2_obs.pop.surv,
-          save_pars = save_pars(all = TRUE)) %>%
-  add_criterion("loo", moment_match = TRUE)
-```
-
-```{r}
-plot(s.m16, ask = FALSE, nvariables = 3)
-```
-
-```{r}
-summary(s.m16)
-```
-
-```{r, fig.height=10}
-plot_fit_pop(s.m16) + facet_wrap(~parent.pop) +   theme(legend.position = "none")
-```
-
-```{r}
-loo_compare(s.m2, s.m3, s.m4, s.m6, s.m9, s.m10, s.m11, s.m12, s.m13, s.m14, s.m15, s.m16)
-```
-
-# Summary
-
-The best survival model is linear with respect time, with random intercept and slope for each population.
-
-# What about random effect for block?
-
-To look at random effect for block we need to use Bernoulli instead of binomial (so we can use one observation per plant).
-
-We can start with `wl2_surv_dates_loc` but we have to fill it in for data points before each plant died.
-
-```{r}
-x <- wl2_surv_dates_loc %>% 
-  complete(Genotype, last_fup_date) %>%
-  filter(Genotype == "BH_1_1") %>% 
-  pull(block)
-
-x
-
-is.na(unique(x))
-```
-
-## NOT WORKING CORRECTLY
-```{r, eval=FALSE}
-wl2_surv_dates_ind <- wl2_surv_dates %>% 
-  complete(Genotype, last_fup_date) %>%
-  group_by(Genotype) %>%
-  mutate(across(c(-status, -last_fup_date, -os_weeks, -planting.date), \(x) ifelse(all(is.na(unique(x))), NA,unique(na.omit(x))))) %>%
-  mutate(planting.date = unique(na.omit(planting.date)),
-         os_weeks=as.duration(planting.date %--% last_fup_date) / dweeks(1),
-           status = ifelse((is.na(death.date) | mdy(death.date) > last_fup_date), 0, 1)) %>% # 0 is alive, 1 is dead
-  filter(cumsum(status) < 2) %>% # you can't die more than once
-  ungroup() %>%  
-  left_join(gowersdist_WL2 %>% filter(TimePd == "Historical"))
-
-wl2_surv_dates_ind %>% select(Genotype, last_fup_date, os_weeks, status)
-```
-
-Can I get the original data back out?
-```{r}
-wl2_surv_dates_ind %>%
-  group_by(parent.pop) %>%
-  mutate(total=length(unique(Genotype))) %>%
-  group_by(parent.pop, os_weeks) %>%
-    summarize(n.newly.dead=sum(status),
-            across(c(total, elevation.group, ends_with("GD")), unique)) %>%
-  ungroup() %>%
-  select(parent.pop, os_weeks, n.newly.dead, total)
+  mutate(survivorship = statistic) %>%
+  ggplot(aes(x=os_weeks, y = survivorship)) +
+  geom_line(aes(color=name)) +
+  geom_point(data = wl2_surv_means, pch=1) + 
+  facet_wrap(~parent.pop) +
+  scale_color_viridis_d() # +
+  #theme(axis.text.x = element_text(angle=90, hjust=1, vjust=.5))
   
 ```
-```{r}
-wl2_obs.pop
-```
 
+I AM HERE.  Code below should be ~ Correct
 
-```{r}
-wl2_surv_dates_ind %>% group_by(Genotype) %>% summarise(status=sum(status)) %>% arrange(desc(status))
-```
+Choose final model
 
-Redo s.m12 to make sure results are the same
+Check mf
 
-```{r, eval=FALSE}
-s.m12.bern <- brm(status  ~ (os_weeks|parent.pop/Genotype), 
-         # prior(normal(0, 4), class = b),
-          family = "bernoulli",
-          chains = 4, cores = 4, #refresh = 0,
-          data = wl2_surv_dates_ind,
-          save_pars = save_pars(all = TRUE),
-          control = list(adapt_delta = 0.9)) %>%
-  add_criterion("loo", moment_match = TRUE)
-```
+Add GDs
+
+### is Gower's distance an important predictor? 
+
+Also: check mf for final model
 
 ```{r}
-plot(s.m12.bern, ask = FALSE, nvariables = 3)
-```
+surv_GD_wflow <- workflow() %>%
+  add_variables(outcomes = dead, predictors = c(parent.pop, mf, block, os_weeks,  contains("GD"))) 
 
+surv_GD_fits <- tibble(wflow=list(
+
+  pop.weeks.block = {surv_GD_wflow %>% 
+      add_model(glmer.model, formula = dead ~ os_weeks + (1|parent.pop) + (1|block))},
+  
+  pop.mf.weeks.block = {surv_GD_wflow %>% 
+      add_model(glmer.model, formula = dead ~ os_weeks + (1|parent.pop/mf) + (1|block))},
+  
+  GS_Recent = {surv_GD_wflow %>% 
+      add_model(glmer.model, formula = dead ~ os_weeks + GrwSsn_GD_Recent + (1|parent.pop) + (1|block))},
+  
+  GS_Historical = {surv_GD_wflow %>% 
+      add_model(glmer.model, formula = dead ~ os_weeks + GrwSsn_GD_Historical + (1|parent.pop) + (1|block))},
+  
+  WY_Recent = {surv_GD_wflow %>% 
+      add_model(glmer.model, formula = dead ~ os_weeks + Wtr_Year_GD_Recent + (1|parent.pop) + (1|block))},
+  
+  WY_Historical = {surv_GD_wflow %>% 
+      add_model(glmer.model, formula = dead ~ os_weeks + Wtr_Year_GD_Historical + (1|parent.pop) + (1|block))}
+
+),
+name=names(wflow)
+) %>% 
+  select(name,wflow) %>%
+  mutate(fit = map(wflow, fit, data = wl2_ind_surv))
+
+```
 
 ```{r}
-summary(s.m12)
-summary(s.m12.bern)
+surv_GD_fits %>% 
+  mutate(glance=map(fit, glance)) %>% 
+  unnest(glance) %>% 
+  arrange(BIC) %>%
+  select(-wflow:-sigma)
 ```
 
-```{r, fig.height=10}
-plot_fit_pop(s.m12.bern) + facet_wrap(~parent.pop) +   theme(legend.position = "none")
+```{r}
+surv_GD_fits %>% 
+  mutate(tidy=map(fit, tidy)) %>% 
+  unnest(tidy) %>% 
+  filter(str_detect(term, "GD")) %>%
+  select(-wflow:-group) %>%
+  arrange(p.value)
 ```
-
