@@ -542,22 +542,22 @@ surv_GD_wflow <- workflow() %>%
 
 surv_GD_fits <- tibble(wflow=list(
 
-  pop.weeks.block = {surv_wflow %>% 
+  pop.weeks.block = {surv_GD_wflow %>% 
       add_model(glmer.model, formula = dead ~ os_weeks + (1|parent.pop) + (1|block))},
   
-  pop.mf.weeks.block = {surv_wflow %>% 
+  pop.mf.weeks.block = {surv_GD_wflow %>% 
       add_model(glmer.model, formula = dead ~ os_weeks + (1|parent.pop/mf) + (1|block))},
   
-  GS_Recent = {surv_wflow %>% 
+  GS_Recent = {surv_GD_wflow %>% 
       add_model(glmer.model, formula = dead ~ os_weeks + GrwSsn_GD_Recent + (1|parent.pop) + (1|block))},
   
-  GS_Historical = {surv_wflow %>% 
+  GS_Historical = {surv_GD_wflow %>% 
       add_model(glmer.model, formula = dead ~ os_weeks + GrwSsn_GD_Historical + (1|parent.pop) + (1|block))},
   
-  WY_Recent = {surv_wflow %>% 
+  WY_Recent = {surv_GD_wflow %>% 
       add_model(glmer.model, formula = dead ~ os_weeks + Wtr_Year_GD_Recent + (1|parent.pop) + (1|block))},
   
-  WY_Historical = {surv_wflow %>% 
+  WY_Historical = {surv_GD_wflow %>% 
       add_model(glmer.model, formula = dead ~ os_weeks + Wtr_Year_GD_Historical + (1|parent.pop) + (1|block))}
 
 ),
@@ -568,3 +568,19 @@ name=names(wflow)
 
 ```
 
+```{r}
+surv_GD_fits %>% 
+  mutate(glance=map(fit, glance)) %>% 
+  unnest(glance) %>% 
+  arrange(BIC) %>%
+  select(-wflow:-sigma)
+```
+
+```{r}
+surv_GD_fits %>% 
+  mutate(tidy=map(fit, tidy)) %>% 
+  unnest(tidy) %>% 
+  filter(str_detect(term, "GD")) %>%
+  select(-wflow:-group) %>%
+  arrange(p.value)
+```
