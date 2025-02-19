@@ -299,6 +299,10 @@ for(i in 1:23) {
 boot_recent_results <- tidy(gowers.boot_recent,conf.int=TRUE,conf.method="norm") %>%  #all pops
   rename(Gowers_Dist = statistic) %>% 
   mutate(TimePd="Recent")
+
+boot.ci(gowers.boot_recent, index=2)
+tidy(gowers.boot_recent,conf.int=TRUE,conf.method="perc")
+confint(gowers.boot_recent)
 ```
 
 Historical
@@ -354,6 +358,111 @@ historical_fig <- boot_gowers_results_all %>%
 plot_grid(historical_fig, recent_fig)
 ggsave("../output/Climate/full_year_Gowers_fromDavis_wtr_year.png", width = 24, height = 8, units = "in")
 ```
+
+## PCA Climate Distance
+
+### Merge garden climate with home sites 
+```{r}
+full_year_home_avgs_flint <- read_csv("../output/Climate/fullyear_FlintAvgs.csv")
+full_year_home_avgs_bioclim <- read_csv("../output/Climate/fullyear_BioClimAvgs.csv")
+full_year_home_avgs <- full_join(full_year_home_avgs_flint, full_year_home_avgs_bioclim)
+names(full_year_home_avgs)
+
+davis_climate_all_long <- davis_climate_all %>% 
+  mutate(parent.pop="UCD_Garden", elevation.group="Low", elev_m=16, Lat=38.53250, Long=-121.7830) %>% 
+  rename_with(~str_remove(., "_Davis"), everything())
+
+davis_home_recent_avgs <- full_year_home_avgs %>% 
+  filter(TimePd=="Recent") %>% 
+  bind_rows(davis_climate_all_long) %>% 
+  select(-TimePd)
+names(davis_home_recent_avgs)
+```
+
+### Correlations - Recent
+
+```{r}
+#normalize the data
+climate_normalized_davis_home_recent_avgs <- davis_home_recent_avgs %>% ungroup() %>% 
+  select(cwd:ppt_coldest_quarter) %>% scale() #normalize the data so they're all on the same scale
+head(climate_normalized_davis_home_recent_avgs)
+cor.norm = cor(climate_normalized_davis_home_recent_avgs) #test correlations among the traits
+cor.norm
+corrplot(cor.norm)
+
+#tmn, tmx, tmean_wettest_quarter, tmean_driest_quarter and ann_tmean all highly correlated (96-99%) - only keep ann_tmean 
+#ann_ppt and ppt 100% correlated (ppt = avg across monts, ann_ppt = avg of the total ppt in a year) - only keep ann_ppt
+#ppt_warmest and coldest quarter highly correlated with ann_ppt and ppt - take both out 
+```
+
+### PCA - Recent + Historical
+
+```{r}
+davis_home_recent_avgs.pc = prcomp(davis_home_recent_avgs[c(6:7, 11:14, 17:18)], scale = TRUE, center = TRUE)
+#str(davis_home_recent_avgs.pc)
+```
+
+plot % Variance Explained
+
+```{r}
+summary(davis_home_recent_avgs.pc)
+
+tibble(PC=str_c("PC",str_pad(1:7,2,pad="0")),
+       percent_var=davis_home_recent_avgs.pc$sdev[1:7]^2/sum(davis_home_recent_avgs.pc$sdev^2)*100) %>%
+  ggplot(aes(x=PC, y=percent_var)) +
+  geom_col() +
+  ggtitle("Percent Variance Explained")
+```
+
+Combine PCs with metadata
+
+```{r}
+davis_home_recent_avgs.pc.dat = data.frame(davis_home_recent_avgs.pc$x)
+
+davis_home_recent_avgs_locs.pc = cbind(davis_home_recent_avgs, davis_home_recent_avgs.pc.dat)
+
+davis_home_recent_avgs_loadings = data.frame(varnames=rownames(davis_home_recent_avgs.pc$rotation), davis_home_recent_avgs.pc$rotation)
+davis_home_recent_avgs_loadings
+```
+
+```{r}
+autoplot(davis_home_recent_avgs.pc, data = davis_home_recent_avgs,
+         colour='elev_m', alpha=0.5,
+         label=TRUE, label.label="parent.pop",
+         loadings=TRUE, loadings.colour='black', loadings.linewidth = 0.7,
+         loadings.label = TRUE, loadings.label.size=6, loadings.label.colour="black", 
+         loadings.label.vjust = -0.2, loadings.label.repel=TRUE) +
+   scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_vline(xintercept = 0, linetype="dashed") + geom_hline(yintercept = 0, linetype="dashed") +
+  theme_classic()
+```
+
+```{r}
+autoplot(davis_home_recent_avgs.pc, data = davis_home_recent_avgs,
+         x=1, y=3,
+         colour='elev_m', alpha=0.5,
+         label=TRUE, label.label="parent.pop",
+         loadings=TRUE, loadings.colour='black', loadings.linewidth = 0.7,
+         loadings.label = TRUE, loadings.label.size=6, loadings.label.colour="black", 
+         loadings.label.vjust = -0.2, loadings.label.repel=TRUE) +
+   scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_vline(xintercept = 0, linetype="dashed") + geom_hline(yintercept = 0, linetype="dashed") +
+  theme_classic()
+```
+
+```{r}
+autoplot(davis_home_recent_avgs.pc, data = davis_home_recent_avgs,
+         x=1, y=,
+         colour='elev_m', alpha=0.5,
+         label=TRUE, label.label="parent.pop",
+         loadings=TRUE, loadings.colour='black', loadings.linewidth = 0.7,
+         loadings.label = TRUE, loadings.label.size=6, loadings.label.colour="black", 
+         loadings.label.vjust = -0.2, loadings.label.repel=TRUE) +
+   scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_vline(xintercept = 0, linetype="dashed") + geom_hline(yintercept = 0, linetype="dashed") +
+  theme_classic()
+```
+
 
 ## Flint Climate Distance
 

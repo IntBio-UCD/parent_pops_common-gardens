@@ -92,6 +92,11 @@ WL2_climate %>%
 WL2_climate %>% 
   ggplot(aes(x=month,y=ppt)) +
   geom_point()
+
+WL2_climate %>% 
+  filter(if_else(pck>70, pck>70, 
+                 if_else(pck>0, tmn < 0, tmn <= -5)))
+#Dec is the first month after the start of the garden that met these conditions 
 ```
 
 
@@ -207,6 +212,11 @@ WL2_climate_2024 %>%
 WL2_climate_2024 %>% 
   ggplot(aes(x=month,y=ppt)) +
   geom_point()
+
+WL2_climate_2024 %>% 
+  filter(if_else(pck>70, pck>70, 
+                 if_else(pck>0, tmn < 0, tmn <= -5)))
+#Dec is the first month after the start of the garden that met these conditions 
 ```
 
 ### BioClim
