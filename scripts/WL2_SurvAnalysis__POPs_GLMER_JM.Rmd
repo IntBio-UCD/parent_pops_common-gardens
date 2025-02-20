@@ -1,5 +1,5 @@
 ---
-title: "WL2_Survival-Analysis"
+title: "WL2_Survival-Analysis--GLMER"
 author: "Julin Maloof"
 date: '`r Sys.Date()`'
 output: 
@@ -112,28 +112,6 @@ wl2_obs.pop <-
 #  bind_rows(week0.pop) %>%
 #  select(parent.pop, elevation.group, os_weeks, prop.surviving) %>%
   arrange(parent.pop, os_weeks)
-
-# Add a week 0 with all plants
-
-wl2_obs.pop.0 <- wl2_obs.pop %>%
-  filter(os_weeks==1) %>%
-   mutate(os_weeks = 0,
-          n.newly.dead = 0,
-          total.dead = 0,
-          surviving = total,
-          prop.surviving = 1) %>%
-   rbind(wl2_obs.pop) %>%
-   arrange(parent.pop, os_weeks)
-
-wl2_obs.pop.0 %>%
-  ggplot(aes(x=os_weeks, y = prop.surviving, color = elevation.group)) +
-  geom_smooth() +
-  geom_point()
-
-wl2_obs.pop.0 %>%
-  ggplot(aes(x=os_weeks, y = prop.surviving, color = parent.pop)) +
-  geom_line() +
-  geom_point()
 ```
 
 
@@ -187,44 +165,6 @@ wl2_estab_means <- wl2_ind_estab %>% # summary for plotting
 wl2_surv_means <- wl2_ind_surv %>%
   group_by(parent.pop, os_weeks) %>%
   summarize(survivorship = 1-mean(dead))
-```
-
-
-Create a plotting function for plotting the fits below:
-FIXME
-```{r, eval=FALSE}
-# only fixed to work with survival models, not establishment
-plot_fit_pop <- function(m, mname=NA, d=wl2_obs.pop.surv) {
-  if(is.na(mname)) mname <- deparse(substitute(m)) 
-  title = str_c(mname, ": ", {formula(m) %>% as.character %>% magrittr::extract2(1)})
-  
-  d %>% 
-    data_grid(os_weeks, parent.pop, n=1) %>%
-    mutate(os_weeks_f = factor(str_pad(round(os_weeks, 1), 2, pad = "0"))) %>% # padding so it will sort correctly
-
-    # Add the discrete hazard probabilities
-    add_epred_draws(m) %>% 
-    
-    # convert hazard to survival probability (1 - hazard)
-    mutate(point.survivorship = 1 - .epred) %>%
-    
-    # calculate the cumulative survivorship
-    arrange(parent.pop, .draw, os_weeks) %>% 
-    group_by(parent.pop, .draw) %>%
-    mutate(cum.survivorship = cumprod(point.survivorship)) %>%
-    
-    # calculate Bayesian highest density 95% credible intervals
-    group_by(parent.pop, os_weeks) %>%
-    point_interval(point.survivorship, cum.survivorship, .interval = hdci) %>%
-    
-    ggplot(aes(x = os_weeks, y = cum.survivorship, ymin = cum.survivorship.lower, ymax = cum.survivorship.upper, group = parent.pop)) +
-    geom_ribbon(fill="grey50", alpha = .5) +
-    geom_line(aes(color=parent.pop), lwd=1.5) +
-    geom_point(aes(x=os_weeks, y = prop.surviving.w3, color = parent.pop), data=d, inherit.aes = FALSE) +
-    scale_color_viridis_d() + 
-    ggtitle(title) +
-    theme(plot.title = element_text(size = 10))
-}
 ```
 
 # Establishment data set
