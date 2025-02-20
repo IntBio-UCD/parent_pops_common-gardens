@@ -232,7 +232,7 @@ temp_fits
 ```{r}
 system.time(
   temp_fits <- temp_fits %>%
-  mutate(fit = map(wflow, fit, data = drop_na(wl2_surv_ind_climate, roll_mean_min_temp_7, roll_mean_max_temp_7, roll_mean_mean_temp_7, roll_max_max_temp_7), .progress = TRUE))
+  mutate(fit = map(wflow, fit, data = drop_na(wl2_ind_surv_climate, roll_mean_min_temp_7, roll_mean_max_temp_7, roll_mean_mean_temp_7, roll_max_max_temp_7), .progress = TRUE))
 )
 ```
 
