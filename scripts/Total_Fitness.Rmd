@@ -1542,11 +1542,39 @@ ucd_total_fitness %>%
   geom_histogram()
 ```
 
+#### Transformations and Scaling 
+```{r}
+wl2_total_fitness_scaled <- wl2_total_fitness %>% mutate_at(c("GrwSsn_GD_Recent","Wtr_Year_GD_Recent",                                                           "GrwSsn_GD_Historical","Wtr_Year_GD_Historical","Geographic_Dist"),
+                                                            scale) %>% 
+  mutate(logTotalFitness=log(Total_Fitness+1),
+         log10TotalFitness=log10(Total_Fitness+1)) #log transformation, add 1 for 0s 
+
+wl2_total_fitness_scaled %>% #didn't help much 
+  ggplot(aes(x=logTotalFitness)) +
+  geom_histogram()
+
+wl2_total_fitness_scaled %>% #didn't help much 
+  ggplot(aes(x=log10TotalFitness)) +
+  geom_histogram()
+
+ucd_total_fitness_scaled <- ucd_total_fitness %>% mutate_at(c("GrwSsn_GD_Recent","Wtr_Year_GD_Recent",
+                                                              "GrwSsn_GD_Historical","Wtr_Year_GD_Historical",
+                                                              "Geographic_Dist"), scale) %>% 
+  mutate(logTotalFitness=log(Total_Fitness+1),
+         log10TotalFitness=log10(Total_Fitness+1)) #log transformation, add 1 for 0s 
+
+ucd_total_fitness_scaled %>% #didn't help much 
+  ggplot(aes(x=logTotalFitness)) +
+  geom_histogram()
+
+ucd_total_fitness_scaled %>% #didn't help much 
+  ggplot(aes(x=log10TotalFitness)) +
+  geom_histogram()
+```
+
+#### Models 
 WL2
 ```{r}
-wl2_total_fitness_scaled <- wl2_total_fitness %>% mutate_at(c("GrwSsn_GD_Recent","Wtr_Year_GD_Recent",
-                                                              "GrwSsn_GD_Historical","Wtr_Year_GD_Historical","Geographic_Dist"), scale)
-
 wl2_total_fitness_gs_mod1 <- lmer(Total_Fitness ~ GrwSsn_GD_Recent + GrwSsn_GD_Historical + Geographic_Dist + (1|pop) + (1|block), data=wl2_total_fitness_scaled)
 #summary(wl2_total_fitness_gs_mod1)
 #ranova(wl2_total_fitness_gs_mod1)
@@ -1556,10 +1584,18 @@ plot(wl2_total_fitness_gs_mod1, which = 1) #residuals vs. fitted plot, slightly 
 qqnorm(resid(wl2_total_fitness_gs_mod1))
 qqline(resid(wl2_total_fitness_gs_mod1))  #QQ plot: points do not fall nicely on the line --> bad (long tail)
 
+## Poisson distribution
 wl2_total_fitness_gs_mod2 <- glmer(Total_Fitness ~ GrwSsn_GD_Recent + GrwSsn_GD_Historical + Geographic_Dist + (1|pop) + (1|block), data=wl2_total_fitness_scaled, family = "poisson")
 plot(wl2_total_fitness_gs_mod2, which = 1) #residuals vs. fitted plot: seems to be a pattern --> bad 
 qqnorm(resid(wl2_total_fitness_gs_mod2))
 qqline(resid(wl2_total_fitness_gs_mod2))  #QQ plot: still not good 
+
+##Log Transformation
+wl2_total_fitness_gs_mod3 <- lmer(logTotalFitness ~ GrwSsn_GD_Recent + GrwSsn_GD_Historical + Geographic_Dist + (1|pop) + (1|block), data=wl2_total_fitness_scaled)
+plot(wl2_total_fitness_gs_mod3, which = 1) #residuals vs. fitted plot: seems to be a pattern --> bad 
+qqnorm(resid(wl2_total_fitness_gs_mod3))
+qqline(resid(wl2_total_fitness_gs_mod3))  #QQ plot: still not good 
+
 
 wl2_total_fitness_wy_mod1 <- lmer(Total_Fitness ~ Wtr_Year_GD_Recent + Wtr_Year_GD_Historical + Geographic_Dist + (1|pop) + (1|block), data=wl2_total_fitness_scaled)
 #summary(wl2_total_fitness_wy_mod1)
@@ -1570,6 +1606,7 @@ plot(wl2_total_fitness_wy_mod1, which = 1) #residuals vs. fitted plot: seems to 
 qqnorm(resid(wl2_total_fitness_wy_mod1))
 qqline(resid(wl2_total_fitness_wy_mod1))  #QQ plot: points do not fall nicely on the line --> bad (long tail)
 
+## Poisson distribution
 wl2_total_fitness_wy_mod2 <- glmer(Total_Fitness ~ Wtr_Year_GD_Recent + Wtr_Year_GD_Historical + Geographic_Dist + (1|pop) + (1|block), data=wl2_total_fitness_scaled, family = "poisson")
 plot(wl2_total_fitness_wy_mod2, which = 1) #residuals vs. fitted plot: seems to be a pattern --> bad 
 qqnorm(resid(wl2_total_fitness_wy_mod2))
@@ -1578,9 +1615,6 @@ qqline(resid(wl2_total_fitness_wy_mod2))  #QQ plot: still not good
 
 DAVIS 
 ```{r}
-
-ucd_total_fitness_scaled <- ucd_total_fitness %>% mutate_at(c("GrwSsn_GD_Recent","Wtr_Year_GD_Recent",
-                                                              "GrwSsn_GD_Historical","Wtr_Year_GD_Historical", "Geographic_Dist"), scale)
 ucd_total_fitness_gs_mod1 <- lmer(Total_Fitness ~ GrwSsn_GD_Recent + GrwSsn_GD_Historical + Geographic_Dist + (1|pop) + (1|block), data=ucd_total_fitness_scaled)
 #summary(ucd_total_fitness_gs_mod1)
 #ranova(ucd_total_fitness_gs_mod1)
@@ -1590,6 +1624,7 @@ plot(ucd_total_fitness_gs_mod1, which = 1) #residuals vs. fitted plot, seems to 
 qqnorm(resid(ucd_total_fitness_gs_mod1))
 qqline(resid(ucd_total_fitness_gs_mod1))  #QQ plot: points do not fall nicely on the line --> bad (tail on both ends)
 
+## Poisson distribution
 ucd_total_fitness_gs_mod2 <- glmer(Total_Fitness ~ GrwSsn_GD_Recent + GrwSsn_GD_Historical + Geographic_Dist + (1|pop) + (1|block), data=ucd_total_fitness_scaled, family = "poisson")
 plot(ucd_total_fitness_gs_mod2, which = 1) #residuals vs. fitted plot: seems to be a pattern --> bad 
 qqnorm(resid(ucd_total_fitness_gs_mod2))
@@ -1604,6 +1639,7 @@ plot(ucd_total_fitness_wy_mod1, which = 1) #residuals vs. fitted plot, seems to 
 qqnorm(resid(ucd_total_fitness_wy_mod1))
 qqline(resid(ucd_total_fitness_wy_mod1))  #QQ plot: points do not fall nicely on the line --> bad (tail on both ends)
 
+## Poisson distribution
 ucd_total_fitness_wy_mod2 <- glmer(Total_Fitness ~ Wtr_Year_GD_Recent + Wtr_Year_GD_Historical + Geographic_Dist + (1|pop) + (1|block), data=ucd_total_fitness_scaled, family = "poisson")
 plot(ucd_total_fitness_wy_mod2, which = 1) #residuals vs. fitted plot: seems to be a pattern --> bad 
 qqnorm(resid(ucd_total_fitness_wy_mod2))
