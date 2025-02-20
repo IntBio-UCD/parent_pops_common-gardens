@@ -106,11 +106,11 @@ temp_summary <- temp %>%
     mean_temp_d = mean(SoilTemp)
   ) %>%
   mutate(
-    roll_mean_min_temp_7 = rollmean(min_temp_d, k = 7, align = "right", fill = NA),
-    roll_mean_max_temp_7 = rollmean(max_temp_d, k = 7, align = "right", fill = NA),
-    roll_mean_mean_temp_7 = rollmean(mean_temp_d, k = 7, align = "right", fill = NA),
-    roll_max_max_temp_7 = rollmax(max_temp_d, k = 7, align = "right", fill = NA),
-  )
+    across(ends_with("temp_d"), \(x) rollmean(x, k = 7, align = "right", fill = NA), .names="{.col}1_7"),
+    across(ends_with("temp_d"), \(x) rollmean(x, k = 13, align = "right", fill = NA), .names="{.col}1_13"), # 13 so I can get the first survey date
+    across(ends_with("1_7"), \(x) dplyr::lag(x, 6), .names = "{.col}_13") 
+  ) %>%
+  rename_with(\(x) str_replace(x, "1_7_13", "6_13"))
 
 temp_summary
 ```
@@ -141,7 +141,9 @@ moisture_summary <- moisture %>%
     mean_moisture_d = mean(s_moisture)
   ) %>%
   mutate(
-    roll_mean_soil_moisture_7 = rollmean(mean_moisture_d, k = 7, align = "right", fill = "extend"),
+    s_moisture_1_7 = rollmean(mean_moisture_d, k = 7, align = "right", fill = "extend"),
+    s_moisture_1_14 = rollmean(mean_moisture_d, k = 14, align = "right", fill = "extend"),
+    s_moisture_7_14 = dplyr::lag(s_moisture_1_7, 7)
   )
 
 moisture_summary
@@ -200,7 +202,7 @@ glmer.model <-
   set_engine("glmer", family = binomial)
 
 temp_wflow <- workflow() %>%
-  add_variables(outcomes = dead, predictors = c(parent.pop, block, os_weeks, roll_mean_min_temp_7, roll_mean_max_temp_7, roll_mean_mean_temp_7, roll_max_max_temp_7 )) 
+  add_variables(outcomes = dead, predictors = c(parent.pop, block, os_weeks, contains("temp_d")  )) 
 
 temp_fits <- tibble(wflow=list(
 
@@ -208,20 +210,32 @@ temp_fits <- tibble(wflow=list(
   pop.weeks.block ={temp_wflow %>% 
       add_model(glmer.model, formula = dead ~ os_weeks + (1|parent.pop) + (1|block))},
   
-    mean.min.temp ={temp_wflow %>% 
-      add_model(glmer.model, formula = dead ~ roll_mean_min_temp_7 + os_weeks + (1|parent.pop) + (1|block))},
+  min.temp.1.7 ={temp_wflow %>% 
+      add_model(glmer.model, formula = dead ~ min_temp_d1_7 + os_weeks + (1|parent.pop) + (1|block))},
   
-    mean.mean.temp ={temp_wflow %>% 
-      add_model(glmer.model, formula = dead ~ roll_mean_mean_temp_7 + os_weeks + (1|parent.pop) + (1|block))},
+  mean.temp.1.7 ={temp_wflow %>% 
+      add_model(glmer.model, formula = dead ~ mean_temp_d1_7 + os_weeks + (1|parent.pop) + (1|block))},
   
-  mean.mean.temp.re_slope ={temp_wflow %>% 
-      add_model(glmer.model, formula = dead ~ roll_mean_mean_temp_7 + os_weeks + (roll_mean_mean_temp_7|parent.pop) + (1|block))},
+  max.temp.1.7 ={temp_wflow %>% 
+      add_model(glmer.model, formula = dead ~ max_temp_d1_7 + os_weeks + (1|parent.pop) + (1|block))},
   
-    mean.max.temp ={temp_wflow %>% 
-      add_model(glmer.model, formula = dead ~ roll_mean_max_temp_7 + os_weeks + (1|parent.pop) + (1|block))},
+  min.temp.1.13 ={temp_wflow %>% 
+      add_model(glmer.model, formula = dead ~ min_temp_d1_13 + os_weeks + (1|parent.pop) + (1|block))},
   
-      max.max.temp ={temp_wflow %>% 
-      add_model(glmer.model, formula = dead ~ roll_max_max_temp_7 + os_weeks + (1|parent.pop) + (1|block))}
+  mean.temp.1.13 ={temp_wflow %>% 
+      add_model(glmer.model, formula = dead ~ mean_temp_d1_13 + os_weeks + (1|parent.pop) + (1|block))},
+  
+  max.temp.1.13 ={temp_wflow %>% 
+      add_model(glmer.model, formula = dead ~ max_temp_d1_13 + os_weeks + (1|parent.pop) + (1|block))},
+  
+  min.temp.6.13 ={temp_wflow %>% 
+      add_model(glmer.model, formula = dead ~ min_temp_d6_13 + os_weeks + (1|parent.pop) + (1|block))},
+  
+  mean.temp.6.13 ={temp_wflow %>% 
+      add_model(glmer.model, formula = dead ~ mean_temp_d6_13 + os_weeks + (1|parent.pop) + (1|block))},
+  
+  max.temp.6.13 ={temp_wflow %>% 
+      add_model(glmer.model, formula = dead ~ max_temp_d6_13 + os_weeks + (1|parent.pop) + (1|block))}
 ),
 name=names(wflow)
 ) %>% 
@@ -232,7 +246,7 @@ temp_fits
 ```{r}
 system.time(
   temp_fits <- temp_fits %>%
-  mutate(fit = map(wflow, fit, data = drop_na(wl2_ind_surv_climate, roll_mean_min_temp_7, roll_mean_max_temp_7, roll_mean_mean_temp_7, roll_max_max_temp_7), .progress = TRUE))
+  mutate(fit = map(wflow, fit, data = drop_na(wl2_ind_surv_climate, contains("temp_d")), .progress = TRUE))
 )
 ```
 
@@ -255,7 +269,8 @@ temp_fits %>%
   mutate(tidy=map(fit, tidy)) %>%
   select(name, tidy) %>%
   unnest(tidy) %>%
-  filter(str_detect(term, "^roll"))
+  filter(str_detect(term, "temp")) %>%
+  arrange(p.value)
 ```
 
 
@@ -268,7 +283,7 @@ glmer.model <-
   set_engine("glmer", family = binomial)
 
 moisture_wflow <- workflow() %>%
-  add_variables(outcomes = dead, predictors = c(parent.pop, block, os_weeks, roll_mean_soil_moisture_7 )) 
+  add_variables(outcomes = dead, predictors = c(parent.pop, block, os_weeks, contains("s_moisture") )) 
 
 moisture_fits <- tibble(wflow=list(
 
@@ -276,8 +291,14 @@ moisture_fits <- tibble(wflow=list(
   pop.weeks.block ={moisture_wflow %>% 
       add_model(glmer.model, formula = dead ~ os_weeks + (1|parent.pop) + (1|block))},
   
-    mean.moisture ={moisture_wflow %>% 
-      add_model(glmer.model, formula = dead ~ roll_mean_soil_moisture_7 + os_weeks + (1|parent.pop) + (1|block))}
+    s_moisture1.7 ={moisture_wflow %>% 
+      add_model(glmer.model, formula = dead ~ s_moisture_1_7 + os_weeks + (1|parent.pop) + (1|block))},
+  
+      s_moisture1.14 ={moisture_wflow %>% 
+      add_model(glmer.model, formula = dead ~ s_moisture_1_14 + os_weeks + (1|parent.pop) + (1|block))},
+      
+          s_moisture7.14 ={moisture_wflow %>% 
+      add_model(glmer.model, formula = dead ~ s_moisture_7_14 + os_weeks + (1|parent.pop) + (1|block))}
 ),
 name=names(wflow)
 ) %>% 
@@ -288,7 +309,7 @@ moisture_fits
 ```{r}
 system.time(
   moisture_fits <- moisture_fits %>%
-  mutate(fit = map(wflow, fit, data = drop_na(wl2_ind_surv_climate, roll_mean_soil_moisture_7), .progress = TRUE))
+  mutate(fit = map(wflow, fit, data = drop_na(wl2_ind_surv_climate, contains("s_moisture")), .progress = TRUE))
 )
 ```
 
