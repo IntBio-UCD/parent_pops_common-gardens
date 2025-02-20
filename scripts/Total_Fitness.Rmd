@@ -173,7 +173,7 @@ ucd_gowers %>%
   scale_fill_viridis(option="mako", direction = -1) +
   scale_y_continuous(expand = c(0, 0)) +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1)) 
-ggsave("../output/UCD_GeoDist.png", width = 12, height = 8, units = "in")
+#ggsave("../output/UCD_GeoDist.png", width = 12, height = 8, units = "in")
 
 wl2_gowers_2023 %>% 
   ggplot(aes(x=fct_reorder(pop, Geographic_Dist), y=Geographic_Dist, fill=Wtr_Year_GD_Recent)) +
@@ -183,7 +183,7 @@ wl2_gowers_2023 %>%
   scale_fill_viridis(option="mako", direction = -1) +
   scale_y_continuous(expand = c(0, 0)) +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1)) 
-ggsave("../output/WL2_GeoDist.png", width = 12, height = 8, units = "in")
+#ggsave("../output/WL2_GeoDist.png", width = 12, height = 8, units = "in")
 
 ## Correlation between geo distance and climate distance
 dist_normalized_ucd <- ucd_gowers %>% select(GrwSsn_GD_Recent:Wtr_Year_GD_Historical, Geographic_Dist) %>% scale() #normalize the data so they're all on the same scale
@@ -207,7 +207,7 @@ ucd_gowers %>%
   scale_fill_viridis(option="mako", direction = -1) +
   scale_y_continuous(expand = c(0, 0)) +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1)) 
-ggsave("../output/UCD_ElevDist.png", width = 12, height = 8, units = "in")
+#ggsave("../output/UCD_ElevDist.png", width = 12, height = 8, units = "in")
 
 wl2_gowers_2023 %>% 
   ggplot(aes(x=fct_reorder(pop, Elev_Dist), y=Elev_Dist, fill=Wtr_Year_GD_Recent)) +
@@ -217,7 +217,7 @@ wl2_gowers_2023 %>%
   scale_fill_viridis(option="mako", direction = -1) +
   scale_y_continuous(expand = c(0, 0)) +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1)) 
-ggsave("../output/WL2_ElevDist.png", width = 12, height = 8, units = "in")
+#ggsave("../output/WL2_ElevDist.png", width = 12, height = 8, units = "in")
 
 ## Correlation between elev distance and climate distance
 dist_normalized_ucd <- ucd_gowers %>% select(GrwSsn_GD_Recent:Wtr_Year_GD_Historical, Elev_Dist) %>% scale() #normalize the data so they're all on the same scale
@@ -409,7 +409,7 @@ ED <- ucd_establishment %>%
   theme(text=element_text(size=25))
 
 ucd_establishment_FIG <- ggarrange(GSCD, WYCD, GD, ED, ncol=2, nrow=2) 
-ggsave("../output/UCD_Traits/UCD_Establishment_SCATTERS.png", width = 24, height = 18, units = "in")
+#ggsave("../output/UCD_Traits/UCD_Establishment_SCATTERS.png", width = 24, height = 18, units = "in")
 ```
 
 WL2
@@ -494,7 +494,7 @@ ED <- wl2_establishment %>%
   theme(text=element_text(size=25))
 
 WL2_establishment_FIG <- ggarrange(GSCD, WYCD, GD, ED, ncol=2, nrow=2) 
-ggsave("../output/WL2_Traits/WL2_Establishment_SCATTERS.png", width = 24, height = 18, units = "in")
+#ggsave("../output/WL2_Traits/WL2_Establishment_SCATTERS.png", width = 24, height = 18, units = "in")
 ```
 
 ## p(Surv to Rep - y1)
@@ -655,7 +655,7 @@ GD <- ucd_surv_to_rep %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 
 ucd_surv_to_rep_y1_FIG <- ggarrange(GSCD, WYCD, GD, ncol=2, nrow=2) 
-ggsave("../output/UCD_Traits/UCD_SurvtoRep_Y1_SCATTERS.png", width = 24, height = 18, units = "in")
+#ggsave("../output/UCD_Traits/UCD_SurvtoRep_Y1_SCATTERS.png", width = 24, height = 18, units = "in")
 ```
 
 WL2
@@ -719,7 +719,7 @@ GD <- wl2_surv_to_rep_y1 %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 
 WL2_surv_to_rep_y1_FIG <- ggarrange(GSCD, WYCD, GD, ncol=2, nrow=2) 
-ggsave("../output/WL2_Traits/WL2_SurvtoRep_Y1_SCATTERS.png", width = 24, height = 18, units = "in")
+#ggsave("../output/WL2_Traits/WL2_SurvtoRep_Y1_SCATTERS.png", width = 24, height = 18, units = "in")
 ```
 
 ## Fruits(y1) 
@@ -857,7 +857,7 @@ GD <- ucd_fruits %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 
 ucd_fruits_FIG <- ggarrange(GSCD, WYCD, GD, ncol=2, nrow=2) 
-ggsave("../output/UCD_Traits/UCD_fruits_SCATTERS.png", width = 24, height = 18, units = "in")
+#ggsave("../output/UCD_Traits/UCD_fruits_SCATTERS.png", width = 24, height = 18, units = "in")
 ```
 
 WL2
@@ -921,7 +921,7 @@ GD <- wl2_fruits_y1 %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 
 wl2_fruits_y1_FIG <- ggarrange(GSCD, WYCD, GD, ncol=2, nrow=2) 
-ggsave("../output/WL2_Traits/WL2_fruits_y1_SCATTERS.png", width = 24, height = 18, units = "in")
+#ggsave("../output/WL2_Traits/WL2_fruits_y1_SCATTERS.png", width = 24, height = 18, units = "in")
 ```
 
 ## p(Winter Surv)
@@ -1019,7 +1019,7 @@ GD <- winter_surv %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 
 wl2_winter_surv_FIG <- ggarrange(GSCD, WYCD, GD, ncol=2, nrow=2) 
-ggsave("../output/WL2_Traits/WL2_WinterSurv_SCATTERS.png", width = 24, height = 18, units = "in")
+#ggsave("../output/WL2_Traits/WL2_WinterSurv_SCATTERS.png", width = 24, height = 18, units = "in")
 ```
 
 ## p(Surv to Rep - y2)
@@ -1137,7 +1137,7 @@ GD <- wl2_surv_to_rep_y2 %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 
 wl2_wl2_surv_to_rep_y2_FIG <- ggarrange(GSCD, WYCD, GD, ncol=2, nrow=2) 
-ggsave("../output/WL2_Traits/WL2_SurvtoRep_y2_SCATTERS.png", width = 24, height = 18, units = "in")
+#ggsave("../output/WL2_Traits/WL2_SurvtoRep_y2_SCATTERS.png", width = 24, height = 18, units = "in")
 ```
 
 ## Fruits(y2)
@@ -1241,7 +1241,7 @@ GD <- wl2_fruits_y2 %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 
 wl2_winter_surv_FIG <- ggarrange(GSCD, WYCD, GD, ncol=2, nrow=2) 
-ggsave("../output/WL2_Traits/WL2_fruits_y2_SCATTERS.png", width = 24, height = 18, units = "in")
+#ggsave("../output/WL2_Traits/WL2_fruits_y2_SCATTERS.png", width = 24, height = 18, units = "in")
 ```
 
 ## Total fitness
@@ -1441,7 +1441,7 @@ ED <- ucd_total_fitness %>%
   theme(text=element_text(size=25))
 
 ucd_total_fitness_FIG <- ggarrange(GSCD, WYCD, GD, ED, ncol=2, nrow=2) 
-ggsave("../output/UCD_Traits/UCD_Total_Fitness_SCATTERS.png", width = 24, height = 18, units = "in")
+#ggsave("../output/UCD_Traits/UCD_Total_Fitness_SCATTERS.png", width = 24, height = 18, units = "in")
 ```
 
 WL2
@@ -1526,25 +1526,48 @@ ED <- wl2_total_fitness %>%
   theme(text=element_text(size=25))
 
 WL2_total_fitness_FIG <- ggarrange(GSCD, WYCD, GD, ED, ncol=2, nrow=2) 
-ggsave("../output/WL2_Traits/WL2_Total_Fitness_SCATTERS.png", width = 24, height = 18, units = "in")
+#ggsave("../output/WL2_Traits/WL2_Total_Fitness_SCATTERS.png", width = 24, height = 18, units = "in")
 ```
 
 ### Stats - Do these need to have a poisson distribution b/c so zero inflated?
+
+#### Check Distributions 
+```{r}
+wl2_total_fitness %>% 
+  ggplot(aes(x=Total_Fitness)) +
+  geom_histogram()
+
+ucd_total_fitness %>% 
+  ggplot(aes(x=Total_Fitness)) +
+  geom_histogram()
+```
+
+WL2
 ```{r}
 wl2_total_fitness_scaled <- wl2_total_fitness %>% mutate_at(c("GrwSsn_GD_Recent","Wtr_Year_GD_Recent",
                                                               "GrwSsn_GD_Historical","Wtr_Year_GD_Historical","Geographic_Dist"), scale)
+
 wl2_total_fitness_gs_mod1 <- lmer(Total_Fitness ~ GrwSsn_GD_Recent + GrwSsn_GD_Historical + Geographic_Dist + (1|pop) + (1|block), data=wl2_total_fitness_scaled)
 summary(wl2_total_fitness_gs_mod1)
 ranova(wl2_total_fitness_gs_mod1)
 anova(wl2_total_fitness_gs_mod1)
 tidy(wl2_total_fitness_gs_mod1)
+plot(wl2_total_fitness_gs_mod1, which = 1) #residuals vs. fitted plot, seems to be a pattern --> bad 
+qqnorm(resid(wl2_total_fitness_gs_mod1))
+qqline(resid(wl2_total_fitness_gs_mod1))  # points do not fall nicely on the line --> bad (long tail)
 
 wl2_total_fitness_wy_mod1 <- lmer(Total_Fitness ~ Wtr_Year_GD_Recent + Wtr_Year_GD_Historical + Geographic_Dist + (1|pop) + (1|block), data=wl2_total_fitness_scaled)
 summary(wl2_total_fitness_wy_mod1)
 ranova(wl2_total_fitness_wy_mod1)
 anova(wl2_total_fitness_wy_mod1)
 tidy(wl2_total_fitness_wy_mod1)
+plot(wl2_total_fitness_wy_mod1, which = 1) #residuals vs. fitted plot, seems to be a pattern --> bad 
+qqnorm(resid(wl2_total_fitness_wy_mod1))
+qqline(resid(wl2_total_fitness_wy_mod1))  # points do not fall nicely on the line --> bad (long tail)
+```
 
+DAVIS 
+```{r}
 
 ucd_total_fitness_scaled <- ucd_total_fitness %>% mutate_at(c("GrwSsn_GD_Recent","Wtr_Year_GD_Recent",
                                                               "GrwSsn_GD_Historical","Wtr_Year_GD_Historical", "Geographic_Dist"), scale)
@@ -1553,13 +1576,18 @@ summary(ucd_total_fitness_gs_mod1)
 ranova(ucd_total_fitness_gs_mod1)
 anova(ucd_total_fitness_gs_mod1)
 tidy(ucd_total_fitness_gs_mod1)
+plot(ucd_total_fitness_gs_mod1, which = 1) #residuals vs. fitted plot, seems to be a pattern --> bad 
+qqnorm(resid(ucd_total_fitness_gs_mod1))
+qqline(resid(ucd_total_fitness_gs_mod1))  # points do not fall nicely on the line --> bad (tail on both ends)
 
 ucd_total_fitness_wy_mod1 <- lmer(Total_Fitness ~ Wtr_Year_GD_Recent + Wtr_Year_GD_Historical + Geographic_Dist + (1|pop) + (1|block), data=ucd_total_fitness_scaled)
 summary(ucd_total_fitness_wy_mod1)
 ranova(ucd_total_fitness_wy_mod1)
 anova(ucd_total_fitness_wy_mod1)
 tidy(ucd_total_fitness_wy_mod1)
-
+plot(ucd_total_fitness_wy_mod1, which = 1) #residuals vs. fitted plot, seems to be a pattern --> bad 
+qqnorm(resid(ucd_total_fitness_wy_mod1))
+qqline(resid(ucd_total_fitness_wy_mod1))  # points do not fall nicely on the line --> bad (tail on both ends)
 ```
 
 
