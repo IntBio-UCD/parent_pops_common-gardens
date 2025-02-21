@@ -31,6 +31,9 @@ library(rstatix) #performing cor_test
 library(lmerTest) #mixed models
 conflicts_prefer(lmerTest::lmer)
 library(broom.mixed)
+library(tidymodels)
+# install.packages("multilevelmod")
+library(multilevelmod)
 
 library(brms)
 #conflicted::conflicts_prefer(brms::ar)
@@ -925,6 +928,14 @@ wl2_fruits_y1_FIG <- ggarrange(GSCD, WYCD, GD, ncol=2, nrow=2)
 ```
 
 ## p(Winter Surv)
+UCD - Check summer survival (equivalent to winter)
+```{r}
+ucd_surv %>% filter(is.na(death.date)) #filter the alive plants on 10/16/23
+#9 plants alive in October, all BH 
+#5 did not reproduce in year 1 
+```
+
+
 WL2
 *Used only water year gowers distance for 2024 b/c that's the only one that includes the winter months 
 ```{r}
@@ -1529,7 +1540,7 @@ WL2_total_fitness_FIG <- ggarrange(GSCD, WYCD, GD, ED, ncol=2, nrow=2)
 #ggsave("../output/WL2_Traits/WL2_Total_Fitness_SCATTERS.png", width = 24, height = 18, units = "in")
 ```
 
-### Stats - Do these need to have a poisson distribution b/c so zero inflated?
+### Stats 
 
 #### Check Distributions 
 ```{r}
@@ -1644,6 +1655,102 @@ ucd_total_fitness_wy_mod2 <- glmer(Total_Fitness ~ Wtr_Year_GD_Recent + Wtr_Year
 plot(ucd_total_fitness_wy_mod2, which = 1) #residuals vs. fitted plot: seems to be a pattern --> bad 
 qqnorm(resid(ucd_total_fitness_wy_mod2))
 qqline(resid(ucd_total_fitness_wy_mod2))  #QQ plot: still not good 
+```
+
+#### Prob of total fitness > 0
+```{r}
+wl2_total_fitness_scaled %>% filter(is.na(Total_Fitness)) #no NAs
+
+wl2_prob_fitness <- wl2_total_fitness_scaled %>% 
+  mutate(ProbFitness=if_else(Total_Fitness==0, 0, 1))
+
+glmer.model_binomial <- 
+  linear_reg() %>% 
+  set_engine("glmer", family=binomial)
+
+prob_fitness_wflow <- workflow() %>% 
+  add_variables(outcomes = ProbFitness, predictors = c(pop, mf, block))
+
+prob_fitness_fits <- tibble(wflow=list(
+  pop = {prob_fitness_wflow %>% 
+      add_model(glmer.model_binomial, formula = ProbFitness ~ (1|pop))},
+  
+  pop.mf = {prob_fitness_wflow %>% 
+      add_model(glmer.model_binomial, formula = ProbFitness ~ (1|pop/mf))},
+  
+  pop.block = {prob_fitness_wflow %>% 
+      add_model(glmer.model_binomial, formula = ProbFitness ~ (1|pop) + (1|block))},
+  
+  pop.mf.block = {prob_fitness_wflow %>% 
+      add_model(glmer.model_binomial, formula = ProbFitness ~ (1|pop/mf) + (1|block))}
+),
+name=names(wflow)
+) %>% 
+  select(name,wflow)
+
+prob_fitness_fits <- prob_fitness_fits %>%
+  mutate(fit = map(wflow, fit, data = wl2_prob_fitness))
+
+prob_fitness_fits %>% mutate(glance=map(fit, glance)) %>% unnest(glance) %>% arrange(AIC) %>% select(-wflow:-sigma)
+#model with pop and block (but excluding mf) is best by AIC and BIC
+```
+
+##### Test climate and geographic distance 
+```{r}
+prob_fitness_GD_wflow <- workflow() %>%
+  add_variables(outcomes = ProbFitness, predictors = c(pop, block, contains("GD"), Geographic_Dist)) 
+
+prob_fitness_GD_fits <- tibble(wflow=list(
+  pop.block = {prob_fitness_GD_wflow %>% 
+      add_model(glmer.model_binomial, formula = ProbFitness ~ (1|pop) + (1|block))},
+  
+  GS_Recent = {prob_fitness_GD_wflow %>% 
+      add_model(glmer.model_binomial, formula = ProbFitness ~ GrwSsn_GD_Recent + Geographic_Dist + (1|pop) + (1|block))},
+  
+  GS_Historical = {prob_fitness_GD_wflow %>% 
+      add_model(glmer.model_binomial, formula = ProbFitness ~ GrwSsn_GD_Historical + Geographic_Dist + (1|pop) + (1|block))},
+  
+  WY_Recent = {prob_fitness_GD_wflow %>% 
+      add_model(glmer.model_binomial, formula = ProbFitness ~ Wtr_Year_GD_Recent + Geographic_Dist + (1|pop) + (1|block))},
+  
+  WY_Historical = {prob_fitness_GD_wflow %>% 
+      add_model(glmer.model_binomial, formula = ProbFitness ~ Wtr_Year_GD_Historical + Geographic_Dist + (1|pop) + (1|block))}
+  
+),
+name=names(wflow)
+) %>% 
+  select(name,wflow) %>%
+  mutate(fit = map(wflow, fit, data = wl2_prob_fitness))
+
+prob_fitness_GD_fits %>% mutate(glance=map(fit, glance)) %>% unnest(glance) %>% arrange(AIC) %>% select(-wflow:-sigma)
+#water year models preferred by AIC 
+
+prob_fitness_GD_fits %>% mutate(tidy=map(fit, tidy)) %>% unnest(tidy) %>%
+  filter(str_detect(term, "GD") | term=="Geographic_Dist") %>%
+  drop_na(p.value) %>%
+  select(-wflow:-group)# %>%
+#  arrange(p.value)
+# recent and historical CD are sig, geo dist is not sig in those models. I think the GS_RECENT model had convergence issues. - need to check the map warnings 
+```
+
+
+#### Total Fitness for plants with any rep
+```{r}
+wl2_rep_output <- wl2_total_fitness_scaled %>% 
+  filter(Total_Fitness > 0)
+wl2_rep_output
+
+wl2_rep_output %>% #still skewed, but poisson might work now 
+  ggplot(aes(x=Total_Fitness)) +
+  geom_histogram()
+
+wl2_rep_output %>% #helped some 
+  ggplot(aes(x=logTotalFitness)) +
+  geom_histogram()
+
+wl2_rep_output %>% #helped some
+  ggplot(aes(x=log10TotalFitness)) +
+  geom_histogram()
 ```
 
 
