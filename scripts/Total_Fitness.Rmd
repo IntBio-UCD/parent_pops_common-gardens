@@ -12,8 +12,6 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 # Total Fitness at both sites 
-To Do:
-- add in geographic distance 
 
 Total Fitness: p(Establishment)*p(Surv to Rep - y1)*Fruits(y1) + p(Winter Surv)*p(Surv to Rep - y2)*Fruits(y2)
 
@@ -25,6 +23,7 @@ library(magrittr)
 library(viridis) #for pretty colors
 library(ggrepel) #for non-overlapping labels on plots
 library(ggdist) #visualizations of distributions and uncertainty 
+library(ggpubr)
 
 #library(sp) #for calculating geographic distance 
 library(geosphere) #for calculating geographic distance
@@ -1734,7 +1733,6 @@ prob_fitness_fits_ucd %>% mutate(glance=map(fit, glance)) %>% unnest(glance) %>%
 VISUALIZE 
 ```{r}
 prob_fitness_nd_wl2 <- data_grid(wl2_prob_fitness, pop)
-prob_fitness_nd_ucd <- data_grid(ucd_prob_fitness, pop)
 
 prob_fitness_predict_fun <- function(m, nd = prob_fitness_nd_wl2) {
   predict(m, 
@@ -1908,7 +1906,8 @@ prob_fitness_GD_fits_ucd %>% mutate(tidy=map(fit, tidy)) %>% unnest(tidy) %>%
 ```{r}
 wl2_rep_output <- wl2_total_fitness_scaled %>% 
   filter(Total_Fitness > 0)
-wl2_rep_output
+#wl2_rep_output
+dim(wl2_rep_output) #98 plants 
 
 wl2_rep_output %>% #still skewed, but poisson might work now 
   ggplot(aes(x=Total_Fitness)) +
@@ -1921,6 +1920,238 @@ wl2_rep_output %>% #helped some
 wl2_rep_output %>% #helped some
   ggplot(aes(x=log10TotalFitness)) +
   geom_histogram()
+
+wl2_fitness_means <- wl2_rep_output %>% # summary for plotting
+  group_by(pop) %>%
+  summarize(Fruits = mean(Total_Fitness))
+
+ucd_rep_output <- ucd_total_fitness_scaled %>% 
+  filter(Total_Fitness > 0)
+#ucd_rep_output
+dim(ucd_rep_output) #30 plants 
+
+ucd_rep_output %>% 
+  ggplot(aes(x=Total_Fitness)) +
+  geom_histogram()
+
+ucd_rep_output %>% 
+  ggplot(aes(x=logTotalFitness)) +
+  geom_histogram()
+
+ucd_rep_output %>% 
+  ggplot(aes(x=log10TotalFitness)) +
+  geom_histogram()
+ucd_fitness_means <- ucd_rep_output %>% # summary for plotting
+  group_by(pop) %>%
+  summarize(Fruits = mean(Total_Fitness))
+```
+
+Basic Model Workflow 
+```{r}
+glmer.model_poisson <- 
+  linear_reg() %>% 
+  set_engine("glmer", family=poisson)
+
+rep_output_wflow <- workflow() %>% 
+  add_variables(outcomes = Total_Fitness, predictors = c(pop, mf, block))
+
+rep_output_fits <- tibble(wflow=list(
+  pop = {rep_output_wflow %>% 
+      add_model(glmer.model_poisson, formula = Total_Fitness ~ (1|pop))},
+  
+  pop.mf = {rep_output_wflow %>% 
+      add_model(glmer.model_poisson, formula = Total_Fitness ~ (1|pop/mf))},
+  
+  pop.block = {rep_output_wflow %>% 
+      add_model(glmer.model_poisson, formula = Total_Fitness ~ (1|pop) + (1|block))},
+  
+  pop.mf.block = {rep_output_wflow %>% 
+      add_model(glmer.model_poisson, formula = Total_Fitness ~ (1|pop/mf) + (1|block))}
+),
+name=names(wflow)
+) %>% 
+  select(name,wflow)
+
+rep_output_fits_wl2 <- rep_output_fits %>%
+  mutate(fit = map(wflow, fit, data = wl2_rep_output))
+
+rep_output_fits_ucd <- rep_output_fits %>%
+  mutate(fit = map(wflow, fit, data = ucd_rep_output))
+#boundary (singular) fit: see help('isSingular')
+#boundary (singular) fit: see help('isSingular')
+mod_test <- glmer(Total_Fitness ~ (1|pop/mf) + (1|block), data=ucd_rep_output, family=poisson)
+plot(mod_test, which = 1) #seems fine 
+qqnorm(resid(mod_test))
+qqline(resid(mod_test))  #QQ plot: not the best 
+
+rep_output_fits_wl2 %>% mutate(glance=map(fit, glance)) %>% unnest(glance) %>% arrange(AIC) %>% select(-wflow:-sigma)
+#model with pop,mf,block is best by AIC and BIC 
+
+rep_output_fits_ucd %>% mutate(glance=map(fit, glance)) %>% unnest(glance) %>% arrange(AIC) %>% select(-wflow:-sigma)
+#model with pop,mf,block is best by AIC and BIC - but that model was singular...
+```
+
+VISUALIZE 
+```{r}
+rep_output_nd_wl2 <- data_grid(wl2_rep_output, pop)
+
+rep_output_predict_fun <- function(m, nd = rep_output_nd_wl2) {
+  predict(m, 
+          newdata = nd,
+          type = "response",
+          re.form = ~(1|pop)
+  ) #%>%
+    #subtract(1, .) # convert hazard to survivorship
+}
+
+# 100 seconds
+system.time (rep_output_fits_wl2 <- rep_output_fits_wl2 %>%
+               mutate(
+                 bootstrap = map(fit, \(x) {
+                   extract_fit_engine(x) %>% 
+                     bootMer(FUN = rep_output_predict_fun, 
+                             re.form = ~ (1|pop),
+                             nsim = 1000,
+                             parallel = "multicore",
+                             ncpus = 7
+                     ) } #bootMer
+                 ),  
+                 tidyboot = map(bootstrap, tidy, conf.int = TRUE),
+                 tidyboot = map(tidyboot, \(x) cbind(rep_output_nd_wl2, x))
+               ) # mutate
+) # system.time
+
+rep_output_fits_wl2 %>%
+  select(name, tidyboot) %>%
+  unnest(tidyboot) %>%
+  ggplot(aes(x=pop)) +
+  geom_col(aes(y=Fruits), data = wl2_fitness_means, fill="skyblue") +
+  geom_pointrange(aes(y=statistic, ymax = conf.high, ymin = conf.low, color=name), position = position_dodge(width = .75)) +
+  ylab("Reproductive Output") +
+  scale_color_viridis_d() +
+  theme(axis.text.x = element_text(angle=90, hjust=1, vjust=.5))
+
+#wl2_fitness_means %>% 
+#  ggplot(aes(x=pop, y=Fruits)) +
+#  geom_col()
+
+#rep_output_fits_wl2 %>%
+#  select(name, bootstrap) %>%
+#  mutate(tidyboot = map(bootstrap, tidy, conf.int = TRUE)) %>%
+#  unnest(tidyboot)
+```
+```{r}
+rep_output_nd_ucd <- data_grid(ucd_rep_output, pop)
+
+rep_output_predict_fun <- function(m, nd = rep_output_nd_ucd) {
+  predict(m, 
+          newdata = nd,
+          type = "response",
+          re.form = ~(1|pop)
+  ) #%>%
+    #subtract(1, .) # convert hazard to survivorship
+}
+
+# 100 seconds
+system.time (rep_output_fits_ucd <- rep_output_fits_ucd %>%  
+               mutate(
+                 bootstrap = map(fit, \(x) {
+                   extract_fit_engine(x) %>% 
+                     bootMer(FUN = rep_output_predict_fun, 
+                             re.form = ~ (1|pop),
+                             nsim = 1000,
+                             parallel = "multicore",
+                             ncpus = 7
+                     ) } #bootMer
+                 ),  
+                 tidyboot = map(bootstrap, tidy, conf.int = TRUE),
+                 tidyboot = map(tidyboot, \(x) cbind(rep_output_nd_ucd, x))
+               ) # mutate
+) # system.time
+
+rep_output_fits_ucd %>%
+  select(name, tidyboot) %>%
+  unnest(tidyboot) %>%
+  ggplot(aes(x=pop)) +
+  geom_col(aes(y=Fruits), data = ucd_fitness_means, fill="skyblue") +
+  geom_pointrange(aes(y=statistic, ymax = conf.high, ymin = conf.low, color=name), position = position_dodge(width = .75)) +
+   ylab("Reproductive Output") +
+  scale_color_viridis_d() +
+  theme(axis.text.x = element_text(angle=90, hjust=1, vjust=.5))
 ```
 
 
+##### Test climate and geographic distance 
+```{r}
+rep_output_GD_wflow_wl2 <- workflow() %>%
+  add_variables(outcomes = Total_Fitness, predictors = c(pop, block, contains("GD"), Geographic_Dist)) 
+
+rep_output_GD_fits_wl2 <- tibble(wflow=list(
+  pop.block = {rep_output_GD_wflow_wl2 %>% 
+      add_model(glmer.model_poisson, formula = Total_Fitness ~ (1|pop) + (1|block))},
+  
+  GS_Recent = {rep_output_GD_wflow_wl2 %>% 
+      add_model(glmer.model_poisson, formula = Total_Fitness ~ GrwSsn_GD_Recent + Geographic_Dist + (1|pop) + (1|block))},
+  
+  GS_Historical = {rep_output_GD_wflow_wl2 %>% 
+      add_model(glmer.model_poisson, formula = Total_Fitness ~ GrwSsn_GD_Historical + Geographic_Dist + (1|pop) + (1|block))},
+  
+  WY_Recent = {rep_output_GD_wflow_wl2 %>% 
+      add_model(glmer.model_poisson, formula = Total_Fitness ~ Wtr_Year_GD_Recent + Geographic_Dist + (1|pop) + (1|block))},
+  
+  WY_Historical = {rep_output_GD_wflow_wl2 %>% 
+      add_model(glmer.model_poisson, formula = Total_Fitness ~ Wtr_Year_GD_Historical + Geographic_Dist + (1|pop) + (1|block))}
+  
+),
+name=names(wflow)
+) %>% 
+  select(name,wflow) %>%
+  mutate(fit = map(wflow, fit, data = wl2_rep_output))
+
+rep_output_GD_fits_wl2 %>% mutate(glance=map(fit, glance)) %>% unnest(glance) %>% arrange(AIC) %>% select(-wflow:-sigma)
+#water year models preferred by AIC 
+
+rep_output_GD_fits_wl2 %>% mutate(tidy=map(fit, tidy)) %>% unnest(tidy) %>%
+  filter(str_detect(term, "GD") | term=="Geographic_Dist") %>%
+  drop_na(p.value) %>%
+  select(-wflow:-group)# %>%
+#  arrange(p.value)
+```
+
+
+```{r}
+rep_output_GD_wflow_ucd <- workflow() %>%
+  add_variables(outcomes = Total_Fitness, predictors = c(pop, mf, contains("GD"), Geographic_Dist)) 
+
+rep_output_GD_fits_ucd <- tibble(wflow=list(
+  pop.MF = {rep_output_GD_wflow_ucd %>% 
+      add_model(glmer.model_poisson, formula = Total_Fitness ~ (1|pop/mf))},
+  
+  GS_Recent = {rep_output_GD_wflow_ucd %>% 
+      add_model(glmer.model_poisson, formula = Total_Fitness ~ GrwSsn_GD_Recent + Geographic_Dist + (1|pop/mf))},
+  
+  GS_Historical = {rep_output_GD_wflow_ucd %>% 
+      add_model(glmer.model_poisson, formula = Total_Fitness ~ GrwSsn_GD_Historical + Geographic_Dist + (1|pop/mf))},
+  
+  WY_Recent = {rep_output_GD_wflow_ucd %>% 
+      add_model(glmer.model_poisson, formula = Total_Fitness ~ Wtr_Year_GD_Recent + Geographic_Dist + (1|pop/mf))},
+  
+  WY_Historical = {rep_output_GD_wflow_ucd %>% 
+      add_model(glmer.model_poisson, formula = Total_Fitness ~ Wtr_Year_GD_Historical + Geographic_Dist + (1|pop/mf))}
+  
+),
+name=names(wflow)
+) %>% 
+  select(name,wflow) %>%
+  mutate(fit = map(wflow, fit, data = ucd_rep_output))
+
+rep_output_GD_fits_ucd %>% mutate(glance=map(fit, glance)) %>% unnest(glance) %>% arrange(AIC) %>% select(-wflow:-sigma)
+#pop.mf preferred by AIC & BIC, WY models are close after
+
+rep_output_GD_fits_ucd %>% mutate(tidy=map(fit, tidy)) %>% unnest(tidy) %>%
+  filter(str_detect(term, "GD") | term=="Geographic_Dist") %>%
+  drop_na(p.value) %>%
+  select(-wflow:-group)# %>%
+#  arrange(p.value)
+
+```
