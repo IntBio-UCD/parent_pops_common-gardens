@@ -1211,3 +1211,12 @@ ggarrange(cwd_dist_fig_historical, pck_dist_fig_historical, ppt_dist_fig_histori
           ppt_cold_dist_fig_historical, ncol=3,nrow=5)
 ggsave("../output/Climate/all_year_Sub_dist_from_WL2_Historical.png", width = 24, height = 24, units = "in")
 ```
+
+## Combine all Subtraction data
+```{r}
+recent_sub_dist_from_wl2 <- full_join(recent_flint_dist, recent_bioclim_dist)
+write_csv(recent_sub_dist_from_wl2, "../output/Climate/full_year_Subtraction_Dist_from_WL2_Recent.csv")
+
+historic_sub_dist_from_wl2 <- full_join(historic_flint_dist, historical_bioclim_dist)
+write_csv(historic_sub_dist_from_wl2, "../output/Climate/full_year_Subtraction_Dist_from_WL2_Historical.csv")
+```

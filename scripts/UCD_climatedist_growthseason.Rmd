@@ -1004,3 +1004,12 @@ ggarrange(cwd_dist_fig_historical, ppt_dist_fig_historical,
           ppt_cold_dist_fig_historical, ncol=3,nrow=5)
 ggsave("../output/Climate/grwssn_Sub_dist_from_Davis_Historical.png", width = 24, height = 24, units = "in")
 ```
+
+## Combine all Subtraction data
+```{r}
+recent_sub_dist_from_Davis <- full_join(recent_flint_dist, recent_bioclim_dist)
+write_csv(recent_sub_dist_from_Davis, "../output/Climate/grwssn_Subtraction_Dist_from_Davis_Recent.csv")
+
+historic_sub_dist_from_Davis <- full_join(historic_flint_dist, historical_bioclim_dist)
+write_csv(historic_sub_dist_from_Davis, "../output/Climate/grwssn_Subtraction_Dist_from_Davis_Historical.csv")
+```
