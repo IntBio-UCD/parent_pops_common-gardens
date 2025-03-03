@@ -172,6 +172,20 @@ wl2_gowers_2024 <- read_csv("../output/Climate/Gowers_WL2_2024.csv") %>%
   rename(pop=parent.pop)
 ```
 
+### Climate Subtraction Distance
+```{r}
+wl2_wtr_year_sub_recent <- read_csv("../output/Climate/full_year_Subtraction_Dist_from_WL2_Recent.csv")
+wl2_grwssn_sub_recent <- read_csv("../output/Climate/grwssn_Subtraction_Dist_from_WL2_Recent.csv")
+wl2_wtr_year_sub_historic <- read_csv("../output/Climate/full_year_Subtraction_Dist_from_WL2_Historical.csv")
+wl2_grwssn_sub_historic <- read_csv("../output/Climate/grwssn_Subtraction_Dist_from_WL2_Historical.csv")
+#wl2_sub_dist_all <- 
+
+ucd_wtr_year_sub_recent <- read_csv("../output/Climate/full_year_Subtraction_Dist_from_Davis_Recent.csv")
+ucd_grwssn_sub_recent <- read_csv("../output/Climate/grwssn_Subtraction_Dist_from_Davis_Recent.csv")
+ucd_wtr_year_sub_historic <- read_csv("../output/Climate/full_year_Subtraction_Dist_from_Davis_Historical.csv")
+ucd_grwssn_sub_historic <- read_csv("../output/Climate/grwssn_Subtraction_Dist_from_Davis_Historical.csv")
+```
+
 ### Check Geographic distance
 ```{r}
 ucd_gowers %>% 
@@ -1923,7 +1937,7 @@ wl2_rep_output %>% #helped some
 
 wl2_fitness_means <- wl2_rep_output %>% # summary for plotting
   group_by(pop) %>%
-  summarize(Fruits = mean(Total_Fitness))
+  summarize(meanTotalFitness = mean(Total_Fitness))
 
 ucd_rep_output <- ucd_total_fitness_scaled %>% 
   filter(Total_Fitness > 0)
@@ -1943,7 +1957,7 @@ ucd_rep_output %>%
   geom_histogram()
 ucd_fitness_means <- ucd_rep_output %>% # summary for plotting
   group_by(pop) %>%
-  summarize(Fruits = mean(Total_Fitness))
+  summarize(meanTotalFitness = mean(Total_Fitness))
 ```
 
 Basic Model Workflow 
@@ -2025,7 +2039,7 @@ rep_output_fits_wl2 %>%
   select(name, tidyboot) %>%
   unnest(tidyboot) %>%
   ggplot(aes(x=pop)) +
-  geom_col(aes(y=Fruits), data = wl2_fitness_means, fill="skyblue") +
+  geom_col(aes(y=meanTotalFitness), data = wl2_fitness_means, fill="skyblue") +
   geom_pointrange(aes(y=statistic, ymax = conf.high, ymin = conf.low, color=name), position = position_dodge(width = .75)) +
   ylab("Reproductive Output") +
   scale_color_viridis_d() +
@@ -2073,7 +2087,7 @@ rep_output_fits_ucd %>%
   select(name, tidyboot) %>%
   unnest(tidyboot) %>%
   ggplot(aes(x=pop)) +
-  geom_col(aes(y=Fruits), data = ucd_fitness_means, fill="skyblue") +
+  geom_col(aes(y=meanTotalFitness), data = ucd_fitness_means, fill="skyblue") +
   geom_pointrange(aes(y=statistic, ymax = conf.high, ymin = conf.low, color=name), position = position_dodge(width = .75)) +
    ylab("Reproductive Output") +
   scale_color_viridis_d() +
