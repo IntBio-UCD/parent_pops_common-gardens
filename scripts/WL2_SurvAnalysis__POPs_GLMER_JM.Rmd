@@ -277,7 +277,7 @@ Keep block but not mf
 
 ### is Gower's distance an important predictor?
 
-
+TODO: ADD GEO DISTANCE
 ```{r}
 estab_GD_wflow <- workflow() %>%
   add_variables(outcomes = dead, predictors = c(parent.pop, mf, block, contains("GD"))) 

@@ -1794,6 +1794,7 @@ prob_fitness_fits_wl2 %>%
 #  mutate(tidyboot = map(bootstrap, tidy, conf.int = TRUE)) %>%
 #  unnest(tidyboot)
 ```
+
 ```{r}
 prob_fitness_nd_ucd <- data_grid(ucd_prob_fitness, pop)
 
@@ -2004,6 +2005,29 @@ rep_output_fits_wl2 %>% mutate(glance=map(fit, glance)) %>% unnest(glance) %>% a
 rep_output_fits_ucd %>% mutate(glance=map(fit, glance)) %>% unnest(glance) %>% arrange(AIC) %>% select(-wflow:-sigma)
 #model with pop,mf,block is best by AIC and BIC - but that model was singular...
 ```
+
+JM: is Poisson appropriate?  assumes mean = variance...
+
+```{r}
+wl2_rep_output %>%
+  group_by(pop) %>%
+  summarize(mean=mean(Total_Fitness),
+            var=var(Total_Fitness))
+```
+
+no, overdispersed
+
+histograms
+```{r}
+wl2_rep_output %>%
+  select(pop, Total_Fitness) %>%
+  ggplot(aes(x=Total_Fitness)) +
+  geom_histogram(bins = 10) +
+  facet_wrap(~pop, scales="free_y")
+```
+
+
+
 
 VISUALIZE 
 ```{r}
