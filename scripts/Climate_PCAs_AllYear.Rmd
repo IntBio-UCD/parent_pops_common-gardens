@@ -185,9 +185,9 @@ flint_all_year_historical_yravgs
 ### Merge with bioclim
 ```{r}
 bioclim_flint_yrly_avgs_recent <- full_join(flint_all_year_recent_yravgs, bioclim_all_year_recent) 
-write_csv(bioclim_flint_yrly_avgs_recent, "../output/Climate/fullyear_wtr_year_avgs_Recent.csv")
+#write_csv(bioclim_flint_yrly_avgs_recent, "../output/Climate/fullyear_wtr_year_avgs_Recent.csv")
 bioclim_flint_yrly_avgs_historical <- full_join(flint_all_year_historical_yravgs, bioclim_all_year_historical) 
-write_csv(bioclim_flint_yrly_avgs_historical, "../output/Climate/fullyear_wtr_year_avgs_Historical.csv")
+#write_csv(bioclim_flint_yrly_avgs_historical, "../output/Climate/fullyear_wtr_year_avgs_Historical.csv")
 ```
 
 ## For 2024 (Water Year Avgs)
@@ -285,9 +285,9 @@ flint_all_year_historical_yravgs_2024
 ### Merge with bioclim
 ```{r}
 bioclim_2024_flint_yrly_avgs_recent <- full_join(flint_all_year_recent_yravgs_2024, bioclim_2024_all_year_recent) 
-write_csv(bioclim_2024_flint_yrly_avgs_recent, "../output/Climate/fullyear_wtr_year_avgs_Recent_2024.csv")
+#write_csv(bioclim_2024_flint_yrly_avgs_recent, "../output/Climate/fullyear_wtr_year_avgs_Recent_2024.csv")
 bioclim_2024_flint_yrly_avgs_historical <- full_join(flint_all_year_historical_yravgs_2024, bioclim_2024_all_year_historical) 
-write_csv(bioclim_2024_flint_yrly_avgs_historical, "../output/Climate/fullyear_wtr_year_avgs_Historical_2024.csv")
+#write_csv(bioclim_2024_flint_yrly_avgs_historical, "../output/Climate/fullyear_wtr_year_avgs_Historical_2024.csv")
 ```
 
 ## All years and months included (Flint)
@@ -728,7 +728,7 @@ flint_all_year_historical_avgs
 flint_all_year_avgs <- bind_rows(flint_all_year_recent_avgs, flint_all_year_historical_avgs) #combine into 1 dataframe 
 head(flint_all_year_avgs)
 tail(flint_all_year_avgs)
-write_csv(flint_all_year_avgs, "../output/Climate/fullyear_FlintAvgs_wtr_year.csv")
+#write_csv(flint_all_year_avgs, "../output/Climate/fullyear_FlintAvgs_wtr_year.csv")
 ```
 
 ### Correlations - Recent + Historical
@@ -854,7 +854,7 @@ bioclim_all_year_historical_avgs
 bioclim_all_year_avgs <- bind_rows(bioclim_all_year_recent_avgs, bioclim_all_year_historical_avgs) #combine into 1 dataframe 
 head(bioclim_all_year_avgs)
 tail(bioclim_all_year_avgs)
-write_csv(bioclim_all_year_avgs, "../output/Climate/fullyear_BioClimAvgs_wtr_year.csv")
+#write_csv(bioclim_all_year_avgs, "../output/Climate/fullyear_BioClimAvgs_wtr_year.csv")
 ```
 
 Merge with flint
@@ -939,7 +939,7 @@ autoplot(all_bioclim_flint_avgs.pc, data = bioclim_flint_all_year_avgs,
 
 ```{r}
 autoplot(all_bioclim_flint_avgs.pc, data = bioclim_flint_all_year_avgs,
-         x=4, y=5,
+         x=1, y=4,
          colour='elev_m', alpha=0.5,
          label=TRUE, label.label="parent.pop",
          loadings=TRUE, loadings.colour='black', loadings.linewidth = 0.7,
@@ -953,7 +953,7 @@ autoplot(all_bioclim_flint_avgs.pc, data = bioclim_flint_all_year_avgs,
 ```{r}
 all_bioclim_flint_avgs_locs.pc_avg <- all_bioclim_flint_avgs_locs.pc %>%
   group_by(parent.pop, elev_m, TimePd) %>%
-  summarise(across(.cols=starts_with("PC"), .fns = mean)) %>%
+  summarise(across(.cols=starts_with("PC", ignore.case = FALSE), .fns = mean)) %>%
   ungroup()
 
 all_bioclim_flint_avgs_locs.pc_avg
@@ -971,11 +971,13 @@ all_bioclim_flint_avgs_locs.pc_avg %>%
 ```{r}
 all_bioclim_flint_avgs_locs.pc_avg %>% 
   mutate(group=str_c(parent.pop,elev_m))  %>%
-  ggplot(aes(x=PC1, y=PC2, shape=TimePd, color=elev_m)) +
+  ggplot(aes(x=PC1, y=PC4, shape=TimePd, color=elev_m)) +
   scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
-  geom_point(size=2, alpha=0.7) +
+  #geom_point(size=2, alpha=0.7) +
+  labs(x="PC1 (51.11%)", y="PC4 (8.07%)") +
   geom_vline(xintercept = 0, linetype="dashed") + geom_hline(yintercept = 0, linetype="dashed") +
   geom_path(aes(group=group),arrow = arrow(length=unit(5, "points")), linewidth = .8)
+ggsave("../output/Climate/Wtr_Year_PC1-PC4.png", width = 8, height = 8, units = "in")
 
 all_bioclim_flint_avgs_locs.pc_avg %>% 
   mutate(group=str_c(parent.pop,elev_m))  %>%
@@ -986,6 +988,7 @@ all_bioclim_flint_avgs_locs.pc_avg %>%
   geom_vline(xintercept = 0, linetype="dashed") + geom_hline(yintercept = 0, linetype="dashed")  +
   geom_path(aes(group=group),arrow = arrow(length=unit(5, "points")), linewidth = .8)
 #high elev climate seems to be shifting to be more similar to low elev 
+
 ```
 
 ## LM on PCs
