@@ -123,10 +123,10 @@ ggplot() +
          label.padding = 0.15,
          label.size = 0.1,
          size = 3) +
-  labs(x="Long", y="Lat", color="Elevation (m)") +
+  labs(color="Elevation (m)") +
   scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
-  theme_classic() +
-  theme(text=element_text(size=25))
+  theme_void()
+ # theme(text=element_text(size=25))
 ggsave("../output/Pop_Map_Labels2.png", width = 10, height = 10, units = "in")
 ```
 
