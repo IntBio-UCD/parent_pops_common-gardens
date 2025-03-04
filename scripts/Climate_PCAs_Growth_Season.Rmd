@@ -118,17 +118,17 @@ flint_grwssn_historical_yravgs_2024
 ### Merge with bioclim
 ```{r}
 bioclim_flint_yrly_avgs_recent <- full_join(flint_grwssn_recent_yravgs, bioclim_recent_grwseason) 
-write_csv(bioclim_flint_yrly_avgs_recent, "../output/Climate/growthseason_yrly_avgs_Recent.csv")
+#write_csv(bioclim_flint_yrly_avgs_recent, "../output/Climate/growthseason_yrly_avgs_Recent.csv")
 bioclim_flint_yrly_avgs_historical <- full_join(flint_grwssn_historical_yravgs, bioclim_historical_grwseason) 
-write_csv(bioclim_flint_yrly_avgs_historical, "../output/Climate/growthseason_yrly_avgs_Historical.csv")
+#write_csv(bioclim_flint_yrly_avgs_historical, "../output/Climate/growthseason_yrly_avgs_Historical.csv")
 ```
 
 For 2024
 ```{r}
 bioclim_flint_yrly_avgs_recent_2024 <- full_join(flint_grwssn_recent_yravgs_2024, bioclim_recent_grwseason_2024) 
-write_csv(bioclim_flint_yrly_avgs_recent_2024, "../output/Climate/growthseason_yrly_avgs_Recent_2024.csv")
+#write_csv(bioclim_flint_yrly_avgs_recent_2024, "../output/Climate/growthseason_yrly_avgs_Recent_2024.csv")
 bioclim_flint_yrly_avgs_historical_2024 <- full_join(flint_grwssn_historical_yravgs_2024, bioclim_historical_grwseason_2024) 
-write_csv(bioclim_flint_yrly_avgs_historical_2024, "../output/Climate/growthseason_yrly_avgs_Historical_2024.csv")
+#write_csv(bioclim_flint_yrly_avgs_historical_2024, "../output/Climate/growthseason_yrly_avgs_Historical_2024.csv")
 ```
 
 
@@ -560,7 +560,7 @@ flint_historical_grwseason_avgs
 flint_grwseason_avgs <- bind_rows(flint_recent_grwseason_avgs, flint_historical_grwseason_avgs) #combine into 1 dataframe 
 head(flint_grwseason_avgs)
 tail(flint_grwseason_avgs)
-write_csv(flint_grwseason_avgs, "../output/Climate/growthseason_FlintAvgs.csv")
+#write_csv(flint_grwseason_avgs, "../output/Climate/growthseason_FlintAvgs.csv")
 ```
 
 ### Correlations - Recent + Historical
@@ -683,7 +683,7 @@ bioclim_historical_grwseason_avgs
 bioclim_grwseason_avgs <- bind_rows(bioclim_recent_grwseason_avgs, bioclim_historical_grwseason_avgs) #combine into 1 dataframe 
 head(bioclim_grwseason_avgs)
 tail(bioclim_grwseason_avgs)
-write_csv(bioclim_grwseason_avgs, "../output/Climate/growthseason_BioClimAvgs.csv")
+#write_csv(bioclim_grwseason_avgs, "../output/Climate/growthseason_BioClimAvgs.csv")
 ```
 
 Merge with flint
@@ -858,9 +858,11 @@ all_bioclim_flint_avgs_locs.pc_avg %>%
   mutate(group=str_c(parent.pop,elev_m))  %>%
   ggplot(aes(x=PC2, y=PC3, shape=TimePd, color=elev_m)) +
   scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
-  geom_point(size=2, alpha=0.7) +
+  #geom_point(size=2, alpha=0.7) +
+  labs(x="PC2 (30.18%)", y="PC3 (12.12%)") +
   geom_vline(xintercept = 0, linetype="dashed") + geom_hline(yintercept = 0, linetype="dashed") +
   geom_path(aes(group=group),arrow = arrow(length=unit(5, "points")), linewidth = .8)
+ggsave("../output/Climate/GRWSSN_PC2-PC3.png", width = 8, height = 8, units = "in")
 
 all_bioclim_flint_avgs_locs.pc_avg %>% 
   mutate(group=str_c(parent.pop,elev_m))  %>%
