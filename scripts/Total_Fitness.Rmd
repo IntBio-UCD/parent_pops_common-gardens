@@ -188,13 +188,22 @@ wl2_gowers_avg
 
 ## Load Davis Fitness Components 
 ```{r}
-ucd_establishment
-ucd_surv_to_rep
-ucd_fruits
+ucd_establishment <- read_csv("../output/UCD_Traits/UCD_Establishment.csv")
+ucd_surv_to_rep <- read_csv("../output/UCD_Traits/UCD_SurvtoRep.csv")
+ucd_fruits <- read_csv("../output/UCD_Traits/UCD_Fruits.csv")
 ```
 
-
 ### UCD - Check summer survival (equivalent to winter)
+```{r}
+ucd_surv <- read_csv("../input/UCD_Data/CorrectedCSVs/UCD_transplants_pheno_mort_20231016_corrected.csv") %>% 
+  rename(death.date=`Death Date`, bud.date=`Date First Bud`, flower.date=`Date First Flower`, 
+         fruit.date=`Date First Fruit`, last.flower.date=`Date Last Flower`, last.fruit.date=`Date Last Fruit`) %>% 
+  filter(!is.na(pop)) %>% 
+  filter(rep != 100) %>% #get rid of individuals that germinated in the field 
+  unite(Genotype, pop:rep, sep="_", remove = FALSE) 
+#unique(ucd_surv$pop)
+```
+
 ```{r}
 ucd_surv %>% filter(is.na(death.date)) #filter the alive plants on 10/16/23
 #9 plants alive in October, all BH 
@@ -203,12 +212,12 @@ ucd_surv %>% filter(is.na(death.date)) #filter the alive plants on 10/16/23
 
 ## Load WL2 Fitness Components 
 ```{r}
-wl2_establishment
-wl2_surv_to_rep_y1
-wl2_fruits_y1
-winter_surv
-wl2_surv_to_rep_y2
-wl2_fruits_y2
+wl2_establishment <- read_csv("../output/WL2_Traits/WL2_Establishment.csv")
+wl2_surv_to_rep_y1 <- read_csv("../output/WL2_Traits/WL2_SurvtoRep_y1.csv")
+wl2_fruits_y1 <- read_csv("../output/WL2_Traits/WL2_Fruits_Y1.csv")
+winter_surv <- read_csv("../output/WL2_Traits/WL2_WinterSurv.csv")
+wl2_surv_to_rep_y2 <- read_csv("../output/WL2_Traits/WL2_Surv_to_Rep_Y2.csv")
+wl2_fruits_y2 <- read_csv("../output/WL2_Traits/WL2_Fruits_Y2.csv")
 ```
 
 
