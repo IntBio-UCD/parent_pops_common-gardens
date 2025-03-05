@@ -1,0 +1,362 @@
+---
+title: "Surv_to_Rep_Y1"
+author: "Brandie QC"
+date: "`r Sys.Date()`"
+output: 
+  html_document: 
+    keep_md: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Survival to Bolting in Year 1 
+
+## Libraries
+```{r}
+library(tidyverse)
+library(magrittr)
+#conflicted::conflicts_prefer(dplyr::filter)
+library(viridis) #for pretty colors
+library(ggrepel) #for non-overlapping labels on plots
+library(ggdist) #visualizations of distributions and uncertainty 
+library(ggpubr)
+
+#library(sp) #for calculating geographic distance 
+library(geosphere) #for calculating geographic distance
+library(corrplot) #plotting correlations  
+library(rstatix) #performing cor_test
+
+library(lmerTest) #mixed models
+conflicted::conflicts_prefer(lmerTest::lmer)
+library(broom.mixed)
+library(tidymodels)
+library(furrr) #Apply Mapping Functions in Parallel using Futures
+tidymodels_prefer()
+# install.packages("multilevelmod")
+library(multilevelmod)
+
+library(brms)
+#conflicted::conflicts_prefer(brms::ar)
+#conflicted::conflicts_prefer(dplyr::combine)
+#conflicted::conflicts_prefer(brms::dstudent_t)
+library(tidybayes) #for extracting and visiaulizing brms model output 
+library(modelr) #for data grid
+
+sem <- function(x, na.rm=FALSE) {           #for caclulating standard error
+  sd(x,na.rm=na.rm)/sqrt(length(na.omit(x)))
+} 
+
+cbbPalette2 <- c("#E69F00","#000000", "#56B4E9","#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+timepd_palette <- c("#56B4E9","#D55E00")
+
+options(mc.cores = parallel::detectCores())
+```
+
+## Load WL2 surv
+```{r}
+wl2_ann_cens <- read_csv("../input/WL2_Data/CorrectedCSVs/WL2_annual_census_20231027_corrected.csv") %>% 
+  unite(Genotype, pop:rep, sep="_", remove = FALSE) %>% 
+  unite(BedLoc, bed:`bed-col`, sep="_", remove = FALSE) %>% 
+  filter(BedLoc!="K_5_C") %>% #get rid of duplicate locations
+  filter(BedLoc!="B_32_A") %>% #get rid of duplicate locations
+  filter(!is.na(pop), !str_detect(Genotype, ".*buff*")) #remove buffers 
+
+wl2_surv_1020 <- read_csv("../input/WL2_Data/CorrectedCSVs/WL2_mort_pheno_20231020_corrected.csv") #need to add in 10/27 mortality 
+wl2_surv_1027 <- wl2_ann_cens %>% 
+  filter(pheno=="X") %>% 
+  select(death.date_2=date, block:bed, bed.row=`bed-row`, bed.col=`bed-col`, pop:rep) #add in 10/27 death dates
+#note: 10/27 pheno dates (like flowering), not updated with this code 
+wl2_surv_y1 <- left_join(wl2_surv_1020, wl2_surv_1027) %>% 
+  mutate(death.date=if_else(is.na(death.date), death.date_2, death.date)) %>% 
+  mutate(pop= str_replace(pop, "Y08", "YO8")) %>% 
+  mutate(pop= str_replace(pop, "Y04", "YO4")) %>% 
+  unite(BedLoc, bed:bed.col, sep="_", remove = FALSE) %>% 
+  filter(BedLoc!="K_5_C") %>% #get rid of duplicate locations
+  filter(BedLoc!="B_32_A") %>% #get rid of duplicate locations
+  unite(Genotype, pop:rep, sep="_", remove = FALSE) %>% 
+  filter(!is.na(pop), !str_detect(Genotype, ".*buff*")) %>%  #remove buffers 
+  select(block:survey.notes)
+#wl2_surv_y1_to_export <- wl2_surv_y1 %>% select(block:rep, death.date, survey.notes)
+#write_csv(wl2_surv_y1_to_export, "../output/WL2_Traits/WL2_Mortality_2023.csv")
+#unique(wl2_surv_y1$pop)
+```
+
+
+## Load UCD Surv
+```{r}
+ucd_surv <- read_csv("../input/UCD_Data/CorrectedCSVs/UCD_transplants_pheno_mort_20231016_corrected.csv") %>% 
+  rename(death.date=`Death Date`, bud.date=`Date First Bud`, flower.date=`Date First Flower`, 
+         fruit.date=`Date First Fruit`, last.flower.date=`Date Last Flower`, last.fruit.date=`Date Last Fruit`) %>% 
+  filter(!is.na(pop)) %>% 
+  filter(rep != 100) %>% #get rid of individuals that germinated in the field 
+  unite(Genotype, pop:rep, sep="_", remove = FALSE) 
+#unique(ucd_surv$pop)
+```
+
+## Gower's Distance
+```{r}
+garden_climate <- read_csv("../output/Climate/flint_climate_UCDpops.csv") %>% 
+  filter(parent.pop=="WL2_Garden" | parent.pop=="UCD_Garden") %>% 
+  select(parent.pop:Long) %>% 
+  distinct()
+garden_climate
+#UCD LAT/LONG = 38.53250, -121.7830
+#WL2 Lat/Long = 38.82599, -120.2509
+
+ucd_gowers <- read_csv("../output/Climate/Gowers_UCD.csv") %>% 
+  select(parent.pop:GrwSsn_GD, Wtr_Year_GD) %>% 
+  pivot_wider(names_from = TimePd, values_from = c(GrwSsn_GD, Wtr_Year_GD)) %>% 
+  mutate(UCD_Lat=38.53250, UCD_Long=-121.7830, UCD_Elev=16) %>% 
+  mutate(Geographic_Dist=distHaversine(cbind(UCD_Long, UCD_Lat), cbind(Long, Lat)),
+         Elev_Dist=UCD_Elev-elev_m) %>% # Calculate the distance using the haversine formula (dist in meters)
+  #mutate(Lat_Dist=UCD_Lat-Lat, Long_Dist=UCD_Long-Long) %>% #Garden-Home - lat and long per Gerst et al 2011 which kept them separate for some directionality
+  rename(pop=parent.pop)
+
+wl2_gowers_2023 <- read_csv("../output/Climate/Gowers_WL2.csv") %>% 
+  select(parent.pop:GrwSsn_GD, Wtr_Year_GD) %>% 
+  pivot_wider(names_from = TimePd, values_from = c(GrwSsn_GD, Wtr_Year_GD)) %>% 
+  mutate(WL2_Lat=38.82599, WL2_Long=-120.2509, WL2_Elev=2020) %>% 
+  mutate(Geographic_Dist=distHaversine(cbind(WL2_Long, WL2_Lat), cbind(Long, Lat)),
+         Elev_Dist=WL2_Elev-elev_m) %>% # Calculate the distance using the haversine formula
+  #mutate(Lat_Dist=WL2_Lat-Lat, Long_Dist=WL2_Long-Long) %>% #Garden-Home - lat and long per Gerst et al 2011 which kept them separate for some directionality
+  rename(pop=parent.pop)
+```
+
+## Davis
+```{r}
+ucd_surv %>% filter(!is.na(bud.date), is.na(fruit.date)) #all plants that initiated reproduction, but did not finish, have a death date 
+ucd_surv %>% filter(!is.na(bud.date), !is.na(death.date)) #many plants with a bud date, have a later death date 
+ucd_surv %>% filter(!is.na(bud.date), is.na(death.date)) #some budding plants do not have a death date
+ucd_surv %>% filter(is.na(bud.date), !is.na(flower.date)) #did not miss any budding plants
+ucd_surv %>% filter(is.na(bud.date), !is.na(fruit.date)) #did not miss any budding plants 
+```
+
+```{r}
+ucd_surv_to_rep <- ucd_surv %>% 
+  left_join(ucd_gowers) %>% 
+  mutate(death.date=mdy(death.date)) %>% 
+  mutate(SurvtoRep_Y1=if_else(is.na(bud.date), 0, 1)) %>% 
+  select(block:rep, elevation.group:Wtr_Year_GD_Historical, Geographic_Dist, Elev_Dist, bud.date, death.date, SurvtoRep_Y1) 
+
+write_csv(ucd_surv_to_rep, "../output/UCD_Traits/UCD_SurvtoRep.csv")
+```
+
+### Bar plots 
+```{r}
+ucd_surv_to_rep %>% 
+  group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
+  summarise(meanSurv=mean(SurvtoRep_Y1, na.rm = TRUE), semSurv=sem(SurvtoRep_Y1, na.rm=TRUE)) %>% 
+  ggplot(aes(x=fct_reorder(pop, meanSurv), y=meanSurv, fill=GrwSsn_GD_Recent)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) + 
+  geom_errorbar(aes(ymin=meanSurv-semSurv,ymax=meanSurv+semSurv),width=.2, position = 
+                  position_dodge(0.75)) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Surv-to-Rep Y1", x="Parent Population", fill="Growth Season Gowers") +
+  scale_fill_viridis(option="mako", direction = -1) +
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+#ggsave("../output/UCD_Traits/UCD_SurvtoRepY1_GrwSsn_GD_Recent.png", width = 12, height = 8, units = "in")
+
+ucd_surv_to_rep %>% 
+  group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
+  summarise(meanSurv=mean(SurvtoRep_Y1, na.rm = TRUE), semSurv=sem(SurvtoRep_Y1, na.rm=TRUE)) %>% 
+  ggplot(aes(x=fct_reorder(pop, meanSurv), y=meanSurv, fill=Wtr_Year_GD_Recent)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) + 
+  geom_errorbar(aes(ymin=meanSurv-semSurv,ymax=meanSurv+semSurv),width=.2, position = 
+                  position_dodge(0.75)) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Surv-to-Rep Y1", x="Parent Population", fill="Water Year Gowers") +
+  scale_fill_viridis(option="mako", direction = -1) +
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+#ggsave("../output/UCD_Traits/UCD_SurvtoRepY1_Wtr_Year_GD_Recent.png", width = 12, height = 8, units = "in")
+```
+
+
+## WL2
+```{r}
+wl2_ann_cens %>% filter(pheno=="B") #check for any plants that started budding the week of the annual census 
+```
+
+```{r}
+wl2_surv_y1 %>% filter(!is.na(bud.date), is.na(fruit.date)) #some plants initiated reproduction but did not make fruits
+wl2_surv_y1 %>% filter(!is.na(bud.date), !is.na(death.date))  #most of above lived
+wl2_surv_y1 %>% filter(is.na(bud.date), !is.na(flower.date)) #didn't miss any budding plants
+wl2_surv_y1 %>% filter(is.na(bud.date), !is.na(fruit.date)) #didn't miss any budding plants 
+wl2_surv_y1 %>% filter(!is.na(last.flower.date)) #NAs
+wl2_surv_y1 %>% filter(!is.na(last.fruit.date)) #none 
+wl2_surv_y1 %>% filter(is.na(bud.date))
+
+wl2_surv_to_rep_y1 <- wl2_surv_y1 %>% 
+  left_join(wl2_gowers_2023) %>% 
+  mutate(death.date=mdy(death.date)) %>% 
+  mutate(bud.date=if_else(Genotype=="TM2_1_11", "10/27/23", bud.date)) %>% #add in bud date for plant that started budding the week of the annual census 
+  mutate(SurvtoRep_Y1=if_else(is.na(bud.date), 0, 1)) %>% 
+  select(block:rep, elevation.group:Wtr_Year_GD_Historical, Geographic_Dist, Elev_Dist, bud.date, death.date, SurvtoRep_Y1) 
+#this is quite uninteresting since only TM2 and FR budded in year 1 
+
+write_csv(wl2_surv_to_rep_y1, "../output/WL2_Traits/WL2_SurvtoRep_y1.csv")
+```
+
+### Bar plots 
+```{r}
+wl2_surv_to_rep_y1 %>% 
+  group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
+  summarise(meanSurv=mean(SurvtoRep_Y1, na.rm = TRUE), semSurv=sem(SurvtoRep_Y1, na.rm=TRUE)) %>% 
+  ggplot(aes(x=fct_reorder(pop, meanSurv), y=meanSurv, fill=GrwSsn_GD_Recent)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) + 
+  geom_errorbar(aes(ymin=meanSurv-semSurv,ymax=meanSurv+semSurv),width=.2, position = 
+                  position_dodge(0.75)) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Surv-to-Rep Y1", x="Parent Population", fill="Growth Season Gowers") +
+  scale_fill_viridis(option="mako", direction = -1) +
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+#ggsave("../output/WL2_Traits/WL2_SurvtoRepY1_GrwSsn_GD_Recent.png", width = 12, height = 8, units = "in")
+
+wl2_surv_to_rep_y1 %>% 
+  group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
+  summarise(meanSurv=mean(SurvtoRep_Y1, na.rm = TRUE), semSurv=sem(SurvtoRep_Y1, na.rm=TRUE)) %>% 
+  ggplot(aes(x=fct_reorder(pop, meanSurv), y=meanSurv, fill=Wtr_Year_GD_Recent)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) + 
+  geom_errorbar(aes(ymin=meanSurv-semSurv,ymax=meanSurv+semSurv),width=.2, position = 
+                  position_dodge(0.75)) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Surv-to-Rep Y1", x="Parent Population", fill="Water Year Gowers") +
+  scale_fill_viridis(option="mako", direction = -1) +
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+#ggsave("../output/WL2_Traits/WL2_SurvtoRepY1_Wtr_Year_GD_Recent.png", width = 12, height = 8, units = "in")
+```
+
+## Scatterplots
+
+### Davis
+```{r}
+#scatter plots
+GSCD <- ucd_surv_to_rep %>% 
+  group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
+  summarise(meanSurv=mean(SurvtoRep_Y1, na.rm = TRUE), semSurv=sem(SurvtoRep_Y1, na.rm=TRUE)) %>% 
+  ggplot(aes(x=GrwSsn_GD_Recent, y=meanSurv, color=GrwSsn_GD_Recent, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanSurv-semSurv,ymax=meanSurv+semSurv),width=.02, linewidth = 2) +
+  #geom_text_repel(aes(x = GrwSsn_GD_Recent, y = meanSurv,
+  #          label = `pop`),
+  #      min.segment.length = 0.8,
+  #      max.overlaps = 100,
+  #      #label.padding = 1,
+  #      #point.padding = 0.8,
+  #      size = 4) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="SurvtoRep_Y1", x="Growth Season CD", color="Growth Season \n Climate Distance") +
+  scale_color_viridis(option="mako", direction = -1) +
+  theme(text=element_text(size=25))
+
+WYCD <- ucd_surv_to_rep %>% 
+  group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
+  summarise(meanSurv=mean(SurvtoRep_Y1, na.rm = TRUE), semSurv=sem(SurvtoRep_Y1, na.rm=TRUE)) %>% 
+  ggplot(aes(x=Wtr_Year_GD_Recent, y=meanSurv, color=Wtr_Year_GD_Recent, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanSurv-semSurv,ymax=meanSurv+semSurv),width=.02, linewidth = 2) +
+  #geom_text_repel(aes(x = Wtr_Year_GD_Recent, y = meanSurv,
+  #          label = `pop`),
+  #      min.segment.length = 0.8,
+  #      max.overlaps = 100,
+  #      #label.padding = 1,
+  #      #point.padding = 0.8,
+  #      size = 4) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="SurvtoRep_Y1", x="Water Year CD", color="Water Year \n Climate Distance") +
+  scale_color_viridis(option="mako", direction = -1) +
+  theme(text=element_text(size=25))
+
+GD <- ucd_surv_to_rep %>% 
+  group_by(pop, elev_m, Geographic_Dist) %>% 
+  summarise(meanSurv=mean(SurvtoRep_Y1, na.rm = TRUE), semSurv=sem(SurvtoRep_Y1, na.rm=TRUE)) %>% 
+  ggplot(aes(x=Geographic_Dist, y=meanSurv, color=Geographic_Dist, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanSurv-semSurv,ymax=meanSurv+semSurv),width=.02, linewidth = 2) +
+  #geom_text_repel(aes(x = Geographic_Dist, y = meanSurv,
+  #          label = `pop`),
+  #      min.segment.length = 0.8,
+  #      max.overlaps = 100,
+  #      #label.padding = 1,
+  #      #point.padding = 0.8,
+  #      size = 4) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="SurvtoRep_Y1", x="Geographic Distance (m)", color="Geographic Distance") +
+  scale_color_viridis(option="mako", direction = -1) +
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+
+ucd_surv_to_rep_y1_FIG <- ggarrange(GSCD, WYCD, GD, ncol=2, nrow=2) 
+#ggsave("../output/UCD_Traits/UCD_SurvtoRep_Y1_SCATTERS.png", width = 24, height = 18, units = "in")
+```
+
+### WL2
+```{r}
+#scatter plots
+GSCD <- wl2_surv_to_rep_y1 %>% 
+  group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
+  summarise(meanSurv=mean(SurvtoRep_Y1, na.rm = TRUE), semSurv=sem(SurvtoRep_Y1, na.rm=TRUE)) %>% 
+  ggplot(aes(x=GrwSsn_GD_Recent, y=meanSurv, color=GrwSsn_GD_Recent, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanSurv-semSurv,ymax=meanSurv+semSurv),width=.02, linewidth = 2) +
+  #geom_text_repel(aes(x = GrwSsn_GD_Recent, y = meanSurv,
+  #          label = `pop`),
+  #      min.segment.length = 0.8,
+  #      max.overlaps = 100,
+  #      #label.padding = 1,
+  #      #point.padding = 0.8,
+  #      size = 4) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="SurvtoRep_Y1", x="Growth Season CD", color="Growth Season \n Climate Distance") +
+  scale_color_viridis(option="mako", direction = -1) +
+  theme(text=element_text(size=25))
+
+WYCD <- wl2_surv_to_rep_y1 %>% 
+  group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
+  summarise(meanSurv=mean(SurvtoRep_Y1, na.rm = TRUE), semSurv=sem(SurvtoRep_Y1, na.rm=TRUE)) %>% 
+  ggplot(aes(x=Wtr_Year_GD_Recent, y=meanSurv, color=Wtr_Year_GD_Recent, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanSurv-semSurv,ymax=meanSurv+semSurv),width=.02,linewidth = 2) +
+  #geom_text_repel(aes(x = Wtr_Year_GD_Recent, y = meanSurv,
+  #          label = `pop`),
+  #      min.segment.length = 0.8,
+  #      max.overlaps = 100,
+  #      #label.padding = 1,
+  #      #point.padding = 0.8,
+  #      size = 4) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="SurvtoRep_Y1", x="Water Year CD", color="Water Year \n Climate Distance") +
+  scale_color_viridis(option="mako", direction = -1) +
+  theme(text=element_text(size=25))
+
+GD <- wl2_surv_to_rep_y1 %>% 
+  group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent, Geographic_Dist) %>% 
+  summarise(meanSurv=mean(SurvtoRep_Y1, na.rm = TRUE), semSurv=sem(SurvtoRep_Y1, na.rm=TRUE)) %>% 
+  ggplot(aes(x=Geographic_Dist, y=meanSurv, color=Geographic_Dist, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanSurv-semSurv,ymax=meanSurv+semSurv),width=.02, linewidth = 2) +
+  #geom_text_repel(aes(x = Geographic_Dist, y = meanSurv,
+  #          label = `pop`),
+  #      min.segment.length = 0.8,
+  #      max.overlaps = 100,
+  #      #label.padding = 1,
+  #      #point.padding = 0.8,
+  #      size = 4) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="SurvtoRep_Y1", x="Geographic Distance (m)", color="Geographic Distance") +
+  scale_color_viridis(option="mako", direction = -1) +
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+
+WL2_surv_to_rep_y1_FIG <- ggarrange(GSCD, WYCD, GD, ncol=2, nrow=2) 
+#ggsave("../output/WL2_Traits/WL2_SurvtoRep_Y1_SCATTERS.png", width = 24, height = 18, units = "in")
+```
