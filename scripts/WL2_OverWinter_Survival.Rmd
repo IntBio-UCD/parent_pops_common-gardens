@@ -6,10 +6,6 @@ output:
   html_document: 
     keep_md: yes
 ---
-To Do:
-- Figure out how to color the 0 mortality bars or pop names by elevation 
-- See Julin's binomSurvivorExamples.Rmd for getting error from the model 
-- Check the data - when looking at Oct 2024 survival, only found 131 "2023-survivors" whereas in this code there are 135. Are any missclassified as TM2 fruiting?
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -17,154 +13,206 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # Over-winter survival at WL2 garden 
 
-## Relevant Libraries and Functions
+To Do:
+- Check the data - when looking at Oct 2024 survival, only found 131 "2023-survivors" whereas in this code there are 135. Are any missclassified as TM2 fruiting?
+- Upate stats 
 
+## Libraries
 ```{r}
 library(tidyverse)
-library(tidymodels)
-tidymodels_prefer()
-library(lmerTest) #for mixed effect models
-conflicted::conflicts_prefer(lmerTest::lmer)
-library(broom.mixed) #tidy method for lmerTest
-library(emmeans) #for post-hoc pairwise comparisons 
-library(naniar) #replaces values with NA
-library(corrplot) #plotting correlations 
+library(magrittr)
+#conflicted::conflicts_prefer(dplyr::filter)
+library(viridis) #for pretty colors
+library(ggrepel) #for non-overlapping labels on plots
+library(ggdist) #visualizations of distributions and uncertainty 
+library(ggpubr)
+
+#library(sp) #for calculating geographic distance 
+library(geosphere) #for calculating geographic distance
+library(corrplot) #plotting correlations  
 library(rstatix) #performing cor_test
+
+library(lmerTest) #mixed models
+conflicted::conflicts_prefer(lmerTest::lmer)
+library(broom.mixed)
+library(tidymodels)
+library(furrr) #Apply Mapping Functions in Parallel using Futures
+tidymodels_prefer()
+# install.packages("multilevelmod")
+library(multilevelmod)
+
+library(brms)
+#conflicted::conflicts_prefer(brms::ar)
+#conflicted::conflicts_prefer(dplyr::combine)
+#conflicted::conflicts_prefer(brms::dstudent_t)
+library(tidybayes) #for extracting and visiaulizing brms model output 
+library(modelr) #for data grid
+
 sem <- function(x, na.rm=FALSE) {           #for caclulating standard error
   sd(x,na.rm=na.rm)/sqrt(length(na.omit(x)))
 } 
 
-elev_three_palette <- c("#0043F0", "#C9727F", "#F5A540") #colors from Gremer et al 2019
-elev_order <- c("High", "Mid", "Low") #for proper arrangement in figures 
+cbbPalette2 <- c("#E69F00","#000000", "#56B4E9","#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+timepd_palette <- c("#56B4E9","#D55E00")
 
-#install.packages("viridis") #for more better color palettes (if want to distinguish between all pops)
-#library(viridis)
-```
-
-## Load the pop and location data and envtal dist data 
-
-```{r}
-gowersdist_UCD <- read_csv("../output/Climate/Pops_GowersEnvtalDist_UCD.csv") %>% 
-  rename(Recent_Gowers_Dist_UCD = Recent_Gowers_Dist, Historic_Gowers_Dist_UCD = Historic_Gowers_Dist)
-head(gowersdist_UCD)
-gowersdist_WL2 <- read_csv("../output/Climate/Pops_GowersEnvtalDist_WL2.csv") %>% 
-  rename(Recent_Gowers_Dist_WL2 = Recent_Gowers_Dist, Historic_Gowers_Dist_WL2 = Historic_Gowers_Dist)
-head(gowersdist_WL2)
-
-gowersdist_all <- full_join(gowersdist_UCD, gowersdist_WL2)
-head(gowersdist_all)
+options(mc.cores = parallel::detectCores())
 ```
 
 ## Load the post-winter data
 ```{r}
 post_winter <- read_csv("../input/WL2_Data/WL2_status_check_20240603_corrected.csv",
                          na = c("", "NA", "-", "N/A")) 
-head(post_winter)
-
-unique(post_winter$pop) #some wrong pop ids "iH", "1H", "cc"
-post_winter %>% rowwise() %>% filter(!is.na(mf), mf != "buffer") %>%  filter(is.na(as.numeric(mf))) #all buffers
-post_winter %>% rowwise() %>% filter(!is.na(rep), rep != "buffer") %>%  filter(is.na(as.numeric(rep))) #all buffers
-
 post_winter_clean <- post_winter %>% 
-  rename(parent.pop=pop) %>% 
-  mutate(parent.pop= str_replace(parent.pop, "iH", "IH")) %>% 
-  mutate(parent.pop= str_replace(parent.pop, "1H", "IH")) %>% 
-  mutate(parent.pop= str_replace(parent.pop, "cc", "CC")) %>% 
-  filter(parent.pop!="buffer", !str_detect(mf, "buf")) %>% 
+  mutate(pop= str_replace(pop, "iH", "IH")) %>% 
+  mutate(pop= str_replace(pop, "1H", "IH")) %>% 
+  mutate(pop= str_replace(pop, "cc", "CC")) %>% 
+  unite(BedLoc, bed:`bed- col`, sep="_", remove = FALSE) %>% 
+  filter(BedLoc!="K_5_C") %>% #get rid of duplicate locations
+  filter(BedLoc!="B_32_A") %>% #get rid of duplicate locations
+  unite(Genotype, pop:rep, sep="_", remove = FALSE) %>% 
+  filter(pop!="buffer", !str_detect(mf, "buf")) %>% 
   mutate(mf=as.double(mf), rep=as.double(rep))
-head(post_winter_clean)
-unique(post_winter_clean$parent.pop)
+unique(post_winter_clean$pop)
 ```
 
-## Add in location info 
+## Gower's Distance
 ```{r}
-post_winter_loc <- left_join(post_winter_clean, gowersdist_all)
-head(post_winter_loc)
+garden_climate <- read_csv("../output/Climate/flint_climate_UCDpops.csv") %>% 
+  filter(parent.pop=="WL2_Garden" | parent.pop=="UCD_Garden") %>% 
+  select(parent.pop:Long) %>% 
+  distinct()
+garden_climate
+#UCD LAT/LONG = 38.53250, -121.7830
+#WL2 Lat/Long = 38.82599, -120.2509
+
+wl2_gowers_2024 <- read_csv("../output/Climate/Gowers_WL2_2024.csv") %>% 
+  pivot_wider(names_from = TimePd, values_from = c(GrwSsn_GD, Wtr_Year_GD)) %>% 
+  mutate(WL2_Lat=38.82599, WL2_Long=-120.2509, WL2_Elev=2020) %>% 
+  mutate(Geographic_Dist=distHaversine(cbind(WL2_Long, WL2_Lat), cbind(Long, Lat)),
+         Elev_Dist=WL2_Elev-elev_m) %>% # Calculate the distance using the haversine formula
+  rename(pop=parent.pop)
 ```
 
-## Filter to only ones alive in October
+## Calculate Winter Surv
 
-```{r}
-alive_oct <- post_winter_loc %>% 
-  filter(death.date == "A" | death.date == "B" | death.date == "C" | death.date == "D") %>% 
-  mutate(Survival=if_else(death.date=="D", 0, 1)) %>% 
-  select(Recent_Gowers_Dist_WL2, Historic_Gowers_Dist_WL2, elevation.group:elev_m, block:rep, 
-         death.date, Survival)
-head(alive_oct) #470 plants alive at annual census 
-unique(alive_oct$parent.pop) #22 populations with an individual alive in October 
-```
+*Used only water year gowers distance for 2024 b/c that's the only one that includes the winter months 
 
 Categories 
 A - alive, “happy” leaves
 B = “barely alive”, still has leaves but major damage
 C = no leaves, stem not brittle
-D = brittle, no leaves, definitely dead  
+D = brittle, no leaves, definitely dead 
 
-## Survival 
+```{r}
+#wl2_surv_y1 %>% filter(is.na(death.date)) - 470 plants alive on 10/27
+post_winter_clean %>% filter(is.na(death.date)) #44 plants with no death date, most have a death date of 10/27
+#A-37-B, no death date on any data sheet, was dying on 9/20 so may have just been missed in June 2024
+
+winter_surv <- post_winter_clean %>% 
+  left_join(wl2_gowers_2024) %>% 
+  filter(death.date == "A" | death.date == "B" | death.date == "C" | death.date == "D") %>% 
+  mutate(WinterSurv=if_else(death.date=="D", 0, 1)) %>% 
+  select(block:rep, elevation.group:Wtr_Year_GD_Historical, Geographic_Dist, Elev_Dist, death.date, WinterSurv) 
+dim(winter_surv) #only 469 rows because A_37_B not included 
+
+#winter_surv %>% filter(death.date!="D") #135 plants survived 
+
+write_csv(winter_surv, "../output/WL2_Traits/WL2_WinterSurv.csv")
+```
 
 ### Descriptive tables 
 ```{r}
 #overall
-xtabs(~death.date, data=alive_oct) #335 dead post-winter out of 470 alive pre-winter = 71% overwinter mortality 
+xtabs(~WinterSurv, data=winter_surv) #335 dead post-winter out of 470 alive pre-winter = 71% overwinter mortality 
 
-xtabs(~death.date+parent.pop, data=alive_oct)
+xtabs(~WinterSurv+pop, data=winter_surv)
 ```
 
-### Means by pop
+### Bar Plots 
 ```{r}
-overwint_surv_summary <- alive_oct %>% 
-  group_by(parent.pop, elev_m, Recent_Gowers_Dist_WL2, Historic_Gowers_Dist_WL2) %>% 
-  summarise(N_Surv = sum(!is.na(Survival)), mean_Surv = mean(Survival,na.rm=(TRUE)), 
-            sem_surv=sem(Survival, na.rm=(TRUE)))
-overwint_surv_summary
-```
-
-```{r}
-overwint_surv_summary %>% 
-  filter(N_Surv != 1) %>% 
-  ggplot(aes(x=fct_reorder(parent.pop, mean_Surv), y=mean_Surv, fill=elev_m)) + 
+winter_surv %>% 
+  group_by(pop, elev_m, Wtr_Year_GD_Recent) %>% 
+  summarise(meanSurv=mean(WinterSurv, na.rm = TRUE), semSurv=sem(WinterSurv, na.rm=TRUE)) %>% 
+  filter(pop != "WR") %>% #only 1 plant 
+  ggplot(aes(x=fct_reorder(pop, meanSurv), y=meanSurv, fill=Wtr_Year_GD_Recent)) +
   geom_col(width = 0.7,position = position_dodge(0.75)) + 
-  geom_errorbar(aes(ymin=mean_Surv-sem_surv,ymax=mean_Surv+sem_surv),width=.2, position = 
+  geom_errorbar(aes(ymin=meanSurv-semSurv,ymax=meanSurv+semSurv),width=.2, position = 
                   position_dodge(0.75)) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
-  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
-  labs(y="Survival", fill="Elevation (m)", x="Parent Population") + 
+  labs(y="Winter Surv", x="Parent Population", fill="Water Year Gowers") +
+  scale_fill_viridis(option="mako", direction = -1) +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/WL2_Traits//WL2_Over_Winter_Surv_PopAvgs.png", width = 14, height = 8, units = "in")
-
-#sort by elevation 
-overwint_surv_summary %>% 
-  #filter(N_Surv != 1) %>% 
-  ggplot(aes(x=fct_reorder(parent.pop, elev_m), y=mean_Surv, fill=elev_m)) + 
-  geom_col(width = 0.7,position = position_dodge(0.75)) + 
-  geom_errorbar(aes(ymin=mean_Surv-sem_surv,ymax=mean_Surv+sem_surv),width=.2, position = 
-                  position_dodge(0.75)) +
-  theme_classic() + 
-  scale_y_continuous(expand = c(0.01, 0)) +
-  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
-  labs(y="Survival", fill="Elevation (m)", x="Parent Population") + 
-  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/WL2_Traits//WL2_Over_Winter_Surv_PopAvgs_byelev.png", width = 14, height = 8, units = "in")
-
-
-#sort by gowers distance - need to play with this one, colors? 
-overwint_surv_summary %>% 
-  filter(N_Surv != 1) %>% 
-  ggplot(aes(x=fct_reorder(parent.pop, mean_Surv), y=mean_Surv, fill=Recent_Gowers_Dist_WL2)) + 
-  geom_col(width = 0.7,position = position_dodge(0.75)) + 
-  geom_errorbar(aes(ymin=mean_Surv-sem_surv,ymax=mean_Surv+sem_surv),width=.2, position = 
-                  position_dodge(0.75)) +
-  theme_classic() + 
-  scale_y_continuous(expand = c(0.01, 0)) +
-  scale_fill_gradient(low = "#0043F0", high = "#F5A540") +
-  labs(y="Survival", fill="Recent Gower's Distance", x="Parent Population") + 
-  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/WL2_Traits//WL2_Over_Winter_Surv_PopAvgs_byenvtdist.png", width = 14, height = 8, units = "in")
+#ggsave("../output/WL2_Traits/WL2_WinterSurv_Wtr_Year_GD_Recent.png", width = 12, height = 8, units = "in")
 ```
 
-## Stats
+### Scatterplots
 ```{r}
+#scatter plots
+GSCD <- winter_surv %>% 
+  group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
+  summarise(meanSurv=mean(WinterSurv, na.rm = TRUE), semSurv=sem(WinterSurv, na.rm=TRUE)) %>% 
+  ggplot(aes(x=GrwSsn_GD_Recent, y=meanSurv, color=GrwSsn_GD_Recent, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanSurv-semSurv,ymax=meanSurv+semSurv),width=.02, linewidth = 2) +
+  #geom_text_repel(aes(x = GrwSsn_GD_Recent, y = meanSurv,
+  #          label = `pop`),
+  #      min.segment.length = 0.8,
+  #      max.overlaps = 100,
+  #      #label.padding = 1,
+  #      #point.padding = 0.8,
+  #      size = 4) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Winter Surv", x="Growth Season CD", color="Growth Season \n Climate Distance") +
+  scale_color_viridis(option="mako", direction = -1) +
+  theme(text=element_text(size=25))
+
+WYCD <- winter_surv %>% 
+  group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
+  summarise(meanSurv=mean(WinterSurv, na.rm = TRUE), semSurv=sem(WinterSurv, na.rm=TRUE)) %>% 
+  ggplot(aes(x=Wtr_Year_GD_Recent, y=meanSurv, color=Wtr_Year_GD_Recent, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanSurv-semSurv,ymax=meanSurv+semSurv),width=.02,linewidth = 2) +
+  #geom_text_repel(aes(x = Wtr_Year_GD_Recent, y = meanSurv,
+  #          label = `pop`),
+  #      min.segment.length = 0.8,
+  #      max.overlaps = 100,
+  #      #label.padding = 1,
+  #      #point.padding = 0.8,
+  #      size = 4) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Winter Surv", x="Water Year CD", color="Water Year \n Climate Distance") +
+  scale_color_viridis(option="mako", direction = -1) +
+  theme(text=element_text(size=25))
+
+GD <- winter_surv %>% 
+  group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent, Geographic_Dist) %>% 
+  summarise(meanSurv=mean(WinterSurv, na.rm = TRUE), semSurv=sem(WinterSurv, na.rm=TRUE)) %>% 
+  ggplot(aes(x=Geographic_Dist, y=meanSurv, color=Geographic_Dist, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanSurv-semSurv,ymax=meanSurv+semSurv),width=.02, linewidth = 2) +
+  #geom_text_repel(aes(x = Geographic_Dist, y = meanSurv,
+  #          label = `pop`),
+  #      min.segment.length = 0.8,
+  #      max.overlaps = 100,
+  #      #label.padding = 1,
+  #      #point.padding = 0.8,
+  #      size = 4) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Winter Surv", x="Geographic Distance (m)", color="Geographic Distance") +
+  scale_color_viridis(option="mako", direction = -1) +
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+
+wl2_winter_surv_FIG <- ggarrange(GSCD, WYCD, GD, ncol=2, nrow=2) 
+#ggsave("../output/WL2_Traits/WL2_WinterSurv_SCATTERS.png", width = 24, height = 18, units = "in")
+```
+
+
+## Stats - need to update!
+```{r, eval=FALSE}
 lmesurv1 <- glmer(Survival ~ Recent_Gowers_Dist_WL2 + (1|parent.pop/mf) + (1|block), 
                   data = alive_oct, 
                   family = binomial(link = "logit")) 
