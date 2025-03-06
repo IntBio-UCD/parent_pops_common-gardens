@@ -269,71 +269,8 @@ ucd_total_fitness %>%
 
 ```
 
-## WL2
-*Used average Gowers
+### Scatterplots
 
-p(Establishment)*p(Surv to Rep - y1)*Fruits(y1) + p(Winter Surv)*p(Surv to Rep - y2)*Fruits(y2)
-```{r}
-wl2_fruits_y1_prep <- wl2_fruits_y1 %>% 
-  select(block:BedLoc, Genotype:rep, elevation.group:Long, y1_flowers=flowers, y1_fruits=fruits)
-
-winter_surv_prep <- winter_surv %>% select(block:BedLoc, Genotype:Long, WinterSurv) 
-wl2_surv_to_rep_y2_prep <- wl2_surv_to_rep_y2 %>% select(pop:Long, SurvtoRep_y2) 
-wl2_fruits_y2_prep <- wl2_fruits_y2 %>% 
-  select(pop:Genotype, elevation.group:Long, y2_flowers=flowers, y2_fruits=fruits)
-
-wl2_total_fitness <- left_join(wl2_establishment, wl2_surv_to_rep_y1) %>% 
-  left_join(wl2_fruits_y1_prep) %>% 
-  left_join(winter_surv_prep) %>% 
-  left_join(wl2_surv_to_rep_y2_prep) %>% 
-  left_join(wl2_fruits_y2_prep) %>% 
-  left_join(wl2_gowers_avg) %>% 
-  select(block:Wtr_Year_GD_Historical, Geographic_Dist, Elev_Dist, Establishment, SurvtoRep_Y1:y2_fruits) %>% 
-  mutate(y1_fruits=if_else(is.na(y1_fruits), 0, y1_fruits),
-         y2_fruits=if_else(is.na(y2_fruits), 0, y2_fruits),
-         WinterSurv=if_else(is.na(WinterSurv), 0, WinterSurv),
-         SurvtoRep_y2=if_else(is.na(SurvtoRep_y2), 0, SurvtoRep_y2)) %>% 
-  mutate(Total_Fitness=(Establishment*SurvtoRep_Y1*y1_fruits) + (WinterSurv*SurvtoRep_y2*y2_fruits))
-
-wl2_total_fitness %>% group_by(pop) %>% summarise(n=n()) %>% arrange(n)
-```
-
-### Bar Plots
-```{r}
-wl2_total_fitness %>% 
-  group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
-  summarise(meanFruits=mean(Total_Fitness, na.rm = TRUE), semFruits=sem(Total_Fitness, na.rm=TRUE)) %>% 
-  ggplot(aes(x=fct_reorder(pop, meanFruits), y=meanFruits, fill=GrwSsn_GD_Recent)) +
-  geom_col(width = 0.7,position = position_dodge(0.75)) + 
-  geom_errorbar(aes(ymin=meanFruits-semFruits,ymax=meanFruits+semFruits),
-                width=.2, position = position_dodge(0.75)) +
-  theme_classic() + 
-  scale_y_continuous(expand = c(0.01, 0)) +
-  labs(y="Total Fitness", x="Parent Population", fill="Growth Season Gowers") +
-  scale_fill_viridis(option="mako", direction = -1) +
-  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-#ggsave("../output/WL2_Traits/WL2_Total_Fitness_GrwSsn_GD_Recent.png", width = 12, height = 8, units = "in")
-
-wl2_total_fitness %>% 
-  group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
-  summarise(meanFruits=mean(Total_Fitness, na.rm = TRUE), semFruits=sem(Total_Fitness, na.rm=TRUE)) %>% 
-  ggplot(aes(x=fct_reorder(pop, meanFruits), y=meanFruits, fill=Wtr_Year_GD_Recent)) +
-  geom_col(width = 0.7,position = position_dodge(0.75)) + 
-  geom_errorbar(aes(ymin=meanFruits-semFruits,ymax=meanFruits+semFruits),width=.2, position = 
-                  position_dodge(0.75)) +
-  theme_classic() + 
-  scale_y_continuous(expand = c(0.01, 0)) +
-  labs(y="Total Fitness", x="Parent Population", fill="Water Year Gowers") +
-  scale_fill_viridis(option="mako", direction = -1) +
-  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-#ggsave("../output/WL2_Traits/WL2_Total_Fitness_Wtr_Year_GD_Recent.png", width = 12, height = 8, units = "in")
-
-wl2_total_fitness %>% filter(pop=="WR") #Only 1 WR plant with fitness > 0 
-```
-
-## Scatterplots
-
-### Davis
 ```{r}
 #scatter plots
 GSCD <- ucd_total_fitness %>% 
@@ -419,7 +356,70 @@ ucd_total_fitness_FIG <- ggarrange(GSCD, WYCD, GD, ED, ncol=2, nrow=2)
 #ggsave("../output/UCD_Traits/UCD_Total_Fitness_SCATTERS.png", width = 24, height = 18, units = "in")
 ```
 
-### WL2
+## WL2
+*Used average Gowers
+
+p(Establishment)*p(Surv to Rep - y1)*Fruits(y1) + p(Winter Surv)*p(Surv to Rep - y2)*Fruits(y2)
+```{r}
+wl2_fruits_y1_prep <- wl2_fruits_y1 %>% 
+  select(block:BedLoc, Genotype:rep, elevation.group:Long, y1_flowers=flowers, y1_fruits=fruits)
+
+winter_surv_prep <- winter_surv %>% select(block:BedLoc, Genotype:Long, WinterSurv) 
+wl2_surv_to_rep_y2_prep <- wl2_surv_to_rep_y2 %>% select(pop:Long, SurvtoRep_y2) 
+wl2_fruits_y2_prep <- wl2_fruits_y2 %>% 
+  select(pop:Genotype, elevation.group:Long, y2_flowers=flowers, y2_fruits=fruits)
+
+wl2_total_fitness <- left_join(wl2_establishment, wl2_surv_to_rep_y1) %>% 
+  left_join(wl2_fruits_y1_prep) %>% 
+  left_join(winter_surv_prep) %>% 
+  left_join(wl2_surv_to_rep_y2_prep) %>% 
+  left_join(wl2_fruits_y2_prep) %>% 
+  left_join(wl2_gowers_avg) %>% 
+  select(block:Wtr_Year_GD_Historical, Geographic_Dist, Elev_Dist, Establishment, SurvtoRep_Y1:y2_fruits) %>% 
+  mutate(y1_fruits=if_else(is.na(y1_fruits), 0, y1_fruits),
+         y2_fruits=if_else(is.na(y2_fruits), 0, y2_fruits),
+         WinterSurv=if_else(is.na(WinterSurv), 0, WinterSurv),
+         SurvtoRep_y2=if_else(is.na(SurvtoRep_y2), 0, SurvtoRep_y2)) %>% 
+  mutate(Total_Fitness=(Establishment*SurvtoRep_Y1*y1_fruits) + (WinterSurv*SurvtoRep_y2*y2_fruits))
+
+wl2_total_fitness %>% group_by(pop) %>% summarise(n=n()) %>% arrange(n)
+```
+
+### Bar Plots
+```{r}
+wl2_total_fitness %>% 
+  group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
+  summarise(meanFruits=mean(Total_Fitness, na.rm = TRUE), semFruits=sem(Total_Fitness, na.rm=TRUE)) %>% 
+  ggplot(aes(x=fct_reorder(pop, meanFruits), y=meanFruits, fill=GrwSsn_GD_Recent)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) + 
+  geom_errorbar(aes(ymin=meanFruits-semFruits,ymax=meanFruits+semFruits),
+                width=.2, position = position_dodge(0.75)) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Total Fitness", x="Parent Population", fill="Growth Season Gowers") +
+  scale_fill_viridis(option="mako", direction = -1) +
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+#ggsave("../output/WL2_Traits/WL2_Total_Fitness_GrwSsn_GD_Recent.png", width = 12, height = 8, units = "in")
+
+wl2_total_fitness %>% 
+  group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
+  summarise(meanFruits=mean(Total_Fitness, na.rm = TRUE), semFruits=sem(Total_Fitness, na.rm=TRUE)) %>% 
+  ggplot(aes(x=fct_reorder(pop, meanFruits), y=meanFruits, fill=Wtr_Year_GD_Recent)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) + 
+  geom_errorbar(aes(ymin=meanFruits-semFruits,ymax=meanFruits+semFruits),width=.2, position = 
+                  position_dodge(0.75)) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Total Fitness", x="Parent Population", fill="Water Year Gowers") +
+  scale_fill_viridis(option="mako", direction = -1) +
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+#ggsave("../output/WL2_Traits/WL2_Total_Fitness_Wtr_Year_GD_Recent.png", width = 12, height = 8, units = "in")
+
+wl2_total_fitness %>% filter(pop=="WR") #Only 1 WR plant with fitness > 0 
+```
+
+### Scatterplots
+
 ```{r}
 #scatter plots
 GSCD <- wl2_total_fitness %>% 
@@ -559,18 +559,203 @@ wl2_prob_fitness <- wl2_total_fitness_scaled %>%
 
 wl2_estab_means <- wl2_prob_fitness %>% # summary for plotting
   group_by(pop) %>%
-  summarize(Survival = mean(ProbFitness))
-
+  summarize(Survival = mean(ProbFitness), n=n())
+wl2_estab_means
 #wl2_prob_fitness %>% group_by(pop, mf, ProbFitness) %>% summarise(n())
+```
 
+```{r}
+#scatter plots - recent
+GSCD_prob_recent <- wl2_total_fitness %>% 
+  mutate(ProbFitness=if_else(Total_Fitness==0, 0, 1)) %>% 
+  group_by(pop, elev_m, GrwSsn_GD_Recent, GrwSsn_GD_Historical) %>% 
+  summarise(meanEst=mean(ProbFitness, na.rm = TRUE), semEst=sem(ProbFitness, na.rm=TRUE)) %>% 
+  ggplot(aes(x=GrwSsn_GD_Recent, y=meanEst, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.02, linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Probability of Fitness", x="Recent Growth Season CD", color="Growth Season \n Climate Distance") +
+  scale_color_manual(values=timepd_palette) +
+  theme(text=element_text(size=25))
+
+WYCD_prob_recent <- wl2_total_fitness %>% 
+  mutate(ProbFitness=if_else(Total_Fitness==0, 0, 1)) %>% 
+  group_by(pop, elev_m, Wtr_Year_GD_Recent, Wtr_Year_GD_Historical) %>% 
+  summarise(meanEst=mean(ProbFitness, na.rm = TRUE), semEst=sem(ProbFitness, na.rm=TRUE)) %>% 
+  ggplot(aes(x=Wtr_Year_GD_Recent, y=meanEst, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.02,linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Probability of Fitness", x="Recent Water Year CD", color="Water Year \n Climate Distance") +
+  scale_color_manual(values=timepd_palette) +
+  theme(text=element_text(size=25))
+
+GD_prob <- wl2_total_fitness %>% 
+  mutate(ProbFitness=if_else(Total_Fitness==0, 0, 1)) %>% 
+  group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent, Geographic_Dist) %>% 
+  summarise(meanEst=mean(ProbFitness, na.rm = TRUE), semEst=sem(ProbFitness, na.rm=TRUE)) %>% 
+  ggplot(aes(x=Geographic_Dist, y=meanEst, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.02, linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Probability of Fitness", x="Geographic Distance (m)") +
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+
+ED_prob <- wl2_total_fitness %>% 
+  mutate(ProbFitness=if_else(Total_Fitness==0, 0, 1)) %>% 
+  group_by(pop, elev_m, Elev_Dist) %>% 
+  summarise(meanEst=mean(ProbFitness, na.rm = TRUE), semEst=sem(ProbFitness, na.rm=TRUE)) %>% 
+  ggplot(aes(x=Elev_Dist, y=meanEst, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.02, linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Probability of Fitness", x="Elevation Distance (m)") +
+  theme(text=element_text(size=25))
+
+WL2_total_fitness_FIG_prob_recent_recent <- ggarrange(GSCD_prob_recent, WYCD_prob_recent, GD_prob, ED_prob, ncol=2, nrow=2) 
+ggsave("../output/WL2_Traits/WL2_ProbFitness_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
+```
+
+```{r}
+#scatter plots - historic
+GSCD_prob_historic <- wl2_total_fitness %>% 
+  mutate(ProbFitness=if_else(Total_Fitness==0, 0, 1)) %>% 
+  group_by(pop, elev_m, GrwSsn_GD_Recent, GrwSsn_GD_Historical) %>% 
+  summarise(meanEst=mean(ProbFitness, na.rm = TRUE), semEst=sem(ProbFitness, na.rm=TRUE)) %>% 
+  ggplot(aes(x=GrwSsn_GD_Historical, y=meanEst, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.02, linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Probability of Fitness", x="Historic Growth Season CD", color="Growth Season \n Climate Distance") +
+  scale_color_manual(values=timepd_palette) +
+  theme(text=element_text(size=25))
+
+WYCD_prob_historic <- wl2_total_fitness %>% 
+  mutate(ProbFitness=if_else(Total_Fitness==0, 0, 1)) %>% 
+  group_by(pop, elev_m, Wtr_Year_GD_Recent, Wtr_Year_GD_Historical) %>% 
+  summarise(meanEst=mean(ProbFitness, na.rm = TRUE), semEst=sem(ProbFitness, na.rm=TRUE)) %>% 
+  ggplot(aes(x=Wtr_Year_GD_Historical, y=meanEst, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.02,linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Probability of Fitness", x="Historic Water Year CD", color="Water Year \n Climate Distance") +
+  scale_color_manual(values=timepd_palette) +
+  theme(text=element_text(size=25))
+
+WL2_total_fitness_FIG_prob_historic_historic <- ggarrange(GSCD_prob_historic, WYCD_prob_historic, GD_prob, ED_prob, ncol=2, nrow=2) 
+ggsave("../output/WL2_Traits/WL2_ProbFitness_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
+```
+
+```{r}
 ucd_prob_fitness <- ucd_total_fitness_scaled %>% 
+  filter(pop!="WV") %>% #ONLY 2 INDIVS 
   mutate(ProbFitness=if_else(Total_Fitness==0, 0, 1))
 
 ucd_estab_means <- ucd_prob_fitness %>% # summary for plotting
-  group_by(pop) %>%
-  summarize(Survival = mean(ProbFitness))
-
+  group_by(pop) %>% #only 2 indivs for WV -remove
+  summarize(Survival = mean(ProbFitness),  n=n())
+ucd_estab_means
 #ucd_prob_fitness %>% group_by(pop, mf, ProbFitness) %>% summarise(n())
+```
+
+```{r}
+#scatter plots - recent
+GSCD_prob_recent <- ucd_total_fitness %>% 
+  filter(pop!="WV") %>% #ONLY 2 INDIVS 
+  mutate(ProbFitness=if_else(Total_Fitness==0, 0, 1)) %>% 
+  group_by(pop, elev_m, GrwSsn_GD_Recent, GrwSsn_GD_Historical) %>% 
+  summarise(meanEst=mean(ProbFitness, na.rm = TRUE), semEst=sem(ProbFitness, na.rm=TRUE)) %>% 
+  ggplot(aes(x=GrwSsn_GD_Recent, y=meanEst, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.02, linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Probability of Fitness", x="Recent Growth Season CD", color="Growth Season \n Climate Distance") +
+  scale_color_manual(values=timepd_palette) +
+  theme(text=element_text(size=25))
+
+WYCD_prob_recent <- ucd_total_fitness %>% 
+  filter(pop!="WV") %>% #ONLY 2 INDIVS 
+  mutate(ProbFitness=if_else(Total_Fitness==0, 0, 1)) %>% 
+  group_by(pop, elev_m, Wtr_Year_GD_Recent, Wtr_Year_GD_Historical) %>% 
+  summarise(meanEst=mean(ProbFitness, na.rm = TRUE), semEst=sem(ProbFitness, na.rm=TRUE)) %>% 
+  ggplot(aes(x=Wtr_Year_GD_Recent, y=meanEst, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.02,linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Probability of Fitness", x="Recent Water Year CD", color="Water Year \n Climate Distance") +
+  scale_color_manual(values=timepd_palette) +
+  theme(text=element_text(size=25))
+
+GD_prob <- ucd_total_fitness %>% 
+  filter(pop!="WV") %>% #ONLY 2 INDIVS 
+  mutate(ProbFitness=if_else(Total_Fitness==0, 0, 1)) %>% 
+  group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent, Geographic_Dist) %>% 
+  summarise(meanEst=mean(ProbFitness, na.rm = TRUE), semEst=sem(ProbFitness, na.rm=TRUE)) %>% 
+  ggplot(aes(x=Geographic_Dist, y=meanEst, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.02, linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Probability of Fitness", x="Geographic Distance (m)") +
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+
+ED_prob <- ucd_total_fitness %>% 
+  filter(pop!="WV") %>% #ONLY 2 INDIVS 
+  mutate(ProbFitness=if_else(Total_Fitness==0, 0, 1)) %>% 
+  group_by(pop, elev_m, Elev_Dist) %>% 
+  summarise(meanEst=mean(ProbFitness, na.rm = TRUE), semEst=sem(ProbFitness, na.rm=TRUE)) %>% 
+  ggplot(aes(x=Elev_Dist, y=meanEst, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.02, linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Probability of Fitness", x="Elevation Distance (m)") +
+  theme(text=element_text(size=25))
+
+UCD_total_fitness_FIG_prob_recent_recent <- ggarrange(GSCD_prob_recent, WYCD_prob_recent, GD_prob, ED_prob, ncol=2, nrow=2) 
+ggsave("../output/UCD_Traits/UCD_ProbFitness_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
+```
+
+```{r}
+#scatter plots - historic
+GSCD_prob_historic <- ucd_total_fitness %>% 
+  filter(pop!="WV") %>% #ONLY 2 INDIVS 
+  mutate(ProbFitness=if_else(Total_Fitness==0, 0, 1)) %>% 
+  group_by(pop, elev_m, GrwSsn_GD_Recent, GrwSsn_GD_Historical) %>% 
+  summarise(meanEst=mean(ProbFitness, na.rm = TRUE), semEst=sem(ProbFitness, na.rm=TRUE)) %>% 
+  ggplot(aes(x=GrwSsn_GD_Historical, y=meanEst, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.02, linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Probability of Fitness", x="Historic Growth Season CD", color="Growth Season \n Climate Distance") +
+  scale_color_manual(values=timepd_palette) +
+  theme(text=element_text(size=25))
+
+WYCD_prob_historic <- ucd_total_fitness %>% 
+  filter(pop!="WV") %>% #ONLY 2 INDIVS 
+  mutate(ProbFitness=if_else(Total_Fitness==0, 0, 1)) %>% 
+  group_by(pop, elev_m, Wtr_Year_GD_Recent, Wtr_Year_GD_Historical) %>% 
+  summarise(meanEst=mean(ProbFitness, na.rm = TRUE), semEst=sem(ProbFitness, na.rm=TRUE)) %>% 
+  ggplot(aes(x=Wtr_Year_GD_Historical, y=meanEst, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.02,linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Probability of Fitness", x="Historic Water Year CD", color="Water Year \n Climate Distance") +
+  scale_color_manual(values=timepd_palette) +
+  theme(text=element_text(size=25))
+
+UCD_total_fitness_FIG_prob_historic_historic <- ggarrange(GSCD_prob_historic, WYCD_prob_historic, GD_prob, ED_prob, ncol=2, nrow=2) 
+ggsave("../output/UCD_Traits/UCD_ProbFitness_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
 ```
 
 #### Basic Model Workflow 
@@ -793,7 +978,8 @@ prob_fitness_GD_fits_ucd %>% mutate(tidy=map(fit, tidy)) %>% unnest(tidy) %>%
 ```{r}
 wl2_rep_output <- wl2_total_fitness_scaled %>% 
   filter(Total_Fitness > 0) %>% 
-  filter(pop!="SQ1", pop!="WR") #remove these pops b/c only 1 individual in dataset 
+  filter(pop!="SQ1", pop!="WR") %>% #remove these pops b/c only 1 individual in dataset 
+  mutate(Total_Fitness_Scaled=Total_Fitness/mean(Total_Fitness))
 #wl2_rep_output
 dim(wl2_rep_output) #98 plants 
 
@@ -809,11 +995,110 @@ wl2_rep_output %>% #helped some
   ggplot(aes(x=log10TotalFitness)) +
   geom_histogram()
 
+wl2_rep_output %>% #helped some
+  ggplot(aes(x=Total_Fitness_Scaled)) +
+  geom_histogram()
+
 wl2_fitness_means <- wl2_rep_output %>% # summary for plotting
   group_by(pop) %>%
-  filter(pop!="SQ1", pop!="WR") %>%  #remove these pops b/c only 1 individual in dataset 
   summarize(meanTotalFitness = mean(Total_Fitness), n=n())
+```
 
+```{r}
+#scatter plots - recent
+GSCD_repoutput_recent <- wl2_total_fitness %>% 
+  filter(Total_Fitness > 0) %>% 
+  filter(pop!="SQ1", pop!="WR") %>% 
+  group_by(pop, elev_m, GrwSsn_GD_Recent, GrwSsn_GD_Historical) %>% 
+  summarise(meanEst=mean(Total_Fitness, na.rm = TRUE), semEst=sem(Total_Fitness, na.rm=TRUE)) %>% 
+  ggplot(aes(x=GrwSsn_GD_Recent, y=meanEst, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.02, linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Total Fruit Number", x="Recent Growth Season CD", color="Growth Season \n Climate Distance") +
+  scale_color_manual(values=timepd_palette) +
+  theme(text=element_text(size=25))
+
+WYCD_repoutput_recent <- wl2_total_fitness %>% 
+  filter(Total_Fitness > 0) %>% 
+  filter(pop!="SQ1", pop!="WR") %>% 
+  group_by(pop, elev_m, Wtr_Year_GD_Recent, Wtr_Year_GD_Historical) %>% 
+  summarise(meanEst=mean(Total_Fitness, na.rm = TRUE), semEst=sem(Total_Fitness, na.rm=TRUE)) %>% 
+  ggplot(aes(x=Wtr_Year_GD_Recent, y=meanEst, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.02,linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Total Fruit Number", x="Recent Water Year CD", color="Water Year \n Climate Distance") +
+  scale_color_manual(values=timepd_palette) +
+  theme(text=element_text(size=25))
+
+GD_repoutput <- wl2_total_fitness %>% 
+  filter(Total_Fitness > 0) %>% 
+  filter(pop!="SQ1", pop!="WR") %>% 
+  group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent, Geographic_Dist) %>% 
+  summarise(meanEst=mean(Total_Fitness, na.rm = TRUE), semEst=sem(Total_Fitness, na.rm=TRUE)) %>% 
+  ggplot(aes(x=Geographic_Dist, y=meanEst, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.02, linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Total Fruit Number", x="Geographic Distance (m)") +
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+
+ED_repoutput <- wl2_total_fitness %>% 
+  filter(Total_Fitness > 0) %>% 
+  filter(pop!="SQ1", pop!="WR") %>% 
+  group_by(pop, elev_m, Elev_Dist) %>% 
+  summarise(meanEst=mean(Total_Fitness, na.rm = TRUE), semEst=sem(Total_Fitness, na.rm=TRUE)) %>% 
+  ggplot(aes(x=Elev_Dist, y=meanEst, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.02, linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Total Fruit Number", x="Elevation Distance (m)") +
+  theme(text=element_text(size=25))
+
+WL2_total_fitness_FIG_repoutput_recent_recent <- ggarrange(GSCD_repoutput_recent, WYCD_repoutput_recent, GD_repoutput, ED_repoutput, ncol=2, nrow=2) 
+ggsave("../output/WL2_Traits/WL2_Total_RepOutput_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
+```
+
+```{r}
+#scatter plots - historic
+GSCD_repoutput_historic <- wl2_total_fitness %>% 
+  filter(Total_Fitness > 0) %>% 
+  filter(pop!="SQ1", pop!="WR") %>% 
+  group_by(pop, elev_m, GrwSsn_GD_Recent, GrwSsn_GD_Historical) %>% 
+  summarise(meanEst=mean(Total_Fitness, na.rm = TRUE), semEst=sem(Total_Fitness, na.rm=TRUE)) %>% 
+  ggplot(aes(x=GrwSsn_GD_Historical, y=meanEst, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.02, linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Total Fruit Number", x="Historic Growth Season CD", color="Growth Season \n Climate Distance") +
+  scale_color_manual(values=timepd_palette) +
+  theme(text=element_text(size=25))
+
+WYCD_repoutput_historic <- wl2_total_fitness %>% 
+  filter(Total_Fitness > 0) %>% 
+  filter(pop!="SQ1", pop!="WR") %>% 
+  group_by(pop, elev_m, Wtr_Year_GD_Recent, Wtr_Year_GD_Historical) %>% 
+  summarise(meanEst=mean(Total_Fitness, na.rm = TRUE), semEst=sem(Total_Fitness, na.rm=TRUE)) %>% 
+  ggplot(aes(x=Wtr_Year_GD_Historical, y=meanEst, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.02,linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Total Fruit Number", x="Historic Water Year CD", color="Water Year \n Climate Distance") +
+  scale_color_manual(values=timepd_palette) +
+  theme(text=element_text(size=25))
+
+WL2_total_fitness_FIG_repoutput_historic_historic <- ggarrange(GSCD_repoutput_historic, WYCD_repoutput_historic, GD_repoutput, ED_repoutput, ncol=2, nrow=2) 
+ggsave("../output/WL2_Traits/WL2_Total_RepOutput_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
+```
+
+```{r}
 ucd_rep_output <- ucd_total_fitness_scaled %>% 
   filter(Total_Fitness > 0)
 #ucd_rep_output
@@ -830,9 +1115,97 @@ ucd_rep_output %>%
 ucd_rep_output %>% 
   ggplot(aes(x=log10TotalFitness)) +
   geom_histogram()
-ucd_fitness_means <- ucd_rep_output %>% # summary for plotting
+ucd_fitness_means <- ucd_rep_output %>% # summary for plotting - only BH and TM2 have greater than 1 individual --> DOESN'T MAKE SENSE TO MODEL 
   group_by(pop) %>%
-  summarize(meanTotalFitness = mean(Total_Fitness))
+  summarize(meanTotalFitness = mean(Total_Fitness), n=n())
+```
+
+```{r}
+#scatter plots - recent
+GSCD_repoutput_recent <- ucd_total_fitness %>% 
+  filter(Total_Fitness > 0) %>% 
+  group_by(pop, elev_m, GrwSsn_GD_Recent, GrwSsn_GD_Historical) %>% 
+  summarise(meanEst=mean(Total_Fitness, na.rm = TRUE), semEst=sem(Total_Fitness, na.rm=TRUE)) %>% 
+  ggplot(aes(x=GrwSsn_GD_Recent, y=meanEst, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.02, linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Total Fruit Number", x="Recent Growth Season CD", color="Growth Season \n Climate Distance") +
+  scale_color_manual(values=timepd_palette) +
+  theme(text=element_text(size=25))
+
+WYCD_repoutput_recent <- ucd_total_fitness %>% 
+  filter(Total_Fitness > 0) %>% 
+  group_by(pop, elev_m, Wtr_Year_GD_Recent, Wtr_Year_GD_Historical) %>% 
+  summarise(meanEst=mean(Total_Fitness, na.rm = TRUE), semEst=sem(Total_Fitness, na.rm=TRUE)) %>% 
+  ggplot(aes(x=Wtr_Year_GD_Recent, y=meanEst, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.02,linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Total Fruit Number", x="Recent Water Year CD", color="Water Year \n Climate Distance") +
+  scale_color_manual(values=timepd_palette) +
+  theme(text=element_text(size=25))
+
+GD_repoutput <- ucd_total_fitness %>% 
+  filter(Total_Fitness > 0) %>% 
+  group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent, Geographic_Dist) %>% 
+  summarise(meanEst=mean(Total_Fitness, na.rm = TRUE), semEst=sem(Total_Fitness, na.rm=TRUE)) %>% 
+  ggplot(aes(x=Geographic_Dist, y=meanEst, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.02, linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Total Fruit Number", x="Geographic Distance (m)") +
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+
+ED_repoutput <- ucd_total_fitness %>% 
+  filter(Total_Fitness > 0) %>% 
+  group_by(pop, elev_m, Elev_Dist) %>% 
+  summarise(meanEst=mean(Total_Fitness, na.rm = TRUE), semEst=sem(Total_Fitness, na.rm=TRUE)) %>% 
+  ggplot(aes(x=Elev_Dist, y=meanEst, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.02, linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Total Fruit Number", x="Elevation Distance (m)") +
+  theme(text=element_text(size=25))
+
+UCD_total_fitness_FIG_repoutput_recent_recent <- ggarrange(GSCD_repoutput_recent, WYCD_repoutput_recent, GD_repoutput, ED_repoutput, ncol=2, nrow=2) 
+ggsave("../output/UCD_Traits/UCD_Total_RepOutput_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
+```
+
+```{r}
+#scatter plots - historic
+GSCD_repoutput_historic <- ucd_total_fitness %>% 
+  filter(Total_Fitness > 0) %>% 
+  group_by(pop, elev_m, GrwSsn_GD_Recent, GrwSsn_GD_Historical) %>% 
+  summarise(meanEst=mean(Total_Fitness, na.rm = TRUE), semEst=sem(Total_Fitness, na.rm=TRUE)) %>% 
+  ggplot(aes(x=GrwSsn_GD_Historical, y=meanEst, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.02, linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Total Fruit Number", x="Historic Growth Season CD", color="Growth Season \n Climate Distance") +
+  scale_color_manual(values=timepd_palette) +
+  theme(text=element_text(size=25))
+
+WYCD_repoutput_historic <- ucd_total_fitness %>% 
+  filter(Total_Fitness > 0) %>% 
+  group_by(pop, elev_m, Wtr_Year_GD_Recent, Wtr_Year_GD_Historical) %>% 
+  summarise(meanEst=mean(Total_Fitness, na.rm = TRUE), semEst=sem(Total_Fitness, na.rm=TRUE)) %>% 
+  ggplot(aes(x=Wtr_Year_GD_Historical, y=meanEst, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.02,linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Total Fruit Number", x="Historic Water Year CD", color="Water Year \n Climate Distance") +
+  scale_color_manual(values=timepd_palette) +
+  theme(text=element_text(size=25))
+
+UCD_total_fitness_FIG_repoutput_historic_historic <- ggarrange(GSCD_repoutput_historic, WYCD_repoutput_historic, GD_repoutput, ED_repoutput, ncol=2, nrow=2) 
+ggsave("../output/UCD_Traits/UCD_Total_RepOutput_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
 ```
 
 Poisson not appropriate?  assumes mean = variance...
@@ -867,34 +1240,16 @@ rep_output_models_nb <- tribble(
 )
 
 #run the models 
-rep_output_models_nb_wl2 <- rep_output_models_nb %>%
+rep_output_models_nb <- rep_output_models_nb %>%
   mutate(glmer.nb = map(f, ~ glmer.nb(as.formula(.), 
                             data = wl2_rep_output)), #run the models 
          predict = map(glmer.nb, predict, type = "response"), # predicting from original data...
         # type = response is for glm models, back transforms probabilities from logit scale 
          glance = map(glmer.nb, glance)) #glance at the model results
 
-rep_output_models_nb_wl2 %>% select(-f, -glmer.nb) %>% unnest(glance) %>% arrange(BIC) #look at the model fitting info 
-rep_output_models_nb_wl2 %>% select(-f, -glmer.nb) %>% unnest(glance) %>% arrange(AIC) #look at the model fitting info 
+rep_output_models_nb %>% select(-f, -glmer.nb) %>% unnest(glance) %>% arrange(BIC) #look at the model fitting info 
+rep_output_models_nb %>% select(-f, -glmer.nb) %>% unnest(glance) %>% arrange(AIC) #look at the model fitting info 
 #model with pop.block best by AIC and BIC 
- 
-
-rep_output_models_nb_ucd <- rep_output_models_nb %>%
-  filter(name!="2_pop.mf", name!="3_pop.block") %>% #pwrssUpdate did not converge in (maxit) iterations
-  mutate(glmer.nb = map(f, ~ glmer.nb(as.formula(.), 
-                            data = ucd_rep_output)), #run the models 
-         predict = map(glmer.nb, predict, type = "response"), # predicting from original data...
-        # type = response is for glm models, back transforms probabilities
-         glance = map(glmer.nb, glance)) #glance at the model results
-
-rep_output_models_nb_ucd %>% select(-f, -glmer.nb) %>% unnest(glance) %>% arrange(BIC) #look at the model fitting info 
-rep_output_models_nb_ucd %>% select(-f, -glmer.nb) %>% unnest(glance) %>% arrange(AIC) #look at the model fitting info 
-#model with just pop is best by AIC and BIC, but "boundary (singular) fit" error for both models 
-
-#mod_test <- glmer.nb(Total_Fitness ~ (1|pop), data=ucd_rep_output)
-#plot(mod_test, which = 1) 
-#qqnorm(resid(mod_test))
-#qqline(resid(mod_test))  
 ```
 
 ### Predicted vs. Observed Rep Output
@@ -908,6 +1263,36 @@ wl2_rep_output %>%
 
 
 ```
+
+```{r}
+rep_output_models_nb_scaled <- tribble(
+  ~name,          ~f,
+  "1_pop",              "Total_Fitness_Scaled ~ (1|pop)", 
+  "2_pop.mf",           "Total_Fitness_Scaled ~  (1|pop/mf)", 
+  "3_pop.block",           "Total_Fitness_Scaled ~ (1|pop) + (1|block)", 
+  "4_pop.mf.block", "Total_Fitness_Scaled ~  (1|pop/mf) + (1|block)"
+)
+
+#run the models 
+rep_output_models_nb_scaled <- rep_output_models_nb_scaled %>%
+  mutate(glmer.nb = map(f, ~ glmer.nb(as.formula(.), 
+                            data = wl2_rep_output)), #run the models 
+         predict = map(glmer.nb, predict, type = "response"), # predicting from original data...
+        # type = response is for glm models, back transforms probabilities from logit scale 
+         glance = map(glmer.nb, glance)) #glance at the model results
+
+rep_output_models_nb_scaled %>% select(-f, -glmer.nb) %>% unnest(glance) %>% arrange(BIC) #look at the model fitting info 
+rep_output_models_nb_scaled %>% select(-f, -glmer.nb) %>% unnest(glance) %>% arrange(AIC) #look at the model fitting info 
+#model with pop.block best by AIC and BIC 
+
+mod_test <- glmer.nb(Total_Fitness_Scaled ~ (1|pop) + (1|block), data=wl2_rep_output)
+plot(mod_test, which = 1) 
+qqnorm(resid(mod_test))
+qqline(resid(mod_test)) 
+#non-integer warnings with these models!
+```
+
+
 
 #### Test climate and geographic distance 
 ```{r}
@@ -939,6 +1324,7 @@ mod_test <- glmer.nb(Total_Fitness ~ Wtr_Year_GD_Historical + Geographic_Dist + 
 plot(mod_test, which = 1) 
 qqnorm(resid(mod_test))
 qqline(resid(mod_test))  
+
 ```
 
 
