@@ -617,7 +617,7 @@ ED_prob <- wl2_total_fitness %>%
   theme(text=element_text(size=30))
 
 WL2_total_fitness_FIG_prob_recent_recent <- ggarrange(GSCD_prob_recent, WYCD_prob_recent, GD_prob, ED_prob, ncol=2, nrow=2) 
-ggsave("../output/WL2_Traits/WL2_ProbFitness_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
+#ggsave("../output/WL2_Traits/WL2_ProbFitness_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
 ```
 
 ```{r}
@@ -649,7 +649,7 @@ WYCD_prob_historic <- wl2_total_fitness %>%
   theme(text=element_text(size=30))
 
 WL2_total_fitness_FIG_prob_historic_historic <- ggarrange(GSCD_prob_historic, WYCD_prob_historic, GD_prob, ED_prob, ncol=2, nrow=2) 
-ggsave("../output/WL2_Traits/WL2_ProbFitness_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
+#ggsave("../output/WL2_Traits/WL2_ProbFitness_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
 ```
 
 ```{r}
@@ -721,7 +721,7 @@ ED_prob <- ucd_total_fitness %>%
   theme(text=element_text(size=30))
 
 UCD_total_fitness_FIG_prob_recent_recent <- ggarrange(GSCD_prob_recent, WYCD_prob_recent, GD_prob, ED_prob, ncol=2, nrow=2) 
-ggsave("../output/UCD_Traits/UCD_ProbFitness_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
+#ggsave("../output/UCD_Traits/UCD_ProbFitness_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
 ```
 
 ```{r}
@@ -755,7 +755,7 @@ WYCD_prob_historic <- ucd_total_fitness %>%
   theme(text=element_text(size=30))
 
 UCD_total_fitness_FIG_prob_historic_historic <- ggarrange(GSCD_prob_historic, WYCD_prob_historic, GD_prob, ED_prob, ncol=2, nrow=2) 
-ggsave("../output/UCD_Traits/UCD_ProbFitness_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
+#ggsave("../output/UCD_Traits/UCD_ProbFitness_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
 ```
 
 #### Basic Model Workflow 
@@ -802,7 +802,7 @@ prob_fitness_fits_ucd %>% mutate(glance=map(fit, glance)) %>% unnest(glance) %>%
 ```
 
 #### VISUALIZE 
-```{r}
+```{r, eval=FALSE}
 prob_fitness_nd_wl2 <- data_grid(wl2_prob_fitness, pop)
 
 prob_fitness_predict_fun <- function(m, nd = prob_fitness_nd_wl2) {
@@ -852,7 +852,7 @@ prob_fitness_fits_wl2 %>%
 #  unnest(tidyboot)
 ```
 
-```{r}
+```{r, eval=FALSE}
 prob_fitness_nd_ucd <- data_grid(ucd_prob_fitness, pop)
 
 prob_fitness_predict_fun <- function(m, nd = prob_fitness_nd_ucd) {
@@ -929,14 +929,14 @@ prob_fitness_GD_fits_wl2 %>% mutate(tidy=map(fit, tidy)) %>% unnest(tidy) %>%
   drop_na(p.value) %>%
   select(-wflow:-group)# %>%
 #  arrange(p.value)
-# recent and historical CD are sig, geo dist is not sig in those models. The GS_RECENT model had convergence issues.
+# recent and historical water year CD are sig, geo dist is not sig in those models. The GS_RECENT model had convergence issues.
 
 #mod_test <- glmer(ProbFitness ~ GrwSsn_GD_Recent + Geographic_Dist + (1|pop) + (1|block), data=wl2_prob_fitness, family=binomial)
 #Warning: Model failed to converge with max|grad| = 0.0747217 (tol = 0.002, component 1)Warning: Model is nearly unidentifiable: very large eigenvalue
 # - Rescale variables? - But the variables were already scaled 
 ```
 
-#### Model Workflow
+
 ```{r}
 prob_fitness_GD_wflow_ucd <- workflow() %>%
   add_variables(outcomes = ProbFitness, predictors = c(pop, mf, contains("GD"), Geographic_Dist)) 
@@ -988,7 +988,7 @@ wl2_rep_output %>% #still skewed
   ggplot(aes(x=Total_Fitness)) +
   geom_histogram()
 
-wl2_rep_output %>% #helped some 
+wl2_rep_output %>% #good enough!
   ggplot(aes(x=logTotalFitness)) +
   geom_histogram()
 
@@ -1062,7 +1062,7 @@ ED_repoutput <- wl2_total_fitness %>%
   theme(text=element_text(size=30))
 
 WL2_total_fitness_FIG_repoutput_recent_recent <- ggarrange(GSCD_repoutput_recent, WYCD_repoutput_recent, GD_repoutput, ED_repoutput, ncol=2, nrow=2) 
-ggsave("../output/WL2_Traits/WL2_Total_RepOutput_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
+#ggsave("../output/WL2_Traits/WL2_Total_RepOutput_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
 ```
 
 ```{r}
@@ -1096,7 +1096,7 @@ WYCD_repoutput_historic <- wl2_total_fitness %>%
   theme(text=element_text(size=30))
 
 WL2_total_fitness_FIG_repoutput_historic_historic <- ggarrange(GSCD_repoutput_historic, WYCD_repoutput_historic, GD_repoutput, ED_repoutput, ncol=2, nrow=2) 
-ggsave("../output/WL2_Traits/WL2_Total_RepOutput_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
+#ggsave("../output/WL2_Traits/WL2_Total_RepOutput_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
 ```
 
 ```{r}
@@ -1174,7 +1174,7 @@ ED_repoutput <- ucd_total_fitness %>%
   theme(text=element_text(size=30))
 
 UCD_total_fitness_FIG_repoutput_recent_recent <- ggarrange(GSCD_repoutput_recent, WYCD_repoutput_recent, GD_repoutput, ED_repoutput, ncol=2, nrow=2) 
-ggsave("../output/UCD_Traits/UCD_Total_RepOutput_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
+#ggsave("../output/UCD_Traits/UCD_Total_RepOutput_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
 ```
 
 ```{r}
@@ -1206,10 +1206,10 @@ WYCD_repoutput_historic <- ucd_total_fitness %>%
   theme(text=element_text(size=30))
 
 UCD_total_fitness_FIG_repoutput_historic_historic <- ggarrange(GSCD_repoutput_historic, WYCD_repoutput_historic, GD_repoutput, ED_repoutput, ncol=2, nrow=2) 
-ggsave("../output/UCD_Traits/UCD_Total_RepOutput_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
+#ggsave("../output/UCD_Traits/UCD_Total_RepOutput_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
 ```
 
-Poisson not appropriate?  assumes mean = variance...
+Poisson not appropriate b/c  assumes mean = variance...
 
 ```{r}
 wl2_rep_output %>%
@@ -1229,61 +1229,25 @@ wl2_rep_output %>%
   facet_wrap(~pop, scales="free_y")
 ```
 
-Can't use workflow with glmer.nb
-In Journal of Ecology paper: "For fruit production, we evaluated models using negative binomial, Poisson, and normal distributions. We rescaled fruit count values by dividing by the global mean and used negative binomial GLMMs (function glmer.nb in R; Bates, 2015)"
+
 ```{r}
-rep_output_models_nb <- tribble(
+rep_output_modelslog <- tribble(
   ~name,          ~f,
-  "1_pop",              "Total_Fitness ~ (1|pop)", 
-  "2_pop.mf",           "Total_Fitness ~  (1|pop/mf)", 
-  "3_pop.block",           "Total_Fitness ~ (1|pop) + (1|block)", 
-  "4_pop.mf.block", "Total_Fitness ~  (1|pop/mf) + (1|block)"
+  "1_pop",              "logTotalFitness ~ (1|pop)", 
+  "2_pop.mf",           "logTotalFitness ~  (1|pop/mf)", 
+  "3_pop.block",        "logTotalFitness ~ (1|pop) + (1|block)", 
+  "4_pop.mf.block",     "logTotalFitness ~  (1|pop/mf) + (1|block)"
 )
 
 #run the models 
-rep_output_models_nb <- rep_output_models_nb %>%
-  mutate(glmer.nb = map(f, ~ glmer.nb(as.formula(.), 
+rep_output_modelslog <- rep_output_modelslog %>%
+  mutate(lmer = map(f, ~ lmer(as.formula(.), 
                             data = wl2_rep_output)), #run the models 
-         predict = map(glmer.nb, predict, type = "response"), # predicting from original data...
-        # type = response is for glm models, back transforms probabilities from logit scale 
-         glance = map(glmer.nb, glance)) #glance at the model results
+         predict = map(lmer, predict), # predicting from original data...
+         glance = map(lmer, glance)) #glance at the model results
 
-rep_output_models_nb %>% select(-f, -glmer.nb) %>% unnest(glance) %>% arrange(BIC) #look at the model fitting info 
-rep_output_models_nb %>% select(-f, -glmer.nb) %>% unnest(glance) %>% arrange(AIC) #look at the model fitting info 
-#model with pop.block best by AIC and BIC 
-```
-
-### Predicted vs. Observed Rep Output
-```{r}
-wl2_rep_output %>% 
-  cbind(predicted={rep_output_models_nb %>% filter(name=="3_pop.block") %>% pull(predict) %>% unlist()}) %>%
-  ggplot(aes(x=Total_Fitness, y = predicted)) +
-  geom_point(alpha=.2) +
-  geom_abline(color="skyblue2") +
-  facet_wrap(~pop, scales="free")
-
-
-```
-
-```{r}
-rep_output_models_nb_scaled <- tribble(
-  ~name,          ~f,
-  "1_pop",              "Total_Fitness_Scaled ~ (1|pop)", 
-  "2_pop.mf",           "Total_Fitness_Scaled ~  (1|pop/mf)", 
-  "3_pop.block",           "Total_Fitness_Scaled ~ (1|pop) + (1|block)", 
-  "4_pop.mf.block", "Total_Fitness_Scaled ~  (1|pop/mf) + (1|block)"
-)
-
-#run the models 
-rep_output_models_nb_scaled <- rep_output_models_nb_scaled %>%
-  mutate(glmer.nb = map(f, ~ glmer.nb(as.formula(.), 
-                            data = wl2_rep_output)), #run the models 
-         predict = map(glmer.nb, predict, type = "response"), # predicting from original data...
-        # type = response is for glm models, back transforms probabilities from logit scale 
-         glance = map(glmer.nb, glance)) #glance at the model results
-
-rep_output_models_nb_scaled %>% select(-f, -glmer.nb) %>% unnest(glance) %>% arrange(BIC) #look at the model fitting info 
-rep_output_models_nb_scaled %>% select(-f, -glmer.nb) %>% unnest(glance) %>% arrange(AIC) #look at the model fitting info 
+rep_output_modelslog %>% select(-f, -lmer) %>% unnest(glance) %>% arrange(BIC) #look at the model fitting info 
+rep_output_modelslog %>% select(-f, -lmer) %>% unnest(glance) %>% arrange(AIC) #look at the model fitting info 
 #model with pop.block best by AIC and BIC 
 
 mod_test <- lmer(logTotalFitness ~  (1|pop) + (1|block), data=wl2_rep_output)
@@ -1291,44 +1255,53 @@ plot(mod_test, which = 1)
 qqnorm(resid(mod_test))
 qqline(resid(mod_test)) 
 summary(mod_test)
-#still getting convergence issues with the scaled data, but maybe it's okay to use log transformation?...
-#mf causes "boundary (singular) fit: see help('isSingular')"
-#only models without issues are the ones with just pop or just block...
+#mf gives "boundary (singular) fit: see help('isSingular')" so take it out 
+```
+
+### Predicted vs. Observed Rep Output
+```{r}
+wl2_rep_output %>% 
+  cbind(predicted={rep_output_modelslog %>% filter(name=="3_pop.block") %>% pull(predict) %>% unlist()}) %>%
+  ggplot(aes(x=logTotalFitness, y = predicted)) +
+  geom_point(alpha=.2) +
+  geom_abline(color="skyblue2") +
+  facet_wrap(~pop, scales="free")
+
 ```
 
 
-
 #### Test climate and geographic distance 
-```{r, eval=FALSE}
-rep_output_models_nb_CD_GD <- tribble(
+```{r}
+rep_output_models_log_CD_GD <- tribble(
   ~name,          ~f,
-  "1_pop.block",      "Total_Fitness ~  (1|pop) + (1|block)", 
-  "2_GS_Recent",      "Total_Fitness ~  GrwSsn_GD_Recent + Geographic_Dist + (1|pop) + (1|block)", 
-  "3_GS_Historical",  "Total_Fitness ~  GrwSsn_GD_Historical + Geographic_Dist + (1|pop) + (1|block)", 
-  "4_WY_Recent",      "Total_Fitness ~  Wtr_Year_GD_Recent + Geographic_Dist +(1|pop) + (1|block)",
-  "5_WY_Historical",  "Total_Fitness ~  Wtr_Year_GD_Historical + Geographic_Dist + (1|pop) + (1|block)"
+  "1_pop.block",      "logTotalFitness ~  (1|pop) + (1|block)", 
+  "2_GS_Recent",      "logTotalFitness ~  GrwSsn_GD_Recent + Geographic_Dist + (1|pop) + (1|block)", 
+  "3_GS_Historical",  "logTotalFitness ~  GrwSsn_GD_Historical + Geographic_Dist + (1|pop) + (1|block)", 
+  "4_WY_Recent",      "logTotalFitness ~  Wtr_Year_GD_Recent + Geographic_Dist +(1|pop) + (1|block)",
+  "5_WY_Historical",  "logTotalFitness ~  Wtr_Year_GD_Historical + Geographic_Dist + (1|pop) + (1|block)"
 )
 
 #run the models 
-rep_output_models_nb_CD_GD_wl2 <- rep_output_models_nb_CD_GD %>%
-  filter(name!="2_GS_Recent") %>% #Warning: unable to evaluate scaled gradientWarning: Model failed to converge: degenerate  Hessian with 1 negative eigenvalues
-  filter(name!="3_GS_Historical") %>%  #Warning: Model failed to converge with max|grad| = 0.00383601 (tol = 0.002, component 1)Warning: Model failed to converge with max|grad| = 0.00229312 (tol = 0.002, component 1)
-  mutate(glmer.nb = map(f, ~ glmer.nb(as.formula(.), 
+rep_output_models_log_CD_GD <- rep_output_models_log_CD_GD %>%
+  mutate(lmer = map(f, ~ lmer(as.formula(.), 
                             data = wl2_rep_output)), #run the models 
-         predict = map(glmer.nb, predict, type = "response"), # predicting from original data...
-        # type = response is for glm models, back transforms probabilities from logit scale 
-         glance = map(glmer.nb, glance)) #glance at the model results
+         predict = map(lmer, predict), # predicting from original data...
+         glance = map(lmer, glance)) #glance at the model results
 
 
-rep_output_models_nb_CD_GD_wl2 %>% select(-f, -glmer.nb) %>% unnest(glance) %>% arrange(BIC) #look at the model fitting info 
-rep_output_models_nb_CD_GD_wl2 %>% select(-f, -glmer.nb) %>% unnest(glance) %>% arrange(AIC) #look at the model fitting info 
+rep_output_models_log_CD_GD %>% select(-f, -lmer) %>% unnest(glance) %>% arrange(BIC) #look at the model fitting info 
+rep_output_models_log_CD_GD %>% select(-f, -lmer) %>% unnest(glance) %>% arrange(AIC) #look at the model fitting info 
+#pop block best by AIC and BIC ...
 
 
-mod_test <- glmer.nb(Total_Fitness ~ Wtr_Year_GD_Historical + Geographic_Dist + (1|pop) + (1|block), data=wl2_rep_output)
-plot(mod_test, which = 1) 
-qqnorm(resid(mod_test))
-qqline(resid(mod_test))  
+#pop.mf preferred by AIC & BIC, WY models are close after
+rep_output_models_log_CD_GD %>% mutate(tidy=map(lmer, tidy)) %>% unnest(tidy) %>%
+  select(-f, -lmer) %>% 
+  filter(str_detect(term, "GD") | term=="Geographic_Dist") %>%
+  drop_na(p.value)
+#  arrange(p.value)
 
+#only GrwSSn historical marginally significant p=0.056... no other distances significant 
 ```
 
 

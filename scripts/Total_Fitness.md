@@ -149,7 +149,7 @@ library(tidymodels)
 ## ✖ infer::t_test()       masks rstatix::t_test()
 ## ✖ Matrix::unpack()      masks tidyr::unpack()
 ## ✖ recipes::update()     masks Matrix::update(), stats::update()
-## • Learn how to get started at https://www.tidymodels.org/start/
+## • Search for functions across packages at https://www.tidymodels.org/find/
 ```
 
 ``` r
@@ -1898,14 +1898,7 @@ system.time (prob_fitness_fits_wl2 <- prob_fitness_fits_wl2 %>%
                  tidyboot = map(tidyboot, \(x) cbind(prob_fitness_nd_wl2, x))
                ) # mutate
 ) # system.time
-```
 
-```
-##     user   system  elapsed 
-## 1371.711   13.115  212.510
-```
-
-``` r
 prob_fitness_fits_wl2 %>%
   select(name, tidyboot) %>%
   unnest(tidyboot) %>%
@@ -1915,11 +1908,6 @@ prob_fitness_fits_wl2 %>%
   ylab("Prob Fitness >0") +
   scale_color_viridis_d() +
   theme(axis.text.x = element_text(angle=90, hjust=1, vjust=.5))
-```
-
-![](Total_Fitness_files/figure-html/unnamed-chunk-26-1.png)<!-- -->
-
-``` r
 #the model with pop and block seems to be underestimating the means whereas the model with just pop seems to match the data better...
 
 #wl2_estab_means %>% 
@@ -1961,14 +1949,7 @@ system.time (prob_fitness_fits_ucd <- prob_fitness_fits_ucd %>%
                  tidyboot = map(tidyboot, \(x) cbind(prob_fitness_nd_ucd, x))
                ) # mutate
 ) # system.time
-```
 
-```
-##    user  system elapsed 
-## 995.101   8.666 151.349
-```
-
-``` r
 prob_fitness_fits_ucd %>%
   select(name, tidyboot) %>%
   unnest(tidyboot) %>%
@@ -1978,11 +1959,6 @@ prob_fitness_fits_ucd %>%
    ylab("Prob Fitness >0") +
   scale_color_viridis_d() +
   theme(axis.text.x = element_text(angle=90, hjust=1, vjust=.5))
-```
-
-![](Total_Fitness_files/figure-html/unnamed-chunk-27-1.png)<!-- -->
-
-``` r
 #pop.mf seems to be underestimating the means, model with just pop seems to match the data better...
 ```
 
@@ -2065,14 +2041,14 @@ prob_fitness_GD_fits_wl2 %>% mutate(tidy=map(fit, tidy)) %>% unnest(tidy) %>%
 
 ``` r
 #  arrange(p.value)
-# recent and historical CD are sig, geo dist is not sig in those models. The GS_RECENT model had convergence issues.
+# recent and historical water year CD are sig, geo dist is not sig in those models. The GS_RECENT model had convergence issues.
 
 #mod_test <- glmer(ProbFitness ~ GrwSsn_GD_Recent + Geographic_Dist + (1|pop) + (1|block), data=wl2_prob_fitness, family=binomial)
 #Warning: Model failed to converge with max|grad| = 0.0747217 (tol = 0.002, component 1)Warning: Model is nearly unidentifiable: very large eigenvalue
 # - Rescale variables? - But the variables were already scaled 
 ```
 
-#### Model Workflow
+
 
 ``` r
 prob_fitness_GD_wflow_ucd <- workflow() %>%
@@ -2171,7 +2147,7 @@ wl2_rep_output %>% #still skewed
 ![](Total_Fitness_files/figure-html/unnamed-chunk-30-1.png)<!-- -->
 
 ``` r
-wl2_rep_output %>% #helped some 
+wl2_rep_output %>% #good enough!
   ggplot(aes(x=logTotalFitness)) +
   geom_histogram()
 ```
@@ -2536,7 +2512,7 @@ UCD_total_fitness_FIG_repoutput_historic_historic <- ggarrange(GSCD_repoutput_hi
 ggsave("../output/UCD_Traits/UCD_Total_RepOutput_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
 ```
 
-Poisson not appropriate?  assumes mean = variance...
+Poisson not appropriate b/c  assumes mean = variance...
 
 
 ``` r
@@ -2573,131 +2549,56 @@ wl2_rep_output %>%
 
 ![](Total_Fitness_files/figure-html/unnamed-chunk-37-1.png)<!-- -->
 
-Can't use workflow with glmer.nb
-In Journal of Ecology paper: "For fruit production, we evaluated models using negative binomial, Poisson, and normal distributions. We rescaled fruit count values by dividing by the global mean and used negative binomial GLMMs (function glmer.nb in R; Bates, 2015)"
+
 
 ``` r
-rep_output_models_nb <- tribble(
+rep_output_modelslog <- tribble(
   ~name,          ~f,
-  "1_pop",              "Total_Fitness ~ (1|pop)", 
-  "2_pop.mf",           "Total_Fitness ~  (1|pop/mf)", 
-  "3_pop.block",           "Total_Fitness ~ (1|pop) + (1|block)", 
-  "4_pop.mf.block", "Total_Fitness ~  (1|pop/mf) + (1|block)"
+  "1_pop",              "logTotalFitness ~ (1|pop)", 
+  "2_pop.mf",           "logTotalFitness ~  (1|pop/mf)", 
+  "3_pop.block",        "logTotalFitness ~ (1|pop) + (1|block)", 
+  "4_pop.mf.block",     "logTotalFitness ~  (1|pop/mf) + (1|block)"
 )
 
 #run the models 
-rep_output_models_nb <- rep_output_models_nb %>%
-  mutate(glmer.nb = map(f, ~ glmer.nb(as.formula(.), 
+rep_output_modelslog <- rep_output_modelslog %>%
+  mutate(lmer = map(f, ~ lmer(as.formula(.), 
                             data = wl2_rep_output)), #run the models 
-         predict = map(glmer.nb, predict, type = "response"), # predicting from original data...
-        # type = response is for glm models, back transforms probabilities from logit scale 
-         glance = map(glmer.nb, glance)) #glance at the model results
-
-rep_output_models_nb %>% select(-f, -glmer.nb) %>% unnest(glance) %>% arrange(BIC) #look at the model fitting info 
-```
-
-```
-## # A tibble: 4 × 9
-##   name           predict     nobs sigma logLik   AIC   BIC deviance df.residual
-##   <chr>          <list>     <int> <dbl>  <dbl> <dbl> <dbl>    <dbl>       <dbl>
-## 1 3_pop.block    <dbl [96]>    96     1  -357.  722.  733.     86.1          92
-## 2 4_pop.mf.block <dbl [96]>    96     1  -357.  724.  737.     82.2          91
-## 3 1_pop          <dbl [96]>    96     1  -375.  756.  764.    103.           93
-## 4 2_pop.mf       <dbl [96]>    96     1  -375.  757.  767.     95.1          92
-```
-
-``` r
-rep_output_models_nb %>% select(-f, -glmer.nb) %>% unnest(glance) %>% arrange(AIC) #look at the model fitting info 
-```
-
-```
-## # A tibble: 4 × 9
-##   name           predict     nobs sigma logLik   AIC   BIC deviance df.residual
-##   <chr>          <list>     <int> <dbl>  <dbl> <dbl> <dbl>    <dbl>       <dbl>
-## 1 3_pop.block    <dbl [96]>    96     1  -357.  722.  733.     86.1          92
-## 2 4_pop.mf.block <dbl [96]>    96     1  -357.  724.  737.     82.2          91
-## 3 1_pop          <dbl [96]>    96     1  -375.  756.  764.    103.           93
-## 4 2_pop.mf       <dbl [96]>    96     1  -375.  757.  767.     95.1          92
-```
-
-``` r
-#model with pop.block best by AIC and BIC 
-```
-
-### Predicted vs. Observed Rep Output
-
-``` r
-wl2_rep_output %>% 
-  cbind(predicted={rep_output_models_nb %>% filter(name=="3_pop.block") %>% pull(predict) %>% unlist()}) %>%
-  ggplot(aes(x=Total_Fitness, y = predicted)) +
-  geom_point(alpha=.2) +
-  geom_abline(color="skyblue2") +
-  facet_wrap(~pop, scales="free")
-```
-
-![](Total_Fitness_files/figure-html/unnamed-chunk-39-1.png)<!-- -->
-
-
-``` r
-rep_output_models_nb_scaled <- tribble(
-  ~name,          ~f,
-  "1_pop",              "Total_Fitness_Scaled ~ (1|pop)", 
-  "2_pop.mf",           "Total_Fitness_Scaled ~  (1|pop/mf)", 
-  "3_pop.block",           "Total_Fitness_Scaled ~ (1|pop) + (1|block)", 
-  "4_pop.mf.block", "Total_Fitness_Scaled ~  (1|pop/mf) + (1|block)"
-)
-
-#run the models 
-rep_output_models_nb_scaled <- rep_output_models_nb_scaled %>%
-  mutate(glmer.nb = map(f, ~ glmer.nb(as.formula(.), 
-                            data = wl2_rep_output)), #run the models 
-         predict = map(glmer.nb, predict, type = "response"), # predicting from original data...
-        # type = response is for glm models, back transforms probabilities from logit scale 
-         glance = map(glmer.nb, glance)) #glance at the model results
+         predict = map(lmer, predict), # predicting from original data...
+         glance = map(lmer, glance)) #glance at the model results
 ```
 
 ```
 ## boundary (singular) fit: see help('isSingular')
-## 
 ## boundary (singular) fit: see help('isSingular')
 ```
 
-```
-## Warning: There were 3 warnings in `mutate()`.
-## The first warning was:
-## ℹ In argument: `glmer.nb = map(f, ~glmer.nb(as.formula(.), data =
-##   wl2_rep_output))`.
-## Caused by warning in `theta.ml()`:
-## ! iteration limit reached
-## ℹ Run `dplyr::last_dplyr_warnings()` to see the 2 remaining warnings.
-```
-
 ``` r
-rep_output_models_nb_scaled %>% select(-f, -glmer.nb) %>% unnest(glance) %>% arrange(BIC) #look at the model fitting info 
+rep_output_modelslog %>% select(-f, -lmer) %>% unnest(glance) %>% arrange(BIC) #look at the model fitting info 
 ```
 
 ```
 ## # A tibble: 4 × 9
-##   name           predict     nobs sigma logLik   AIC   BIC deviance df.residual
-##   <chr>          <list>     <int> <dbl>  <dbl> <dbl> <dbl>    <dbl>       <dbl>
-## 1 3_pop.block    <dbl [96]>    96     1  -114.  237.  247.     77.1          92
-## 2 4_pop.mf.block <dbl [96]>    96     1  -114.  239.  251.     77.1          91
-## 3 1_pop          <dbl [96]>    96     1  -125.  256.  264.     94.6          93
-## 4 2_pop.mf       <dbl [96]>    96     1  -125.  258.  268.     94.6          92
+##   name           predict     nobs sigma logLik   AIC   BIC REMLcrit df.residual
+##   <chr>          <list>     <int> <dbl>  <dbl> <dbl> <dbl>    <dbl>       <int>
+## 1 3_pop.block    <dbl [96]>    96 0.871  -135.  278.  288.     270.          92
+## 2 4_pop.mf.block <dbl [96]>    96 0.871  -135.  280.  293.     270.          91
+## 3 1_pop          <dbl [96]>    96 1.07   -147.  299.  307.     293.          93
+## 4 2_pop.mf       <dbl [96]>    96 1.07   -147.  301.  312.     293.          92
 ```
 
 ``` r
-rep_output_models_nb_scaled %>% select(-f, -glmer.nb) %>% unnest(glance) %>% arrange(AIC) #look at the model fitting info 
+rep_output_modelslog %>% select(-f, -lmer) %>% unnest(glance) %>% arrange(AIC) #look at the model fitting info 
 ```
 
 ```
 ## # A tibble: 4 × 9
-##   name           predict     nobs sigma logLik   AIC   BIC deviance df.residual
-##   <chr>          <list>     <int> <dbl>  <dbl> <dbl> <dbl>    <dbl>       <dbl>
-## 1 3_pop.block    <dbl [96]>    96     1  -114.  237.  247.     77.1          92
-## 2 4_pop.mf.block <dbl [96]>    96     1  -114.  239.  251.     77.1          91
-## 3 1_pop          <dbl [96]>    96     1  -125.  256.  264.     94.6          93
-## 4 2_pop.mf       <dbl [96]>    96     1  -125.  258.  268.     94.6          92
+##   name           predict     nobs sigma logLik   AIC   BIC REMLcrit df.residual
+##   <chr>          <list>     <int> <dbl>  <dbl> <dbl> <dbl>    <dbl>       <int>
+## 1 3_pop.block    <dbl [96]>    96 0.871  -135.  278.  288.     270.          92
+## 2 4_pop.mf.block <dbl [96]>    96 0.871  -135.  280.  293.     270.          91
+## 3 1_pop          <dbl [96]>    96 1.07   -147.  299.  307.     293.          93
+## 4 2_pop.mf       <dbl [96]>    96 1.07   -147.  301.  312.     293.          92
 ```
 
 ``` r
@@ -2707,14 +2608,14 @@ mod_test <- lmer(logTotalFitness ~  (1|pop) + (1|block), data=wl2_rep_output)
 plot(mod_test, which = 1) 
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-40-1.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-38-1.png)<!-- -->
 
 ``` r
 qqnorm(resid(mod_test))
 qqline(resid(mod_test)) 
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-40-2.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-38-2.png)<!-- -->
 
 ``` r
 summary(mod_test)
@@ -2747,44 +2648,102 @@ summary(mod_test)
 ```
 
 ``` r
-#still getting convergence issues with the scaled data, but maybe it's okay to use log transformation?...
-#mf causes "boundary (singular) fit: see help('isSingular')"
-#only models without issues are the ones with just pop or just block...
+#mf gives "boundary (singular) fit: see help('isSingular')" so take it out 
 ```
 
+### Predicted vs. Observed Rep Output
+
+``` r
+wl2_rep_output %>% 
+  cbind(predicted={rep_output_modelslog %>% filter(name=="3_pop.block") %>% pull(predict) %>% unlist()}) %>%
+  ggplot(aes(x=logTotalFitness, y = predicted)) +
+  geom_point(alpha=.2) +
+  geom_abline(color="skyblue2") +
+  facet_wrap(~pop, scales="free")
+```
+
+![](Total_Fitness_files/figure-html/unnamed-chunk-39-1.png)<!-- -->
 
 
 #### Test climate and geographic distance 
 
 ``` r
-rep_output_models_nb_CD_GD <- tribble(
+rep_output_models_log_CD_GD <- tribble(
   ~name,          ~f,
-  "1_pop.block",      "Total_Fitness ~  (1|pop) + (1|block)", 
-  "2_GS_Recent",      "Total_Fitness ~  GrwSsn_GD_Recent + Geographic_Dist + (1|pop) + (1|block)", 
-  "3_GS_Historical",  "Total_Fitness ~  GrwSsn_GD_Historical + Geographic_Dist + (1|pop) + (1|block)", 
-  "4_WY_Recent",      "Total_Fitness ~  Wtr_Year_GD_Recent + Geographic_Dist +(1|pop) + (1|block)",
-  "5_WY_Historical",  "Total_Fitness ~  Wtr_Year_GD_Historical + Geographic_Dist + (1|pop) + (1|block)"
+  "1_pop.block",      "logTotalFitness ~  (1|pop) + (1|block)", 
+  "2_GS_Recent",      "logTotalFitness ~  GrwSsn_GD_Recent + Geographic_Dist + (1|pop) + (1|block)", 
+  "3_GS_Historical",  "logTotalFitness ~  GrwSsn_GD_Historical + Geographic_Dist + (1|pop) + (1|block)", 
+  "4_WY_Recent",      "logTotalFitness ~  Wtr_Year_GD_Recent + Geographic_Dist +(1|pop) + (1|block)",
+  "5_WY_Historical",  "logTotalFitness ~  Wtr_Year_GD_Historical + Geographic_Dist + (1|pop) + (1|block)"
 )
 
 #run the models 
-rep_output_models_nb_CD_GD_wl2 <- rep_output_models_nb_CD_GD %>%
-  filter(name!="2_GS_Recent") %>% #Warning: unable to evaluate scaled gradientWarning: Model failed to converge: degenerate  Hessian with 1 negative eigenvalues
-  filter(name!="3_GS_Historical") %>%  #Warning: Model failed to converge with max|grad| = 0.00383601 (tol = 0.002, component 1)Warning: Model failed to converge with max|grad| = 0.00229312 (tol = 0.002, component 1)
-  mutate(glmer.nb = map(f, ~ glmer.nb(as.formula(.), 
+rep_output_models_log_CD_GD <- rep_output_models_log_CD_GD %>%
+  mutate(lmer = map(f, ~ lmer(as.formula(.), 
                             data = wl2_rep_output)), #run the models 
-         predict = map(glmer.nb, predict, type = "response"), # predicting from original data...
-        # type = response is for glm models, back transforms probabilities from logit scale 
-         glance = map(glmer.nb, glance)) #glance at the model results
+         predict = map(lmer, predict), # predicting from original data...
+         glance = map(lmer, glance)) #glance at the model results
 
 
-rep_output_models_nb_CD_GD_wl2 %>% select(-f, -glmer.nb) %>% unnest(glance) %>% arrange(BIC) #look at the model fitting info 
-rep_output_models_nb_CD_GD_wl2 %>% select(-f, -glmer.nb) %>% unnest(glance) %>% arrange(AIC) #look at the model fitting info 
+rep_output_models_log_CD_GD %>% select(-f, -lmer) %>% unnest(glance) %>% arrange(BIC) #look at the model fitting info 
+```
+
+```
+## # A tibble: 5 × 9
+##   name            predict     nobs sigma logLik   AIC   BIC REMLcrit df.residual
+##   <chr>           <list>     <int> <dbl>  <dbl> <dbl> <dbl>    <dbl>       <int>
+## 1 1_pop.block     <dbl [96]>    96 0.871  -135.  278.  288.     270.          92
+## 2 3_GS_Historical <dbl [96]>    96 0.873  -134.  280.  295.     268.          90
+## 3 2_GS_Recent     <dbl [96]>    96 0.874  -135.  282.  298.     270.          90
+## 4 4_WY_Recent     <dbl [96]>    96 0.873  -136.  284.  299.     272.          90
+## 5 5_WY_Historical <dbl [96]>    96 0.873  -136.  284.  300.     272.          90
+```
+
+``` r
+rep_output_models_log_CD_GD %>% select(-f, -lmer) %>% unnest(glance) %>% arrange(AIC) #look at the model fitting info 
+```
+
+```
+## # A tibble: 5 × 9
+##   name            predict     nobs sigma logLik   AIC   BIC REMLcrit df.residual
+##   <chr>           <list>     <int> <dbl>  <dbl> <dbl> <dbl>    <dbl>       <int>
+## 1 1_pop.block     <dbl [96]>    96 0.871  -135.  278.  288.     270.          92
+## 2 3_GS_Historical <dbl [96]>    96 0.873  -134.  280.  295.     268.          90
+## 3 2_GS_Recent     <dbl [96]>    96 0.874  -135.  282.  298.     270.          90
+## 4 4_WY_Recent     <dbl [96]>    96 0.873  -136.  284.  299.     272.          90
+## 5 5_WY_Historical <dbl [96]>    96 0.873  -136.  284.  300.     272.          90
+```
+
+``` r
+#pop block best by AIC and BIC ...
 
 
-mod_test <- glmer.nb(Total_Fitness ~ Wtr_Year_GD_Historical + Geographic_Dist + (1|pop) + (1|block), data=wl2_rep_output)
-plot(mod_test, which = 1) 
-qqnorm(resid(mod_test))
-qqline(resid(mod_test))  
+#pop.mf preferred by AIC & BIC, WY models are close after
+rep_output_models_log_CD_GD %>% mutate(tidy=map(lmer, tidy)) %>% unnest(tidy) %>%
+  select(-f, -lmer) %>% 
+  filter(str_detect(term, "GD") | term=="Geographic_Dist") %>%
+  drop_na(p.value)
+```
+
+```
+## # A tibble: 8 × 11
+##   name    predict glance   effect group term  estimate std.error statistic    df
+##   <chr>   <list>  <list>   <chr>  <chr> <chr>    <dbl>     <dbl>     <dbl> <dbl>
+## 1 2_GS_R… <dbl>   <tibble> fixed  <NA>  GrwS… -0.254       0.162   -1.57    4.80
+## 2 2_GS_R… <dbl>   <tibble> fixed  <NA>  Geog…  0.195       0.276    0.707   5.73
+## 3 3_GS_H… <dbl>   <tibble> fixed  <NA>  GrwS… -0.509       0.194   -2.62    4.15
+## 4 3_GS_H… <dbl>   <tibble> fixed  <NA>  Geog…  0.121       0.220    0.552   6.54
+## 5 4_WY_R… <dbl>   <tibble> fixed  <NA>  Wtr_… -0.00853     0.219   -0.0389  4.84
+## 6 4_WY_R… <dbl>   <tibble> fixed  <NA>  Geog…  0.0916      0.361    0.254   5.37
+## 7 5_WY_H… <dbl>   <tibble> fixed  <NA>  Wtr_…  0.0102      0.200    0.0510  4.97
+## 8 5_WY_H… <dbl>   <tibble> fixed  <NA>  Geog…  0.0790      0.346    0.228   5.45
+## # ℹ 1 more variable: p.value <dbl>
+```
+
+``` r
+#  arrange(p.value)
+
+#only GrwSSn historical marginally significant p=0.056... no other distances significant 
 ```
 
 
