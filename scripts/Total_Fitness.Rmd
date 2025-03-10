@@ -575,7 +575,7 @@ GSCD_prob_recent <- wl2_total_fitness %>%
   geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.02, linewidth = 2) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
-  labs(y="Probability of Fitness", x="Recent Growth Season CD", color="Growth Season \n Climate Distance") +
+  labs(y="Probability of Reproducing", x="Recent Growth Season CD", color="Growth Season \n Climate Distance") +
   scale_color_manual(values=timepd_palette) +
   theme(text=element_text(size=30))
 
@@ -588,7 +588,7 @@ WYCD_prob_recent <- wl2_total_fitness %>%
   geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.02,linewidth = 2) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
-  labs(y="Probability of Fitness", x="Recent Water Year CD", color="Water Year \n Climate Distance") +
+  labs(y="Probability of Reproducing", x="Recent Water Year CD", color="Water Year \n Climate Distance") +
   scale_color_manual(values=timepd_palette) +
   theme(text=element_text(size=30))
 
@@ -601,7 +601,7 @@ GD_prob <- wl2_total_fitness %>%
   geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.02, linewidth = 2) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
-  labs(y="Probability of Fitness", x="Geographic Distance (m)") +
+  labs(y="Probability of Reproducing", x="Geographic Distance (m)") +
   theme(text=element_text(size=30), axis.text.x = element_text(angle = 45,  hjust = 1))
 
 ED_prob <- wl2_total_fitness %>% 
@@ -613,7 +613,7 @@ ED_prob <- wl2_total_fitness %>%
   geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.02, linewidth = 2) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
-  labs(y="Probability of Fitness", x="Elevation Distance (m)") +
+  labs(y="Probability of Reproducing", x="Elevation Distance (m)") +
   theme(text=element_text(size=30))
 
 WL2_total_fitness_FIG_prob_recent_recent <- ggarrange(GSCD_prob_recent, WYCD_prob_recent, GD_prob, ED_prob, ncol=2, nrow=2) 
@@ -631,7 +631,7 @@ GSCD_prob_historic <- wl2_total_fitness %>%
   geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.02, linewidth = 2) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
-  labs(y="Probability of Fitness", x="Historic Growth Season CD", color="Growth Season \n Climate Distance") +
+  labs(y="Probability of Reproducing", x="Historic Growth Season CD", color="Growth Season \n Climate Distance") +
   scale_color_manual(values=timepd_palette) +
   theme(text=element_text(size=30))
 
@@ -644,7 +644,7 @@ WYCD_prob_historic <- wl2_total_fitness %>%
   geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.02,linewidth = 2) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
-  labs(y="Probability of Fitness", x="Historic Water Year CD", color="Water Year \n Climate Distance") +
+  labs(y="Probability of Reproducing", x="Historic Water Year CD", color="Water Year \n Climate Distance") +
   scale_color_manual(values=timepd_palette) +
   theme(text=element_text(size=30))
 
@@ -676,7 +676,7 @@ GSCD_prob_recent <- ucd_total_fitness %>%
   geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.02, linewidth = 2) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
-  labs(y="Probability of Fitness", x="Recent Growth Season CD", color="Growth Season \n Climate Distance") +
+  labs(y="Probability of Reproducing", x="Recent Growth Season CD", color="Growth Season \n Climate Distance") +
   scale_color_manual(values=timepd_palette) +
   theme(text=element_text(size=30))
 
@@ -690,7 +690,7 @@ WYCD_prob_recent <- ucd_total_fitness %>%
   geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.02,linewidth = 2) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
-  labs(y="Probability of Fitness", x="Recent Water Year CD", color="Water Year \n Climate Distance") +
+  labs(y="Probability of Reproducing", x="Recent Water Year CD", color="Water Year \n Climate Distance") +
   scale_color_manual(values=timepd_palette) +
   theme(text=element_text(size=30))
 
@@ -704,7 +704,7 @@ GD_prob <- ucd_total_fitness %>%
   geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.02, linewidth = 2) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
-  labs(y="Probability of Fitness", x="Geographic Distance (m)") +
+  labs(y="Probability of Reproducing", x="Geographic Distance (m)") +
   theme(text=element_text(size=30), axis.text.x = element_text(angle = 45,  hjust = 1))
 
 ED_prob <- ucd_total_fitness %>% 
@@ -717,7 +717,7 @@ ED_prob <- ucd_total_fitness %>%
   geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.02, linewidth = 2) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
-  labs(y="Probability of Fitness", x="Elevation Distance (m)") +
+  labs(y="Probability of Reproducing", x="Elevation Distance (m)") +
   theme(text=element_text(size=30))
 
 UCD_total_fitness_FIG_prob_recent_recent <- ggarrange(GSCD_prob_recent, WYCD_prob_recent, GD_prob, ED_prob, ncol=2, nrow=2) 
@@ -736,7 +736,7 @@ GSCD_prob_historic <- ucd_total_fitness %>%
   geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.02, linewidth = 2) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
-  labs(y="Probability of Fitness", x="Historic Growth Season CD", color="Growth Season \n Climate Distance") +
+  labs(y="Probability of Reproducing", x="Historic Growth Season CD", color="Growth Season \n Climate Distance") +
   scale_color_manual(values=timepd_palette) +
   theme(text=element_text(size=30))
 
@@ -750,7 +750,7 @@ WYCD_prob_historic <- ucd_total_fitness %>%
   geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.02,linewidth = 2) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
-  labs(y="Probability of Fitness", x="Historic Water Year CD", color="Water Year \n Climate Distance") +
+  labs(y="Probability of Reproducing", x="Historic Water Year CD", color="Water Year \n Climate Distance") +
   scale_color_manual(values=timepd_palette) +
   theme(text=element_text(size=30))
 
@@ -931,31 +931,32 @@ prob_fitness_GD_fits_wl2 %>% mutate(tidy=map(fit, tidy)) %>% unnest(tidy) %>%
 #  arrange(p.value)
 # recent and historical water year CD are sig, geo dist is not sig in those models. The GS_RECENT model had convergence issues.
 
-#mod_test <- glmer(ProbFitness ~ GrwSsn_GD_Recent + Geographic_Dist + (1|pop) + (1|block), data=wl2_prob_fitness, family=binomial)
+mod_test <- glmer(ProbFitness ~ Wtr_Year_GD_Recent + Geographic_Dist + (1|pop) + (1|block), data=wl2_prob_fitness, family=binomial)
+#summary(mod_test)
 #Warning: Model failed to converge with max|grad| = 0.0747217 (tol = 0.002, component 1)Warning: Model is nearly unidentifiable: very large eigenvalue
 # - Rescale variables? - But the variables were already scaled 
 ```
 
-
+Keep block in for UCD
 ```{r}
 prob_fitness_GD_wflow_ucd <- workflow() %>%
-  add_variables(outcomes = ProbFitness, predictors = c(pop, mf, contains("GD"), Geographic_Dist)) 
+  add_variables(outcomes = ProbFitness, predictors = c(pop, mf, block, contains("GD"), Geographic_Dist)) 
 
 prob_fitness_GD_fits_ucd <- tibble(wflow=list(
-  pop.MF = {prob_fitness_GD_wflow_ucd %>% 
-      add_model(glmer.model_binomial, formula = ProbFitness ~ (1|pop/mf))},
+  pop.mf.block = {prob_fitness_GD_wflow_ucd %>% 
+      add_model(glmer.model_binomial, formula = ProbFitness ~ (1|pop/mf) + (1|block))},
   
   GS_Recent = {prob_fitness_GD_wflow_ucd %>% 
-      add_model(glmer.model_binomial, formula = ProbFitness ~ GrwSsn_GD_Recent + Geographic_Dist + (1|pop/mf))},
+      add_model(glmer.model_binomial, formula = ProbFitness ~ GrwSsn_GD_Recent + Geographic_Dist + (1|pop/mf) + (1|block))},
   
   GS_Historical = {prob_fitness_GD_wflow_ucd %>% 
-      add_model(glmer.model_binomial, formula = ProbFitness ~ GrwSsn_GD_Historical + Geographic_Dist + (1|pop/mf))},
+      add_model(glmer.model_binomial, formula = ProbFitness ~ GrwSsn_GD_Historical + Geographic_Dist + (1|pop/mf) + (1|block))},
   
   WY_Recent = {prob_fitness_GD_wflow_ucd %>% 
-      add_model(glmer.model_binomial, formula = ProbFitness ~ Wtr_Year_GD_Recent + Geographic_Dist + (1|pop/mf))},
+      add_model(glmer.model_binomial, formula = ProbFitness ~ Wtr_Year_GD_Recent + Geographic_Dist + (1|pop/mf) + (1|block))},
   
   WY_Historical = {prob_fitness_GD_wflow_ucd %>% 
-      add_model(glmer.model_binomial, formula = ProbFitness ~ Wtr_Year_GD_Historical + Geographic_Dist + (1|pop/mf))}
+      add_model(glmer.model_binomial, formula = ProbFitness ~ Wtr_Year_GD_Historical + Geographic_Dist + (1|pop/mf) + (1|block))}
   
 ),
 name=names(wflow)
@@ -964,7 +965,7 @@ name=names(wflow)
   mutate(fit = map(wflow, fit, data = ucd_prob_fitness))
 
 prob_fitness_GD_fits_ucd %>% mutate(glance=map(fit, glance)) %>% unnest(glance) %>% arrange(AIC) %>% select(-wflow:-sigma)
-#pop.mf preferred by AIC & BIC, WY models are close after
+#pop.mf.block preferred by AIC & BIC, WY models are close after
 
 prob_fitness_GD_fits_ucd %>% mutate(tidy=map(fit, tidy)) %>% unnest(tidy) %>%
   filter(str_detect(term, "GD") | term=="Geographic_Dist") %>%
