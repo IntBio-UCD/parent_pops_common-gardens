@@ -13,6 +13,9 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # Fruit production in year 2 at WL2
 
+To Do:
+- Think about removing 0s to make distribution more normal for analysis ...
+
 ## Libraries
 ```{r}
 library(tidyverse)
@@ -62,6 +65,8 @@ wl2_y2_pops <- read_csv("../input/WL2_Data/Final_2023_2024_Pop_Loc_Info.csv") %>
   select(Pop.Type, loc:bed, row=bedrow, col=bedcol, pop:unique.ID)
 
 wl2_blocks <- read_csv("../input/WL2_Data/CorrectedCSVs/WL2_mort_pheno_20231020_corrected.csv") %>% 
+  unite(BedLoc, bed:bed.col, sep="_", remove = FALSE) %>% 
+  filter(BedLoc!="K_5_C") %>% #get rid of duplicate locations
   select(block, pop, mf, rep) %>% #add in block info 
   mutate(mf=as.double(mf), rep=as.double(rep)) #convert to num
 
@@ -190,7 +195,7 @@ ED <- wl2_fruits_y2 %>%
   theme(text=element_text(size=30))
 
 wl2_fruitsy2_FIG <- ggarrange(GSCD_recent, WYCD_recent, GD, ED, ncol=2, nrow=2) 
-ggsave("../output/WL2_Traits/WL2_fruits_y2_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
+#ggsave("../output/WL2_Traits/WL2_fruits_y2_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
 ```
 
 ```{r}
@@ -218,7 +223,7 @@ WYCD_historic <- wl2_fruits_y2 %>%
   theme(text=element_text(size=25))
 
 wl2_fruitsy2_FIG_historic <- ggarrange(GSCD_historic, WYCD_historic, GD, ED, ncol=2, nrow=2) 
-ggsave("../output/WL2_Traits/WL2_fruits_y2_SCATTERS_Historical.png", width = 24, height = 18, units = "in")
+#ggsave("../output/WL2_Traits/WL2_fruits_y2_SCATTERS_Historical.png", width = 24, height = 18, units = "in")
 ```
 
 ## Stats

@@ -1,7 +1,7 @@
 ---
 title: "WL2_Fruits_Y2"
 author: "Brandie QC"
-date: "2025-03-10"
+date: "2025-03-11"
 output: 
   html_document: 
     keep_md: true
@@ -10,6 +10,9 @@ output:
 
 
 # Fruit production in year 2 at WL2
+
+To Do:
+- Think about removing 0s to make distribution more normal for analysis ...
 
 ## Libraries
 
@@ -219,6 +222,8 @@ wl2_y2_pops <- read_csv("../input/WL2_Data/Final_2023_2024_Pop_Loc_Info.csv") %>
 
 ``` r
 wl2_blocks <- read_csv("../input/WL2_Data/CorrectedCSVs/WL2_mort_pheno_20231020_corrected.csv") %>% 
+  unite(BedLoc, bed:bed.col, sep="_", remove = FALSE) %>% 
+  filter(BedLoc!="K_5_C") %>% #get rid of duplicate locations
   select(block, pop, mf, rep) %>% #add in block info 
   mutate(mf=as.double(mf), rep=as.double(rep)) #convert to num
 ```
@@ -518,7 +523,7 @@ wl2_fruitsy2_FIG <- ggarrange(GSCD_recent, WYCD_recent, GD, ED, ncol=2, nrow=2)
 ```
 
 ``` r
-ggsave("../output/WL2_Traits/WL2_fruits_y2_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
+#ggsave("../output/WL2_Traits/WL2_fruits_y2_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
 ```
 
 
@@ -575,7 +580,7 @@ wl2_fruitsy2_FIG_historic <- ggarrange(GSCD_historic, WYCD_historic, GD, ED, nco
 ```
 
 ``` r
-ggsave("../output/WL2_Traits/WL2_fruits_y2_SCATTERS_Historical.png", width = 24, height = 18, units = "in")
+#ggsave("../output/WL2_Traits/WL2_fruits_y2_SCATTERS_Historical.png", width = 24, height = 18, units = "in")
 ```
 
 ## Stats
@@ -635,7 +640,7 @@ wl2_fruits_y2 %>%
 ##    pop   elev_m GrwSsn_GD_Recent Wtr_Year_GD_Recent Geographic_Dist meanFruits
 ##    <chr>  <dbl>            <dbl>              <dbl>           <dbl>      <dbl>
 ##  1 BH      511.            0.360              0.566         159626.       23.9
-##  2 CC      313             0.435              0.445         132498.       14.7
+##  2 CC      313             0.435              0.445         132498.       15.3
 ##  3 IH      454.            0.453              0.422          65203.       11.1
 ##  4 LV1    2593.            0.414              0.406         212682.      NaN  
 ##  5 SC      422.            0.449              0.497          62499.       18.7
@@ -743,10 +748,10 @@ fruits_modelslog %>% select(-f, -lmer) %>% unnest(glance) %>% arrange(BIC) #look
 ## # A tibble: 4 × 9
 ##   name           predict     nobs sigma logLik   AIC   BIC REMLcrit df.residual
 ##   <chr>          <list>     <int> <dbl>  <dbl> <dbl> <dbl>    <dbl>       <int>
-## 1 3_pop.block    <dbl [82]>    82 0.908  -123.  253.  263.     245.          78
-## 2 4_pop.mf.block <dbl [82]>    82 0.908  -123.  255.  267.     245.          77
-## 3 1_pop          <dbl [82]>    82 1.30   -138.  283.  290.     277.          79
-## 4 2_pop.mf       <dbl [82]>    82 1.30   -138.  285.  294.     277.          78
+## 1 3_pop.block    <dbl [81]>    81 0.907  -121.  250.  260.     242.          77
+## 2 4_pop.mf.block <dbl [81]>    81 0.907  -121.  252.  264.     242.          76
+## 3 1_pop          <dbl [81]>    81 1.31   -137.  280.  287.     274.          78
+## 4 2_pop.mf       <dbl [81]>    81 1.31   -137.  282.  292.     274.          77
 ```
 
 ``` r
@@ -757,10 +762,10 @@ fruits_modelslog %>% select(-f, -lmer) %>% unnest(glance) %>% arrange(AIC) #look
 ## # A tibble: 4 × 9
 ##   name           predict     nobs sigma logLik   AIC   BIC REMLcrit df.residual
 ##   <chr>          <list>     <int> <dbl>  <dbl> <dbl> <dbl>    <dbl>       <int>
-## 1 3_pop.block    <dbl [82]>    82 0.908  -123.  253.  263.     245.          78
-## 2 4_pop.mf.block <dbl [82]>    82 0.908  -123.  255.  267.     245.          77
-## 3 1_pop          <dbl [82]>    82 1.30   -138.  283.  290.     277.          79
-## 4 2_pop.mf       <dbl [82]>    82 1.30   -138.  285.  294.     277.          78
+## 1 3_pop.block    <dbl [81]>    81 0.907  -121.  250.  260.     242.          77
+## 2 4_pop.mf.block <dbl [81]>    81 0.907  -121.  252.  264.     242.          76
+## 3 1_pop          <dbl [81]>    81 1.31   -137.  280.  287.     274.          78
+## 4 2_pop.mf       <dbl [81]>    81 1.31   -137.  282.  292.     274.          77
 ```
 
 ``` r
@@ -789,22 +794,22 @@ summary(mod_test)
 ## Formula: logFruits ~ (1 | pop) + (1 | block)
 ##    Data: wl2_fruits_y2_scaled
 ## 
-## REML criterion at convergence: 245
+## REML criterion at convergence: 242.3
 ## 
 ## Scaled residuals: 
 ##     Min      1Q  Median      3Q     Max 
-## -1.9292 -0.5498  0.2095  0.6934  1.5662 
+## -1.8945 -0.5596  0.2023  0.6666  1.5560 
 ## 
 ## Random effects:
 ##  Groups   Name        Variance Std.Dev.
-##  block    (Intercept) 0.90008  0.9487  
-##  pop      (Intercept) 0.07346  0.2710  
-##  Residual             0.82454  0.9080  
-## Number of obs: 82, groups:  block, 13; pop, 7
+##  block    (Intercept) 0.92492  0.9617  
+##  pop      (Intercept) 0.07338  0.2709  
+##  Residual             0.82273  0.9070  
+## Number of obs: 81, groups:  block, 13; pop, 7
 ## 
 ## Fixed effects:
 ##             Estimate Std. Error      df t value Pr(>|t|)    
-## (Intercept)   2.2528     0.3105 12.1506   7.256 9.38e-06 ***
+## (Intercept)   2.2401     0.3138 12.2011    7.14 1.08e-05 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
@@ -849,7 +854,14 @@ fruits_models_log_CD_GD <- fruits_models_log_CD_GD %>%
 
 ```
 ## boundary (singular) fit: see help('isSingular')
-## boundary (singular) fit: see help('isSingular')
+```
+
+```
+## Warning: There was 1 warning in `mutate()`.
+## ℹ In argument: `lmer = map(f, ~lmer(as.formula(.), data =
+##   wl2_fruits_y2_scaled))`.
+## Caused by warning in `checkConv()`:
+## ! Model failed to converge with max|grad| = 0.00208063 (tol = 0.002, component 1)
 ```
 
 ``` r
@@ -860,11 +872,11 @@ fruits_models_log_CD_GD %>% select(-f, -lmer) %>% unnest(glance) %>% arrange(BIC
 ## # A tibble: 5 × 9
 ##   name            predict     nobs sigma logLik   AIC   BIC REMLcrit df.residual
 ##   <chr>           <list>     <int> <dbl>  <dbl> <dbl> <dbl>    <dbl>       <int>
-## 1 1_pop.block     <dbl [82]>    82 0.908  -123.  253.  263.     245.          78
-## 2 4_WY_Recent     <dbl [82]>    82 0.891  -122.  255.  270.     243.          76
-## 3 5_WY_Historical <dbl [82]>    82 0.896  -122.  256.  270.     244.          76
-## 4 2_GS_Recent     <dbl [82]>    82 0.912  -124.  259.  273.     247.          76
-## 5 3_GS_Historical <dbl [82]>    82 0.911  -124.  259.  274.     247.          76
+## 1 1_pop.block     <dbl [81]>    81 0.907  -121.  250.  260.     242.          77
+## 2 4_WY_Recent     <dbl [81]>    81 0.889  -120.  252.  267.     240.          75
+## 3 5_WY_Historical <dbl [81]>    81 0.893  -121.  253.  268.     241.          75
+## 4 3_GS_Historical <dbl [81]>    81 0.911  -122.  256.  271.     244.          75
+## 5 2_GS_Recent     <dbl [81]>    81 0.911  -122.  256.  271.     244.          75
 ```
 
 ``` r
@@ -875,11 +887,11 @@ fruits_models_log_CD_GD %>% select(-f, -lmer) %>% unnest(glance) %>% arrange(AIC
 ## # A tibble: 5 × 9
 ##   name            predict     nobs sigma logLik   AIC   BIC REMLcrit df.residual
 ##   <chr>           <list>     <int> <dbl>  <dbl> <dbl> <dbl>    <dbl>       <int>
-## 1 1_pop.block     <dbl [82]>    82 0.908  -123.  253.  263.     245.          78
-## 2 4_WY_Recent     <dbl [82]>    82 0.891  -122.  255.  270.     243.          76
-## 3 5_WY_Historical <dbl [82]>    82 0.896  -122.  256.  270.     244.          76
-## 4 2_GS_Recent     <dbl [82]>    82 0.912  -124.  259.  273.     247.          76
-## 5 3_GS_Historical <dbl [82]>    82 0.911  -124.  259.  274.     247.          76
+## 1 1_pop.block     <dbl [81]>    81 0.907  -121.  250.  260.     242.          77
+## 2 4_WY_Recent     <dbl [81]>    81 0.889  -120.  252.  267.     240.          75
+## 3 5_WY_Historical <dbl [81]>    81 0.893  -121.  253.  268.     241.          75
+## 4 3_GS_Historical <dbl [81]>    81 0.911  -122.  256.  271.     244.          75
+## 5 2_GS_Recent     <dbl [81]>    81 0.911  -122.  256.  271.     244.          75
 ```
 
 ``` r
@@ -897,14 +909,14 @@ fruits_models_log_CD_GD %>% mutate(tidy=map(lmer, tidy)) %>% unnest(tidy) %>%
 ## # A tibble: 8 × 11
 ##   name    predict glance   effect group term  estimate std.error statistic    df
 ##   <chr>   <list>  <list>   <chr>  <chr> <chr>    <dbl>     <dbl>     <dbl> <dbl>
-## 1 2_GS_R… <dbl>   <tibble> fixed  <NA>  GrwS…  -0.0825     0.131    -0.628  7.09
-## 2 2_GS_R… <dbl>   <tibble> fixed  <NA>  Geog…   0.213      0.144     1.48   4.25
-## 3 3_GS_H… <dbl>   <tibble> fixed  <NA>  GrwS…  -0.0636     0.141    -0.451  5.73
-## 4 3_GS_H… <dbl>   <tibble> fixed  <NA>  Geog…   0.208      0.148     1.41   4.21
-## 5 4_WY_R… <dbl>   <tibble> fixed  <NA>  Wtr_…  -0.264      0.110    -2.39  70.1 
-## 6 4_WY_R… <dbl>   <tibble> fixed  <NA>  Geog…   0.362      0.126     2.89  68.8 
-## 7 5_WY_H… <dbl>   <tibble> fixed  <NA>  Wtr_…  -0.247      0.111    -2.22  70.3 
-## 8 5_WY_H… <dbl>   <tibble> fixed  <NA>  Geog…   0.342      0.124     2.76  68.7 
+## 1 2_GS_R… <dbl>   <tibble> fixed  <NA>  GrwS…  -0.0918     0.131    -0.702  7.31
+## 2 2_GS_R… <dbl>   <tibble> fixed  <NA>  Geog…   0.212      0.142     1.49   4.29
+## 3 3_GS_H… <dbl>   <tibble> fixed  <NA>  GrwS…  -0.0869     0.139    -0.624  6.14
+## 4 3_GS_H… <dbl>   <tibble> fixed  <NA>  Geog…   0.210      0.144     1.46   4.20
+## 5 4_WY_R… <dbl>   <tibble> fixed  <NA>  Wtr_…  -0.269      0.111    -2.43  69.0 
+## 6 4_WY_R… <dbl>   <tibble> fixed  <NA>  Geog…   0.364      0.126     2.90  67.8 
+## 7 5_WY_H… <dbl>   <tibble> fixed  <NA>  Wtr_…  -0.252      0.112    -2.26  68.7 
+## 8 5_WY_H… <dbl>   <tibble> fixed  <NA>  Geog…   0.344      0.124     2.77  67.3 
 ## # ℹ 1 more variable: p.value <dbl>
 ```
 
