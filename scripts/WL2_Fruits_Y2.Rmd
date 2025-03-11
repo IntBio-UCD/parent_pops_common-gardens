@@ -15,6 +15,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 To Do:
 - Think about removing 0s to make distribution more normal for analysis ...
+- Run models with fruits+flowers
 
 ## Libraries
 ```{r}
