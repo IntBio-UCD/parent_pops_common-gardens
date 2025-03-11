@@ -1,7 +1,7 @@
 ---
 title: "Fruits_Y1"
 author: "Brandie QC"
-date: "2025-03-05"
+date: "2025-03-11"
 output: 
   html_document: 
     keep_md: true
@@ -10,9 +10,6 @@ output:
 
 
 # Year 1 Fruit Production
-
-To Do:
-- Compare no flowers to fruits + flowers 
 
 ## Libraries
 
@@ -203,7 +200,7 @@ options(mc.cores = parallel::detectCores())
 ## Need the UCD 2023 and WL2 2023 & 2024 annual census data sheets (for fruit number)
 
 ``` r
-ucd_ann_cens <- read_csv("../output/UCD_Traits/UCD2023_Annual_Census_Combined.csv") %>%  #note this is only for plants that survived to rep 
+ucd_ann_cens <- read_csv("../output/UCD_Traits/UCD2023_Annual_Census_Combined.csv") %>%  #note this is only for plants with annual census data 
   rename(pop=parent.pop) %>% 
   filter(!is.na(pop)) %>% 
   filter(rep != 100) %>% #get rid of individuals that germinated in the field 
@@ -332,6 +329,7 @@ wl2_gowers_2023 <- read_csv("../output/Climate/Gowers_WL2.csv") %>%
 
 ``` r
 ucd_fruits <- ucd_ann_cens %>% select(block:rep, elevation.group, elev_m, Lat:Long, flowers, fruits) %>%  #note this is only for plants that survived to rep 
+  mutate(FrFlN=fruits+flowers) %>% 
   left_join(ucd_gowers)
 ```
 
@@ -340,7 +338,77 @@ ucd_fruits <- ucd_ann_cens %>% select(block:rep, elevation.group, elev_m, Lat:Lo
 ```
 
 ``` r
-write_csv(ucd_fruits, "../output/UCD_Traits/UCD_Fruits.csv")
+ucd_fruits %>% group_by(pop) %>% summarise(n=n()) %>% arrange(n) #SQ3 & WL1 only 1 individual 
+```
+
+```
+## # A tibble: 10 × 2
+##    pop       n
+##    <chr> <int>
+##  1 SQ3       1
+##  2 WL1       1
+##  3 DPR       2
+##  4 YO7       2
+##  5 CP2       3
+##  6 WL2       3
+##  7 IH        4
+##  8 SC        4
+##  9 TM2      12
+## 10 BH       31
+```
+
+``` r
+ucd_fruits %>% filter(FrFlN>0) %>% arrange(pop) #DPR 2 indivs, BH and TM2 lots, rest only 1 indiv ...
+```
+
+```
+## # A tibble: 33 × 23
+##    block   row col   Genotype pop      mf   rep elevation.group elev_m   Lat
+##    <chr> <dbl> <chr> <chr>    <chr> <dbl> <dbl> <chr>            <dbl> <dbl>
+##  1 D2       26 B     BH_5_15  BH        5    15 Low               511.  37.4
+##  2 D2       29 D     BH_2_9   BH        2     9 Low               511.  37.4
+##  3 D2       35 D     BH_3_6   BH        3     6 Low               511.  37.4
+##  4 F2       35 D     BH_2_1   BH        2     1 Low               511.  37.4
+##  5 H2       24 B     BH_5_29  BH        5    29 Low               511.  37.4
+##  6 J1       10 C     BH_3_1   BH        3     1 Low               511.  37.4
+##  7 J1       19 C     BH_5_20  BH        5    20 Low               511.  37.4
+##  8 J2       23 D     BH_4_9   BH        4     9 Low               511.  37.4
+##  9 J2       25 D     BH_2_5   BH        2     5 Low               511.  37.4
+## 10 J2       37 B     BH_1_7   BH        1     7 Low               511.  37.4
+## # ℹ 23 more rows
+## # ℹ 13 more variables: Long <dbl>, flowers <dbl>, fruits <dbl>, FrFlN <dbl>,
+## #   GrwSsn_GD_Recent <dbl>, GrwSsn_GD_Historical <dbl>,
+## #   Wtr_Year_GD_Recent <dbl>, Wtr_Year_GD_Historical <dbl>, UCD_Lat <dbl>,
+## #   UCD_Long <dbl>, UCD_Elev <dbl>, Geographic_Dist <dbl>, Elev_Dist <dbl>
+```
+
+``` r
+ucd_fruits %>% filter(fruits>0) %>% arrange(pop) #only BH and TM2 with greater than 1 indiv 
+```
+
+```
+## # A tibble: 30 × 23
+##    block   row col   Genotype pop      mf   rep elevation.group elev_m   Lat
+##    <chr> <dbl> <chr> <chr>    <chr> <dbl> <dbl> <chr>            <dbl> <dbl>
+##  1 D2       26 B     BH_5_15  BH        5    15 Low               511.  37.4
+##  2 D2       29 D     BH_2_9   BH        2     9 Low               511.  37.4
+##  3 D2       35 D     BH_3_6   BH        3     6 Low               511.  37.4
+##  4 F2       35 D     BH_2_1   BH        2     1 Low               511.  37.4
+##  5 H2       24 B     BH_5_29  BH        5    29 Low               511.  37.4
+##  6 J1       10 C     BH_3_1   BH        3     1 Low               511.  37.4
+##  7 J1       19 C     BH_5_20  BH        5    20 Low               511.  37.4
+##  8 J2       23 D     BH_4_9   BH        4     9 Low               511.  37.4
+##  9 J2       25 D     BH_2_5   BH        2     5 Low               511.  37.4
+## 10 J2       37 B     BH_1_7   BH        1     7 Low               511.  37.4
+## # ℹ 20 more rows
+## # ℹ 13 more variables: Long <dbl>, flowers <dbl>, fruits <dbl>, FrFlN <dbl>,
+## #   GrwSsn_GD_Recent <dbl>, GrwSsn_GD_Historical <dbl>,
+## #   Wtr_Year_GD_Recent <dbl>, Wtr_Year_GD_Historical <dbl>, UCD_Lat <dbl>,
+## #   UCD_Long <dbl>, UCD_Elev <dbl>, Geographic_Dist <dbl>, Elev_Dist <dbl>
+```
+
+``` r
+#write_csv(ucd_fruits, "../output/UCD_Traits/UCD_Fruits.csv")
 ```
 
 ### Bar Plots 
@@ -399,6 +467,7 @@ ucd_fruits %>%
 
 ``` r
 wl2_fruits_y1 <- wl2_ann_cens %>% select(block:rep, flowers=num.flw, fruits=num.fruit) %>% 
+  mutate(FrFlN=fruits+flowers) %>% 
   left_join(wl2_gowers_2023)
 ```
 
@@ -407,7 +476,143 @@ wl2_fruits_y1 <- wl2_ann_cens %>% select(block:rep, flowers=num.flw, fruits=num.
 ```
 
 ``` r
-write_csv(wl2_fruits_y1, "../output/WL2_Traits/WL2_Fruits_Y1.csv")
+summary(wl2_fruits_y1)
+```
+
+```
+##     block              BedLoc              bed               bed-row     
+##  Length:1573        Length:1573        Length:1573        Min.   : 1.00  
+##  Class :character   Class :character   Class :character   1st Qu.:12.00  
+##  Mode  :character   Mode  :character   Mode  :character   Median :23.00  
+##                                                           Mean   :25.31  
+##                                                           3rd Qu.:39.00  
+##                                                           Max.   :59.00  
+##                                                                          
+##    bed-col            Genotype             pop                 mf           
+##  Length:1573        Length:1573        Length:1573        Length:1573       
+##  Class :character   Class :character   Class :character   Class :character  
+##  Mode  :character   Mode  :character   Mode  :character   Mode  :character  
+##                                                                             
+##                                                                             
+##                                                                             
+##                                                                             
+##      rep               flowers            fruits           FrFlN        
+##  Length:1573        Min.   : 0.0000   Min.   : 0.000   Min.   : 0.0000  
+##  Class :character   1st Qu.: 0.0000   1st Qu.: 0.000   1st Qu.: 0.0000  
+##  Mode  :character   Median : 0.0000   Median : 0.000   Median : 0.0000  
+##                     Mean   : 0.1681   Mean   : 0.306   Mean   : 0.4752  
+##                     3rd Qu.: 0.0000   3rd Qu.: 0.000   3rd Qu.: 0.0000  
+##                     Max.   :20.0000   Max.   :22.000   Max.   :35.0000  
+##                     NA's   :1109      NA's   :1109     NA's   :1110     
+##  elevation.group        elev_m            Lat             Long       
+##  Length:1573        Min.   : 313.0   Min.   :36.56   Min.   :-123.0  
+##  Class :character   1st Qu.: 511.4   1st Qu.:37.81   1st Qu.:-121.2  
+##  Mode  :character   Median :2020.1   Median :38.71   Median :-120.3  
+##                     Mean   :1666.3   Mean   :38.72   Mean   :-120.4  
+##                     3rd Qu.:2470.0   3rd Qu.:39.59   3rd Qu.:-119.6  
+##                     Max.   :2872.3   Max.   :40.74   Max.   :-118.8  
+##                                                                      
+##  GrwSsn_GD_Recent GrwSsn_GD_Historical Wtr_Year_GD_Recent
+##  Min.   :0.2165   Min.   :0.2154       Min.   :0.3641    
+##  1st Qu.:0.2871   1st Qu.:0.2609       1st Qu.:0.3922    
+##  Median :0.3595   Median :0.3419       Median :0.4233    
+##  Mean   :0.3439   Mean   :0.3454       Mean   :0.4724    
+##  3rd Qu.:0.4089   3rd Qu.:0.4148       3rd Qu.:0.5594    
+##  Max.   :0.4460   Max.   :0.5230       Max.   :0.7142    
+##                                                          
+##  Wtr_Year_GD_Historical    WL2_Lat         WL2_Long         WL2_Elev   
+##  Min.   :0.4075         Min.   :38.83   Min.   :-120.3   Min.   :2020  
+##  1st Qu.:0.4252         1st Qu.:38.83   1st Qu.:-120.3   1st Qu.:2020  
+##  Median :0.4629         Median :38.83   Median :-120.3   Median :2020  
+##  Mean   :0.4921         Mean   :38.83   Mean   :-120.3   Mean   :2020  
+##  3rd Qu.:0.5537         3rd Qu.:38.83   3rd Qu.:-120.3   3rd Qu.:2020  
+##  Max.   :0.6473         Max.   :38.83   Max.   :-120.3   Max.   :2020  
+##                                                                        
+##  Geographic_Dist      Elev_Dist        
+##  Min.   :   136.3   Min.   :-852.2950  
+##  1st Qu.: 62498.9   1st Qu.:-449.9787  
+##  Median :131232.0   Median :  -0.1158  
+##  Mean   :119848.0   Mean   : 353.6799  
+##  3rd Qu.:159625.6   3rd Qu.:1508.5706  
+##  Max.   :317600.4   Max.   :1707.0000  
+## 
+```
+
+``` r
+wl2_fruits_y1 %>% group_by(pop) %>% summarise(n=n()) %>% arrange(n)
+```
+
+```
+## # A tibble: 23 × 2
+##    pop       n
+##    <chr> <int>
+##  1 WV        3
+##  2 WR       14
+##  3 LV3      27
+##  4 SQ1      30
+##  5 SQ3      33
+##  6 YO4      40
+##  7 FR       48
+##  8 WL1      48
+##  9 SQ2      61
+## 10 TM2      84
+## # ℹ 13 more rows
+```
+
+``` r
+wl2_fruits_y1 %>% filter(fruits>0) #all TM2
+```
+
+```
+## # A tibble: 25 × 25
+##    block BedLoc bed   `bed-row` `bed-col` Genotype pop   mf    rep   flowers
+##    <chr> <chr>  <chr>     <dbl> <chr>     <chr>    <chr> <chr> <chr>   <dbl>
+##  1 A     A_1_A  A             1 A         TM2_6_11 TM2   6     11          0
+##  2 B     A_43_A A            43 A         TM2_6_1  TM2   6     1           0
+##  3 B     A_56_B A            56 B         TM2_2_12 TM2   2     12          0
+##  4 A     A_23_D A            23 D         TM2_3_3  TM2   3     3           1
+##  5 B     A_44_C A            44 C         TM2_6_3  TM2   6     3           1
+##  6 C     B_37_A B            37 A         TM2_1_16 TM2   1     16          5
+##  7 C     B_36_D B            36 D         TM2_1_4  TM2   1     4           2
+##  8 C     B_43_D B            43 D         TM2_7_10 TM2   7     10         20
+##  9 F     C_54_B C            54 B         TM2_1_14 TM2   1     14          2
+## 10 E     C_32_D C            32 D         TM2_7_12 TM2   7     12          3
+## # ℹ 15 more rows
+## # ℹ 15 more variables: fruits <dbl>, FrFlN <dbl>, elevation.group <chr>,
+## #   elev_m <dbl>, Lat <dbl>, Long <dbl>, GrwSsn_GD_Recent <dbl>,
+## #   GrwSsn_GD_Historical <dbl>, Wtr_Year_GD_Recent <dbl>,
+## #   Wtr_Year_GD_Historical <dbl>, WL2_Lat <dbl>, WL2_Long <dbl>,
+## #   WL2_Elev <dbl>, Geographic_Dist <dbl>, Elev_Dist <dbl>
+```
+
+``` r
+wl2_fruits_y1 %>% filter(FrFlN>0) #all TM2
+```
+
+```
+## # A tibble: 26 × 25
+##    block BedLoc bed   `bed-row` `bed-col` Genotype pop   mf    rep   flowers
+##    <chr> <chr>  <chr>     <dbl> <chr>     <chr>    <chr> <chr> <chr>   <dbl>
+##  1 A     A_1_A  A             1 A         TM2_6_11 TM2   6     11          0
+##  2 B     A_43_A A            43 A         TM2_6_1  TM2   6     1           0
+##  3 B     A_46_B A            46 B         TM2_3_11 TM2   3     11          2
+##  4 B     A_56_B A            56 B         TM2_2_12 TM2   2     12          0
+##  5 A     A_23_D A            23 D         TM2_3_3  TM2   3     3           1
+##  6 B     A_44_C A            44 C         TM2_6_3  TM2   6     3           1
+##  7 C     B_37_A B            37 A         TM2_1_16 TM2   1     16          5
+##  8 C     B_36_D B            36 D         TM2_1_4  TM2   1     4           2
+##  9 C     B_43_D B            43 D         TM2_7_10 TM2   7     10         20
+## 10 F     C_54_B C            54 B         TM2_1_14 TM2   1     14          2
+## # ℹ 16 more rows
+## # ℹ 15 more variables: fruits <dbl>, FrFlN <dbl>, elevation.group <chr>,
+## #   elev_m <dbl>, Lat <dbl>, Long <dbl>, GrwSsn_GD_Recent <dbl>,
+## #   GrwSsn_GD_Historical <dbl>, Wtr_Year_GD_Recent <dbl>,
+## #   Wtr_Year_GD_Historical <dbl>, WL2_Lat <dbl>, WL2_Long <dbl>,
+## #   WL2_Elev <dbl>, Geographic_Dist <dbl>, Elev_Dist <dbl>
+```
+
+``` r
+#write_csv(wl2_fruits_y1, "../output/WL2_Traits/WL2_Fruits_Y1.csv")
 ```
 
 ### Bar Plots
@@ -464,7 +669,7 @@ wl2_fruits_y1 %>%
 #ggsave("../output/WL2_Traits/WL2_FruitsY1_Wtr_Year_GD_Recent.png", width = 12, height = 8, units = "in")
 ```
 
-## Scatterplots
+## Scatterplots (didn't edit these due to low sample sizes, can just report means in text)
 ### Davis
 
 ``` r
@@ -475,13 +680,6 @@ GSCD <- ucd_fruits %>%
   ggplot(aes(x=GrwSsn_GD_Recent, y=meanFruits, color=GrwSsn_GD_Recent, group = pop)) +
   geom_point(size=6) + 
   geom_errorbar(aes(ymin=meanFruits-semFruits,ymax=meanFruits+semFruits),width=.02, linewidth = 2) +
-  #geom_text_repel(aes(x = GrwSsn_GD_Recent, y = meanFruits,
-  #          label = `pop`),
-  #      min.segment.length = 0.8,
-  #      max.overlaps = 100,
-  #      #label.padding = 1,
-  #      #point.padding = 0.8,
-  #      size = 4) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
   labs(y="Fruit Number", x="Growth Season CD", color="Growth Season \n Climate Distance") +
@@ -501,13 +699,6 @@ WYCD <- ucd_fruits %>%
   ggplot(aes(x=Wtr_Year_GD_Recent, y=meanFruits, color=Wtr_Year_GD_Recent, group = pop)) +
   geom_point(size=6) + 
   geom_errorbar(aes(ymin=meanFruits-semFruits,ymax=meanFruits+semFruits),width=.02, linewidth = 2) +
-  #geom_text_repel(aes(x = Wtr_Year_GD_Recent, y = meanFruits,
-  #          label = `pop`),
-  #      min.segment.length = 0.8,
-  #      max.overlaps = 100,
-  #      #label.padding = 1,
-  #      #point.padding = 0.8,
-  #      size = 4) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
   labs(y="Fruit Number", x="Water Year CD", color="Water Year \n Climate Distance") +
@@ -527,13 +718,6 @@ GD <- ucd_fruits %>%
   ggplot(aes(x=Geographic_Dist, y=meanFruits, color=Geographic_Dist, group = pop)) +
   geom_point(size=6) + 
   geom_errorbar(aes(ymin=meanFruits-semFruits,ymax=meanFruits+semFruits),width=.02, linewidth = 2) +
-  #geom_text_repel(aes(x = Geographic_Dist, y = meanFruits,
-  #          label = `pop`),
-  #      min.segment.length = 0.8,
-  #      max.overlaps = 100,
-  #      #label.padding = 1,
-  #      #point.padding = 0.8,
-  #      size = 4) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
   labs(y="Fruit Number", x="Geographic Distance (m)", color="Geographic Distance") +
@@ -561,13 +745,6 @@ GSCD <- wl2_fruits_y1 %>%
   ggplot(aes(x=GrwSsn_GD_Recent, y=meanFruits, color=GrwSsn_GD_Recent, group = pop)) +
   geom_point(size=6) + 
   geom_errorbar(aes(ymin=meanFruits-semFruits,ymax=meanFruits+semFruits),width=.02, linewidth = 2) +
-  #geom_text_repel(aes(x = GrwSsn_GD_Recent, y = meanFruits,
-  #          label = `pop`),
-  #      min.segment.length = 0.8,
-  #      max.overlaps = 100,
-  #      #label.padding = 1,
-  #      #point.padding = 0.8,
-  #      size = 4) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
   labs(y="Fruit Number", x="Growth Season CD", color="Growth Season \n Climate Distance") +
@@ -587,13 +764,6 @@ WYCD <- wl2_fruits_y1 %>%
   ggplot(aes(x=Wtr_Year_GD_Recent, y=meanFruits, color=Wtr_Year_GD_Recent, group = pop)) +
   geom_point(size=6) + 
   geom_errorbar(aes(ymin=meanFruits-semFruits,ymax=meanFruits+semFruits),width=.02,linewidth = 2) +
-  #geom_text_repel(aes(x = Wtr_Year_GD_Recent, y = meanFruits,
-  #          label = `pop`),
-  #      min.segment.length = 0.8,
-  #      max.overlaps = 100,
-  #      #label.padding = 1,
-  #      #point.padding = 0.8,
-  #      size = 4) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
   labs(y="Fruit Number", x="Water Year CD", color="Water Year \n Climate Distance") +
@@ -613,13 +783,6 @@ GD <- wl2_fruits_y1 %>%
   ggplot(aes(x=Geographic_Dist, y=meanFruits, color=Geographic_Dist, group = pop)) +
   geom_point(size=6) + 
   geom_errorbar(aes(ymin=meanFruits-semFruits,ymax=meanFruits+semFruits),width=.02, linewidth = 2) +
-  #geom_text_repel(aes(x = Geographic_Dist, y = meanFruits,
-  #          label = `pop`),
-  #      min.segment.length = 0.8,
-  #      max.overlaps = 100,
-  #      #label.padding = 1,
-  #      #point.padding = 0.8,
-  #      size = 4) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
   labs(y="Fruit Number", x="Geographic Distance (m)", color="Geographic Distance") +
@@ -648,3 +811,5 @@ wl2_fruits_y1_FIG <- ggarrange(GSCD, WYCD, GD, ncol=2, nrow=2)
 ``` r
 #ggsave("../output/WL2_Traits/WL2_fruits_y1_SCATTERS.png", width = 24, height = 18, units = "in")
 ```
+
+## No Stats due to low sample sizes (within pops)

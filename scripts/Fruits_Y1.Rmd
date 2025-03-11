@@ -13,9 +13,6 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # Year 1 Fruit Production
 
-To Do:
-- Compare no flowers to fruits + flowers 
-
 ## Libraries
 ```{r}
 library(tidyverse)
@@ -59,7 +56,7 @@ options(mc.cores = parallel::detectCores())
 
 ## Need the UCD 2023 and WL2 2023 & 2024 annual census data sheets (for fruit number)
 ```{r}
-ucd_ann_cens <- read_csv("../output/UCD_Traits/UCD2023_Annual_Census_Combined.csv") %>%  #note this is only for plants that survived to rep 
+ucd_ann_cens <- read_csv("../output/UCD_Traits/UCD2023_Annual_Census_Combined.csv") %>%  #note this is only for plants with annual census data 
   rename(pop=parent.pop) %>% 
   filter(!is.na(pop)) %>% 
   filter(rep != 100) %>% #get rid of individuals that germinated in the field 
@@ -105,8 +102,12 @@ wl2_gowers_2023 <- read_csv("../output/Climate/Gowers_WL2.csv") %>%
 ## Davis
 ```{r}
 ucd_fruits <- ucd_ann_cens %>% select(block:rep, elevation.group, elev_m, Lat:Long, flowers, fruits) %>%  #note this is only for plants that survived to rep 
+  mutate(FrFlN=fruits+flowers) %>% 
   left_join(ucd_gowers)
 
+ucd_fruits %>% group_by(pop) %>% summarise(n=n()) %>% arrange(n) #SQ3 & WL1 only 1 individual 
+ucd_fruits %>% filter(FrFlN>0) %>% arrange(pop) #DPR 2 indivs, BH and TM2 lots, rest only 1 indiv ...
+ucd_fruits %>% filter(fruits>0) %>% arrange(pop) #only BH and TM2 with greater than 1 indiv 
 #write_csv(ucd_fruits, "../output/UCD_Traits/UCD_Fruits.csv")
 ```
 
@@ -144,8 +145,14 @@ ucd_fruits %>%
 ## WL2
 ```{r}
 wl2_fruits_y1 <- wl2_ann_cens %>% select(block:rep, flowers=num.flw, fruits=num.fruit) %>% 
+  mutate(FrFlN=fruits+flowers) %>% 
   left_join(wl2_gowers_2023)
 
+summary(wl2_fruits_y1)
+
+wl2_fruits_y1 %>% group_by(pop) %>% summarise(n=n()) %>% arrange(n)
+wl2_fruits_y1 %>% filter(fruits>0) #all TM2
+wl2_fruits_y1 %>% filter(FrFlN>0) #all TM2
 #write_csv(wl2_fruits_y1, "../output/WL2_Traits/WL2_Fruits_Y1.csv")
 ```
 
@@ -182,7 +189,7 @@ wl2_fruits_y1 %>%
 #ggsave("../output/WL2_Traits/WL2_FruitsY1_Wtr_Year_GD_Recent.png", width = 12, height = 8, units = "in")
 ```
 
-## Scatterplots
+## Scatterplots (didn't edit these due to low sample sizes, can just report means in text)
 ### Davis
 ```{r}
 #scatter plots
@@ -192,13 +199,6 @@ GSCD <- ucd_fruits %>%
   ggplot(aes(x=GrwSsn_GD_Recent, y=meanFruits, color=GrwSsn_GD_Recent, group = pop)) +
   geom_point(size=6) + 
   geom_errorbar(aes(ymin=meanFruits-semFruits,ymax=meanFruits+semFruits),width=.02, linewidth = 2) +
-  #geom_text_repel(aes(x = GrwSsn_GD_Recent, y = meanFruits,
-  #          label = `pop`),
-  #      min.segment.length = 0.8,
-  #      max.overlaps = 100,
-  #      #label.padding = 1,
-  #      #point.padding = 0.8,
-  #      size = 4) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
   labs(y="Fruit Number", x="Growth Season CD", color="Growth Season \n Climate Distance") +
@@ -211,13 +211,6 @@ WYCD <- ucd_fruits %>%
   ggplot(aes(x=Wtr_Year_GD_Recent, y=meanFruits, color=Wtr_Year_GD_Recent, group = pop)) +
   geom_point(size=6) + 
   geom_errorbar(aes(ymin=meanFruits-semFruits,ymax=meanFruits+semFruits),width=.02, linewidth = 2) +
-  #geom_text_repel(aes(x = Wtr_Year_GD_Recent, y = meanFruits,
-  #          label = `pop`),
-  #      min.segment.length = 0.8,
-  #      max.overlaps = 100,
-  #      #label.padding = 1,
-  #      #point.padding = 0.8,
-  #      size = 4) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
   labs(y="Fruit Number", x="Water Year CD", color="Water Year \n Climate Distance") +
@@ -230,13 +223,6 @@ GD <- ucd_fruits %>%
   ggplot(aes(x=Geographic_Dist, y=meanFruits, color=Geographic_Dist, group = pop)) +
   geom_point(size=6) + 
   geom_errorbar(aes(ymin=meanFruits-semFruits,ymax=meanFruits+semFruits),width=.02, linewidth = 2) +
-  #geom_text_repel(aes(x = Geographic_Dist, y = meanFruits,
-  #          label = `pop`),
-  #      min.segment.length = 0.8,
-  #      max.overlaps = 100,
-  #      #label.padding = 1,
-  #      #point.padding = 0.8,
-  #      size = 4) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
   labs(y="Fruit Number", x="Geographic Distance (m)", color="Geographic Distance") +
@@ -256,13 +242,6 @@ GSCD <- wl2_fruits_y1 %>%
   ggplot(aes(x=GrwSsn_GD_Recent, y=meanFruits, color=GrwSsn_GD_Recent, group = pop)) +
   geom_point(size=6) + 
   geom_errorbar(aes(ymin=meanFruits-semFruits,ymax=meanFruits+semFruits),width=.02, linewidth = 2) +
-  #geom_text_repel(aes(x = GrwSsn_GD_Recent, y = meanFruits,
-  #          label = `pop`),
-  #      min.segment.length = 0.8,
-  #      max.overlaps = 100,
-  #      #label.padding = 1,
-  #      #point.padding = 0.8,
-  #      size = 4) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
   labs(y="Fruit Number", x="Growth Season CD", color="Growth Season \n Climate Distance") +
@@ -275,13 +254,6 @@ WYCD <- wl2_fruits_y1 %>%
   ggplot(aes(x=Wtr_Year_GD_Recent, y=meanFruits, color=Wtr_Year_GD_Recent, group = pop)) +
   geom_point(size=6) + 
   geom_errorbar(aes(ymin=meanFruits-semFruits,ymax=meanFruits+semFruits),width=.02,linewidth = 2) +
-  #geom_text_repel(aes(x = Wtr_Year_GD_Recent, y = meanFruits,
-  #          label = `pop`),
-  #      min.segment.length = 0.8,
-  #      max.overlaps = 100,
-  #      #label.padding = 1,
-  #      #point.padding = 0.8,
-  #      size = 4) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
   labs(y="Fruit Number", x="Water Year CD", color="Water Year \n Climate Distance") +
@@ -294,13 +266,6 @@ GD <- wl2_fruits_y1 %>%
   ggplot(aes(x=Geographic_Dist, y=meanFruits, color=Geographic_Dist, group = pop)) +
   geom_point(size=6) + 
   geom_errorbar(aes(ymin=meanFruits-semFruits,ymax=meanFruits+semFruits),width=.02, linewidth = 2) +
-  #geom_text_repel(aes(x = Geographic_Dist, y = meanFruits,
-  #          label = `pop`),
-  #      min.segment.length = 0.8,
-  #      max.overlaps = 100,
-  #      #label.padding = 1,
-  #      #point.padding = 0.8,
-  #      size = 4) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
   labs(y="Fruit Number", x="Geographic Distance (m)", color="Geographic Distance") +
@@ -310,3 +275,5 @@ GD <- wl2_fruits_y1 %>%
 wl2_fruits_y1_FIG <- ggarrange(GSCD, WYCD, GD, ncol=2, nrow=2) 
 #ggsave("../output/WL2_Traits/WL2_fruits_y1_SCATTERS.png", width = 24, height = 18, units = "in")
 ```
+
+## No Stats due to low sample sizes (within pops)
