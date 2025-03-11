@@ -1,7 +1,7 @@
 ---
 title: "WL2_Fruits_Y2"
 author: "Brandie QC"
-date: "2025-03-05"
+date: "2025-03-10"
 output: 
   html_document: 
     keep_md: true
@@ -147,7 +147,7 @@ library(tidymodels)
 ## ✖ infer::t_test()       masks rstatix::t_test()
 ## ✖ Matrix::unpack()      masks tidyr::unpack()
 ## ✖ recipes::update()     masks Matrix::update(), stats::update()
-## • Search for functions across packages at https://www.tidymodels.org/find/
+## • Use tidymodels_prefer() to resolve common conflicts.
 ```
 
 ``` r
@@ -217,6 +217,45 @@ wl2_y2_pops <- read_csv("../input/WL2_Data/Final_2023_2024_Pop_Loc_Info.csv") %>
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
 ```
 
+``` r
+wl2_blocks <- read_csv("../input/WL2_Data/CorrectedCSVs/WL2_mort_pheno_20231020_corrected.csv") %>% 
+  select(block, pop, mf, rep) %>% #add in block info 
+  mutate(mf=as.double(mf), rep=as.double(rep)) #convert to num
+```
+
+```
+## Rows: 1826 Columns: 14
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: ","
+## chr (12): block, bed, bed.col, pop, mf, rep, bud.date, flower.date, fruit.da...
+## dbl  (1): bed.row
+## lgl  (1): last.fruit.date
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+```
+
+```
+## Warning: There were 2 warnings in `mutate()`.
+## The first warning was:
+## ℹ In argument: `mf = as.double(mf)`.
+## Caused by warning:
+## ! NAs introduced by coercion
+## ℹ Run `dplyr::last_dplyr_warnings()` to see the 1 remaining warning.
+```
+
+``` r
+#wl2_blocks %>% rowwise() %>%  #checking if mf and rep can be converted to numeric (all buffers)
+#  filter(!is.na(mf)) %>%  
+#  filter(is.na(as.numeric(mf)))
+
+wl2_y2_pops_blocks <- left_join(wl2_y2_pops, wl2_blocks)
+```
+
+```
+## Joining with `by = join_by(pop, mf, rep)`
+```
+
 ## Need the WL2 2024 annual census data sheets (for fruit number)
 
 ``` r
@@ -235,7 +274,7 @@ wl2_ann_cens_2024 <- read_csv("../input/WL2_Data/WL2_Annual_Census_20241023_corr
 ```
 
 ``` r
-wl2_ann_cens_2024_pops <- left_join(wl2_y2_pops, wl2_ann_cens_2024) %>%  
+wl2_ann_cens_2024_pops <- left_join(wl2_y2_pops_blocks, wl2_ann_cens_2024) %>%  
   rename(Genotype=unique.ID)
 ```
 
@@ -302,7 +341,8 @@ wl2_gowers_2024 <- read_csv("../output/Climate/Gowers_WL2_2024.csv") %>%
 ## Calculate Fruits(y2)
 
 ``` r
-wl2_fruits_y2 <- wl2_ann_cens_2024_pops %>% select(Pop.Type:Genotype, flowers=num.flw, fruits=num.fruit) %>% 
+wl2_fruits_y2 <- wl2_ann_cens_2024_pops %>% select(Pop.Type:block, flowers=num.flw, fruits=num.fruit) %>%
+  mutate(FrFlN=fruits+flowers) %>% 
   left_join(wl2_gowers_2024)
 ```
 
@@ -311,7 +351,7 @@ wl2_fruits_y2 <- wl2_ann_cens_2024_pops %>% select(Pop.Type:Genotype, flowers=nu
 ```
 
 ``` r
-write_csv(wl2_fruits_y2, "../output/WL2_Traits/WL2_Fruits_Y2.csv")
+#write_csv(wl2_fruits_y2, "../output/WL2_Traits/WL2_Fruits_Y2.csv")
 ```
 
 ### BAR PLOTS 
@@ -371,42 +411,35 @@ wl2_fruits_y2 %>% filter(pop=="TM2") #only 3 of the 6 made fruits and those 3 ha
 ```
 
 ```
-## # A tibble: 6 × 24
-##   Pop.Type     loc   bed     row col   pop      mf   rep Genotype flowers fruits
-##   <chr>        <chr> <chr> <dbl> <chr> <chr> <dbl> <dbl> <chr>      <dbl>  <dbl>
-## 1 2023-surviv… B_56… B        56 C     TM2       1     3 TM2_1_3        0    125
-## 2 2023-surviv… C_23… C        23 D     TM2       4    12 TM2_4_12       0     19
-## 3 2023-surviv… D_19… D        19 A     TM2       7    18 TM2_7_18      NA     NA
-## 4 2023-surviv… E_49… E        49 B     TM2       6     4 TM2_6_4        0      2
-## 5 2023-surviv… F_24… F        24 A     TM2       2     4 TM2_2_4       NA     NA
-## 6 2023-surviv… H_13… H        13 A     TM2       2     6 TM2_2_6       NA     NA
-## # ℹ 13 more variables: elevation.group <chr>, elev_m <dbl>, Lat <dbl>,
-## #   Long <dbl>, GrwSsn_GD_Recent <dbl>, GrwSsn_GD_Historical <dbl>,
-## #   Wtr_Year_GD_Recent <dbl>, Wtr_Year_GD_Historical <dbl>, WL2_Lat <dbl>,
-## #   WL2_Long <dbl>, WL2_Elev <dbl>, Geographic_Dist <dbl>, Elev_Dist <dbl>
+## # A tibble: 6 × 26
+##   Pop.Type      loc   bed     row col   pop      mf   rep Genotype block flowers
+##   <chr>         <chr> <chr> <dbl> <chr> <chr> <dbl> <dbl> <chr>    <chr>   <dbl>
+## 1 2023-survivor B_56… B        56 C     TM2       1     3 TM2_1_3  B           0
+## 2 2023-survivor C_23… C        23 D     TM2       4    12 TM2_4_12 E           0
+## 3 2023-survivor D_19… D        19 A     TM2       7    18 TM2_7_18 G          NA
+## 4 2023-survivor E_49… E        49 B     TM2       6     4 TM2_6_4  I           0
+## 5 2023-survivor F_24… F        24 A     TM2       2     4 TM2_2_4  I          NA
+## 6 2023-survivor H_13… H        13 A     TM2       2     6 TM2_2_6  L          NA
+## # ℹ 15 more variables: fruits <dbl>, FrFlN <dbl>, elevation.group <chr>,
+## #   elev_m <dbl>, Lat <dbl>, Long <dbl>, GrwSsn_GD_Recent <dbl>,
+## #   GrwSsn_GD_Historical <dbl>, Wtr_Year_GD_Recent <dbl>,
+## #   Wtr_Year_GD_Historical <dbl>, WL2_Lat <dbl>, WL2_Long <dbl>,
+## #   WL2_Elev <dbl>, Geographic_Dist <dbl>, Elev_Dist <dbl>
 ```
 
 ### Scatterplots
 
 ``` r
 #scatter plots
-GSCD <- wl2_fruits_y2 %>% 
+GSCD_recent <- wl2_fruits_y2 %>% 
   group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
   summarise(meanFruits=mean(fruits, na.rm = TRUE), semFruits=sem(fruits, na.rm=TRUE)) %>% 
-  ggplot(aes(x=GrwSsn_GD_Recent, y=meanFruits, color=GrwSsn_GD_Recent, group = pop)) +
+  ggplot(aes(x=GrwSsn_GD_Recent, y=meanFruits, group = pop)) +
   geom_point(size=6) + 
   geom_errorbar(aes(ymin=meanFruits-semFruits,ymax=meanFruits+semFruits),width=.02, linewidth = 2) +
-  #geom_text_repel(aes(x = GrwSsn_GD_Recent, y = meanFruits,
-  #          label = `pop`),
-  #      min.segment.length = 0.8,
-  #      max.overlaps = 100,
-  #      #label.padding = 1,
-  #      #point.padding = 0.8,
-  #      size = 4) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
-  labs(y="Fruit Number", x="Growth Season CD", color="Growth Season \n Climate Distance") +
-  scale_color_viridis(option="mako", direction = -1) +
+  labs(y="Y2 Fruit Number", x="Recent Growth Season CD", color="Growth Season \n Climate Distance") +
   theme(text=element_text(size=25))
 ```
 
@@ -416,23 +449,15 @@ GSCD <- wl2_fruits_y2 %>%
 ```
 
 ``` r
-WYCD <- wl2_fruits_y2 %>% 
+WYCD_recent <- wl2_fruits_y2 %>% 
   group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
   summarise(meanFruits=mean(fruits, na.rm = TRUE), semFruits=sem(fruits, na.rm=TRUE)) %>% 
-  ggplot(aes(x=Wtr_Year_GD_Recent, y=meanFruits, color=Wtr_Year_GD_Recent, group = pop)) +
+  ggplot(aes(x=Wtr_Year_GD_Recent, y=meanFruits, group = pop)) +
   geom_point(size=6) + 
   geom_errorbar(aes(ymin=meanFruits-semFruits,ymax=meanFruits+semFruits),width=.02,linewidth = 2) +
-  #geom_text_repel(aes(x = Wtr_Year_GD_Recent, y = meanFruits,
-  #          label = `pop`),
-  #      min.segment.length = 0.8,
-  #      max.overlaps = 100,
-  #      #label.padding = 1,
-  #      #point.padding = 0.8,
-  #      size = 4) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
-  labs(y="Fruit Number", x="Water Year CD", color="Water Year \n Climate Distance") +
-  scale_color_viridis(option="mako", direction = -1) +
+  labs(y="Y2 Fruit Number", x="Recent Water Year CD", color="Water Year \n Climate Distance") +
   theme(text=element_text(size=25))
 ```
 
@@ -445,20 +470,12 @@ WYCD <- wl2_fruits_y2 %>%
 GD <- wl2_fruits_y2 %>% 
   group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent, Geographic_Dist) %>% 
   summarise(meanFruits=mean(fruits, na.rm = TRUE), semFruits=sem(fruits, na.rm=TRUE)) %>% 
-  ggplot(aes(x=Geographic_Dist, y=meanFruits, color=Geographic_Dist, group = pop)) +
+  ggplot(aes(x=Geographic_Dist, y=meanFruits, group = pop)) +
   geom_point(size=6) + 
   geom_errorbar(aes(ymin=meanFruits-semFruits,ymax=meanFruits+semFruits),width=.02, linewidth = 2) +
-  #geom_text_repel(aes(x = Geographic_Dist, y = meanFruits,
-  #          label = `pop`),
-  #      min.segment.length = 0.8,
-  #      max.overlaps = 100,
-  #      #label.padding = 1,
-  #      #point.padding = 0.8,
-  #      size = 4) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
-  labs(y="Fruit Number", x="Geographic Distance (m)", color="Geographic Distance") +
-  scale_color_viridis(option="mako", direction = -1) +
+  labs(y="Y2 Fruit Number", x="Geographic Distance (m)") +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 ```
 
@@ -468,7 +485,25 @@ GD <- wl2_fruits_y2 %>%
 ```
 
 ``` r
-wl2_winter_surv_FIG <- ggarrange(GSCD, WYCD, GD, ncol=2, nrow=2) 
+ED <- wl2_fruits_y2 %>% 
+  group_by(pop, elev_m, Elev_Dist) %>% 
+  summarise(meanFruits=mean(fruits, na.rm = TRUE), semFruits=sem(fruits, na.rm=TRUE)) %>% 
+  ggplot(aes(x=Elev_Dist, y=meanFruits, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanFruits-semFruits,ymax=meanFruits+semFruits),width=.02, linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Y2 Fruit Number", x="Elevation Distance (m)") +
+  theme(text=element_text(size=30))
+```
+
+```
+## `summarise()` has grouped output by 'pop', 'elev_m'. You can override using the
+## `.groups` argument.
+```
+
+``` r
+wl2_fruitsy2_FIG <- ggarrange(GSCD_recent, WYCD_recent, GD, ED, ncol=2, nrow=2) 
 ```
 
 ```
@@ -478,8 +513,403 @@ wl2_winter_surv_FIG <- ggarrange(GSCD, WYCD, GD, ncol=2, nrow=2)
 ## (`geom_point()`).
 ## Removed 1 row containing missing values or values outside the scale range
 ## (`geom_point()`).
+## Removed 1 row containing missing values or values outside the scale range
+## (`geom_point()`).
 ```
 
 ``` r
-#ggsave("../output/WL2_Traits/WL2_fruits_y2_SCATTERS.png", width = 24, height = 18, units = "in")
+ggsave("../output/WL2_Traits/WL2_fruits_y2_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
+```
+
+
+``` r
+#scatter plots
+GSCD_historic <- wl2_fruits_y2 %>% 
+  group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
+  summarise(meanFruits=mean(fruits, na.rm = TRUE), semFruits=sem(fruits, na.rm=TRUE)) %>% 
+  ggplot(aes(x=GrwSsn_GD_Recent, y=meanFruits, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanFruits-semFruits,ymax=meanFruits+semFruits),width=.02, linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Y2 Fruit Number", x="Historic Growth Season CD", color="Growth Season \n Climate Distance") +
+  theme(text=element_text(size=25))
+```
+
+```
+## `summarise()` has grouped output by 'pop', 'elev_m', 'GrwSsn_GD_Recent'. You
+## can override using the `.groups` argument.
+```
+
+``` r
+WYCD_historic <- wl2_fruits_y2 %>% 
+  group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
+  summarise(meanFruits=mean(fruits, na.rm = TRUE), semFruits=sem(fruits, na.rm=TRUE)) %>% 
+  ggplot(aes(x=Wtr_Year_GD_Recent, y=meanFruits, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanFruits-semFruits,ymax=meanFruits+semFruits),width=.02,linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Y2 Fruit Number", x="Historic Water Year CD", color="Water Year \n Climate Distance") +
+  theme(text=element_text(size=25))
+```
+
+```
+## `summarise()` has grouped output by 'pop', 'elev_m', 'GrwSsn_GD_Recent'. You
+## can override using the `.groups` argument.
+```
+
+``` r
+wl2_fruitsy2_FIG_historic <- ggarrange(GSCD_historic, WYCD_historic, GD, ED, ncol=2, nrow=2) 
+```
+
+```
+## Warning: Removed 1 row containing missing values or values outside the scale range
+## (`geom_point()`).
+## Removed 1 row containing missing values or values outside the scale range
+## (`geom_point()`).
+## Removed 1 row containing missing values or values outside the scale range
+## (`geom_point()`).
+## Removed 1 row containing missing values or values outside the scale range
+## (`geom_point()`).
+```
+
+``` r
+ggsave("../output/WL2_Traits/WL2_fruits_y2_SCATTERS_Historical.png", width = 24, height = 18, units = "in")
+```
+
+## Stats
+
+### Check Distributions
+
+``` r
+wl2_fruits_y2 %>% 
+  ggplot(aes(x=fruits)) +
+  geom_histogram()
+```
+
+```
+## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+```
+
+```
+## Warning: Removed 51 rows containing non-finite outside the scale range
+## (`stat_bin()`).
+```
+
+![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-9-1.png)<!-- -->
+
+``` r
+wl2_fruits_y2 %>% 
+  ggplot(aes(x=FrFlN)) +
+  geom_histogram()
+```
+
+```
+## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+```
+
+```
+## Warning: Removed 52 rows containing non-finite outside the scale range
+## (`stat_bin()`).
+```
+
+![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-9-2.png)<!-- -->
+
+### Check Sample Sizes
+
+``` r
+wl2_fruits_y2 %>% 
+  group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent, Geographic_Dist) %>% 
+  summarise(meanFruits=mean(fruits, na.rm = TRUE), semFruits=sem(fruits, na.rm=TRUE), n=n()) 
+```
+
+```
+## `summarise()` has grouped output by 'pop', 'elev_m', 'GrwSsn_GD_Recent',
+## 'Wtr_Year_GD_Recent'. You can override using the `.groups` argument.
+```
+
+```
+## # A tibble: 10 × 8
+## # Groups:   pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent [10]
+##    pop   elev_m GrwSsn_GD_Recent Wtr_Year_GD_Recent Geographic_Dist meanFruits
+##    <chr>  <dbl>            <dbl>              <dbl>           <dbl>      <dbl>
+##  1 BH      511.            0.360              0.566         159626.       23.9
+##  2 CC      313             0.435              0.445         132498.       14.7
+##  3 IH      454.            0.453              0.422          65203.       11.1
+##  4 LV1    2593.            0.414              0.406         212682.      NaN  
+##  5 SC      422.            0.449              0.497          62499.       18.7
+##  6 SQ1    1921.            0.159              0.310         283281.        2  
+##  7 TM2     379.            0.566              0.406         140893.       48.7
+##  8 WL2    2020.            0.238              0.226            136.       22.4
+##  9 WR     1158             0.366              0.355          74992.       30  
+## 10 YO7    2470.            0.353              0.328         128037.       19.4
+## # ℹ 2 more variables: semFruits <dbl>, n <int>
+```
+
+``` r
+#remove LV1, SQ1, WR b/c only 1 indiv each 
+```
+
+
+## Transformations and Scaling 
+
+``` r
+wl2_fruits_y2_scaled <- wl2_fruits_y2 %>% mutate_at(c("GrwSsn_GD_Recent","Wtr_Year_GD_Recent",                                                           "GrwSsn_GD_Historical","Wtr_Year_GD_Historical","Geographic_Dist"),
+                                                            scale) %>% 
+  filter(pop!="LV1", pop!="SQ1", pop!="WR") %>% 
+  drop_na(fruits, FrFlN) %>% 
+  mutate(logFruits=log(fruits + 1),
+         log10Fruits=log10(fruits + 1),
+         logFrFLs=log(FrFlN + 1),
+         log10FrFLs=log10(FrFlN + 1)) #log transformation, add 1 for 0s 
+
+wl2_fruits_y2_scaled %>%  #looks better
+  ggplot(aes(x=logFruits)) +
+  geom_histogram()
+```
+
+```
+## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+```
+
+![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-11-1.png)<!-- -->
+
+``` r
+wl2_fruits_y2_scaled %>% 
+  ggplot(aes(x=log10Fruits)) +
+  geom_histogram()
+```
+
+```
+## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+```
+
+![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-11-2.png)<!-- -->
+
+``` r
+wl2_fruits_y2_scaled %>%  #looks better
+  ggplot(aes(x=logFrFLs)) +
+  geom_histogram()
+```
+
+```
+## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+```
+
+![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-11-3.png)<!-- -->
+
+``` r
+wl2_fruits_y2_scaled %>% 
+  ggplot(aes(x=log10FrFLs)) +
+  geom_histogram()
+```
+
+```
+## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+```
+
+![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-11-4.png)<!-- -->
+
+
+``` r
+fruits_modelslog <- tribble(
+  ~name,          ~f,
+  "1_pop",              "logFruits ~ (1|pop)", 
+  "2_pop.mf",           "logFruits ~  (1|pop/mf)", 
+  "3_pop.block",        "logFruits ~ (1|pop) + (1|block)", 
+  "4_pop.mf.block",     "logFruits ~  (1|pop/mf) + (1|block)"
+)
+
+#run the models 
+fruits_modelslog <- fruits_modelslog %>%
+  mutate(lmer = map(f, ~ lmer(as.formula(.), 
+                            data = wl2_fruits_y2_scaled)), #run the models 
+         predict = map(lmer, predict), # predicting from original data...
+         glance = map(lmer, glance)) #glance at the model results
+```
+
+```
+## boundary (singular) fit: see help('isSingular')
+## boundary (singular) fit: see help('isSingular')
+## boundary (singular) fit: see help('isSingular')
+```
+
+``` r
+fruits_modelslog %>% select(-f, -lmer) %>% unnest(glance) %>% arrange(BIC) #look at the model fitting info 
+```
+
+```
+## # A tibble: 4 × 9
+##   name           predict     nobs sigma logLik   AIC   BIC REMLcrit df.residual
+##   <chr>          <list>     <int> <dbl>  <dbl> <dbl> <dbl>    <dbl>       <int>
+## 1 3_pop.block    <dbl [82]>    82 0.908  -123.  253.  263.     245.          78
+## 2 4_pop.mf.block <dbl [82]>    82 0.908  -123.  255.  267.     245.          77
+## 3 1_pop          <dbl [82]>    82 1.30   -138.  283.  290.     277.          79
+## 4 2_pop.mf       <dbl [82]>    82 1.30   -138.  285.  294.     277.          78
+```
+
+``` r
+fruits_modelslog %>% select(-f, -lmer) %>% unnest(glance) %>% arrange(AIC) #look at the model fitting info 
+```
+
+```
+## # A tibble: 4 × 9
+##   name           predict     nobs sigma logLik   AIC   BIC REMLcrit df.residual
+##   <chr>          <list>     <int> <dbl>  <dbl> <dbl> <dbl>    <dbl>       <int>
+## 1 3_pop.block    <dbl [82]>    82 0.908  -123.  253.  263.     245.          78
+## 2 4_pop.mf.block <dbl [82]>    82 0.908  -123.  255.  267.     245.          77
+## 3 1_pop          <dbl [82]>    82 1.30   -138.  283.  290.     277.          79
+## 4 2_pop.mf       <dbl [82]>    82 1.30   -138.  285.  294.     277.          78
+```
+
+``` r
+#model with pop.block best by AIC and BIC 
+
+mod_test <- lmer(logFruits ~  (1|pop) + (1|block), data=wl2_fruits_y2_scaled)
+plot(mod_test, which = 1) 
+```
+
+![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-12-1.png)<!-- -->
+
+``` r
+qqnorm(resid(mod_test))
+qqline(resid(mod_test)) 
+```
+
+![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-12-2.png)<!-- -->
+
+``` r
+summary(mod_test)
+```
+
+```
+## Linear mixed model fit by REML. t-tests use Satterthwaite's method [
+## lmerModLmerTest]
+## Formula: logFruits ~ (1 | pop) + (1 | block)
+##    Data: wl2_fruits_y2_scaled
+## 
+## REML criterion at convergence: 245
+## 
+## Scaled residuals: 
+##     Min      1Q  Median      3Q     Max 
+## -1.9292 -0.5498  0.2095  0.6934  1.5662 
+## 
+## Random effects:
+##  Groups   Name        Variance Std.Dev.
+##  block    (Intercept) 0.90008  0.9487  
+##  pop      (Intercept) 0.07346  0.2710  
+##  Residual             0.82454  0.9080  
+## Number of obs: 82, groups:  block, 13; pop, 7
+## 
+## Fixed effects:
+##             Estimate Std. Error      df t value Pr(>|t|)    
+## (Intercept)   2.2528     0.3105 12.1506   7.256 9.38e-06 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+```
+
+``` r
+#mf gives "boundary (singular) fit: see help('isSingular')" so take it out 
+```
+
+### Predicted vs. Observed Rep Output
+
+``` r
+wl2_fruits_y2_scaled %>% 
+  cbind(predicted={fruits_modelslog %>% filter(name=="3_pop.block") %>% pull(predict) %>% unlist()}) %>%
+  ggplot(aes(x=logFruits, y = predicted)) +
+  geom_point(alpha=.2) +
+  geom_abline(color="skyblue2") +
+  facet_wrap(~pop, scales="free")
+```
+
+![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-13-1.png)<!-- -->
+
+
+#### Test climate and geographic distance 
+
+``` r
+fruits_models_log_CD_GD <- tribble(
+  ~name,          ~f,
+  "1_pop.block",      "logFruits ~  (1|pop) + (1|block)", 
+  "2_GS_Recent",      "logFruits ~  GrwSsn_GD_Recent + Geographic_Dist + (1|pop) + (1|block)", 
+  "3_GS_Historical",  "logFruits ~  GrwSsn_GD_Historical + Geographic_Dist + (1|pop) + (1|block)", 
+  "4_WY_Recent",      "logFruits ~  Wtr_Year_GD_Recent + Geographic_Dist +(1|pop) + (1|block)",
+  "5_WY_Historical",  "logFruits ~  Wtr_Year_GD_Historical + Geographic_Dist + (1|pop) + (1|block)"
+)
+
+#run the models 
+fruits_models_log_CD_GD <- fruits_models_log_CD_GD %>%
+  mutate(lmer = map(f, ~ lmer(as.formula(.), 
+                            data = wl2_fruits_y2_scaled)), #run the models 
+         predict = map(lmer, predict), # predicting from original data...
+         glance = map(lmer, glance)) #glance at the model results
+```
+
+```
+## boundary (singular) fit: see help('isSingular')
+## boundary (singular) fit: see help('isSingular')
+```
+
+``` r
+fruits_models_log_CD_GD %>% select(-f, -lmer) %>% unnest(glance) %>% arrange(BIC) #look at the model fitting info 
+```
+
+```
+## # A tibble: 5 × 9
+##   name            predict     nobs sigma logLik   AIC   BIC REMLcrit df.residual
+##   <chr>           <list>     <int> <dbl>  <dbl> <dbl> <dbl>    <dbl>       <int>
+## 1 1_pop.block     <dbl [82]>    82 0.908  -123.  253.  263.     245.          78
+## 2 4_WY_Recent     <dbl [82]>    82 0.891  -122.  255.  270.     243.          76
+## 3 5_WY_Historical <dbl [82]>    82 0.896  -122.  256.  270.     244.          76
+## 4 2_GS_Recent     <dbl [82]>    82 0.912  -124.  259.  273.     247.          76
+## 5 3_GS_Historical <dbl [82]>    82 0.911  -124.  259.  274.     247.          76
+```
+
+``` r
+fruits_models_log_CD_GD %>% select(-f, -lmer) %>% unnest(glance) %>% arrange(AIC) #look at the model fitting info 
+```
+
+```
+## # A tibble: 5 × 9
+##   name            predict     nobs sigma logLik   AIC   BIC REMLcrit df.residual
+##   <chr>           <list>     <int> <dbl>  <dbl> <dbl> <dbl>    <dbl>       <int>
+## 1 1_pop.block     <dbl [82]>    82 0.908  -123.  253.  263.     245.          78
+## 2 4_WY_Recent     <dbl [82]>    82 0.891  -122.  255.  270.     243.          76
+## 3 5_WY_Historical <dbl [82]>    82 0.896  -122.  256.  270.     244.          76
+## 4 2_GS_Recent     <dbl [82]>    82 0.912  -124.  259.  273.     247.          76
+## 5 3_GS_Historical <dbl [82]>    82 0.911  -124.  259.  274.     247.          76
+```
+
+``` r
+#pop block best by AIC and BIC ...
+
+
+#pop.mf preferred by AIC & BIC, WY models are close after
+fruits_models_log_CD_GD %>% mutate(tidy=map(lmer, tidy)) %>% unnest(tidy) %>%
+  select(-f, -lmer) %>% 
+  filter(str_detect(term, "GD") | term=="Geographic_Dist") %>%
+  drop_na(p.value)
+```
+
+```
+## # A tibble: 8 × 11
+##   name    predict glance   effect group term  estimate std.error statistic    df
+##   <chr>   <list>  <list>   <chr>  <chr> <chr>    <dbl>     <dbl>     <dbl> <dbl>
+## 1 2_GS_R… <dbl>   <tibble> fixed  <NA>  GrwS…  -0.0825     0.131    -0.628  7.09
+## 2 2_GS_R… <dbl>   <tibble> fixed  <NA>  Geog…   0.213      0.144     1.48   4.25
+## 3 3_GS_H… <dbl>   <tibble> fixed  <NA>  GrwS…  -0.0636     0.141    -0.451  5.73
+## 4 3_GS_H… <dbl>   <tibble> fixed  <NA>  Geog…   0.208      0.148     1.41   4.21
+## 5 4_WY_R… <dbl>   <tibble> fixed  <NA>  Wtr_…  -0.264      0.110    -2.39  70.1 
+## 6 4_WY_R… <dbl>   <tibble> fixed  <NA>  Geog…   0.362      0.126     2.89  68.8 
+## 7 5_WY_H… <dbl>   <tibble> fixed  <NA>  Wtr_…  -0.247      0.111    -2.22  70.3 
+## 8 5_WY_H… <dbl>   <tibble> fixed  <NA>  Geog…   0.342      0.124     2.76  68.7 
+## # ℹ 1 more variable: p.value <dbl>
+```
+
+``` r
+#  arrange(p.value)
+
+#water year recent and historical + geo dist in those models = sig 
 ```
