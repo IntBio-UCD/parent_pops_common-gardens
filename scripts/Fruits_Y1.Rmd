@@ -107,7 +107,7 @@ wl2_gowers_2023 <- read_csv("../output/Climate/Gowers_WL2.csv") %>%
 ucd_fruits <- ucd_ann_cens %>% select(block:rep, elevation.group, elev_m, Lat:Long, flowers, fruits) %>%  #note this is only for plants that survived to rep 
   left_join(ucd_gowers)
 
-write_csv(ucd_fruits, "../output/UCD_Traits/UCD_Fruits.csv")
+#write_csv(ucd_fruits, "../output/UCD_Traits/UCD_Fruits.csv")
 ```
 
 ### Bar Plots 
@@ -146,7 +146,7 @@ ucd_fruits %>%
 wl2_fruits_y1 <- wl2_ann_cens %>% select(block:rep, flowers=num.flw, fruits=num.fruit) %>% 
   left_join(wl2_gowers_2023)
 
-write_csv(wl2_fruits_y1, "../output/WL2_Traits/WL2_Fruits_Y1.csv")
+#write_csv(wl2_fruits_y1, "../output/WL2_Traits/WL2_Fruits_Y1.csv")
 ```
 
 ### Bar Plots
