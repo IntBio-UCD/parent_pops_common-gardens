@@ -235,6 +235,7 @@ ucd_total_fitness %>% filter(Total_Fitness>0)
 
 ucd_total_fitness %>% group_by(pop) %>% summarise(n=n()) %>% arrange(n)
 #only 2 WV plants 
+ucd_total_fitness %>% filter(Total_Fitness>0) %>% arrange(pop) #only TM2 and BH have greater than 1 indiv
 ```
 
 ### Bar Plots 
