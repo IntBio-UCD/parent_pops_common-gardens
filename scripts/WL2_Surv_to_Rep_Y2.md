@@ -1,7 +1,7 @@
 ---
 title: "WL2_Surv_to_Rep_Y2"
 author: "Brandie QC"
-date: "2025-03-10"
+date: "2025-03-11"
 output: 
   html_document: 
     keep_md: true
@@ -147,7 +147,7 @@ library(tidymodels)
 ## ✖ infer::t_test()       masks rstatix::t_test()
 ## ✖ Matrix::unpack()      masks tidyr::unpack()
 ## ✖ recipes::update()     masks Matrix::update(), stats::update()
-## • Learn how to get started at https://www.tidymodels.org/start/
+## • Use suppressPackageStartupMessages() to eliminate package startup messages
 ```
 
 ``` r
@@ -219,6 +219,8 @@ wl2_y2_pops <- read_csv("../input/WL2_Data/Final_2023_2024_Pop_Loc_Info.csv") %>
 
 ``` r
 wl2_blocks <- read_csv("../input/WL2_Data/CorrectedCSVs/WL2_mort_pheno_20231020_corrected.csv") %>% 
+  unite(BedLoc, bed:bed.col, sep="_", remove = FALSE) %>% 
+  filter(BedLoc!="K_5_C") %>% #get rid of duplicate locations
   select(block, pop, mf, rep) %>% #add in block info 
   mutate(mf=as.double(mf), rep=as.double(rep)) #convert to num
 ```
@@ -373,7 +375,7 @@ wl2_surv_y2 %>% filter(!is.na(bud.date), !is.na(death.date))  #bud date and deat
 ```
 
 ```
-## # A tibble: 75 × 18
+## # A tibble: 74 × 18
 ##    Pop.Type    loc   bed     row col   pop      mf   rep Genotype block bud.date
 ##    <chr>       <chr> <chr> <dbl> <chr> <chr> <dbl> <dbl> <chr>    <chr> <chr>   
 ##  1 2023-survi… A_17… A        17 A     BH        7     3 BH_7_3   A     6/18/24 
@@ -386,7 +388,7 @@ wl2_surv_y2 %>% filter(!is.na(bud.date), !is.na(death.date))  #bud date and deat
 ##  8 2023-survi… A_45… A        45 B     IH        2     4 IH_2_4   B     7/2/24  
 ##  9 2023-survi… A_49… A        49 A     YO7       7    23 YO7_7_23 B     6/18/24 
 ## 10 2023-survi… A_53… A        53 A     CC        4     4 CC_4_4   B     6/18/24 
-## # ℹ 65 more rows
+## # ℹ 64 more rows
 ## # ℹ 7 more variables: flower.date <chr>, fruit.date <chr>, last.FL.date <chr>,
 ## #   last.FR.date <chr>, death.date <chr>, missing.date <chr>,
 ## #   survey.notes <chr>
@@ -485,7 +487,7 @@ wl2_surv_to_rep_y2 %>% group_by(pop) %>% summarise(n=n()) %>% arrange(n)
 ##  3 WR        1
 ##  4 TM2       6
 ##  5 WL2       6
-##  6 CC       18
+##  6 CC       17
 ##  7 YO7      18
 ##  8 SC       22
 ##  9 BH       29
@@ -714,8 +716,19 @@ name=names(wflow)
 
 surv_fits_wl2 <- surv_fits %>%
   mutate(fit = map(wflow, fit, data = wl2_surv_to_rep_y2_scaled))
+```
+
+```
+## Warning: There was 1 warning in `mutate()`.
+## ℹ In argument: `fit = map(wflow, fit, data = wl2_surv_to_rep_y2_scaled)`.
+## Caused by warning in `checkConv()`:
+## ! Model failed to converge with max|grad| = 0.0354704 (tol = 0.002, component 1)
+```
+
+``` r
 #mod_test <- glmer(SurvtoRep_y2 ~ (1|pop/mf) + (1|block), data=wl2_surv_to_rep_y2_scaled, family=binomial)
 #summary(mod_test)
+#Warning: Model failed to converge with max|grad| = 0.0354704 (tol = 0.002, component 1)
 
 surv_fits_wl2 %>% mutate(glance=map(fit, glance)) %>% unnest(glance) %>% arrange(AIC) %>% select(-wflow:-sigma)
 ```
@@ -724,14 +737,14 @@ surv_fits_wl2 %>% mutate(glance=map(fit, glance)) %>% unnest(glance) %>% arrange
 ## # A tibble: 4 × 6
 ##   name         logLik   AIC   BIC deviance df.residual
 ##   <chr>         <dbl> <dbl> <dbl>    <dbl>       <int>
-## 1 pop.block     -76.4  159.  168.     127.         133
-## 2 pop.mf.block  -76.0  160.  172.     110.         132
-## 3 pop           -82.3  169.  174.     162.         134
-## 4 pop.mf        -82.1  170.  179.     151.         133
+## 1 pop.block     -75.7  157.  166.     125.         132
+## 2 pop.mf.block  -75.4  159.  170.     111.         131
+## 3 pop           -82.0  168.  174.     162.         133
+## 4 pop.mf        -81.8  170.  178.     152.         132
 ```
 
 ``` r
-#model with pop and block (but excluding mf) is best by AIC and BIC, but no issues with mf model 
+#model with pop and block (but excluding mf) is best by AIC and BIC, convergence issues with mf included 
 ```
 
 #### Test climate and geographic distance 
@@ -741,20 +754,20 @@ surv_GD_wflow_wl2 <- workflow() %>%
   add_variables(outcomes = SurvtoRep_y2, predictors = c(pop, mf, block, contains("GD"), Geographic_Dist)) 
 
 surv_GD_fits_wl2 <- tibble(wflow=list(
-  pop.mf.block = {surv_GD_wflow_wl2 %>% 
-      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ (1|pop/mf) + (1|block))},
+  pop.block = {surv_GD_wflow_wl2 %>% 
+      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ (1|pop) + (1|block))},
   
   GS_Recent = {surv_GD_wflow_wl2 %>% 
-      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ GrwSsn_GD_Recent + Geographic_Dist + (1|pop/mf) + (1|block))},
+      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ GrwSsn_GD_Recent + Geographic_Dist + (1|pop) + (1|block))},
   
   GS_Historical = {surv_GD_wflow_wl2 %>% 
-      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ GrwSsn_GD_Historical + Geographic_Dist + (1|pop/mf) + (1|block))},
+      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ GrwSsn_GD_Historical + Geographic_Dist + (1|pop) + (1|block))},
   
   WY_Recent = {surv_GD_wflow_wl2 %>% 
-      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ Wtr_Year_GD_Recent + Geographic_Dist + (1|pop/mf) + (1|block))},
+      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ Wtr_Year_GD_Recent + Geographic_Dist + (1|pop) + (1|block))},
   
   WY_Historical = {surv_GD_wflow_wl2 %>% 
-      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ Wtr_Year_GD_Historical + Geographic_Dist + (1|pop/mf) + (1|block))}
+      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ Wtr_Year_GD_Historical + Geographic_Dist + (1|pop) + (1|block))}
   
 ),
 name=names(wflow)
@@ -764,6 +777,7 @@ name=names(wflow)
 ```
 
 ```
+## boundary (singular) fit: see help('isSingular')
 ## boundary (singular) fit: see help('isSingular')
 ```
 
@@ -775,11 +789,11 @@ surv_GD_fits_wl2 %>% mutate(glance=map(fit, glance)) %>% unnest(glance) %>% arra
 ## # A tibble: 5 × 6
 ##   name          logLik   AIC   BIC deviance df.residual
 ##   <chr>          <dbl> <dbl> <dbl>    <dbl>       <int>
-## 1 WY_Historical  -73.6  159.  177.     109.         130
-## 2 WY_Recent      -73.9  160.  177.     111.         130
-## 3 pop.mf.block   -76.0  160.  172.     110.         132
-## 4 GS_Historical  -74.7  161.  179.     113.         130
-## 5 GS_Recent      -74.9  162.  179.     115.         130
+## 1 WY_Historical  -73.3  157.  171.     126.         130
+## 2 WY_Recent      -73.5  157.  172.     126.         130
+## 3 pop.block      -75.7  157.  166.     125.         132
+## 4 GS_Historical  -74.0  158.  173.     125.         130
+## 5 GS_Recent      -74.3  159.  173.     127.         130
 ```
 
 ``` r
@@ -795,21 +809,21 @@ surv_GD_fits_wl2 %>% mutate(tidy=map(fit, tidy)) %>% unnest(tidy) %>%
 ## # A tibble: 8 × 6
 ##   name          term                   estimate std.error statistic p.value
 ##   <chr>         <chr>                     <dbl>     <dbl>     <dbl>   <dbl>
-## 1 GS_Recent     GrwSsn_GD_Recent         -0.402     0.283    -1.42   0.156 
-## 2 GS_Recent     Geographic_Dist           0.132     0.283     0.467  0.640 
-## 3 GS_Historical GrwSsn_GD_Historical     -0.430     0.293    -1.47   0.142 
-## 4 GS_Historical Geographic_Dist           0.196     0.296     0.663  0.508 
-## 5 WY_Recent     Wtr_Year_GD_Recent       -0.603     0.317    -1.90   0.0569
-## 6 WY_Recent     Geographic_Dist           0.430     0.305     1.41   0.158 
-## 7 WY_Historical Wtr_Year_GD_Historical   -0.647     0.327    -1.98   0.0477
-## 8 WY_Historical Geographic_Dist           0.455     0.311     1.47   0.143
+## 1 GS_Recent     GrwSsn_GD_Recent         -0.421     0.257    -1.63   0.102 
+## 2 GS_Recent     Geographic_Dist           0.135     0.251     0.537  0.592 
+## 3 GS_Historical GrwSsn_GD_Historical     -0.449     0.258    -1.74   0.0814
+## 4 GS_Historical Geographic_Dist           0.205     0.257     0.799  0.424 
+## 5 WY_Recent     Wtr_Year_GD_Recent       -0.529     0.254    -2.08   0.0375
+## 6 WY_Recent     Geographic_Dist           0.431     0.256     1.69   0.0917
+## 7 WY_Historical Wtr_Year_GD_Historical   -0.545     0.252    -2.16   0.0304
+## 8 WY_Historical Geographic_Dist           0.443     0.256     1.73   0.0831
 ```
 
 ``` r
 #  arrange(p.value)
 # recent water year = marginally sig, historical water year = sig, but historical water year had a singular boundary warning 
 
-mod_test <- glmer(SurvtoRep_y2 ~ Wtr_Year_GD_Historical + Geographic_Dist + (1|pop/mf) + (1|block), data=wl2_surv_to_rep_y2_scaled, family=binomial)
+mod_test <- glmer(SurvtoRep_y2 ~ Wtr_Year_GD_Recent + Geographic_Dist + (1|pop) + (1|block), data=wl2_surv_to_rep_y2_scaled, family=binomial)
 ```
 
 ```
@@ -824,40 +838,39 @@ summary(mod_test)
 ## Generalized linear mixed model fit by maximum likelihood (Laplace
 ##   Approximation) [glmerMod]
 ##  Family: binomial  ( logit )
-## Formula: SurvtoRep_y2 ~ Wtr_Year_GD_Historical + Geographic_Dist + (1 |  
-##     pop/mf) + (1 | block)
+## Formula: SurvtoRep_y2 ~ Wtr_Year_GD_Recent + Geographic_Dist + (1 | pop) +  
+##     (1 | block)
 ##    Data: wl2_surv_to_rep_y2_scaled
 ## 
 ##      AIC      BIC   logLik deviance df.resid 
-##    159.2    176.7    -73.6    147.2      130 
+##    157.1    171.6    -73.5    147.1      130 
 ## 
 ## Scaled residuals: 
 ##     Min      1Q  Median      3Q     Max 
-## -3.3984 -0.5547  0.3603  0.5150  1.4216 
+## -3.2244 -0.7116  0.4170  0.5428  1.3945 
 ## 
 ## Random effects:
 ##  Groups Name        Variance  Std.Dev. 
-##  mf:pop (Intercept) 5.323e-01 7.296e-01
-##  block  (Intercept) 1.175e+00 1.084e+00
-##  pop    (Intercept) 1.342e-10 1.159e-05
-## Number of obs: 136, groups:  mf:pop, 44; block, 13; pop, 10
+##  block  (Intercept) 1.047e+00 1.023e+00
+##  pop    (Intercept) 2.453e-10 1.566e-05
+## Number of obs: 135, groups:  block, 13; pop, 10
 ## 
 ## Fixed effects:
-##                        Estimate Std. Error z value Pr(>|z|)   
-## (Intercept)              1.2494     0.4347   2.874  0.00405 **
-## Wtr_Year_GD_Historical  -0.6471     0.3268  -1.980  0.04771 * 
-## Geographic_Dist          0.4554     0.3108   1.465  0.14289   
+##                    Estimate Std. Error z value Pr(>|z|)   
+## (Intercept)          1.1288     0.3700   3.051  0.00228 **
+## Wtr_Year_GD_Recent  -0.5286     0.2542  -2.080  0.03755 * 
+## Geographic_Dist      0.4315     0.2558   1.687  0.09167 . 
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
 ## Correlation of Fixed Effects:
 ##             (Intr) W_Y_GD
-## Wtr_Yr_GD_H -0.200       
-## Gegrphc_Dst  0.087 -0.442
+## Wtr_Yr_GD_R -0.128       
+## Gegrphc_Dst  0.093 -0.453
 ## optimizer (Nelder_Mead) convergence code: 0 (OK)
 ## boundary (singular) fit: see help('isSingular')
 ```
 
 ``` r
-#boundary (singular) fit: see help('isSingular') for water year historical 
+#boundary (singular) fit: see help('isSingular') for water year recent and historical - when you add water year climate distance, pop explains little variation 
 ```
