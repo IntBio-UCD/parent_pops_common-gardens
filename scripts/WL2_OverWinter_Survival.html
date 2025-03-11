@@ -11,7 +11,7 @@
 
 <meta name="author" content="Brandie Quarles" />
 
-<meta name="date" content="2025-03-05" />
+<meta name="date" content="2025-03-11" />
 
 <title>WL2_OverWinter_Survival</title>
 
@@ -352,16 +352,13 @@ display: none;
 
 <h1 class="title toc-ignore">WL2_OverWinter_Survival</h1>
 <h4 class="author">Brandie Quarles</h4>
-<h4 class="date">2025-03-05</h4>
+<h4 class="date">2025-03-11</h4>
 
 </div>
 
 
 <div id="over-winter-survival-at-wl2-garden" class="section level1">
 <h1>Over-winter survival at WL2 garden</h1>
-<p>To Do: - Check the data - when looking at Oct 2024 survival, only
-found 131 “2023-survivors” whereas in this code there are 135. Are any
-missclassified as TM2 fruiting? - Upate stats</p>
 <div id="libraries" class="section level2">
 <h2>Libraries</h2>
 <pre class="r"><code>library(tidyverse)</code></pre>
@@ -585,13 +582,30 @@ winter_surv &lt;- post_winter_clean %&gt;%
 <pre><code>## Joining with `by = join_by(pop)`</code></pre>
 <pre class="r"><code>dim(winter_surv) #only 469 rows because A_37_B not included </code></pre>
 <pre><code>## [1] 469  21</code></pre>
-<pre class="r"><code>#winter_surv %&gt;% filter(death.date!=&quot;D&quot;) #135 plants survived 
-
-write_csv(winter_surv, &quot;../output/WL2_Traits/WL2_WinterSurv.csv&quot;)</code></pre>
+<pre class="r"><code>winter_surv %&gt;% filter(death.date!=&quot;D&quot;) #135 plants survived </code></pre>
+<pre><code>## # A tibble: 135 × 21
+##    block BedLoc bed   `bed- row` `bed- col` Genotype pop      mf   rep
+##    &lt;chr&gt; &lt;chr&gt;  &lt;chr&gt;      &lt;dbl&gt; &lt;chr&gt;      &lt;chr&gt;    &lt;chr&gt; &lt;dbl&gt; &lt;dbl&gt;
+##  1 A     A_6_B  A              6 B          CC_3_3   CC        3     3
+##  2 A     A_16_B A             16 B          BH_3_3   BH        3     3
+##  3 A     A_17_A A             17 A          BH_7_3   BH        7     3
+##  4 A     A_18_A A             18 A          BH_4_3   BH        4     3
+##  5 A     A_24_A A             24 A          WL2_7_9  WL2       7     9
+##  6 B     A_32_B A             32 B          IH_7_4   IH        7     4
+##  7 B     A_35_A A             35 A          SC_8_4   SC        8     4
+##  8 B     A_36_A A             36 A          BH_3_4   BH        3     4
+##  9 B     A_39_B A             39 B          WL2_7_10 WL2       7    10
+## 10 B     A_45_B A             45 B          IH_2_4   IH        2     4
+## # ℹ 125 more rows
+## # ℹ 12 more variables: elevation.group &lt;chr&gt;, elev_m &lt;dbl&gt;, Lat &lt;dbl&gt;,
+## #   Long &lt;dbl&gt;, GrwSsn_GD_Recent &lt;dbl&gt;, GrwSsn_GD_Historical &lt;dbl&gt;,
+## #   Wtr_Year_GD_Recent &lt;dbl&gt;, Wtr_Year_GD_Historical &lt;dbl&gt;,
+## #   Geographic_Dist &lt;dbl&gt;, Elev_Dist &lt;dbl&gt;, death.date &lt;chr&gt;, WinterSurv &lt;dbl&gt;</code></pre>
+<pre class="r"><code>#write_csv(winter_surv, &quot;../output/WL2_Traits/WL2_WinterSurv.csv&quot;)</code></pre>
 <div id="descriptive-tables" class="section level3">
 <h3>Descriptive tables</h3>
 <pre class="r"><code>#overall
-xtabs(~WinterSurv, data=winter_surv) #335 dead post-winter out of 470 alive pre-winter = 71% overwinter mortality </code></pre>
+xtabs(~WinterSurv, data=winter_surv) #334 dead post-winter out of 469 alive pre-winter = 71% overwinter mortality </code></pre>
 <pre><code>## WinterSurv
 ##   0   1 
 ## 334 135</code></pre>
@@ -628,100 +642,181 @@ xtabs(~WinterSurv, data=winter_surv) #335 dead post-winter out of 470 alive pre-
 <div id="scatterplots" class="section level3">
 <h3>Scatterplots</h3>
 <pre class="r"><code>#scatter plots
-GSCD &lt;- winter_surv %&gt;% 
+WYCD_recent &lt;- winter_surv %&gt;% 
   group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %&gt;% 
   summarise(meanSurv=mean(WinterSurv, na.rm = TRUE), semSurv=sem(WinterSurv, na.rm=TRUE)) %&gt;% 
-  ggplot(aes(x=GrwSsn_GD_Recent, y=meanSurv, color=GrwSsn_GD_Recent, group = pop)) +
-  geom_point(size=6) + 
-  geom_errorbar(aes(ymin=meanSurv-semSurv,ymax=meanSurv+semSurv),width=.02, linewidth = 2) +
-  #geom_text_repel(aes(x = GrwSsn_GD_Recent, y = meanSurv,
-  #          label = `pop`),
-  #      min.segment.length = 0.8,
-  #      max.overlaps = 100,
-  #      #label.padding = 1,
-  #      #point.padding = 0.8,
-  #      size = 4) +
-  theme_classic() + 
-  scale_y_continuous(expand = c(0.01, 0)) +
-  labs(y=&quot;Winter Surv&quot;, x=&quot;Growth Season CD&quot;, color=&quot;Growth Season \n Climate Distance&quot;) +
-  scale_color_viridis(option=&quot;mako&quot;, direction = -1) +
-  theme(text=element_text(size=25))</code></pre>
-<pre><code>## `summarise()` has grouped output by &#39;pop&#39;, &#39;elev_m&#39;, &#39;GrwSsn_GD_Recent&#39;. You
-## can override using the `.groups` argument.</code></pre>
-<pre class="r"><code>WYCD &lt;- winter_surv %&gt;% 
-  group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %&gt;% 
-  summarise(meanSurv=mean(WinterSurv, na.rm = TRUE), semSurv=sem(WinterSurv, na.rm=TRUE)) %&gt;% 
-  ggplot(aes(x=Wtr_Year_GD_Recent, y=meanSurv, color=Wtr_Year_GD_Recent, group = pop)) +
+  ggplot(aes(x=Wtr_Year_GD_Recent, y=meanSurv, group = pop)) +
   geom_point(size=6) + 
   geom_errorbar(aes(ymin=meanSurv-semSurv,ymax=meanSurv+semSurv),width=.02,linewidth = 2) +
-  #geom_text_repel(aes(x = Wtr_Year_GD_Recent, y = meanSurv,
-  #          label = `pop`),
-  #      min.segment.length = 0.8,
-  #      max.overlaps = 100,
-  #      #label.padding = 1,
-  #      #point.padding = 0.8,
-  #      size = 4) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
-  labs(y=&quot;Winter Surv&quot;, x=&quot;Water Year CD&quot;, color=&quot;Water Year \n Climate Distance&quot;) +
-  scale_color_viridis(option=&quot;mako&quot;, direction = -1) +
+  labs(y=&quot;Winter Surv&quot;, x=&quot;Recent Water Year CD&quot;) +
   theme(text=element_text(size=25))</code></pre>
 <pre><code>## `summarise()` has grouped output by &#39;pop&#39;, &#39;elev_m&#39;, &#39;GrwSsn_GD_Recent&#39;. You
 ## can override using the `.groups` argument.</code></pre>
 <pre class="r"><code>GD &lt;- winter_surv %&gt;% 
   group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent, Geographic_Dist) %&gt;% 
   summarise(meanSurv=mean(WinterSurv, na.rm = TRUE), semSurv=sem(WinterSurv, na.rm=TRUE)) %&gt;% 
-  ggplot(aes(x=Geographic_Dist, y=meanSurv, color=Geographic_Dist, group = pop)) +
+  ggplot(aes(x=Geographic_Dist, y=meanSurv, group = pop)) +
   geom_point(size=6) + 
   geom_errorbar(aes(ymin=meanSurv-semSurv,ymax=meanSurv+semSurv),width=.02, linewidth = 2) +
-  #geom_text_repel(aes(x = Geographic_Dist, y = meanSurv,
-  #          label = `pop`),
-  #      min.segment.length = 0.8,
-  #      max.overlaps = 100,
-  #      #label.padding = 1,
-  #      #point.padding = 0.8,
-  #      size = 4) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
-  labs(y=&quot;Winter Surv&quot;, x=&quot;Geographic Distance (m)&quot;, color=&quot;Geographic Distance&quot;) +
-  scale_color_viridis(option=&quot;mako&quot;, direction = -1) +
+  labs(y=&quot;Winter Surv&quot;, x=&quot;Geographic Distance (m)&quot;) +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))</code></pre>
 <pre><code>## `summarise()` has grouped output by &#39;pop&#39;, &#39;elev_m&#39;, &#39;GrwSsn_GD_Recent&#39;,
 ## &#39;Wtr_Year_GD_Recent&#39;. You can override using the `.groups` argument.</code></pre>
-<pre class="r"><code>wl2_winter_surv_FIG &lt;- ggarrange(GSCD, WYCD, GD, ncol=2, nrow=2) 
-#ggsave(&quot;../output/WL2_Traits/WL2_WinterSurv_SCATTERS.png&quot;, width = 24, height = 18, units = &quot;in&quot;)</code></pre>
+<pre class="r"><code>ED &lt;- winter_surv %&gt;% 
+  group_by(pop, elev_m, Elev_Dist) %&gt;% 
+  summarise(meanSurv=mean(WinterSurv, na.rm = TRUE), semSurv=sem(WinterSurv, na.rm=TRUE)) %&gt;% 
+  ggplot(aes(x=Elev_Dist, y=meanSurv, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanSurv-semSurv,ymax=meanSurv+semSurv),width=.02, linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y=&quot;Surv-to-Rep Y2&quot;, x=&quot;Elevation Distance (m)&quot;) +
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))</code></pre>
+<pre><code>## `summarise()` has grouped output by &#39;pop&#39;, &#39;elev_m&#39;. You can override using the
+## `.groups` argument.</code></pre>
+<pre class="r"><code>wl2_winter_surv_FIG_recent &lt;- ggarrange(&quot;&quot;,WYCD_recent, GD,ED, ncol=2, nrow=2) </code></pre>
+<pre><code>## Warning in as_grob.default(plot): Cannot convert object of class character into
+## a grob.</code></pre>
+<pre class="r"><code>#ggsave(&quot;../output/WL2_Traits/WL2_WinterSurv_SCATTERS_Recent.png&quot;, width = 24, height = 18, units = &quot;in&quot;)</code></pre>
+<pre class="r"><code>#scatter plots
+WYCD_historic &lt;- winter_surv %&gt;% 
+  group_by(pop, elev_m, GrwSsn_GD_Historical, Wtr_Year_GD_Historical) %&gt;% 
+  summarise(meanSurv=mean(WinterSurv, na.rm = TRUE), semSurv=sem(WinterSurv, na.rm=TRUE)) %&gt;% 
+  ggplot(aes(x=Wtr_Year_GD_Historical, y=meanSurv, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanSurv-semSurv,ymax=meanSurv+semSurv),width=.02,linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y=&quot;Winter Surv&quot;, x=&quot;Historic Water Year CD&quot;) +
+  theme(text=element_text(size=25))</code></pre>
+<pre><code>## `summarise()` has grouped output by &#39;pop&#39;, &#39;elev_m&#39;, &#39;GrwSsn_GD_Historical&#39;.
+## You can override using the `.groups` argument.</code></pre>
+<pre class="r"><code>wl2_winter_surv_FIG_historic &lt;- ggarrange(&quot;&quot;, WYCD_historic, GD,ED, ncol=2, nrow=2) </code></pre>
+<pre><code>## Warning in as_grob.default(plot): Cannot convert object of class character into
+## a grob.</code></pre>
+<pre class="r"><code>#ggsave(&quot;../output/WL2_Traits/WL2_WinterSurv_SCATTERS_Historical.png&quot;, width = 24, height = 18, units = &quot;in&quot;)</code></pre>
 </div>
 </div>
-<div id="stats---need-to-update" class="section level2">
-<h2>Stats - need to update!</h2>
-<pre class="r"><code>lmesurv1 &lt;- glmer(Survival ~ Recent_Gowers_Dist_WL2 + (1|parent.pop/mf) + (1|block), 
-                  data = alive_oct, 
-                  family = binomial(link = &quot;logit&quot;)) 
-summary(lmesurv1)
-anova(lmesurv1)
-glance(lmesurv1)
+<div id="stats" class="section level2">
+<h2>Stats</h2>
+<div id="scaling" class="section level3">
+<h3>Scaling</h3>
+<pre class="r"><code>winter_surv %&gt;% group_by(pop, elev_m, GrwSsn_GD_Historical, Wtr_Year_GD_Historical) %&gt;% 
+  summarise(meanSurv=mean(WinterSurv, na.rm = TRUE), semSurv=sem(WinterSurv, na.rm=TRUE), n=n()) #WR only has 1 individual, remove </code></pre>
+<pre><code>## `summarise()` has grouped output by &#39;pop&#39;, &#39;elev_m&#39;, &#39;GrwSsn_GD_Historical&#39;.
+## You can override using the `.groups` argument.</code></pre>
+<pre><code>## # A tibble: 22 × 7
+## # Groups:   pop, elev_m, GrwSsn_GD_Historical [22]
+##    pop   elev_m GrwSsn_GD_Historical Wtr_Year_GD_Historical meanSurv semSurv
+##    &lt;chr&gt;  &lt;dbl&gt;                &lt;dbl&gt;                  &lt;dbl&gt;    &lt;dbl&gt;   &lt;dbl&gt;
+##  1 BH      511.                0.382                  0.521    0.547  0.0690
+##  2 CC      313                 0.510                  0.415    0.327  0.0657
+##  3 CP2    2244.                0.336                  0.296    0      0     
+##  4 CP3    2266.                0.371                  0.317    0      0     
+##  5 DPR    1019.                0.418                  0.361    0      0     
+##  6 FR      787                 0.349                  0.387    0      0     
+##  7 IH      454.                0.456                  0.387    0.618  0.0661
+##  8 LV1    2593.                0.615                  0.499    0.2    0.2   
+##  9 LV3    2354.                0.626                  0.510    0      0     
+## 10 LVTR1  2741.                0.631                  0.507    0      0     
+## # ℹ 12 more rows
+## # ℹ 1 more variable: n &lt;int&gt;</code></pre>
+<pre class="r"><code>wl2_winter_surv_scaled &lt;- winter_surv %&gt;% 
+  filter(pop!=&quot;WR&quot;) %&gt;% 
+  mutate_at(c(&quot;GrwSsn_GD_Recent&quot;,&quot;Wtr_Year_GD_Recent&quot;,                                                           &quot;GrwSsn_GD_Historical&quot;,&quot;Wtr_Year_GD_Historical&quot;,&quot;Geographic_Dist&quot;),
+                                                            scale) </code></pre>
+</div>
+<div id="basic-model-workflow" class="section level3">
+<h3>Basic Model Workflow</h3>
+<pre class="r"><code>glmer.model_binomial &lt;- 
+  linear_reg() %&gt;% 
+  set_engine(&quot;glmer&quot;, family=binomial)
 
-lmesurv2 &lt;- glmer(Survival ~ Historic_Gowers_Dist_WL2 + (1|parent.pop/mf) + (1|block), 
-                  data = alive_oct, 
-                  family = binomial(link = &quot;logit&quot;)) 
-summary(lmesurv2)
-anova(lmesurv2)
-glance(lmesurv2)
+surv_wflow &lt;- workflow() %&gt;% 
+  add_variables(outcomes = WinterSurv, predictors = c(pop, mf, block))
 
-alive_oct_scale &lt;- alive_oct %&gt;% 
-  mutate(elev_m_s = scale_this(elev_m))
-lmesurv3 &lt;- glmer(Survival ~ elev_m_s + (1|parent.pop/mf) + (1|block), 
-                  data = alive_oct_scale, 
-                  family = binomial(link = &quot;logit&quot;)) #get a failed to converge and rescale variables warning for this model 
-summary(lmesurv3)
-anova(lmesurv3)
-glance(lmesurv3)
+surv_fits &lt;- tibble(wflow=list(
+  pop = {surv_wflow %&gt;% 
+      add_model(glmer.model_binomial, formula = WinterSurv ~ (1|pop))},
+  
+  pop.mf = {surv_wflow %&gt;% 
+      add_model(glmer.model_binomial, formula = WinterSurv ~ (1|pop/mf))},
+  
+  pop.block = {surv_wflow %&gt;% 
+      add_model(glmer.model_binomial, formula = WinterSurv ~ (1|pop) + (1|block))},
+  
+  pop.mf.block = {surv_wflow %&gt;% 
+      add_model(glmer.model_binomial, formula = WinterSurv ~ (1|pop/mf) + (1|block))}
+),
+name=names(wflow)
+) %&gt;% 
+  select(name,wflow)
 
-#to test for significance of random effect: 
-#the most common way to do this is to use a likelihood ratio test, i.e. fit the full and reduced models (the reduced model is the model with the focal variance(s) set to zero). 
-m0 &lt;- glmer(Survival ~ elev_m_s + (1|parent.pop), data = alive_oct_scale, family = binomial(&quot;logit&quot;)) 
-m00 &lt;- glm(Survival~ elev_m_s, alive_oct_scale, family = binomial(&quot;logit&quot;))
-anova(lmesurv3,m0, m00) #model with both random effects has a higher likelihood (better fit)</code></pre>
+surv_fits_wl2 &lt;- surv_fits %&gt;%
+  mutate(fit = map(wflow, fit, data = wl2_winter_surv_scaled))
+#mod_test &lt;- glmer(WinterSurv ~ (1|pop/mf) + (1|block), data=wl2_winter_surv_scaled, family=binomial)
+#summary(mod_test)
+
+surv_fits_wl2 %&gt;% mutate(glance=map(fit, glance)) %&gt;% unnest(glance) %&gt;% arrange(AIC) %&gt;% select(-wflow:-sigma)</code></pre>
+<pre><code>## # A tibble: 4 × 6
+##   name         logLik   AIC   BIC deviance df.residual
+##   &lt;chr&gt;         &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;    &lt;dbl&gt;       &lt;int&gt;
+## 1 pop           -230.  465.  473.     411.         466
+## 2 pop.mf        -230.  465.  478.     390.         465
+## 3 pop.block     -230.  466.  478.     403.         465
+## 4 pop.mf.block  -229.  466.  483.     381.         464</code></pre>
+<pre class="r"><code>#model with just pop best by AIC and BIC, but nothing wrong with the full model, so use that </code></pre>
+<div id="test-climate-and-geographic-distance" class="section level4">
+<h4>Test climate and geographic distance</h4>
+<pre class="r"><code>surv_GD_wflow_wl2 &lt;- workflow() %&gt;%
+  add_variables(outcomes = WinterSurv, predictors = c(pop, mf, block, contains(&quot;GD&quot;), Geographic_Dist)) 
+
+surv_GD_fits_wl2 &lt;- tibble(wflow=list(
+  pop.mf.block = {surv_GD_wflow_wl2 %&gt;% 
+      add_model(glmer.model_binomial, formula = WinterSurv ~ (1|pop/mf) + (1|block))},
+  
+  WY_Recent = {surv_GD_wflow_wl2 %&gt;% 
+      add_model(glmer.model_binomial, formula = WinterSurv ~ Wtr_Year_GD_Recent + Geographic_Dist + (1|pop/mf) + (1|block))},
+  
+  WY_Historical = {surv_GD_wflow_wl2 %&gt;% 
+      add_model(glmer.model_binomial, formula = WinterSurv ~ Wtr_Year_GD_Historical + Geographic_Dist + (1|pop/mf) + (1|block))}
+  
+),
+name=names(wflow)
+) %&gt;% 
+  select(name,wflow) %&gt;%
+  mutate(fit = map(wflow, fit, data = wl2_winter_surv_scaled))
+
+surv_GD_fits_wl2 %&gt;% mutate(glance=map(fit, glance)) %&gt;% unnest(glance) %&gt;% arrange(AIC) %&gt;% select(-wflow:-sigma)</code></pre>
+<pre><code>## # A tibble: 3 × 6
+##   name          logLik   AIC   BIC deviance df.residual
+##   &lt;chr&gt;          &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;    &lt;dbl&gt;       &lt;int&gt;
+## 1 WY_Recent      -225.  463.  488.     384.         462
+## 2 pop.mf.block   -229.  466.  483.     381.         464
+## 3 WY_Historical  -228.  467.  492.     383.         462</code></pre>
+<pre class="r"><code>#WY recent model the best 
+
+surv_GD_fits_wl2 %&gt;% mutate(tidy=map(fit, tidy)) %&gt;% unnest(tidy) %&gt;%
+  filter(str_detect(term, &quot;GD&quot;) | term==&quot;Geographic_Dist&quot;) %&gt;%
+  drop_na(p.value) %&gt;%
+  select(-wflow:-group)# %&gt;%</code></pre>
+<pre><code>## # A tibble: 4 × 6
+##   name          term                   estimate std.error statistic p.value
+##   &lt;chr&gt;         &lt;chr&gt;                     &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;   &lt;dbl&gt;
+## 1 WY_Recent     Wtr_Year_GD_Recent        1.52      0.549     2.77  0.00552
+## 2 WY_Recent     Geographic_Dist          -0.406     0.432    -0.940 0.347  
+## 3 WY_Historical Wtr_Year_GD_Historical    1.02      0.544     1.88  0.0602 
+## 4 WY_Historical Geographic_Dist          -0.378     0.489    -0.773 0.439</code></pre>
+<pre class="r"><code>#  arrange(p.value)
+
+#mod_test &lt;- glmer(WinterSurv ~ Wtr_Year_GD_Recent + Geographic_Dist + (1|pop/mf) + (1|block), data=wl2_winter_surv_scaled, family=binomial)
+#summary(mod_test)</code></pre>
+</div>
+</div>
 </div>
 </div>
 

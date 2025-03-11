@@ -13,10 +13,6 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # Over-winter survival at WL2 garden 
 
-To Do:
-- Check the data - when looking at Oct 2024 survival, only found 131 "2023-survivors" whereas in this code there are 135. Are any missclassified as TM2 fruiting?
-- Update stats 
-
 ## Libraries
 ```{r}
 library(tidyverse)
@@ -115,15 +111,15 @@ winter_surv <- post_winter_clean %>%
   select(block:rep, elevation.group:Wtr_Year_GD_Historical, Geographic_Dist, Elev_Dist, death.date, WinterSurv) 
 dim(winter_surv) #only 469 rows because A_37_B not included 
 
-#winter_surv %>% filter(death.date!="D") #135 plants survived 
+winter_surv %>% filter(death.date!="D") #135 plants survived 
 
-write_csv(winter_surv, "../output/WL2_Traits/WL2_WinterSurv.csv")
+#write_csv(winter_surv, "../output/WL2_Traits/WL2_WinterSurv.csv")
 ```
 
 ### Descriptive tables 
 ```{r}
 #overall
-xtabs(~WinterSurv, data=winter_surv) #335 dead post-winter out of 470 alive pre-winter = 71% overwinter mortality 
+xtabs(~WinterSurv, data=winter_surv) #334 dead post-winter out of 469 alive pre-winter = 71% overwinter mortality 
 
 xtabs(~WinterSurv+pop, data=winter_surv)
 ```
@@ -182,8 +178,8 @@ ED <- winter_surv %>%
   labs(y="Surv-to-Rep Y2", x="Elevation Distance (m)") +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 
-wl2_winter_surv_FIG_recent <- ggarrange(WYCD_recent, GD,ED, ncol=2, nrow=2) 
-ggsave("../output/WL2_Traits/WL2_WinterSurv_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
+wl2_winter_surv_FIG_recent <- ggarrange("",WYCD_recent, GD,ED, ncol=2, nrow=2) 
+#ggsave("../output/WL2_Traits/WL2_WinterSurv_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
 ```
 
 ```{r}
@@ -199,15 +195,20 @@ WYCD_historic <- winter_surv %>%
   labs(y="Winter Surv", x="Historic Water Year CD") +
   theme(text=element_text(size=25))
 
-wl2_winter_surv_FIG_historic <- ggarrange(WYCD_historic, GD,ED, ncol=2, nrow=2) 
-ggsave("../output/WL2_Traits/WL2_WinterSurv_SCATTERS_Historical.png", width = 24, height = 18, units = "in")
+wl2_winter_surv_FIG_historic <- ggarrange("", WYCD_historic, GD,ED, ncol=2, nrow=2) 
+#ggsave("../output/WL2_Traits/WL2_WinterSurv_SCATTERS_Historical.png", width = 24, height = 18, units = "in")
 ```
 
 
 ## Stats
 ### Scaling 
 ```{r}
-wl2_winter_surv_scaled <- winter_surv %>% mutate_at(c("GrwSsn_GD_Recent","Wtr_Year_GD_Recent",                                                           "GrwSsn_GD_Historical","Wtr_Year_GD_Historical","Geographic_Dist"),
+winter_surv %>% group_by(pop, elev_m, GrwSsn_GD_Historical, Wtr_Year_GD_Historical) %>% 
+  summarise(meanSurv=mean(WinterSurv, na.rm = TRUE), semSurv=sem(WinterSurv, na.rm=TRUE), n=n()) #WR only has 1 individual, remove 
+
+wl2_winter_surv_scaled <- winter_surv %>% 
+  filter(pop!="WR") %>% 
+  mutate_at(c("GrwSsn_GD_Recent","Wtr_Year_GD_Recent",                                                           "GrwSsn_GD_Historical","Wtr_Year_GD_Historical","Geographic_Dist"),
                                                             scale) 
 ```
 
@@ -244,6 +245,7 @@ surv_fits_wl2 <- surv_fits %>%
 #summary(mod_test)
 
 surv_fits_wl2 %>% mutate(glance=map(fit, glance)) %>% unnest(glance) %>% arrange(AIC) %>% select(-wflow:-sigma)
+#model with just pop best by AIC and BIC, but nothing wrong with the full model, so use that 
 ```
 
 #### Test climate and geographic distance 
@@ -268,6 +270,7 @@ name=names(wflow)
   mutate(fit = map(wflow, fit, data = wl2_winter_surv_scaled))
 
 surv_GD_fits_wl2 %>% mutate(glance=map(fit, glance)) %>% unnest(glance) %>% arrange(AIC) %>% select(-wflow:-sigma)
+#WY recent model the best 
 
 surv_GD_fits_wl2 %>% mutate(tidy=map(fit, tidy)) %>% unnest(tidy) %>%
   filter(str_detect(term, "GD") | term=="Geographic_Dist") %>%
@@ -275,7 +278,7 @@ surv_GD_fits_wl2 %>% mutate(tidy=map(fit, tidy)) %>% unnest(tidy) %>%
   select(-wflow:-group)# %>%
 #  arrange(p.value)
 
-mod_test <- glmer(WinterSurv ~ Wtr_Year_GD_Historical + Geographic_Dist + (1|pop/mf) + (1|block), data=wl2_winter_surv_scaled, family=binomial)
-summary(mod_test)
+#mod_test <- glmer(WinterSurv ~ Wtr_Year_GD_Recent + Geographic_Dist + (1|pop/mf) + (1|block), data=wl2_winter_surv_scaled, family=binomial)
+#summary(mod_test)
 ```
 
