@@ -60,13 +60,23 @@ wl2_y2_pops <- read_csv("../input/WL2_Data/Final_2023_2024_Pop_Loc_Info.csv") %>
   select(Pop.Type:unique.ID) %>% 
   filter(Pop.Type=="2023-survivor") %>% 
   select(Pop.Type, loc:bed, row=bedrow, col=bedcol, pop:unique.ID)
+
+wl2_blocks <- read_csv("../input/WL2_Data/CorrectedCSVs/WL2_mort_pheno_20231020_corrected.csv") %>% 
+  select(block, pop, mf, rep) %>% #add in block info 
+  mutate(mf=as.double(mf), rep=as.double(rep)) #convert to num
+
+#wl2_blocks %>% rowwise() %>%  #checking if mf and rep can be converted to numeric (all buffers)
+#  filter(!is.na(mf)) %>%  
+#  filter(is.na(as.numeric(mf)))
+
+wl2_y2_pops_blocks <- left_join(wl2_y2_pops, wl2_blocks)
 ```
 
 ## Year 2 Surv Data
 ```{r}
 wl2_20241023 <- read_csv("../input/WL2_Data/WL2_mort_pheno_20241023_corrected.csv") %>% #note this has 2023 and 2024 plants
   select(-block)
-wl2_surv_y2 <- left_join(wl2_y2_pops, wl2_20241023) %>%  
+wl2_surv_y2 <- left_join(wl2_y2_pops_blocks, wl2_20241023) %>%  
   rename(Genotype=unique.ID)
 #unique(wl2_surv_y2$pop) #only 10 pops with winter surv 
 ```
@@ -105,12 +115,12 @@ wl2_surv_to_rep_y2 <- wl2_surv_y2 %>%
                             Genotype=="CC_9_6" | Genotype=="WL2_8_4",
                           "Missed", bud.date)) %>% #add in bud date for plants with a later rep date 
   mutate(SurvtoRep_y2=if_else(is.na(bud.date), 0, 1)) %>% 
-  select(Pop.Type:Genotype, elevation.group:Wtr_Year_GD_Historical, Geographic_Dist, Elev_Dist, bud.date, death.date, SurvtoRep_y2) 
+  select(Pop.Type:block, elevation.group:Wtr_Year_GD_Historical, Geographic_Dist, Elev_Dist, bud.date, death.date, SurvtoRep_y2) 
 
 wl2_surv_to_rep_y2 %>% group_by(pop) %>% summarise(n=n()) %>% arrange(n)
 #LV1, SQ1, and WR only have 1 indiv alive in 2024
 
-write_csv(wl2_surv_to_rep_y2, "../output/WL2_Traits/WL2_Surv_to_Rep_Y2.csv")
+#write_csv(wl2_surv_to_rep_y2, "../output/WL2_Traits/WL2_Surv_to_Rep_Y2.csv")
 ```
 
 ### Bar Plots
@@ -128,7 +138,7 @@ wl2_surv_to_rep_y2 %>%
   labs(y="Surv-to-Rep Y2", x="Parent Population", fill="Growth Season Gowers") +
   scale_fill_viridis(option="mako", direction = -1) +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/WL2_Traits/WL2_SurvtoRepY2_GrwSsn_GD_Recent.png", width = 12, height = 8, units = "in")
+#ggsave("../output/WL2_Traits/WL2_SurvtoRepY2_GrwSsn_GD_Recent.png", width = 12, height = 8, units = "in")
 
 wl2_surv_to_rep_y2 %>% 
   group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
@@ -143,69 +153,170 @@ wl2_surv_to_rep_y2 %>%
   labs(y="Surv-to-Rep Y2", x="Parent Population", fill="Water Year Gowers") +
   scale_fill_viridis(option="mako", direction = -1) +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/WL2_Traits/WL2_SurvtoRepY2_Wtr_Year_GD_Recent.png", width = 12, height = 8, units = "in")
+#ggsave("../output/WL2_Traits/WL2_SurvtoRepY2_Wtr_Year_GD_Recent.png", width = 12, height = 8, units = "in")
 ```
 
 ### Scatterplots
 ```{r}
 #scatter plots
-GSCD <- wl2_surv_to_rep_y2 %>% 
+GSCD_recent <- wl2_surv_to_rep_y2 %>% 
   group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
   summarise(meanSurv=mean(SurvtoRep_y2, na.rm = TRUE), semSurv=sem(SurvtoRep_y2, na.rm=TRUE)) %>% 
-  ggplot(aes(x=GrwSsn_GD_Recent, y=meanSurv, color=GrwSsn_GD_Recent, group = pop)) +
+  ggplot(aes(x=GrwSsn_GD_Recent, y=meanSurv, group = pop)) +
   geom_point(size=6) + 
   geom_errorbar(aes(ymin=meanSurv-semSurv,ymax=meanSurv+semSurv),width=.02, linewidth = 2) +
-  #geom_text_repel(aes(x = GrwSsn_GD_Recent, y = meanSurv,
-  #          label = `pop`),
-  #      min.segment.length = 0.8,
-  #      max.overlaps = 100,
-  #      #label.padding = 1,
-  #      #point.padding = 0.8,
-  #      size = 4) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
-  labs(y="Surv-to-Rep Y2", x="Growth Season CD", color="Growth Season \n Climate Distance") +
-  scale_color_viridis(option="mako", direction = -1) +
+  labs(y="Surv-to-Rep Y2", x="Recent Growth Season CD") +
   theme(text=element_text(size=25))
 
-WYCD <- wl2_surv_to_rep_y2 %>% 
+WYCD_recent <- wl2_surv_to_rep_y2 %>% 
   group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
   summarise(meanSurv=mean(SurvtoRep_y2, na.rm = TRUE), semSurv=sem(SurvtoRep_y2, na.rm=TRUE)) %>% 
-  ggplot(aes(x=Wtr_Year_GD_Recent, y=meanSurv, color=Wtr_Year_GD_Recent, group = pop)) +
+  ggplot(aes(x=Wtr_Year_GD_Recent, y=meanSurv, group = pop)) +
   geom_point(size=6) + 
   geom_errorbar(aes(ymin=meanSurv-semSurv,ymax=meanSurv+semSurv),width=.02,linewidth = 2) +
-  #geom_text_repel(aes(x = Wtr_Year_GD_Recent, y = meanSurv,
-  #          label = `pop`),
-  #      min.segment.length = 0.8,
-  #      max.overlaps = 100,
-  #      #label.padding = 1,
-  #      #point.padding = 0.8,
-  #      size = 4) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
-  labs(y="Surv-to-Rep Y2", x="Water Year CD", color="Water Year \n Climate Distance") +
-  scale_color_viridis(option="mako", direction = -1) +
+  labs(y="Surv-to-Rep Y2", x="Recent Water Year CD") +
   theme(text=element_text(size=25))
 
 GD <- wl2_surv_to_rep_y2 %>% 
   group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent, Geographic_Dist) %>% 
   summarise(meanSurv=mean(SurvtoRep_y2, na.rm = TRUE), semSurv=sem(SurvtoRep_y2, na.rm=TRUE)) %>% 
-  ggplot(aes(x=Geographic_Dist, y=meanSurv, color=Geographic_Dist, group = pop)) +
+  ggplot(aes(x=Geographic_Dist, y=meanSurv, group = pop)) +
   geom_point(size=6) + 
   geom_errorbar(aes(ymin=meanSurv-semSurv,ymax=meanSurv+semSurv),width=.02, linewidth = 2) +
-  #geom_text_repel(aes(x = Geographic_Dist, y = meanSurv,
-  #          label = `pop`),
-  #      min.segment.length = 0.8,
-  #      max.overlaps = 100,
-  #      #label.padding = 1,
-  #      #point.padding = 0.8,
-  #      size = 4) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
-  labs(y="Surv-to-Rep Y2", x="Geographic Distance (m)", color="Geographic Distance") +
-  scale_color_viridis(option="mako", direction = -1) +
+  labs(y="Surv-to-Rep Y2", x="Geographic Distance (m)") +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 
-wl2_wl2_surv_to_rep_y2_FIG <- ggarrange(GSCD, WYCD, GD, ncol=2, nrow=2) 
-ggsave("../output/WL2_Traits/WL2_SurvtoRep_y2_SCATTERS.png", width = 24, height = 18, units = "in")
+ED <- wl2_surv_to_rep_y2 %>% 
+  group_by(pop, elev_m, Elev_Dist) %>% 
+  summarise(meanSurv=mean(SurvtoRep_y2, na.rm = TRUE), semSurv=sem(SurvtoRep_y2, na.rm=TRUE)) %>% 
+  ggplot(aes(x=Elev_Dist, y=meanSurv, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanSurv-semSurv,ymax=meanSurv+semSurv),width=.02, linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Surv-to-Rep Y2", x="Elevation Distance (m)") +
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+
+wl2_surv_to_rep_y2_FIG <- ggarrange(GSCD_recent, WYCD_recent, GD, ED, ncol=2, nrow=2) 
+#ggsave("../output/WL2_Traits/WL2_SurvtoRep_y2_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
+```
+
+```{r}
+#scatter plots
+GSCD_historic <- wl2_surv_to_rep_y2 %>% 
+  group_by(pop, elev_m, GrwSsn_GD_Historical, Wtr_Year_GD_Historical) %>% 
+  summarise(meanSurv=mean(SurvtoRep_y2, na.rm = TRUE), semSurv=sem(SurvtoRep_y2, na.rm=TRUE)) %>% 
+  ggplot(aes(x=GrwSsn_GD_Historical, y=meanSurv, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanSurv-semSurv,ymax=meanSurv+semSurv),width=.02, linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Surv-to-Rep Y2", x="Historic Growth Season CD") +
+  theme(text=element_text(size=25))
+
+WYCD_historic <- wl2_surv_to_rep_y2 %>% 
+  group_by(pop, elev_m, GrwSsn_GD_Historical, Wtr_Year_GD_Historical) %>% 
+  summarise(meanSurv=mean(SurvtoRep_y2, na.rm = TRUE), semSurv=sem(SurvtoRep_y2, na.rm=TRUE)) %>% 
+  ggplot(aes(x=Wtr_Year_GD_Historical, y=meanSurv, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanSurv-semSurv,ymax=meanSurv+semSurv),width=.02,linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Surv-to-Rep Y2", x="Historic Water Year CD") +
+  theme(text=element_text(size=25))
+
+wl2_surv_to_rep_y2_FIG <- ggarrange(GSCD_historic, WYCD_historic, GD, ED, ncol=2, nrow=2) 
+#ggsave("../output/WL2_Traits/WL2_SurvtoRep_y2_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
+```
+
+## Stats
+
+### Scaling 
+```{r}
+wl2_surv_to_rep_y2_scaled <- wl2_surv_to_rep_y2 %>% mutate_at(c("GrwSsn_GD_Recent","Wtr_Year_GD_Recent",                                                           "GrwSsn_GD_Historical","Wtr_Year_GD_Historical","Geographic_Dist"),
+                                                            scale) 
+```
+
+
+### Basic Model Workflow 
+```{r}
+glmer.model_binomial <- 
+  linear_reg() %>% 
+  set_engine("glmer", family=binomial)
+
+surv_wflow <- workflow() %>% 
+  add_variables(outcomes = SurvtoRep_y2, predictors = c(pop, mf, block))
+
+surv_fits <- tibble(wflow=list(
+  pop = {surv_wflow %>% 
+      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ (1|pop))},
+  
+  pop.mf = {surv_wflow %>% 
+      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ (1|pop/mf))},
+  
+  pop.block = {surv_wflow %>% 
+      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ (1|pop) + (1|block))},
+  
+  pop.mf.block = {surv_wflow %>% 
+      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ (1|pop/mf) + (1|block))}
+),
+name=names(wflow)
+) %>% 
+  select(name,wflow)
+
+surv_fits_wl2 <- surv_fits %>%
+  mutate(fit = map(wflow, fit, data = wl2_surv_to_rep_y2_scaled))
+#mod_test <- glmer(SurvtoRep_y2 ~ (1|pop/mf) + (1|block), data=wl2_surv_to_rep_y2_scaled, family=binomial)
+#summary(mod_test)
+
+surv_fits_wl2 %>% mutate(glance=map(fit, glance)) %>% unnest(glance) %>% arrange(AIC) %>% select(-wflow:-sigma)
+#model with pop and block (but excluding mf) is best by AIC and BIC, but no issues with mf model 
+```
+
+#### Test climate and geographic distance 
+```{r}
+surv_GD_wflow_wl2 <- workflow() %>%
+  add_variables(outcomes = SurvtoRep_y2, predictors = c(pop, mf, block, contains("GD"), Geographic_Dist)) 
+
+surv_GD_fits_wl2 <- tibble(wflow=list(
+  pop.mf.block = {surv_GD_wflow_wl2 %>% 
+      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ (1|pop/mf) + (1|block))},
+  
+  GS_Recent = {surv_GD_wflow_wl2 %>% 
+      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ GrwSsn_GD_Recent + Geographic_Dist + (1|pop/mf) + (1|block))},
+  
+  GS_Historical = {surv_GD_wflow_wl2 %>% 
+      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ GrwSsn_GD_Historical + Geographic_Dist + (1|pop/mf) + (1|block))},
+  
+  WY_Recent = {surv_GD_wflow_wl2 %>% 
+      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ Wtr_Year_GD_Recent + Geographic_Dist + (1|pop/mf) + (1|block))},
+  
+  WY_Historical = {surv_GD_wflow_wl2 %>% 
+      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ Wtr_Year_GD_Historical + Geographic_Dist + (1|pop/mf) + (1|block))}
+  
+),
+name=names(wflow)
+) %>% 
+  select(name,wflow) %>%
+  mutate(fit = map(wflow, fit, data = wl2_surv_to_rep_y2_scaled))
+
+surv_GD_fits_wl2 %>% mutate(glance=map(fit, glance)) %>% unnest(glance) %>% arrange(AIC) %>% select(-wflow:-sigma)
+#water year models preferred by AIC 
+
+surv_GD_fits_wl2 %>% mutate(tidy=map(fit, tidy)) %>% unnest(tidy) %>%
+  filter(str_detect(term, "GD") | term=="Geographic_Dist") %>%
+  drop_na(p.value) %>%
+  select(-wflow:-group)# %>%
+#  arrange(p.value)
+# recent water year = marginally sig, historical water year = sig, but historical water year had a singular boundary warning 
+
+mod_test <- glmer(SurvtoRep_y2 ~ Wtr_Year_GD_Historical + Geographic_Dist + (1|pop/mf) + (1|block), data=wl2_surv_to_rep_y2_scaled, family=binomial)
+summary(mod_test)
+#boundary (singular) fit: see help('isSingular') for water year historical 
 ```
