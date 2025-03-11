@@ -7,9 +7,15 @@ output:
     keep_md: true
 ---
 
+# First Year Survival (surv to ann census)
+
 To Do:
 - Look at relationship between size and survival
 - Standard error correction on scatter plots?
+
+To Think about:
+- Should we be getting rid of plants that germinated in the field or including those as original plants that died??
+  - Only 3 total plants (2 WL2 and 1 SQ2) so maybe it doesn't really make a difference 
 
 
 
@@ -150,7 +156,7 @@ library(tidymodels)
 ## ✖ infer::t_test()       masks rstatix::t_test()
 ## ✖ Matrix::unpack()      masks tidyr::unpack()
 ## ✖ recipes::update()     masks Matrix::update(), stats::update()
-## • Search for functions across packages at https://www.tidymodels.org/find/
+## • Dig deeper into tidy modeling with R at https://www.tmwr.org
 ```
 
 ``` r
@@ -399,7 +405,6 @@ WL2_firstyear_mort %>% rowwise() %>%  #checking if mf and rep can be converted t
 UCD_firstyear_mort <- read_csv("../input/UCD_Data/CorrectedCSVs/Annual_Census_Transplants_All_May_2023_corrected.csv",
                            na = c("", "NA", "-", "N/A")) %>% 
   rename(parent.pop=pop) %>% 
-  filter(rep != 100) %>%  #get rid of individuals that germinated in the field 
   mutate(parent.pop= str_replace(parent.pop, ".*VTR.*", "LVTR1")) %>% 
   unite(Genotype, parent.pop:rep, sep="_", remove = FALSE) %>% 
   filter(!str_detect(Genotype, ".*buff*")) %>% 
@@ -460,6 +465,10 @@ UCD_firstyear_mort %>% rowwise() %>%  #checking if mf and rep can be converted t
 ## #   pheno <chr>, diam_mm <dbl>, height_cm <dbl>, total_branch <dbl>,
 ## #   herb_dam <chr>, wilt_status <chr>, longest_leaf_cm <dbl>, flowers <dbl>,
 ## #   fruits <dbl>, longest_ fruit_cm <dbl>, repro_ branch <dbl>, notes <chr>
+```
+
+``` r
+#UCD_firstyear_mort %>% filter(rep==100) #need to convert these to dead
 ```
 
 
@@ -531,6 +540,7 @@ wl2_y1_surv <- WL2_firstyear_mort_prep %>%
 ucd_y1_surv <- UCD_firstyear_mort_prep %>% 
   left_join(ucd_gowers) %>% 
   mutate(Survival=if_else(pheno=="X" | is.na(pheno), 0, 1)) %>% 
+  mutate(Survival=if_else(rep==100, 0, Survival)) %>% 
   select(block:Genotype, parent.pop:rep, elevation.group:Wtr_Year_GD_Historical, Geographic_Dist, Elev_Dist, pheno, Survival)
 ```
 
@@ -540,6 +550,8 @@ ucd_y1_surv <- UCD_firstyear_mort_prep %>%
 
 ``` r
 #ucd_y1_surv %>% group_by(parent.pop) %>% summarise(n=n()) %>% arrange(n) #min sample size = 2 
+
+#ucd_y1_surv %>% filter(rep==100)
 ```
 
 ### Bar plots 
@@ -974,10 +986,10 @@ surv_fits_ucd %>% mutate(glance=map(fit, glance)) %>% unnest(glance) %>% arrange
 ## # A tibble: 4 × 6
 ##   name         logLik   AIC   BIC deviance df.residual
 ##   <chr>         <dbl> <dbl> <dbl>    <dbl>       <int>
-## 1 pop.mf        -165.  336.  350.     264.         751
-## 2 pop.mf.block  -164.  337.  355.     253.         750
-## 3 pop           -168.  341.  350.     299.         752
-## 4 pop.block     -167.  341.  355.     288.         751
+## 1 pop.mf        -166.  337.  351.     266.         754
+## 2 pop.mf.block  -165.  337.  356.     254.         753
+## 3 pop           -169.  341.  350.     299.         755
+## 4 pop.block     -168.  341.  355.     288.         754
 ```
 
 ``` r
@@ -1090,11 +1102,11 @@ surv_GD_fits_ucd %>% mutate(glance=map(fit, glance)) %>% unnest(glance) %>% arra
 ## # A tibble: 5 × 6
 ##   name          logLik   AIC   BIC deviance df.residual
 ##   <chr>          <dbl> <dbl> <dbl>    <dbl>       <int>
-## 1 WY_Recent      -162.  336.  364.     253.         748
-## 2 WY_Historical  -162.  336.  364.     254.         748
-## 3 pop.block      -164.  337.  355.     253.         750
-## 4 GS_Historical  -163.  338.  366.     253.         748
-## 5 GS_Recent      -163.  339.  367.     253.         748
+## 1 WY_Recent      -162.  337.  365.     255.         751
+## 2 WY_Historical  -162.  337.  365.     255.         751
+## 3 pop.block      -165.  337.  356.     254.         753
+## 4 GS_Historical  -164.  339.  367.     255.         751
+## 5 GS_Recent      -164.  339.  367.     255.         751
 ```
 
 ``` r
@@ -1110,14 +1122,14 @@ surv_GD_fits_ucd %>% mutate(tidy=map(fit, tidy)) %>% unnest(tidy) %>%
 ## # A tibble: 8 × 6
 ##   name          term                   estimate std.error statistic p.value
 ##   <chr>         <chr>                     <dbl>     <dbl>     <dbl>   <dbl>
-## 1 GS_Recent     GrwSsn_GD_Recent         0.0922     0.563     0.164   0.870
-## 2 GS_Recent     Geographic_Dist         -0.701      0.558    -1.26    0.209
-## 3 GS_Historical GrwSsn_GD_Historical    -0.406      0.651    -0.623   0.533
-## 4 GS_Historical Geographic_Dist         -0.492      0.566    -0.869   0.385
-## 5 WY_Recent     Wtr_Year_GD_Recent      -0.881      0.537    -1.64    0.101
-## 6 WY_Recent     Geographic_Dist         -0.348      0.475    -0.733   0.463
-## 7 WY_Historical Wtr_Year_GD_Historical  -0.900      0.548    -1.64    0.100
-## 8 WY_Historical Geographic_Dist         -0.275      0.487    -0.564   0.573
+## 1 GS_Recent     GrwSsn_GD_Recent         0.0956     0.558     0.171  0.864 
+## 2 GS_Recent     Geographic_Dist         -0.698      0.556    -1.26   0.209 
+## 3 GS_Historical GrwSsn_GD_Historical    -0.400      0.647    -0.618  0.536 
+## 4 GS_Historical Geographic_Dist         -0.490      0.564    -0.869  0.385 
+## 5 WY_Recent     Wtr_Year_GD_Recent      -0.885      0.532    -1.66   0.0960
+## 6 WY_Recent     Geographic_Dist         -0.341      0.472    -0.724  0.469 
+## 7 WY_Historical Wtr_Year_GD_Historical  -0.905      0.542    -1.67   0.0951
+## 8 WY_Historical Geographic_Dist         -0.267      0.484    -0.553  0.580
 ```
 
 ``` r

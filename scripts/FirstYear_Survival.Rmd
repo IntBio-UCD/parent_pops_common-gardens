@@ -7,9 +7,15 @@ output:
     keep_md: true
 ---
 
+# First Year Survival (surv to ann census)
+
 To Do:
 - Look at relationship between size and survival
 - Standard error correction on scatter plots?
+
+To Think about:
+- Should we be getting rid of plants that germinated in the field or including those as original plants that died??
+  - Only 3 total plants (2 WL2 and 1 SQ2) so maybe it doesn't really make a difference 
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -108,7 +114,6 @@ WL2_firstyear_mort %>% rowwise() %>%  #checking if mf and rep can be converted t
 UCD_firstyear_mort <- read_csv("../input/UCD_Data/CorrectedCSVs/Annual_Census_Transplants_All_May_2023_corrected.csv",
                            na = c("", "NA", "-", "N/A")) %>% 
   rename(parent.pop=pop) %>% 
-  filter(rep != 100) %>%  #get rid of individuals that germinated in the field 
   mutate(parent.pop= str_replace(parent.pop, ".*VTR.*", "LVTR1")) %>% 
   unite(Genotype, parent.pop:rep, sep="_", remove = FALSE) %>% 
   filter(!str_detect(Genotype, ".*buff*")) %>% 
@@ -118,6 +123,8 @@ unique(UCD_firstyear_mort$parent.pop)
 UCD_firstyear_mort %>% rowwise() %>%  #checking if mf and rep can be converted to numeric 
   filter(!is.na(rep)) %>%  
   filter(is.na(as.numeric(rep)))
+
+#UCD_firstyear_mort %>% filter(rep==100) #need to convert these to dead
 ```
 
 ```{r}
@@ -157,8 +164,11 @@ wl2_y1_surv <- WL2_firstyear_mort_prep %>%
 ucd_y1_surv <- UCD_firstyear_mort_prep %>% 
   left_join(ucd_gowers) %>% 
   mutate(Survival=if_else(pheno=="X" | is.na(pheno), 0, 1)) %>% 
+  mutate(Survival=if_else(rep==100, 0, Survival)) %>% 
   select(block:Genotype, parent.pop:rep, elevation.group:Wtr_Year_GD_Historical, Geographic_Dist, Elev_Dist, pheno, Survival)
 #ucd_y1_surv %>% group_by(parent.pop) %>% summarise(n=n()) %>% arrange(n) #min sample size = 2 
+
+#ucd_y1_surv %>% filter(rep==100)
 ```
 
 ### Bar plots 
