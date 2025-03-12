@@ -1,7 +1,7 @@
 ---
 title: "Establishment_Figures"
 author: "Brandie QC"
-date: "2025-03-05"
+date: "2025-03-11"
 output: 
   html_document: 
     keep_md: true
@@ -147,7 +147,7 @@ library(tidymodels)
 ## ✖ infer::t_test()       masks rstatix::t_test()
 ## ✖ Matrix::unpack()      masks tidyr::unpack()
 ## ✖ recipes::update()     masks Matrix::update(), stats::update()
-## • Use suppressPackageStartupMessages() to eliminate package startup messages
+## • Use tidymodels_prefer() to resolve common conflicts.
 ```
 
 ``` r
@@ -204,8 +204,8 @@ ucd_surv <- read_csv("../input/UCD_Data/CorrectedCSVs/UCD_transplants_pheno_mort
   rename(death.date=`Death Date`, bud.date=`Date First Bud`, flower.date=`Date First Flower`, 
          fruit.date=`Date First Fruit`, last.flower.date=`Date Last Flower`, last.fruit.date=`Date Last Fruit`) %>% 
   filter(!is.na(pop)) %>% 
-  filter(rep != 100) %>% #get rid of individuals that germinated in the field 
-  unite(Genotype, pop:rep, sep="_", remove = FALSE) 
+  unite(Genotype, pop:rep, sep="_", remove = FALSE) %>% 
+  filter(!str_detect(Genotype, "buffer")) 
 ```
 
 ```
@@ -385,13 +385,43 @@ unique(ucd_surv$pop)
 ```
 
 ``` r
+ucd_surv %>% filter(rep==100)
+```
+
+```
+## # A tibble: 2 × 14
+##   block   row col   Genotype  pop      mf   rep bud.date flower.date fruit.date
+##   <chr> <dbl> <chr> <chr>     <chr> <dbl> <dbl> <chr>    <chr>       <chr>     
+## 1 L1        5 A     WL2_3_100 WL2       3   100 <NA>     <NA>        <NA>      
+## 2 L2       37 C     SQ2_6_100 SQ2       6   100 <NA>     <NA>        <NA>      
+## # ℹ 4 more variables: last.flower.date <chr>, last.fruit.date <chr>,
+## #   death.date <chr>, Notes <chr>
+```
+
+``` r
+ucd_surv %>% filter(Genotype=="WL2_4_10")
+```
+
+```
+## # A tibble: 1 × 14
+##   block   row col   Genotype pop      mf   rep bud.date flower.date fruit.date
+##   <chr> <dbl> <chr> <chr>    <chr> <dbl> <dbl> <chr>    <chr>       <chr>     
+## 1 L2       33 D     WL2_4_10 WL2       4    10 <NA>     <NA>        <NA>      
+## # ℹ 4 more variables: last.flower.date <chr>, last.fruit.date <chr>,
+## #   death.date <chr>, Notes <chr>
+```
+
+``` r
+#there are 3 plants that died early and later had germ WL2_4_10(1/6/23), WL2_3_100(L1_5_A)-1/6/23 and SQ2_6_100(L2_37_C)-12/13/22
+
 ucd_establishment <- ucd_surv %>% 
   left_join(ucd_gowers) %>% 
   select(block:rep, elevation.group:Wtr_Year_GD_Historical, Geographic_Dist, Elev_Dist, death.date) %>% 
   mutate(death.date=mdy(death.date)) %>% 
   mutate(Establishment=if_else(is.na(death.date), 1,
                                if_else(death.date=="2022-11-30" | death.date=="2022-12-13" | death.date=="2022-12-21", 0,
-                                       1)))
+                                       1))) %>% 
+  mutate(Establishment=if_else(Genotype=="SQ2_6_100", 0, Establishment))
 ```
 
 ```
@@ -399,7 +429,9 @@ ucd_establishment <- ucd_surv %>%
 ```
 
 ``` r
-write_csv(ucd_establishment, "../output/UCD_Traits/UCD_Establishment.csv")
+#ucd_establishment %>% filter(Establishment==0)
+  
+#write_csv(ucd_establishment, "../output/UCD_Traits/UCD_Establishment.csv")
 ```
 
 ### Bar plots
@@ -472,7 +504,7 @@ wl2_establishment <- wl2_surv_y1 %>%
 ```
 
 ``` r
-write_csv(wl2_establishment, "../output/WL2_Traits/WL2_Establishment.csv")
+#write_csv(wl2_establishment, "../output/WL2_Traits/WL2_Establishment.csv")
 ```
 
 ### Bar plots
@@ -532,25 +564,15 @@ wl2_establishment %>%
 
 ``` r
 #scatter plots
-GSCD <- ucd_establishment %>% 
+GSCD_recent <- ucd_establishment %>% 
   group_by(pop, elev_m, GrwSsn_GD_Recent, GrwSsn_GD_Historical) %>% 
   summarise(meanEst=mean(Establishment, na.rm = TRUE), semEst=sem(Establishment, na.rm=TRUE)) %>% 
-  pivot_longer(cols = starts_with("GrwSsn"), names_to = "TimePd", values_to = "GrwSsn_CD") %>% 
-  mutate(TimePd=str_replace(TimePd, "GrwSsn_GD_", "")) %>% 
-  ggplot(aes(x=GrwSsn_CD, y=meanEst, color=TimePd, group = pop)) +
-  geom_point(size=6, alpha=0.7) + 
+  ggplot(aes(x=GrwSsn_GD_Recent, y=meanEst, group = pop)) +
+  geom_point(size=6) + 
   geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.02, linewidth = 2) +
-  #geom_text_repel(aes(x = GrwSsn_CD, y = meanEst,
-  #          label = `pop`),
-  #      min.segment.length = 0.8,
-  #      max.overlaps = 100,
-  #      #label.padding = 1,
-  #      #point.padding = 0.8,
-  #      size = 4) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
-  labs(y="Establishment", x="Growth Season CD", color="Time Period") +
-  scale_color_manual(values=timepd_palette) +
+  labs(y="Establishment", x="Recent Growth Season CD") +
   theme(text=element_text(size=25))
 ```
 
@@ -560,25 +582,15 @@ GSCD <- ucd_establishment %>%
 ```
 
 ``` r
-WYCD <- ucd_establishment %>% 
+WYCD_recent <- ucd_establishment %>% 
   group_by(pop, elev_m, Wtr_Year_GD_Recent, Wtr_Year_GD_Historical) %>% 
   summarise(meanEst=mean(Establishment, na.rm = TRUE), semEst=sem(Establishment, na.rm=TRUE)) %>%
-  pivot_longer(cols = starts_with("Wtr_Year"), names_to = "TimePd", values_to = "Wtr_Year_CD") %>% 
-  mutate(TimePd=str_replace(TimePd, "Wtr_Year_GD_", "")) %>% 
-  ggplot(aes(x=Wtr_Year_CD, y=meanEst, color=TimePd, group = pop)) +
-  geom_point(size=6, alpha=0.7) + 
+  ggplot(aes(x=Wtr_Year_GD_Recent, y=meanEst, group = pop)) +
+  geom_point(size=6) + 
   geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.02, linewidth = 2) +
-  #geom_text_repel(aes(x = Wtr_Year_CD, y = meanEst,
-  #          label = `pop`),
-  #      min.segment.length = 0.8,
-  #      max.overlaps = 100,
-  #      #label.padding = 1,
-  #      #point.padding = 0.8,
-  #      size = 4) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
-  labs(y="Establishment", x="Water Year CD", color="Time Period") +
-  scale_color_manual(values=timepd_palette) +
+  labs(y="Establishment", x="Recent Water Year CD") +
   theme(text=element_text(size=25))
 ```
 
@@ -594,13 +606,6 @@ GD <- ucd_establishment %>%
   ggplot(aes(x=Geographic_Dist, y=meanEst, group = pop)) +
   geom_point(size=6) + 
   geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.02, linewidth = 2) +
-  #geom_text_repel(aes(x = Geographic_Dist, y = meanEst,
-  #          label = `pop`),
-  #      min.segment.length = 0.8,
-  #      max.overlaps = 100,
-  #      #label.padding = 1,
-  #      #point.padding = 0.8,
-  #      size = 4) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
   labs(y="Establishment", x="Geographic Distance (m)") +
@@ -619,13 +624,6 @@ ED <- ucd_establishment %>%
   ggplot(aes(x=Elev_Dist, y=meanEst, group = pop)) +
   geom_point(size=6) + 
   geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.02, linewidth = 2) +
-  #geom_text_repel(aes(x = Elev_Dist, y = meanEst,
-  #          label = `pop`),
-  #      min.segment.length = 0.8,
-  #      max.overlaps = 100,
-  #      #label.padding = 1,
-  #      #point.padding = 0.8,
-  #      size = 4) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
   labs(y="Establishment", x="Elevation Distance (m)") +
@@ -638,33 +636,22 @@ ED <- ucd_establishment %>%
 ```
 
 ``` r
-ucd_establishment_FIG <- ggarrange(GSCD, WYCD, GD, ED, ncol=2, nrow=2) 
-#ggsave("../output/UCD_Traits/UCD_Establishment_SCATTERS.png", width = 24, height = 18, units = "in")
+ucd_establishment_FIG <- ggarrange(GSCD_recent, WYCD_recent, GD, ED, ncol=2, nrow=2) 
+#ggsave("../output/UCD_Traits/UCD_Establishment_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
 ```
 
-### WL2
 
 ``` r
 #scatter plots
-GSCD <- wl2_establishment %>% 
+GSCD_historic <- ucd_establishment %>% 
   group_by(pop, elev_m, GrwSsn_GD_Recent, GrwSsn_GD_Historical) %>% 
   summarise(meanEst=mean(Establishment, na.rm = TRUE), semEst=sem(Establishment, na.rm=TRUE)) %>% 
-  pivot_longer(cols = starts_with("GrwSsn"), names_to = "TimePd", values_to = "GrwSsn_CD") %>% 
-  mutate(TimePd=str_replace(TimePd, "GrwSsn_GD_", "")) %>% 
-  ggplot(aes(x=GrwSsn_CD, y=meanEst, color=TimePd, group = pop)) +
+  ggplot(aes(x=GrwSsn_GD_Historical, y=meanEst, group = pop)) +
   geom_point(size=6) + 
   geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.02, linewidth = 2) +
-  #geom_text_repel(aes(x = GrwSsn_CD, y = meanEst,
-  #          label = `pop`),
-  #      min.segment.length = 0.8,
-  #      max.overlaps = 100,
-  #      #label.padding = 1,
-  #      #point.padding = 0.8,
-  #      size = 4) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
-  labs(y="Establishment", x="Growth Season CD", color="Growth Season \n Climate Distance") +
-  scale_color_manual(values=timepd_palette) +
+  labs(y="Establishment", x="Historic Growth Season CD") +
   theme(text=element_text(size=25))
 ```
 
@@ -674,25 +661,59 @@ GSCD <- wl2_establishment %>%
 ```
 
 ``` r
-WYCD <- wl2_establishment %>% 
+WYCD_historic <- ucd_establishment %>% 
   group_by(pop, elev_m, Wtr_Year_GD_Recent, Wtr_Year_GD_Historical) %>% 
-  summarise(meanEst=mean(Establishment, na.rm = TRUE), semEst=sem(Establishment, na.rm=TRUE)) %>% 
-  pivot_longer(cols = starts_with("Wtr_Year"), names_to = "TimePd", values_to = "Wtr_Year_CD") %>% 
-  mutate(TimePd=str_replace(TimePd, "Wtr_Year_GD_", "")) %>% 
-  ggplot(aes(x=Wtr_Year_CD, y=meanEst, color=TimePd, group = pop)) +
+  summarise(meanEst=mean(Establishment, na.rm = TRUE), semEst=sem(Establishment, na.rm=TRUE)) %>%
+  ggplot(aes(x=Wtr_Year_GD_Historical, y=meanEst, group = pop)) +
   geom_point(size=6) + 
-  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.02,linewidth = 2) +
-  #geom_text_repel(aes(x = Wtr_Year_CD, y = meanEst,
-  #          label = `pop`),
-  #      min.segment.length = 0.8,
-  #      max.overlaps = 100,
-  #      #label.padding = 1,
-  #      #point.padding = 0.8,
-  #      size = 4) +
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.02, linewidth = 2) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
-  labs(y="Establishment", x="Water Year CD", color="Water Year \n Climate Distance") +
-  scale_color_manual(values=timepd_palette) +
+  labs(y="Establishment", x="Historic Water Year CD") +
+  theme(text=element_text(size=25))
+```
+
+```
+## `summarise()` has grouped output by 'pop', 'elev_m', 'Wtr_Year_GD_Recent'. You
+## can override using the `.groups` argument.
+```
+
+``` r
+ucd_establishment_FIG <- ggarrange(GSCD_historic, WYCD_historic, GD, ED, ncol=2, nrow=2) 
+#ggsave("../output/UCD_Traits/UCD_Establishment_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
+```
+
+### WL2
+
+``` r
+#scatter plots
+GSCD_recent <- wl2_establishment %>% 
+  group_by(pop, elev_m, GrwSsn_GD_Recent, GrwSsn_GD_Historical) %>% 
+  summarise(meanEst=mean(Establishment, na.rm = TRUE), semEst=sem(Establishment, na.rm=TRUE)) %>% 
+  ggplot(aes(x=GrwSsn_GD_Recent, y=meanEst, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.02, linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Establishment", x="Recent Growth Season CD") +
+  theme(text=element_text(size=25))
+```
+
+```
+## `summarise()` has grouped output by 'pop', 'elev_m', 'GrwSsn_GD_Recent'. You
+## can override using the `.groups` argument.
+```
+
+``` r
+WYCD_recent <- wl2_establishment %>% 
+  group_by(pop, elev_m, Wtr_Year_GD_Recent, Wtr_Year_GD_Historical) %>% 
+  summarise(meanEst=mean(Establishment, na.rm = TRUE), semEst=sem(Establishment, na.rm=TRUE)) %>%
+  ggplot(aes(x=Wtr_Year_GD_Recent, y=meanEst, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.02, linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Establishment", x="Recent Water Year CD") +
   theme(text=element_text(size=25))
 ```
 
@@ -703,18 +724,11 @@ WYCD <- wl2_establishment %>%
 
 ``` r
 GD <- wl2_establishment %>% 
-  group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent, Geographic_Dist) %>% 
+  group_by(pop, elev_m, Geographic_Dist) %>% 
   summarise(meanEst=mean(Establishment, na.rm = TRUE), semEst=sem(Establishment, na.rm=TRUE)) %>% 
   ggplot(aes(x=Geographic_Dist, y=meanEst, group = pop)) +
   geom_point(size=6) + 
   geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.02, linewidth = 2) +
-  #geom_text_repel(aes(x = Geographic_Dist, y = meanEst,
-  #          label = `pop`),
-  #      min.segment.length = 0.8,
-  #      max.overlaps = 100,
-  #      #label.padding = 1,
-  #      #point.padding = 0.8,
-  #      size = 4) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
   labs(y="Establishment", x="Geographic Distance (m)") +
@@ -722,8 +736,8 @@ GD <- wl2_establishment %>%
 ```
 
 ```
-## `summarise()` has grouped output by 'pop', 'elev_m', 'GrwSsn_GD_Recent',
-## 'Wtr_Year_GD_Recent'. You can override using the `.groups` argument.
+## `summarise()` has grouped output by 'pop', 'elev_m'. You can override using the
+## `.groups` argument.
 ```
 
 ``` r
@@ -733,13 +747,6 @@ ED <- wl2_establishment %>%
   ggplot(aes(x=Elev_Dist, y=meanEst, group = pop)) +
   geom_point(size=6) + 
   geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.02, linewidth = 2) +
-  #geom_text_repel(aes(x = Elev_Dist, y = meanEst,
-  #          label = `pop`),
-  #      min.segment.length = 0.8,
-  #      max.overlaps = 100,
-  #      #label.padding = 1,
-  #      #point.padding = 0.8,
-  #      size = 4) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
   labs(y="Establishment", x="Elevation Distance (m)") +
@@ -752,6 +759,272 @@ ED <- wl2_establishment %>%
 ```
 
 ``` r
-WL2_establishment_FIG <- ggarrange(GSCD, WYCD, GD, ED, ncol=2, nrow=2) 
-#ggsave("../output/WL2_Traits/WL2_Establishment_SCATTERS.png", width = 24, height = 18, units = "in")
+wl2_establishment_FIG <- ggarrange(GSCD_recent, WYCD_recent, GD, ED, ncol=2, nrow=2) 
+#ggsave("../output/WL2_Traits/WL2_Establishment_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
+```
+
+
+``` r
+#scatter plots
+GSCD_historic <- wl2_establishment %>% 
+  group_by(pop, elev_m, GrwSsn_GD_Recent, GrwSsn_GD_Historical) %>% 
+  summarise(meanEst=mean(Establishment, na.rm = TRUE), semEst=sem(Establishment, na.rm=TRUE)) %>% 
+  ggplot(aes(x=GrwSsn_GD_Historical, y=meanEst, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.02, linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Establishment", x="Historic Growth Season CD") +
+  theme(text=element_text(size=25))
+```
+
+```
+## `summarise()` has grouped output by 'pop', 'elev_m', 'GrwSsn_GD_Recent'. You
+## can override using the `.groups` argument.
+```
+
+``` r
+WYCD_historic <- wl2_establishment %>% 
+  group_by(pop, elev_m, Wtr_Year_GD_Recent, Wtr_Year_GD_Historical) %>% 
+  summarise(meanEst=mean(Establishment, na.rm = TRUE), semEst=sem(Establishment, na.rm=TRUE)) %>%
+  ggplot(aes(x=Wtr_Year_GD_Historical, y=meanEst, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.02, linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Establishment", x="Historic Water Year CD") +
+  theme(text=element_text(size=25))
+```
+
+```
+## `summarise()` has grouped output by 'pop', 'elev_m', 'Wtr_Year_GD_Recent'. You
+## can override using the `.groups` argument.
+```
+
+``` r
+wl2_establishment_FIG <- ggarrange(GSCD_historic, WYCD_historic, GD, ED, ncol=2, nrow=2) 
+#ggsave("../output/WL2_Traits/WL2_Establishment_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
+```
+
+## Stats
+
+### Scaling 
+
+``` r
+wl2_establishment_scaled <- wl2_establishment %>% mutate_at(c("GrwSsn_GD_Recent","Wtr_Year_GD_Recent",                                                           "GrwSsn_GD_Historical","Wtr_Year_GD_Historical","Geographic_Dist"),
+                                                            scale) 
+
+ucd_establishment_scaled <- ucd_establishment %>% mutate_at(c("GrwSsn_GD_Recent","Wtr_Year_GD_Recent",                                                           "GrwSsn_GD_Historical","Wtr_Year_GD_Historical","Geographic_Dist"),
+                                                            scale) 
+```
+
+### Basic Model Workflow 
+
+``` r
+glmer.model_binomial <- 
+  linear_reg() %>% 
+  set_engine("glmer", family=binomial)
+
+surv_wflow <- workflow() %>% 
+  add_variables(outcomes = Establishment, predictors = c(pop, mf, block))
+
+surv_fits <- tibble(wflow=list(
+  pop = {surv_wflow %>% 
+      add_model(glmer.model_binomial, formula = Establishment ~ (1|pop))},
+  
+  pop.mf = {surv_wflow %>% 
+      add_model(glmer.model_binomial, formula = Establishment ~ (1|pop/mf))},
+  
+  pop.block = {surv_wflow %>% 
+      add_model(glmer.model_binomial, formula = Establishment ~ (1|pop) + (1|block))},
+  
+  pop.mf.block = {surv_wflow %>% 
+      add_model(glmer.model_binomial, formula = Establishment ~ (1|pop/mf) + (1|block))}
+),
+name=names(wflow)
+) %>% 
+  select(name,wflow)
+
+surv_fits_wl2 <- surv_fits %>%
+  mutate(fit = map(wflow, fit, data = wl2_establishment_scaled))
+```
+
+```
+## boundary (singular) fit: see help('isSingular')
+## boundary (singular) fit: see help('isSingular')
+```
+
+``` r
+#mod_test <- glmer(Establishment ~ (1|pop) + (1|block), data=wl2_establishment_scaled, family=binomial)
+#summary(mod_test)
+#boundary (singular) fit: see help('isSingular') errors with mf in the model 
+
+surv_fits_ucd <- surv_fits %>%
+  mutate(fit = map(wflow, fit, data = ucd_establishment_scaled))
+```
+
+```
+## boundary (singular) fit: see help('isSingular')
+```
+
+```
+## Warning: There were 2 warnings in `mutate()`.
+## The first warning was:
+## ℹ In argument: `fit = map(wflow, fit, data = ucd_establishment_scaled)`.
+## Caused by warning in `checkConv()`:
+## ! unable to evaluate scaled gradient
+## ℹ Run `dplyr::last_dplyr_warnings()` to see the 1 remaining warning.
+```
+
+``` r
+#mod_test <- glmer(Establishment ~ (1|pop) + (1|block), data=ucd_establishment_scaled, family=binomial)
+#summary(mod_test)
+#full model: Warning: unable to evaluate scaled gradientWarning: Model failed to converge: degenerate  Hessian with 1 negative eigenvalues
+#pop.mf: boundary (singular) fit: see help('isSingular')
+
+surv_fits_wl2 %>% mutate(glance=map(fit, glance)) %>% unnest(glance) %>% arrange(AIC) %>% select(-wflow:-sigma)
+```
+
+```
+## # A tibble: 4 × 6
+##   name         logLik   AIC   BIC deviance df.residual
+##   <chr>         <dbl> <dbl> <dbl>    <dbl>       <int>
+## 1 pop.block    -1010. 2027. 2043.    1928.        1570
+## 2 pop.mf.block -1010. 2029. 2050.    1928.        1569
+## 3 pop          -1060. 2125. 2135.    2071.        1571
+## 4 pop.mf       -1060. 2127. 2143.    2071.        1570
+```
+
+``` r
+#pop block model best by AIC and BIC
+
+surv_fits_ucd %>% mutate(glance=map(fit, glance)) %>% unnest(glance) %>% arrange(AIC) %>% select(-wflow:-sigma)
+```
+
+```
+## # A tibble: 4 × 6
+##   name         logLik   AIC   BIC deviance df.residual
+##   <chr>         <dbl> <dbl> <dbl>    <dbl>       <int>
+## 1 pop.block     -93.4  193.  207.     160.         754
+## 2 pop           -94.7  193.  203.     172.         755
+## 3 pop.mf.block  -93.4  195.  213.     160.         753
+## 4 pop.mf        -94.7  195.  209.     172.         754
+```
+
+``` r
+#pop.block model best by AIC and BIC, issues with mf so exclude it 
+```
+
+#### Test climate and geographic distance 
+
+``` r
+surv_GD_wflow <- workflow() %>%
+  add_variables(outcomes = Establishment, predictors = c(pop, mf, block, contains("GD"), Geographic_Dist)) 
+
+surv_GD_fits <- tibble(wflow=list(
+  pop.block = {surv_GD_wflow %>% 
+      add_model(glmer.model_binomial, formula = Establishment ~ (1|pop) + (1|block))},
+  
+  GS_Recent = {surv_GD_wflow %>% 
+      add_model(glmer.model_binomial, formula = Establishment ~ GrwSsn_GD_Recent + Geographic_Dist + (1|pop) + (1|block))},
+  
+  GS_Historical = {surv_GD_wflow %>% 
+      add_model(glmer.model_binomial, formula = Establishment ~ GrwSsn_GD_Historical + Geographic_Dist + (1|pop) + (1|block))},
+  
+  WY_Recent = {surv_GD_wflow %>% 
+      add_model(glmer.model_binomial, formula = Establishment ~ Wtr_Year_GD_Recent + Geographic_Dist + (1|pop) + (1|block))},
+  
+  WY_Historical = {surv_GD_wflow %>% 
+      add_model(glmer.model_binomial, formula = Establishment ~ Wtr_Year_GD_Historical + Geographic_Dist + (1|pop) + (1|block))}
+  
+),
+name=names(wflow)
+) %>% 
+  select(name,wflow) 
+
+surv_GD_fits_wl2 <- surv_GD_fits %>%
+  mutate(fit = map(wflow, fit, data = wl2_establishment_scaled))
+
+surv_GD_fits_ucd <- surv_GD_fits %>%
+  mutate(fit = map(wflow, fit, data = ucd_establishment_scaled))
+
+surv_GD_fits_wl2 %>% mutate(glance=map(fit, glance)) %>% unnest(glance) %>% arrange(AIC) %>% select(-wflow:-sigma)
+```
+
+```
+## # A tibble: 5 × 6
+##   name          logLik   AIC   BIC deviance df.residual
+##   <chr>          <dbl> <dbl> <dbl>    <dbl>       <int>
+## 1 WY_Recent     -1000. 2010. 2037.    1935.        1568
+## 2 WY_Historical -1004. 2018. 2045.    1931.        1568
+## 3 GS_Historical -1005. 2021. 2048.    1928.        1568
+## 4 GS_Recent     -1006. 2022. 2049.    1928.        1568
+## 5 pop.block     -1010. 2027. 2043.    1928.        1570
+```
+
+``` r
+#water year models the best
+
+surv_GD_fits_ucd %>% mutate(glance=map(fit, glance)) %>% unnest(glance) %>% arrange(AIC) %>% select(-wflow:-sigma)
+```
+
+```
+## # A tibble: 5 × 6
+##   name          logLik   AIC   BIC deviance df.residual
+##   <chr>          <dbl> <dbl> <dbl>    <dbl>       <int>
+## 1 pop.block      -93.4  193.  207.     160.         754
+## 2 WY_Historical  -91.6  193.  216.     160.         752
+## 3 WY_Recent      -91.7  193.  217.     160.         752
+## 4 GS_Recent      -92.7  195.  219.     161.         752
+## 5 GS_Historical  -92.9  196.  219.     160.         752
+```
+
+``` r
+#pop.block model best by AIC and BIC
+
+surv_GD_fits_wl2 %>% mutate(tidy=map(fit, tidy)) %>% unnest(tidy) %>%
+  filter(str_detect(term, "GD") | term=="Geographic_Dist") %>%
+  drop_na(p.value) %>%
+  select(-wflow:-group)# %>%
+```
+
+```
+## # A tibble: 8 × 6
+##   name          term                   estimate std.error statistic   p.value
+##   <chr>         <chr>                     <dbl>     <dbl>     <dbl>     <dbl>
+## 1 GS_Recent     GrwSsn_GD_Recent        -0.0947    0.104     -0.911 0.362    
+## 2 GS_Recent     Geographic_Dist         -0.306     0.100     -3.06  0.00224  
+## 3 GS_Historical GrwSsn_GD_Historical    -0.156     0.104     -1.50  0.135    
+## 4 GS_Historical Geographic_Dist         -0.271     0.0993    -2.73  0.00635  
+## 5 WY_Recent     Wtr_Year_GD_Recent       0.341     0.0772     4.41  0.0000104
+## 6 WY_Recent     Geographic_Dist         -0.299     0.0737    -4.06  0.0000482
+## 7 WY_Historical Wtr_Year_GD_Historical   0.235     0.0942     2.49  0.0126   
+## 8 WY_Historical Geographic_Dist         -0.301     0.0887    -3.39  0.000692
+```
+
+``` r
+#  arrange(p.value)
+
+surv_GD_fits_ucd %>% mutate(tidy=map(fit, tidy)) %>% unnest(tidy) %>%
+  filter(str_detect(term, "GD") | term=="Geographic_Dist") %>%
+  drop_na(p.value) %>%
+  select(-wflow:-group)# %>%
+```
+
+```
+## # A tibble: 8 × 6
+##   name          term                   estimate std.error statistic p.value
+##   <chr>         <chr>                     <dbl>     <dbl>     <dbl>   <dbl>
+## 1 GS_Recent     GrwSsn_GD_Recent        -0.279      0.309    -0.903  0.366 
+## 2 GS_Recent     Geographic_Dist         -0.124      0.296    -0.421  0.674 
+## 3 GS_Historical GrwSsn_GD_Historical    -0.196      0.318    -0.619  0.536 
+## 4 GS_Historical Geographic_Dist         -0.145      0.307    -0.472  0.637 
+## 5 WY_Recent     Wtr_Year_GD_Recent      -0.511      0.303    -1.68   0.0922
+## 6 WY_Recent     Geographic_Dist         -0.105      0.285    -0.369  0.712 
+## 7 WY_Historical Wtr_Year_GD_Historical  -0.547      0.310    -1.77   0.0773
+## 8 WY_Historical Geographic_Dist         -0.0534     0.291    -0.184  0.854
+```
+
+``` r
+#  arrange(p.value)
 ```
