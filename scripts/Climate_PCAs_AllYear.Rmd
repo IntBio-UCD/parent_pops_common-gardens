@@ -32,7 +32,6 @@ library(ggrepel)
 #library(cowplot)
 library(gridExtra)
 library(corrplot) #plotting correlations 
-library(rstatix) #performing cor_test
 library(QBMS) #for function calc_biovars to calculate bioclim variables
 library(ggfortify) #easier PCA figures
 sem <- function(x, na.rm=FALSE) {
@@ -167,7 +166,7 @@ bioclim_all_year_historical <- pop_elev_bioclim_all_year %>% filter(year<=1993 &
 #tail(bioclim_all_year_historical, 13)
 ```
 
-### Yearly averages for Flint
+### Yearly averages for Flint (for climate distance calc)
 ```{r}
 flint_all_year_recent_yravgs <- flint_all_year_recent %>% 
   group_by(parent.pop, elevation.group, elev_m, Lat, Long, wtr_yr) %>% 
@@ -299,7 +298,7 @@ bioclim_2024_flint_yrly_avgs_historical <- full_join(flint_all_year_historical_y
 climate_normalized_all_flint_recent <- flint_all_year_recent %>% select(cwd, pck, ppt, tmn, tmx) %>% scale() #normalize the data so they're all on the same scale
 head(climate_normalized_all_flint_recent)
 cor.norm = cor(climate_normalized_all_flint_recent) #test correlations among the traits
-corrplot(cor.norm)
+corrplot(cor.norm, type = "upper")
 #tmn and tmx highly correlated, consider removing one 
 ```
 
@@ -872,15 +871,54 @@ head(bioclim_flint_all_year_avgs)
 climate_normalized_bioclim_flint_all_year_avgs <- bioclim_flint_all_year_avgs %>% ungroup() %>% 
   select(cwd:ppt_coldest_quarter) %>% scale() #normalize the data so they're all on the same scale
 head(climate_normalized_bioclim_flint_all_year_avgs)
+dim(climate_normalized_bioclim_flint_all_year_avgs)
 cor.norm = cor(climate_normalized_bioclim_flint_all_year_avgs) #test correlations among the traits
-cor.norm
-corrplot(cor.norm)
+cor.sig <- cor.mtest(climate_normalized_bioclim_flint_all_year_avgs, method = "pearson")
+
+corrplot(cor.norm, type="upper",
+         tl.srt = 45, p.mat = cor.sig$p, 
+         sig.level = 0.05, insig="blank")
 
 #tmn, tmx, tmean_wettest_quarter, tmean_driest_quarter and ann_tmean all highly correlated (97-99%) - only keep ann_tmean 
 #temp_ann_range and mean_diurnal range 92% correlated - keep temp_ann_range 
 #ann_ppt and ppt 100% correlated (ppt = avg across monts, ann_ppt = avg of the total ppt in a year) - only keep ann_ppt 
 #ppt_warmest and coldest quarter highly correlated with ann_ppt and ppt - take both out 
 ```
+
+Recent
+```{r}
+climate_normalized_bioclim_flint_all_year_avgs_recent <- bioclim_flint_all_year_avgs %>% 
+  ungroup() %>% 
+  filter(TimePd=="Recent") %>% 
+  select(tmn:tmean_driest_quarter, cwd, pck, ppt, ann_ppt:ppt_coldest_quarter) %>% 
+  scale() #normalize the data so they're all on the same scale
+
+cor.norm_recent = cor(climate_normalized_bioclim_flint_all_year_avgs_recent) #test correlations among the traits
+cor.sig_recent <- cor.mtest(climate_normalized_bioclim_flint_all_year_avgs_recent, method = "pearson")
+
+corrplot(cor.norm_recent, type="upper",
+         tl.srt = 45, p.mat = cor.sig_recent$p, 
+         sig.level = 0.05, insig="blank")
+#800 x 734
+```
+
+Historical
+```{r}
+climate_normalized_bioclim_flint_all_year_avgs_historic <- bioclim_flint_all_year_avgs %>% 
+  ungroup() %>% 
+  filter(TimePd=="Historical") %>% 
+  select(tmn:tmean_driest_quarter, cwd, pck, ppt, ann_ppt:ppt_coldest_quarter) %>% 
+  scale() #normalize the data so they're all on the same scale
+
+cor.norm_historic = cor(climate_normalized_bioclim_flint_all_year_avgs_historic) #test correlations among the traits
+cor.sig_historic <- cor.mtest(climate_normalized_bioclim_flint_all_year_avgs_historic, method = "pearson")
+
+corrplot(cor.norm_historic, type="upper",
+         tl.srt = 45, p.mat = cor.sig_historic$p, 
+         sig.level = 0.05, insig="blank")
+#800 x 734
+```
+
 
 ### PCA - Recent + Historical
 
@@ -979,14 +1017,14 @@ all_bioclim_flint_avgs_locs.pc_avg %>%
   geom_path(aes(group=group),arrow = arrow(length=unit(5, "points")), linewidth = .8)
 ggsave("../output/Climate/Wtr_Year_PC1-PC4.png", width = 8, height = 8, units = "in")
 
-all_bioclim_flint_avgs_locs.pc_avg %>% 
-  mutate(group=str_c(parent.pop,elev_m))  %>%
-  ggplot(aes(x=PC1, y=PC2, shape=TimePd, color=elev_m)) +
-  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
-  geom_point(size=2, alpha=0.7) +
-  geom_text_repel(aes(label = parent.pop)) +
-  geom_vline(xintercept = 0, linetype="dashed") + geom_hline(yintercept = 0, linetype="dashed")  +
-  geom_path(aes(group=group),arrow = arrow(length=unit(5, "points")), linewidth = .8)
+#all_bioclim_flint_avgs_locs.pc_avg %>% 
+#  mutate(group=str_c(parent.pop,elev_m))  %>%
+#  ggplot(aes(x=PC1, y=PC2, shape=TimePd, color=elev_m)) +
+#  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+#  geom_point(size=2, alpha=0.7) +
+#  geom_text_repel(aes(label = parent.pop)) +
+#  geom_vline(xintercept = 0, linetype="dashed") + geom_hline(yintercept = 0, #linetype="dashed")  +
+#  geom_path(aes(group=group),arrow = arrow(length=unit(5, "points")), linewidth = #.8)
 #high elev climate seems to be shifting to be more similar to low elev 
 
 ```
@@ -1017,6 +1055,13 @@ PC_anova <- lmer_results %>% select(-data, -glm) %>% unnest(anova) %>%
   arrange(term, p.value)
 
 PC_anova
+
+lmer_results %>% select(-data, -glm) %>% unnest(anova) %>%
+  filter(PC=="PC1"| PC=="PC4")
+
+#mod_test <- glm(PC4 ~ TimePd*elev_m*Lat, data=all_bioclim_flint_avgs_locs.pc)
+#summary(mod_test)
+#anova(mod_test)
 ```
 
 ```{r}

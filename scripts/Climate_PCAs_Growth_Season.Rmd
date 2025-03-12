@@ -33,7 +33,6 @@ library(ggrepel)
 #library(cowplot)
 library(gridExtra)
 library(corrplot) #plotting correlations 
-library(rstatix) #performing cor_test
 library(QBMS) #for function calc_biovars to calculate bioclim variables
 library(ggfortify) #easier PCA figures
 sem <- function(x, na.rm=FALSE) {
@@ -89,7 +88,7 @@ bioclim_recent_grwseason_2024 <- read_csv("../output/Climate/BioClim_growthseaso
 bioclim_historical_grwseason_2024 <- read_csv("../output/Climate/BioClim_growthseason_Historical_2024.csv")
 ```
 
-### Yearly averages for Flint
+### Yearly averages for Flint (for climate dist calcs)
 ```{r}
 flint_grwssn_recent_yravgs <- flint_recent_grwseason %>% 
   group_by(parent.pop, elevation.group, elev_m, Lat, Long, year) %>% 
@@ -708,10 +707,44 @@ corrplot(cor.norm)
 #tmn, tmx, tmean_driest_month and ann_tmean all highly correlated (90-98%) - only keep ann_tmean 
 ```
 
+Recent
+```{r}
+climate_normalized_bioclim_flint_grwseason_avgs_recent <- bioclim_flint_grwseason_avgs %>% 
+  ungroup() %>% 
+  filter(TimePd=="Recent") %>% 
+  select(tmn:tmean_driest_month, cwd, ppt, ann_ppt:ppt_coldest_month) %>% 
+  scale() #normalize the data so they're all on the same scale
+
+cor.norm_recent = cor(climate_normalized_bioclim_flint_grwseason_avgs_recent) #test correlations among the traits
+cor.sig_recent <- cor.mtest(climate_normalized_bioclim_flint_grwseason_avgs_recent, method = "pearson")
+
+corrplot(cor.norm_recent, type="upper",
+         tl.srt = 45, p.mat = cor.sig_recent$p, 
+         sig.level = 0.05, insig="blank")
+#800 x 734
+```
+
+Historical
+```{r}
+climate_normalized_bioclim_flint_grwseason_avgs_historic <- bioclim_flint_grwseason_avgs %>% 
+  ungroup() %>% 
+  filter(TimePd=="Historical") %>% 
+  select(tmn:tmean_driest_month, cwd, ppt, ann_ppt:ppt_coldest_month) %>% 
+  scale() #normalize the data so they're all on the same scale
+
+cor.norm_historic = cor(climate_normalized_bioclim_flint_grwseason_avgs_historic) #test correlations among the traits
+cor.sig_historic <- cor.mtest(climate_normalized_bioclim_flint_grwseason_avgs_historic, method = "pearson")
+
+corrplot(cor.norm_historic, type="upper",
+         tl.srt = 45, p.mat = cor.sig_historic$p, 
+         sig.level = 0.05, insig="blank")
+#800 x 734
+```
+
 ### PCA - Recent + Historical
 
 ```{r}
-all_bioclim_flint_avgs.pc = prcomp(bioclim_flint_grwseason_avgs[c(7, 11:15, 17:20)], scale = TRUE, center = TRUE) 
+all_bioclim_flint_avgs.pc = prcomp(bioclim_flint_grwseason_avgs[c(7:8, 11:15, 17:20)], scale = TRUE, center = TRUE) 
 str(all_bioclim_flint_avgs.pc)
 ```
 
@@ -752,7 +785,7 @@ autoplot(all_bioclim_flint_avgs.pc, data = bioclim_flint_grwseason_avgs,
 
 ```{r}
 autoplot(all_bioclim_flint_avgs.pc, data = bioclim_flint_grwseason_avgs,
-         x=1, y=3,
+         x=2, y=4,
          colour='elev_m', alpha=0.5,
          label=TRUE, label.label="parent.pop",
          loadings=TRUE, loadings.colour='black', loadings.linewidth = 0.7,
@@ -840,11 +873,18 @@ PC_anova <- lmer_results %>% select(-data, -glm) %>% unnest(anova) %>%
   arrange(term, p.value)
 
 PC_anova
+
+lmer_results %>% select(-data, -glm) %>% unnest(anova) %>%
+  filter(PC=="PC2"| PC=="PC4")
+
+mod_test <- glm(PC4 ~ TimePd*elev_m*Lat, data=all_bioclim_flint_avgs_locs.pc)
+#summary(mod_test)
+anova(mod_test)
 ```
 
 ```{r}
 autoplot(all_bioclim_flint_avgs.pc, data = bioclim_flint_grwseason_avgs,
-         x=2, y=3,
+         x=2, y=4,
          colour='elev_m', alpha=0.5,
          label=TRUE, label.label="parent.pop",
          loadings=TRUE, loadings.colour='black', loadings.linewidth = 0.7,
@@ -856,17 +896,17 @@ autoplot(all_bioclim_flint_avgs.pc, data = bioclim_flint_grwseason_avgs,
 
 all_bioclim_flint_avgs_locs.pc_avg %>% 
   mutate(group=str_c(parent.pop,elev_m))  %>%
-  ggplot(aes(x=PC2, y=PC3, shape=TimePd, color=elev_m)) +
+  ggplot(aes(x=PC2, y=PC4, shape=TimePd, color=elev_m)) +
   scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
   #geom_point(size=2, alpha=0.7) +
-  labs(x="PC2 (30.18%)", y="PC3 (12.12%)") +
+  labs(x="PC2 (30.76%)", y="PC4 (10.65%)") +
   geom_vline(xintercept = 0, linetype="dashed") + geom_hline(yintercept = 0, linetype="dashed") +
   geom_path(aes(group=group),arrow = arrow(length=unit(5, "points")), linewidth = .8)
-ggsave("../output/Climate/GRWSSN_PC2-PC3.png", width = 8, height = 8, units = "in")
+ggsave("../output/Climate/GRWSSN_PC2-PC4.png", width = 8, height = 8, units = "in")
 
 all_bioclim_flint_avgs_locs.pc_avg %>% 
   mutate(group=str_c(parent.pop,elev_m))  %>%
-  ggplot(aes(x=PC2, y=PC3, shape=TimePd, color=elev_m)) +
+  ggplot(aes(x=PC2, y=PC4, shape=TimePd, color=elev_m)) +
   scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
   geom_point(size=2, alpha=0.7) +
   geom_text_repel(aes(label = parent.pop)) +
