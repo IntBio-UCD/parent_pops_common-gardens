@@ -13,12 +13,6 @@ knitr::opts_chunk$set(echo = TRUE)
 
 To Do:
 
--   Save PC figures of interest
-
-    -   Color monthly PCA by month relative to growth season?
-
--   Save linear model results
-
 -   Check the significance of the PCA
 
     -   Remember this paper: Björklund, M. 2019. Be careful with your principal components. Evolution 73: 2151--2158.
@@ -902,7 +896,7 @@ all_bioclim_flint_avgs_locs.pc_avg %>%
   labs(x="PC2 (30.76%)", y="PC4 (10.65%)") +
   geom_vline(xintercept = 0, linetype="dashed") + geom_hline(yintercept = 0, linetype="dashed") +
   geom_path(aes(group=group),arrow = arrow(length=unit(5, "points")), linewidth = .8)
-ggsave("../output/Climate/GRWSSN_PC2-PC4.png", width = 8, height = 8, units = "in")
+#ggsave("../output/Climate/GRWSSN_PC2-PC4.png", width = 8, height = 8, units = "in")
 
 all_bioclim_flint_avgs_locs.pc_avg %>% 
   mutate(group=str_c(parent.pop,elev_m))  %>%
