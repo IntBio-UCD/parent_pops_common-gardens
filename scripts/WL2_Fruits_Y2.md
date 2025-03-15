@@ -1,7 +1,7 @@
 ---
 title: "WL2_Fruits_Y2"
 author: "Brandie QC"
-date: "2025-03-11"
+date: "2025-03-14"
 output: 
   html_document: 
     keep_md: true
@@ -12,7 +12,7 @@ output:
 # Fruit production in year 2 at WL2
 
 To Do:
-- Think about removing 0s to make distribution more normal for analysis ...
+- Run models with fruits+flowers
 
 ## Libraries
 
@@ -150,7 +150,7 @@ library(tidymodels)
 ## ✖ infer::t_test()       masks rstatix::t_test()
 ## ✖ Matrix::unpack()      masks tidyr::unpack()
 ## ✖ recipes::update()     masks Matrix::update(), stats::update()
-## • Use tidymodels_prefer() to resolve common conflicts.
+## • Dig deeper into tidy modeling with R at https://www.tmwr.org
 ```
 
 ``` r
@@ -353,6 +353,129 @@ wl2_fruits_y2 <- wl2_ann_cens_2024_pops %>% select(Pop.Type:block, flowers=num.f
 
 ```
 ## Joining with `by = join_by(pop)`
+```
+
+``` r
+wl2_fruits_y2_nozeros <- wl2_fruits_y2 %>% 
+  filter(fruits>0)
+summary(wl2_fruits_y2_nozeros)
+```
+
+```
+##    Pop.Type             loc                bed                 row       
+##  Length:73          Length:73          Length:73          Min.   : 2.00  
+##  Class :character   Class :character   Class :character   1st Qu.:21.00  
+##  Mode  :character   Mode  :character   Mode  :character   Median :36.00  
+##                                                           Mean   :32.88  
+##                                                           3rd Qu.:47.00  
+##                                                           Max.   :58.00  
+##                                                                          
+##      col                pop                  mf             rep        
+##  Length:73          Length:73          Min.   :1.000   Min.   : 1.000  
+##  Class :character   Class :character   1st Qu.:2.000   1st Qu.: 4.000  
+##  Mode  :character   Mode  :character   Median :4.000   Median : 7.000  
+##                                        Mean   :4.301   Mean   : 7.452  
+##                                        3rd Qu.:6.000   3rd Qu.:11.000  
+##                                        Max.   :9.000   Max.   :23.000  
+##                                                                        
+##    Genotype            block              flowers           fruits      
+##  Length:73          Length:73          Min.   :0.0000   Min.   :  1.00  
+##  Class :character   Class :character   1st Qu.:0.0000   1st Qu.:  6.00  
+##  Mode  :character   Mode  :character   Median :0.0000   Median : 15.00  
+##                                        Mean   :0.1528   Mean   : 22.22  
+##                                        3rd Qu.:0.0000   3rd Qu.: 30.00  
+##                                        Max.   :8.0000   Max.   :125.00  
+##                                        NA's   :1                        
+##      FrFlN        elevation.group        elev_m            Lat       
+##  Min.   :  1.00   Length:73          Min.   : 313.0   Min.   :36.56  
+##  1st Qu.:  6.00   Class :character   1st Qu.: 421.5   1st Qu.:37.81  
+##  Median : 15.00   Mode  :character   Median : 511.4   Median :38.41  
+##  Mean   : 22.65                      Mean   : 993.0   Mean   :38.40  
+##  3rd Qu.: 30.50                      3rd Qu.:2020.1   3rd Qu.:39.09  
+##  Max.   :125.00                      Max.   :2470.0   Max.   :39.59  
+##  NA's   :1                                                           
+##       Long        GrwSsn_GD_Recent GrwSsn_GD_Historical Wtr_Year_GD_Recent
+##  Min.   :-121.6   Min.   :0.1593   Min.   :0.2165       Min.   :0.2256    
+##  1st Qu.:-120.9   1st Qu.:0.3535   1st Qu.:0.3432       1st Qu.:0.3278    
+##  Median :-120.3   Median :0.3605   Median :0.3815       Median :0.4223    
+##  Mean   :-120.4   Mean   :0.3943   Mean   :0.4112       Mean   :0.4308    
+##  3rd Qu.:-120.0   3rd Qu.:0.4493   3rd Qu.:0.4560       3rd Qu.:0.4971    
+##  Max.   :-118.8   Max.   :0.5655   Max.   :0.5660       Max.   :0.5660    
+##                                                                           
+##  Wtr_Year_GD_Historical    WL2_Lat         WL2_Long         WL2_Elev   
+##  Min.   :0.2469         Min.   :38.83   Min.   :-120.3   Min.   :2020  
+##  1st Qu.:0.3132         1st Qu.:38.83   1st Qu.:-120.3   1st Qu.:2020  
+##  Median :0.3865         Median :38.83   Median :-120.3   Median :2020  
+##  Mean   :0.4046         Mean   :38.83   Mean   :-120.3   Mean   :2020  
+##  3rd Qu.:0.4743         3rd Qu.:38.83   3rd Qu.:-120.3   3rd Qu.:2020  
+##  Max.   :0.5207         Max.   :38.83   Max.   :-120.3   Max.   :2020  
+##                                                                        
+##  Geographic_Dist      Elev_Dist        
+##  Min.   :   136.3   Min.   :-449.9787  
+##  1st Qu.: 65203.4   1st Qu.:  -0.1158  
+##  Median :128036.9   Median :1508.5706  
+##  Mean   :108511.2   Mean   :1027.0481  
+##  3rd Qu.:140893.4   3rd Qu.:1598.4822  
+##  Max.   :283280.5   Max.   :1707.0000  
+## 
+```
+
+``` r
+wl2_FRFLs_y2_nozeros <- wl2_fruits_y2 %>% 
+  filter(FrFlN>0)
+summary(wl2_FRFLs_y2_nozeros)
+```
+
+```
+##    Pop.Type             loc                bed                 row       
+##  Length:73          Length:73          Length:73          Min.   : 2.00  
+##  Class :character   Class :character   Class :character   1st Qu.:20.00  
+##  Mode  :character   Mode  :character   Mode  :character   Median :36.00  
+##                                                           Mean   :32.63  
+##                                                           3rd Qu.:47.00  
+##                                                           Max.   :58.00  
+##      col                pop                  mf             rep        
+##  Length:73          Length:73          Min.   :1.000   Min.   : 1.000  
+##  Class :character   Class :character   1st Qu.:2.000   1st Qu.: 4.000  
+##  Mode  :character   Mode  :character   Median :4.000   Median : 7.000  
+##                                        Mean   :4.301   Mean   : 7.438  
+##                                        3rd Qu.:6.000   3rd Qu.:11.000  
+##                                        Max.   :9.000   Max.   :23.000  
+##    Genotype            block              flowers           fruits      
+##  Length:73          Length:73          Min.   :0.0000   Min.   :  0.00  
+##  Class :character   Class :character   1st Qu.:0.0000   1st Qu.:  6.00  
+##  Mode  :character   Mode  :character   Median :0.0000   Median : 15.00  
+##                                        Mean   :0.1781   Mean   : 22.19  
+##                                        3rd Qu.:0.0000   3rd Qu.: 30.00  
+##                                        Max.   :8.0000   Max.   :125.00  
+##      FrFlN        elevation.group        elev_m            Lat       
+##  Min.   :  1.00   Length:73          Min.   : 313.0   Min.   :36.56  
+##  1st Qu.:  6.00   Class :character   1st Qu.: 421.5   1st Qu.:37.81  
+##  Median : 15.00   Mode  :character   Median : 511.4   Median :38.41  
+##  Mean   : 22.37                      Mean   : 994.9   Mean   :38.39  
+##  3rd Qu.: 30.00                      3rd Qu.:2020.1   3rd Qu.:39.09  
+##  Max.   :125.00                      Max.   :2470.0   Max.   :39.59  
+##       Long        GrwSsn_GD_Recent GrwSsn_GD_Historical Wtr_Year_GD_Recent
+##  Min.   :-121.6   Min.   :0.1593   Min.   :0.2165       Min.   :0.2256    
+##  1st Qu.:-120.9   1st Qu.:0.3535   1st Qu.:0.3432       1st Qu.:0.3278    
+##  Median :-120.3   Median :0.3605   Median :0.3815       Median :0.4223    
+##  Mean   :-120.4   Mean   :0.3945   Mean   :0.4104       Mean   :0.4305    
+##  3rd Qu.:-120.0   3rd Qu.:0.4493   3rd Qu.:0.4560       3rd Qu.:0.4971    
+##  Max.   :-118.8   Max.   :0.5655   Max.   :0.5660       Max.   :0.5660    
+##  Wtr_Year_GD_Historical    WL2_Lat         WL2_Long         WL2_Elev   
+##  Min.   :0.2469         Min.   :38.83   Min.   :-120.3   Min.   :2020  
+##  1st Qu.:0.3132         1st Qu.:38.83   1st Qu.:-120.3   1st Qu.:2020  
+##  Median :0.3865         Median :38.83   Median :-120.3   Median :2020  
+##  Mean   :0.4042         Mean   :38.83   Mean   :-120.3   Mean   :2020  
+##  3rd Qu.:0.4743         3rd Qu.:38.83   3rd Qu.:-120.3   3rd Qu.:2020  
+##  Max.   :0.5207         Max.   :38.83   Max.   :-120.3   Max.   :2020  
+##  Geographic_Dist      Elev_Dist        
+##  Min.   :   136.3   Min.   :-449.9787  
+##  1st Qu.: 65203.4   1st Qu.:  -0.1158  
+##  Median :128036.9   Median :1508.5706  
+##  Mean   :107589.3   Mean   :1025.1148  
+##  3rd Qu.:140893.4   3rd Qu.:1598.4822  
+##  Max.   :283280.5   Max.   :1707.0000
 ```
 
 ``` r
@@ -621,6 +744,18 @@ wl2_fruits_y2 %>%
 
 ![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-9-2.png)<!-- -->
 
+``` r
+wl2_fruits_y2_nozeros %>% 
+  ggplot(aes(x=fruits)) +
+  geom_histogram()
+```
+
+```
+## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+```
+
+![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-9-3.png)<!-- -->
+
 ### Check Sample Sizes
 
 ``` r
@@ -654,6 +789,37 @@ wl2_fruits_y2 %>%
 
 ``` r
 #remove LV1, SQ1, WR b/c only 1 indiv each 
+
+wl2_fruits_y2_nozeros %>% 
+  group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent, Geographic_Dist) %>% 
+  summarise(meanFruits=mean(fruits, na.rm = TRUE), semFruits=sem(fruits, na.rm=TRUE), n=n()) %>% 
+  arrange(n)
+```
+
+```
+## `summarise()` has grouped output by 'pop', 'elev_m', 'GrwSsn_GD_Recent',
+## 'Wtr_Year_GD_Recent'. You can override using the `.groups` argument.
+```
+
+```
+## # A tibble: 9 × 8
+## # Groups:   pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent [9]
+##   pop   elev_m GrwSsn_GD_Recent Wtr_Year_GD_Recent Geographic_Dist meanFruits
+##   <chr>  <dbl>            <dbl>              <dbl>           <dbl>      <dbl>
+## 1 SQ1    1921.            0.159              0.310         283281.        2  
+## 2 WR     1158             0.366              0.355          74992.       30  
+## 3 TM2     379.            0.566              0.406         140893.       48.7
+## 4 WL2    2020.            0.238              0.226            136.       22.4
+## 5 CC      313             0.435              0.445         132498.       17  
+## 6 SC      422.            0.449              0.497          62499.       20.6
+## 7 IH      454.            0.453              0.422          65203.       14.5
+## 8 YO7    2470.            0.353              0.328         128037.       21.9
+## 9 BH      511.            0.360              0.566         159626.       28.4
+## # ℹ 2 more variables: semFruits <dbl>, n <int>
+```
+
+``` r
+#remove SQ1 and WR b/c 1 indiv - without those 2 there are only 7 pops 
 ```
 
 
@@ -718,6 +884,39 @@ wl2_fruits_y2_scaled %>%
 
 
 ``` r
+wl2_fruits_y2_nozeros_scaled <- wl2_fruits_y2_nozeros %>% mutate_at(c("GrwSsn_GD_Recent","Wtr_Year_GD_Recent",                                                           "GrwSsn_GD_Historical","Wtr_Year_GD_Historical","Geographic_Dist"),
+                                                            scale) %>% 
+  filter(pop!="SQ1", pop!="WR") %>% 
+  drop_na(fruits) %>% 
+  mutate(logFruits=log(fruits),
+         log10Fruits=log10(fruits)) #log transformation
+
+wl2_fruits_y2_nozeros_scaled %>%  #looks better
+  ggplot(aes(x=logFruits)) +
+  geom_histogram()
+```
+
+```
+## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+```
+
+![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-12-1.png)<!-- -->
+
+``` r
+wl2_fruits_y2_nozeros_scaled %>% 
+  ggplot(aes(x=log10Fruits)) +
+  geom_histogram()
+```
+
+```
+## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+```
+
+![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-12-2.png)<!-- -->
+
+
+
+``` r
 fruits_modelslog <- tribble(
   ~name,          ~f,
   "1_pop",              "logFruits ~ (1|pop)", 
@@ -729,14 +928,12 @@ fruits_modelslog <- tribble(
 #run the models 
 fruits_modelslog <- fruits_modelslog %>%
   mutate(lmer = map(f, ~ lmer(as.formula(.), 
-                            data = wl2_fruits_y2_scaled)), #run the models 
+                            data = wl2_fruits_y2_nozeros_scaled)), #run the models 
          predict = map(lmer, predict), # predicting from original data...
          glance = map(lmer, glance)) #glance at the model results
 ```
 
 ```
-## boundary (singular) fit: see help('isSingular')
-## boundary (singular) fit: see help('isSingular')
 ## boundary (singular) fit: see help('isSingular')
 ```
 
@@ -748,10 +945,10 @@ fruits_modelslog %>% select(-f, -lmer) %>% unnest(glance) %>% arrange(BIC) #look
 ## # A tibble: 4 × 9
 ##   name           predict     nobs sigma logLik   AIC   BIC REMLcrit df.residual
 ##   <chr>          <list>     <int> <dbl>  <dbl> <dbl> <dbl>    <dbl>       <int>
-## 1 3_pop.block    <dbl [81]>    81 0.907  -121.  250.  260.     242.          77
-## 2 4_pop.mf.block <dbl [81]>    81 0.907  -121.  252.  264.     242.          76
-## 3 1_pop          <dbl [81]>    81 1.31   -137.  280.  287.     274.          78
-## 4 2_pop.mf       <dbl [81]>    81 1.31   -137.  282.  292.     274.          77
+## 1 3_pop.block    <dbl [71]>    71 0.851  -98.7  205.  214.     197.          67
+## 2 4_pop.mf.block <dbl [71]>    71 0.790  -98.4  207.  218.     197.          66
+## 3 1_pop          <dbl [71]>    71 1.12  -109.   224.  231.     218.          68
+## 4 2_pop.mf       <dbl [71]>    71 1.05  -109.   226.  235.     218.          67
 ```
 
 ``` r
@@ -762,27 +959,27 @@ fruits_modelslog %>% select(-f, -lmer) %>% unnest(glance) %>% arrange(AIC) #look
 ## # A tibble: 4 × 9
 ##   name           predict     nobs sigma logLik   AIC   BIC REMLcrit df.residual
 ##   <chr>          <list>     <int> <dbl>  <dbl> <dbl> <dbl>    <dbl>       <int>
-## 1 3_pop.block    <dbl [81]>    81 0.907  -121.  250.  260.     242.          77
-## 2 4_pop.mf.block <dbl [81]>    81 0.907  -121.  252.  264.     242.          76
-## 3 1_pop          <dbl [81]>    81 1.31   -137.  280.  287.     274.          78
-## 4 2_pop.mf       <dbl [81]>    81 1.31   -137.  282.  292.     274.          77
+## 1 3_pop.block    <dbl [71]>    71 0.851  -98.7  205.  214.     197.          67
+## 2 4_pop.mf.block <dbl [71]>    71 0.790  -98.4  207.  218.     197.          66
+## 3 1_pop          <dbl [71]>    71 1.12  -109.   224.  231.     218.          68
+## 4 2_pop.mf       <dbl [71]>    71 1.05  -109.   226.  235.     218.          67
 ```
 
 ``` r
 #model with pop.block best by AIC and BIC 
 
-mod_test <- lmer(logFruits ~  (1|pop) + (1|block), data=wl2_fruits_y2_scaled)
+mod_test <- lmer(logFruits ~  (1|pop/mf) + (1|block), data=wl2_fruits_y2_nozeros_scaled)
 plot(mod_test, which = 1) 
 ```
 
-![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-12-1.png)<!-- -->
+![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-13-1.png)<!-- -->
 
 ``` r
 qqnorm(resid(mod_test))
 qqline(resid(mod_test)) 
 ```
 
-![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-12-2.png)<!-- -->
+![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-13-2.png)<!-- -->
 
 ``` r
 summary(mod_test)
@@ -791,45 +988,46 @@ summary(mod_test)
 ```
 ## Linear mixed model fit by REML. t-tests use Satterthwaite's method [
 ## lmerModLmerTest]
-## Formula: logFruits ~ (1 | pop) + (1 | block)
-##    Data: wl2_fruits_y2_scaled
+## Formula: logFruits ~ (1 | pop/mf) + (1 | block)
+##    Data: wl2_fruits_y2_nozeros_scaled
 ## 
-## REML criterion at convergence: 242.3
+## REML criterion at convergence: 196.8
 ## 
 ## Scaled residuals: 
-##     Min      1Q  Median      3Q     Max 
-## -1.8945 -0.5596  0.2023  0.6666  1.5560 
+##      Min       1Q   Median       3Q      Max 
+## -2.25552 -0.49253  0.02444  0.65431  1.56566 
 ## 
 ## Random effects:
 ##  Groups   Name        Variance Std.Dev.
-##  block    (Intercept) 0.92492  0.9617  
-##  pop      (Intercept) 0.07338  0.2709  
-##  Residual             0.82273  0.9070  
-## Number of obs: 81, groups:  block, 13; pop, 7
+##  mf:pop   (Intercept) 0.117378 0.34260 
+##  block    (Intercept) 0.436298 0.66053 
+##  pop      (Intercept) 0.009607 0.09802 
+##  Residual             0.623977 0.78992 
+## Number of obs: 71, groups:  mf:pop, 36; block, 12; pop, 7
 ## 
 ## Fixed effects:
 ##             Estimate Std. Error      df t value Pr(>|t|)    
-## (Intercept)   2.2401     0.3138 12.2011    7.14 1.08e-05 ***
+## (Intercept)   2.4408     0.2313 12.0722   10.55 1.89e-07 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
 
 ``` r
-#mf gives "boundary (singular) fit: see help('isSingular')" so take it out 
+#full model has no issues
 ```
 
 ### Predicted vs. Observed Rep Output
 
 ``` r
-wl2_fruits_y2_scaled %>% 
-  cbind(predicted={fruits_modelslog %>% filter(name=="3_pop.block") %>% pull(predict) %>% unlist()}) %>%
+wl2_fruits_y2_nozeros_scaled %>% 
+  cbind(predicted={fruits_modelslog %>% filter(name=="4_pop.mf.block") %>% pull(predict) %>% unlist()}) %>%
   ggplot(aes(x=logFruits, y = predicted)) +
   geom_point(alpha=.2) +
   geom_abline(color="skyblue2") +
   facet_wrap(~pop, scales="free")
 ```
 
-![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-13-1.png)<!-- -->
+![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-14-1.png)<!-- -->
 
 
 #### Test climate and geographic distance 
@@ -837,31 +1035,76 @@ wl2_fruits_y2_scaled %>%
 ``` r
 fruits_models_log_CD_GD <- tribble(
   ~name,          ~f,
-  "1_pop.block",      "logFruits ~  (1|pop) + (1|block)", 
-  "2_GS_Recent",      "logFruits ~  GrwSsn_GD_Recent + Geographic_Dist + (1|pop) + (1|block)", 
-  "3_GS_Historical",  "logFruits ~  GrwSsn_GD_Historical + Geographic_Dist + (1|pop) + (1|block)", 
-  "4_WY_Recent",      "logFruits ~  Wtr_Year_GD_Recent + Geographic_Dist +(1|pop) + (1|block)",
-  "5_WY_Historical",  "logFruits ~  Wtr_Year_GD_Historical + Geographic_Dist + (1|pop) + (1|block)"
+  "1_pop.block",      "logFruits ~  (1|pop/mf) + (1|block)", 
+  "2_GS_Recent",      "logFruits ~  GrwSsn_GD_Recent + Geographic_Dist + (1|pop/mf) + (1|block)", 
+  "3_GS_Historical",  "logFruits ~  GrwSsn_GD_Historical + Geographic_Dist + (1|pop/mf) + (1|block)", 
+  "4_WY_Recent",      "logFruits ~  Wtr_Year_GD_Recent + Geographic_Dist +(1|pop/mf) + (1|block)",
+  "5_WY_Historical",  "logFruits ~  Wtr_Year_GD_Historical + Geographic_Dist + (1|pop/mf) + (1|block)"
 )
 
 #run the models 
 fruits_models_log_CD_GD <- fruits_models_log_CD_GD %>%
   mutate(lmer = map(f, ~ lmer(as.formula(.), 
-                            data = wl2_fruits_y2_scaled)), #run the models 
+                            data = wl2_fruits_y2_nozeros_scaled)), #run the models 
          predict = map(lmer, predict), # predicting from original data...
          glance = map(lmer, glance)) #glance at the model results
 ```
 
 ```
 ## boundary (singular) fit: see help('isSingular')
+## boundary (singular) fit: see help('isSingular')
+## boundary (singular) fit: see help('isSingular')
+## boundary (singular) fit: see help('isSingular')
+```
+
+``` r
+mod_test <- lmer(logFruits ~  GrwSsn_GD_Recent + Geographic_Dist + (1|pop/mf) + (1|block), data=wl2_fruits_y2_nozeros_scaled)
 ```
 
 ```
-## Warning: There was 1 warning in `mutate()`.
-## ℹ In argument: `lmer = map(f, ~lmer(as.formula(.), data =
-##   wl2_fruits_y2_scaled))`.
-## Caused by warning in `checkConv()`:
-## ! Model failed to converge with max|grad| = 0.00208063 (tol = 0.002, component 1)
+## boundary (singular) fit: see help('isSingular')
+```
+
+``` r
+#boundary (singular) fit: see help('isSingular') warning for all models with climate distance 
+summary(mod_test) #pop starts explaining 0 variation ...
+```
+
+```
+## Linear mixed model fit by REML. t-tests use Satterthwaite's method [
+## lmerModLmerTest]
+## Formula: logFruits ~ GrwSsn_GD_Recent + Geographic_Dist + (1 | pop/mf) +  
+##     (1 | block)
+##    Data: wl2_fruits_y2_nozeros_scaled
+## 
+## REML criterion at convergence: 197.6
+## 
+## Scaled residuals: 
+##      Min       1Q   Median       3Q      Max 
+## -2.16288 -0.39062  0.04714  0.61963  1.67461 
+## 
+## Random effects:
+##  Groups   Name        Variance Std.Dev.
+##  mf:pop   (Intercept) 0.07053  0.2656  
+##  block    (Intercept) 0.45140  0.6719  
+##  pop      (Intercept) 0.00000  0.0000  
+##  Residual             0.64309  0.8019  
+## Number of obs: 71, groups:  mf:pop, 36; block, 12; pop, 7
+## 
+## Fixed effects:
+##                  Estimate Std. Error       df t value Pr(>|t|)    
+## (Intercept)       2.45181    0.22765 12.90210  10.770 8.12e-08 ***
+## GrwSsn_GD_Recent -0.08842    0.11781 28.78483  -0.751    0.459    
+## Geographic_Dist   0.24144    0.12166 18.77770   1.985    0.062 .  
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Correlation of Fixed Effects:
+##             (Intr) GS_GD_
+## GrwSsn_GD_R -0.010       
+## Gegrphc_Dst  0.010 -0.089
+## optimizer (nloptwrap) convergence code: 0 (OK)
+## boundary (singular) fit: see help('isSingular')
 ```
 
 ``` r
@@ -872,11 +1115,11 @@ fruits_models_log_CD_GD %>% select(-f, -lmer) %>% unnest(glance) %>% arrange(BIC
 ## # A tibble: 5 × 9
 ##   name            predict     nobs sigma logLik   AIC   BIC REMLcrit df.residual
 ##   <chr>           <list>     <int> <dbl>  <dbl> <dbl> <dbl>    <dbl>       <int>
-## 1 1_pop.block     <dbl [81]>    81 0.907  -121.  250.  260.     242.          77
-## 2 4_WY_Recent     <dbl [81]>    81 0.889  -120.  252.  267.     240.          75
-## 3 5_WY_Historical <dbl [81]>    81 0.893  -121.  253.  268.     241.          75
-## 4 3_GS_Historical <dbl [81]>    81 0.911  -122.  256.  271.     244.          75
-## 5 2_GS_Recent     <dbl [81]>    81 0.911  -122.  256.  271.     244.          75
+## 1 1_pop.block     <dbl [71]>    71 0.790  -98.4  207.  218.     197.          66
+## 2 3_GS_Historical <dbl [71]>    71 0.800  -98.7  211.  227.     197.          64
+## 3 4_WY_Recent     <dbl [71]>    71 0.798  -98.8  212.  227.     198.          64
+## 4 2_GS_Recent     <dbl [71]>    71 0.802  -98.8  212.  227.     198.          64
+## 5 5_WY_Historical <dbl [71]>    71 0.798  -98.9  212.  228.     198.          64
 ```
 
 ``` r
@@ -887,18 +1130,16 @@ fruits_models_log_CD_GD %>% select(-f, -lmer) %>% unnest(glance) %>% arrange(AIC
 ## # A tibble: 5 × 9
 ##   name            predict     nobs sigma logLik   AIC   BIC REMLcrit df.residual
 ##   <chr>           <list>     <int> <dbl>  <dbl> <dbl> <dbl>    <dbl>       <int>
-## 1 1_pop.block     <dbl [81]>    81 0.907  -121.  250.  260.     242.          77
-## 2 4_WY_Recent     <dbl [81]>    81 0.889  -120.  252.  267.     240.          75
-## 3 5_WY_Historical <dbl [81]>    81 0.893  -121.  253.  268.     241.          75
-## 4 3_GS_Historical <dbl [81]>    81 0.911  -122.  256.  271.     244.          75
-## 5 2_GS_Recent     <dbl [81]>    81 0.911  -122.  256.  271.     244.          75
+## 1 1_pop.block     <dbl [71]>    71 0.790  -98.4  207.  218.     197.          66
+## 2 3_GS_Historical <dbl [71]>    71 0.800  -98.7  211.  227.     197.          64
+## 3 4_WY_Recent     <dbl [71]>    71 0.798  -98.8  212.  227.     198.          64
+## 4 2_GS_Recent     <dbl [71]>    71 0.802  -98.8  212.  227.     198.          64
+## 5 5_WY_Historical <dbl [71]>    71 0.798  -98.9  212.  228.     198.          64
 ```
 
 ``` r
-#pop block best by AIC and BIC ...
+#pop.block preferred by AIC & BIC, WY models are close after
 
-
-#pop.mf preferred by AIC & BIC, WY models are close after
 fruits_models_log_CD_GD %>% mutate(tidy=map(lmer, tidy)) %>% unnest(tidy) %>%
   select(-f, -lmer) %>% 
   filter(str_detect(term, "GD") | term=="Geographic_Dist") %>%
@@ -909,14 +1150,14 @@ fruits_models_log_CD_GD %>% mutate(tidy=map(lmer, tidy)) %>% unnest(tidy) %>%
 ## # A tibble: 8 × 11
 ##   name    predict glance   effect group term  estimate std.error statistic    df
 ##   <chr>   <list>  <list>   <chr>  <chr> <chr>    <dbl>     <dbl>     <dbl> <dbl>
-## 1 2_GS_R… <dbl>   <tibble> fixed  <NA>  GrwS…  -0.0918     0.131    -0.702  7.31
-## 2 2_GS_R… <dbl>   <tibble> fixed  <NA>  Geog…   0.212      0.142     1.49   4.29
-## 3 3_GS_H… <dbl>   <tibble> fixed  <NA>  GrwS…  -0.0869     0.139    -0.624  6.14
-## 4 3_GS_H… <dbl>   <tibble> fixed  <NA>  Geog…   0.210      0.144     1.46   4.20
-## 5 4_WY_R… <dbl>   <tibble> fixed  <NA>  Wtr_…  -0.269      0.111    -2.43  69.0 
-## 6 4_WY_R… <dbl>   <tibble> fixed  <NA>  Geog…   0.364      0.126     2.90  67.8 
-## 7 5_WY_H… <dbl>   <tibble> fixed  <NA>  Wtr_…  -0.252      0.112    -2.26  68.7 
-## 8 5_WY_H… <dbl>   <tibble> fixed  <NA>  Geog…   0.344      0.124     2.77  67.3 
+## 1 2_GS_R… <dbl>   <tibble> fixed  <NA>  GrwS…  -0.0884     0.118    -0.751  28.8
+## 2 2_GS_R… <dbl>   <tibble> fixed  <NA>  Geog…   0.241      0.122     1.98   18.8
+## 3 3_GS_H… <dbl>   <tibble> fixed  <NA>  GrwS…  -0.0969     0.118    -0.822  29.5
+## 4 3_GS_H… <dbl>   <tibble> fixed  <NA>  Geog…   0.243      0.122     1.99   18.6
+## 5 4_WY_R… <dbl>   <tibble> fixed  <NA>  Wtr_…  -0.0775     0.135    -0.574  20.2
+## 6 4_WY_R… <dbl>   <tibble> fixed  <NA>  Geog…   0.275      0.141     1.95   21.1
+## 7 5_WY_H… <dbl>   <tibble> fixed  <NA>  Wtr_…  -0.0576     0.134    -0.430  20.4
+## 8 5_WY_H… <dbl>   <tibble> fixed  <NA>  Geog…   0.261      0.139     1.89   21.4
 ## # ℹ 1 more variable: p.value <dbl>
 ```
 

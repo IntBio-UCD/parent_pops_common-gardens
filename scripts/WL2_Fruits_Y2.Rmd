@@ -14,7 +14,6 @@ knitr::opts_chunk$set(echo = TRUE)
 # Fruit production in year 2 at WL2
 
 To Do:
-- Think about removing 0s to make distribution more normal for analysis ...
 - Run models with fruits+flowers
 
 ## Libraries
@@ -109,6 +108,14 @@ wl2_gowers_2024 <- read_csv("../output/Climate/Gowers_WL2_2024.csv") %>%
 wl2_fruits_y2 <- wl2_ann_cens_2024_pops %>% select(Pop.Type:block, flowers=num.flw, fruits=num.fruit) %>%
   mutate(FrFlN=fruits+flowers) %>% 
   left_join(wl2_gowers_2024)
+
+wl2_fruits_y2_nozeros <- wl2_fruits_y2 %>% 
+  filter(fruits>0)
+summary(wl2_fruits_y2_nozeros)
+
+wl2_FRFLs_y2_nozeros <- wl2_fruits_y2 %>% 
+  filter(FrFlN>0)
+summary(wl2_FRFLs_y2_nozeros)
 
 #write_csv(wl2_fruits_y2, "../output/WL2_Traits/WL2_Fruits_Y2.csv")
 ```
@@ -238,6 +245,10 @@ wl2_fruits_y2 %>%
 wl2_fruits_y2 %>% 
   ggplot(aes(x=FrFlN)) +
   geom_histogram()
+
+wl2_fruits_y2_nozeros %>% 
+  ggplot(aes(x=fruits)) +
+  geom_histogram()
 ```
 
 ### Check Sample Sizes
@@ -246,6 +257,12 @@ wl2_fruits_y2 %>%
   group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent, Geographic_Dist) %>% 
   summarise(meanFruits=mean(fruits, na.rm = TRUE), semFruits=sem(fruits, na.rm=TRUE), n=n()) 
 #remove LV1, SQ1, WR b/c only 1 indiv each 
+
+wl2_fruits_y2_nozeros %>% 
+  group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent, Geographic_Dist) %>% 
+  summarise(meanFruits=mean(fruits, na.rm = TRUE), semFruits=sem(fruits, na.rm=TRUE), n=n()) %>% 
+  arrange(n)
+#remove SQ1 and WR b/c 1 indiv - without those 2 there are only 7 pops 
 ```
 
 
@@ -278,6 +295,24 @@ wl2_fruits_y2_scaled %>%
 ```
 
 ```{r}
+wl2_fruits_y2_nozeros_scaled <- wl2_fruits_y2_nozeros %>% mutate_at(c("GrwSsn_GD_Recent","Wtr_Year_GD_Recent",                                                           "GrwSsn_GD_Historical","Wtr_Year_GD_Historical","Geographic_Dist"),
+                                                            scale) %>% 
+  filter(pop!="SQ1", pop!="WR") %>% 
+  drop_na(fruits) %>% 
+  mutate(logFruits=log(fruits),
+         log10Fruits=log10(fruits)) #log transformation
+
+wl2_fruits_y2_nozeros_scaled %>%  #looks better
+  ggplot(aes(x=logFruits)) +
+  geom_histogram()
+
+wl2_fruits_y2_nozeros_scaled %>% 
+  ggplot(aes(x=log10Fruits)) +
+  geom_histogram()
+```
+
+
+```{r}
 fruits_modelslog <- tribble(
   ~name,          ~f,
   "1_pop",              "logFruits ~ (1|pop)", 
@@ -289,7 +324,7 @@ fruits_modelslog <- tribble(
 #run the models 
 fruits_modelslog <- fruits_modelslog %>%
   mutate(lmer = map(f, ~ lmer(as.formula(.), 
-                            data = wl2_fruits_y2_scaled)), #run the models 
+                            data = wl2_fruits_y2_nozeros_scaled)), #run the models 
          predict = map(lmer, predict), # predicting from original data...
          glance = map(lmer, glance)) #glance at the model results
 
@@ -297,18 +332,18 @@ fruits_modelslog %>% select(-f, -lmer) %>% unnest(glance) %>% arrange(BIC) #look
 fruits_modelslog %>% select(-f, -lmer) %>% unnest(glance) %>% arrange(AIC) #look at the model fitting info 
 #model with pop.block best by AIC and BIC 
 
-mod_test <- lmer(logFruits ~  (1|pop) + (1|block), data=wl2_fruits_y2_scaled)
+mod_test <- lmer(logFruits ~  (1|pop/mf) + (1|block), data=wl2_fruits_y2_nozeros_scaled)
 plot(mod_test, which = 1) 
 qqnorm(resid(mod_test))
 qqline(resid(mod_test)) 
 summary(mod_test)
-#mf gives "boundary (singular) fit: see help('isSingular')" so take it out 
+#full model has no issues
 ```
 
 ### Predicted vs. Observed Rep Output
 ```{r}
-wl2_fruits_y2_scaled %>% 
-  cbind(predicted={fruits_modelslog %>% filter(name=="3_pop.block") %>% pull(predict) %>% unlist()}) %>%
+wl2_fruits_y2_nozeros_scaled %>% 
+  cbind(predicted={fruits_modelslog %>% filter(name=="4_pop.mf.block") %>% pull(predict) %>% unlist()}) %>%
   ggplot(aes(x=logFruits, y = predicted)) +
   geom_point(alpha=.2) +
   geom_abline(color="skyblue2") +
@@ -321,27 +356,27 @@ wl2_fruits_y2_scaled %>%
 ```{r}
 fruits_models_log_CD_GD <- tribble(
   ~name,          ~f,
-  "1_pop.block",      "logFruits ~  (1|pop) + (1|block)", 
-  "2_GS_Recent",      "logFruits ~  GrwSsn_GD_Recent + Geographic_Dist + (1|pop) + (1|block)", 
-  "3_GS_Historical",  "logFruits ~  GrwSsn_GD_Historical + Geographic_Dist + (1|pop) + (1|block)", 
-  "4_WY_Recent",      "logFruits ~  Wtr_Year_GD_Recent + Geographic_Dist +(1|pop) + (1|block)",
-  "5_WY_Historical",  "logFruits ~  Wtr_Year_GD_Historical + Geographic_Dist + (1|pop) + (1|block)"
+  "1_pop.block",      "logFruits ~  (1|pop/mf) + (1|block)", 
+  "2_GS_Recent",      "logFruits ~  GrwSsn_GD_Recent + Geographic_Dist + (1|pop/mf) + (1|block)", 
+  "3_GS_Historical",  "logFruits ~  GrwSsn_GD_Historical + Geographic_Dist + (1|pop/mf) + (1|block)", 
+  "4_WY_Recent",      "logFruits ~  Wtr_Year_GD_Recent + Geographic_Dist +(1|pop/mf) + (1|block)",
+  "5_WY_Historical",  "logFruits ~  Wtr_Year_GD_Historical + Geographic_Dist + (1|pop/mf) + (1|block)"
 )
 
 #run the models 
 fruits_models_log_CD_GD <- fruits_models_log_CD_GD %>%
   mutate(lmer = map(f, ~ lmer(as.formula(.), 
-                            data = wl2_fruits_y2_scaled)), #run the models 
+                            data = wl2_fruits_y2_nozeros_scaled)), #run the models 
          predict = map(lmer, predict), # predicting from original data...
          glance = map(lmer, glance)) #glance at the model results
-
+mod_test <- lmer(logFruits ~  GrwSsn_GD_Recent + Geographic_Dist + (1|pop/mf) + (1|block), data=wl2_fruits_y2_nozeros_scaled)
+#boundary (singular) fit: see help('isSingular') warning for all models with climate distance 
+summary(mod_test) #pop starts explaining 0 variation ...
 
 fruits_models_log_CD_GD %>% select(-f, -lmer) %>% unnest(glance) %>% arrange(BIC) #look at the model fitting info 
 fruits_models_log_CD_GD %>% select(-f, -lmer) %>% unnest(glance) %>% arrange(AIC) #look at the model fitting info 
-#pop block best by AIC and BIC ...
+#pop.block preferred by AIC & BIC, WY models are close after
 
-
-#pop.mf preferred by AIC & BIC, WY models are close after
 fruits_models_log_CD_GD %>% mutate(tidy=map(lmer, tidy)) %>% unnest(tidy) %>%
   select(-f, -lmer) %>% 
   filter(str_detect(term, "GD") | term=="Geographic_Dist") %>%
