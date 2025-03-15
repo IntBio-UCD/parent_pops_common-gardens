@@ -145,14 +145,13 @@ ucd_fruits %>%
 ## WL2
 ```{r}
 wl2_fruits_y1 <- wl2_ann_cens %>% select(block:rep, flowers=num.flw, fruits=num.fruit) %>% 
+  filter(fruits>0) %>% 
   mutate(FrFlN=fruits+flowers) %>% 
   left_join(wl2_gowers_2023)
 
 summary(wl2_fruits_y1)
 
-wl2_fruits_y1 %>% group_by(pop) %>% summarise(n=n()) %>% arrange(n)
-wl2_fruits_y1 %>% filter(fruits>0) #all TM2
-wl2_fruits_y1 %>% filter(FrFlN>0) #all TM2
+#wl2_fruits_y1 %>% group_by(pop) %>% summarise(n=n()) %>% arrange(n) #all TM2
 #write_csv(wl2_fruits_y1, "../output/WL2_Traits/WL2_Fruits_Y1.csv")
 ```
 
@@ -189,91 +188,163 @@ wl2_fruits_y1 %>%
 #ggsave("../output/WL2_Traits/WL2_FruitsY1_Wtr_Year_GD_Recent.png", width = 12, height = 8, units = "in")
 ```
 
-## Scatterplots (didn't edit these due to low sample sizes, can just report means in text)
+## Scatterplots
 ### Davis
 ```{r}
-#scatter plots
-GSCD <- ucd_fruits %>% 
-  group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
+#scatter plots - recent
+GSCD_prob_recent <- ucd_fruits %>% 
+  group_by(pop, elev_m, GrwSsn_GD_Recent, GrwSsn_GD_Historical) %>% 
   summarise(meanFruits=mean(fruits, na.rm = TRUE), semFruits=sem(fruits, na.rm=TRUE)) %>% 
-  ggplot(aes(x=GrwSsn_GD_Recent, y=meanFruits, color=GrwSsn_GD_Recent, group = pop)) +
+  ggplot(aes(x=GrwSsn_GD_Recent, y=meanFruits, group = pop)) +
   geom_point(size=6) + 
   geom_errorbar(aes(ymin=meanFruits-semFruits,ymax=meanFruits+semFruits),width=.02, linewidth = 2) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
-  labs(y="Fruit Number", x="Growth Season CD", color="Growth Season \n Climate Distance") +
-  scale_color_viridis(option="mako", direction = -1) +
-  theme(text=element_text(size=25))
+  labs(y="Fruit Number", x="Recent Growth Season CD", color="Growth Season \n Climate Distance") +
+  theme(text=element_text(size=30))
 
-WYCD <- ucd_fruits %>% 
-  group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
+WYCD_prob_recent <- ucd_fruits %>% 
+  group_by(pop, elev_m, Wtr_Year_GD_Recent, Wtr_Year_GD_Historical) %>% 
   summarise(meanFruits=mean(fruits, na.rm = TRUE), semFruits=sem(fruits, na.rm=TRUE)) %>% 
-  ggplot(aes(x=Wtr_Year_GD_Recent, y=meanFruits, color=Wtr_Year_GD_Recent, group = pop)) +
-  geom_point(size=6) + 
-  geom_errorbar(aes(ymin=meanFruits-semFruits,ymax=meanFruits+semFruits),width=.02, linewidth = 2) +
-  theme_classic() + 
-  scale_y_continuous(expand = c(0.01, 0)) +
-  labs(y="Fruit Number", x="Water Year CD", color="Water Year \n Climate Distance") +
-  scale_color_viridis(option="mako", direction = -1) +
-  theme(text=element_text(size=25))
-
-GD <- ucd_fruits %>% 
-  group_by(pop, elev_m, Geographic_Dist) %>% 
-  summarise(meanFruits=mean(fruits, na.rm = TRUE), semFruits=sem(fruits, na.rm=TRUE)) %>% 
-  ggplot(aes(x=Geographic_Dist, y=meanFruits, color=Geographic_Dist, group = pop)) +
-  geom_point(size=6) + 
-  geom_errorbar(aes(ymin=meanFruits-semFruits,ymax=meanFruits+semFruits),width=.02, linewidth = 2) +
-  theme_classic() + 
-  scale_y_continuous(expand = c(0.01, 0)) +
-  labs(y="Fruit Number", x="Geographic Distance (m)", color="Geographic Distance") +
-  scale_color_viridis(option="mako", direction = -1) +
-  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-
-ucd_fruits_FIG <- ggarrange(GSCD, WYCD, GD, ncol=2, nrow=2) 
-#ggsave("../output/UCD_Traits/UCD_fruits_SCATTERS.png", width = 24, height = 18, units = "in")
-```
-
-### WL2
-```{r}
-#scatter plots
-GSCD <- wl2_fruits_y1 %>% 
-  group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
-  summarise(meanFruits=mean(fruits, na.rm = TRUE), semFruits=sem(fruits, na.rm=TRUE)) %>% 
-  ggplot(aes(x=GrwSsn_GD_Recent, y=meanFruits, color=GrwSsn_GD_Recent, group = pop)) +
-  geom_point(size=6) + 
-  geom_errorbar(aes(ymin=meanFruits-semFruits,ymax=meanFruits+semFruits),width=.02, linewidth = 2) +
-  theme_classic() + 
-  scale_y_continuous(expand = c(0.01, 0)) +
-  labs(y="Fruit Number", x="Growth Season CD", color="Growth Season \n Climate Distance") +
-  scale_color_viridis(option="mako", direction = -1) +
-  theme(text=element_text(size=25))
-
-WYCD <- wl2_fruits_y1 %>% 
-  group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
-  summarise(meanFruits=mean(fruits, na.rm = TRUE), semFruits=sem(fruits, na.rm=TRUE)) %>% 
-  ggplot(aes(x=Wtr_Year_GD_Recent, y=meanFruits, color=Wtr_Year_GD_Recent, group = pop)) +
+  ggplot(aes(x=Wtr_Year_GD_Recent, y=meanFruits, group = pop)) +
   geom_point(size=6) + 
   geom_errorbar(aes(ymin=meanFruits-semFruits,ymax=meanFruits+semFruits),width=.02,linewidth = 2) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
-  labs(y="Fruit Number", x="Water Year CD", color="Water Year \n Climate Distance") +
-  scale_color_viridis(option="mako", direction = -1) +
-  theme(text=element_text(size=25))
+  labs(y="Fruit Number", x="Recent Water Year CD", color="Water Year \n Climate Distance") +
+  theme(text=element_text(size=30))
 
-GD <- wl2_fruits_y1 %>% 
+GD_prob <- ucd_fruits %>% 
   group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent, Geographic_Dist) %>% 
   summarise(meanFruits=mean(fruits, na.rm = TRUE), semFruits=sem(fruits, na.rm=TRUE)) %>% 
-  ggplot(aes(x=Geographic_Dist, y=meanFruits, color=Geographic_Dist, group = pop)) +
+  ggplot(aes(x=Geographic_Dist, y=meanFruits, group = pop)) +
   geom_point(size=6) + 
   geom_errorbar(aes(ymin=meanFruits-semFruits,ymax=meanFruits+semFruits),width=.02, linewidth = 2) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
-  labs(y="Fruit Number", x="Geographic Distance (m)", color="Geographic Distance") +
-  scale_color_viridis(option="mako", direction = -1) +
-  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+  labs(y="Fruit Number", x="Geographic Distance (m)") +
+  theme(text=element_text(size=30), axis.text.x = element_text(angle = 45,  hjust = 1))
 
-wl2_fruits_y1_FIG <- ggarrange(GSCD, WYCD, GD, ncol=2, nrow=2) 
-#ggsave("../output/WL2_Traits/WL2_fruits_y1_SCATTERS.png", width = 24, height = 18, units = "in")
+ED_prob <- ucd_fruits %>% 
+  group_by(pop, elev_m, Elev_Dist) %>% 
+  summarise(meanFruits=mean(fruits, na.rm = TRUE), semFruits=sem(fruits, na.rm=TRUE)) %>% 
+  ggplot(aes(x=Elev_Dist, y=meanFruits, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanFruits-semFruits,ymax=meanFruits+semFruits),width=.02, linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Fruit Number", x="Elevation Distance (m)") +
+  theme(text=element_text(size=30))
+
+ucd_fruits_FIG_prob_recent_recent <- ggarrange(GSCD_prob_recent, WYCD_prob_recent, GD_prob, ED_prob, ncol=2, nrow=2) 
+#ggsave("../output/UCD_Traits/UCD_fruits_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
+```
+
+```{r}
+#scatter plots - historic
+GSCD_prob_historic <- ucd_fruits %>% 
+  group_by(pop, elev_m, GrwSsn_GD_Recent, GrwSsn_GD_Historical) %>% 
+  summarise(meanFruits=mean(fruits, na.rm = TRUE), semFruits=sem(fruits, na.rm=TRUE)) %>% 
+  ggplot(aes(x=GrwSsn_GD_Historical, y=meanFruits, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanFruits-semFruits,ymax=meanFruits+semFruits),width=.02, linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Fruit Number", x="Historic Growth Season CD", color="Growth Season \n Climate Distance") +
+  theme(text=element_text(size=30))
+
+WYCD_prob_historic <- ucd_fruits %>% 
+  group_by(pop, elev_m, Wtr_Year_GD_Recent, Wtr_Year_GD_Historical) %>% 
+  summarise(meanFruits=mean(fruits, na.rm = TRUE), semFruits=sem(fruits, na.rm=TRUE)) %>% 
+  ggplot(aes(x=Wtr_Year_GD_Historical, y=meanFruits, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanFruits-semFruits,ymax=meanFruits+semFruits),width=.02,linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Fruit Number", x="Historic Water Year CD", color="Water Year \n Climate Distance") +
+  theme(text=element_text(size=30))
+
+ucd_fruits_FIG_prob_historic_historic <- ggarrange(GSCD_prob_historic, WYCD_prob_historic, GD_prob, ED_prob, ncol=2, nrow=2) 
+#ggsave("../output/UCD_Traits/UCD_fruits_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
+```
+
+### WL2
+```{r}
+#scatter plots - recent
+GSCD_prob_recent <- wl2_fruits_y1 %>% 
+  group_by(pop, elev_m, GrwSsn_GD_Recent, GrwSsn_GD_Historical) %>% 
+  summarise(meanFruits=mean(fruits, na.rm = TRUE), semFruits=sem(fruits, na.rm=TRUE)) %>% 
+  ggplot(aes(x=GrwSsn_GD_Recent, y=meanFruits, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanFruits-semFruits,ymax=meanFruits+semFruits),width=.02, linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Fruit Number", x="Recent Growth Season CD", color="Growth Season \n Climate Distance") +
+  theme(text=element_text(size=30))
+
+WYCD_prob_recent <- wl2_fruits_y1 %>% 
+  group_by(pop, elev_m, Wtr_Year_GD_Recent, Wtr_Year_GD_Historical) %>% 
+  summarise(meanFruits=mean(fruits, na.rm = TRUE), semFruits=sem(fruits, na.rm=TRUE)) %>% 
+  ggplot(aes(x=Wtr_Year_GD_Recent, y=meanFruits, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanFruits-semFruits,ymax=meanFruits+semFruits),width=.02,linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Fruit Number", x="Recent Water Year CD", color="Water Year \n Climate Distance") +
+  theme(text=element_text(size=30))
+
+GD_prob <- wl2_fruits_y1 %>% 
+  group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent, Geographic_Dist) %>% 
+  summarise(meanFruits=mean(fruits, na.rm = TRUE), semFruits=sem(fruits, na.rm=TRUE)) %>% 
+  ggplot(aes(x=Geographic_Dist, y=meanFruits, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanFruits-semFruits,ymax=meanFruits+semFruits),width=.02, linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Fruit Number", x="Geographic Distance (m)") +
+  theme(text=element_text(size=30), axis.text.x = element_text(angle = 45,  hjust = 1))
+
+ED_prob <- wl2_fruits_y1 %>% 
+  group_by(pop, elev_m, Elev_Dist) %>% 
+  summarise(meanFruits=mean(fruits, na.rm = TRUE), semFruits=sem(fruits, na.rm=TRUE)) %>% 
+  ggplot(aes(x=Elev_Dist, y=meanFruits, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanFruits-semFruits,ymax=meanFruits+semFruits),width=.02, linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Fruit Number", x="Elevation Distance (m)") +
+  theme(text=element_text(size=30))
+
+wl2_fruits_y1_FIG_prob_recent_recent <- ggarrange(GSCD_prob_recent, WYCD_prob_recent, GD_prob, ED_prob, ncol=2, nrow=2) 
+#ggsave("../output/WL2_Traits/WL2_fruits_y1_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
+```
+
+```{r}
+#scatter plots - historic
+GSCD_prob_historic <- wl2_fruits_y1 %>% 
+  group_by(pop, elev_m, GrwSsn_GD_Recent, GrwSsn_GD_Historical) %>% 
+  summarise(meanFruits=mean(fruits, na.rm = TRUE), semFruits=sem(fruits, na.rm=TRUE)) %>% 
+  ggplot(aes(x=GrwSsn_GD_Historical, y=meanFruits, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanFruits-semFruits,ymax=meanFruits+semFruits),width=.02, linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Fruit Number", x="Historic Growth Season CD", color="Growth Season \n Climate Distance") +
+  theme(text=element_text(size=30))
+
+WYCD_prob_historic <- wl2_fruits_y1 %>% 
+  group_by(pop, elev_m, Wtr_Year_GD_Recent, Wtr_Year_GD_Historical) %>% 
+  summarise(meanFruits=mean(fruits, na.rm = TRUE), semFruits=sem(fruits, na.rm=TRUE)) %>% 
+  ggplot(aes(x=Wtr_Year_GD_Historical, y=meanFruits, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanFruits-semFruits,ymax=meanFruits+semFruits),width=.02,linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Fruit Number", x="Historic Water Year CD", color="Water Year \n Climate Distance") +
+  theme(text=element_text(size=30))
+
+wl2_fruits_y1_FIG_prob_historic_historic <- ggarrange(GSCD_prob_historic, WYCD_prob_historic, GD_prob, ED_prob, ncol=2, nrow=2) 
+#ggsave("../output/WL2_Traits/WL2_fruits_y1_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
 ```
 
 ## No Stats due to low sample sizes (within pops)
