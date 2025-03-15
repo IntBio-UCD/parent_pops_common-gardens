@@ -1,7 +1,7 @@
 ---
 title: "Surv_to_Rep_Y1"
 author: "Brandie QC"
-date: "2025-03-11"
+date: "2025-03-14"
 output: 
   html_document: 
     keep_md: true
@@ -10,9 +10,6 @@ output:
 
 
 # Survival to Bolting in Year 1 
-To Think about:
-- Should we be getting rid of plants that germinated in the field or including those as original plants that died??
-  - Only 3 total plants (2 WL2 and 1 SQ2) so maybe it doesn't really make a difference 
 
 ## Libraries
 
@@ -150,7 +147,7 @@ library(tidymodels)
 ## ✖ infer::t_test()       masks rstatix::t_test()
 ## ✖ Matrix::unpack()      masks tidyr::unpack()
 ## ✖ recipes::update()     masks Matrix::update(), stats::update()
-## • Use suppressPackageStartupMessages() to eliminate package startup messages
+## • Use tidymodels_prefer() to resolve common conflicts.
 ```
 
 ``` r
@@ -247,6 +244,42 @@ wl2_surv_1020 <- read_csv("../input/WL2_Data/CorrectedCSVs/WL2_mort_pheno_202310
 ```
 
 ``` r
+wl2_surv_1020 %>% rowwise() %>%  #checking if mf and rep can be converted to numeric 
+  filter(!is.na(mf)) %>%  
+  filter(is.na(as.numeric(mf))) #all buffers
+```
+
+```
+## Warning: There were 87 warnings in `filter()`.
+## The first warning was:
+## ℹ In argument: `is.na(as.numeric(mf))`.
+## ℹ In row 116.
+## Caused by warning:
+## ! NAs introduced by coercion
+## ℹ Run `dplyr::last_dplyr_warnings()` to see the 86 remaining warnings.
+```
+
+```
+## # A tibble: 87 × 14
+## # Rowwise: 
+##    block bed   bed.row bed.col pop   mf    rep   bud.date flower.date fruit.date
+##    <chr> <chr>   <dbl> <chr>   <chr> <chr> <chr> <chr>    <chr>       <chr>     
+##  1 B     A          59 B       WL1*  buff… buff… <NA>     <NA>        <NA>      
+##  2 B     A          60 A       WL1*  buff… buff… <NA>     <NA>        <NA>      
+##  3 B     A          59 C       WL1*  buff… buff… <NA>     <NA>        <NA>      
+##  4 B     A          59 D       WL1*  buff… buff… <NA>     <NA>        <NA>      
+##  5 C     B          53 A       WL1*  buff… buff… <NA>     <NA>        <NA>      
+##  6 C     B          53 B       WL1*  buff… buff… <NA>     <NA>        <NA>      
+##  7 B     B          55 A       WL1*  buff… buff… <NA>     <NA>        <NA>      
+##  8 B     B          56 B       WL1*  buff… buff… <NA>     <NA>        <NA>      
+##  9 B     B          60 A       WL1*  buff… buff… <NA>     <NA>        <NA>      
+## 10 B     B          60 B       WL1*  buff… buff… <NA>     <NA>        <NA>      
+## # ℹ 77 more rows
+## # ℹ 4 more variables: last.flower.date <chr>, last.fruit.date <lgl>,
+## #   death.date <chr>, survey.notes <chr>
+```
+
+``` r
 wl2_surv_1027 <- wl2_ann_cens %>% 
   filter(pheno=="X") %>% 
   select(death.date_2=date, block:bed, bed.row=`bed-row`, bed.col=`bed-col`, pop:rep) #add in 10/27 death dates
@@ -260,6 +293,7 @@ wl2_surv_y1 <- left_join(wl2_surv_1020, wl2_surv_1027) %>%
   filter(BedLoc!="B_32_A") %>% #get rid of duplicate locations
   unite(Genotype, pop:rep, sep="_", remove = FALSE) %>% 
   filter(!is.na(pop), !str_detect(Genotype, ".*buff*")) %>%  #remove buffers 
+  mutate(mf=as.double(mf), rep=as.double(rep)) %>% 
   select(block:survey.notes)
 ```
 
@@ -300,6 +334,40 @@ ucd_surv <- read_csv("../input/UCD_Data/CorrectedCSVs/UCD_transplants_pheno_mort
 #unique(ucd_surv$pop)
 #this has 1 more row than the annual census dataset --> WL2_4_10 died in Jan (1/6/23), new germ germinated so it was converted to rep 100
 #including the plant above tehre are 3 plants in this scenario, WL2_3_100(L1_5_A)-1/6/23 and SQ2_6_100(L2_37_C)-12/13/22
+```
+
+## Establishment
+
+``` r
+ucd_est <- read_csv("../output/UCD_Traits/UCD_Establishment.csv") %>% select(block:rep, Establishment) 
+```
+
+```
+## Rows: 757 Columns: 19
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: ","
+## chr   (5): block, col, Genotype, pop, elevation.group
+## dbl  (13): row, mf, rep, elev_m, Lat, Long, GrwSsn_GD_Recent, GrwSsn_GD_Hist...
+## date  (1): death.date
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+```
+
+``` r
+wl2_est <- read_csv("../output/WL2_Traits/WL2_Establishment.csv") %>% select(block:rep, Establishment) 
+```
+
+```
+## Rows: 1573 Columns: 21
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: ","
+## chr   (7): block, BedLoc, bed, bed.col, Genotype, pop, elevation.group
+## dbl  (13): bed.row, mf, rep, elev_m, Lat, Long, GrwSsn_GD_Recent, GrwSsn_GD_...
+## date  (1): death.date
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
 ```
 
 ## Gower's Distance
@@ -480,13 +548,16 @@ ucd_surv %>% filter(is.na(bud.date), !is.na(fruit.date)) #did not miss any buddi
 ``` r
 ucd_surv_to_rep <- ucd_surv %>% 
   filter(!str_detect(Genotype, "buffer")) %>% 
+  left_join(ucd_est) %>% 
   left_join(ucd_gowers) %>% 
+  filter(Establishment==1) %>% 
   mutate(death.date=mdy(death.date)) %>% 
   mutate(SurvtoRep_Y1=if_else(is.na(bud.date), 0, 1)) %>% 
   select(block:rep, elevation.group:Wtr_Year_GD_Historical, Geographic_Dist, Elev_Dist, bud.date, death.date, SurvtoRep_Y1) 
 ```
 
 ```
+## Joining with `by = join_by(block, row, col, Genotype, pop, mf, rep)`
 ## Joining with `by = join_by(pop)`
 ```
 
@@ -519,7 +590,7 @@ ucd_surv_to_rep %>%
 ## can override using the `.groups` argument.
 ```
 
-![](Surv_to_Rep_Y1_files/figure-html/unnamed-chunk-7-1.png)<!-- -->
+![](Surv_to_Rep_Y1_files/figure-html/unnamed-chunk-8-1.png)<!-- -->
 
 ``` r
 #ggsave("../output/UCD_Traits/UCD_SurvtoRepY1_GrwSsn_GD_Recent.png", width = 12, height = 8, units = "in")
@@ -543,7 +614,7 @@ ucd_surv_to_rep %>%
 ## can override using the `.groups` argument.
 ```
 
-![](Surv_to_Rep_Y1_files/figure-html/unnamed-chunk-7-2.png)<!-- -->
+![](Surv_to_Rep_Y1_files/figure-html/unnamed-chunk-8-2.png)<!-- -->
 
 ``` r
 #ggsave("../output/UCD_Traits/UCD_SurvtoRepY1_Wtr_Year_GD_Recent.png", width = 12, height = 8, units = "in")
@@ -573,16 +644,16 @@ wl2_surv_y1 %>% filter(!is.na(bud.date), is.na(fruit.date)) #some plants initiat
 
 ```
 ## # A tibble: 8 × 16
-##   block BedLoc bed   bed.row bed.col Genotype pop   mf    rep   bud.date
-##   <chr> <chr>  <chr>   <dbl> <chr>   <chr>    <chr> <chr> <chr> <chr>   
-## 1 A     A_23_A A          23 A       FR_7_3   FR    7     3     9/6/23  
-## 2 B     A_46_B A          46 B       TM2_3_11 TM2   3     11    9/20/23 
-## 3 I     E_48_D E          48 D       TM2_1_10 TM2   1     10    8/2/23  
-## 4 I     F_21_D F          21 D       FR_7_11  FR    7     11    8/30/23 
-## 5 L     H_13_A H          13 A       TM2_2_6  TM2   2     6     10/20/23
-## 6 K     H_21_B H          21 B       TM2_1_12 TM2   1     12    8/2/23  
-## 7 L     H_6_C  H           6 C       TM2_5_11 TM2   5     11    8/2/23  
-## 8 M     J_10_D J          10 D       TM2_3_10 TM2   3     10    8/2/23  
+##   block BedLoc bed   bed.row bed.col Genotype pop      mf   rep bud.date
+##   <chr> <chr>  <chr>   <dbl> <chr>   <chr>    <chr> <dbl> <dbl> <chr>   
+## 1 A     A_23_A A          23 A       FR_7_3   FR        7     3 9/6/23  
+## 2 B     A_46_B A          46 B       TM2_3_11 TM2       3    11 9/20/23 
+## 3 I     E_48_D E          48 D       TM2_1_10 TM2       1    10 8/2/23  
+## 4 I     F_21_D F          21 D       FR_7_11  FR        7    11 8/30/23 
+## 5 L     H_13_A H          13 A       TM2_2_6  TM2       2     6 10/20/23
+## 6 K     H_21_B H          21 B       TM2_1_12 TM2       1    12 8/2/23  
+## 7 L     H_6_C  H           6 C       TM2_5_11 TM2       5    11 8/2/23  
+## 8 M     J_10_D J          10 D       TM2_3_10 TM2       3    10 8/2/23  
 ## # ℹ 6 more variables: flower.date <chr>, fruit.date <chr>,
 ## #   last.flower.date <chr>, last.fruit.date <lgl>, death.date <chr>,
 ## #   survey.notes <chr>
@@ -594,11 +665,11 @@ wl2_surv_y1 %>% filter(!is.na(bud.date), !is.na(death.date))  #most of above liv
 
 ```
 ## # A tibble: 3 × 16
-##   block BedLoc bed   bed.row bed.col Genotype pop   mf    rep   bud.date
-##   <chr> <chr>  <chr>   <dbl> <chr>   <chr>    <chr> <chr> <chr> <chr>   
-## 1 A     A_23_A A          23 A       FR_7_3   FR    7     3     9/6/23  
-## 2 I     E_48_D E          48 D       TM2_1_10 TM2   1     10    8/2/23  
-## 3 M     J_10_D J          10 D       TM2_3_10 TM2   3     10    8/2/23  
+##   block BedLoc bed   bed.row bed.col Genotype pop      mf   rep bud.date
+##   <chr> <chr>  <chr>   <dbl> <chr>   <chr>    <chr> <dbl> <dbl> <chr>   
+## 1 A     A_23_A A          23 A       FR_7_3   FR        7     3 9/6/23  
+## 2 I     E_48_D E          48 D       TM2_1_10 TM2       1    10 8/2/23  
+## 3 M     J_10_D J          10 D       TM2_3_10 TM2       3    10 8/2/23  
 ## # ℹ 6 more variables: flower.date <chr>, fruit.date <chr>,
 ## #   last.flower.date <chr>, last.fruit.date <lgl>, death.date <chr>,
 ## #   survey.notes <chr>
@@ -611,7 +682,7 @@ wl2_surv_y1 %>% filter(is.na(bud.date), !is.na(flower.date)) #didn't miss any bu
 ```
 ## # A tibble: 0 × 16
 ## # ℹ 16 variables: block <chr>, BedLoc <chr>, bed <chr>, bed.row <dbl>,
-## #   bed.col <chr>, Genotype <chr>, pop <chr>, mf <chr>, rep <chr>,
+## #   bed.col <chr>, Genotype <chr>, pop <chr>, mf <dbl>, rep <dbl>,
 ## #   bud.date <chr>, flower.date <chr>, fruit.date <chr>,
 ## #   last.flower.date <chr>, last.fruit.date <lgl>, death.date <chr>,
 ## #   survey.notes <chr>
@@ -624,7 +695,7 @@ wl2_surv_y1 %>% filter(is.na(bud.date), !is.na(fruit.date)) #didn't miss any bud
 ```
 ## # A tibble: 0 × 16
 ## # ℹ 16 variables: block <chr>, BedLoc <chr>, bed <chr>, bed.row <dbl>,
-## #   bed.col <chr>, Genotype <chr>, pop <chr>, mf <chr>, rep <chr>,
+## #   bed.col <chr>, Genotype <chr>, pop <chr>, mf <dbl>, rep <dbl>,
 ## #   bud.date <chr>, flower.date <chr>, fruit.date <chr>,
 ## #   last.flower.date <chr>, last.fruit.date <lgl>, death.date <chr>,
 ## #   survey.notes <chr>
@@ -636,10 +707,10 @@ wl2_surv_y1 %>% filter(!is.na(last.flower.date)) #NAs
 
 ```
 ## # A tibble: 2 × 16
-##   block BedLoc bed   bed.row bed.col Genotype pop   mf    rep   bud.date
-##   <chr> <chr>  <chr>   <dbl> <chr>   <chr>    <chr> <chr> <chr> <chr>   
-## 1 G     D_16_C D          16 C       TM2_6_13 TM2   6     13    <NA>    
-## 2 L     I_8_A  I           8 A       WL1_7_16 WL1   7     16    <NA>    
+##   block BedLoc bed   bed.row bed.col Genotype pop      mf   rep bud.date
+##   <chr> <chr>  <chr>   <dbl> <chr>   <chr>    <chr> <dbl> <dbl> <chr>   
+## 1 G     D_16_C D          16 C       TM2_6_13 TM2       6    13 <NA>    
+## 2 L     I_8_A  I           8 A       WL1_7_16 WL1       7    16 <NA>    
 ## # ℹ 6 more variables: flower.date <chr>, fruit.date <chr>,
 ## #   last.flower.date <chr>, last.fruit.date <lgl>, death.date <chr>,
 ## #   survey.notes <chr>
@@ -652,7 +723,7 @@ wl2_surv_y1 %>% filter(!is.na(last.fruit.date)) #none
 ```
 ## # A tibble: 0 × 16
 ## # ℹ 16 variables: block <chr>, BedLoc <chr>, bed <chr>, bed.row <dbl>,
-## #   bed.col <chr>, Genotype <chr>, pop <chr>, mf <chr>, rep <chr>,
+## #   bed.col <chr>, Genotype <chr>, pop <chr>, mf <dbl>, rep <dbl>,
 ## #   bud.date <chr>, flower.date <chr>, fruit.date <chr>,
 ## #   last.flower.date <chr>, last.fruit.date <lgl>, death.date <chr>,
 ## #   survey.notes <chr>
@@ -664,18 +735,18 @@ wl2_surv_y1 %>% filter(is.na(bud.date))
 
 ```
 ## # A tibble: 1,539 × 16
-##    block BedLoc bed   bed.row bed.col Genotype   pop   mf    rep   bud.date
-##    <chr> <chr>  <chr>   <dbl> <chr>   <chr>      <chr> <chr> <chr> <chr>   
-##  1 A     A_1_B  A           1 B       LVTR1_7_1  LVTR1 7     1     <NA>    
-##  2 A     A_2_A  A           2 A       SQ2_6_14   SQ2   6     14    <NA>    
-##  3 A     A_2_B  A           2 B       YO8_8_3    YO8   8     3     <NA>    
-##  4 A     A_3_A  A           3 A       CC_2_3     CC    2     3     <NA>    
-##  5 A     A_3_B  A           3 B       YO11_5_14  YO11  5     14    <NA>    
-##  6 A     A_4_A  A           4 A       BH_6_3     BH    6     3     <NA>    
-##  7 A     A_4_B  A           4 B       DPR_4_8    DPR   4     8     <NA>    
-##  8 A     A_5_A  A           5 A       CP2_5_1    CP2   5     1     <NA>    
-##  9 A     A_5_B  A           5 B       LVTR1_3_12 LVTR1 3     12    <NA>    
-## 10 A     A_6_A  A           6 A       CC_5_3     CC    5     3     <NA>    
+##    block BedLoc bed   bed.row bed.col Genotype   pop      mf   rep bud.date
+##    <chr> <chr>  <chr>   <dbl> <chr>   <chr>      <chr> <dbl> <dbl> <chr>   
+##  1 A     A_1_B  A           1 B       LVTR1_7_1  LVTR1     7     1 <NA>    
+##  2 A     A_2_A  A           2 A       SQ2_6_14   SQ2       6    14 <NA>    
+##  3 A     A_2_B  A           2 B       YO8_8_3    YO8       8     3 <NA>    
+##  4 A     A_3_A  A           3 A       CC_2_3     CC        2     3 <NA>    
+##  5 A     A_3_B  A           3 B       YO11_5_14  YO11      5    14 <NA>    
+##  6 A     A_4_A  A           4 A       BH_6_3     BH        6     3 <NA>    
+##  7 A     A_4_B  A           4 B       DPR_4_8    DPR       4     8 <NA>    
+##  8 A     A_5_A  A           5 A       CP2_5_1    CP2       5     1 <NA>    
+##  9 A     A_5_B  A           5 B       LVTR1_3_12 LVTR1     3    12 <NA>    
+## 10 A     A_6_A  A           6 A       CC_5_3     CC        5     3 <NA>    
 ## # ℹ 1,529 more rows
 ## # ℹ 6 more variables: flower.date <chr>, fruit.date <chr>,
 ## #   last.flower.date <chr>, last.fruit.date <lgl>, death.date <chr>,
@@ -684,7 +755,9 @@ wl2_surv_y1 %>% filter(is.na(bud.date))
 
 ``` r
 wl2_surv_to_rep_y1 <- wl2_surv_y1 %>% 
+  left_join(wl2_est) %>% 
   left_join(wl2_gowers_2023) %>% 
+  filter(Establishment==1) %>% 
   mutate(death.date=mdy(death.date)) %>% 
   mutate(bud.date=if_else(Genotype=="TM2_1_11", "10/27/23", bud.date)) %>% #add in bud date for plant that started budding the week of the annual census 
   mutate(SurvtoRep_Y1=if_else(is.na(bud.date), 0, 1)) %>% 
@@ -692,6 +765,8 @@ wl2_surv_to_rep_y1 <- wl2_surv_y1 %>%
 ```
 
 ```
+## Joining with `by = join_by(block, BedLoc, bed, bed.row, bed.col, Genotype, pop,
+## mf, rep)`
 ## Joining with `by = join_by(pop)`
 ```
 
@@ -724,7 +799,7 @@ wl2_surv_to_rep_y1 %>%
 ## can override using the `.groups` argument.
 ```
 
-![](Surv_to_Rep_Y1_files/figure-html/unnamed-chunk-10-1.png)<!-- -->
+![](Surv_to_Rep_Y1_files/figure-html/unnamed-chunk-11-1.png)<!-- -->
 
 ``` r
 #ggsave("../output/WL2_Traits/WL2_SurvtoRepY1_GrwSsn_GD_Recent.png", width = 12, height = 8, units = "in")
@@ -748,7 +823,7 @@ wl2_surv_to_rep_y1 %>%
 ## can override using the `.groups` argument.
 ```
 
-![](Surv_to_Rep_Y1_files/figure-html/unnamed-chunk-10-2.png)<!-- -->
+![](Surv_to_Rep_Y1_files/figure-html/unnamed-chunk-11-2.png)<!-- -->
 
 ``` r
 #ggsave("../output/WL2_Traits/WL2_SurvtoRepY1_Wtr_Year_GD_Recent.png", width = 12, height = 8, units = "in")
@@ -1004,13 +1079,131 @@ wl2_surv_to_rep_y1_FIG <- ggarrange(GSCD_historic, WYCD_historic, GD, ED, ncol=2
 
 ## Stats
 
-No stats for WL2 since only 2 pops with surv
+No stats for WL2 since only 2 pops with surv (model possible, but wouldn't yield interesting info)
 
 ### Scaling 
 
 ``` r
 ucd_surv_to_rep_scaled <- ucd_surv_to_rep %>% mutate_at(c("GrwSsn_GD_Recent","Wtr_Year_GD_Recent",                                                           "GrwSsn_GD_Historical","Wtr_Year_GD_Historical","Geographic_Dist"),
                                                             scale) 
+
+ ucd_surv_to_rep %>% 
+  group_by(pop) %>% 
+  summarise(meanSurv=mean(SurvtoRep_Y1, na.rm = TRUE), semSurv=sem(SurvtoRep_Y1, na.rm=TRUE), n=n()) %>% 
+   arrange(n) #smallest N=2
+```
+
+```
+## # A tibble: 23 × 4
+##    pop   meanSurv semSurv     n
+##    <chr>    <dbl>   <dbl> <int>
+##  1 WV       0       0         2
+##  2 LV1      0       0         3
+##  3 YO4      0       0         5
+##  4 CP3      0       0         6
+##  5 SQ3      0.111   0.111     9
+##  6 WR       0       0         9
+##  7 LVTR1    0       0        13
+##  8 YO11     0       0        13
+##  9 YO8      0       0        13
+## 10 YO7      0       0        16
+## # ℹ 13 more rows
+```
+
+``` r
+ #CHECK MODEL PARAMS
+unique(ucd_surv_to_rep_scaled$pop)
+```
+
+```
+##  [1] "WL2"   "CP2"   "YO11"  "CC"    "FR"    "BH"    "IH"    "LV3"   "SC"   
+## [10] "LVTR1" "SQ3"   "TM2"   "WL1"   "YO7"   "DPR"   "SQ2"   "SQ1"   "YO8"  
+## [19] "YO4"   "WR"    "WV"    "CP3"   "LV1"
+```
+
+``` r
+unique(ucd_surv_to_rep_scaled$mf)
+```
+
+```
+##  [1]  4 10  5  3  6  1  8  7  2  9 12
+```
+
+``` r
+unique(ucd_surv_to_rep_scaled$block)
+```
+
+```
+##  [1] "D1" "D2" "F1" "F2" "H1" "H2" "J1" "J2" "L1" "L2"
+```
+
+``` r
+summary(ucd_surv_to_rep_scaled)
+```
+
+```
+##     block                row            col              Genotype        
+##  Length:736         Min.   : 3.00   Length:736         Length:736        
+##  Class :character   1st Qu.:12.00   Class :character   Class :character  
+##  Mode  :character   Median :22.00   Mode  :character   Mode  :character  
+##                     Mean   :21.86                                        
+##                     3rd Qu.:32.00                                        
+##                     Max.   :42.00                                        
+##                                                                          
+##      pop                  mf              rep          elevation.group   
+##  Length:736         Min.   : 1.000   Min.   :  1.000   Length:736        
+##  Class :character   1st Qu.: 2.000   1st Qu.:  4.000   Class :character  
+##  Mode  :character   Median : 4.000   Median :  7.500   Mode  :character  
+##                     Mean   : 4.342   Mean   :  8.602                     
+##                     3rd Qu.: 6.000   3rd Qu.: 12.000                     
+##                     Max.   :12.000   Max.   :100.000                     
+##                                                                          
+##      elev_m            Lat             Long        GrwSsn_GD_Recent.V1 
+##  Min.   : 313.0   Min.   :36.56   Min.   :-123.0   Min.   :-1.1692651  
+##  1st Qu.: 511.4   1st Qu.:37.41   1st Qu.:-121.2   1st Qu.:-0.8458475  
+##  Median :1613.8   Median :38.79   Median :-120.2   Median :-0.2837737  
+##  Mean   :1349.3   Mean   :38.65   Mean   :-120.4   Mean   : 0.0000000  
+##  3rd Qu.:2020.1   3rd Qu.:39.59   3rd Qu.:-120.0   3rd Qu.: 0.6546102  
+##  Max.   :2872.3   Max.   :40.74   Max.   :-118.8   Max.   : 2.5792921  
+##                                                                        
+##  GrwSsn_GD_Historical.V1 Wtr_Year_GD_Recent.V1 Wtr_Year_GD_Historical.V1
+##  Min.   :-0.9765468      Min.   :-1.3505154    Min.   :-1.2118082       
+##  1st Qu.:-0.8866344      1st Qu.:-0.8917330    1st Qu.:-1.0197933       
+##  Median :-0.3787430      Median : 0.0676840    Median : 0.1249107       
+##  Mean   : 0.0000000      Mean   : 0.0000000    Mean   : 0.0000000       
+##  3rd Qu.: 0.2491584      3rd Qu.: 0.7717951    3rd Qu.: 0.7324267       
+##  Max.   : 2.2760452      Max.   : 2.0548257    Max.   : 2.0701544       
+##                                                                         
+##   Geographic_Dist.V1    Elev_Dist         bud.date           death.date        
+##  Min.   :-1.2326446   Min.   :-2856.3   Length:736         Min.   :2023-01-06  
+##  1st Qu.:-0.8138640   1st Qu.:-2004.1   Class :character   1st Qu.:2023-02-10  
+##  Median :-0.4748125   Median :-1597.8   Mode  :character   Median :2023-03-03  
+##  Mean   : 0.0000000   Mean   :-1333.3                      Mean   :2023-03-09  
+##  3rd Qu.: 0.5694950   3rd Qu.: -495.4                      3rd Qu.:2023-03-24  
+##  Max.   : 2.4217472   Max.   : -297.0                      Max.   :2023-10-16  
+##                                                            NA's   :9           
+##   SurvtoRep_Y1    
+##  Min.   :0.00000  
+##  1st Qu.:0.00000  
+##  Median :0.00000  
+##  Mean   :0.06793  
+##  3rd Qu.:0.00000  
+##  Max.   :1.00000  
+## 
+```
+
+``` r
+names(ucd_surv_to_rep_scaled)
+```
+
+```
+##  [1] "block"                  "row"                    "col"                   
+##  [4] "Genotype"               "pop"                    "mf"                    
+##  [7] "rep"                    "elevation.group"        "elev_m"                
+## [10] "Lat"                    "Long"                   "GrwSsn_GD_Recent"      
+## [13] "GrwSsn_GD_Historical"   "Wtr_Year_GD_Recent"     "Wtr_Year_GD_Historical"
+## [16] "Geographic_Dist"        "Elev_Dist"              "bud.date"              
+## [19] "death.date"             "SurvtoRep_Y1"
 ```
 
 ### Basic Model Workflow 
@@ -1052,10 +1245,10 @@ surv_fits_ucd %>% mutate(glance=map(fit, glance)) %>% unnest(glance) %>% arrange
 ## # A tibble: 4 × 6
 ##   name         logLik   AIC   BIC deviance df.residual
 ##   <chr>         <dbl> <dbl> <dbl>    <dbl>       <int>
-## 1 pop.block     -141.  287.  301.     231.         754
-## 2 pop           -142.  288.  297.     245.         755
-## 3 pop.mf.block  -140.  288.  307.     219.         753
-## 4 pop.mf        -141.  289.  302.     233.         754
+## 1 pop.block     -140.  286.  300.     230.         733
+## 2 pop           -141.  286.  295.     244.         734
+## 3 pop.mf.block  -140.  287.  305.     218.         732
+## 4 pop.mf        -141.  287.  301.     232.         733
 ```
 
 ``` r
@@ -1096,11 +1289,11 @@ surv_GD_fits_ucd %>% mutate(glance=map(fit, glance)) %>% unnest(glance) %>% arra
 ## # A tibble: 5 × 6
 ##   name          logLik   AIC   BIC deviance df.residual
 ##   <chr>          <dbl> <dbl> <dbl>    <dbl>       <int>
-## 1 WY_Historical  -136.  285.  313.     221.         751
-## 2 WY_Recent      -137.  285.  313.     220.         751
-## 3 pop.block      -140.  288.  307.     219.         753
-## 4 GS_Historical  -139.  289.  317.     219.         751
-## 5 GS_Recent      -139.  290.  317.     220.         751
+## 1 WY_Historical  -136.  284.  312.     220.         730
+## 2 WY_Recent      -136.  284.  312.     220.         730
+## 3 pop.block      -140.  287.  305.     218.         732
+## 4 GS_Historical  -138.  288.  316.     219.         730
+## 5 GS_Recent      -138.  288.  316.     219.         730
 ```
 
 ``` r
@@ -1116,14 +1309,14 @@ surv_GD_fits_ucd %>% mutate(tidy=map(fit, tidy)) %>% unnest(tidy) %>%
 ## # A tibble: 8 × 6
 ##   name          term                   estimate std.error statistic p.value
 ##   <chr>         <chr>                     <dbl>     <dbl>     <dbl>   <dbl>
-## 1 GS_Recent     GrwSsn_GD_Recent          0.137     0.648     0.211  0.833 
-## 2 GS_Recent     Geographic_Dist          -0.952     0.635    -1.50   0.134 
-## 3 GS_Historical GrwSsn_GD_Historical     -0.544     0.766    -0.711  0.477 
-## 4 GS_Historical Geographic_Dist          -0.672     0.645    -1.04   0.297 
-## 5 WY_Recent     Wtr_Year_GD_Recent       -1.32      0.667    -1.97   0.0483
-## 6 WY_Recent     Geographic_Dist          -0.464     0.537    -0.865  0.387 
-## 7 WY_Historical Wtr_Year_GD_Historical   -1.41      0.675    -2.10   0.0361
-## 8 WY_Historical Geographic_Dist          -0.320     0.542    -0.590  0.555
+## 1 GS_Recent     GrwSsn_GD_Recent          0.160     0.641     0.250  0.802 
+## 2 GS_Recent     Geographic_Dist          -0.940     0.630    -1.49   0.135 
+## 3 GS_Historical GrwSsn_GD_Historical     -0.522     0.762    -0.685  0.493 
+## 4 GS_Historical Geographic_Dist          -0.662     0.641    -1.03   0.301 
+## 5 WY_Recent     Wtr_Year_GD_Recent       -1.29      0.666    -1.93   0.0534
+## 6 WY_Recent     Geographic_Dist          -0.455     0.536    -0.849  0.396 
+## 7 WY_Historical Wtr_Year_GD_Historical   -1.38      0.675    -2.05   0.0403
+## 8 WY_Historical Geographic_Dist          -0.314     0.543    -0.579  0.563
 ```
 
 ``` r

@@ -12,9 +12,6 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 # Survival to Bolting in Year 1 
-To Think about:
-- Should we be getting rid of plants that germinated in the field or including those as original plants that died??
-  - Only 3 total plants (2 WL2 and 1 SQ2) so maybe it doesn't really make a difference 
 
 ## Libraries
 ```{r}
@@ -67,6 +64,9 @@ wl2_ann_cens <- read_csv("../input/WL2_Data/CorrectedCSVs/WL2_annual_census_2023
   filter(!is.na(pop), !str_detect(Genotype, ".*buff*")) #remove buffers 
 
 wl2_surv_1020 <- read_csv("../input/WL2_Data/CorrectedCSVs/WL2_mort_pheno_20231020_corrected.csv") #need to add in 10/27 mortality 
+wl2_surv_1020 %>% rowwise() %>%  #checking if mf and rep can be converted to numeric 
+  filter(!is.na(mf)) %>%  
+  filter(is.na(as.numeric(mf))) #all buffers
 wl2_surv_1027 <- wl2_ann_cens %>% 
   filter(pheno=="X") %>% 
   select(death.date_2=date, block:bed, bed.row=`bed-row`, bed.col=`bed-col`, pop:rep) #add in 10/27 death dates
@@ -80,6 +80,7 @@ wl2_surv_y1 <- left_join(wl2_surv_1020, wl2_surv_1027) %>%
   filter(BedLoc!="B_32_A") %>% #get rid of duplicate locations
   unite(Genotype, pop:rep, sep="_", remove = FALSE) %>% 
   filter(!is.na(pop), !str_detect(Genotype, ".*buff*")) %>%  #remove buffers 
+  mutate(mf=as.double(mf), rep=as.double(rep)) %>% 
   select(block:survey.notes)
 #wl2_surv_y1_to_export <- wl2_surv_y1 %>% select(block:rep, death.date, survey.notes)
 #write_csv(wl2_surv_y1_to_export, "../output/WL2_Traits/WL2_Mortality_2023.csv")
@@ -98,6 +99,13 @@ ucd_surv <- read_csv("../input/UCD_Data/CorrectedCSVs/UCD_transplants_pheno_mort
 #unique(ucd_surv$pop)
 #this has 1 more row than the annual census dataset --> WL2_4_10 died in Jan (1/6/23), new germ germinated so it was converted to rep 100
 #including the plant above tehre are 3 plants in this scenario, WL2_3_100(L1_5_A)-1/6/23 and SQ2_6_100(L2_37_C)-12/13/22
+```
+
+## Establishment
+```{r}
+ucd_est <- read_csv("../output/UCD_Traits/UCD_Establishment.csv") %>% select(block:rep, Establishment) 
+
+wl2_est <- read_csv("../output/WL2_Traits/WL2_Establishment.csv") %>% select(block:rep, Establishment) 
 ```
 
 ## Gower's Distance
@@ -141,7 +149,9 @@ ucd_surv %>% filter(is.na(bud.date), !is.na(fruit.date)) #did not miss any buddi
 ```{r}
 ucd_surv_to_rep <- ucd_surv %>% 
   filter(!str_detect(Genotype, "buffer")) %>% 
+  left_join(ucd_est) %>% 
   left_join(ucd_gowers) %>% 
+  filter(Establishment==1) %>% 
   mutate(death.date=mdy(death.date)) %>% 
   mutate(SurvtoRep_Y1=if_else(is.na(bud.date), 0, 1)) %>% 
   select(block:rep, elevation.group:Wtr_Year_GD_Historical, Geographic_Dist, Elev_Dist, bud.date, death.date, SurvtoRep_Y1) 
@@ -199,7 +209,9 @@ wl2_surv_y1 %>% filter(!is.na(last.fruit.date)) #none
 wl2_surv_y1 %>% filter(is.na(bud.date))
 
 wl2_surv_to_rep_y1 <- wl2_surv_y1 %>% 
+  left_join(wl2_est) %>% 
   left_join(wl2_gowers_2023) %>% 
+  filter(Establishment==1) %>% 
   mutate(death.date=mdy(death.date)) %>% 
   mutate(bud.date=if_else(Genotype=="TM2_1_11", "10/27/23", bud.date)) %>% #add in bud date for plant that started budding the week of the annual census 
   mutate(SurvtoRep_Y1=if_else(is.na(bud.date), 0, 1)) %>% 
@@ -404,12 +416,24 @@ wl2_surv_to_rep_y1_FIG <- ggarrange(GSCD_historic, WYCD_historic, GD, ED, ncol=2
 
 ## Stats
 
-No stats for WL2 since only 2 pops with surv
+No stats for WL2 since only 2 pops with surv (model possible, but wouldn't yield interesting info)
 
 ### Scaling 
 ```{r}
 ucd_surv_to_rep_scaled <- ucd_surv_to_rep %>% mutate_at(c("GrwSsn_GD_Recent","Wtr_Year_GD_Recent",                                                           "GrwSsn_GD_Historical","Wtr_Year_GD_Historical","Geographic_Dist"),
                                                             scale) 
+
+ ucd_surv_to_rep %>% 
+  group_by(pop) %>% 
+  summarise(meanSurv=mean(SurvtoRep_Y1, na.rm = TRUE), semSurv=sem(SurvtoRep_Y1, na.rm=TRUE), n=n()) %>% 
+   arrange(n) #smallest N=2
+ 
+ #CHECK MODEL PARAMS
+unique(ucd_surv_to_rep_scaled$pop)
+unique(ucd_surv_to_rep_scaled$mf)
+unique(ucd_surv_to_rep_scaled$block)
+summary(ucd_surv_to_rep_scaled)
+names(ucd_surv_to_rep_scaled)
 ```
 
 ### Basic Model Workflow 
