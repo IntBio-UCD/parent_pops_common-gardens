@@ -13,9 +13,6 @@ To Do:
 - Look at relationship between size and survival
 - Standard error correction on scatter plots?
 
-To Think about:
-- Should we be getting rid of plants that germinated in the field or including those as original plants that died??
-  - Only 3 total plants (2 WL2 and 1 SQ2) so maybe it doesn't really make a difference 
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -66,15 +63,17 @@ options(mc.cores = parallel::detectCores())
 ## Gower's Distance
 ```{r}
 garden_climate <- read_csv("../output/Climate/flint_climate_UCDpops.csv") %>% 
-  filter(parent.pop=="WL2_Garden" | parent.pop=="UCD_Garden") %>% 
-  select(parent.pop:Long) %>% 
+  rename(pop=parent.pop) %>% 
+  filter(pop=="WL2_Garden" | pop=="UCD_Garden") %>% 
+  select(pop:Long) %>% 
   distinct()
 garden_climate
 #UCD LAT/LONG = 38.53250, -121.7830
 #WL2 Lat/Long = 38.82599, -120.2509
 
 ucd_gowers <- read_csv("../output/Climate/Gowers_UCD.csv") %>% 
-  select(parent.pop:GrwSsn_GD, Wtr_Year_GD) %>% 
+  rename(pop=parent.pop) %>% 
+  select(pop:GrwSsn_GD, Wtr_Year_GD) %>% 
   pivot_wider(names_from = TimePd, values_from = c(GrwSsn_GD, Wtr_Year_GD)) %>% 
   mutate(UCD_Lat=38.53250, UCD_Long=-121.7830, UCD_Elev=16) %>% 
   mutate(Geographic_Dist=distHaversine(cbind(UCD_Long, UCD_Lat), cbind(Long, Lat)),
@@ -82,7 +81,8 @@ ucd_gowers <- read_csv("../output/Climate/Gowers_UCD.csv") %>%
   #mutate(Lat_Dist=UCD_Lat-Lat, Long_Dist=UCD_Long-Long) %>% #Garden-Home - lat and long per Gerst et al 2011 which kept them separate for some directionality
 
 wl2_gowers_2023 <- read_csv("../output/Climate/Gowers_WL2.csv") %>% 
-  select(parent.pop:GrwSsn_GD, Wtr_Year_GD) %>% 
+  rename(pop=parent.pop) %>% 
+  select(pop:GrwSsn_GD, Wtr_Year_GD) %>% 
   pivot_wider(names_from = TimePd, values_from = c(GrwSsn_GD, Wtr_Year_GD)) %>% 
   mutate(WL2_Lat=38.82599, WL2_Long=-120.2509, WL2_Elev=2020) %>% 
   mutate(Geographic_Dist=distHaversine(cbind(WL2_Long, WL2_Lat), cbind(Long, Lat)),
@@ -94,17 +94,16 @@ wl2_gowers_2023 <- read_csv("../output/Climate/Gowers_WL2.csv") %>%
 ```{r}
 WL2_firstyear_mort <- read_csv("../input/WL2_Data/CorrectedCSVs/WL2_annual_census_20231027_corrected.csv",
                                  na = c("", "NA", "-", "N/A")) %>% 
-  rename(parent.pop=pop) %>% 
-  mutate(parent.pop= str_replace(parent.pop, ".*VTR.*", "LVTR1")) %>% 
-  mutate(parent.pop= str_replace(parent.pop, "Y08", "YO8")) %>% 
-  mutate(parent.pop= str_replace(parent.pop, "Y04", "YO4")) %>% 
-  filter(!is.na(parent.pop)) %>% 
+  mutate(pop= str_replace(pop, ".*VTR.*", "LVTR1")) %>% 
+  mutate(pop= str_replace(pop, "Y08", "YO8")) %>% 
+  mutate(pop= str_replace(pop, "Y04", "YO4")) %>% 
+  filter(!is.na(pop)) %>% 
   unite(BedLoc, bed:`bed-col`, sep="_", remove = FALSE) %>% 
-  unite(Genotype, parent.pop:rep, sep="_", remove = FALSE) %>% 
+  unite(Genotype, pop:rep, sep="_", remove = FALSE) %>% 
   filter(!str_detect(Genotype, ".*buff*")) %>% 
-  unite(pop.mf, parent.pop:mf, sep="_", remove = FALSE)
+  unite(pop.mf, pop:mf, sep="_", remove = FALSE)
 head(WL2_firstyear_mort)
-unique(WL2_firstyear_mort$parent.pop)
+unique(WL2_firstyear_mort$pop)
 WL2_firstyear_mort %>% filter(Genotype=="CC_1_2") #there are 2 CC_1_2 plants (in different field locs), CC-1-2 was planted in 13-A and not 5C according to planting notes 
 WL2_firstyear_mort %>% filter(Genotype=="IH_4_5") #there are 2 IH_4_5 plants (in different field locs), IH_4_5 was planted in 22B and not 32A according to planting notes 
 WL2_firstyear_mort %>% rowwise() %>%  #checking if mf and rep can be converted to numeric 
@@ -113,13 +112,12 @@ WL2_firstyear_mort %>% rowwise() %>%  #checking if mf and rep can be converted t
 
 UCD_firstyear_mort <- read_csv("../input/UCD_Data/CorrectedCSVs/Annual_Census_Transplants_All_May_2023_corrected.csv",
                            na = c("", "NA", "-", "N/A")) %>% 
-  rename(parent.pop=pop) %>% 
-  mutate(parent.pop= str_replace(parent.pop, ".*VTR.*", "LVTR1")) %>% 
-  unite(Genotype, parent.pop:rep, sep="_", remove = FALSE) %>% 
+  mutate(pop= str_replace(pop, ".*VTR.*", "LVTR1")) %>% 
+  unite(Genotype, pop:rep, sep="_", remove = FALSE) %>% 
   filter(!str_detect(Genotype, ".*buff*")) %>% 
-  unite(pop.mf, parent.pop:mf, sep="_", remove = FALSE)
+  unite(pop.mf, pop:mf, sep="_", remove = FALSE)
 head(UCD_firstyear_mort)
-unique(UCD_firstyear_mort$parent.pop)
+unique(UCD_firstyear_mort$pop)
 UCD_firstyear_mort %>% rowwise() %>%  #checking if mf and rep can be converted to numeric 
   filter(!is.na(rep)) %>%  
   filter(is.na(as.numeric(rep)))
@@ -130,7 +128,6 @@ UCD_firstyear_mort %>% rowwise() %>%  #checking if mf and rep can be converted t
 ```{r}
 WL2_firstyear_mort %>% filter(pheno=="X") %>% filter(!is.na(num.fruit)) #no dead that had mature fruit. 
 ```
-
 
 ## Clean the data 
 ```{r}
@@ -150,34 +147,47 @@ UCD_firstyear_mort_prep <- UCD_firstyear_mort %>%
 names(UCD_firstyear_mort_prep)
 ```
 
+## Establishment
+```{r}
+ucd_est <- read_csv("../output/UCD_Traits/UCD_Establishment.csv") %>% select(block:rep, Establishment) 
+
+wl2_est <- read_csv("../output/WL2_Traits/WL2_Establishment.csv") %>% select(block:rep, Establishment) 
+```
+
 ## Calculate First Year Survival 
 ```{r}
 #WL2_firstyear_mort %>% filter(is.na(pheno)) %>% filter(!is.na(survey.notes)) #double checking that all NAs = dead 
 #UCD_firstyear_mort %>% filter(is.na(pheno)) %>% filter(!is.na(notes))
 
 wl2_y1_surv <- WL2_firstyear_mort_prep %>% 
+  left_join(wl2_est) %>% 
   left_join(wl2_gowers_2023) %>% 
+  filter(Establishment==1) %>% 
   mutate(Survival=if_else(pheno=="X" | is.na(pheno), 0, 1)) %>% 
-  select(block:Genotype, parent.pop:rep, elevation.group:Wtr_Year_GD_Historical, Geographic_Dist, Elev_Dist, pheno, Survival)
-#wl2_y1_surv %>% group_by(parent.pop) %>% summarise(n=n()) %>% arrange(n) #min sample size = 3 
+  select(block:Genotype, pop:rep, elevation.group:Wtr_Year_GD_Historical, Geographic_Dist, Elev_Dist, pheno, Survival)
+#wl2_y1_surv %>% group_by(pop) %>% summarise(n=n()) %>% arrange(n) #min sample size = 4 
 
 ucd_y1_surv <- UCD_firstyear_mort_prep %>% 
+  left_join(ucd_est) %>% 
+  mutate(Establishment = if_else(Genotype=="WL2_4_100", 1, Establishment)) %>% #take into account the later germ plant that established and later died (coded as WL2_4_10 in establishment data sheet)
   left_join(ucd_gowers) %>% 
+  filter(Establishment==1) %>% 
   mutate(Survival=if_else(pheno=="X" | is.na(pheno), 0, 1)) %>% 
   mutate(Survival=if_else(rep==100, 0, Survival)) %>% 
-  select(block:Genotype, parent.pop:rep, elevation.group:Wtr_Year_GD_Historical, Geographic_Dist, Elev_Dist, pheno, Survival)
-#ucd_y1_surv %>% group_by(parent.pop) %>% summarise(n=n()) %>% arrange(n) #min sample size = 2 
+  select(block:Genotype, pop:rep, elevation.group:Wtr_Year_GD_Historical, Geographic_Dist, Elev_Dist, pheno, Survival)
+#ucd_y1_surv %>% group_by(pop) %>% summarise(n=n()) %>% arrange(n) #min sample size = 2 
 
 #ucd_y1_surv %>% filter(rep==100)
 ```
+
 
 ### Bar plots 
 WL2
 ```{r}
 wl2_y1_surv %>% 
-  group_by(parent.pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
+  group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
   summarise(meanSurv=mean(Survival, na.rm = TRUE), semSurv=sem(Survival, na.rm=TRUE)) %>% 
-  ggplot(aes(x=fct_reorder(parent.pop, meanSurv), y=meanSurv, fill=GrwSsn_GD_Recent)) +
+  ggplot(aes(x=fct_reorder(pop, meanSurv), y=meanSurv, fill=GrwSsn_GD_Recent)) +
   geom_col(width = 0.7,position = position_dodge(0.75)) + 
   geom_errorbar(aes(ymin=meanSurv-semSurv,ymax=meanSurv+semSurv),width=.2, position = 
                   position_dodge(0.75)) +
@@ -189,9 +199,9 @@ wl2_y1_surv %>%
 #ggsave("../output/WL2_Traits/WL2_Y1Surv_GrwSsn_GD_Recent.png", width = 12, height = 8, units = "in")
 
 wl2_y1_surv %>% 
-  group_by(parent.pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
+  group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
   summarise(meanSurv=mean(Survival, na.rm = TRUE), semSurv=sem(Survival, na.rm=TRUE)) %>% 
-  ggplot(aes(x=fct_reorder(parent.pop, meanSurv), y=meanSurv, fill=Wtr_Year_GD_Recent)) +
+  ggplot(aes(x=fct_reorder(pop, meanSurv), y=meanSurv, fill=Wtr_Year_GD_Recent)) +
   geom_col(width = 0.7,position = position_dodge(0.75)) + 
   geom_errorbar(aes(ymin=meanSurv-semSurv,ymax=meanSurv+semSurv),width=.2, position = 
                   position_dodge(0.75)) +
@@ -206,9 +216,9 @@ wl2_y1_surv %>%
 Davis
 ```{r}
 ucd_y1_surv %>% 
-  group_by(parent.pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
+  group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
   summarise(meanSurv=mean(Survival, na.rm = TRUE), semSurv=sem(Survival, na.rm=TRUE)) %>% 
-  ggplot(aes(x=fct_reorder(parent.pop, meanSurv), y=meanSurv, fill=GrwSsn_GD_Recent)) +
+  ggplot(aes(x=fct_reorder(pop, meanSurv), y=meanSurv, fill=GrwSsn_GD_Recent)) +
   geom_col(width = 0.7,position = position_dodge(0.75)) + 
   geom_errorbar(aes(ymin=meanSurv-semSurv,ymax=meanSurv+semSurv),width=.2, position = 
                   position_dodge(0.75)) +
@@ -220,9 +230,9 @@ ucd_y1_surv %>%
 #ggsave("../output/UCD_Traits/UCD_Y1Surv_GrwSsn_GD_Recent.png", width = 12, height = 8, units = "in")
 
 ucd_y1_surv %>% 
-  group_by(parent.pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
+  group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
   summarise(meanSurv=mean(Survival, na.rm = TRUE), semSurv=sem(Survival, na.rm=TRUE)) %>% 
-  ggplot(aes(x=fct_reorder(parent.pop, meanSurv), y=meanSurv, fill=Wtr_Year_GD_Recent)) +
+  ggplot(aes(x=fct_reorder(pop, meanSurv), y=meanSurv, fill=Wtr_Year_GD_Recent)) +
   geom_col(width = 0.7,position = position_dodge(0.75)) + 
   geom_errorbar(aes(ymin=meanSurv-semSurv,ymax=meanSurv+semSurv),width=.2, position = 
                   position_dodge(0.75)) +
@@ -239,9 +249,9 @@ WL2
 ```{r}
 #scatter plots
 GSCD_recent <- wl2_y1_surv %>% 
-  group_by(parent.pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
+  group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
   summarise(meanSurv=mean(Survival, na.rm = TRUE), semSurv=sem(Survival, na.rm=TRUE)) %>% 
-  ggplot(aes(x=GrwSsn_GD_Recent, y=meanSurv, group = parent.pop)) +
+  ggplot(aes(x=GrwSsn_GD_Recent, y=meanSurv, group = pop)) +
   geom_point(size=6) + 
   geom_errorbar(aes(ymin=meanSurv-semSurv,ymax=meanSurv+semSurv),width=.02, linewidth = 2) +
   theme_classic() + 
@@ -250,9 +260,9 @@ GSCD_recent <- wl2_y1_surv %>%
   theme(text=element_text(size=25))
 
 WYCD_recent <- wl2_y1_surv %>% 
-  group_by(parent.pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
+  group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
   summarise(meanSurv=mean(Survival, na.rm = TRUE), semSurv=sem(Survival, na.rm=TRUE)) %>% 
-  ggplot(aes(x=Wtr_Year_GD_Recent, y=meanSurv, group = parent.pop)) +
+  ggplot(aes(x=Wtr_Year_GD_Recent, y=meanSurv, group = pop)) +
   geom_point(size=6) + 
   geom_errorbar(aes(ymin=meanSurv-semSurv,ymax=meanSurv+semSurv),width=.02,linewidth = 2) +
   theme_classic() + 
@@ -261,9 +271,9 @@ WYCD_recent <- wl2_y1_surv %>%
   theme(text=element_text(size=25))
 
 GD <- wl2_y1_surv %>% 
-  group_by(parent.pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent, Geographic_Dist) %>% 
+  group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent, Geographic_Dist) %>% 
   summarise(meanSurv=mean(Survival, na.rm = TRUE), semSurv=sem(Survival, na.rm=TRUE)) %>% 
-  ggplot(aes(x=Geographic_Dist, y=meanSurv, group = parent.pop)) +
+  ggplot(aes(x=Geographic_Dist, y=meanSurv, group = pop)) +
   geom_point(size=6) + 
   geom_errorbar(aes(ymin=meanSurv-semSurv,ymax=meanSurv+semSurv),width=.02, linewidth = 2) +
   theme_classic() + 
@@ -272,9 +282,9 @@ GD <- wl2_y1_surv %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 
 ED <- wl2_y1_surv %>% 
-  group_by(parent.pop, elev_m, Elev_Dist) %>% 
+  group_by(pop, elev_m, Elev_Dist) %>% 
   summarise(meanSurv=mean(Survival, na.rm = TRUE), semSurv=sem(Survival, na.rm=TRUE)) %>% 
-  ggplot(aes(x=Elev_Dist, y=meanSurv, group = parent.pop)) +
+  ggplot(aes(x=Elev_Dist, y=meanSurv, group = pop)) +
   geom_point(size=6) + 
   geom_errorbar(aes(ymin=meanSurv-semSurv,ymax=meanSurv+semSurv),width=.02, linewidth = 2) +
   theme_classic() + 
@@ -289,9 +299,9 @@ wl2_y1_surv_FIG <- ggarrange(GSCD_recent, WYCD_recent, GD, ED, ncol=2, nrow=2)
 ```{r}
 #scatter plots
 GSCD_historic <- wl2_y1_surv %>% 
-  group_by(parent.pop, elev_m, GrwSsn_GD_Historical, Wtr_Year_GD_Historical) %>% 
+  group_by(pop, elev_m, GrwSsn_GD_Historical, Wtr_Year_GD_Historical) %>% 
   summarise(meanSurv=mean(Survival, na.rm = TRUE), semSurv=sem(Survival, na.rm=TRUE)) %>% 
-  ggplot(aes(x=GrwSsn_GD_Historical, y=meanSurv, group = parent.pop)) +
+  ggplot(aes(x=GrwSsn_GD_Historical, y=meanSurv, group = pop)) +
   geom_point(size=6) + 
   geom_errorbar(aes(ymin=meanSurv-semSurv,ymax=meanSurv+semSurv),width=.02, linewidth = 2) +
   theme_classic() + 
@@ -300,9 +310,9 @@ GSCD_historic <- wl2_y1_surv %>%
   theme(text=element_text(size=25))
 
 WYCD_historic <- wl2_y1_surv %>% 
-  group_by(parent.pop, elev_m, GrwSsn_GD_Historical, Wtr_Year_GD_Historical) %>% 
+  group_by(pop, elev_m, GrwSsn_GD_Historical, Wtr_Year_GD_Historical) %>% 
   summarise(meanSurv=mean(Survival, na.rm = TRUE), semSurv=sem(Survival, na.rm=TRUE)) %>% 
-  ggplot(aes(x=Wtr_Year_GD_Historical, y=meanSurv, group = parent.pop)) +
+  ggplot(aes(x=Wtr_Year_GD_Historical, y=meanSurv, group = pop)) +
   geom_point(size=6) + 
   geom_errorbar(aes(ymin=meanSurv-semSurv,ymax=meanSurv+semSurv),width=.02,linewidth = 2) +
   theme_classic() + 
@@ -318,9 +328,9 @@ Davis
 ```{r}
 #scatter plots
 GSCD_recent <- ucd_y1_surv %>% 
-  group_by(parent.pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
+  group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
   summarise(meanSurv=mean(Survival, na.rm = TRUE), semSurv=sem(Survival, na.rm=TRUE)) %>% 
-  ggplot(aes(x=GrwSsn_GD_Recent, y=meanSurv, group = parent.pop)) +
+  ggplot(aes(x=GrwSsn_GD_Recent, y=meanSurv, group = pop)) +
   geom_point(size=6) + 
   geom_errorbar(aes(ymin=meanSurv-semSurv,ymax=meanSurv+semSurv),width=.02, linewidth = 2) +
   theme_classic() + 
@@ -329,9 +339,9 @@ GSCD_recent <- ucd_y1_surv %>%
   theme(text=element_text(size=25))
 
 WYCD_recent <- ucd_y1_surv %>% 
-  group_by(parent.pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
+  group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
   summarise(meanSurv=mean(Survival, na.rm = TRUE), semSurv=sem(Survival, na.rm=TRUE)) %>% 
-  ggplot(aes(x=Wtr_Year_GD_Recent, y=meanSurv, group = parent.pop)) +
+  ggplot(aes(x=Wtr_Year_GD_Recent, y=meanSurv, group = pop)) +
   geom_point(size=6) + 
   geom_errorbar(aes(ymin=meanSurv-semSurv,ymax=meanSurv+semSurv),width=.02,linewidth = 2) +
   theme_classic() + 
@@ -340,9 +350,9 @@ WYCD_recent <- ucd_y1_surv %>%
   theme(text=element_text(size=25))
 
 GD <- ucd_y1_surv %>% 
-  group_by(parent.pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent, Geographic_Dist) %>% 
+  group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent, Geographic_Dist) %>% 
   summarise(meanSurv=mean(Survival, na.rm = TRUE), semSurv=sem(Survival, na.rm=TRUE)) %>% 
-  ggplot(aes(x=Geographic_Dist, y=meanSurv, group = parent.pop)) +
+  ggplot(aes(x=Geographic_Dist, y=meanSurv, group = pop)) +
   geom_point(size=6) + 
   geom_errorbar(aes(ymin=meanSurv-semSurv,ymax=meanSurv+semSurv),width=.02, linewidth = 2) +
   theme_classic() + 
@@ -351,9 +361,9 @@ GD <- ucd_y1_surv %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 
 ED <- ucd_y1_surv %>% 
-  group_by(parent.pop, elev_m, Elev_Dist) %>% 
+  group_by(pop, elev_m, Elev_Dist) %>% 
   summarise(meanSurv=mean(Survival, na.rm = TRUE), semSurv=sem(Survival, na.rm=TRUE)) %>% 
-  ggplot(aes(x=Elev_Dist, y=meanSurv, group = parent.pop)) +
+  ggplot(aes(x=Elev_Dist, y=meanSurv, group = pop)) +
   geom_point(size=6) + 
   geom_errorbar(aes(ymin=meanSurv-semSurv,ymax=meanSurv+semSurv),width=.02, linewidth = 2) +
   theme_classic() + 
@@ -368,9 +378,9 @@ ucd_y1_surv_FIG <- ggarrange(GSCD_recent, WYCD_recent, GD, ED, ncol=2, nrow=2)
 ```{r}
 #scatter plots
 GSCD_historic <- ucd_y1_surv %>% 
-  group_by(parent.pop, elev_m, GrwSsn_GD_Historical, Wtr_Year_GD_Historical) %>% 
+  group_by(pop, elev_m, GrwSsn_GD_Historical, Wtr_Year_GD_Historical) %>% 
   summarise(meanSurv=mean(Survival, na.rm = TRUE), semSurv=sem(Survival, na.rm=TRUE)) %>% 
-  ggplot(aes(x=GrwSsn_GD_Historical, y=meanSurv, group = parent.pop)) +
+  ggplot(aes(x=GrwSsn_GD_Historical, y=meanSurv, group = pop)) +
   geom_point(size=6) + 
   geom_errorbar(aes(ymin=meanSurv-semSurv,ymax=meanSurv+semSurv),width=.02, linewidth = 2) +
   theme_classic() + 
@@ -379,9 +389,9 @@ GSCD_historic <- ucd_y1_surv %>%
   theme(text=element_text(size=25))
 
 WYCD_historic <- ucd_y1_surv %>% 
-  group_by(parent.pop, elev_m, GrwSsn_GD_Historical, Wtr_Year_GD_Historical) %>% 
+  group_by(pop, elev_m, GrwSsn_GD_Historical, Wtr_Year_GD_Historical) %>% 
   summarise(meanSurv=mean(Survival, na.rm = TRUE), semSurv=sem(Survival, na.rm=TRUE)) %>% 
-  ggplot(aes(x=Wtr_Year_GD_Historical, y=meanSurv, group = parent.pop)) +
+  ggplot(aes(x=Wtr_Year_GD_Historical, y=meanSurv, group = pop)) +
   geom_point(size=6) + 
   geom_errorbar(aes(ymin=meanSurv-semSurv,ymax=meanSurv+semSurv),width=.02,linewidth = 2) +
   theme_classic() + 
@@ -402,6 +412,17 @@ wl2_y1_surv_scaled <- wl2_y1_surv %>% mutate_at(c("GrwSsn_GD_Recent","Wtr_Year_G
 
 ucd_y1_surv_scaled <- ucd_y1_surv %>% mutate_at(c("GrwSsn_GD_Recent","Wtr_Year_GD_Recent",                                                           "GrwSsn_GD_Historical","Wtr_Year_GD_Historical","Geographic_Dist"),
                                                             scale) 
+
+#CHECK MODEL PARAMS
+unique(wl2_y1_surv_scaled$pop)
+unique(wl2_y1_surv_scaled$mf)
+unique(wl2_y1_surv_scaled$block)
+summary(wl2_y1_surv_scaled)
+
+unique(ucd_y1_surv_scaled$pop)
+unique(ucd_y1_surv_scaled$mf)
+unique(ucd_y1_surv_scaled$block)
+summary(ucd_y1_surv_scaled)
 ```
 
 ### Basic Model Workflow 
@@ -411,20 +432,20 @@ glmer.model_binomial <-
   set_engine("glmer", family=binomial)
 
 surv_wflow <- workflow() %>% 
-  add_variables(outcomes = Survival, predictors = c(parent.pop, mf, block))
+  add_variables(outcomes = Survival, predictors = c(pop, mf, block))
 
 surv_fits <- tibble(wflow=list(
   pop = {surv_wflow %>% 
-      add_model(glmer.model_binomial, formula = Survival ~ (1|parent.pop))},
+      add_model(glmer.model_binomial, formula = Survival ~ (1|pop))},
   
   pop.mf = {surv_wflow %>% 
-      add_model(glmer.model_binomial, formula = Survival ~ (1|parent.pop/mf))},
+      add_model(glmer.model_binomial, formula = Survival ~ (1|pop/mf))},
   
   pop.block = {surv_wflow %>% 
-      add_model(glmer.model_binomial, formula = Survival ~ (1|parent.pop) + (1|block))},
+      add_model(glmer.model_binomial, formula = Survival ~ (1|pop) + (1|block))},
   
   pop.mf.block = {surv_wflow %>% 
-      add_model(glmer.model_binomial, formula = Survival ~ (1|parent.pop/mf) + (1|block))}
+      add_model(glmer.model_binomial, formula = Survival ~ (1|pop/mf) + (1|block))}
 ),
 name=names(wflow)
 ) %>% 
@@ -432,16 +453,16 @@ name=names(wflow)
 
 surv_fits_wl2 <- surv_fits %>%
   mutate(fit = map(wflow, fit, data = wl2_y1_surv_scaled))
-#mod_test <- glmer(Survival ~ (1|parent.pop) + (1|block), data=wl2_y1_surv_scaled, family=binomial)
+#mod_test <- glmer(Survival ~ (1|pop/mf) + (1|block), data=wl2_y1_surv_scaled, family=binomial)
 #summary(mod_test)
-#boundary (singular) fit: see help('isSingular') errors with mf in the model 
+#no issues with mf 
 
 surv_fits_ucd <- surv_fits %>%
   mutate(fit = map(wflow, fit, data = ucd_y1_surv_scaled))
-#mod_test <- glmer(Survival ~ (1|parent.pop/mf) + (1|block), data=ucd_y1_surv_scaled, family=binomial)
+#mod_test <- glmer(Survival ~ (1|pop/mf) + (1|block), data=ucd_y1_surv_scaled, family=binomial)
 
 surv_fits_wl2 %>% mutate(glance=map(fit, glance)) %>% unnest(glance) %>% arrange(AIC) %>% select(-wflow:-sigma)
-#pop block model best by AIC and BIC
+#pop block model best by AIC and BIC, full model close behind
 
 surv_fits_ucd %>% mutate(glance=map(fit, glance)) %>% unnest(glance) %>% arrange(AIC) %>% select(-wflow:-sigma)
 #pop.mf model best by AIC and BIC, but full model = close behind and has no issues so will use that 
@@ -449,32 +470,40 @@ surv_fits_ucd %>% mutate(glance=map(fit, glance)) %>% unnest(glance) %>% arrange
 
 #### Test climate and geographic distance 
 ```{r}
-surv_GD_wflow_wl2 <- workflow() %>%
-  add_variables(outcomes = Survival, predictors = c(parent.pop, mf, block, contains("GD"), Geographic_Dist)) 
+surv_GD_wflow <- workflow() %>%
+  add_variables(outcomes = Survival, predictors = c(pop, mf, block, contains("GD"), Geographic_Dist)) 
 
-surv_GD_fits_wl2 <- tibble(wflow=list(
-  pop.block = {surv_GD_wflow_wl2 %>% 
-      add_model(glmer.model_binomial, formula = Survival ~ (1|parent.pop) + (1|block))},
+surv_GD_fits <- tibble(wflow=list(
+  pop.block = {surv_GD_wflow %>% 
+      add_model(glmer.model_binomial, formula = Survival ~ (1|pop/mf) + (1|block))},
   
-  GS_Recent = {surv_GD_wflow_wl2 %>% 
-      add_model(glmer.model_binomial, formula = Survival ~ GrwSsn_GD_Recent + Geographic_Dist + (1|parent.pop) + (1|block))},
+  GS_Recent = {surv_GD_wflow %>% 
+      add_model(glmer.model_binomial, formula = Survival ~ GrwSsn_GD_Recent + Geographic_Dist + (1|pop/mf) + (1|block))},
   
-  GS_Historical = {surv_GD_wflow_wl2 %>% 
-      add_model(glmer.model_binomial, formula = Survival ~ GrwSsn_GD_Historical + Geographic_Dist + (1|parent.pop) + (1|block))},
+  GS_Historical = {surv_GD_wflow %>% 
+      add_model(glmer.model_binomial, formula = Survival ~ GrwSsn_GD_Historical + Geographic_Dist + (1|pop/mf) + (1|block))},
   
-  WY_Recent = {surv_GD_wflow_wl2 %>% 
-      add_model(glmer.model_binomial, formula = Survival ~ Wtr_Year_GD_Recent + Geographic_Dist + (1|parent.pop) + (1|block))},
+  WY_Recent = {surv_GD_wflow %>% 
+      add_model(glmer.model_binomial, formula = Survival ~ Wtr_Year_GD_Recent + Geographic_Dist + (1|pop/mf) + (1|block))},
   
-  WY_Historical = {surv_GD_wflow_wl2 %>% 
-      add_model(glmer.model_binomial, formula = Survival ~ Wtr_Year_GD_Historical + Geographic_Dist + (1|parent.pop) + (1|block))}
+  WY_Historical = {surv_GD_wflow %>% 
+      add_model(glmer.model_binomial, formula = Survival ~ Wtr_Year_GD_Historical + Geographic_Dist + (1|pop/mf) + (1|block))}
   
 ),
 name=names(wflow)
 ) %>% 
-  select(name,wflow) %>%
+  select(name,wflow) 
+
+surv_GD_fits_wl2 <- surv_GD_fits %>%
   mutate(fit = map(wflow, fit, data = wl2_y1_surv_scaled))
 
+surv_GD_fits_ucd <- surv_GD_fits %>%
+  mutate(fit = map(wflow, fit, data = ucd_y1_surv_scaled))
+
 surv_GD_fits_wl2 %>% mutate(glance=map(fit, glance)) %>% unnest(glance) %>% arrange(AIC) %>% select(-wflow:-sigma)
+#water year models the best
+
+surv_GD_fits_ucd %>% mutate(glance=map(fit, glance)) %>% unnest(glance) %>% arrange(AIC) %>% select(-wflow:-sigma)
 #water year models the best 
 
 surv_GD_fits_wl2 %>% mutate(tidy=map(fit, tidy)) %>% unnest(tidy) %>%
@@ -483,46 +512,13 @@ surv_GD_fits_wl2 %>% mutate(tidy=map(fit, tidy)) %>% unnest(tidy) %>%
   select(-wflow:-group)# %>%
 #  arrange(p.value)
 
-#mod_test <- glmer(Survival ~ GrwSsn_GD_Historical + Geographic_Dist + (1|parent.pop) + (1|block), data=wl2_y1_surv_scaled, family=binomial)
-#summary(mod_test)
-```
-
-```{r}
-surv_GD_wflow_ucd <- workflow() %>%
-  add_variables(outcomes = Survival, predictors = c(parent.pop, mf, block, contains("GD"), Geographic_Dist)) 
-
-surv_GD_fits_ucd <- tibble(wflow=list(
-  pop.block = {surv_GD_wflow_ucd %>% 
-      add_model(glmer.model_binomial, formula = Survival ~ (1|parent.pop/mf) + (1|block))},
-  
-  GS_Recent = {surv_GD_wflow_ucd %>% 
-      add_model(glmer.model_binomial, formula = Survival ~ GrwSsn_GD_Recent + Geographic_Dist + (1|parent.pop/mf) + (1|block))},
-  
-  GS_Historical = {surv_GD_wflow_ucd %>% 
-      add_model(glmer.model_binomial, formula = Survival ~ GrwSsn_GD_Historical + Geographic_Dist + (1|parent.pop/mf) + (1|block))},
-  
-  WY_Recent = {surv_GD_wflow_ucd %>% 
-      add_model(glmer.model_binomial, formula = Survival ~ Wtr_Year_GD_Recent + Geographic_Dist + (1|parent.pop/mf) + (1|block))},
-  
-  WY_Historical = {surv_GD_wflow_ucd %>% 
-      add_model(glmer.model_binomial, formula = Survival ~ Wtr_Year_GD_Historical + Geographic_Dist + (1|parent.pop/mf) + (1|block))}
-  
-),
-name=names(wflow)
-) %>% 
-  select(name,wflow) %>%
-  mutate(fit = map(wflow, fit, data = ucd_y1_surv_scaled))
-
-surv_GD_fits_ucd %>% mutate(glance=map(fit, glance)) %>% unnest(glance) %>% arrange(AIC) %>% select(-wflow:-sigma)
-#water year models the best 
-
 surv_GD_fits_ucd %>% mutate(tidy=map(fit, tidy)) %>% unnest(tidy) %>%
   filter(str_detect(term, "GD") | term=="Geographic_Dist") %>%
   drop_na(p.value) %>%
   select(-wflow:-group)# %>%
 #  arrange(p.value)
 
-#mod_test <- glmer(Survival ~ Wtr_Year_GD_Historical + Geographic_Dist + (1|parent.pop/mf) + (1|block), data=ucd_y1_surv_scaled, family=binomial)
+#mod_test <- glmer(Survival ~ Wtr_Year_GD_Historical + Geographic_Dist + (1|pop/mf) + (1|block), data=ucd_y1_surv_scaled, family=binomial)
 #summary(mod_test)
 ```
 
@@ -543,7 +539,7 @@ head(firstyear_mort_rxnnorms_loc)
 ### Means by maternal family
 ```{r, eval=FALSE}
 firstyear_mort_rxnnorms_mfs <- firstyear_mort_rxnnorms_loc %>% 
-  group_by(pop.mf, parent.pop, Site, elev_m, Recent_Gowers_Dist_WL2) %>% 
+  group_by(pop.mf, pop, Site, elev_m, Recent_Gowers_Dist_WL2) %>% 
   summarise(N_Surv = sum(!is.na(Survival)), mean_Surv = mean(Survival,na.rm=(TRUE)), 
             sem_surv=sem(Survival, na.rm=(TRUE)))
 firstyear_mort_rxnnorms_mfs %>% arrange(N_Surv)
@@ -558,7 +554,7 @@ firstyear_mort_rxnnorms_summary_mfs_wide %>% arrange(Both.Sites)
 
 firstyear_mort_rxnnorms_summary_mfs_bothsites <- left_join(firstyear_mort_rxnnorms_summary_mfs_wide, firstyear_mort_rxnnorms_mfs)
 head(firstyear_mort_rxnnorms_summary_mfs_bothsites)
-unique(firstyear_mort_rxnnorms_summary_mfs_bothsites$parent.pop) #still have all 23 pops 
+unique(firstyear_mort_rxnnorms_summary_mfs_bothsites$pop) #still have all 23 pops 
 
 firstyear_mort_rxnnorms_summary_mfs2 <- firstyear_mort_rxnnorms_summary_mfs_bothsites %>% 
   mutate(Site=str_replace_all(Site, "UCD", "Low Elev"), 
@@ -597,8 +593,8 @@ firstyear_mort_rxnnorms_summary_mfs2 %>%
 ```{r, eval=FALSE}
 firstyear_mort_rxnnorms_summary_mfs2 %>% 
   filter(N_Surv != 1) %>% 
-  filter(parent.pop=="TM2"|parent.pop=="WL2") %>%  
-  ggplot(aes(x=Site, y=mean_Surv, group=pop.mf, color=parent.pop)) + 
+  filter(pop=="TM2"|pop=="WL2") %>%  
+  ggplot(aes(x=Site, y=mean_Surv, group=pop.mf, color=pop)) + 
   geom_point(size=0.8) + geom_line(linewidth=0.8) +
   geom_errorbar(aes(ymin=mean_Surv-sem_surv,ymax=mean_Surv+sem_surv),width=.1) +
   theme_classic() + 
@@ -608,8 +604,8 @@ firstyear_mort_rxnnorms_summary_mfs2 %>%
 
 firstyear_mort_rxnnorms_summary_mfs2 %>% 
   filter(N_Surv != 1) %>% 
-  filter(parent.pop=="WL2") %>%  
-  ggplot(aes(x=Site, y=mean_Surv, group=pop.mf, color=parent.pop)) + 
+  filter(pop=="WL2") %>%  
+  ggplot(aes(x=Site, y=mean_Surv, group=pop.mf, color=pop)) + 
   geom_point(size=0.8) + geom_line(linewidth=0.8) +
   geom_errorbar(aes(ymin=mean_Surv-sem_surv,ymax=mean_Surv+sem_surv),width=.1) +
   theme_classic() + 
@@ -619,9 +615,9 @@ firstyear_mort_rxnnorms_summary_mfs2 %>%
 
 ### Means by Pop
 ```{r, eval=FALSE}
-xtabs(~parent.pop+Survival, data=firstyear_mort_rxnnorms_loc)
+xtabs(~pop+Survival, data=firstyear_mort_rxnnorms_loc)
 firstyear_mort_rxnnorms_summary <- firstyear_mort_rxnnorms_loc %>% 
-  group_by(parent.pop, Site, elev_m) %>% 
+  group_by(pop, Site, elev_m) %>% 
   summarise(N_Surv = sum(!is.na(Survival)), mean_Surv = mean(Survival,na.rm=(TRUE)), 
             sem_surv=sem(Survival, na.rm=(TRUE)))
 firstyear_mort_rxnnorms_summary
@@ -640,7 +636,7 @@ firstyear_mort_rxnnorms_summary2$Site <- factor(firstyear_mort_rxnnorms_summary2
 #### Plot Pop Avgs
 ```{r, eval=FALSE}
 firstyear_mort_rxnnorms_summary %>% 
-   ggplot(aes(x=Site, y=mean_Surv, group=parent.pop, color=parent.pop)) + 
+   ggplot(aes(x=Site, y=mean_Surv, group=pop, color=pop)) + 
   geom_point(size=0.8) + geom_line(linewidth=0.8) +
   geom_errorbar(aes(ymin=mean_Surv-sem_surv,ymax=mean_Surv+sem_surv),width=.1) +
   theme_classic() +
@@ -650,7 +646,7 @@ firstyear_mort_rxnnorms_summary %>%
 ```{r, eval=FALSE}
 firstyear_mort_rxnnorms_summary2 %>% 
   filter(N_Surv != 1) %>% 
-  ggplot(aes(x=Site, y=mean_Surv, group=parent.pop, color=elev_m)) + 
+  ggplot(aes(x=Site, y=mean_Surv, group=pop, color=elev_m)) + 
   geom_point(size=1.5) + geom_line(linewidth=1.5) +
   geom_errorbar(aes(ymin=mean_Surv-sem_surv,ymax=mean_Surv+sem_surv),width=.1) +
   theme_classic() + scale_colour_gradient(low = "#F5A540", high = "#0043F0")  +
@@ -663,7 +659,7 @@ firstyear_mort_rxnnorms_summary2 %>%
 firstyear_mort_rxnnorms_summary2 %>% 
   filter(N_Surv != 1) %>% 
   filter(Site=="High Elev") %>% 
-  ggplot(aes(x=fct_reorder(parent.pop, mean_Surv), y=mean_Surv, group=parent.pop, fill=elev_m)) + 
+  ggplot(aes(x=fct_reorder(pop, mean_Surv), y=mean_Surv, group=pop, fill=elev_m)) + 
   geom_col(width = 0.7,position = position_dodge(0.75)) +
   geom_errorbar(aes(ymin=mean_Surv-sem_surv,ymax=mean_Surv+sem_surv),width=.1) +
   theme_classic() + scale_fill_gradient(low = "#F5A540", high = "#0043F0")  +
@@ -675,7 +671,7 @@ firstyear_mort_rxnnorms_summary2 %>%
 Combine pop and mf avgs 
 ```{r, eval=FALSE}
 firstyear_mort_rxnnorms_summary2 %>% 
-  mutate(pop.mf=parent.pop) %>% 
+  mutate(pop.mf=pop) %>% 
   filter(N_Surv != 1) %>% 
   ggplot(aes(x=Site, y=mean_Surv, group=pop.mf, color=elev_m)) + 
   geom_point(size=1.5) + geom_line(linewidth=1.5, alpha=0.7) +
@@ -690,10 +686,10 @@ firstyear_mort_rxnnorms_summary2 %>%
 
 ```{r, eval=FALSE}
 firstyear_mort_rxnnorms_summary2 %>% 
-  filter(!is.na(parent.pop), parent.pop!="YO8*") %>% 
+  filter(!is.na(pop), pop!="YO8*") %>% 
   filter(N_Surv != 1) %>% 
-  filter(parent.pop=="TM2"|parent.pop=="WL2") %>%  
-  ggplot(aes(x=Site, y=mean_Surv, group=parent.pop, color=parent.pop)) + 
+  filter(pop=="TM2"|pop=="WL2") %>%  
+  ggplot(aes(x=Site, y=mean_Surv, group=pop, color=pop)) + 
   geom_point(size=0.8) + geom_line(linewidth=0.8) +
   geom_errorbar(aes(ymin=mean_Surv-sem_surv,ymax=mean_Surv+sem_surv),width=.1) +
   theme_classic() + 
@@ -717,13 +713,13 @@ summary(size_survival)
 
 #### Log Reg Survival 
 ```{r, eval=FALSE}
-lmesurv1 <- glmer(Survival ~ elev_m*Site + (1|parent.pop/mf), 
+lmesurv1 <- glmer(Survival ~ elev_m*Site + (1|pop/mf), 
                   data = size_survival, 
                   family = binomial(link = "logit"), 
                   nAGQ=0, #uses the adaptive Gaussian quadrature instead the Laplace approximation. Ask Julin about this 
                   control=glmerControl(optimizer="bobyqa",optCtrl=list(maxfun=2e5))) 
-lmesurv2 <- glmer(Survival ~ elev_m*Site + (1|parent.pop/mf), data = size_survival, family = binomial(link = "logit"), nAGQ=0) 
-lmesurv3 <- glmer(Survival ~ elev_m*Site + (1|parent.pop/mf), data = size_survival, family = binomial(link = "logit"), control=glmerControl(optimizer="bobyqa",optCtrl=list(maxfun=2e5))) #this one results in a warnign 
+lmesurv2 <- glmer(Survival ~ elev_m*Site + (1|pop/mf), data = size_survival, family = binomial(link = "logit"), nAGQ=0) 
+lmesurv3 <- glmer(Survival ~ elev_m*Site + (1|pop/mf), data = size_survival, family = binomial(link = "logit"), control=glmerControl(optimizer="bobyqa",optCtrl=list(maxfun=2e5))) #this one results in a warnign 
 summary(lmesurv1)
 anova(lmesurv1)
 glance(lmesurv1)
@@ -732,7 +728,7 @@ emmip(lmesurv1, Site ~ elev_m, cov.reduce = range) #low elev pops have a steeper
 #ranova(lmesurv) doesn't work for lme4
 #to test for significance of random effect: 
 #the most common way to do this is to use a likelihood ratio test, i.e. fit the full and reduced models (the reduced model is the model with the focal variance(s) set to zero). 
-m0 <- glmer(Survival ~ elev_m + (1|parent.pop), data = size_survival, family = binomial("logit")) 
+m0 <- glmer(Survival ~ elev_m + (1|pop), data = size_survival, family = binomial("logit")) 
 m00 <- glm(Survival~ elev_m, size_survival, family = binomial("logit"))
 anova(lmesurv1,m0, m00) #model with both random effects has a higher likelihood (better fit)
 ```
@@ -747,7 +743,7 @@ summary(basiclogit_height)
 logit_height <- glm(Survival ~ height.cm + Site, data = size_survival, family = "binomial")
 summary(logit_height)
 
-logit_height2 <- glmer(Survival ~ height.cm*Site + (1|parent.pop/mf), data = size_survival, family = binomial(link = "logit"), nAGQ=0) 
+logit_height2 <- glmer(Survival ~ height.cm*Site + (1|pop/mf), data = size_survival, family = binomial(link = "logit"), nAGQ=0) 
 summary(logit_height2)
 emtrends(logit_height2, pairwise ~ Site, var = "height.cm")
 emmip(logit_height2, Site ~ height.cm, cov.reduce = range)
@@ -755,7 +751,7 @@ emmip(logit_height2, Site ~ height.cm, cov.reduce = range)
 
 Length
 ```{r, eval=FALSE}
-logit_length2 <- glmer(Survival ~ long.leaf.cm*Site + (1|parent.pop/mf), data = size_survival, family = binomial(link = "logit"), nAGQ=0) 
+logit_length2 <- glmer(Survival ~ long.leaf.cm*Site + (1|pop/mf), data = size_survival, family = binomial(link = "logit"), nAGQ=0) 
 summary(logit_length2)
 emtrends(logit_length2, pairwise ~ Site, var = "long.leaf.cm")
 emmip(logit_length2, Site ~ long.leaf.cm, cov.reduce = range)
@@ -771,7 +767,7 @@ size_survival %>%
 
 ```{r, eval=FALSE}
 size_surv_pop_avgs <- size_survival %>% 
-  group_by(parent.pop, Site, elev_m) %>% 
+  group_by(pop, Site, elev_m) %>% 
   summarise(N_Surv = sum(!is.na(Survival)), mean_Surv = mean(Survival,na.rm=(TRUE)), 
             sem_surv=sem(Survival, na.rm=(TRUE)), 
             N_height = sum(!is.na(height.cm)), mean_height.cm = mean(height.cm,na.rm=(TRUE)), 
@@ -790,7 +786,7 @@ size_surv_pop_avgs2$Site <- factor(size_surv_pop_avgs2$Site,
 
 ```{r, eval=FALSE}
 size_surv_pop_avgs2 %>% 
-  ggplot(aes(x=mean_height.cm, y=mean_Surv, group=parent.pop, color=elev_m)) +
+  ggplot(aes(x=mean_height.cm, y=mean_Surv, group=pop, color=elev_m)) +
   geom_point(size=8) +
   theme_classic() + scale_colour_gradient(low = "#F5A540", high = "#0043F0")  +
   labs(x="Height (cm)" ,y="Survival", color="Elevation (m)") +
@@ -799,7 +795,7 @@ size_surv_pop_avgs2 %>%
 #ggsave("../output/Surv_Height_BothGardens.png", width = 18, height = 8, units = "in")
 
 size_surv_pop_avgs2 %>% 
-  ggplot(aes(x=mean_long.leaf.cm, y=mean_Surv, group=parent.pop, color=elev_m)) +
+  ggplot(aes(x=mean_long.leaf.cm, y=mean_Surv, group=pop, color=elev_m)) +
   geom_point(size=8) +
   theme_classic() + scale_colour_gradient(low = "#F5A540", high = "#0043F0")  +
   labs(x="Leaf Length (cm)" ,y="Survival", color="Elevation (m)") +
@@ -809,7 +805,7 @@ size_surv_pop_avgs2 %>%
 
 size_surv_pop_avgs %>% 
   filter(Site=="UCD") %>% 
-  ggplot(aes(x=mean_height.cm, y=mean_Surv, group=parent.pop, color=elev_m)) +
+  ggplot(aes(x=mean_height.cm, y=mean_Surv, group=pop, color=elev_m)) +
   geom_point(size=1) +
   theme_classic() + scale_colour_gradient(low = "#F5A540", high = "#0043F0")  +
   labs(x="Height (cm)" ,y="Survival", color="Elevation (m)", title="Low Elevation Garden") +
@@ -826,7 +822,7 @@ size_surv_pop_avgs %>%
 
 size_surv_pop_avgs %>% 
   filter(Site=="WL2") %>% 
-  ggplot(aes(x=mean_height.cm, y=mean_Surv, group=parent.pop, color=elev_m)) +
+  ggplot(aes(x=mean_height.cm, y=mean_Surv, group=pop, color=elev_m)) +
   geom_point(size=1) +
   theme_classic() + scale_colour_gradient(low = "#F5A540", high = "#0043F0")  +
   labs(x="Height (cm)" ,y="Survival", color="Elevation (m)", title="High Elevation Garden") +
