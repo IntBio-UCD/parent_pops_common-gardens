@@ -389,6 +389,17 @@ wl2_establishment_scaled <- wl2_establishment %>% mutate_at(c("GrwSsn_GD_Recent"
 
 ucd_establishment_scaled <- ucd_establishment %>% mutate_at(c("GrwSsn_GD_Recent","Wtr_Year_GD_Recent",                                                           "GrwSsn_GD_Historical","Wtr_Year_GD_Historical","Geographic_Dist"),
                                                             scale) 
+
+#CHECK MODEL PARAMS
+unique(wl2_establishment_scaled$pop)
+unique(wl2_establishment_scaled$mf)
+unique(wl2_establishment_scaled$block)
+summary(wl2_establishment_scaled)
+
+unique(ucd_establishment_scaled$pop)
+unique(ucd_establishment_scaled$mf)
+unique(ucd_establishment_scaled$block)
+summary(ucd_establishment_scaled)
 ```
 
 ### Basic Model Workflow 
@@ -425,7 +436,7 @@ surv_fits_wl2 <- surv_fits %>%
 
 surv_fits_ucd <- surv_fits %>%
   mutate(fit = map(wflow, fit, data = ucd_establishment_scaled))
-#mod_test <- glmer(Establishment ~ (1|pop) + (1|block), data=ucd_establishment_scaled, family=binomial)
+#mod_test <- glmer(Establishment ~ (1|pop/mf) + (1|block), data=ucd_establishment_scaled, family=binomial)
 #summary(mod_test)
 #full model: Warning: unable to evaluate scaled gradientWarning: Model failed to converge: degenerate  Hessian with 1 negative eigenvalues
 #pop.mf: boundary (singular) fit: see help('isSingular')

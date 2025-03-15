@@ -1,7 +1,7 @@
 ---
 title: "Establishment_Figures"
 author: "Brandie QC"
-date: "2025-03-11"
+date: "2025-03-14"
 output: 
   html_document: 
     keep_md: true
@@ -147,7 +147,7 @@ library(tidymodels)
 ## ✖ infer::t_test()       masks rstatix::t_test()
 ## ✖ Matrix::unpack()      masks tidyr::unpack()
 ## ✖ recipes::update()     masks Matrix::update(), stats::update()
-## • Use tidymodels_prefer() to resolve common conflicts.
+## • Dig deeper into tidy modeling with R at https://www.tmwr.org
 ```
 
 ``` r
@@ -816,6 +816,159 @@ wl2_establishment_scaled <- wl2_establishment %>% mutate_at(c("GrwSsn_GD_Recent"
 
 ucd_establishment_scaled <- ucd_establishment %>% mutate_at(c("GrwSsn_GD_Recent","Wtr_Year_GD_Recent",                                                           "GrwSsn_GD_Historical","Wtr_Year_GD_Historical","Geographic_Dist"),
                                                             scale) 
+
+#CHECK MODEL PARAMS
+unique(wl2_establishment_scaled$pop)
+```
+
+```
+##  [1] "TM2"   "LVTR1" "SQ2"   "YO8"   "CC"    "YO11"  "BH"    "DPR"   "CP2"  
+## [10] "WL1"   "IH"    "CP3"   "SC"    "FR"    "LV3"   "YO7"   "WV"    "SQ3"  
+## [19] "WL2"   "LV1"   "YO4"   "WR"    "SQ1"
+```
+
+``` r
+unique(wl2_establishment_scaled$mf)
+```
+
+```
+##  [1] "6"  "7"  "8"  "2"  "5"  "4"  "3"  "1"  "9"  "14" "13" "10" "11"
+```
+
+``` r
+unique(wl2_establishment_scaled$block)
+```
+
+```
+##  [1] "A" "B" "D" "C" "E" "F" "G" "H" "I" "J" "K" "L" "M"
+```
+
+``` r
+summary(wl2_establishment_scaled)
+```
+
+```
+##     block              BedLoc              bed               bed.row     
+##  Length:1573        Length:1573        Length:1573        Min.   : 1.00  
+##  Class :character   Class :character   Class :character   1st Qu.:12.00  
+##  Mode  :character   Mode  :character   Mode  :character   Median :23.00  
+##                                                           Mean   :25.31  
+##                                                           3rd Qu.:39.00  
+##                                                           Max.   :59.00  
+##                                                                          
+##    bed.col            Genotype             pop                 mf           
+##  Length:1573        Length:1573        Length:1573        Length:1573       
+##  Class :character   Class :character   Class :character   Class :character  
+##  Mode  :character   Mode  :character   Mode  :character   Mode  :character  
+##                                                                             
+##                                                                             
+##                                                                             
+##                                                                             
+##      rep            elevation.group        elev_m            Lat       
+##  Length:1573        Length:1573        Min.   : 313.0   Min.   :36.56  
+##  Class :character   Class :character   1st Qu.: 511.4   1st Qu.:37.81  
+##  Mode  :character   Mode  :character   Median :2020.1   Median :38.71  
+##                                        Mean   :1666.3   Mean   :38.72  
+##                                        3rd Qu.:2470.0   3rd Qu.:39.59  
+##                                        Max.   :2872.3   Max.   :40.74  
+##                                                                        
+##       Long        GrwSsn_GD_Recent.V1  GrwSsn_GD_Historical.V1
+##  Min.   :-123.0   Min.   :-1.9632729   Min.   :-1.3943169     
+##  1st Qu.:-121.2   1st Qu.:-0.8743510   1st Qu.:-0.9061194     
+##  Median :-120.3   Median : 0.2411361   Median :-0.0377006     
+##  Mean   :-120.4   Mean   : 0.0000000   Mean   : 0.0000000     
+##  3rd Qu.:-119.6   3rd Qu.: 1.0008977   3rd Qu.: 0.7439772     
+##  Max.   :-118.8   Max.   : 1.5737175   Max.   : 1.9045594     
+##                                                               
+##  Wtr_Year_GD_Recent.V1 Wtr_Year_GD_Historical.V1  Geographic_Dist.V1 
+##  Min.   :-1.0463797    Min.   :-1.1603596        Min.   :-1.5226937  
+##  1st Qu.:-0.7745928    1st Qu.:-0.9176147        1st Qu.:-0.7294617  
+##  Median :-0.4740430    Median :-0.4005792        Median : 0.1448008  
+##  Mean   : 0.0000000    Mean   : 0.0000000        Mean   : 0.0000000  
+##  3rd Qu.: 0.8398030    3rd Qu.: 0.8455327        3rd Qu.: 0.5059584  
+##  Max.   : 2.3349702    Max.   : 2.1290787        Max.   : 2.5153459  
+##                                                                      
+##    Elev_Dist           death.date         Establishment   
+##  Min.   :-852.2950   Min.   :2023-07-11   Min.   :0.0000  
+##  1st Qu.:-449.9787   1st Qu.:2023-07-26   1st Qu.:0.0000  
+##  Median :  -0.1158   Median :2023-08-02   Median :0.0000  
+##  Mean   : 353.6799   Mean   :2023-08-12   Mean   :0.4628  
+##  3rd Qu.:1508.5706   3rd Qu.:2023-08-09   3rd Qu.:1.0000  
+##  Max.   :1707.0000   Max.   :2023-10-27   Max.   :1.0000  
+##                      NA's   :470
+```
+
+``` r
+unique(ucd_establishment_scaled$pop)
+```
+
+```
+##  [1] "WL2"   "CP2"   "YO11"  "CC"    "FR"    "BH"    "IH"    "LV3"   "SC"   
+## [10] "LVTR1" "SQ3"   "TM2"   "WL1"   "YO7"   "DPR"   "SQ2"   "SQ1"   "YO8"  
+## [19] "YO4"   "WR"    "WV"    "CP3"   "LV1"
+```
+
+``` r
+unique(ucd_establishment_scaled$mf)
+```
+
+```
+##  [1]  4 10  5  3  6  1  8  7  2  9 12
+```
+
+``` r
+unique(ucd_establishment_scaled$block)
+```
+
+```
+##  [1] "D1" "D2" "F1" "F2" "H1" "H2" "J1" "J2" "L1" "L2"
+```
+
+``` r
+summary(ucd_establishment_scaled)
+```
+
+```
+##     block                row            col              Genotype        
+##  Length:757         Min.   : 3.00   Length:757         Length:757        
+##  Class :character   1st Qu.:12.00   Class :character   Class :character  
+##  Mode  :character   Median :22.00   Mode  :character   Mode  :character  
+##                     Mean   :21.84                                        
+##                     3rd Qu.:32.00                                        
+##                     Max.   :42.00                                        
+##                                                                          
+##      pop                  mf              rep          elevation.group   
+##  Length:757         Min.   : 1.000   Min.   :  1.000   Length:757        
+##  Class :character   1st Qu.: 2.000   1st Qu.:  4.000   Class :character  
+##  Mode  :character   Median : 4.000   Median :  8.000   Mode  :character  
+##                     Mean   : 4.363   Mean   :  8.688                     
+##                     3rd Qu.: 6.000   3rd Qu.: 12.000                     
+##                     Max.   :12.000   Max.   :100.000                     
+##                                                                          
+##      elev_m            Lat             Long        GrwSsn_GD_Recent.V1 
+##  Min.   : 313.0   Min.   :36.56   Min.   :-123.0   Min.   :-1.1768979  
+##  1st Qu.: 511.4   1st Qu.:37.41   1st Qu.:-121.2   1st Qu.:-0.8536523  
+##  Median :1613.8   Median :38.79   Median :-120.2   Median :-0.2555757  
+##  Mean   :1362.2   Mean   :38.65   Mean   :-120.4   Mean   : 0.0000000  
+##  3rd Qu.:2020.1   3rd Qu.:39.59   3rd Qu.:-120.0   3rd Qu.: 0.6460069  
+##  Max.   :2872.3   Max.   :40.74   Max.   :-118.8   Max.   : 2.5696645  
+##                                                                        
+##  GrwSsn_GD_Historical.V1 Wtr_Year_GD_Recent.V1 Wtr_Year_GD_Historical.V1
+##  Min.   :-0.9835052      Min.   :-1.3643995    Min.   :-1.2260429       
+##  1st Qu.:-0.8935147      1st Qu.:-0.9050347    1st Qu.:-1.0338074       
+##  Median :-0.3851817      Median : 0.0556001    Median : 0.1122115       
+##  Mean   : 0.0000000      Mean   : 0.0000000    Mean   : 0.0000000       
+##  3rd Qu.: 0.2432655      3rd Qu.: 0.7606050    3rd Qu.: 0.7204253       
+##  Max.   : 2.2719145      Max.   : 2.0452643    Max.   : 2.0596897       
+##                                                                         
+##   Geographic_Dist.V1    Elev_Dist         death.date         Establishment   
+##  Min.   :-1.2373721   Min.   :-2856.3   Min.   :2022-11-30   Min.   :0.0000  
+##  1st Qu.:-0.7812455   1st Qu.:-2004.1   1st Qu.:2023-02-10   1st Qu.:1.0000  
+##  Median :-0.4795199   Median :-1597.8   Median :2023-03-03   Median :1.0000  
+##  Mean   : 0.0000000   Mean   :-1346.2   Mean   :2023-03-07   Mean   :0.9723  
+##  3rd Qu.: 0.5648152   3rd Qu.: -495.4   3rd Qu.:2023-03-24   3rd Qu.:1.0000  
+##  Max.   : 2.4171164   Max.   : -297.0   Max.   :2023-10-16   Max.   :1.0000  
+##                                         NA's   :9
 ```
 
 ### Basic Model Workflow 
@@ -877,7 +1030,7 @@ surv_fits_ucd <- surv_fits %>%
 ```
 
 ``` r
-#mod_test <- glmer(Establishment ~ (1|pop) + (1|block), data=ucd_establishment_scaled, family=binomial)
+#mod_test <- glmer(Establishment ~ (1|pop/mf) + (1|block), data=ucd_establishment_scaled, family=binomial)
 #summary(mod_test)
 #full model: Warning: unable to evaluate scaled gradientWarning: Model failed to converge: degenerate  Hessian with 1 negative eigenvalues
 #pop.mf: boundary (singular) fit: see help('isSingular')
@@ -973,7 +1126,7 @@ surv_GD_fits_ucd %>% mutate(glance=map(fit, glance)) %>% unnest(glance) %>% arra
 ##   name          logLik   AIC   BIC deviance df.residual
 ##   <chr>          <dbl> <dbl> <dbl>    <dbl>       <int>
 ## 1 pop.block      -93.4  193.  207.     160.         754
-## 2 WY_Historical  -91.6  193.  216.     160.         752
+## 2 WY_Historical  -91.5  193.  216.     160.         752
 ## 3 WY_Recent      -91.7  193.  217.     160.         752
 ## 4 GS_Recent      -92.7  195.  219.     161.         752
 ## 5 GS_Historical  -92.9  196.  219.     160.         752
@@ -1015,14 +1168,14 @@ surv_GD_fits_ucd %>% mutate(tidy=map(fit, tidy)) %>% unnest(tidy) %>%
 ## # A tibble: 8 × 6
 ##   name          term                   estimate std.error statistic p.value
 ##   <chr>         <chr>                     <dbl>     <dbl>     <dbl>   <dbl>
-## 1 GS_Recent     GrwSsn_GD_Recent        -0.279      0.309    -0.903  0.366 
-## 2 GS_Recent     Geographic_Dist         -0.124      0.296    -0.421  0.674 
-## 3 GS_Historical GrwSsn_GD_Historical    -0.196      0.318    -0.619  0.536 
-## 4 GS_Historical Geographic_Dist         -0.145      0.307    -0.472  0.637 
-## 5 WY_Recent     Wtr_Year_GD_Recent      -0.511      0.303    -1.68   0.0922
+## 1 GS_Recent     GrwSsn_GD_Recent        -0.279      0.308    -0.904  0.366 
+## 2 GS_Recent     Geographic_Dist         -0.124      0.296    -0.420  0.674 
+## 3 GS_Historical GrwSsn_GD_Historical    -0.197      0.317    -0.620  0.535 
+## 4 GS_Historical Geographic_Dist         -0.145      0.307    -0.471  0.637 
+## 5 WY_Recent     Wtr_Year_GD_Recent      -0.511      0.303    -1.68   0.0920
 ## 6 WY_Recent     Geographic_Dist         -0.105      0.285    -0.369  0.712 
-## 7 WY_Historical Wtr_Year_GD_Historical  -0.547      0.310    -1.77   0.0773
-## 8 WY_Historical Geographic_Dist         -0.0534     0.291    -0.184  0.854
+## 7 WY_Historical Wtr_Year_GD_Historical  -0.547      0.310    -1.77   0.0771
+## 8 WY_Historical Geographic_Dist         -0.0532     0.291    -0.183  0.855
 ```
 
 ``` r
