@@ -805,6 +805,36 @@ tmx_dist_fig_historical <- historic_flint_dist %>%
 #ggsave("../output/Climate/all-year_MeanTMX_DistfromWL2_HistoricalClim_wtr_year.png", width = 12, height = 6, units = "in")
 ```
 
+#### For 2024
+```{r}
+pops_flint_avgs_2024 <- read_csv("../output/Climate/fullyear_FlintAvgs_wtr_year_2024.csv")
+
+pops_flint_avgs_recent_2024 <- pops_flint_avgs_2024 %>% filter(TimePd=="Recent")
+recent_flint_dist_prep_2024 <- bind_cols(WL2_climate_2024_flint, pops_flint_avgs_recent_2024)
+names(recent_flint_dist_prep_2024)
+
+recent_flint_dist_2024 <- recent_flint_dist_prep_2024 %>% 
+  mutate(ppt_dist=ppt_WL2 - ppt,
+         cwd_dist=cwd_WL2 - cwd,
+         pck_dist=pck_WL2 - pck,
+         tmn_dist=tmn_WL2 - tmn,
+         tmx_dist=tmx_WL2 - tmx) %>% 
+ dplyr::select(parent.pop, elevation.group, elev_m, ends_with("_dist"))
+
+pops_flint_avgs_historic_2024 <- pops_flint_avgs_2024 %>% filter(TimePd=="Historical")
+historic_flint_dist_prep_2024 <- bind_cols(WL2_climate_2024_flint, pops_flint_avgs_historic_2024)
+names(historic_flint_dist_prep_2024)
+
+historic_flint_dist_2024 <- historic_flint_dist_prep_2024 %>% 
+  mutate(ppt_dist=ppt_WL2 - ppt,
+         cwd_dist=cwd_WL2 - cwd,
+         pck_dist=pck_WL2 - pck,
+         tmn_dist=tmn_WL2 - tmn,
+         tmx_dist=tmx_WL2 - tmx) %>% 
+ dplyr::select(parent.pop, elevation.group, elev_m, ends_with("_dist"))
+```
+
+
 ## Bioclim Climate Distance
 
 ### Gowers
@@ -1194,6 +1224,46 @@ ppt_cold_dist_fig_historical <- historical_bioclim_dist %>%
 #ggsave("../output/Climate/all-year_PPT_Cold_DistfromWL2_HistoricalClim_wtr_year.png", width = 12, height = 6, units = "in")
 ```
 
+#### For 2024
+```{r}
+pops_bioclim_avgs_2024 <-  read_csv("../output/Climate/fullyear_BioClimAvgs_wtr_year_2024.csv") 
+
+#Recent
+pops_bioclim_recent_avgs_2024 <- pops_bioclim_avgs_2024 %>%  filter(TimePd=="Recent")
+recent_bioclim_dist_prep_2024 <- bind_cols(wl2_bioclim_all_year_final_2024, pops_bioclim_recent_avgs_2024)
+recent_bioclim_dist_2024 <- recent_bioclim_dist_prep_2024 %>% 
+  mutate(ann_tmean_dist=ann_tmean_WL2 - ann_tmean,
+         mean_diurnal_range_dist=mean_diurnal_range_WL2 - mean_diurnal_range,
+         temp_seasonality_dist=temp_seasonality_WL2 - temp_seasonality,
+         temp_ann_range_dist=temp_ann_range_WL2 - temp_ann_range,
+         tmean_wettest_quarter_dist=tmean_wettest_quarter_WL2 - tmean_wettest_quarter,
+         tmean_driest_quarter_dist=tmean_driest_quarter_WL2 - tmean_driest_quarter,
+         ann_ppt_dist=ann_ppt_WL2 - ann_ppt,
+         ppt_seasonality_dist=ppt_seasonality_WL2 - ppt_seasonality, 
+         ppt_warmest_quarter_dist=ppt_warmest_quarter_WL2 - ppt_warmest_quarter,
+         ppt_coldest_quarter_dist=ppt_coldest_quarter_WL2 - ppt_coldest_quarter) %>% 
+ dplyr::select(parent.pop, elevation.group, elev_m, ends_with("_dist"))
+#recent_bioclim_dist_2024
+
+#Historical
+pops_bioclim_historical_avgs_2024 <- pops_bioclim_avgs_2024 %>% filter(TimePd=="Historical")
+historical_bioclim_dist_prep_2024 <- bind_cols(wl2_bioclim_all_year_final_2024, pops_bioclim_historical_avgs_2024)
+historical_bioclim_dist_2024 <- historical_bioclim_dist_prep_2024 %>% 
+  mutate(ann_tmean_dist=ann_tmean_WL2 - ann_tmean,
+         mean_diurnal_range_dist=mean_diurnal_range_WL2 - mean_diurnal_range,
+         temp_seasonality_dist=temp_seasonality_WL2 - temp_seasonality,
+         temp_ann_range_dist=temp_ann_range_WL2 - temp_ann_range,
+         tmean_wettest_quarter_dist=tmean_wettest_quarter_WL2 - tmean_wettest_quarter,
+         tmean_driest_quarter_dist=tmean_driest_quarter_WL2 - tmean_driest_quarter,
+         ann_ppt_dist=ann_ppt_WL2 - ann_ppt,
+         ppt_seasonality_dist=ppt_seasonality_WL2 - ppt_seasonality, 
+         ppt_warmest_quarter_dist=ppt_warmest_quarter_WL2 - ppt_warmest_quarter,
+         ppt_coldest_quarter_dist=ppt_coldest_quarter_WL2 - ppt_coldest_quarter) %>% 
+  dplyr::select(parent.pop, elevation.group, elev_m, ends_with("_dist"))
+#historical_bioclim_dist_2024
+```
+
+
 ## Combine all Subtraction Figs
 ```{r}
 ggarrange(cwd_dist_fig_recent, pck_dist_fig_recent, ppt_dist_fig_recent, tmn_dist_fig_recent, tmx_dist_fig_recent,
@@ -1220,3 +1290,13 @@ write_csv(recent_sub_dist_from_wl2, "../output/Climate/full_year_Subtraction_Dis
 historic_sub_dist_from_wl2 <- full_join(historic_flint_dist, historical_bioclim_dist)
 write_csv(historic_sub_dist_from_wl2, "../output/Climate/full_year_Subtraction_Dist_from_WL2_Historical.csv")
 ```
+
+### For 2024
+```{r}
+recent_sub_dist_2024_from_wl2 <- full_join(recent_flint_dist_2024, recent_bioclim_dist_2024)
+write_csv(recent_sub_dist_2024_from_wl2, "../output/Climate/full_year_Subtraction_Dist_from_WL2_2024_Recent.csv")
+
+historic_sub_dist_2024_from_wl2 <- full_join(historic_flint_dist_2024, historical_bioclim_dist_2024)
+write_csv(historic_sub_dist_2024_from_wl2, "../output/Climate/full_year_Subtraction_Dist_from_WL2_2024_Historical.csv")
+```
+
