@@ -234,9 +234,7 @@ head(pop_elev_bioclim_2024_all_year)
 #write_csv(pop_elev_bioclim_2024_all_year, "../output/Climate/bioclim_all_year_UCD_pops_wtr_year_2024.csv")
 ```
 
-## Calculation of recent (last 30 years) and historical climate (prior 30 years)
-
-Note: Removed 2024 to facilitate use of QBMS package (also most of the plants did not experience 2024)
+### Calculation of recent (last 30 years) and historical climate (prior 30 years)
 
 ```{r}
 flint_all_year_recent_2024 <- flint_all_year_wtr_yr %>% 
@@ -260,6 +258,59 @@ bioclim_2024_all_year_recent <- pop_elev_bioclim_2024_all_year %>% filter(year>1
 bioclim_2024_all_year_historical <- pop_elev_bioclim_2024_all_year %>% filter(year<=1994 & year>1964)
 #head(bioclim_2024_all_year_historical, 13)
 #tail(bioclim_2024_all_year_historical, 13)
+```
+
+### Avg across years and months 
+```{r}
+flint_all_year_recent_2024_avgs <- flint_all_year_recent_2024 %>% 
+  group_by(parent.pop, elevation.group, elev_m, Lat, Long) %>% 
+  summarise_at(c("cwd",  "pck", "ppt", "tmn", "tmx"), c(mean), na.rm = TRUE) %>% 
+  mutate(TimePd = "Recent") 
+#flint_all_year_recent_2024_avgs
+
+flint_all_year_historical_2024_avgs <- flint_all_year_historical_2024 %>% 
+  group_by(parent.pop, elevation.group, elev_m, Lat, Long) %>% 
+  summarise_at(c("cwd", "pck", "ppt", "tmn", "tmx"), c(mean), na.rm = TRUE) %>% 
+  mutate(TimePd = "Historical")
+#flint_all_year_historical_2024_avgs
+
+flint_all_year_avgs_2024 <- bind_rows(flint_all_year_recent_2024_avgs, flint_all_year_historical_2024_avgs) #combine into 1 dataframe 
+#head(flint_all_year_avgs_2024)
+#tail(flint_all_year_avgs_2024)
+#write_csv(flint_all_year_avgs_2024, "../output/Climate/fullyear_FlintAvgs_wtr_year_2024.csv")
+```
+
+```{r}
+bioclim_all_year_recent_2024_avgs <- bioclim_2024_all_year_recent %>% 
+  group_by(parent.pop, elevation.group, elev_m, Lat, Long) %>% 
+  summarise_at(c("ann_tmean", "mean_diurnal_range", "temp_seasonality", "temp_ann_range",
+                 "tmean_wettest_quarter", "tmean_driest_quarter", "ann_ppt",
+                 "ppt_seasonality","ppt_warmest_quarter", "ppt_coldest_quarter"),
+               c(mean), na.rm = TRUE) %>% 
+  mutate(TimePd = "Recent") 
+#bioclim_all_year_recent_2024_avgs
+
+bioclim_all_year_historical_2024_avgs <- bioclim_2024_all_year_historical %>% 
+  group_by(parent.pop, elevation.group, elev_m, Lat, Long) %>% 
+  summarise_at(c("ann_tmean", "mean_diurnal_range", "temp_seasonality", "temp_ann_range",
+                 "tmean_wettest_quarter", "tmean_driest_quarter", "ann_ppt",
+                 "ppt_seasonality","ppt_warmest_quarter", "ppt_coldest_quarter"),
+               c(mean), na.rm = TRUE) %>% 
+  mutate(TimePd = "Historical") 
+#bioclim_all_year_historical_2024_avgs
+
+bioclim_all_year_avgs_2024 <- bind_rows(bioclim_all_year_recent_2024_avgs, bioclim_all_year_historical_2024_avgs) #combine into 1 dataframe 
+#head(bioclim_all_year_avgs_2024)
+#tail(bioclim_all_year_avgs_2024)
+#write_csv(bioclim_all_year_avgs_2024, "../output/Climate/fullyear_BioClimAvgs_wtr_year_2024.csv")
+```
+
+Merge with flint
+
+```{r}
+bioclim_flint_all_year_avgs <- full_join(flint_all_year_avgs, bioclim_all_year_avgs) %>% 
+  select(TimePd, parent.pop:ppt_coldest_quarter)
+head(bioclim_flint_all_year_avgs)
 ```
 
 ### Yearly averages for Flint
