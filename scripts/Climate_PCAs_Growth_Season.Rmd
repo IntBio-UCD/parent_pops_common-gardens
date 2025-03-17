@@ -57,7 +57,7 @@ flint_historical_grwseason <- read_csv("../output/Climate/flint_climate_growthse
 head(flint_historical_grwseason, 12)
 ```
 
-For 2024
+### For 2024
 ```{r}
 flint_recent_grwseason_2024 <- read_csv("../output/Climate/flint_climate_growthseason_recent_2024.csv") %>%
   dplyr::select(month, parent.pop:tmx)
@@ -76,13 +76,13 @@ bioclim_recent_grwseason <- read_csv("../output/Climate/BioClim_growthseason_Rec
 bioclim_historical_grwseason <- read_csv("../output/Climate/BioClim_growthseason_Historical.csv")
 ```
 
-For 2024
+### For 2024
 ```{r}
 bioclim_recent_grwseason_2024 <- read_csv("../output/Climate/BioClim_growthseason_Recent_2024.csv")
 bioclim_historical_grwseason_2024 <- read_csv("../output/Climate/BioClim_growthseason_Historical_2024.csv")
 ```
 
-### Yearly averages for Flint (for climate dist calcs)
+## Yearly averages for Flint (for climate dist calcs)
 ```{r}
 flint_grwssn_recent_yravgs <- flint_recent_grwseason %>% 
   group_by(parent.pop, elevation.group, elev_m, Lat, Long, year) %>% 
@@ -95,7 +95,7 @@ flint_grwssn_historical_yravgs <- flint_historical_grwseason %>%
 flint_grwssn_historical_yravgs
 ```
 
-For 2024
+### For 2024
 ```{r}
 flint_grwssn_recent_yravgs_2024 <- flint_recent_grwseason_2024 %>% 
   group_by(parent.pop, elevation.group, elev_m, Lat, Long, year) %>% 
@@ -108,7 +108,7 @@ flint_grwssn_historical_yravgs_2024 <- flint_historical_grwseason_2024 %>%
 flint_grwssn_historical_yravgs_2024
 ```
 
-### Merge with bioclim
+## Merge flint yrly avgs with bioclim
 ```{r}
 bioclim_flint_yrly_avgs_recent <- full_join(flint_grwssn_recent_yravgs, bioclim_recent_grwseason) 
 #write_csv(bioclim_flint_yrly_avgs_recent, "../output/Climate/growthseason_yrly_avgs_Recent.csv")
@@ -116,7 +116,7 @@ bioclim_flint_yrly_avgs_historical <- full_join(flint_grwssn_historical_yravgs, 
 #write_csv(bioclim_flint_yrly_avgs_historical, "../output/Climate/growthseason_yrly_avgs_Historical.csv")
 ```
 
-For 2024
+### For 2024
 ```{r}
 bioclim_flint_yrly_avgs_recent_2024 <- full_join(flint_grwssn_recent_yravgs_2024, bioclim_recent_grwseason_2024) 
 #write_csv(bioclim_flint_yrly_avgs_recent_2024, "../output/Climate/growthseason_yrly_avgs_Recent_2024.csv")
@@ -124,6 +124,50 @@ bioclim_flint_yrly_avgs_historical_2024 <- full_join(flint_grwssn_historical_yra
 #write_csv(bioclim_flint_yrly_avgs_historical_2024, "../output/Climate/growthseason_yrly_avgs_Historical_2024.csv")
 ```
 
+## 2024 avgs across years and months
+```{r}
+flint_grwssn_recent_2024_avgs <- flint_recent_grwseason_2024 %>% 
+  group_by(parent.pop, elevation.group, elev_m, Lat, Long) %>% 
+  summarise_at(c("cwd",  "pck", "ppt", "tmn", "tmx"), c(mean), na.rm = TRUE) %>% 
+  mutate(TimePd = "Recent") 
+#flint_grwssn_recent_2024_avgs
+
+flint_grwssn_historical_2024_avgs <- flint_historical_grwseason_2024 %>% 
+  group_by(parent.pop, elevation.group, elev_m, Lat, Long) %>% 
+  summarise_at(c("cwd", "pck", "ppt", "tmn", "tmx"), c(mean), na.rm = TRUE) %>% 
+  mutate(TimePd = "Historical")
+#flint_grwssn_historical_2024_avgs
+
+flint_grwssn_avgs_2024 <- bind_rows(flint_grwssn_recent_2024_avgs, flint_grwssn_historical_2024_avgs) #combine into 1 dataframe 
+#head(flint_grwssn_avgs_2024)
+#tail(flint_grwssn_avgs_2024)
+#write_csv(flint_grwssn_avgs_2024, "../output/Climate/grwssn_FlintAvgs_2024.csv")
+```
+
+```{r}
+bioclim_grwssn_recent_2024_avgs <- bioclim_recent_grwseason_2024 %>% 
+  group_by(parent.pop, elevation.group, elev_m) %>% 
+  summarise_at(c("ann_tmean", "mean_diurnal_range", "temp_seasonality", "temp_ann_range",
+                 "tmean_wettest_month", "tmean_driest_month", "ann_ppt",
+                 "ppt_seasonality","ppt_warmest_month", "ppt_coldest_month"),
+               c(mean), na.rm = TRUE) %>% 
+  mutate(TimePd = "Recent") 
+#bioclim_grwssn_recent_2024_avgs
+
+bioclim_grwssn_historical_2024_avgs <- bioclim_recent_grwseason_2024 %>% 
+  group_by(parent.pop, elevation.group, elev_m) %>% 
+  summarise_at(c("ann_tmean", "mean_diurnal_range", "temp_seasonality", "temp_ann_range",
+                 "tmean_wettest_month", "tmean_driest_month", "ann_ppt",
+                 "ppt_seasonality","ppt_warmest_month", "ppt_coldest_month"),
+               c(mean), na.rm = TRUE) %>% 
+  mutate(TimePd = "Historical") 
+#bioclim_grwssn_historical_2024_avgs
+
+bioclim_grwssn_avgs_2024 <- bind_rows(bioclim_grwssn_recent_2024_avgs, bioclim_grwssn_historical_2024_avgs) #combine into 1 dataframe 
+#head(bioclim_grwssn_avgs_2024)
+#tail(bioclim_grwssn_avgs_2024)
+#write_csv(bioclim_grwssn_avgs_2024, "../output/Climate/grwssn_BioClimAvgs_2024.csv")
+```
 
 ## All years and months included (Flint)
 
