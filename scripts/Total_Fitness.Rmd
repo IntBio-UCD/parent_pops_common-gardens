@@ -13,11 +13,6 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # Total Fitness at both sites
 
-To Do:
-
--   Double check prob. rep and total fruits
--   Add directional climate distance to the models 
-
 Total Fitness: p(Establishment)*p(Surv to Rep - y1)*Fruits(y1) + p(Winter Surv)*p(Surv to Rep - y2)*Fruits(y2)
 
 ## Libraries
