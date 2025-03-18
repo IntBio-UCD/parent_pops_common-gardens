@@ -1510,6 +1510,15 @@ summary(mod_test)
  #- Rescale variables?
 ```
 
+Model comparison
+```{r}
+m1 <-  glmer(ProbFitness ~ Wtr_Year_TempDist_Recent + GrwSsn_PPTDist_Recent + Geographic_Dist + (1|pop) + (1|block), data=wl2_prob_fitness_sub, family=binomial)
+m2 <- glmer(ProbFitness ~ Wtr_Year_TempDist_Recent + Geographic_Dist + (1|pop) + (1|block), data=wl2_prob_fitness_sub, family=binomial)
+m3 <- glmer(ProbFitness ~  GrwSsn_PPTDist_Recent + Geographic_Dist + (1|pop) + (1|block), data=wl2_prob_fitness_sub, family=binomial)
+anova(m1, m2, m3)
+```
+
+
 Keep block in for UCD
 
 ```{r}
