@@ -122,7 +122,7 @@ wl2_gowers_2023 <- read_csv("../output/Climate/Gowers_WL2.csv") %>%
   rename(pop=parent.pop)
 ```
 
-## For Subtraction Distances
+## Climate Subtraction Distances
 ```{r}
 ucd_wtr_year_sub_recent <- read_csv("../output/Climate/full_year_Subtraction_Dist_from_Davis_Recent.csv") %>% 
   select(parent.pop, Wtr_Year_TempDist_Recent=ann_tmean_dist, Wtr_Year_PPTDist_Recent=ann_ppt_dist)
