@@ -11,7 +11,7 @@
 
 <meta name="author" content="Brandie QC" />
 
-<meta name="date" content="2025-03-11" />
+<meta name="date" content="2025-03-18" />
 
 <title>WL2_Surv_to_Rep_Y2</title>
 
@@ -352,7 +352,7 @@ display: none;
 
 <h1 class="title toc-ignore">WL2_Surv_to_Rep_Y2</h1>
 <h4 class="author">Brandie QC</h4>
-<h4 class="date">2025-03-11</h4>
+<h4 class="date">2025-03-18</h4>
 
 </div>
 
@@ -449,7 +449,7 @@ library(tidymodels)</code></pre>
 ## ✖ infer::t_test()       masks rstatix::t_test()
 ## ✖ Matrix::unpack()      masks tidyr::unpack()
 ## ✖ recipes::update()     masks Matrix::update(), stats::update()
-## • Use suppressPackageStartupMessages() to eliminate package startup messages</code></pre>
+## • Search for functions across packages at https://www.tidymodels.org/find/</code></pre>
 <pre class="r"><code>library(furrr) #Apply Mapping Functions in Parallel using Futures</code></pre>
 <pre><code>## Loading required package: future</code></pre>
 <pre class="r"><code>tidymodels_prefer()
@@ -579,6 +579,59 @@ wl2_gowers_2024 &lt;- read_csv(&quot;../output/Climate/Gowers_WL2_2024.csv&quot;
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
 </div>
+<div id="climate-subtraction-distance" class="section level2">
+<h2>Climate Subtraction Distance</h2>
+<pre class="r"><code>wl2_wtr_year_sub_recent_2024 &lt;- read_csv(&quot;../output/Climate/full_year_Subtraction_Dist_from_WL2_2024_Recent.csv&quot;) %&gt;% 
+  select(parent.pop, Wtr_Year_TempDist_Recent=ann_tmean_dist, Wtr_Year_PPTDist_Recent=ann_ppt_dist)</code></pre>
+<pre><code>## Rows: 23 Columns: 18
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr  (2): parent.pop, elevation.group
+## dbl (16): elev_m, ppt_dist, cwd_dist, pck_dist, tmn_dist, tmx_dist, ann_tmea...
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+<pre class="r"><code>wl2_wtr_year_sub_historic_2024 &lt;- read_csv(&quot;../output/Climate/full_year_Subtraction_Dist_from_WL2_2024_Historical.csv&quot;) %&gt;% 
+  select(parent.pop, Wtr_Year_TempDist_Historic=ann_tmean_dist, Wtr_Year_PPTDist_Historic=ann_ppt_dist)</code></pre>
+<pre><code>## Rows: 23 Columns: 18
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr  (2): parent.pop, elevation.group
+## dbl (16): elev_m, ppt_dist, cwd_dist, pck_dist, tmn_dist, tmx_dist, ann_tmea...
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+<pre class="r"><code>wl2_grwssn_sub_recent_2024 &lt;- read_csv(&quot;../output/Climate/grwssn_Subtraction_Dist_from_WL2_2024_Recent.csv&quot;) %&gt;% 
+  select(parent.pop, GrwSsn_TempDist_Recent=ann_tmean_dist, GrwSsn_PPTDist_Recent=ann_ppt_dist)</code></pre>
+<pre><code>## Rows: 23 Columns: 18
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr  (2): parent.pop, elevation.group
+## dbl (16): elev_m, ppt_dist, cwd_dist, pck_dist, tmn_dist, tmx_dist, ann_tmea...
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+<pre class="r"><code>wl2_grwssn_sub_historic_2024 &lt;- read_csv(&quot;../output/Climate/grwssn_Subtraction_Dist_from_WL2_2024_Historical.csv&quot;) %&gt;% 
+  select(parent.pop, GrwSsn_TempDist_Historic=ann_tmean_dist, GrwSsn_PPTDist_Historic=ann_ppt_dist)</code></pre>
+<pre><code>## Rows: 23 Columns: 18
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr  (2): parent.pop, elevation.group
+## dbl (16): elev_m, ppt_dist, cwd_dist, pck_dist, tmn_dist, tmx_dist, ann_tmea...
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+<pre class="r"><code>wl2_sub_dist_2024 &lt;- wl2_wtr_year_sub_recent_2024 %&gt;% 
+  left_join(wl2_wtr_year_sub_historic_2024) %&gt;% 
+  left_join(wl2_grwssn_sub_recent_2024) %&gt;% 
+  left_join(wl2_grwssn_sub_historic_2024) %&gt;% 
+  rename(pop=parent.pop) %&gt;% 
+  left_join(wl2_gowers_2024)</code></pre>
+<pre><code>## Joining with `by = join_by(parent.pop)`
+## Joining with `by = join_by(parent.pop)`
+## Joining with `by = join_by(parent.pop)`
+## Joining with `by = join_by(pop)`</code></pre>
+</div>
 <div id="calculate-survival-to-bolting" class="section level2">
 <h2>Calculate Survival to Bolting</h2>
 <pre class="r"><code>wl2_surv_y2 %&gt;% filter(!is.na(bud.date), is.na(fruit.date)) #some plants initiated reproduction but did not make fruits</code></pre>
@@ -684,6 +737,16 @@ wl2_surv_y2 %&gt;% filter(!is.na(bud.date), !is.na(death.date))  #bud date and d
 <pre class="r"><code>#LV1, SQ1, and WR only have 1 indiv alive in 2024
 
 #write_csv(wl2_surv_to_rep_y2, &quot;../output/WL2_Traits/WL2_Surv_to_Rep_Y2.csv&quot;)</code></pre>
+<pre class="r"><code>wl2_surv_to_rep_y2_sub_dist &lt;- wl2_surv_to_rep_y2 %&gt;% 
+  select(loc:block, SurvtoRep_y2) %&gt;% 
+  left_join(wl2_sub_dist_2024)</code></pre>
+<pre><code>## Joining with `by = join_by(pop)`</code></pre>
+<pre class="r"><code>unique(wl2_surv_to_rep_y2_sub_dist$block)</code></pre>
+<pre><code>##  [1] &quot;A&quot; &quot;B&quot; &quot;C&quot; &quot;D&quot; &quot;E&quot; &quot;F&quot; &quot;G&quot; &quot;H&quot; &quot;I&quot; &quot;J&quot; &quot;K&quot; &quot;L&quot; &quot;M&quot;</code></pre>
+<pre class="r"><code>unique(wl2_surv_to_rep_y2_sub_dist$pop)</code></pre>
+<pre><code>##  [1] &quot;CC&quot;  &quot;BH&quot;  &quot;WL2&quot; &quot;IH&quot;  &quot;SC&quot;  &quot;YO7&quot; &quot;SQ1&quot; &quot;TM2&quot; &quot;WR&quot;  &quot;LV1&quot;</code></pre>
+<pre class="r"><code>unique(wl2_surv_to_rep_y2_sub_dist$mf)</code></pre>
+<pre><code>## [1] 3 7 4 8 2 1 5 6 9</code></pre>
 <div id="bar-plots" class="section level3">
 <h3>Bar Plots</h3>
 <pre class="r"><code>wl2_surv_to_rep_y2 %&gt;% 
@@ -726,6 +789,7 @@ wl2_surv_to_rep_y2 %&gt;%
 <h3>Scatterplots</h3>
 <pre class="r"><code>#scatter plots
 GSCD_recent &lt;- wl2_surv_to_rep_y2 %&gt;% 
+  filter(pop != &quot;LV1&quot;, pop != &quot;SQ1&quot;, pop != &quot;WR&quot;) %&gt;% 
   group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %&gt;% 
   summarise(meanSurv=mean(SurvtoRep_y2, na.rm = TRUE), semSurv=sem(SurvtoRep_y2, na.rm=TRUE)) %&gt;% 
   ggplot(aes(x=GrwSsn_GD_Recent, y=meanSurv, group = pop)) +
@@ -738,6 +802,7 @@ GSCD_recent &lt;- wl2_surv_to_rep_y2 %&gt;%
 <pre><code>## `summarise()` has grouped output by &#39;pop&#39;, &#39;elev_m&#39;, &#39;GrwSsn_GD_Recent&#39;. You
 ## can override using the `.groups` argument.</code></pre>
 <pre class="r"><code>WYCD_recent &lt;- wl2_surv_to_rep_y2 %&gt;% 
+  filter(pop != &quot;LV1&quot;, pop != &quot;SQ1&quot;, pop != &quot;WR&quot;) %&gt;% 
   group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %&gt;% 
   summarise(meanSurv=mean(SurvtoRep_y2, na.rm = TRUE), semSurv=sem(SurvtoRep_y2, na.rm=TRUE)) %&gt;% 
   ggplot(aes(x=Wtr_Year_GD_Recent, y=meanSurv, group = pop)) +
@@ -750,6 +815,7 @@ GSCD_recent &lt;- wl2_surv_to_rep_y2 %&gt;%
 <pre><code>## `summarise()` has grouped output by &#39;pop&#39;, &#39;elev_m&#39;, &#39;GrwSsn_GD_Recent&#39;. You
 ## can override using the `.groups` argument.</code></pre>
 <pre class="r"><code>GD &lt;- wl2_surv_to_rep_y2 %&gt;% 
+  filter(pop != &quot;LV1&quot;, pop != &quot;SQ1&quot;, pop != &quot;WR&quot;) %&gt;% 
   group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent, Geographic_Dist) %&gt;% 
   summarise(meanSurv=mean(SurvtoRep_y2, na.rm = TRUE), semSurv=sem(SurvtoRep_y2, na.rm=TRUE)) %&gt;% 
   ggplot(aes(x=Geographic_Dist, y=meanSurv, group = pop)) +
@@ -762,6 +828,7 @@ GSCD_recent &lt;- wl2_surv_to_rep_y2 %&gt;%
 <pre><code>## `summarise()` has grouped output by &#39;pop&#39;, &#39;elev_m&#39;, &#39;GrwSsn_GD_Recent&#39;,
 ## &#39;Wtr_Year_GD_Recent&#39;. You can override using the `.groups` argument.</code></pre>
 <pre class="r"><code>ED &lt;- wl2_surv_to_rep_y2 %&gt;% 
+  filter(pop != &quot;LV1&quot;, pop != &quot;SQ1&quot;, pop != &quot;WR&quot;) %&gt;% 
   group_by(pop, elev_m, Elev_Dist) %&gt;% 
   summarise(meanSurv=mean(SurvtoRep_y2, na.rm = TRUE), semSurv=sem(SurvtoRep_y2, na.rm=TRUE)) %&gt;% 
   ggplot(aes(x=Elev_Dist, y=meanSurv, group = pop)) +
@@ -777,6 +844,7 @@ GSCD_recent &lt;- wl2_surv_to_rep_y2 %&gt;%
 #ggsave(&quot;../output/WL2_Traits/WL2_SurvtoRep_y2_SCATTERS_Recent.png&quot;, width = 24, height = 18, units = &quot;in&quot;)</code></pre>
 <pre class="r"><code>#scatter plots
 GSCD_historic &lt;- wl2_surv_to_rep_y2 %&gt;% 
+  filter(pop != &quot;LV1&quot;, pop != &quot;SQ1&quot;, pop != &quot;WR&quot;) %&gt;% 
   group_by(pop, elev_m, GrwSsn_GD_Historical, Wtr_Year_GD_Historical) %&gt;% 
   summarise(meanSurv=mean(SurvtoRep_y2, na.rm = TRUE), semSurv=sem(SurvtoRep_y2, na.rm=TRUE)) %&gt;% 
   ggplot(aes(x=GrwSsn_GD_Historical, y=meanSurv, group = pop)) +
@@ -789,6 +857,7 @@ GSCD_historic &lt;- wl2_surv_to_rep_y2 %&gt;%
 <pre><code>## `summarise()` has grouped output by &#39;pop&#39;, &#39;elev_m&#39;, &#39;GrwSsn_GD_Historical&#39;.
 ## You can override using the `.groups` argument.</code></pre>
 <pre class="r"><code>WYCD_historic &lt;- wl2_surv_to_rep_y2 %&gt;% 
+  filter(pop != &quot;LV1&quot;, pop != &quot;SQ1&quot;, pop != &quot;WR&quot;) %&gt;% 
   group_by(pop, elev_m, GrwSsn_GD_Historical, Wtr_Year_GD_Historical) %&gt;% 
   summarise(meanSurv=mean(SurvtoRep_y2, na.rm = TRUE), semSurv=sem(SurvtoRep_y2, na.rm=TRUE)) %&gt;% 
   ggplot(aes(x=Wtr_Year_GD_Historical, y=meanSurv, group = pop)) +
@@ -802,14 +871,235 @@ GSCD_historic &lt;- wl2_surv_to_rep_y2 %&gt;%
 ## You can override using the `.groups` argument.</code></pre>
 <pre class="r"><code>wl2_surv_to_rep_y2_FIG &lt;- ggarrange(GSCD_historic, WYCD_historic, GD, ED, ncol=2, nrow=2) 
 #ggsave(&quot;../output/WL2_Traits/WL2_SurvtoRep_y2_SCATTERS_Historic.png&quot;, width = 24, height = 18, units = &quot;in&quot;)</code></pre>
+<div id="directional-distance" class="section level4">
+<h4>Directional Distance</h4>
+<pre class="r"><code>#scatter plots - recent
+GSCD_prob_recent &lt;- wl2_surv_to_rep_y2_sub_dist %&gt;% 
+  filter(pop != &quot;LV1&quot;, pop != &quot;SQ1&quot;, pop != &quot;WR&quot;) %&gt;% 
+  group_by(pop, elev_m, GrwSsn_TempDist_Recent, GrwSsn_TempDist_Historic) %&gt;% 
+  summarise(meanEst=mean(SurvtoRep_y2, na.rm = TRUE), semEst=sem(SurvtoRep_y2, na.rm=TRUE)) %&gt;% 
+  ggplot(aes(x=GrwSsn_TempDist_Recent, y=meanEst, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.3, linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y=&quot;Surv-to-Rep Y2&quot;, x=&quot;Recent Growth Season Temp Dist&quot;) +
+  theme(text=element_text(size=30))</code></pre>
+<pre><code>## `summarise()` has grouped output by &#39;pop&#39;, &#39;elev_m&#39;, &#39;GrwSsn_TempDist_Recent&#39;.
+## You can override using the `.groups` argument.</code></pre>
+<pre class="r"><code>WYCD_prob_recent &lt;- wl2_surv_to_rep_y2_sub_dist %&gt;% 
+  filter(pop != &quot;LV1&quot;, pop != &quot;SQ1&quot;, pop != &quot;WR&quot;) %&gt;% 
+  group_by(pop, elev_m, Wtr_Year_TempDist_Recent, Wtr_Year_TempDist_Historic) %&gt;% 
+  summarise(meanEst=mean(SurvtoRep_y2, na.rm = TRUE), semEst=sem(SurvtoRep_y2, na.rm=TRUE)) %&gt;% 
+  ggplot(aes(x=Wtr_Year_TempDist_Recent, y=meanEst, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.3,linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y=&quot;Surv-to-Rep Y2&quot;, x=&quot;Recent Water Year Temp Dist&quot;) +
+  theme(text=element_text(size=30))</code></pre>
+<pre><code>## `summarise()` has grouped output by &#39;pop&#39;, &#39;elev_m&#39;,
+## &#39;Wtr_Year_TempDist_Recent&#39;. You can override using the `.groups` argument.</code></pre>
+<pre class="r"><code>GD_prob &lt;- wl2_surv_to_rep_y2_sub_dist %&gt;% 
+  filter(pop != &quot;LV1&quot;, pop != &quot;SQ1&quot;, pop != &quot;WR&quot;) %&gt;% 
+  group_by(pop, elev_m, GrwSsn_TempDist_Recent, Wtr_Year_TempDist_Recent, Geographic_Dist) %&gt;% 
+  summarise(meanEst=mean(SurvtoRep_y2, na.rm = TRUE), semEst=sem(SurvtoRep_y2, na.rm=TRUE)) %&gt;% 
+  ggplot(aes(x=Geographic_Dist, y=meanEst, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.2, linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y=&quot;Surv-to-Rep Y2&quot;, x=&quot;Geographic Distance (m)&quot;) +
+  theme(text=element_text(size=30), axis.text.x = element_text(angle = 45,  hjust = 1))</code></pre>
+<pre><code>## `summarise()` has grouped output by &#39;pop&#39;, &#39;elev_m&#39;, &#39;GrwSsn_TempDist_Recent&#39;,
+## &#39;Wtr_Year_TempDist_Recent&#39;. You can override using the `.groups` argument.</code></pre>
+<pre class="r"><code>ED_prob &lt;- wl2_surv_to_rep_y2_sub_dist %&gt;% 
+  filter(pop != &quot;LV1&quot;, pop != &quot;SQ1&quot;, pop != &quot;WR&quot;) %&gt;% 
+  group_by(pop, elev_m, Elev_Dist) %&gt;% 
+  summarise(meanEst=mean(SurvtoRep_y2, na.rm = TRUE), semEst=sem(SurvtoRep_y2, na.rm=TRUE)) %&gt;% 
+  ggplot(aes(x=Elev_Dist, y=meanEst, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.3, linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y=&quot;Surv-to-Rep Y2&quot;, x=&quot;Elevation Distance (m)&quot;) +
+  theme(text=element_text(size=30))</code></pre>
+<pre><code>## `summarise()` has grouped output by &#39;pop&#39;, &#39;elev_m&#39;. You can override using the
+## `.groups` argument.</code></pre>
+<pre class="r"><code>WL2_surv_to_rep_y2_sub_FIG_prob_recent &lt;- ggarrange(GSCD_prob_recent, WYCD_prob_recent, GD_prob, ED_prob, ncol=2, nrow=2) 
+ggsave(&quot;../output/WL2_Traits/WL2_SurvtoRep_y2_TmpSubDist_SCATTERS_Recent.png&quot;, width = 24, height = 18, units = &quot;in&quot;)</code></pre>
+<pre class="r"><code>#scatter plots - historic
+GSCD_prob_historic &lt;- wl2_surv_to_rep_y2_sub_dist %&gt;% 
+  filter(pop != &quot;LV1&quot;, pop != &quot;SQ1&quot;, pop != &quot;WR&quot;) %&gt;% 
+  group_by(pop, elev_m, GrwSsn_TempDist_Recent, GrwSsn_TempDist_Historic) %&gt;% 
+  summarise(meanEst=mean(SurvtoRep_y2, na.rm = TRUE), semEst=sem(SurvtoRep_y2, na.rm=TRUE)) %&gt;% 
+  ggplot(aes(x=GrwSsn_TempDist_Historic, y=meanEst, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.3, linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y=&quot;Surv-to-Rep Y2&quot;, x=&quot;Historic Growth Season Temp Dist&quot;) +
+  theme(text=element_text(size=30))</code></pre>
+<pre><code>## `summarise()` has grouped output by &#39;pop&#39;, &#39;elev_m&#39;, &#39;GrwSsn_TempDist_Recent&#39;.
+## You can override using the `.groups` argument.</code></pre>
+<pre class="r"><code>WYCD_prob_historic &lt;- wl2_surv_to_rep_y2_sub_dist %&gt;% 
+  filter(pop != &quot;LV1&quot;, pop != &quot;SQ1&quot;, pop != &quot;WR&quot;) %&gt;% 
+  group_by(pop, elev_m, Wtr_Year_TempDist_Recent, Wtr_Year_TempDist_Historic) %&gt;% 
+  summarise(meanEst=mean(SurvtoRep_y2, na.rm = TRUE), semEst=sem(SurvtoRep_y2, na.rm=TRUE)) %&gt;% 
+  ggplot(aes(x=Wtr_Year_TempDist_Historic, y=meanEst, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.3,linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y=&quot;Surv-to-Rep Y2&quot;, x=&quot;Historic Water Year Temp Dist&quot;) +
+  theme(text=element_text(size=30))</code></pre>
+<pre><code>## `summarise()` has grouped output by &#39;pop&#39;, &#39;elev_m&#39;,
+## &#39;Wtr_Year_TempDist_Recent&#39;. You can override using the `.groups` argument.</code></pre>
+<pre class="r"><code>WL2_surv_to_rep_y2_sub_FIG_prob_historic &lt;- ggarrange(GSCD_prob_historic, WYCD_prob_historic, GD_prob, ED_prob, ncol=2, nrow=2) 
+ggsave(&quot;../output/WL2_Traits/WL2_SurvtoRep_y2_TmpSubDist_SCATTERS_Historic.png&quot;, width = 24, height = 18, units = &quot;in&quot;)</code></pre>
+<pre class="r"><code>#scatter plots - recent
+GSCD_prob_recent &lt;- wl2_surv_to_rep_y2_sub_dist %&gt;% 
+  filter(pop != &quot;LV1&quot;, pop != &quot;SQ1&quot;, pop != &quot;WR&quot;) %&gt;% 
+  group_by(pop, elev_m, GrwSsn_PPTDist_Recent, GrwSsn_PPTDist_Historic) %&gt;% 
+  summarise(meanEst=mean(SurvtoRep_y2, na.rm = TRUE), semEst=sem(SurvtoRep_y2, na.rm=TRUE)) %&gt;% 
+  ggplot(aes(x=GrwSsn_PPTDist_Recent, y=meanEst, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=0.3, linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y=&quot;Surv-to-Rep Y2&quot;, x=&quot;Recent Growth Season PPT Dist&quot;) +
+  theme(text=element_text(size=30))</code></pre>
+<pre><code>## `summarise()` has grouped output by &#39;pop&#39;, &#39;elev_m&#39;, &#39;GrwSsn_PPTDist_Recent&#39;.
+## You can override using the `.groups` argument.</code></pre>
+<pre class="r"><code>WYCD_prob_recent &lt;- wl2_surv_to_rep_y2_sub_dist %&gt;% 
+  filter(pop != &quot;LV1&quot;, pop != &quot;SQ1&quot;, pop != &quot;WR&quot;) %&gt;% 
+  group_by(pop, elev_m, Wtr_Year_PPTDist_Recent, Wtr_Year_PPTDist_Historic) %&gt;% 
+  summarise(meanEst=mean(SurvtoRep_y2, na.rm = TRUE), semEst=sem(SurvtoRep_y2, na.rm=TRUE)) %&gt;% 
+  ggplot(aes(x=Wtr_Year_PPTDist_Recent, y=meanEst, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.3,linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y=&quot;Surv-to-Rep Y2&quot;, x=&quot;Recent Water Year PPT Dist&quot;) +
+  theme(text=element_text(size=30))</code></pre>
+<pre><code>## `summarise()` has grouped output by &#39;pop&#39;, &#39;elev_m&#39;, &#39;Wtr_Year_PPTDist_Recent&#39;.
+## You can override using the `.groups` argument.</code></pre>
+<pre class="r"><code>GD_prob &lt;- wl2_surv_to_rep_y2_sub_dist %&gt;% 
+  filter(pop != &quot;LV1&quot;, pop != &quot;SQ1&quot;, pop != &quot;WR&quot;) %&gt;% 
+  group_by(pop, elev_m, GrwSsn_PPTDist_Recent, Wtr_Year_PPTDist_Recent, Geographic_Dist) %&gt;% 
+  summarise(meanEst=mean(SurvtoRep_y2, na.rm = TRUE), semEst=sem(SurvtoRep_y2, na.rm=TRUE)) %&gt;% 
+  ggplot(aes(x=Geographic_Dist, y=meanEst, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.2, linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y=&quot;Surv-to-Rep Y2&quot;, x=&quot;Geographic Distance (m)&quot;) +
+  theme(text=element_text(size=30), axis.text.x = element_text(angle = 45,  hjust = 1))</code></pre>
+<pre><code>## `summarise()` has grouped output by &#39;pop&#39;, &#39;elev_m&#39;, &#39;GrwSsn_PPTDist_Recent&#39;,
+## &#39;Wtr_Year_PPTDist_Recent&#39;. You can override using the `.groups` argument.</code></pre>
+<pre class="r"><code>ED_prob &lt;- wl2_surv_to_rep_y2_sub_dist %&gt;% 
+  filter(pop != &quot;LV1&quot;, pop != &quot;SQ1&quot;, pop != &quot;WR&quot;) %&gt;% 
+  group_by(pop, elev_m, Elev_Dist) %&gt;% 
+  summarise(meanEst=mean(SurvtoRep_y2, na.rm = TRUE), semEst=sem(SurvtoRep_y2, na.rm=TRUE)) %&gt;% 
+  ggplot(aes(x=Elev_Dist, y=meanEst, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.3, linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y=&quot;Surv-to-Rep Y2&quot;, x=&quot;Elevation Distance (m)&quot;) +
+  theme(text=element_text(size=30))</code></pre>
+<pre><code>## `summarise()` has grouped output by &#39;pop&#39;, &#39;elev_m&#39;. You can override using the
+## `.groups` argument.</code></pre>
+<pre class="r"><code>WL2_surv_to_rep_y2_sub_FIG_prob_recent &lt;- ggarrange(GSCD_prob_recent, WYCD_prob_recent, GD_prob, ED_prob, ncol=2, nrow=2) 
+ggsave(&quot;../output/WL2_Traits/WL2_SurvtoRep_y2_PPTSubDist_SCATTERS_Recent.png&quot;, width = 24, height = 18, units = &quot;in&quot;)</code></pre>
+<pre class="r"><code>#scatter plots - historic
+GSCD_prob_historic &lt;- wl2_surv_to_rep_y2_sub_dist %&gt;% 
+  filter(pop != &quot;LV1&quot;, pop != &quot;SQ1&quot;, pop != &quot;WR&quot;) %&gt;% 
+  group_by(pop, elev_m, GrwSsn_PPTDist_Recent, GrwSsn_PPTDist_Historic) %&gt;% 
+  summarise(meanEst=mean(SurvtoRep_y2, na.rm = TRUE), semEst=sem(SurvtoRep_y2, na.rm=TRUE)) %&gt;% 
+  ggplot(aes(x=GrwSsn_PPTDist_Historic, y=meanEst, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.3, linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y=&quot;Surv-to-Rep Y2&quot;, x=&quot;Historic Growth Season PPT Dist&quot;) +
+  theme(text=element_text(size=30))</code></pre>
+<pre><code>## `summarise()` has grouped output by &#39;pop&#39;, &#39;elev_m&#39;, &#39;GrwSsn_PPTDist_Recent&#39;.
+## You can override using the `.groups` argument.</code></pre>
+<pre class="r"><code>WYCD_prob_historic &lt;- wl2_surv_to_rep_y2_sub_dist %&gt;% 
+  filter(pop != &quot;LV1&quot;, pop != &quot;SQ1&quot;, pop != &quot;WR&quot;) %&gt;% 
+  group_by(pop, elev_m, Wtr_Year_PPTDist_Recent, Wtr_Year_PPTDist_Historic) %&gt;% 
+  summarise(meanEst=mean(SurvtoRep_y2, na.rm = TRUE), semEst=sem(SurvtoRep_y2, na.rm=TRUE)) %&gt;% 
+  ggplot(aes(x=Wtr_Year_PPTDist_Historic, y=meanEst, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.3,linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y=&quot;Surv-to-Rep Y2&quot;, x=&quot;Historic Water Year PPT Dist&quot;) +
+  theme(text=element_text(size=30))</code></pre>
+<pre><code>## `summarise()` has grouped output by &#39;pop&#39;, &#39;elev_m&#39;, &#39;Wtr_Year_PPTDist_Recent&#39;.
+## You can override using the `.groups` argument.</code></pre>
+<pre class="r"><code>WL2_surv_to_rep_y2_sub_FIG_prob_historic &lt;- ggarrange(GSCD_prob_historic, WYCD_prob_historic, GD_prob, ED_prob, ncol=2, nrow=2) 
+ggsave(&quot;../output/WL2_Traits/WL2_SurvtoRep_y2_PPTSubDist_SCATTERS_Historic.png&quot;, width = 24, height = 18, units = &quot;in&quot;)</code></pre>
+</div>
 </div>
 </div>
 <div id="stats" class="section level2">
 <h2>Stats</h2>
 <div id="scaling" class="section level3">
 <h3>Scaling</h3>
-<pre class="r"><code>wl2_surv_to_rep_y2_scaled &lt;- wl2_surv_to_rep_y2 %&gt;% mutate_at(c(&quot;GrwSsn_GD_Recent&quot;,&quot;Wtr_Year_GD_Recent&quot;,                                                           &quot;GrwSsn_GD_Historical&quot;,&quot;Wtr_Year_GD_Historical&quot;,&quot;Geographic_Dist&quot;),
+<pre class="r"><code>wl2_surv_to_rep_y2 %&gt;% 
+  group_by(pop) %&gt;% 
+  summarise(n=n()) %&gt;% 
+  arrange(n) #LV1, SQ1, WR only 1 indiv, remove </code></pre>
+<pre><code>## # A tibble: 10 × 2
+##    pop       n
+##    &lt;chr&gt; &lt;int&gt;
+##  1 LV1       1
+##  2 SQ1       1
+##  3 WR        1
+##  4 TM2       6
+##  5 WL2       6
+##  6 CC       17
+##  7 YO7      18
+##  8 SC       22
+##  9 BH       29
+## 10 IH       34</code></pre>
+<pre class="r"><code>wl2_surv_to_rep_y2_scaled &lt;- wl2_surv_to_rep_y2 %&gt;% 
+  filter(pop != &quot;LV1&quot;, pop != &quot;SQ1&quot;, pop != &quot;WR&quot;) %&gt;% 
+  mutate_at(c(&quot;GrwSsn_GD_Recent&quot;,&quot;Wtr_Year_GD_Recent&quot;,                                                           &quot;GrwSsn_GD_Historical&quot;,&quot;Wtr_Year_GD_Historical&quot;,&quot;Geographic_Dist&quot;),
                                                             scale) </code></pre>
+<pre class="r"><code>wl2_surv_to_rep_y2_sub_dist %&gt;% 
+  group_by(pop) %&gt;% 
+  summarise(n=n()) %&gt;% 
+  arrange(n) #LV1, SQ1, WR only 1 indiv, remove </code></pre>
+<pre><code>## # A tibble: 10 × 2
+##    pop       n
+##    &lt;chr&gt; &lt;int&gt;
+##  1 LV1       1
+##  2 SQ1       1
+##  3 WR        1
+##  4 TM2       6
+##  5 WL2       6
+##  6 CC       17
+##  7 YO7      18
+##  8 SC       22
+##  9 BH       29
+## 10 IH       34</code></pre>
+<pre class="r"><code>wl2_surv_to_rep_y2_scaled_sub &lt;- wl2_surv_to_rep_y2_sub_dist %&gt;% 
+  filter(pop != &quot;LV1&quot;, pop != &quot;SQ1&quot;, pop != &quot;WR&quot;) %&gt;% 
+  mutate_at(c(&quot;Wtr_Year_TempDist_Recent&quot;,  &quot;Wtr_Year_PPTDist_Recent&quot;, 
+                 &quot;Wtr_Year_TempDist_Historic&quot;, &quot;Wtr_Year_PPTDist_Historic&quot;,
+                 &quot;GrwSsn_TempDist_Recent&quot;, &quot;GrwSsn_PPTDist_Recent&quot;,
+                 &quot;GrwSsn_TempDist_Historic&quot;, &quot;GrwSsn_PPTDist_Historic&quot;,
+              &quot;Geographic_Dist&quot;), scale)
+
+unique(wl2_surv_to_rep_y2_scaled_sub$pop)</code></pre>
+<pre><code>## [1] &quot;CC&quot;  &quot;BH&quot;  &quot;WL2&quot; &quot;IH&quot;  &quot;SC&quot;  &quot;YO7&quot; &quot;TM2&quot;</code></pre>
+<pre class="r"><code>unique(wl2_surv_to_rep_y2_scaled_sub$mf)</code></pre>
+<pre><code>## [1] 3 7 4 8 2 1 6 5 9</code></pre>
+<pre class="r"><code>unique(wl2_surv_to_rep_y2_scaled_sub$block)</code></pre>
+<pre><code>##  [1] &quot;A&quot; &quot;B&quot; &quot;C&quot; &quot;D&quot; &quot;E&quot; &quot;F&quot; &quot;G&quot; &quot;H&quot; &quot;I&quot; &quot;J&quot; &quot;K&quot; &quot;L&quot; &quot;M&quot;</code></pre>
 </div>
 <div id="basic-model-workflow" class="section level3">
 <h3>Basic Model Workflow</h3>
@@ -842,7 +1132,7 @@ surv_fits_wl2 &lt;- surv_fits %&gt;%
 <pre><code>## Warning: There was 1 warning in `mutate()`.
 ## ℹ In argument: `fit = map(wflow, fit, data = wl2_surv_to_rep_y2_scaled)`.
 ## Caused by warning in `checkConv()`:
-## ! Model failed to converge with max|grad| = 0.0354704 (tol = 0.002, component 1)</code></pre>
+## ! Model failed to converge with max|grad| = 0.0344541 (tol = 0.002, component 1)</code></pre>
 <pre class="r"><code>#mod_test &lt;- glmer(SurvtoRep_y2 ~ (1|pop/mf) + (1|block), data=wl2_surv_to_rep_y2_scaled, family=binomial)
 #summary(mod_test)
 #Warning: Model failed to converge with max|grad| = 0.0354704 (tol = 0.002, component 1)
@@ -851,10 +1141,10 @@ surv_fits_wl2 %&gt;% mutate(glance=map(fit, glance)) %&gt;% unnest(glance) %&gt;
 <pre><code>## # A tibble: 4 × 6
 ##   name         logLik   AIC   BIC deviance df.residual
 ##   &lt;chr&gt;         &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;    &lt;dbl&gt;       &lt;int&gt;
-## 1 pop.block     -75.7  157.  166.     125.         132
-## 2 pop.mf.block  -75.4  159.  170.     111.         131
-## 3 pop           -82.0  168.  174.     162.         133
-## 4 pop.mf        -81.8  170.  178.     152.         132</code></pre>
+## 1 pop.block     -74.7  155.  164.     124.         129
+## 2 pop.mf.block  -74.4  157.  168.     111.         128
+## 3 pop           -80.1  164.  170.     158.         130
+## 4 pop.mf        -79.8  166.  174.     148.         129</code></pre>
 <pre class="r"><code>#model with pop and block (but excluding mf) is best by AIC and BIC, convergence issues with mf included </code></pre>
 <div id="test-climate-and-geographic-distance" class="section level4">
 <h4>Test climate and geographic distance</h4>
@@ -888,11 +1178,11 @@ name=names(wflow)
 <pre><code>## # A tibble: 5 × 6
 ##   name          logLik   AIC   BIC deviance df.residual
 ##   &lt;chr&gt;          &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;    &lt;dbl&gt;       &lt;int&gt;
-## 1 WY_Historical  -73.3  157.  171.     126.         130
-## 2 WY_Recent      -73.5  157.  172.     126.         130
-## 3 pop.block      -75.7  157.  166.     125.         132
-## 4 GS_Historical  -74.0  158.  173.     125.         130
-## 5 GS_Recent      -74.3  159.  173.     127.         130</code></pre>
+## 1 WY_Recent      -72.0  154.  168.     124.         127
+## 2 WY_Historical  -72.4  155.  169.     125.         127
+## 3 pop.block      -74.7  155.  164.     124.         129
+## 4 GS_Recent      -73.3  157.  171.     126.         127
+## 5 GS_Historical  -73.4  157.  171.     125.         127</code></pre>
 <pre class="r"><code>#water year models preferred by AIC 
 
 surv_GD_fits_wl2 %&gt;% mutate(tidy=map(fit, tidy)) %&gt;% unnest(tidy) %&gt;%
@@ -902,14 +1192,14 @@ surv_GD_fits_wl2 %&gt;% mutate(tidy=map(fit, tidy)) %&gt;% unnest(tidy) %&gt;%
 <pre><code>## # A tibble: 8 × 6
 ##   name          term                   estimate std.error statistic p.value
 ##   &lt;chr&gt;         &lt;chr&gt;                     &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;   &lt;dbl&gt;
-## 1 GS_Recent     GrwSsn_GD_Recent         -0.421     0.257    -1.63   0.102 
-## 2 GS_Recent     Geographic_Dist           0.135     0.251     0.537  0.592 
-## 3 GS_Historical GrwSsn_GD_Historical     -0.449     0.258    -1.74   0.0814
-## 4 GS_Historical Geographic_Dist           0.205     0.257     0.799  0.424 
-## 5 WY_Recent     Wtr_Year_GD_Recent       -0.529     0.254    -2.08   0.0375
-## 6 WY_Recent     Geographic_Dist           0.431     0.256     1.69   0.0917
-## 7 WY_Historical Wtr_Year_GD_Historical   -0.545     0.252    -2.16   0.0304
-## 8 WY_Historical Geographic_Dist           0.443     0.256     1.73   0.0831</code></pre>
+## 1 GS_Recent     GrwSsn_GD_Recent         -0.372     0.242    -1.53   0.125 
+## 2 GS_Recent     Geographic_Dist           0.196     0.241     0.813  0.416 
+## 3 GS_Historical GrwSsn_GD_Historical     -0.356     0.249    -1.43   0.152 
+## 4 GS_Historical Geographic_Dist           0.229     0.242     0.948  0.343 
+## 5 WY_Recent     Wtr_Year_GD_Recent       -0.577     0.262    -2.20   0.0278
+## 6 WY_Recent     Geographic_Dist           0.506     0.253     2.00   0.0459
+## 7 WY_Historical Wtr_Year_GD_Historical   -0.520     0.251    -2.07   0.0382
+## 8 WY_Historical Geographic_Dist           0.465     0.246     1.89   0.0590</code></pre>
 <pre class="r"><code>#  arrange(p.value)
 # recent water year = marginally sig, historical water year = sig, but historical water year had a singular boundary warning 
 
@@ -924,33 +1214,91 @@ mod_test &lt;- glmer(SurvtoRep_y2 ~ Wtr_Year_GD_Recent + Geographic_Dist + (1|po
 ##    Data: wl2_surv_to_rep_y2_scaled
 ## 
 ##      AIC      BIC   logLik deviance df.resid 
-##    157.1    171.6    -73.5    147.1      130 
+##    154.1    168.5    -72.0    144.1      127 
 ## 
 ## Scaled residuals: 
 ##     Min      1Q  Median      3Q     Max 
-## -3.2244 -0.7116  0.4170  0.5428  1.3945 
+## -3.3391 -0.7043  0.3982  0.5694  1.4199 
 ## 
 ## Random effects:
 ##  Groups Name        Variance  Std.Dev. 
-##  block  (Intercept) 1.047e+00 1.023e+00
-##  pop    (Intercept) 2.453e-10 1.566e-05
-## Number of obs: 135, groups:  block, 13; pop, 10
+##  block  (Intercept) 9.694e-01 9.846e-01
+##  pop    (Intercept) 1.547e-10 1.244e-05
+## Number of obs: 132, groups:  block, 13; pop, 7
 ## 
 ## Fixed effects:
 ##                    Estimate Std. Error z value Pr(&gt;|z|)   
-## (Intercept)          1.1288     0.3700   3.051  0.00228 **
-## Wtr_Year_GD_Recent  -0.5286     0.2542  -2.080  0.03755 * 
-## Geographic_Dist      0.4315     0.2558   1.687  0.09167 . 
+## (Intercept)          1.1143     0.3620   3.078  0.00208 **
+## Wtr_Year_GD_Recent  -0.5765     0.2621  -2.199  0.02784 * 
+## Geographic_Dist      0.5055     0.2533   1.996  0.04592 * 
 ## ---
 ## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
 ## 
 ## Correlation of Fixed Effects:
 ##             (Intr) W_Y_GD
-## Wtr_Yr_GD_R -0.128       
-## Gegrphc_Dst  0.093 -0.453
+## Wtr_Yr_GD_R -0.127       
+## Gegrphc_Dst  0.097 -0.496
 ## optimizer (Nelder_Mead) convergence code: 0 (OK)
 ## boundary (singular) fit: see help(&#39;isSingular&#39;)</code></pre>
 <pre class="r"><code>#boundary (singular) fit: see help(&#39;isSingular&#39;) for water year recent and historical - when you add water year climate distance, pop explains little variation </code></pre>
+<pre class="r"><code>surv_GD_wflow_wl2_sub &lt;- workflow() %&gt;%
+  add_variables(outcomes = SurvtoRep_y2, predictors = c(pop, mf, block, contains(&quot;Dist&quot;))) 
+
+surv_GD_fits_wl2_sub &lt;- tibble(wflow=list(
+  pop.block = {surv_GD_wflow_wl2_sub %&gt;% 
+      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ (1|pop) + (1|block))},
+  
+  GS_Recent = {surv_GD_wflow_wl2_sub %&gt;% 
+      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ GrwSsn_TempDist_Recent + GrwSsn_PPTDist_Recent + Geographic_Dist + (1|pop) + (1|block))},
+  
+  GS_Historical = {surv_GD_wflow_wl2_sub %&gt;% 
+      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ GrwSsn_TempDist_Historic + GrwSsn_PPTDist_Historic + Geographic_Dist + (1|pop) + (1|block))},
+  
+  WY_Recent = {surv_GD_wflow_wl2_sub %&gt;% 
+      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ Wtr_Year_TempDist_Recent + Wtr_Year_PPTDist_Recent + Geographic_Dist + (1|pop) + (1|block))},
+  
+  WY_Historical = {surv_GD_wflow_wl2_sub %&gt;% 
+      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ Wtr_Year_TempDist_Historic + Wtr_Year_PPTDist_Historic + Geographic_Dist + (1|pop) + (1|block))}
+  
+),
+name=names(wflow)
+) %&gt;% 
+  select(name,wflow) %&gt;%
+  mutate(fit = map(wflow, fit, data = wl2_surv_to_rep_y2_scaled_sub))</code></pre>
+<pre><code>## boundary (singular) fit: see help(&#39;isSingular&#39;)
+## boundary (singular) fit: see help(&#39;isSingular&#39;)
+## boundary (singular) fit: see help(&#39;isSingular&#39;)</code></pre>
+<pre class="r"><code>surv_GD_fits_wl2_sub %&gt;% mutate(glance=map(fit, glance)) %&gt;% unnest(glance) %&gt;% arrange(AIC) %&gt;% select(-wflow:-sigma)</code></pre>
+<pre><code>## # A tibble: 5 × 6
+##   name          logLik   AIC   BIC deviance df.residual
+##   &lt;chr&gt;          &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;    &lt;dbl&gt;       &lt;int&gt;
+## 1 WY_Recent      -70.9  154.  171.     121.         126
+## 2 WY_Historical  -71.0  154.  171.     121.         126
+## 3 pop.block      -74.7  155.  164.     124.         129
+## 4 GS_Recent      -71.9  156.  173.     122.         126
+## 5 GS_Historical  -71.9  156.  173.     122.         126</code></pre>
+<pre class="r"><code>#water year models preferred by AIC 
+
+surv_GD_fits_wl2_sub %&gt;% mutate(tidy=map(fit, tidy)) %&gt;% unnest(tidy) %&gt;%
+  filter(str_detect(term, &quot;Dist&quot;)) %&gt;%
+  drop_na(p.value) %&gt;%
+  select(-wflow:-group)# %&gt;%</code></pre>
+<pre><code>## # A tibble: 12 × 6
+##    name          term                       estimate std.error statistic p.value
+##    &lt;chr&gt;         &lt;chr&gt;                         &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;   &lt;dbl&gt;
+##  1 GS_Recent     GrwSsn_TempDist_Recent       0.721      0.432    1.67    0.0950
+##  2 GS_Recent     GrwSsn_PPTDist_Recent       -0.202      0.410   -0.492   0.623 
+##  3 GS_Recent     Geographic_Dist              0.169      0.235    0.719   0.472 
+##  4 GS_Historical GrwSsn_TempDist_Historic     0.721      0.432    1.67    0.0950
+##  5 GS_Historical GrwSsn_PPTDist_Historic     -0.202      0.410   -0.492   0.623 
+##  6 GS_Historical Geographic_Dist              0.169      0.235    0.719   0.472 
+##  7 WY_Recent     Wtr_Year_TempDist_Recent     0.665      0.337    1.97    0.0486
+##  8 WY_Recent     Wtr_Year_PPTDist_Recent     -0.0413     0.312   -0.132   0.895 
+##  9 WY_Recent     Geographic_Dist              0.316      0.262    1.21    0.228 
+## 10 WY_Historical Wtr_Year_TempDist_Historic   0.667      0.345    1.93    0.0534
+## 11 WY_Historical Wtr_Year_PPTDist_Historic   -0.0192     0.315   -0.0609  0.951 
+## 12 WY_Historical Geographic_Dist              0.284      0.255    1.11    0.266</code></pre>
+<pre class="r"><code>#  arrange(p.value)</code></pre>
 </div>
 </div>
 </div>

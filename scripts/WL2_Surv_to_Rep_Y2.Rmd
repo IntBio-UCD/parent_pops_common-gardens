@@ -101,6 +101,25 @@ wl2_gowers_2024 <- read_csv("../output/Climate/Gowers_WL2_2024.csv") %>%
   rename(pop=parent.pop)
 ```
 
+## Climate Subtraction Distance
+
+```{r}
+wl2_wtr_year_sub_recent_2024 <- read_csv("../output/Climate/full_year_Subtraction_Dist_from_WL2_2024_Recent.csv") %>% 
+  select(parent.pop, Wtr_Year_TempDist_Recent=ann_tmean_dist, Wtr_Year_PPTDist_Recent=ann_ppt_dist)
+wl2_wtr_year_sub_historic_2024 <- read_csv("../output/Climate/full_year_Subtraction_Dist_from_WL2_2024_Historical.csv") %>% 
+  select(parent.pop, Wtr_Year_TempDist_Historic=ann_tmean_dist, Wtr_Year_PPTDist_Historic=ann_ppt_dist)
+wl2_grwssn_sub_recent_2024 <- read_csv("../output/Climate/grwssn_Subtraction_Dist_from_WL2_2024_Recent.csv") %>% 
+  select(parent.pop, GrwSsn_TempDist_Recent=ann_tmean_dist, GrwSsn_PPTDist_Recent=ann_ppt_dist)
+wl2_grwssn_sub_historic_2024 <- read_csv("../output/Climate/grwssn_Subtraction_Dist_from_WL2_2024_Historical.csv") %>% 
+  select(parent.pop, GrwSsn_TempDist_Historic=ann_tmean_dist, GrwSsn_PPTDist_Historic=ann_ppt_dist)
+wl2_sub_dist_2024 <- wl2_wtr_year_sub_recent_2024 %>% 
+  left_join(wl2_wtr_year_sub_historic_2024) %>% 
+  left_join(wl2_grwssn_sub_recent_2024) %>% 
+  left_join(wl2_grwssn_sub_historic_2024) %>% 
+  rename(pop=parent.pop) %>% 
+  left_join(wl2_gowers_2024)
+```
+
 ## Calculate Survival to Bolting 
 ```{r}
 wl2_surv_y2 %>% filter(!is.na(bud.date), is.na(fruit.date)) #some plants initiated reproduction but did not make fruits
@@ -124,6 +143,17 @@ wl2_surv_to_rep_y2 %>% group_by(pop) %>% summarise(n=n()) %>% arrange(n)
 
 #write_csv(wl2_surv_to_rep_y2, "../output/WL2_Traits/WL2_Surv_to_Rep_Y2.csv")
 ```
+
+```{r}
+wl2_surv_to_rep_y2_sub_dist <- wl2_surv_to_rep_y2 %>% 
+  select(loc:block, SurvtoRep_y2) %>% 
+  left_join(wl2_sub_dist_2024)
+
+unique(wl2_surv_to_rep_y2_sub_dist$block)
+unique(wl2_surv_to_rep_y2_sub_dist$pop)
+unique(wl2_surv_to_rep_y2_sub_dist$mf)
+```
+
 
 ### Bar Plots
 ```{r}
@@ -162,6 +192,7 @@ wl2_surv_to_rep_y2 %>%
 ```{r}
 #scatter plots
 GSCD_recent <- wl2_surv_to_rep_y2 %>% 
+  filter(pop != "LV1", pop != "SQ1", pop != "WR") %>% 
   group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
   summarise(meanSurv=mean(SurvtoRep_y2, na.rm = TRUE), semSurv=sem(SurvtoRep_y2, na.rm=TRUE)) %>% 
   ggplot(aes(x=GrwSsn_GD_Recent, y=meanSurv, group = pop)) +
@@ -173,6 +204,7 @@ GSCD_recent <- wl2_surv_to_rep_y2 %>%
   theme(text=element_text(size=25))
 
 WYCD_recent <- wl2_surv_to_rep_y2 %>% 
+  filter(pop != "LV1", pop != "SQ1", pop != "WR") %>% 
   group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
   summarise(meanSurv=mean(SurvtoRep_y2, na.rm = TRUE), semSurv=sem(SurvtoRep_y2, na.rm=TRUE)) %>% 
   ggplot(aes(x=Wtr_Year_GD_Recent, y=meanSurv, group = pop)) +
@@ -184,6 +216,7 @@ WYCD_recent <- wl2_surv_to_rep_y2 %>%
   theme(text=element_text(size=25))
 
 GD <- wl2_surv_to_rep_y2 %>% 
+  filter(pop != "LV1", pop != "SQ1", pop != "WR") %>% 
   group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent, Geographic_Dist) %>% 
   summarise(meanSurv=mean(SurvtoRep_y2, na.rm = TRUE), semSurv=sem(SurvtoRep_y2, na.rm=TRUE)) %>% 
   ggplot(aes(x=Geographic_Dist, y=meanSurv, group = pop)) +
@@ -195,6 +228,7 @@ GD <- wl2_surv_to_rep_y2 %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 
 ED <- wl2_surv_to_rep_y2 %>% 
+  filter(pop != "LV1", pop != "SQ1", pop != "WR") %>% 
   group_by(pop, elev_m, Elev_Dist) %>% 
   summarise(meanSurv=mean(SurvtoRep_y2, na.rm = TRUE), semSurv=sem(SurvtoRep_y2, na.rm=TRUE)) %>% 
   ggplot(aes(x=Elev_Dist, y=meanSurv, group = pop)) +
@@ -212,6 +246,7 @@ wl2_surv_to_rep_y2_FIG <- ggarrange(GSCD_recent, WYCD_recent, GD, ED, ncol=2, nr
 ```{r}
 #scatter plots
 GSCD_historic <- wl2_surv_to_rep_y2 %>% 
+  filter(pop != "LV1", pop != "SQ1", pop != "WR") %>% 
   group_by(pop, elev_m, GrwSsn_GD_Historical, Wtr_Year_GD_Historical) %>% 
   summarise(meanSurv=mean(SurvtoRep_y2, na.rm = TRUE), semSurv=sem(SurvtoRep_y2, na.rm=TRUE)) %>% 
   ggplot(aes(x=GrwSsn_GD_Historical, y=meanSurv, group = pop)) +
@@ -223,6 +258,7 @@ GSCD_historic <- wl2_surv_to_rep_y2 %>%
   theme(text=element_text(size=25))
 
 WYCD_historic <- wl2_surv_to_rep_y2 %>% 
+  filter(pop != "LV1", pop != "SQ1", pop != "WR") %>% 
   group_by(pop, elev_m, GrwSsn_GD_Historical, Wtr_Year_GD_Historical) %>% 
   summarise(meanSurv=mean(SurvtoRep_y2, na.rm = TRUE), semSurv=sem(SurvtoRep_y2, na.rm=TRUE)) %>% 
   ggplot(aes(x=Wtr_Year_GD_Historical, y=meanSurv, group = pop)) +
@@ -237,13 +273,209 @@ wl2_surv_to_rep_y2_FIG <- ggarrange(GSCD_historic, WYCD_historic, GD, ED, ncol=2
 #ggsave("../output/WL2_Traits/WL2_SurvtoRep_y2_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
 ```
 
+#### Directional Distance
+```{r}
+#scatter plots - recent
+GSCD_prob_recent <- wl2_surv_to_rep_y2_sub_dist %>% 
+  filter(pop != "LV1", pop != "SQ1", pop != "WR") %>% 
+  group_by(pop, elev_m, GrwSsn_TempDist_Recent, GrwSsn_TempDist_Historic) %>% 
+  summarise(meanEst=mean(SurvtoRep_y2, na.rm = TRUE), semEst=sem(SurvtoRep_y2, na.rm=TRUE)) %>% 
+  ggplot(aes(x=GrwSsn_TempDist_Recent, y=meanEst, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.3, linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Surv-to-Rep Y2", x="Recent Growth Season Temp Dist") +
+  theme(text=element_text(size=30))
+
+WYCD_prob_recent <- wl2_surv_to_rep_y2_sub_dist %>% 
+  filter(pop != "LV1", pop != "SQ1", pop != "WR") %>% 
+  group_by(pop, elev_m, Wtr_Year_TempDist_Recent, Wtr_Year_TempDist_Historic) %>% 
+  summarise(meanEst=mean(SurvtoRep_y2, na.rm = TRUE), semEst=sem(SurvtoRep_y2, na.rm=TRUE)) %>% 
+  ggplot(aes(x=Wtr_Year_TempDist_Recent, y=meanEst, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.3,linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Surv-to-Rep Y2", x="Recent Water Year Temp Dist") +
+  theme(text=element_text(size=30))
+
+GD_prob <- wl2_surv_to_rep_y2_sub_dist %>% 
+  filter(pop != "LV1", pop != "SQ1", pop != "WR") %>% 
+  group_by(pop, elev_m, GrwSsn_TempDist_Recent, Wtr_Year_TempDist_Recent, Geographic_Dist) %>% 
+  summarise(meanEst=mean(SurvtoRep_y2, na.rm = TRUE), semEst=sem(SurvtoRep_y2, na.rm=TRUE)) %>% 
+  ggplot(aes(x=Geographic_Dist, y=meanEst, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.2, linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Surv-to-Rep Y2", x="Geographic Distance (m)") +
+  theme(text=element_text(size=30), axis.text.x = element_text(angle = 45,  hjust = 1))
+
+ED_prob <- wl2_surv_to_rep_y2_sub_dist %>% 
+  filter(pop != "LV1", pop != "SQ1", pop != "WR") %>% 
+  group_by(pop, elev_m, Elev_Dist) %>% 
+  summarise(meanEst=mean(SurvtoRep_y2, na.rm = TRUE), semEst=sem(SurvtoRep_y2, na.rm=TRUE)) %>% 
+  ggplot(aes(x=Elev_Dist, y=meanEst, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.3, linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Surv-to-Rep Y2", x="Elevation Distance (m)") +
+  theme(text=element_text(size=30))
+
+WL2_surv_to_rep_y2_sub_FIG_prob_recent <- ggarrange(GSCD_prob_recent, WYCD_prob_recent, GD_prob, ED_prob, ncol=2, nrow=2) 
+ggsave("../output/WL2_Traits/WL2_SurvtoRep_y2_TmpSubDist_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
+```
+
+```{r}
+#scatter plots - historic
+GSCD_prob_historic <- wl2_surv_to_rep_y2_sub_dist %>% 
+  filter(pop != "LV1", pop != "SQ1", pop != "WR") %>% 
+  group_by(pop, elev_m, GrwSsn_TempDist_Recent, GrwSsn_TempDist_Historic) %>% 
+  summarise(meanEst=mean(SurvtoRep_y2, na.rm = TRUE), semEst=sem(SurvtoRep_y2, na.rm=TRUE)) %>% 
+  ggplot(aes(x=GrwSsn_TempDist_Historic, y=meanEst, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.3, linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Surv-to-Rep Y2", x="Historic Growth Season Temp Dist") +
+  theme(text=element_text(size=30))
+
+WYCD_prob_historic <- wl2_surv_to_rep_y2_sub_dist %>% 
+  filter(pop != "LV1", pop != "SQ1", pop != "WR") %>% 
+  group_by(pop, elev_m, Wtr_Year_TempDist_Recent, Wtr_Year_TempDist_Historic) %>% 
+  summarise(meanEst=mean(SurvtoRep_y2, na.rm = TRUE), semEst=sem(SurvtoRep_y2, na.rm=TRUE)) %>% 
+  ggplot(aes(x=Wtr_Year_TempDist_Historic, y=meanEst, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.3,linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Surv-to-Rep Y2", x="Historic Water Year Temp Dist") +
+  theme(text=element_text(size=30))
+
+WL2_surv_to_rep_y2_sub_FIG_prob_historic <- ggarrange(GSCD_prob_historic, WYCD_prob_historic, GD_prob, ED_prob, ncol=2, nrow=2) 
+ggsave("../output/WL2_Traits/WL2_SurvtoRep_y2_TmpSubDist_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
+```
+
+```{r}
+#scatter plots - recent
+GSCD_prob_recent <- wl2_surv_to_rep_y2_sub_dist %>% 
+  filter(pop != "LV1", pop != "SQ1", pop != "WR") %>% 
+  group_by(pop, elev_m, GrwSsn_PPTDist_Recent, GrwSsn_PPTDist_Historic) %>% 
+  summarise(meanEst=mean(SurvtoRep_y2, na.rm = TRUE), semEst=sem(SurvtoRep_y2, na.rm=TRUE)) %>% 
+  ggplot(aes(x=GrwSsn_PPTDist_Recent, y=meanEst, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=0.3, linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Surv-to-Rep Y2", x="Recent Growth Season PPT Dist") +
+  theme(text=element_text(size=30))
+
+WYCD_prob_recent <- wl2_surv_to_rep_y2_sub_dist %>% 
+  filter(pop != "LV1", pop != "SQ1", pop != "WR") %>% 
+  group_by(pop, elev_m, Wtr_Year_PPTDist_Recent, Wtr_Year_PPTDist_Historic) %>% 
+  summarise(meanEst=mean(SurvtoRep_y2, na.rm = TRUE), semEst=sem(SurvtoRep_y2, na.rm=TRUE)) %>% 
+  ggplot(aes(x=Wtr_Year_PPTDist_Recent, y=meanEst, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.3,linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Surv-to-Rep Y2", x="Recent Water Year PPT Dist") +
+  theme(text=element_text(size=30))
+
+GD_prob <- wl2_surv_to_rep_y2_sub_dist %>% 
+  filter(pop != "LV1", pop != "SQ1", pop != "WR") %>% 
+  group_by(pop, elev_m, GrwSsn_PPTDist_Recent, Wtr_Year_PPTDist_Recent, Geographic_Dist) %>% 
+  summarise(meanEst=mean(SurvtoRep_y2, na.rm = TRUE), semEst=sem(SurvtoRep_y2, na.rm=TRUE)) %>% 
+  ggplot(aes(x=Geographic_Dist, y=meanEst, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.2, linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Surv-to-Rep Y2", x="Geographic Distance (m)") +
+  theme(text=element_text(size=30), axis.text.x = element_text(angle = 45,  hjust = 1))
+
+ED_prob <- wl2_surv_to_rep_y2_sub_dist %>% 
+  filter(pop != "LV1", pop != "SQ1", pop != "WR") %>% 
+  group_by(pop, elev_m, Elev_Dist) %>% 
+  summarise(meanEst=mean(SurvtoRep_y2, na.rm = TRUE), semEst=sem(SurvtoRep_y2, na.rm=TRUE)) %>% 
+  ggplot(aes(x=Elev_Dist, y=meanEst, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.3, linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Surv-to-Rep Y2", x="Elevation Distance (m)") +
+  theme(text=element_text(size=30))
+
+WL2_surv_to_rep_y2_sub_FIG_prob_recent <- ggarrange(GSCD_prob_recent, WYCD_prob_recent, GD_prob, ED_prob, ncol=2, nrow=2) 
+ggsave("../output/WL2_Traits/WL2_SurvtoRep_y2_PPTSubDist_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
+```
+
+```{r}
+#scatter plots - historic
+GSCD_prob_historic <- wl2_surv_to_rep_y2_sub_dist %>% 
+  filter(pop != "LV1", pop != "SQ1", pop != "WR") %>% 
+  group_by(pop, elev_m, GrwSsn_PPTDist_Recent, GrwSsn_PPTDist_Historic) %>% 
+  summarise(meanEst=mean(SurvtoRep_y2, na.rm = TRUE), semEst=sem(SurvtoRep_y2, na.rm=TRUE)) %>% 
+  ggplot(aes(x=GrwSsn_PPTDist_Historic, y=meanEst, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.3, linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Surv-to-Rep Y2", x="Historic Growth Season PPT Dist") +
+  theme(text=element_text(size=30))
+
+WYCD_prob_historic <- wl2_surv_to_rep_y2_sub_dist %>% 
+  filter(pop != "LV1", pop != "SQ1", pop != "WR") %>% 
+  group_by(pop, elev_m, Wtr_Year_PPTDist_Recent, Wtr_Year_PPTDist_Historic) %>% 
+  summarise(meanEst=mean(SurvtoRep_y2, na.rm = TRUE), semEst=sem(SurvtoRep_y2, na.rm=TRUE)) %>% 
+  ggplot(aes(x=Wtr_Year_PPTDist_Historic, y=meanEst, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.3,linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Surv-to-Rep Y2", x="Historic Water Year PPT Dist") +
+  theme(text=element_text(size=30))
+
+WL2_surv_to_rep_y2_sub_FIG_prob_historic <- ggarrange(GSCD_prob_historic, WYCD_prob_historic, GD_prob, ED_prob, ncol=2, nrow=2) 
+ggsave("../output/WL2_Traits/WL2_SurvtoRep_y2_PPTSubDist_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
+```
+
 ## Stats
 
 ### Scaling 
 ```{r}
-wl2_surv_to_rep_y2_scaled <- wl2_surv_to_rep_y2 %>% mutate_at(c("GrwSsn_GD_Recent","Wtr_Year_GD_Recent",                                                           "GrwSsn_GD_Historical","Wtr_Year_GD_Historical","Geographic_Dist"),
+wl2_surv_to_rep_y2 %>% 
+  group_by(pop) %>% 
+  summarise(n=n()) %>% 
+  arrange(n) #LV1, SQ1, WR only 1 indiv, remove 
+
+wl2_surv_to_rep_y2_scaled <- wl2_surv_to_rep_y2 %>% 
+  filter(pop != "LV1", pop != "SQ1", pop != "WR") %>% 
+  mutate_at(c("GrwSsn_GD_Recent","Wtr_Year_GD_Recent",                                                           "GrwSsn_GD_Historical","Wtr_Year_GD_Historical","Geographic_Dist"),
                                                             scale) 
 ```
+
+```{r}
+wl2_surv_to_rep_y2_sub_dist %>% 
+  group_by(pop) %>% 
+  summarise(n=n()) %>% 
+  arrange(n) #LV1, SQ1, WR only 1 indiv, remove 
+
+wl2_surv_to_rep_y2_scaled_sub <- wl2_surv_to_rep_y2_sub_dist %>% 
+  filter(pop != "LV1", pop != "SQ1", pop != "WR") %>% 
+  mutate_at(c("Wtr_Year_TempDist_Recent",  "Wtr_Year_PPTDist_Recent", 
+                 "Wtr_Year_TempDist_Historic", "Wtr_Year_PPTDist_Historic",
+                 "GrwSsn_TempDist_Recent", "GrwSsn_PPTDist_Recent",
+                 "GrwSsn_TempDist_Historic", "GrwSsn_PPTDist_Historic",
+              "Geographic_Dist"), scale)
+
+unique(wl2_surv_to_rep_y2_scaled_sub$pop)
+unique(wl2_surv_to_rep_y2_scaled_sub$mf)
+unique(wl2_surv_to_rep_y2_scaled_sub$block)
+```
+
 
 
 ### Basic Model Workflow 
@@ -322,4 +554,40 @@ surv_GD_fits_wl2 %>% mutate(tidy=map(fit, tidy)) %>% unnest(tidy) %>%
 mod_test <- glmer(SurvtoRep_y2 ~ Wtr_Year_GD_Recent + Geographic_Dist + (1|pop) + (1|block), data=wl2_surv_to_rep_y2_scaled, family=binomial)
 summary(mod_test)
 #boundary (singular) fit: see help('isSingular') for water year recent and historical - when you add water year climate distance, pop explains little variation 
+```
+
+```{r}
+surv_GD_wflow_wl2_sub <- workflow() %>%
+  add_variables(outcomes = SurvtoRep_y2, predictors = c(pop, mf, block, contains("Dist"))) 
+
+surv_GD_fits_wl2_sub <- tibble(wflow=list(
+  pop.block = {surv_GD_wflow_wl2_sub %>% 
+      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ (1|pop) + (1|block))},
+  
+  GS_Recent = {surv_GD_wflow_wl2_sub %>% 
+      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ GrwSsn_TempDist_Recent + GrwSsn_PPTDist_Recent + Geographic_Dist + (1|pop) + (1|block))},
+  
+  GS_Historical = {surv_GD_wflow_wl2_sub %>% 
+      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ GrwSsn_TempDist_Historic + GrwSsn_PPTDist_Historic + Geographic_Dist + (1|pop) + (1|block))},
+  
+  WY_Recent = {surv_GD_wflow_wl2_sub %>% 
+      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ Wtr_Year_TempDist_Recent + Wtr_Year_PPTDist_Recent + Geographic_Dist + (1|pop) + (1|block))},
+  
+  WY_Historical = {surv_GD_wflow_wl2_sub %>% 
+      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ Wtr_Year_TempDist_Historic + Wtr_Year_PPTDist_Historic + Geographic_Dist + (1|pop) + (1|block))}
+  
+),
+name=names(wflow)
+) %>% 
+  select(name,wflow) %>%
+  mutate(fit = map(wflow, fit, data = wl2_surv_to_rep_y2_scaled_sub))
+
+surv_GD_fits_wl2_sub %>% mutate(glance=map(fit, glance)) %>% unnest(glance) %>% arrange(AIC) %>% select(-wflow:-sigma)
+#water year models preferred by AIC 
+
+surv_GD_fits_wl2_sub %>% mutate(tidy=map(fit, tidy)) %>% unnest(tidy) %>%
+  filter(str_detect(term, "Dist")) %>%
+  drop_na(p.value) %>%
+  select(-wflow:-group)# %>%
+#  arrange(p.value)
 ```
