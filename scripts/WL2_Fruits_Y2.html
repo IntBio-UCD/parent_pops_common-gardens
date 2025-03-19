@@ -11,7 +11,7 @@
 
 <meta name="author" content="Brandie QC" />
 
-<meta name="date" content="2025-03-14" />
+<meta name="date" content="2025-03-18" />
 
 <title>WL2_Fruits_Y2</title>
 
@@ -352,7 +352,7 @@ display: none;
 
 <h1 class="title toc-ignore">WL2_Fruits_Y2</h1>
 <h4 class="author">Brandie QC</h4>
-<h4 class="date">2025-03-14</h4>
+<h4 class="date">2025-03-18</h4>
 
 </div>
 
@@ -450,7 +450,7 @@ library(tidymodels)</code></pre>
 ## ✖ infer::t_test()       masks rstatix::t_test()
 ## ✖ Matrix::unpack()      masks tidyr::unpack()
 ## ✖ recipes::update()     masks Matrix::update(), stats::update()
-## • Dig deeper into tidy modeling with R at https://www.tmwr.org</code></pre>
+## • Use suppressPackageStartupMessages() to eliminate package startup messages</code></pre>
 <pre class="r"><code>library(furrr) #Apply Mapping Functions in Parallel using Futures</code></pre>
 <pre><code>## Loading required package: future</code></pre>
 <pre class="r"><code>tidymodels_prefer()
@@ -578,6 +578,59 @@ wl2_gowers_2024 &lt;- read_csv(&quot;../output/Climate/Gowers_WL2_2024.csv&quot;
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
 </div>
+<div id="climate-subtraction-distance" class="section level2">
+<h2>Climate Subtraction Distance</h2>
+<pre class="r"><code>wl2_wtr_year_sub_recent_2024 &lt;- read_csv(&quot;../output/Climate/full_year_Subtraction_Dist_from_WL2_2024_Recent.csv&quot;) %&gt;% 
+  select(parent.pop, Wtr_Year_TempDist_Recent=ann_tmean_dist, Wtr_Year_PPTDist_Recent=ann_ppt_dist)</code></pre>
+<pre><code>## Rows: 23 Columns: 18
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr  (2): parent.pop, elevation.group
+## dbl (16): elev_m, ppt_dist, cwd_dist, pck_dist, tmn_dist, tmx_dist, ann_tmea...
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+<pre class="r"><code>wl2_wtr_year_sub_historic_2024 &lt;- read_csv(&quot;../output/Climate/full_year_Subtraction_Dist_from_WL2_2024_Historical.csv&quot;) %&gt;% 
+  select(parent.pop, Wtr_Year_TempDist_Historic=ann_tmean_dist, Wtr_Year_PPTDist_Historic=ann_ppt_dist)</code></pre>
+<pre><code>## Rows: 23 Columns: 18
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr  (2): parent.pop, elevation.group
+## dbl (16): elev_m, ppt_dist, cwd_dist, pck_dist, tmn_dist, tmx_dist, ann_tmea...
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+<pre class="r"><code>wl2_grwssn_sub_recent_2024 &lt;- read_csv(&quot;../output/Climate/grwssn_Subtraction_Dist_from_WL2_2024_Recent.csv&quot;) %&gt;% 
+  select(parent.pop, GrwSsn_TempDist_Recent=ann_tmean_dist, GrwSsn_PPTDist_Recent=ann_ppt_dist)</code></pre>
+<pre><code>## Rows: 23 Columns: 18
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr  (2): parent.pop, elevation.group
+## dbl (16): elev_m, ppt_dist, cwd_dist, pck_dist, tmn_dist, tmx_dist, ann_tmea...
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+<pre class="r"><code>wl2_grwssn_sub_historic_2024 &lt;- read_csv(&quot;../output/Climate/grwssn_Subtraction_Dist_from_WL2_2024_Historical.csv&quot;) %&gt;% 
+  select(parent.pop, GrwSsn_TempDist_Historic=ann_tmean_dist, GrwSsn_PPTDist_Historic=ann_ppt_dist)</code></pre>
+<pre><code>## Rows: 23 Columns: 18
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr  (2): parent.pop, elevation.group
+## dbl (16): elev_m, ppt_dist, cwd_dist, pck_dist, tmn_dist, tmx_dist, ann_tmea...
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+<pre class="r"><code>wl2_sub_dist_2024 &lt;- wl2_wtr_year_sub_recent_2024 %&gt;% 
+  left_join(wl2_wtr_year_sub_historic_2024) %&gt;% 
+  left_join(wl2_grwssn_sub_recent_2024) %&gt;% 
+  left_join(wl2_grwssn_sub_historic_2024) %&gt;% 
+  rename(pop=parent.pop) %&gt;% 
+  left_join(wl2_gowers_2024)</code></pre>
+<pre><code>## Joining with `by = join_by(parent.pop)`
+## Joining with `by = join_by(parent.pop)`
+## Joining with `by = join_by(parent.pop)`
+## Joining with `by = join_by(pop)`</code></pre>
+</div>
 <div id="calculate-fruitsy2" class="section level2">
 <h2>Calculate Fruits(y2)</h2>
 <pre class="r"><code>wl2_fruits_y2 &lt;- wl2_ann_cens_2024_pops %&gt;% select(Pop.Type:block, flowers=num.flw, fruits=num.fruit) %&gt;%
@@ -696,6 +749,15 @@ summary(wl2_FRFLs_y2_nozeros)</code></pre>
 ##  3rd Qu.:140893.4   3rd Qu.:1598.4822  
 ##  Max.   :283280.5   Max.   :1707.0000</code></pre>
 <pre class="r"><code>#write_csv(wl2_fruits_y2, &quot;../output/WL2_Traits/WL2_Fruits_Y2.csv&quot;)</code></pre>
+<pre class="r"><code>wl2_fruits_y2_sub_dist &lt;- wl2_fruits_y2 %&gt;% 
+  select(loc:block, fruits, FrFlN) %&gt;% 
+  left_join(wl2_sub_dist_2024)</code></pre>
+<pre><code>## Joining with `by = join_by(pop)`</code></pre>
+<pre class="r"><code>wl2_fruits_y2_nozeros_sub_dist &lt;- wl2_fruits_y2_sub_dist %&gt;% 
+  filter(fruits&gt;0)
+
+wl2_FRFLs_y2_nozero_sub_dists &lt;- wl2_fruits_y2_sub_dist %&gt;% 
+  filter(FrFlN&gt;0)</code></pre>
 <div id="bar-plots" class="section level3">
 <h3>BAR PLOTS</h3>
 <pre class="r"><code>wl2_fruits_y2 %&gt;% 
@@ -846,6 +908,177 @@ GSCD_historic &lt;- wl2_fruits_y2 %&gt;%
 ## Removed 1 row containing missing values or values outside the scale range
 ## (`geom_point()`).</code></pre>
 <pre class="r"><code>#ggsave(&quot;../output/WL2_Traits/WL2_fruits_y2_SCATTERS_Historical.png&quot;, width = 24, height = 18, units = &quot;in&quot;)</code></pre>
+<div id="directional-distance" class="section level4">
+<h4>Directional Distance</h4>
+<pre class="r"><code>#scatter plots - recent
+GSCD_prob_recent &lt;- wl2_fruits_y2_sub_dist %&gt;% 
+  filter(pop != &quot;LV1&quot;, pop != &quot;SQ1&quot;, pop != &quot;WR&quot;) %&gt;% 
+  group_by(pop, elev_m, GrwSsn_TempDist_Recent, GrwSsn_TempDist_Historic) %&gt;% 
+  summarise(meanEst=mean(fruits, na.rm = TRUE), semEst=sem(fruits, na.rm=TRUE)) %&gt;% 
+  ggplot(aes(x=GrwSsn_TempDist_Recent, y=meanEst, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.3, linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y=&quot;Y2 Fruit Number&quot;, x=&quot;Recent Growth Season Temp Dist&quot;) +
+  theme(text=element_text(size=30))</code></pre>
+<pre><code>## `summarise()` has grouped output by &#39;pop&#39;, &#39;elev_m&#39;, &#39;GrwSsn_TempDist_Recent&#39;.
+## You can override using the `.groups` argument.</code></pre>
+<pre class="r"><code>WYCD_prob_recent &lt;- wl2_fruits_y2_sub_dist %&gt;% 
+  filter(pop != &quot;LV1&quot;, pop != &quot;SQ1&quot;, pop != &quot;WR&quot;) %&gt;% 
+  group_by(pop, elev_m, Wtr_Year_TempDist_Recent, Wtr_Year_TempDist_Historic) %&gt;% 
+  summarise(meanEst=mean(fruits, na.rm = TRUE), semEst=sem(fruits, na.rm=TRUE)) %&gt;% 
+  ggplot(aes(x=Wtr_Year_TempDist_Recent, y=meanEst, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.3,linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y=&quot;Y2 Fruit Number&quot;, x=&quot;Recent Water Year Temp Dist&quot;) +
+  theme(text=element_text(size=30))</code></pre>
+<pre><code>## `summarise()` has grouped output by &#39;pop&#39;, &#39;elev_m&#39;,
+## &#39;Wtr_Year_TempDist_Recent&#39;. You can override using the `.groups` argument.</code></pre>
+<pre class="r"><code>GD_prob &lt;- wl2_fruits_y2_sub_dist %&gt;% 
+  filter(pop != &quot;LV1&quot;, pop != &quot;SQ1&quot;, pop != &quot;WR&quot;) %&gt;% 
+  group_by(pop, elev_m, GrwSsn_TempDist_Recent, Wtr_Year_TempDist_Recent, Geographic_Dist) %&gt;% 
+  summarise(meanEst=mean(fruits, na.rm = TRUE), semEst=sem(fruits, na.rm=TRUE)) %&gt;% 
+  ggplot(aes(x=Geographic_Dist, y=meanEst, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.2, linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y=&quot;Y2 Fruit Number&quot;, x=&quot;Geographic Distance (m)&quot;) +
+  theme(text=element_text(size=30), axis.text.x = element_text(angle = 45,  hjust = 1))</code></pre>
+<pre><code>## `summarise()` has grouped output by &#39;pop&#39;, &#39;elev_m&#39;, &#39;GrwSsn_TempDist_Recent&#39;,
+## &#39;Wtr_Year_TempDist_Recent&#39;. You can override using the `.groups` argument.</code></pre>
+<pre class="r"><code>ED_prob &lt;- wl2_fruits_y2_sub_dist %&gt;% 
+  filter(pop != &quot;LV1&quot;, pop != &quot;SQ1&quot;, pop != &quot;WR&quot;) %&gt;% 
+  group_by(pop, elev_m, Elev_Dist) %&gt;% 
+  summarise(meanEst=mean(fruits, na.rm = TRUE), semEst=sem(fruits, na.rm=TRUE)) %&gt;% 
+  ggplot(aes(x=Elev_Dist, y=meanEst, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.3, linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y=&quot;Y2 Fruit Number&quot;, x=&quot;Elevation Distance (m)&quot;) +
+  theme(text=element_text(size=30))</code></pre>
+<pre><code>## `summarise()` has grouped output by &#39;pop&#39;, &#39;elev_m&#39;. You can override using the
+## `.groups` argument.</code></pre>
+<pre class="r"><code>WL2_fruits_y2_sub_FIG_prob_recent &lt;- ggarrange(GSCD_prob_recent, WYCD_prob_recent, GD_prob, ED_prob, ncol=2, nrow=2) 
+ggsave(&quot;../output/WL2_Traits/WL2_fruits_y2_TmpSubDist_SCATTERS_Recent.png&quot;, width = 24, height = 18, units = &quot;in&quot;)</code></pre>
+<pre class="r"><code>#scatter plots - historic
+GSCD_prob_historic &lt;- wl2_fruits_y2_sub_dist %&gt;% 
+  filter(pop != &quot;LV1&quot;, pop != &quot;SQ1&quot;, pop != &quot;WR&quot;) %&gt;% 
+  group_by(pop, elev_m, GrwSsn_TempDist_Recent, GrwSsn_TempDist_Historic) %&gt;% 
+  summarise(meanEst=mean(fruits, na.rm = TRUE), semEst=sem(fruits, na.rm=TRUE)) %&gt;% 
+  ggplot(aes(x=GrwSsn_TempDist_Historic, y=meanEst, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.3, linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y=&quot;Y2 Fruit Number&quot;, x=&quot;Historic Growth Season Temp Dist&quot;) +
+  theme(text=element_text(size=30))</code></pre>
+<pre><code>## `summarise()` has grouped output by &#39;pop&#39;, &#39;elev_m&#39;, &#39;GrwSsn_TempDist_Recent&#39;.
+## You can override using the `.groups` argument.</code></pre>
+<pre class="r"><code>WYCD_prob_historic &lt;- wl2_fruits_y2_sub_dist %&gt;% 
+  filter(pop != &quot;LV1&quot;, pop != &quot;SQ1&quot;, pop != &quot;WR&quot;) %&gt;% 
+  group_by(pop, elev_m, Wtr_Year_TempDist_Recent, Wtr_Year_TempDist_Historic) %&gt;% 
+  summarise(meanEst=mean(fruits, na.rm = TRUE), semEst=sem(fruits, na.rm=TRUE)) %&gt;% 
+  ggplot(aes(x=Wtr_Year_TempDist_Historic, y=meanEst, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.3,linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y=&quot;Y2 Fruit Number&quot;, x=&quot;Historic Water Year Temp Dist&quot;) +
+  theme(text=element_text(size=30))</code></pre>
+<pre><code>## `summarise()` has grouped output by &#39;pop&#39;, &#39;elev_m&#39;,
+## &#39;Wtr_Year_TempDist_Recent&#39;. You can override using the `.groups` argument.</code></pre>
+<pre class="r"><code>WL2_fruits_y2_sub_FIG_prob_historic &lt;- ggarrange(GSCD_prob_historic, WYCD_prob_historic, GD_prob, ED_prob, ncol=2, nrow=2) 
+ggsave(&quot;../output/WL2_Traits/WL2_fruits_y2_TmpSubDist_SCATTERS_Historic.png&quot;, width = 24, height = 18, units = &quot;in&quot;)</code></pre>
+<pre class="r"><code>#scatter plots - recent
+GSCD_prob_recent &lt;- wl2_fruits_y2_sub_dist %&gt;% 
+  filter(pop != &quot;LV1&quot;, pop != &quot;SQ1&quot;, pop != &quot;WR&quot;) %&gt;% 
+  group_by(pop, elev_m, GrwSsn_PPTDist_Recent, GrwSsn_PPTDist_Historic) %&gt;% 
+  summarise(meanEst=mean(fruits, na.rm = TRUE), semEst=sem(fruits, na.rm=TRUE)) %&gt;% 
+  ggplot(aes(x=GrwSsn_PPTDist_Recent, y=meanEst, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=0.3, linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y=&quot;Y2 Fruit Number&quot;, x=&quot;Recent Growth Season PPT Dist&quot;) +
+  theme(text=element_text(size=30))</code></pre>
+<pre><code>## `summarise()` has grouped output by &#39;pop&#39;, &#39;elev_m&#39;, &#39;GrwSsn_PPTDist_Recent&#39;.
+## You can override using the `.groups` argument.</code></pre>
+<pre class="r"><code>WYCD_prob_recent &lt;- wl2_fruits_y2_sub_dist %&gt;% 
+  filter(pop != &quot;LV1&quot;, pop != &quot;SQ1&quot;, pop != &quot;WR&quot;) %&gt;% 
+  group_by(pop, elev_m, Wtr_Year_PPTDist_Recent, Wtr_Year_PPTDist_Historic) %&gt;% 
+  summarise(meanEst=mean(fruits, na.rm = TRUE), semEst=sem(fruits, na.rm=TRUE)) %&gt;% 
+  ggplot(aes(x=Wtr_Year_PPTDist_Recent, y=meanEst, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.3,linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y=&quot;Y2 Fruit Number&quot;, x=&quot;Recent Water Year PPT Dist&quot;) +
+  theme(text=element_text(size=30))</code></pre>
+<pre><code>## `summarise()` has grouped output by &#39;pop&#39;, &#39;elev_m&#39;, &#39;Wtr_Year_PPTDist_Recent&#39;.
+## You can override using the `.groups` argument.</code></pre>
+<pre class="r"><code>GD_prob &lt;- wl2_fruits_y2_sub_dist %&gt;% 
+  filter(pop != &quot;LV1&quot;, pop != &quot;SQ1&quot;, pop != &quot;WR&quot;) %&gt;% 
+  group_by(pop, elev_m, GrwSsn_PPTDist_Recent, Wtr_Year_PPTDist_Recent, Geographic_Dist) %&gt;% 
+  summarise(meanEst=mean(fruits, na.rm = TRUE), semEst=sem(fruits, na.rm=TRUE)) %&gt;% 
+  ggplot(aes(x=Geographic_Dist, y=meanEst, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.2, linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y=&quot;Y2 Fruit Number&quot;, x=&quot;Geographic Distance (m)&quot;) +
+  theme(text=element_text(size=30), axis.text.x = element_text(angle = 45,  hjust = 1))</code></pre>
+<pre><code>## `summarise()` has grouped output by &#39;pop&#39;, &#39;elev_m&#39;, &#39;GrwSsn_PPTDist_Recent&#39;,
+## &#39;Wtr_Year_PPTDist_Recent&#39;. You can override using the `.groups` argument.</code></pre>
+<pre class="r"><code>ED_prob &lt;- wl2_fruits_y2_sub_dist %&gt;% 
+  filter(pop != &quot;LV1&quot;, pop != &quot;SQ1&quot;, pop != &quot;WR&quot;) %&gt;% 
+  group_by(pop, elev_m, Elev_Dist) %&gt;% 
+  summarise(meanEst=mean(fruits, na.rm = TRUE), semEst=sem(fruits, na.rm=TRUE)) %&gt;% 
+  ggplot(aes(x=Elev_Dist, y=meanEst, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.3, linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y=&quot;Y2 Fruit Number&quot;, x=&quot;Elevation Distance (m)&quot;) +
+  theme(text=element_text(size=30))</code></pre>
+<pre><code>## `summarise()` has grouped output by &#39;pop&#39;, &#39;elev_m&#39;. You can override using the
+## `.groups` argument.</code></pre>
+<pre class="r"><code>WL2_fruits_y2_sub_FIG_prob_recent &lt;- ggarrange(GSCD_prob_recent, WYCD_prob_recent, GD_prob, ED_prob, ncol=2, nrow=2) 
+ggsave(&quot;../output/WL2_Traits/WL2_fruits_y2_PPTSubDist_SCATTERS_Recent.png&quot;, width = 24, height = 18, units = &quot;in&quot;)</code></pre>
+<pre class="r"><code>#scatter plots - historic
+GSCD_prob_historic &lt;- wl2_fruits_y2_sub_dist %&gt;% 
+  filter(pop != &quot;LV1&quot;, pop != &quot;SQ1&quot;, pop != &quot;WR&quot;) %&gt;% 
+  group_by(pop, elev_m, GrwSsn_PPTDist_Recent, GrwSsn_PPTDist_Historic) %&gt;% 
+  summarise(meanEst=mean(fruits, na.rm = TRUE), semEst=sem(fruits, na.rm=TRUE)) %&gt;% 
+  ggplot(aes(x=GrwSsn_PPTDist_Historic, y=meanEst, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.3, linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y=&quot;Y2 Fruit Number&quot;, x=&quot;Historic Growth Season PPT Dist&quot;) +
+  theme(text=element_text(size=30))</code></pre>
+<pre><code>## `summarise()` has grouped output by &#39;pop&#39;, &#39;elev_m&#39;, &#39;GrwSsn_PPTDist_Recent&#39;.
+## You can override using the `.groups` argument.</code></pre>
+<pre class="r"><code>WYCD_prob_historic &lt;- wl2_fruits_y2_sub_dist %&gt;% 
+  filter(pop != &quot;LV1&quot;, pop != &quot;SQ1&quot;, pop != &quot;WR&quot;) %&gt;% 
+  group_by(pop, elev_m, Wtr_Year_PPTDist_Recent, Wtr_Year_PPTDist_Historic) %&gt;% 
+  summarise(meanEst=mean(fruits, na.rm = TRUE), semEst=sem(fruits, na.rm=TRUE)) %&gt;% 
+  ggplot(aes(x=Wtr_Year_PPTDist_Historic, y=meanEst, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.3,linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y=&quot;Y2 Fruit Number&quot;, x=&quot;Historic Water Year PPT Dist&quot;) +
+  theme(text=element_text(size=30))</code></pre>
+<pre><code>## `summarise()` has grouped output by &#39;pop&#39;, &#39;elev_m&#39;, &#39;Wtr_Year_PPTDist_Recent&#39;.
+## You can override using the `.groups` argument.</code></pre>
+<pre class="r"><code>WL2_fruits_y2_sub_FIG_prob_historic &lt;- ggarrange(GSCD_prob_historic, WYCD_prob_historic, GD_prob, ED_prob, ncol=2, nrow=2) 
+ggsave(&quot;../output/WL2_Traits/WL2_fruits_y2_PPTSubDist_SCATTERS_Historic.png&quot;, width = 24, height = 18, units = &quot;in&quot;)</code></pre>
+</div>
 </div>
 </div>
 <div id="stats" class="section level2">
@@ -967,6 +1200,23 @@ wl2_fruits_y2_nozeros_scaled %&gt;%  #looks better
   geom_histogram()</code></pre>
 <pre><code>## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.</code></pre>
 <p><img role="img" src="data:image/png;base64,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CBAgQIAAAQKlCgigpfIqnAABAgQIECBAoCgggBZFTBMgQIAAAQIECJQqIICWyqtwAgQIECBAgACBooAAWhQxTYAAAQIECBAgUKqAAFoqr8IJECBAgAABAgSKAgJoUcQ0AQIECBAgQIBAqQICaKm8CidAgAABAgQIECgKCKBFEdMECBAgQIAAAQKlCgigpfIqnAABAgQIECBAoCgggBZFTBMgQIAAAQIECJQqIICWyqtwAgQIECBAgACBooAAWhQxTYAAAQIECBAgUKqAAFoqr8IJECBAgAABAgSKAgJoUcQ0AQIECBAgQIBAqQICaKm8CidAgAABAgQIECgKCKBFEdMECBAgQIAAAQKlCgigpfIqnAABAgQIECBAoCgggBZFTBMgQIAAAQIECJQqIICWyqtwAgQIECBAgACBooAAWhQxTYAAAQIECBAgUKqAAFoqr8IJECBAgAABAgSKAgJoUcQ0AQIECBAgQIBAqQICaKm8CidAgAABAgQIECgKCKBFEdMECBAgQIAAAQKlCgigpfIqnAABAgQIECBAoCgggBZFTBMgQIAAAQIECJQqIICWyqtwAgQIECBAgACBooAAWhQxTYAAAQIECBAgUKqAAFoqr8IJECBAgAABAgSKAgJoUcQ0AQIECBAgQIBAqQICaKm8CidAgAABAgQIECgKCKBFEdMECBAgQIAAAQKlCgigpfIqnAABAgQIECBAoCgggBZFTBMgQIAAAQIECJQqIICWyqtwAgQIECBAgACBooAAWhQxTYAAAQIECBAgUKqAAFoqr8IJECBAgAABAgSKAgJoUcQ0AQIECBAgQIBAqQICaKm8CidAgAABAgQIECgKCKBFEdMECBAgQIAAAQKlCgigpfIqnAABAgQIECBAoCgggBZFTBMgQIAAAQIECJQqIICWyqtwAgQIECBAgACBooAAWhQxTYAAAQIECBAgUKqAAFoqr8IJECBAgAABAgSKAgJoUcQ0AQIECBAgQIBAqQICaKm8CidAgAABAgQIECgKCKBFEdMECBAgQIAAAQKlCgigpfIqnAABAgQIECBAoCjQWZyRynRXV1cqVcnq0dbWlv3t7OwMqdWt1VDt7e0MXjHgEDKD+JrYtGlTqzfDpteX6us11Xo1DVtYMG4HXhO/RuHw6/eGqm3jhU1+i5NxO4hDXR0auWkgqGQDaHd390B13qHz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" /><!-- --></p>
+<pre class="r"><code>wl2_fruits_y2_nozeros_scaled_sub &lt;- wl2_fruits_y2_nozeros_sub_dist %&gt;% 
+  filter(pop != &quot;LV1&quot;, pop != &quot;SQ1&quot;, pop != &quot;WR&quot;) %&gt;% 
+  mutate_at(c(&quot;Wtr_Year_TempDist_Recent&quot;,  &quot;Wtr_Year_PPTDist_Recent&quot;, 
+                 &quot;Wtr_Year_TempDist_Historic&quot;, &quot;Wtr_Year_PPTDist_Historic&quot;,
+                 &quot;GrwSsn_TempDist_Recent&quot;, &quot;GrwSsn_PPTDist_Recent&quot;,
+                 &quot;GrwSsn_TempDist_Historic&quot;, &quot;GrwSsn_PPTDist_Historic&quot;,
+              &quot;Geographic_Dist&quot;), scale) %&gt;% 
+  drop_na(fruits) %&gt;% 
+  mutate(logFruits=log(fruits),
+         log10Fruits=log10(fruits)) #log transformation
+
+unique(wl2_fruits_y2_nozeros_scaled_sub$pop)</code></pre>
+<pre><code>## [1] &quot;BH&quot;  &quot;WL2&quot; &quot;IH&quot;  &quot;SC&quot;  &quot;YO7&quot; &quot;CC&quot;  &quot;TM2&quot;</code></pre>
+<pre class="r"><code>unique(wl2_fruits_y2_nozeros_scaled_sub$mf)</code></pre>
+<pre><code>## [1] 7 8 3 2 4 1 6 5 9</code></pre>
+<pre class="r"><code>unique(wl2_fruits_y2_nozeros_scaled_sub$block)</code></pre>
+<pre><code>##  [1] &quot;A&quot; &quot;B&quot; &quot;C&quot; &quot;D&quot; &quot;E&quot; &quot;F&quot; &quot;H&quot; &quot;I&quot; &quot;J&quot; &quot;K&quot; &quot;L&quot; &quot;M&quot;</code></pre>
 <pre class="r"><code>fruits_modelslog &lt;- tribble(
   ~name,          ~f,
   &quot;1_pop&quot;,              &quot;logFruits ~ (1|pop)&quot;, 
@@ -1139,6 +1389,65 @@ fruits_models_log_CD_GD %&gt;% mutate(tidy=map(lmer, tidy)) %&gt;% unnest(tidy) 
 <pre class="r"><code>#  arrange(p.value)
 
 #water year recent and historical + geo dist in those models = sig </code></pre>
+<pre class="r"><code>fruits_models_log_CD_GD_sub &lt;- tribble(
+  ~name,          ~f,
+  &quot;1_pop.block&quot;,      &quot;logFruits ~  (1|pop/mf) + (1|block)&quot;, 
+  &quot;2_GS_Recent&quot;,      &quot;logFruits ~  GrwSsn_TempDist_Recent + GrwSsn_PPTDist_Recent + Geographic_Dist + (1|pop/mf) + (1|block)&quot;, 
+  &quot;3_GS_Historical&quot;,  &quot;logFruits ~  GrwSsn_TempDist_Historic + GrwSsn_PPTDist_Historic + Geographic_Dist + (1|pop/mf) + (1|block)&quot;, 
+  &quot;4_WY_Recent&quot;,      &quot;logFruits ~  Wtr_Year_TempDist_Recent + Wtr_Year_PPTDist_Recent + Geographic_Dist +(1|pop/mf) + (1|block)&quot;,
+  &quot;5_WY_Historical&quot;,  &quot;logFruits ~  Wtr_Year_TempDist_Historic + Wtr_Year_PPTDist_Historic + Geographic_Dist + (1|pop/mf) + (1|block)&quot;
+)
+
+#run the models 
+fruits_models_log_CD_GD_sub &lt;- fruits_models_log_CD_GD_sub %&gt;%
+  mutate(lmer = map(f, ~ lmer(as.formula(.), 
+                            data = wl2_fruits_y2_nozeros_scaled_sub)), #run the models 
+         predict = map(lmer, predict), # predicting from original data...
+         glance = map(lmer, glance)) #glance at the model results</code></pre>
+<pre><code>## boundary (singular) fit: see help(&#39;isSingular&#39;)
+## boundary (singular) fit: see help(&#39;isSingular&#39;)
+## boundary (singular) fit: see help(&#39;isSingular&#39;)
+## boundary (singular) fit: see help(&#39;isSingular&#39;)</code></pre>
+<pre class="r"><code>#boundary (singular) fit: see help(&#39;isSingular&#39;) warning for all models with climate distance 
+
+fruits_models_log_CD_GD_sub %&gt;% select(-f, -lmer) %&gt;% unnest(glance) %&gt;% arrange(BIC) #look at the model fitting info </code></pre>
+<pre><code>## # A tibble: 5 × 9
+##   name            predict     nobs sigma logLik   AIC   BIC REMLcrit df.residual
+##   &lt;chr&gt;           &lt;list&gt;     &lt;int&gt; &lt;dbl&gt;  &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;    &lt;dbl&gt;       &lt;int&gt;
+## 1 1_pop.block     &lt;dbl [71]&gt;    71 0.790  -98.4  207.  218.     197.          66
+## 2 2_GS_Recent     &lt;dbl [71]&gt;    71 0.796  -99.3  215.  233.     199.          63
+## 3 3_GS_Historical &lt;dbl [71]&gt;    71 0.796  -99.3  215.  233.     199.          63
+## 4 5_WY_Historical &lt;dbl [71]&gt;    71 0.796  -99.5  215.  233.     199.          63
+## 5 4_WY_Recent     &lt;dbl [71]&gt;    71 0.797  -99.6  215.  233.     199.          63</code></pre>
+<pre class="r"><code>fruits_models_log_CD_GD_sub %&gt;% select(-f, -lmer) %&gt;% unnest(glance) %&gt;% arrange(AIC) #look at the model fitting info </code></pre>
+<pre><code>## # A tibble: 5 × 9
+##   name            predict     nobs sigma logLik   AIC   BIC REMLcrit df.residual
+##   &lt;chr&gt;           &lt;list&gt;     &lt;int&gt; &lt;dbl&gt;  &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;    &lt;dbl&gt;       &lt;int&gt;
+## 1 1_pop.block     &lt;dbl [71]&gt;    71 0.790  -98.4  207.  218.     197.          66
+## 2 2_GS_Recent     &lt;dbl [71]&gt;    71 0.796  -99.3  215.  233.     199.          63
+## 3 3_GS_Historical &lt;dbl [71]&gt;    71 0.796  -99.3  215.  233.     199.          63
+## 4 5_WY_Historical &lt;dbl [71]&gt;    71 0.796  -99.5  215.  233.     199.          63
+## 5 4_WY_Recent     &lt;dbl [71]&gt;    71 0.797  -99.6  215.  233.     199.          63</code></pre>
+<pre class="r"><code>fruits_models_log_CD_GD_sub %&gt;% mutate(tidy=map(lmer, tidy)) %&gt;% unnest(tidy) %&gt;%
+  select(name, term:p.value) %&gt;% 
+  filter(str_detect(term, &quot;Dist&quot;)) %&gt;%
+  drop_na(p.value)</code></pre>
+<pre><code>## # A tibble: 12 × 7
+##    name            term               estimate std.error statistic    df p.value
+##    &lt;chr&gt;           &lt;chr&gt;                 &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt; &lt;dbl&gt;   &lt;dbl&gt;
+##  1 2_GS_Recent     GrwSsn_TempDist_R…   0.0592     0.198     0.298  20.0   0.769
+##  2 2_GS_Recent     GrwSsn_PPTDist_Re…   0.0727     0.192     0.380  24.5   0.707
+##  3 2_GS_Recent     Geographic_Dist      0.193      0.116     1.66   21.6   0.111
+##  4 3_GS_Historical GrwSsn_TempDist_H…   0.0592     0.198     0.298  20.0   0.769
+##  5 3_GS_Historical GrwSsn_PPTDist_Hi…   0.0727     0.192     0.380  24.5   0.707
+##  6 3_GS_Historical Geographic_Dist      0.193      0.116     1.66   21.6   0.111
+##  7 4_WY_Recent     Wtr_Year_TempDist…   0.140      0.159     0.879  24.7   0.388
+##  8 4_WY_Recent     Wtr_Year_PPTDist_…   0.0804     0.173     0.466  25.4   0.645
+##  9 4_WY_Recent     Geographic_Dist      0.197      0.132     1.49   25.6   0.148
+## 10 5_WY_Historical Wtr_Year_TempDist…   0.153      0.166     0.922  24.5   0.366
+## 11 5_WY_Historical Wtr_Year_PPTDist_…   0.0936     0.177     0.530  24.5   0.601
+## 12 5_WY_Historical Geographic_Dist      0.196      0.128     1.53   24.7   0.138</code></pre>
+<pre class="r"><code>#  arrange(p.value)</code></pre>
 </div>
 </div>
 </div>
