@@ -97,13 +97,13 @@ wl2_gowers_2024 <- read_csv("../output/Climate/Gowers_WL2_2024.csv") %>%
 ### Climate Subtraction Distance
 
 ```{r}
-ucd_wtr_year_sub_recent <- read_csv("../output/Climate/full_year_Subtraction_Dist_from_Davis_Recent.csv") %>% 
+ucd_wtr_year_sub_recent <- read_csv("../output/Climate/full_year_Subtraction_Dist_from_Home_Davis_Recent.csv") %>% 
   select(parent.pop, Wtr_Year_TempDist_Recent=ann_tmean_dist, Wtr_Year_PPTDist_Recent=ann_ppt_dist)
-ucd_wtr_year_sub_historic <- read_csv("../output/Climate/full_year_Subtraction_Dist_from_Davis_Historical.csv") %>% 
+ucd_wtr_year_sub_historic <- read_csv("../output/Climate/full_year_Subtraction_Dist_from_Home_Davis_Historical.csv") %>% 
   select(parent.pop, Wtr_Year_TempDist_Historic=ann_tmean_dist, Wtr_Year_PPTDist_Historic=ann_ppt_dist)
-ucd_grwssn_sub_recent <- read_csv("../output/Climate/grwssn_Subtraction_Dist_from_Davis_Recent.csv") %>% 
+ucd_grwssn_sub_recent <- read_csv("../output/Climate/grwssn_Subtraction_Dist_from_Home_Davis_Recent.csv") %>% 
   select(parent.pop, GrwSsn_TempDist_Recent=ann_tmean_dist, GrwSsn_PPTDist_Recent=ann_ppt_dist)
-ucd_grwssn_sub_historic <- read_csv("../output/Climate/grwssn_Subtraction_Dist_from_Davis_Historical.csv") %>% 
+ucd_grwssn_sub_historic <- read_csv("../output/Climate/grwssn_Subtraction_Dist_from_Home_Davis_Historical.csv") %>% 
   select(parent.pop, GrwSsn_TempDist_Historic=ann_tmean_dist, GrwSsn_PPTDist_Historic=ann_ppt_dist)
 ucd_sub_dist <- ucd_wtr_year_sub_recent %>% 
   left_join(ucd_wtr_year_sub_historic) %>% 
@@ -112,13 +112,13 @@ ucd_sub_dist <- ucd_wtr_year_sub_recent %>%
   rename(pop=parent.pop) %>% 
   left_join(ucd_gowers)
 
-wl2_wtr_year_sub_recent <- read_csv("../output/Climate/full_year_Subtraction_Dist_from_WL2_Recent.csv") %>% 
+wl2_wtr_year_sub_recent <- read_csv("../output/Climate/full_year_Subtraction_Dist_from_Home_WL2_Recent.csv") %>% 
   select(parent.pop, Wtr_Year_TempDist_Recent=ann_tmean_dist, Wtr_Year_PPTDist_Recent=ann_ppt_dist)
-wl2_wtr_year_sub_historic <- read_csv("../output/Climate/full_year_Subtraction_Dist_from_WL2_Historical.csv") %>% 
+wl2_wtr_year_sub_historic <- read_csv("../output/Climate/full_year_Subtraction_Dist_from_Home_WL2_Historical.csv") %>% 
   select(parent.pop, Wtr_Year_TempDist_Historic=ann_tmean_dist, Wtr_Year_PPTDist_Historic=ann_ppt_dist)
-wl2_grwssn_sub_recent <- read_csv("../output/Climate/grwssn_Subtraction_Dist_from_WL2_Recent.csv") %>% 
+wl2_grwssn_sub_recent <- read_csv("../output/Climate/grwssn_Subtraction_Dist_from_Home_WL2_Recent.csv") %>% 
   select(parent.pop, GrwSsn_TempDist_Recent=ann_tmean_dist, GrwSsn_PPTDist_Recent=ann_ppt_dist)
-wl2_grwssn_sub_historic <- read_csv("../output/Climate/grwssn_Subtraction_Dist_from_WL2_Historical.csv") %>% 
+wl2_grwssn_sub_historic <- read_csv("../output/Climate/grwssn_Subtraction_Dist_from_Home_WL2_Historical.csv") %>% 
   select(parent.pop, GrwSsn_TempDist_Historic=ann_tmean_dist, GrwSsn_PPTDist_Historic=ann_ppt_dist)
 wl2_sub_dist_2023 <- wl2_wtr_year_sub_recent %>% 
   left_join(wl2_wtr_year_sub_historic) %>% 
@@ -127,13 +127,13 @@ wl2_sub_dist_2023 <- wl2_wtr_year_sub_recent %>%
   rename(pop=parent.pop) %>% 
   left_join(wl2_gowers_2023)
 
-wl2_wtr_year_sub_recent_2024 <- read_csv("../output/Climate/full_year_Subtraction_Dist_from_WL2_2024_Recent.csv") %>% 
+wl2_wtr_year_sub_recent_2024 <- read_csv("../output/Climate/full_year_Subtraction_Dist_from_Home_WL2_2024_Recent.csv") %>% 
   select(parent.pop, Wtr_Year_TempDist_Recent=ann_tmean_dist, Wtr_Year_PPTDist_Recent=ann_ppt_dist)
-wl2_wtr_year_sub_historic_2024 <- read_csv("../output/Climate/full_year_Subtraction_Dist_from_WL2_2024_Historical.csv") %>% 
+wl2_wtr_year_sub_historic_2024 <- read_csv("../output/Climate/full_year_Subtraction_Dist_from_Home_WL2_2024_Historical.csv") %>% 
   select(parent.pop, Wtr_Year_TempDist_Historic=ann_tmean_dist, Wtr_Year_PPTDist_Historic=ann_ppt_dist)
-wl2_grwssn_sub_recent_2024 <- read_csv("../output/Climate/grwssn_Subtraction_Dist_from_WL2_2024_Recent.csv") %>% 
+wl2_grwssn_sub_recent_2024 <- read_csv("../output/Climate/grwssn_Subtraction_Dist_from_Home_WL2_2024_Recent.csv") %>% 
   select(parent.pop, GrwSsn_TempDist_Recent=ann_tmean_dist, GrwSsn_PPTDist_Recent=ann_ppt_dist)
-wl2_grwssn_sub_historic_2024 <- read_csv("../output/Climate/grwssn_Subtraction_Dist_from_WL2_2024_Historical.csv") %>% 
+wl2_grwssn_sub_historic_2024 <- read_csv("../output/Climate/grwssn_Subtraction_Dist_from_Home_WL2_2024_Historical.csv") %>% 
   select(parent.pop, GrwSsn_TempDist_Historic=ann_tmean_dist, GrwSsn_PPTDist_Historic=ann_ppt_dist)
 wl2_sub_dist_2024 <- wl2_wtr_year_sub_recent_2024 %>% 
   left_join(wl2_wtr_year_sub_historic_2024) %>% 
@@ -714,6 +714,12 @@ ucd_estab_means <- ucd_prob_fitness %>% # summary for plotting
   summarize(Survival = mean(ProbFitness),  n=n())
 ucd_estab_means
 #ucd_prob_fitness %>% group_by(pop, mf, ProbFitness) %>% summarise(n())
+
+ucd_prob_fitness_to_save <- ucd_total_fitness %>% 
+  filter(SurvtoRep_Y1==1) %>% 
+  filter(pop!="WV") %>% #ONLY 2 INDIVS 
+  mutate(ProbFruits=if_else(Total_Fitness==0, 0, 1))
+#write_csv(ucd_prob_fitness_to_save, "../output/UCD_Traits/ProbFruits_UCD.csv")
 ```
 
 ```{r}
