@@ -103,13 +103,13 @@ wl2_gowers_2024 <- read_csv("../output/Climate/Gowers_WL2_2024.csv") %>%
 ## Climate Subtraction Distance
 
 ```{r}
-wl2_wtr_year_sub_recent_2024 <- read_csv("../output/Climate/full_year_Subtraction_Dist_from_WL2_2024_Recent.csv") %>% 
+wl2_wtr_year_sub_recent_2024 <- read_csv("../output/Climate/full_year_Subtraction_Dist_from_Home_WL2_2024_Recent.csv") %>% 
   select(parent.pop, Wtr_Year_TempDist_Recent=ann_tmean_dist, Wtr_Year_PPTDist_Recent=ann_ppt_dist)
-wl2_wtr_year_sub_historic_2024 <- read_csv("../output/Climate/full_year_Subtraction_Dist_from_WL2_2024_Historical.csv") %>% 
+wl2_wtr_year_sub_historic_2024 <- read_csv("../output/Climate/full_year_Subtraction_Dist_from_Home_WL2_2024_Historical.csv") %>% 
   select(parent.pop, Wtr_Year_TempDist_Historic=ann_tmean_dist, Wtr_Year_PPTDist_Historic=ann_ppt_dist)
-wl2_grwssn_sub_recent_2024 <- read_csv("../output/Climate/grwssn_Subtraction_Dist_from_WL2_2024_Recent.csv") %>% 
+wl2_grwssn_sub_recent_2024 <- read_csv("../output/Climate/grwssn_Subtraction_Dist_from_Home_WL2_2024_Recent.csv") %>% 
   select(parent.pop, GrwSsn_TempDist_Recent=ann_tmean_dist, GrwSsn_PPTDist_Recent=ann_ppt_dist)
-wl2_grwssn_sub_historic_2024 <- read_csv("../output/Climate/grwssn_Subtraction_Dist_from_WL2_2024_Historical.csv") %>% 
+wl2_grwssn_sub_historic_2024 <- read_csv("../output/Climate/grwssn_Subtraction_Dist_from_Home_WL2_2024_Historical.csv") %>% 
   select(parent.pop, GrwSsn_TempDist_Historic=ann_tmean_dist, GrwSsn_PPTDist_Historic=ann_ppt_dist)
 wl2_sub_dist_2024 <- wl2_wtr_year_sub_recent_2024 %>% 
   left_join(wl2_wtr_year_sub_historic_2024) %>% 
@@ -133,7 +133,7 @@ wl2_FRFLs_y2_nozeros <- wl2_fruits_y2 %>%
   filter(FrFlN>0)
 summary(wl2_FRFLs_y2_nozeros)
 
-#write_csv(wl2_fruits_y2, "../output/WL2_Traits/WL2_Fruits_Y2.csv")
+#write_csv(wl2_fruits_y2_nozeros, "../output/WL2_Traits/WL2_Fruits_Y2.csv")
 ```
 
 ```{r}
@@ -146,6 +146,22 @@ wl2_fruits_y2_nozeros_sub_dist <- wl2_fruits_y2_sub_dist %>%
 
 wl2_FRFLs_y2_nozero_sub_dists <- wl2_fruits_y2_sub_dist %>% 
   filter(FrFlN>0)
+```
+
+Probability of Fruits given Surv to Budding 
+```{r}
+wl2_surv_to_rep_y2 <- read_csv("../output/WL2_Traits/WL2_Surv_to_Rep_Y2.csv")
+
+wl2_prob_fruits <- wl2_surv_to_rep_y2 %>% 
+  filter(SurvtoRep_y2==1) %>% 
+  select(loc:block, death.date, SurvtoRep_y2) %>% 
+  left_join(wl2_fruits_y2) %>% 
+  mutate(ProbFruits=if_else(is.na(fruits), 0, 
+                            if_else(fruits==0, 0, 1))) %>% 
+  select(loc:col, block, pop:Genotype, elevation.group:Elev_Dist, ProbFruits)
+
+
+#write_csv(wl2_prob_fruits, "../output/WL2_Traits/WL2_ProbFruits_Y2.csv")
 ```
 
 
