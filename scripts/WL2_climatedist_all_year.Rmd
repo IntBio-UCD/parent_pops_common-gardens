@@ -1256,6 +1256,7 @@ historical_bioclim_dist_2024 <- historical_bioclim_dist_prep_2024 %>%
          temp_ann_range_dist=temp_ann_range - temp_ann_range_WL2,
          tmean_wettest_quarter_dist=tmean_wettest_quarter - tmean_wettest_quarter_WL2,
          tmean_driest_quarter_dist=tmean_driest_quarter - tmean_driest_quarter_WL2,
+         ann_ppt_dist=ann_ppt - ann_ppt_WL2,
          ppt_seasonality_dist=ppt_seasonality - ppt_seasonality_WL2, 
          ppt_warmest_quarter_dist=ppt_warmest_quarter - ppt_warmest_quarter_WL2,
          ppt_coldest_quarter_dist=ppt_coldest_quarter - ppt_coldest_quarter_WL2) %>% 
