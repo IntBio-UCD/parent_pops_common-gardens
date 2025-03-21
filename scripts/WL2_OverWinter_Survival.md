@@ -147,7 +147,7 @@ library(tidymodels)
 ## ✖ infer::t_test()       masks rstatix::t_test()
 ## ✖ Matrix::unpack()      masks tidyr::unpack()
 ## ✖ recipes::update()     masks Matrix::update(), stats::update()
-## • Use tidymodels_prefer() to resolve common conflicts.
+## • Learn how to get started at https://www.tidymodels.org/start/
 ```
 
 ``` r
@@ -498,7 +498,8 @@ winter_surv %>%
 
 ``` r
 #scatter plots
-WYCD_recent <- winter_surv %>% 
+WYCD_recent <- winter_surv %>%
+  filter(pop!="WR") %>% 
   group_by(pop, elev_m, Wtr_Year_GD_Recent) %>% 
   summarise(meanSurv=mean(WinterSurv, na.rm = TRUE), semSurv=sem(WinterSurv, na.rm=TRUE)) %>% 
   ggplot(aes(x=Wtr_Year_GD_Recent, y=meanSurv, group = pop)) +
@@ -517,6 +518,7 @@ WYCD_recent <- winter_surv %>%
 
 ``` r
 GD <- winter_surv %>% 
+  filter(pop!="WR") %>% 
   group_by(pop, elev_m, Wtr_Year_GD_Recent, Geographic_Dist) %>% 
   summarise(meanSurv=mean(WinterSurv, na.rm = TRUE), semSurv=sem(WinterSurv, na.rm=TRUE)) %>% 
   ggplot(aes(x=Geographic_Dist, y=meanSurv, group = pop)) +
@@ -535,6 +537,7 @@ GD <- winter_surv %>%
 
 ``` r
 ED <- winter_surv %>% 
+  filter(pop!="WR") %>% 
   group_by(pop, elev_m, Elev_Dist) %>% 
   summarise(meanSurv=mean(WinterSurv, na.rm = TRUE), semSurv=sem(WinterSurv, na.rm=TRUE)) %>% 
   ggplot(aes(x=Elev_Dist, y=meanSurv, group = pop)) +
@@ -568,6 +571,7 @@ ggsave("../output/WL2_Traits/WL2_WinterSurv_SCATTERS_Recent.png", width = 24, he
 ``` r
 #scatter plots
 WYCD_historic <- winter_surv %>% 
+  filter(pop!="WR") %>% 
   group_by(pop, elev_m, Wtr_Year_GD_Historical) %>% 
   summarise(meanSurv=mean(WinterSurv, na.rm = TRUE), semSurv=sem(WinterSurv, na.rm=TRUE)) %>% 
   ggplot(aes(x=Wtr_Year_GD_Historical, y=meanSurv, group = pop)) +
@@ -601,6 +605,7 @@ ggsave("../output/WL2_Traits/WL2_WinterSurv_SCATTERS_Historical.png", width = 24
 ``` r
 #scatter plots - recent
 WYCD_prob_recent <- winter_surv_sub_dist %>% 
+  filter(pop!="WR") %>% 
   group_by(pop, elev_m, Wtr_Year_TempDist_Recent, Wtr_Year_TempDist_Historic) %>% 
   summarise(meanEst=mean(WinterSurv, na.rm = TRUE), semEst=sem(WinterSurv, na.rm=TRUE)) %>% 
   ggplot(aes(x=Wtr_Year_TempDist_Recent, y=meanEst, group = pop)) +
@@ -619,6 +624,7 @@ WYCD_prob_recent <- winter_surv_sub_dist %>%
 
 ``` r
 GD_prob <- winter_surv_sub_dist %>% 
+  filter(pop!="WR") %>% 
   group_by(pop, elev_m, Wtr_Year_TempDist_Recent, Geographic_Dist) %>% 
   summarise(meanEst=mean(WinterSurv, na.rm = TRUE), semEst=sem(WinterSurv, na.rm=TRUE)) %>% 
   ggplot(aes(x=Geographic_Dist, y=meanEst, group = pop)) +
@@ -637,6 +643,7 @@ GD_prob <- winter_surv_sub_dist %>%
 
 ``` r
 ED_prob <- winter_surv_sub_dist %>% 
+  filter(pop!="WR") %>% 
   group_by(pop, elev_m, Elev_Dist) %>% 
   summarise(meanEst=mean(WinterSurv, na.rm = TRUE), semEst=sem(WinterSurv, na.rm=TRUE)) %>% 
   ggplot(aes(x=Elev_Dist, y=meanEst, group = pop)) +
@@ -670,6 +677,7 @@ ggsave("../output/WL2_Traits/WL2_WinterSurv_TmpSubDist_SCATTERS_Recent.png", wid
 ``` r
 #scatter plots - historic
 WYCD_prob_historic <- winter_surv_sub_dist %>% 
+  filter(pop!="WR") %>% 
   group_by(pop, elev_m, Wtr_Year_TempDist_Recent, Wtr_Year_TempDist_Historic) %>% 
   summarise(meanEst=mean(WinterSurv, na.rm = TRUE), semEst=sem(WinterSurv, na.rm=TRUE)) %>% 
   ggplot(aes(x=Wtr_Year_TempDist_Historic, y=meanEst, group = pop)) +
@@ -703,6 +711,7 @@ ggsave("../output/WL2_Traits/WL2_WinterSurv_TmpSubDist_SCATTERS_Historic.png", w
 ``` r
 #scatter plots - recent
 WYCD_prob_recent <- winter_surv_sub_dist %>% 
+  filter(pop!="WR") %>% 
   group_by(pop, elev_m, Wtr_Year_PPTDist_Recent, Wtr_Year_PPTDist_Historic) %>% 
   summarise(meanEst=mean(WinterSurv, na.rm = TRUE), semEst=sem(WinterSurv, na.rm=TRUE)) %>% 
   ggplot(aes(x=Wtr_Year_PPTDist_Recent, y=meanEst, group = pop)) +
@@ -721,6 +730,7 @@ WYCD_prob_recent <- winter_surv_sub_dist %>%
 
 ``` r
 GD_prob <- winter_surv_sub_dist %>% 
+  filter(pop!="WR") %>% 
   group_by(pop, elev_m, Wtr_Year_PPTDist_Recent, Geographic_Dist) %>% 
   summarise(meanEst=mean(WinterSurv, na.rm = TRUE), semEst=sem(WinterSurv, na.rm=TRUE)) %>% 
   ggplot(aes(x=Geographic_Dist, y=meanEst, group = pop)) +
@@ -739,6 +749,7 @@ GD_prob <- winter_surv_sub_dist %>%
 
 ``` r
 ED_prob <- winter_surv_sub_dist %>% 
+  filter(pop!="WR") %>% 
   group_by(pop, elev_m, Elev_Dist) %>% 
   summarise(meanEst=mean(WinterSurv, na.rm = TRUE), semEst=sem(WinterSurv, na.rm=TRUE)) %>% 
   ggplot(aes(x=Elev_Dist, y=meanEst, group = pop)) +
@@ -772,6 +783,7 @@ ggsave("../output/WL2_Traits/WL2_WinterSurv_PPTSubDist_SCATTERS_Recent.png", wid
 ``` r
 #scatter plots - historic
 WYCD_prob_historic <- winter_surv_sub_dist %>% 
+  filter(pop!="WR") %>% 
   group_by(pop, elev_m, Wtr_Year_PPTDist_Recent, Wtr_Year_PPTDist_Historic) %>% 
   summarise(meanEst=mean(WinterSurv, na.rm = TRUE), semEst=sem(WinterSurv, na.rm=TRUE)) %>% 
   ggplot(aes(x=Wtr_Year_PPTDist_Historic, y=meanEst, group = pop)) +
@@ -804,7 +816,8 @@ ggsave("../output/WL2_Traits/WL2_WinterSurv_PPTSubDist_SCATTERS_Historic.png", w
 
 ``` r
 #scatter plots - recent
-WYCD_prob_recent <- winter_surv_sub_dist %>% 
+WYCD_prob_recent <- winter_surv_sub_dist %>%
+  filter(pop!="WR") %>% 
   group_by(pop, elev_m, Wtr_Year_TempPpt_Recent, Wtr_Year_TempPpt_Historic) %>% 
   summarise(meanEst=mean(WinterSurv, na.rm = TRUE), semEst=sem(WinterSurv, na.rm=TRUE)) %>% 
   ggplot(aes(x=Wtr_Year_TempPpt_Recent, y=meanEst, group = pop)) +
@@ -823,6 +836,7 @@ WYCD_prob_recent <- winter_surv_sub_dist %>%
 
 ``` r
 GD_prob <- winter_surv_sub_dist %>% 
+  filter(pop!="WR") %>% 
   group_by(pop, elev_m, Wtr_Year_TempPpt_Recent, Geographic_Dist) %>% 
   summarise(meanEst=mean(WinterSurv, na.rm = TRUE), semEst=sem(WinterSurv, na.rm=TRUE)) %>% 
   ggplot(aes(x=Geographic_Dist, y=meanEst, group = pop)) +
@@ -841,6 +855,7 @@ GD_prob <- winter_surv_sub_dist %>%
 
 ``` r
 ED_prob <- winter_surv_sub_dist %>% 
+  filter(pop!="WR") %>% 
   group_by(pop, elev_m, Elev_Dist) %>% 
   summarise(meanEst=mean(WinterSurv, na.rm = TRUE), semEst=sem(WinterSurv, na.rm=TRUE)) %>% 
   ggplot(aes(x=Elev_Dist, y=meanEst, group = pop)) +
@@ -874,6 +889,7 @@ ggsave("../output/WL2_Traits/WL2_WinterSurv_TempPptSubDist_SCATTERS_Recent.png",
 ``` r
 #scatter plots - historic
 WYCD_prob_historic <- winter_surv_sub_dist %>% 
+  filter(pop!="WR") %>% 
   group_by(pop, elev_m, Wtr_Year_TempPpt_Recent, Wtr_Year_TempPpt_Historic) %>% 
   summarise(meanEst=mean(WinterSurv, na.rm = TRUE), semEst=sem(WinterSurv, na.rm=TRUE)) %>% 
   ggplot(aes(x=Wtr_Year_TempPpt_Historic, y=meanEst, group = pop)) +

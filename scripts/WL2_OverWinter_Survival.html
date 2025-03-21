@@ -449,7 +449,7 @@ library(tidymodels)</code></pre>
 ## ✖ infer::t_test()       masks rstatix::t_test()
 ## ✖ Matrix::unpack()      masks tidyr::unpack()
 ## ✖ recipes::update()     masks Matrix::update(), stats::update()
-## • Use tidymodels_prefer() to resolve common conflicts.</code></pre>
+## • Learn how to get started at https://www.tidymodels.org/start/</code></pre>
 <pre class="r"><code>library(furrr) #Apply Mapping Functions in Parallel using Futures</code></pre>
 <pre><code>## Loading required package: future</code></pre>
 <pre class="r"><code>tidymodels_prefer()
@@ -679,7 +679,8 @@ xtabs(~WinterSurv, data=winter_surv) #334 dead post-winter out of 469 alive pre-
 <div id="scatterplots" class="section level3">
 <h3>Scatterplots</h3>
 <pre class="r"><code>#scatter plots
-WYCD_recent &lt;- winter_surv %&gt;% 
+WYCD_recent &lt;- winter_surv %&gt;%
+  filter(pop!=&quot;WR&quot;) %&gt;% 
   group_by(pop, elev_m, Wtr_Year_GD_Recent) %&gt;% 
   summarise(meanSurv=mean(WinterSurv, na.rm = TRUE), semSurv=sem(WinterSurv, na.rm=TRUE)) %&gt;% 
   ggplot(aes(x=Wtr_Year_GD_Recent, y=meanSurv, group = pop)) +
@@ -692,6 +693,7 @@ WYCD_recent &lt;- winter_surv %&gt;%
 <pre><code>## `summarise()` has grouped output by &#39;pop&#39;, &#39;elev_m&#39;. You can override using the
 ## `.groups` argument.</code></pre>
 <pre class="r"><code>GD &lt;- winter_surv %&gt;% 
+  filter(pop!=&quot;WR&quot;) %&gt;% 
   group_by(pop, elev_m, Wtr_Year_GD_Recent, Geographic_Dist) %&gt;% 
   summarise(meanSurv=mean(WinterSurv, na.rm = TRUE), semSurv=sem(WinterSurv, na.rm=TRUE)) %&gt;% 
   ggplot(aes(x=Geographic_Dist, y=meanSurv, group = pop)) +
@@ -704,6 +706,7 @@ WYCD_recent &lt;- winter_surv %&gt;%
 <pre><code>## `summarise()` has grouped output by &#39;pop&#39;, &#39;elev_m&#39;, &#39;Wtr_Year_GD_Recent&#39;. You
 ## can override using the `.groups` argument.</code></pre>
 <pre class="r"><code>ED &lt;- winter_surv %&gt;% 
+  filter(pop!=&quot;WR&quot;) %&gt;% 
   group_by(pop, elev_m, Elev_Dist) %&gt;% 
   summarise(meanSurv=mean(WinterSurv, na.rm = TRUE), semSurv=sem(WinterSurv, na.rm=TRUE)) %&gt;% 
   ggplot(aes(x=Elev_Dist, y=meanSurv, group = pop)) +
@@ -721,6 +724,7 @@ WYCD_recent &lt;- winter_surv %&gt;%
 <pre class="r"><code>ggsave(&quot;../output/WL2_Traits/WL2_WinterSurv_SCATTERS_Recent.png&quot;, width = 24, height = 18, units = &quot;in&quot;)</code></pre>
 <pre class="r"><code>#scatter plots
 WYCD_historic &lt;- winter_surv %&gt;% 
+  filter(pop!=&quot;WR&quot;) %&gt;% 
   group_by(pop, elev_m, Wtr_Year_GD_Historical) %&gt;% 
   summarise(meanSurv=mean(WinterSurv, na.rm = TRUE), semSurv=sem(WinterSurv, na.rm=TRUE)) %&gt;% 
   ggplot(aes(x=Wtr_Year_GD_Historical, y=meanSurv, group = pop)) +
@@ -738,6 +742,7 @@ WYCD_historic &lt;- winter_surv %&gt;%
 <pre class="r"><code>ggsave(&quot;../output/WL2_Traits/WL2_WinterSurv_SCATTERS_Historical.png&quot;, width = 24, height = 18, units = &quot;in&quot;)</code></pre>
 <pre class="r"><code>#scatter plots - recent
 WYCD_prob_recent &lt;- winter_surv_sub_dist %&gt;% 
+  filter(pop!=&quot;WR&quot;) %&gt;% 
   group_by(pop, elev_m, Wtr_Year_TempDist_Recent, Wtr_Year_TempDist_Historic) %&gt;% 
   summarise(meanEst=mean(WinterSurv, na.rm = TRUE), semEst=sem(WinterSurv, na.rm=TRUE)) %&gt;% 
   ggplot(aes(x=Wtr_Year_TempDist_Recent, y=meanEst, group = pop)) +
@@ -750,6 +755,7 @@ WYCD_prob_recent &lt;- winter_surv_sub_dist %&gt;%
 <pre><code>## `summarise()` has grouped output by &#39;pop&#39;, &#39;elev_m&#39;,
 ## &#39;Wtr_Year_TempDist_Recent&#39;. You can override using the `.groups` argument.</code></pre>
 <pre class="r"><code>GD_prob &lt;- winter_surv_sub_dist %&gt;% 
+  filter(pop!=&quot;WR&quot;) %&gt;% 
   group_by(pop, elev_m, Wtr_Year_TempDist_Recent, Geographic_Dist) %&gt;% 
   summarise(meanEst=mean(WinterSurv, na.rm = TRUE), semEst=sem(WinterSurv, na.rm=TRUE)) %&gt;% 
   ggplot(aes(x=Geographic_Dist, y=meanEst, group = pop)) +
@@ -762,6 +768,7 @@ WYCD_prob_recent &lt;- winter_surv_sub_dist %&gt;%
 <pre><code>## `summarise()` has grouped output by &#39;pop&#39;, &#39;elev_m&#39;,
 ## &#39;Wtr_Year_TempDist_Recent&#39;. You can override using the `.groups` argument.</code></pre>
 <pre class="r"><code>ED_prob &lt;- winter_surv_sub_dist %&gt;% 
+  filter(pop!=&quot;WR&quot;) %&gt;% 
   group_by(pop, elev_m, Elev_Dist) %&gt;% 
   summarise(meanEst=mean(WinterSurv, na.rm = TRUE), semEst=sem(WinterSurv, na.rm=TRUE)) %&gt;% 
   ggplot(aes(x=Elev_Dist, y=meanEst, group = pop)) +
@@ -779,6 +786,7 @@ WYCD_prob_recent &lt;- winter_surv_sub_dist %&gt;%
 <pre class="r"><code>ggsave(&quot;../output/WL2_Traits/WL2_WinterSurv_TmpSubDist_SCATTERS_Recent.png&quot;, width = 24, height = 18, units = &quot;in&quot;)</code></pre>
 <pre class="r"><code>#scatter plots - historic
 WYCD_prob_historic &lt;- winter_surv_sub_dist %&gt;% 
+  filter(pop!=&quot;WR&quot;) %&gt;% 
   group_by(pop, elev_m, Wtr_Year_TempDist_Recent, Wtr_Year_TempDist_Historic) %&gt;% 
   summarise(meanEst=mean(WinterSurv, na.rm = TRUE), semEst=sem(WinterSurv, na.rm=TRUE)) %&gt;% 
   ggplot(aes(x=Wtr_Year_TempDist_Historic, y=meanEst, group = pop)) +
@@ -796,6 +804,7 @@ WYCD_prob_historic &lt;- winter_surv_sub_dist %&gt;%
 <pre class="r"><code>ggsave(&quot;../output/WL2_Traits/WL2_WinterSurv_TmpSubDist_SCATTERS_Historic.png&quot;, width = 24, height = 18, units = &quot;in&quot;)</code></pre>
 <pre class="r"><code>#scatter plots - recent
 WYCD_prob_recent &lt;- winter_surv_sub_dist %&gt;% 
+  filter(pop!=&quot;WR&quot;) %&gt;% 
   group_by(pop, elev_m, Wtr_Year_PPTDist_Recent, Wtr_Year_PPTDist_Historic) %&gt;% 
   summarise(meanEst=mean(WinterSurv, na.rm = TRUE), semEst=sem(WinterSurv, na.rm=TRUE)) %&gt;% 
   ggplot(aes(x=Wtr_Year_PPTDist_Recent, y=meanEst, group = pop)) +
@@ -808,6 +817,7 @@ WYCD_prob_recent &lt;- winter_surv_sub_dist %&gt;%
 <pre><code>## `summarise()` has grouped output by &#39;pop&#39;, &#39;elev_m&#39;, &#39;Wtr_Year_PPTDist_Recent&#39;.
 ## You can override using the `.groups` argument.</code></pre>
 <pre class="r"><code>GD_prob &lt;- winter_surv_sub_dist %&gt;% 
+  filter(pop!=&quot;WR&quot;) %&gt;% 
   group_by(pop, elev_m, Wtr_Year_PPTDist_Recent, Geographic_Dist) %&gt;% 
   summarise(meanEst=mean(WinterSurv, na.rm = TRUE), semEst=sem(WinterSurv, na.rm=TRUE)) %&gt;% 
   ggplot(aes(x=Geographic_Dist, y=meanEst, group = pop)) +
@@ -820,6 +830,7 @@ WYCD_prob_recent &lt;- winter_surv_sub_dist %&gt;%
 <pre><code>## `summarise()` has grouped output by &#39;pop&#39;, &#39;elev_m&#39;, &#39;Wtr_Year_PPTDist_Recent&#39;.
 ## You can override using the `.groups` argument.</code></pre>
 <pre class="r"><code>ED_prob &lt;- winter_surv_sub_dist %&gt;% 
+  filter(pop!=&quot;WR&quot;) %&gt;% 
   group_by(pop, elev_m, Elev_Dist) %&gt;% 
   summarise(meanEst=mean(WinterSurv, na.rm = TRUE), semEst=sem(WinterSurv, na.rm=TRUE)) %&gt;% 
   ggplot(aes(x=Elev_Dist, y=meanEst, group = pop)) +
@@ -837,6 +848,7 @@ WYCD_prob_recent &lt;- winter_surv_sub_dist %&gt;%
 <pre class="r"><code>ggsave(&quot;../output/WL2_Traits/WL2_WinterSurv_PPTSubDist_SCATTERS_Recent.png&quot;, width = 24, height = 18, units = &quot;in&quot;)</code></pre>
 <pre class="r"><code>#scatter plots - historic
 WYCD_prob_historic &lt;- winter_surv_sub_dist %&gt;% 
+  filter(pop!=&quot;WR&quot;) %&gt;% 
   group_by(pop, elev_m, Wtr_Year_PPTDist_Recent, Wtr_Year_PPTDist_Historic) %&gt;% 
   summarise(meanEst=mean(WinterSurv, na.rm = TRUE), semEst=sem(WinterSurv, na.rm=TRUE)) %&gt;% 
   ggplot(aes(x=Wtr_Year_PPTDist_Historic, y=meanEst, group = pop)) +
@@ -853,7 +865,8 @@ WYCD_prob_historic &lt;- winter_surv_sub_dist %&gt;%
 ## a grob.</code></pre>
 <pre class="r"><code>ggsave(&quot;../output/WL2_Traits/WL2_WinterSurv_PPTSubDist_SCATTERS_Historic.png&quot;, width = 24, height = 18, units = &quot;in&quot;)</code></pre>
 <pre class="r"><code>#scatter plots - recent
-WYCD_prob_recent &lt;- winter_surv_sub_dist %&gt;% 
+WYCD_prob_recent &lt;- winter_surv_sub_dist %&gt;%
+  filter(pop!=&quot;WR&quot;) %&gt;% 
   group_by(pop, elev_m, Wtr_Year_TempPpt_Recent, Wtr_Year_TempPpt_Historic) %&gt;% 
   summarise(meanEst=mean(WinterSurv, na.rm = TRUE), semEst=sem(WinterSurv, na.rm=TRUE)) %&gt;% 
   ggplot(aes(x=Wtr_Year_TempPpt_Recent, y=meanEst, group = pop)) +
@@ -866,6 +879,7 @@ WYCD_prob_recent &lt;- winter_surv_sub_dist %&gt;%
 <pre><code>## `summarise()` has grouped output by &#39;pop&#39;, &#39;elev_m&#39;, &#39;Wtr_Year_TempPpt_Recent&#39;.
 ## You can override using the `.groups` argument.</code></pre>
 <pre class="r"><code>GD_prob &lt;- winter_surv_sub_dist %&gt;% 
+  filter(pop!=&quot;WR&quot;) %&gt;% 
   group_by(pop, elev_m, Wtr_Year_TempPpt_Recent, Geographic_Dist) %&gt;% 
   summarise(meanEst=mean(WinterSurv, na.rm = TRUE), semEst=sem(WinterSurv, na.rm=TRUE)) %&gt;% 
   ggplot(aes(x=Geographic_Dist, y=meanEst, group = pop)) +
@@ -878,6 +892,7 @@ WYCD_prob_recent &lt;- winter_surv_sub_dist %&gt;%
 <pre><code>## `summarise()` has grouped output by &#39;pop&#39;, &#39;elev_m&#39;, &#39;Wtr_Year_TempPpt_Recent&#39;.
 ## You can override using the `.groups` argument.</code></pre>
 <pre class="r"><code>ED_prob &lt;- winter_surv_sub_dist %&gt;% 
+  filter(pop!=&quot;WR&quot;) %&gt;% 
   group_by(pop, elev_m, Elev_Dist) %&gt;% 
   summarise(meanEst=mean(WinterSurv, na.rm = TRUE), semEst=sem(WinterSurv, na.rm=TRUE)) %&gt;% 
   ggplot(aes(x=Elev_Dist, y=meanEst, group = pop)) +
@@ -895,6 +910,7 @@ WYCD_prob_recent &lt;- winter_surv_sub_dist %&gt;%
 <pre class="r"><code>ggsave(&quot;../output/WL2_Traits/WL2_WinterSurv_TempPptSubDist_SCATTERS_Recent.png&quot;, width = 24, height = 18, units = &quot;in&quot;)</code></pre>
 <pre class="r"><code>#scatter plots - historic
 WYCD_prob_historic &lt;- winter_surv_sub_dist %&gt;% 
+  filter(pop!=&quot;WR&quot;) %&gt;% 
   group_by(pop, elev_m, Wtr_Year_TempPpt_Recent, Wtr_Year_TempPpt_Historic) %&gt;% 
   summarise(meanEst=mean(WinterSurv, na.rm = TRUE), semEst=sem(WinterSurv, na.rm=TRUE)) %&gt;% 
   ggplot(aes(x=Wtr_Year_TempPpt_Historic, y=meanEst, group = pop)) +
