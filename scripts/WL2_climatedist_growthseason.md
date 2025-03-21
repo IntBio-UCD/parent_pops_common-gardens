@@ -2118,7 +2118,7 @@ ggarrange(cwd_dist_fig_recent, ppt_dist_fig_recent, tmn_dist_fig_recent, tmx_dis
 ![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-42-1.png)<!-- -->
 
 ``` r
-ggsave("../output/Climate/grwssn_Sub_dist_from_WL2_Recent.png", width = 24, height = 24, units = "in")
+ggsave("../output/Climate/grwssn_Sub_dist_from_Home_WL2_Recent.png", width = 24, height = 24, units = "in")
 
 ggarrange(cwd_dist_fig_historical, ppt_dist_fig_historical, 
           tmn_dist_fig_historical, tmx_dist_fig_historical,
@@ -2131,7 +2131,7 @@ ggarrange(cwd_dist_fig_historical, ppt_dist_fig_historical,
 ![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-42-2.png)<!-- -->
 
 ``` r
-ggsave("../output/Climate/grwssn_Sub_dist_from_WL2_Historical.png", width = 24, height = 24, units = "in")
+ggsave("../output/Climate/grwssn_Sub_dist_from_Home_WL2_Historical.png", width = 24, height = 24, units = "in")
 ```
 
 ## Combine all Subtraction data
@@ -2145,7 +2145,7 @@ recent_sub_dist_from_wl2 <- full_join(recent_flint_dist, recent_bioclim_dist)
 ```
 
 ``` r
-write_csv(recent_sub_dist_from_wl2, "../output/Climate/grwssn_Subtraction_Dist_from_WL2_Recent.csv")
+write_csv(recent_sub_dist_from_wl2, "../output/Climate/grwssn_Subtraction_Dist_from_Home_WL2_Recent.csv")
 
 historic_sub_dist_from_wl2 <- full_join(historic_flint_dist, historical_bioclim_dist)
 ```
@@ -2155,7 +2155,7 @@ historic_sub_dist_from_wl2 <- full_join(historic_flint_dist, historical_bioclim_
 ```
 
 ``` r
-write_csv(historic_sub_dist_from_wl2, "../output/Climate/grwssn_Subtraction_Dist_from_WL2_Historical.csv")
+write_csv(historic_sub_dist_from_wl2, "../output/Climate/grwssn_Subtraction_Dist_from_Home_WL2_Historical.csv")
 ```
 
 ### For 2024
@@ -2169,7 +2169,7 @@ recent_sub_dist_2024_from_wl2 <- full_join(recent_flint_dist_2024, recent_biocli
 ```
 
 ``` r
-write_csv(recent_sub_dist_2024_from_wl2, "../output/Climate/grwssn_Subtraction_Dist_from_WL2_2024_Recent.csv")
+write_csv(recent_sub_dist_2024_from_wl2, "../output/Climate/grwssn_Subtraction_Dist_from_Home_WL2_2024_Recent.csv")
 
 historic_sub_dist_2024_from_wl2 <- full_join(historic_flint_dist_2024, historical_bioclim_dist_2024)
 ```
@@ -2179,6 +2179,6 @@ historic_sub_dist_2024_from_wl2 <- full_join(historic_flint_dist_2024, historica
 ```
 
 ``` r
-write_csv(historic_sub_dist_2024_from_wl2, "../output/Climate/grwssn_Subtraction_Dist_from_WL2_2024_Historical.csv")
+write_csv(historic_sub_dist_2024_from_wl2, "../output/Climate/grwssn_Subtraction_Dist_from_Home_WL2_2024_Historical.csv")
 ```
 
