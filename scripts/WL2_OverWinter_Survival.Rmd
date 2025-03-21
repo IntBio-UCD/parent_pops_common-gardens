@@ -548,7 +548,7 @@ surv_GD_fits_wl2_sub_tp %>% mutate(glance=map(fit, glance)) %>% unnest(glance) %
 
 
 surv_GD_fits_wl2_sub_tp %>% mutate(tidy=map(fit, tidy)) %>% unnest(tidy) %>%
-  filter(str_detect(term, "TempPpt"), term=="Geographic_Dist") %>%
+  filter(str_detect(term, "TempPpt") | term=="Geographic_Dist") %>%
   drop_na(p.value) %>%
   select(-wflow:-group)# %>%
 #  arrange(p.value)

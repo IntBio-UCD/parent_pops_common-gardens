@@ -1179,15 +1179,19 @@ surv_GD_fits_wl2_sub_tp %>% mutate(glance=map(fit, glance)) %>% unnest(glance) %
 
 ``` r
 surv_GD_fits_wl2_sub_tp %>% mutate(tidy=map(fit, tidy)) %>% unnest(tidy) %>%
-  filter(str_detect(term, "TempPpt"), term=="Geographic_Dist") %>%
+  filter(str_detect(term, "TempPpt") | term=="Geographic_Dist") %>%
   drop_na(p.value) %>%
   select(-wflow:-group)# %>%
 ```
 
 ```
-## # A tibble: 0 × 6
-## # ℹ 6 variables: name <chr>, term <chr>, estimate <dbl>, std.error <dbl>,
-## #   statistic <dbl>, p.value <dbl>
+## # A tibble: 4 × 6
+##   name          term                      estimate std.error statistic p.value
+##   <chr>         <chr>                        <dbl>     <dbl>     <dbl>   <dbl>
+## 1 WY_Recent     Wtr_Year_TempPpt_Recent     0.530      0.646    0.820    0.412
+## 2 WY_Recent     Geographic_Dist            -0.0357     0.541   -0.0660   0.947
+## 3 WY_Historical Wtr_Year_TempPpt_Historic   0.515      0.640    0.805    0.421
+## 4 WY_Historical Geographic_Dist            -0.0641     0.534   -0.120    0.904
 ```
 
 ``` r

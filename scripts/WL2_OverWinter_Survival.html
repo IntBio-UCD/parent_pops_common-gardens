@@ -1109,12 +1109,16 @@ surv_GD_fits_wl2_sub_tp %&gt;% mutate(glance=map(fit, glance)) %&gt;% unnest(gla
 ## 2 WY_Recent      -229.  470.  495.     381.         462
 ## 3 WY_Historical  -229.  470.  495.     381.         462</code></pre>
 <pre class="r"><code>surv_GD_fits_wl2_sub_tp %&gt;% mutate(tidy=map(fit, tidy)) %&gt;% unnest(tidy) %&gt;%
-  filter(str_detect(term, &quot;TempPpt&quot;), term==&quot;Geographic_Dist&quot;) %&gt;%
+  filter(str_detect(term, &quot;TempPpt&quot;) | term==&quot;Geographic_Dist&quot;) %&gt;%
   drop_na(p.value) %&gt;%
   select(-wflow:-group)# %&gt;%</code></pre>
-<pre><code>## # A tibble: 0 × 6
-## # ℹ 6 variables: name &lt;chr&gt;, term &lt;chr&gt;, estimate &lt;dbl&gt;, std.error &lt;dbl&gt;,
-## #   statistic &lt;dbl&gt;, p.value &lt;dbl&gt;</code></pre>
+<pre><code>## # A tibble: 4 × 6
+##   name          term                      estimate std.error statistic p.value
+##   &lt;chr&gt;         &lt;chr&gt;                        &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;   &lt;dbl&gt;
+## 1 WY_Recent     Wtr_Year_TempPpt_Recent     0.530      0.646    0.820    0.412
+## 2 WY_Recent     Geographic_Dist            -0.0357     0.541   -0.0660   0.947
+## 3 WY_Historical Wtr_Year_TempPpt_Historic   0.515      0.640    0.805    0.421
+## 4 WY_Historical Geographic_Dist            -0.0641     0.534   -0.120    0.904</code></pre>
 <pre class="r"><code>#  arrange(p.value)</code></pre>
 </div>
 </div>
