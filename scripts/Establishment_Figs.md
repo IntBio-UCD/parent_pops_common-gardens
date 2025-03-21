@@ -147,7 +147,7 @@ library(tidymodels)
 ## ✖ infer::t_test()       masks rstatix::t_test()
 ## ✖ Matrix::unpack()      masks tidyr::unpack()
 ## ✖ recipes::update()     masks Matrix::update(), stats::update()
-## • Use tidymodels_prefer() to resolve common conflicts.
+## • Search for functions across packages at https://www.tidymodels.org/find/
 ```
 
 ``` r
@@ -803,6 +803,7 @@ wl2_establishment %>%
 ``` r
 #scatter plots
 GSCD_recent <- ucd_establishment %>% 
+  filter(pop!="WV") %>% #Only 2 indivs for WV
   group_by(pop, elev_m, GrwSsn_GD_Recent, GrwSsn_GD_Historical) %>% 
   summarise(meanEst=mean(Establishment, na.rm = TRUE), semEst=sem(Establishment, na.rm=TRUE)) %>% 
   ggplot(aes(x=GrwSsn_GD_Recent, y=meanEst, group = pop)) +
@@ -821,6 +822,7 @@ GSCD_recent <- ucd_establishment %>%
 
 ``` r
 WYCD_recent <- ucd_establishment %>% 
+  filter(pop!="WV") %>% #Only 2 indivs for WV
   group_by(pop, elev_m, Wtr_Year_GD_Recent, Wtr_Year_GD_Historical) %>% 
   summarise(meanEst=mean(Establishment, na.rm = TRUE), semEst=sem(Establishment, na.rm=TRUE)) %>%
   ggplot(aes(x=Wtr_Year_GD_Recent, y=meanEst, group = pop)) +
@@ -839,6 +841,7 @@ WYCD_recent <- ucd_establishment %>%
 
 ``` r
 GD <- ucd_establishment %>% 
+  filter(pop!="WV") %>% #Only 2 indivs for WV
   group_by(pop, elev_m, Geographic_Dist) %>% 
   summarise(meanEst=mean(Establishment, na.rm = TRUE), semEst=sem(Establishment, na.rm=TRUE)) %>% 
   ggplot(aes(x=Geographic_Dist, y=meanEst, group = pop)) +
@@ -857,6 +860,7 @@ GD <- ucd_establishment %>%
 
 ``` r
 ED <- ucd_establishment %>% 
+  filter(pop!="WV") %>% #Only 2 indivs for WV
   group_by(pop, elev_m, Elev_Dist) %>% 
   summarise(meanEst=mean(Establishment, na.rm = TRUE), semEst=sem(Establishment, na.rm=TRUE)) %>% 
   ggplot(aes(x=Elev_Dist, y=meanEst, group = pop)) +
@@ -882,6 +886,7 @@ ggsave("../output/UCD_Traits/UCD_Establishment_SCATTERS_Recent.png", width = 24,
 ``` r
 #scatter plots
 GSCD_historic <- ucd_establishment %>% 
+  filter(pop!="WV") %>% #Only 2 indivs for WV
   group_by(pop, elev_m, GrwSsn_GD_Recent, GrwSsn_GD_Historical) %>% 
   summarise(meanEst=mean(Establishment, na.rm = TRUE), semEst=sem(Establishment, na.rm=TRUE)) %>% 
   ggplot(aes(x=GrwSsn_GD_Historical, y=meanEst, group = pop)) +
@@ -900,6 +905,7 @@ GSCD_historic <- ucd_establishment %>%
 
 ``` r
 WYCD_historic <- ucd_establishment %>% 
+  filter(pop!="WV") %>% #Only 2 indivs for WV
   group_by(pop, elev_m, Wtr_Year_GD_Recent, Wtr_Year_GD_Historical) %>% 
   summarise(meanEst=mean(Establishment, na.rm = TRUE), semEst=sem(Establishment, na.rm=TRUE)) %>%
   ggplot(aes(x=Wtr_Year_GD_Historical, y=meanEst, group = pop)) +
@@ -1171,6 +1177,7 @@ ggsave("../output/WL2_Traits/WL2_Establishment_TmpSubDist_SCATTERS_Historic.png"
 ``` r
 #scatter plots - recent
 GSCD_prob_recent <- ucd_establishment_sub_dist %>% 
+  filter(pop!="WV") %>% #Only 2 indivs for WV
   group_by(pop, elev_m, GrwSsn_TempDist_Recent, GrwSsn_TempDist_Historic) %>% 
   summarise(meanEst=mean(Establishment, na.rm = TRUE), semEst=sem(Establishment, na.rm=TRUE)) %>% 
   ggplot(aes(x=GrwSsn_TempDist_Recent, y=meanEst, group = pop)) +
@@ -1189,6 +1196,7 @@ GSCD_prob_recent <- ucd_establishment_sub_dist %>%
 
 ``` r
 WYCD_prob_recent <- ucd_establishment_sub_dist %>% 
+  filter(pop!="WV") %>% #Only 2 indivs for WV
   group_by(pop, elev_m, Wtr_Year_TempDist_Recent, Wtr_Year_TempDist_Historic) %>% 
   summarise(meanEst=mean(Establishment, na.rm = TRUE), semEst=sem(Establishment, na.rm=TRUE)) %>% 
   ggplot(aes(x=Wtr_Year_TempDist_Recent, y=meanEst, group = pop)) +
@@ -1207,6 +1215,7 @@ WYCD_prob_recent <- ucd_establishment_sub_dist %>%
 
 ``` r
 GD_prob <- ucd_establishment_sub_dist %>% 
+  filter(pop!="WV") %>% #Only 2 indivs for WV
   group_by(pop, elev_m, GrwSsn_TempDist_Recent, Wtr_Year_TempDist_Recent, Geographic_Dist) %>% 
   summarise(meanEst=mean(Establishment, na.rm = TRUE), semEst=sem(Establishment, na.rm=TRUE)) %>% 
   ggplot(aes(x=Geographic_Dist, y=meanEst, group = pop)) +
@@ -1225,6 +1234,7 @@ GD_prob <- ucd_establishment_sub_dist %>%
 
 ``` r
 ED_prob <- ucd_establishment_sub_dist %>% 
+  filter(pop!="WV") %>% #Only 2 indivs for WV
   group_by(pop, elev_m, Elev_Dist) %>% 
   summarise(meanEst=mean(Establishment, na.rm = TRUE), semEst=sem(Establishment, na.rm=TRUE)) %>% 
   ggplot(aes(x=Elev_Dist, y=meanEst, group = pop)) +
@@ -1250,6 +1260,7 @@ ggsave("../output/UCD_Traits/UCD_Establishment_TmpSubDist_SCATTERS_Recent.png", 
 ``` r
 #scatter plots - historic
 GSCD_prob_historic <- ucd_establishment_sub_dist %>% 
+  filter(pop!="WV") %>% #Only 2 indivs for WV
   group_by(pop, elev_m, GrwSsn_TempDist_Recent, GrwSsn_TempDist_Historic) %>% 
   summarise(meanEst=mean(Establishment, na.rm = TRUE), semEst=sem(Establishment, na.rm=TRUE)) %>% 
   ggplot(aes(x=GrwSsn_TempDist_Historic, y=meanEst, group = pop)) +
@@ -1268,6 +1279,7 @@ GSCD_prob_historic <- ucd_establishment_sub_dist %>%
 
 ``` r
 WYCD_prob_historic <- ucd_establishment_sub_dist %>% 
+  filter(pop!="WV") %>% #Only 2 indivs for WV
   group_by(pop, elev_m, Wtr_Year_TempDist_Recent, Wtr_Year_TempDist_Historic) %>% 
   summarise(meanEst=mean(Establishment, na.rm = TRUE), semEst=sem(Establishment, na.rm=TRUE)) %>% 
   ggplot(aes(x=Wtr_Year_TempDist_Historic, y=meanEst, group = pop)) +
@@ -1415,6 +1427,7 @@ ggsave("../output/WL2_Traits/WL2_Establishment_PPTSubDist_SCATTERS_Historic.png"
 ``` r
 #scatter plots - recent
 GSCD_prob_recent <- ucd_establishment_sub_dist %>% 
+  filter(pop!="WV") %>% #Only 2 indivs for WV
   group_by(pop, elev_m, GrwSsn_PPTDist_Recent, GrwSsn_PPTDist_Historic) %>% 
   summarise(meanEst=mean(Establishment, na.rm = TRUE), semEst=sem(Establishment, na.rm=TRUE)) %>% 
   ggplot(aes(x=GrwSsn_PPTDist_Recent, y=meanEst, group = pop)) +
@@ -1433,6 +1446,7 @@ GSCD_prob_recent <- ucd_establishment_sub_dist %>%
 
 ``` r
 WYCD_prob_recent <- ucd_establishment_sub_dist %>% 
+  filter(pop!="WV") %>% #Only 2 indivs for WV
   group_by(pop, elev_m, Wtr_Year_PPTDist_Recent, Wtr_Year_PPTDist_Historic) %>% 
   summarise(meanEst=mean(Establishment, na.rm = TRUE), semEst=sem(Establishment, na.rm=TRUE)) %>% 
   ggplot(aes(x=Wtr_Year_PPTDist_Recent, y=meanEst, group = pop)) +
@@ -1451,6 +1465,7 @@ WYCD_prob_recent <- ucd_establishment_sub_dist %>%
 
 ``` r
 GD_prob <- ucd_establishment_sub_dist %>% 
+  filter(pop!="WV") %>% #Only 2 indivs for WV
   group_by(pop, elev_m, GrwSsn_PPTDist_Recent, Wtr_Year_PPTDist_Recent, Geographic_Dist) %>% 
   summarise(meanEst=mean(Establishment, na.rm = TRUE), semEst=sem(Establishment, na.rm=TRUE)) %>% 
   ggplot(aes(x=Geographic_Dist, y=meanEst, group = pop)) +
@@ -1469,6 +1484,7 @@ GD_prob <- ucd_establishment_sub_dist %>%
 
 ``` r
 ED_prob <- ucd_establishment_sub_dist %>% 
+  filter(pop!="WV") %>% #Only 2 indivs for WV
   group_by(pop, elev_m, Elev_Dist) %>% 
   summarise(meanEst=mean(Establishment, na.rm = TRUE), semEst=sem(Establishment, na.rm=TRUE)) %>% 
   ggplot(aes(x=Elev_Dist, y=meanEst, group = pop)) +
@@ -1494,6 +1510,7 @@ ggsave("../output/UCD_Traits/UCD_Establishment_PPTSubDist_SCATTERS_Recent.png", 
 ``` r
 #scatter plots - historic
 GSCD_prob_historic <- ucd_establishment_sub_dist %>% 
+  filter(pop!="WV") %>% #Only 2 indivs for WV
   group_by(pop, elev_m, GrwSsn_PPTDist_Recent, GrwSsn_PPTDist_Historic) %>% 
   summarise(meanEst=mean(Establishment, na.rm = TRUE), semEst=sem(Establishment, na.rm=TRUE)) %>% 
   ggplot(aes(x=GrwSsn_PPTDist_Historic, y=meanEst, group = pop)) +
@@ -1512,6 +1529,7 @@ GSCD_prob_historic <- ucd_establishment_sub_dist %>%
 
 ``` r
 WYCD_prob_historic <- ucd_establishment_sub_dist %>% 
+  filter(pop!="WV") %>% #Only 2 indivs for WV
   group_by(pop, elev_m, Wtr_Year_PPTDist_Recent, Wtr_Year_PPTDist_Historic) %>% 
   summarise(meanEst=mean(Establishment, na.rm = TRUE), semEst=sem(Establishment, na.rm=TRUE)) %>% 
   ggplot(aes(x=Wtr_Year_PPTDist_Historic, y=meanEst, group = pop)) +
