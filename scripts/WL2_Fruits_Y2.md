@@ -148,7 +148,7 @@ library(tidymodels)
 ## ✖ infer::t_test()       masks rstatix::t_test()
 ## ✖ Matrix::unpack()      masks tidyr::unpack()
 ## ✖ recipes::update()     masks Matrix::update(), stats::update()
-## • Dig deeper into tidy modeling with R at https://www.tmwr.org
+## • Search for functions across packages at https://www.tidymodels.org/find/
 ```
 
 ``` r
@@ -1862,24 +1862,23 @@ fruits_models_log_CD_GD %>% select(-f, -lmer) %>% unnest(glance) %>% arrange(AIC
 #pop.block preferred by AIC & BIC, WY models are close after
 
 fruits_models_log_CD_GD %>% mutate(tidy=map(lmer, tidy)) %>% unnest(tidy) %>%
-  select(-f, -lmer) %>% 
+  select(name, term:p.value) %>% 
   filter(str_detect(term, "GD") | term=="Geographic_Dist") %>%
   drop_na(p.value)
 ```
 
 ```
-## # A tibble: 8 × 11
-##   name    predict glance   effect group term  estimate std.error statistic    df
-##   <chr>   <list>  <list>   <chr>  <chr> <chr>    <dbl>     <dbl>     <dbl> <dbl>
-## 1 2_GS_R… <dbl>   <tibble> fixed  <NA>  GrwS…  -0.0884     0.118    -0.751  28.8
-## 2 2_GS_R… <dbl>   <tibble> fixed  <NA>  Geog…   0.241      0.122     1.98   18.8
-## 3 3_GS_H… <dbl>   <tibble> fixed  <NA>  GrwS…  -0.0969     0.118    -0.822  29.5
-## 4 3_GS_H… <dbl>   <tibble> fixed  <NA>  Geog…   0.243      0.122     1.99   18.6
-## 5 4_WY_R… <dbl>   <tibble> fixed  <NA>  Wtr_…  -0.0775     0.135    -0.574  20.2
-## 6 4_WY_R… <dbl>   <tibble> fixed  <NA>  Geog…   0.275      0.141     1.95   21.1
-## 7 5_WY_H… <dbl>   <tibble> fixed  <NA>  Wtr_…  -0.0576     0.134    -0.430  20.4
-## 8 5_WY_H… <dbl>   <tibble> fixed  <NA>  Geog…   0.261      0.139     1.89   21.4
-## # ℹ 1 more variable: p.value <dbl>
+## # A tibble: 8 × 7
+##   name            term                estimate std.error statistic    df p.value
+##   <chr>           <chr>                  <dbl>     <dbl>     <dbl> <dbl>   <dbl>
+## 1 2_GS_Recent     GrwSsn_GD_Recent     -0.0884     0.118    -0.751  28.8  0.459 
+## 2 2_GS_Recent     Geographic_Dist       0.241      0.122     1.98   18.8  0.0620
+## 3 3_GS_Historical GrwSsn_GD_Historic…  -0.0969     0.118    -0.822  29.5  0.418 
+## 4 3_GS_Historical Geographic_Dist       0.243      0.122     1.99   18.6  0.0613
+## 5 4_WY_Recent     Wtr_Year_GD_Recent   -0.0775     0.135    -0.574  20.2  0.572 
+## 6 4_WY_Recent     Geographic_Dist       0.275      0.141     1.95   21.1  0.0650
+## 7 5_WY_Historical Wtr_Year_GD_Histor…  -0.0576     0.134    -0.430  20.4  0.672 
+## 8 5_WY_Historical Geographic_Dist       0.261      0.139     1.89   21.4  0.0729
 ```
 
 ``` r

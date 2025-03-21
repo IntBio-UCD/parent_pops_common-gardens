@@ -767,7 +767,7 @@ fruits_models_log_CD_GD %>% select(-f, -lmer) %>% unnest(glance) %>% arrange(AIC
 #pop.block preferred by AIC & BIC, WY models are close after
 
 fruits_models_log_CD_GD %>% mutate(tidy=map(lmer, tidy)) %>% unnest(tidy) %>%
-  select(-f, -lmer) %>% 
+  select(name, term:p.value) %>% 
   filter(str_detect(term, "GD") | term=="Geographic_Dist") %>%
   drop_na(p.value)
 #  arrange(p.value)
