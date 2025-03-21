@@ -1,7 +1,7 @@
 ---
 title: "WL2_Fruits_Y2"
 author: "Brandie QC"
-date: "2025-03-19"
+date: "2025-03-21"
 output: 
   html_document: 
     keep_md: true
@@ -11,8 +11,6 @@ output:
 
 # Fruit production in year 2 at WL2
 
-To Do:
-- Run models with fruits+flowers
 
 ## Libraries
 
@@ -150,7 +148,7 @@ library(tidymodels)
 ## ✖ infer::t_test()       masks rstatix::t_test()
 ## ✖ Matrix::unpack()      masks tidyr::unpack()
 ## ✖ recipes::update()     masks Matrix::update(), stats::update()
-## • Use suppressPackageStartupMessages() to eliminate package startup messages
+## • Dig deeper into tidy modeling with R at https://www.tmwr.org
 ```
 
 ``` r
@@ -327,7 +325,7 @@ wl2_gowers_2024 <- read_csv("../output/Climate/Gowers_WL2_2024.csv") %>%
   pivot_wider(names_from = TimePd, values_from = c(GrwSsn_GD, Wtr_Year_GD)) %>% 
   mutate(WL2_Lat=38.82599, WL2_Long=-120.2509, WL2_Elev=2020) %>% 
   mutate(Geographic_Dist=distHaversine(cbind(WL2_Long, WL2_Lat), cbind(Long, Lat)),
-         Elev_Dist=WL2_Elev-elev_m) %>% # Calculate the distance using the haversine formula
+         Elev_Dist=elev_m-WL2_Elev) %>% # Calculate the distance using the haversine formula
   rename(pop=parent.pop)
 ```
 
@@ -346,7 +344,7 @@ wl2_gowers_2024 <- read_csv("../output/Climate/Gowers_WL2_2024.csv") %>%
 
 
 ``` r
-wl2_wtr_year_sub_recent_2024 <- read_csv("../output/Climate/full_year_Subtraction_Dist_from_WL2_2024_Recent.csv") %>% 
+wl2_wtr_year_sub_recent_2024 <- read_csv("../output/Climate/full_year_Subtraction_Dist_from_Home_WL2_2024_Recent.csv") %>% 
   select(parent.pop, Wtr_Year_TempDist_Recent=ann_tmean_dist, Wtr_Year_PPTDist_Recent=ann_ppt_dist)
 ```
 
@@ -362,7 +360,7 @@ wl2_wtr_year_sub_recent_2024 <- read_csv("../output/Climate/full_year_Subtractio
 ```
 
 ``` r
-wl2_wtr_year_sub_historic_2024 <- read_csv("../output/Climate/full_year_Subtraction_Dist_from_WL2_2024_Historical.csv") %>% 
+wl2_wtr_year_sub_historic_2024 <- read_csv("../output/Climate/full_year_Subtraction_Dist_from_Home_WL2_2024_Historical.csv") %>% 
   select(parent.pop, Wtr_Year_TempDist_Historic=ann_tmean_dist, Wtr_Year_PPTDist_Historic=ann_ppt_dist)
 ```
 
@@ -378,7 +376,7 @@ wl2_wtr_year_sub_historic_2024 <- read_csv("../output/Climate/full_year_Subtract
 ```
 
 ``` r
-wl2_grwssn_sub_recent_2024 <- read_csv("../output/Climate/grwssn_Subtraction_Dist_from_WL2_2024_Recent.csv") %>% 
+wl2_grwssn_sub_recent_2024 <- read_csv("../output/Climate/grwssn_Subtraction_Dist_from_Home_WL2_2024_Recent.csv") %>% 
   select(parent.pop, GrwSsn_TempDist_Recent=ann_tmean_dist, GrwSsn_PPTDist_Recent=ann_ppt_dist)
 ```
 
@@ -394,7 +392,7 @@ wl2_grwssn_sub_recent_2024 <- read_csv("../output/Climate/grwssn_Subtraction_Dis
 ```
 
 ``` r
-wl2_grwssn_sub_historic_2024 <- read_csv("../output/Climate/grwssn_Subtraction_Dist_from_WL2_2024_Historical.csv") %>% 
+wl2_grwssn_sub_historic_2024 <- read_csv("../output/Climate/grwssn_Subtraction_Dist_from_Home_WL2_2024_Historical.csv") %>% 
   select(parent.pop, GrwSsn_TempDist_Historic=ann_tmean_dist, GrwSsn_PPTDist_Historic=ann_ppt_dist)
 ```
 
@@ -492,13 +490,13 @@ summary(wl2_fruits_y2_nozeros)
 ##  3rd Qu.:0.4743         3rd Qu.:38.83   3rd Qu.:-120.3   3rd Qu.:2020  
 ##  Max.   :0.5207         Max.   :38.83   Max.   :-120.3   Max.   :2020  
 ##                                                                        
-##  Geographic_Dist      Elev_Dist        
-##  Min.   :   136.3   Min.   :-449.9787  
-##  1st Qu.: 65203.4   1st Qu.:  -0.1158  
-##  Median :128036.9   Median :1508.5706  
-##  Mean   :108511.2   Mean   :1027.0481  
-##  3rd Qu.:140893.4   3rd Qu.:1598.4822  
-##  Max.   :283280.5   Max.   :1707.0000  
+##  Geographic_Dist      Elev_Dist         
+##  Min.   :   136.3   Min.   :-1707.0000  
+##  1st Qu.: 65203.4   1st Qu.:-1598.4822  
+##  Median :128036.9   Median :-1508.5706  
+##  Mean   :108511.2   Mean   :-1027.0481  
+##  3rd Qu.:140893.4   3rd Qu.:    0.1158  
+##  Max.   :283280.5   Max.   :  449.9787  
 ## 
 ```
 
@@ -551,17 +549,17 @@ summary(wl2_FRFLs_y2_nozeros)
 ##  Mean   :0.4042         Mean   :38.83   Mean   :-120.3   Mean   :2020  
 ##  3rd Qu.:0.4743         3rd Qu.:38.83   3rd Qu.:-120.3   3rd Qu.:2020  
 ##  Max.   :0.5207         Max.   :38.83   Max.   :-120.3   Max.   :2020  
-##  Geographic_Dist      Elev_Dist        
-##  Min.   :   136.3   Min.   :-449.9787  
-##  1st Qu.: 65203.4   1st Qu.:  -0.1158  
-##  Median :128036.9   Median :1508.5706  
-##  Mean   :107589.3   Mean   :1025.1148  
-##  3rd Qu.:140893.4   3rd Qu.:1598.4822  
-##  Max.   :283280.5   Max.   :1707.0000
+##  Geographic_Dist      Elev_Dist         
+##  Min.   :   136.3   Min.   :-1707.0000  
+##  1st Qu.: 65203.4   1st Qu.:-1598.4822  
+##  Median :128036.9   Median :-1508.5706  
+##  Mean   :107589.3   Mean   :-1025.1148  
+##  3rd Qu.:140893.4   3rd Qu.:    0.1158  
+##  Max.   :283280.5   Max.   :  449.9787
 ```
 
 ``` r
-#write_csv(wl2_fruits_y2, "../output/WL2_Traits/WL2_Fruits_Y2.csv")
+#write_csv(wl2_fruits_y2_nozeros, "../output/WL2_Traits/WL2_Fruits_Y2.csv")
 ```
 
 
@@ -581,6 +579,41 @@ wl2_fruits_y2_nozeros_sub_dist <- wl2_fruits_y2_sub_dist %>%
 
 wl2_FRFLs_y2_nozero_sub_dists <- wl2_fruits_y2_sub_dist %>% 
   filter(FrFlN>0)
+```
+
+Probability of Fruits given Surv to Budding 
+
+``` r
+wl2_surv_to_rep_y2 <- read_csv("../output/WL2_Traits/WL2_Surv_to_Rep_Y2.csv")
+```
+
+```
+## Rows: 135 Columns: 23
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: ","
+## chr (10): Pop.Type, loc, bed, col, pop, Genotype, block, elevation.group, bu...
+## dbl (13): row, mf, rep, elev_m, Lat, Long, GrwSsn_GD_Recent, GrwSsn_GD_Histo...
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+```
+
+``` r
+wl2_prob_fruits <- wl2_surv_to_rep_y2 %>% 
+  filter(SurvtoRep_y2==1) %>% 
+  select(loc:block, death.date, SurvtoRep_y2) %>% 
+  left_join(wl2_fruits_y2) %>% 
+  mutate(ProbFruits=if_else(is.na(fruits), 0, 
+                            if_else(fruits==0, 0, 1))) %>% 
+  select(loc:col, block, pop:Genotype, elevation.group:Elev_Dist, ProbFruits)
+```
+
+```
+## Joining with `by = join_by(loc, bed, row, col, pop, mf, rep, Genotype, block)`
+```
+
+``` r
+#write_csv(wl2_prob_fruits, "../output/WL2_Traits/WL2_ProbFruits_Y2.csv")
 ```
 
 
@@ -607,7 +640,7 @@ wl2_fruits_y2_nozeros %>%
 ## can override using the `.groups` argument.
 ```
 
-![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-8-1.png)<!-- -->
+![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-9-1.png)<!-- -->
 
 ``` r
 ggsave("../output/WL2_Traits/WL2_FruitsY2_GrwSsn_GD_Recent.png", width = 12, height = 8, units = "in")
@@ -632,7 +665,7 @@ wl2_fruits_y2_nozeros %>%
 ## can override using the `.groups` argument.
 ```
 
-![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-8-2.png)<!-- -->
+![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-9-2.png)<!-- -->
 
 ``` r
 ggsave("../output/WL2_Traits/WL2_FruitsY2_Wtr_Year_GD_Recent.png", width = 12, height = 8, units = "in")
@@ -659,6 +692,7 @@ wl2_fruits_y2_nozeros %>% filter(pop=="TM2") #only 3 of the 6 made fruits and th
 ``` r
 #scatter plots
 GSCD_recent <- wl2_fruits_y2_nozeros %>% 
+  filter(pop != "LV1", pop != "SQ1", pop != "WR") %>% 
   group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
   summarise(meanFruits=mean(fruits, na.rm = TRUE), semFruits=sem(fruits, na.rm=TRUE)) %>% 
   ggplot(aes(x=GrwSsn_GD_Recent, y=meanFruits, group = pop)) +
@@ -677,6 +711,7 @@ GSCD_recent <- wl2_fruits_y2_nozeros %>%
 
 ``` r
 WYCD_recent <- wl2_fruits_y2_nozeros %>% 
+  filter(pop != "LV1", pop != "SQ1", pop != "WR") %>% 
   group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
   summarise(meanFruits=mean(fruits, na.rm = TRUE), semFruits=sem(fruits, na.rm=TRUE)) %>% 
   ggplot(aes(x=Wtr_Year_GD_Recent, y=meanFruits, group = pop)) +
@@ -695,6 +730,7 @@ WYCD_recent <- wl2_fruits_y2_nozeros %>%
 
 ``` r
 GD <- wl2_fruits_y2_nozeros %>% 
+  filter(pop != "LV1", pop != "SQ1", pop != "WR") %>% 
   group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent, Geographic_Dist) %>% 
   summarise(meanFruits=mean(fruits, na.rm = TRUE), semFruits=sem(fruits, na.rm=TRUE)) %>% 
   ggplot(aes(x=Geographic_Dist, y=meanFruits, group = pop)) +
@@ -713,6 +749,7 @@ GD <- wl2_fruits_y2_nozeros %>%
 
 ``` r
 ED <- wl2_fruits_y2_nozeros %>% 
+  filter(pop != "LV1", pop != "SQ1", pop != "WR") %>% 
   group_by(pop, elev_m, Elev_Dist) %>% 
   summarise(meanFruits=mean(fruits, na.rm = TRUE), semFruits=sem(fruits, na.rm=TRUE)) %>% 
   ggplot(aes(x=Elev_Dist, y=meanFruits, group = pop)) +
@@ -738,6 +775,7 @@ ggsave("../output/WL2_Traits/WL2_fruits_y2_nozeros_SCATTERS_Recent.png", width =
 ``` r
 #scatter plots
 GSCD_historic <- wl2_fruits_y2_nozeros %>% 
+  filter(pop != "LV1", pop != "SQ1", pop != "WR") %>% 
   group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
   summarise(meanFruits=mean(fruits, na.rm = TRUE), semFruits=sem(fruits, na.rm=TRUE)) %>% 
   ggplot(aes(x=GrwSsn_GD_Recent, y=meanFruits, group = pop)) +
@@ -756,6 +794,7 @@ GSCD_historic <- wl2_fruits_y2_nozeros %>%
 
 ``` r
 WYCD_historic <- wl2_fruits_y2_nozeros %>% 
+  filter(pop != "LV1", pop != "SQ1", pop != "WR") %>% 
   group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
   summarise(meanFruits=mean(fruits, na.rm = TRUE), semFruits=sem(fruits, na.rm=TRUE)) %>% 
   ggplot(aes(x=Wtr_Year_GD_Recent, y=meanFruits, group = pop)) +
@@ -781,6 +820,7 @@ ggsave("../output/WL2_Traits/WL2_fruits_y2_nozeros_SCATTERS_Historical.png", wid
 ``` r
 #scatter plots
 GSCD_recent <- wl2_FRFLs_y2_nozeros %>% 
+  filter(pop != "LV1", pop != "SQ1", pop != "WR") %>% 
   group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
   summarise(meanFruits=mean(FrFlN, na.rm = TRUE), semFruits=sem(FrFlN, na.rm=TRUE)) %>% 
   ggplot(aes(x=GrwSsn_GD_Recent, y=meanFruits, group = pop)) +
@@ -799,6 +839,7 @@ GSCD_recent <- wl2_FRFLs_y2_nozeros %>%
 
 ``` r
 WYCD_recent <- wl2_FRFLs_y2_nozeros %>% 
+  filter(pop != "LV1", pop != "SQ1", pop != "WR") %>% 
   group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
   summarise(meanFruits=mean(FrFlN, na.rm = TRUE), semFruits=sem(FrFlN, na.rm=TRUE)) %>% 
   ggplot(aes(x=Wtr_Year_GD_Recent, y=meanFruits, group = pop)) +
@@ -817,6 +858,7 @@ WYCD_recent <- wl2_FRFLs_y2_nozeros %>%
 
 ``` r
 GD <- wl2_FRFLs_y2_nozeros %>% 
+  filter(pop != "LV1", pop != "SQ1", pop != "WR") %>% 
   group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent, Geographic_Dist) %>% 
   summarise(meanFruits=mean(FrFlN, na.rm = TRUE), semFruits=sem(FrFlN, na.rm=TRUE)) %>% 
   ggplot(aes(x=Geographic_Dist, y=meanFruits, group = pop)) +
@@ -835,6 +877,7 @@ GD <- wl2_FRFLs_y2_nozeros %>%
 
 ``` r
 ED <- wl2_FRFLs_y2_nozeros %>% 
+  filter(pop != "LV1", pop != "SQ1", pop != "WR") %>% 
   group_by(pop, elev_m, Elev_Dist) %>% 
   summarise(meanFruits=mean(FrFlN, na.rm = TRUE), semFruits=sem(FrFlN, na.rm=TRUE)) %>% 
   ggplot(aes(x=Elev_Dist, y=meanFruits, group = pop)) +
@@ -860,6 +903,7 @@ ggsave("../output/WL2_Traits/WL2_FrFlN_y2_nozeros_SCATTERS_Recent.png", width = 
 ``` r
 #scatter plots
 GSCD_historic <- wl2_FRFLs_y2_nozeros %>% 
+  filter(pop != "LV1", pop != "SQ1", pop != "WR") %>% 
   group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
   summarise(meanFruits=mean(FrFlN, na.rm = TRUE), semFruits=sem(FrFlN, na.rm=TRUE)) %>% 
   ggplot(aes(x=GrwSsn_GD_Recent, y=meanFruits, group = pop)) +
@@ -878,6 +922,7 @@ GSCD_historic <- wl2_FRFLs_y2_nozeros %>%
 
 ``` r
 WYCD_historic <- wl2_FRFLs_y2_nozeros %>% 
+  filter(pop != "LV1", pop != "SQ1", pop != "WR") %>% 
   group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
   summarise(meanFruits=mean(FrFlN, na.rm = TRUE), semFruits=sem(FrFlN, na.rm=TRUE)) %>% 
   ggplot(aes(x=Wtr_Year_GD_Recent, y=meanFruits, group = pop)) +
@@ -1175,7 +1220,7 @@ wl2_fruits_y2 %>%
 ## (`stat_bin()`).
 ```
 
-![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-17-1.png)<!-- -->
+![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-18-1.png)<!-- -->
 
 ``` r
 wl2_fruits_y2 %>% 
@@ -1192,7 +1237,7 @@ wl2_fruits_y2 %>%
 ## (`stat_bin()`).
 ```
 
-![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-17-2.png)<!-- -->
+![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-18-2.png)<!-- -->
 
 ``` r
 wl2_fruits_y2_nozeros %>% 
@@ -1204,14 +1249,14 @@ wl2_fruits_y2_nozeros %>%
 ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 ```
 
-![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-17-3.png)<!-- -->
+![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-18-3.png)<!-- -->
 
 ### Check Sample Sizes
 
 ``` r
 wl2_fruits_y2 %>% 
   group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent, Geographic_Dist) %>% 
-  summarise(meanFruits=mean(fruits, na.rm = TRUE), semFruits=sem(fruits, na.rm=TRUE), n=n()) 
+  summarise(n=n()) 
 ```
 
 ```
@@ -1220,21 +1265,20 @@ wl2_fruits_y2 %>%
 ```
 
 ```
-## # A tibble: 10 × 8
+## # A tibble: 10 × 6
 ## # Groups:   pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent [10]
-##    pop   elev_m GrwSsn_GD_Recent Wtr_Year_GD_Recent Geographic_Dist meanFruits
-##    <chr>  <dbl>            <dbl>              <dbl>           <dbl>      <dbl>
-##  1 BH      511.            0.360              0.566         159626.       23.9
-##  2 CC      313             0.435              0.445         132498.       15.3
-##  3 IH      454.            0.453              0.422          65203.       11.1
-##  4 LV1    2593.            0.414              0.406         212682.      NaN  
-##  5 SC      422.            0.449              0.497          62499.       18.7
-##  6 SQ1    1921.            0.159              0.310         283281.        2  
-##  7 TM2     379.            0.566              0.406         140893.       48.7
-##  8 WL2    2020.            0.238              0.226            136.       22.4
-##  9 WR     1158             0.366              0.355          74992.       30  
-## 10 YO7    2470.            0.353              0.328         128037.       19.4
-## # ℹ 2 more variables: semFruits <dbl>, n <int>
+##    pop   elev_m GrwSsn_GD_Recent Wtr_Year_GD_Recent Geographic_Dist     n
+##    <chr>  <dbl>            <dbl>              <dbl>           <dbl> <int>
+##  1 BH      511.            0.360              0.566         159626.    29
+##  2 CC      313             0.435              0.445         132498.    17
+##  3 IH      454.            0.453              0.422          65203.    34
+##  4 LV1    2593.            0.414              0.406         212682.     1
+##  5 SC      422.            0.449              0.497          62499.    22
+##  6 SQ1    1921.            0.159              0.310         283281.     1
+##  7 TM2     379.            0.566              0.406         140893.     6
+##  8 WL2    2020.            0.238              0.226            136.     6
+##  9 WR     1158             0.366              0.355          74992.     1
+## 10 YO7    2470.            0.353              0.328         128037.    18
 ```
 
 ``` r
@@ -1242,7 +1286,7 @@ wl2_fruits_y2 %>%
 
 wl2_fruits_y2_nozeros %>% 
   group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent, Geographic_Dist) %>% 
-  summarise(meanFruits=mean(fruits, na.rm = TRUE), semFruits=sem(fruits, na.rm=TRUE), n=n()) %>% 
+  summarise(n=n()) %>% 
   arrange(n)
 ```
 
@@ -1252,20 +1296,19 @@ wl2_fruits_y2_nozeros %>%
 ```
 
 ```
-## # A tibble: 9 × 8
+## # A tibble: 9 × 6
 ## # Groups:   pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent [9]
-##   pop   elev_m GrwSsn_GD_Recent Wtr_Year_GD_Recent Geographic_Dist meanFruits
-##   <chr>  <dbl>            <dbl>              <dbl>           <dbl>      <dbl>
-## 1 SQ1    1921.            0.159              0.310         283281.        2  
-## 2 WR     1158             0.366              0.355          74992.       30  
-## 3 TM2     379.            0.566              0.406         140893.       48.7
-## 4 WL2    2020.            0.238              0.226            136.       22.4
-## 5 CC      313             0.435              0.445         132498.       17  
-## 6 SC      422.            0.449              0.497          62499.       20.6
-## 7 IH      454.            0.453              0.422          65203.       14.5
-## 8 YO7    2470.            0.353              0.328         128037.       21.9
-## 9 BH      511.            0.360              0.566         159626.       28.4
-## # ℹ 2 more variables: semFruits <dbl>, n <int>
+##   pop   elev_m GrwSsn_GD_Recent Wtr_Year_GD_Recent Geographic_Dist     n
+##   <chr>  <dbl>            <dbl>              <dbl>           <dbl> <int>
+## 1 SQ1    1921.            0.159              0.310         283281.     1
+## 2 WR     1158             0.366              0.355          74992.     1
+## 3 TM2     379.            0.566              0.406         140893.     3
+## 4 WL2    2020.            0.238              0.226            136.     5
+## 5 CC      313             0.435              0.445         132498.     9
+## 6 SC      422.            0.449              0.497          62499.    10
+## 7 IH      454.            0.453              0.422          65203.    13
+## 8 YO7    2470.            0.353              0.328         128037.    15
+## 9 BH      511.            0.360              0.566         159626.    16
 ```
 
 ``` r
@@ -1273,7 +1316,7 @@ wl2_fruits_y2_nozeros %>%
 
 wl2_FRFLs_y2_nozeros %>% 
   group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent, Geographic_Dist) %>% 
-  summarise(meanFrFlN=mean(FrFlN, na.rm = TRUE), semFrFlN=sem(FrFlN, na.rm=TRUE), n=n()) %>% 
+  summarise(n=n()) %>% 
   arrange(n)
 ```
 
@@ -1283,20 +1326,19 @@ wl2_FRFLs_y2_nozeros %>%
 ```
 
 ```
-## # A tibble: 9 × 8
+## # A tibble: 9 × 6
 ## # Groups:   pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent [9]
-##   pop   elev_m GrwSsn_GD_Recent Wtr_Year_GD_Recent Geographic_Dist meanFrFlN
-##   <chr>  <dbl>            <dbl>              <dbl>           <dbl>     <dbl>
-## 1 SQ1    1921.            0.159              0.310         283281.       2  
-## 2 WR     1158             0.366              0.355          74992.      30  
-## 3 TM2     379.            0.566              0.406         140893.      48.7
-## 4 WL2    2020.            0.238              0.226            136.      22.6
-## 5 CC      313             0.435              0.445         132498.      18.9
-## 6 SC      422.            0.449              0.497          62499.      20.6
-## 7 IH      454.            0.453              0.422          65203.      13.6
-## 8 YO7    2470.            0.353              0.328         128037.      22.1
-## 9 BH      511.            0.360              0.566         159626.      28.9
-## # ℹ 2 more variables: semFrFlN <dbl>, n <int>
+##   pop   elev_m GrwSsn_GD_Recent Wtr_Year_GD_Recent Geographic_Dist     n
+##   <chr>  <dbl>            <dbl>              <dbl>           <dbl> <int>
+## 1 SQ1    1921.            0.159              0.310         283281.     1
+## 2 WR     1158             0.366              0.355          74992.     1
+## 3 TM2     379.            0.566              0.406         140893.     3
+## 4 WL2    2020.            0.238              0.226            136.     5
+## 5 CC      313             0.435              0.445         132498.     8
+## 6 SC      422.            0.449              0.497          62499.    10
+## 7 IH      454.            0.453              0.422          65203.    14
+## 8 YO7    2470.            0.353              0.328         128037.    15
+## 9 BH      511.            0.360              0.566         159626.    16
 ```
 
 
@@ -1321,7 +1363,7 @@ wl2_fruits_y2_scaled %>%  #looks better
 ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 ```
 
-![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-19-1.png)<!-- -->
+![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-20-1.png)<!-- -->
 
 ``` r
 wl2_fruits_y2_scaled %>% 
@@ -1333,7 +1375,7 @@ wl2_fruits_y2_scaled %>%
 ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 ```
 
-![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-19-2.png)<!-- -->
+![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-20-2.png)<!-- -->
 
 ``` r
 wl2_fruits_y2_scaled %>%  #looks better
@@ -1345,7 +1387,7 @@ wl2_fruits_y2_scaled %>%  #looks better
 ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 ```
 
-![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-19-3.png)<!-- -->
+![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-20-3.png)<!-- -->
 
 ``` r
 wl2_fruits_y2_scaled %>% 
@@ -1357,7 +1399,7 @@ wl2_fruits_y2_scaled %>%
 ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 ```
 
-![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-19-4.png)<!-- -->
+![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-20-4.png)<!-- -->
 
 
 ``` r
@@ -1377,7 +1419,7 @@ wl2_fruits_y2_nozeros_scaled %>%  #looks better
 ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 ```
 
-![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-20-1.png)<!-- -->
+![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-21-1.png)<!-- -->
 
 ``` r
 wl2_fruits_y2_nozeros_scaled %>% 
@@ -1389,7 +1431,7 @@ wl2_fruits_y2_nozeros_scaled %>%
 ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 ```
 
-![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-20-2.png)<!-- -->
+![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-21-2.png)<!-- -->
 
 ``` r
 wl2_FrFlN_y2_nozeros_scaled <- wl2_FRFLs_y2_nozeros %>% 
@@ -1409,7 +1451,7 @@ wl2_FrFlN_y2_nozeros_scaled %>%  #looks better
 ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 ```
 
-![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-20-3.png)<!-- -->
+![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-21-3.png)<!-- -->
 
 ``` r
 wl2_FrFlN_y2_nozeros_scaled %>% 
@@ -1421,7 +1463,7 @@ wl2_FrFlN_y2_nozeros_scaled %>%
 ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 ```
 
-![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-20-4.png)<!-- -->
+![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-21-4.png)<!-- -->
 
 
 ``` r
@@ -1477,7 +1519,7 @@ wl2_FrFlN_y2_nozeros_scaled_sub %>%  #looks better
 ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 ```
 
-![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-21-1.png)<!-- -->
+![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-22-1.png)<!-- -->
 
 ``` r
 wl2_FrFlN_y2_nozeros_scaled_sub %>% 
@@ -1489,7 +1531,7 @@ wl2_FrFlN_y2_nozeros_scaled_sub %>%
 ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 ```
 
-![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-21-2.png)<!-- -->
+![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-22-2.png)<!-- -->
 
 ## Base Models
 
@@ -1549,14 +1591,14 @@ mod_test <- lmer(logFruits ~  (1|pop/mf) + (1|block), data=wl2_fruits_y2_nozeros
 plot(mod_test, which = 1) 
 ```
 
-![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-22-1.png)<!-- -->
+![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-23-1.png)<!-- -->
 
 ``` r
 qqnorm(resid(mod_test))
 qqline(resid(mod_test)) 
 ```
 
-![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-22-2.png)<!-- -->
+![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-23-2.png)<!-- -->
 
 ``` r
 summary(mod_test)
@@ -1650,14 +1692,14 @@ mod_test <- lmer(logFrFlN ~  (1|pop/mf) + (1|block), data=wl2_FrFlN_y2_nozeros_s
 plot(mod_test, which = 1) 
 ```
 
-![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-23-1.png)<!-- -->
+![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-24-1.png)<!-- -->
 
 ``` r
 qqnorm(resid(mod_test))
 qqline(resid(mod_test)) 
 ```
 
-![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-23-2.png)<!-- -->
+![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-24-2.png)<!-- -->
 
 ``` r
 summary(mod_test)
@@ -1706,7 +1748,7 @@ wl2_fruits_y2_nozeros_scaled %>%
   facet_wrap(~pop, scales="free")
 ```
 
-![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-24-1.png)<!-- -->
+![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-25-1.png)<!-- -->
 
 
 #### Test climate and geographic distance 
@@ -1915,17 +1957,17 @@ fruits_models_log_CD_GD_sub %>% mutate(tidy=map(lmer, tidy)) %>% unnest(tidy) %>
 ## # A tibble: 12 × 7
 ##    name            term               estimate std.error statistic    df p.value
 ##    <chr>           <chr>                 <dbl>     <dbl>     <dbl> <dbl>   <dbl>
-##  1 2_GS_Recent     GrwSsn_TempDist_R…   0.0592     0.198     0.298  20.0   0.769
-##  2 2_GS_Recent     GrwSsn_PPTDist_Re…   0.0727     0.192     0.380  24.5   0.707
+##  1 2_GS_Recent     GrwSsn_TempDist_R…  -0.0592     0.198    -0.298  20.0   0.769
+##  2 2_GS_Recent     GrwSsn_PPTDist_Re…  -0.0727     0.192    -0.380  24.5   0.707
 ##  3 2_GS_Recent     Geographic_Dist      0.193      0.116     1.66   21.6   0.111
-##  4 3_GS_Historical GrwSsn_TempDist_H…   0.0592     0.198     0.298  20.0   0.769
-##  5 3_GS_Historical GrwSsn_PPTDist_Hi…   0.0727     0.192     0.380  24.5   0.707
+##  4 3_GS_Historical GrwSsn_TempDist_H…  -0.0592     0.198    -0.298  20.0   0.769
+##  5 3_GS_Historical GrwSsn_PPTDist_Hi…  -0.0727     0.192    -0.380  24.5   0.707
 ##  6 3_GS_Historical Geographic_Dist      0.193      0.116     1.66   21.6   0.111
-##  7 4_WY_Recent     Wtr_Year_TempDist…   0.140      0.159     0.879  24.7   0.388
-##  8 4_WY_Recent     Wtr_Year_PPTDist_…   0.0804     0.173     0.466  25.4   0.645
+##  7 4_WY_Recent     Wtr_Year_TempDist…  -0.140      0.159    -0.879  24.7   0.388
+##  8 4_WY_Recent     Wtr_Year_PPTDist_…  -0.0804     0.173    -0.466  25.4   0.645
 ##  9 4_WY_Recent     Geographic_Dist      0.197      0.132     1.49   25.6   0.148
-## 10 5_WY_Historical Wtr_Year_TempDist…   0.153      0.166     0.922  24.5   0.366
-## 11 5_WY_Historical Wtr_Year_PPTDist_…   0.0936     0.177     0.530  24.5   0.601
+## 10 5_WY_Historical Wtr_Year_TempDist…  -0.153      0.166    -0.922  24.5   0.366
+## 11 5_WY_Historical Wtr_Year_PPTDist_…  -0.0936     0.177    -0.530  24.5   0.601
 ## 12 5_WY_Historical Geographic_Dist      0.196      0.128     1.53   24.7   0.138
 ```
 
@@ -2139,17 +2181,17 @@ FrFlN_models_log_CD_GD_sub %>% mutate(tidy=map(lmer, tidy)) %>% unnest(tidy) %>%
 ## # A tibble: 12 × 7
 ##    name            term               estimate std.error statistic    df p.value
 ##    <chr>           <chr>                 <dbl>     <dbl>     <dbl> <dbl>   <dbl>
-##  1 2_GS_Recent     GrwSsn_TempDist_R…  2.62e-2  0.0911      0.287   21.6  0.777 
-##  2 2_GS_Recent     GrwSsn_PPTDist_Re…  2.00e-4  0.000741    0.269   26.2  0.790 
+##  1 2_GS_Recent     GrwSsn_TempDist_R… -2.62e-2  0.0911     -0.287   21.6  0.777 
+##  2 2_GS_Recent     GrwSsn_PPTDist_Re… -2.00e-4  0.000741   -0.269   26.2  0.790 
 ##  3 2_GS_Recent     Geographic_Dist     2.42e-1  0.122       1.99    22.5  0.0588
-##  4 3_GS_Historical GrwSsn_TempDist_H…  2.62e-2  0.0911      0.287   21.6  0.777 
-##  5 3_GS_Historical GrwSsn_PPTDist_Hi…  2.00e-4  0.000741    0.269   26.2  0.790 
+##  4 3_GS_Historical GrwSsn_TempDist_H… -2.62e-2  0.0911     -0.287   21.6  0.777 
+##  5 3_GS_Historical GrwSsn_PPTDist_Hi… -2.00e-4  0.000741   -0.269   26.2  0.790 
 ##  6 3_GS_Historical Geographic_Dist     2.42e-1  0.122       1.99    22.5  0.0588
-##  7 4_WY_Recent     Wtr_Year_TempDist…  2.09e-2  0.0357      0.587   25.2  0.562 
-##  8 4_WY_Recent     Wtr_Year_PPTDist_… -2.04e-5  0.000683   -0.0300  27.1  0.976 
+##  7 4_WY_Recent     Wtr_Year_TempDist… -2.09e-2  0.0357     -0.587   25.2  0.562 
+##  8 4_WY_Recent     Wtr_Year_PPTDist_…  2.04e-5  0.000683    0.0300  27.1  0.976 
 ##  9 4_WY_Recent     Geographic_Dist     2.77e-1  0.138       2.00    26.4  0.0556
-## 10 5_WY_Historical Wtr_Year_TempDist…  2.30e-2  0.0361      0.638   25.0  0.529 
-## 11 5_WY_Historical Wtr_Year_PPTDist_…  5.32e-5  0.000693    0.0768  26.2  0.939 
+## 10 5_WY_Historical Wtr_Year_TempDist… -2.30e-2  0.0361     -0.638   25.0  0.529 
+## 11 5_WY_Historical Wtr_Year_PPTDist_… -5.32e-5  0.000693   -0.0768  26.2  0.939 
 ## 12 5_WY_Historical Geographic_Dist     2.68e-1  0.134       2.01    25.4  0.0553
 ```
 

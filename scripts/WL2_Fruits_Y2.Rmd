@@ -96,7 +96,7 @@ wl2_gowers_2024 <- read_csv("../output/Climate/Gowers_WL2_2024.csv") %>%
   pivot_wider(names_from = TimePd, values_from = c(GrwSsn_GD, Wtr_Year_GD)) %>% 
   mutate(WL2_Lat=38.82599, WL2_Long=-120.2509, WL2_Elev=2020) %>% 
   mutate(Geographic_Dist=distHaversine(cbind(WL2_Long, WL2_Lat), cbind(Long, Lat)),
-         Elev_Dist=WL2_Elev-elev_m) %>% # Calculate the distance using the haversine formula
+         Elev_Dist=elev_m-WL2_Elev) %>% # Calculate the distance using the haversine formula
   rename(pop=parent.pop)
 ```
 
@@ -204,6 +204,7 @@ wl2_fruits_y2_nozeros %>% filter(pop=="TM2") #only 3 of the 6 made fruits and th
 ```{r}
 #scatter plots
 GSCD_recent <- wl2_fruits_y2_nozeros %>% 
+  filter(pop != "LV1", pop != "SQ1", pop != "WR") %>% 
   group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
   summarise(meanFruits=mean(fruits, na.rm = TRUE), semFruits=sem(fruits, na.rm=TRUE)) %>% 
   ggplot(aes(x=GrwSsn_GD_Recent, y=meanFruits, group = pop)) +
@@ -215,6 +216,7 @@ GSCD_recent <- wl2_fruits_y2_nozeros %>%
   theme(text=element_text(size=25))
 
 WYCD_recent <- wl2_fruits_y2_nozeros %>% 
+  filter(pop != "LV1", pop != "SQ1", pop != "WR") %>% 
   group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
   summarise(meanFruits=mean(fruits, na.rm = TRUE), semFruits=sem(fruits, na.rm=TRUE)) %>% 
   ggplot(aes(x=Wtr_Year_GD_Recent, y=meanFruits, group = pop)) +
@@ -226,6 +228,7 @@ WYCD_recent <- wl2_fruits_y2_nozeros %>%
   theme(text=element_text(size=25))
 
 GD <- wl2_fruits_y2_nozeros %>% 
+  filter(pop != "LV1", pop != "SQ1", pop != "WR") %>% 
   group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent, Geographic_Dist) %>% 
   summarise(meanFruits=mean(fruits, na.rm = TRUE), semFruits=sem(fruits, na.rm=TRUE)) %>% 
   ggplot(aes(x=Geographic_Dist, y=meanFruits, group = pop)) +
@@ -237,6 +240,7 @@ GD <- wl2_fruits_y2_nozeros %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 
 ED <- wl2_fruits_y2_nozeros %>% 
+  filter(pop != "LV1", pop != "SQ1", pop != "WR") %>% 
   group_by(pop, elev_m, Elev_Dist) %>% 
   summarise(meanFruits=mean(fruits, na.rm = TRUE), semFruits=sem(fruits, na.rm=TRUE)) %>% 
   ggplot(aes(x=Elev_Dist, y=meanFruits, group = pop)) +
@@ -254,6 +258,7 @@ ggsave("../output/WL2_Traits/WL2_fruits_y2_nozeros_SCATTERS_Recent.png", width =
 ```{r}
 #scatter plots
 GSCD_historic <- wl2_fruits_y2_nozeros %>% 
+  filter(pop != "LV1", pop != "SQ1", pop != "WR") %>% 
   group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
   summarise(meanFruits=mean(fruits, na.rm = TRUE), semFruits=sem(fruits, na.rm=TRUE)) %>% 
   ggplot(aes(x=GrwSsn_GD_Recent, y=meanFruits, group = pop)) +
@@ -265,6 +270,7 @@ GSCD_historic <- wl2_fruits_y2_nozeros %>%
   theme(text=element_text(size=25))
 
 WYCD_historic <- wl2_fruits_y2_nozeros %>% 
+  filter(pop != "LV1", pop != "SQ1", pop != "WR") %>% 
   group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
   summarise(meanFruits=mean(fruits, na.rm = TRUE), semFruits=sem(fruits, na.rm=TRUE)) %>% 
   ggplot(aes(x=Wtr_Year_GD_Recent, y=meanFruits, group = pop)) +
@@ -282,6 +288,7 @@ ggsave("../output/WL2_Traits/WL2_fruits_y2_nozeros_SCATTERS_Historical.png", wid
 ```{r}
 #scatter plots
 GSCD_recent <- wl2_FRFLs_y2_nozeros %>% 
+  filter(pop != "LV1", pop != "SQ1", pop != "WR") %>% 
   group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
   summarise(meanFruits=mean(FrFlN, na.rm = TRUE), semFruits=sem(FrFlN, na.rm=TRUE)) %>% 
   ggplot(aes(x=GrwSsn_GD_Recent, y=meanFruits, group = pop)) +
@@ -293,6 +300,7 @@ GSCD_recent <- wl2_FRFLs_y2_nozeros %>%
   theme(text=element_text(size=25))
 
 WYCD_recent <- wl2_FRFLs_y2_nozeros %>% 
+  filter(pop != "LV1", pop != "SQ1", pop != "WR") %>% 
   group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
   summarise(meanFruits=mean(FrFlN, na.rm = TRUE), semFruits=sem(FrFlN, na.rm=TRUE)) %>% 
   ggplot(aes(x=Wtr_Year_GD_Recent, y=meanFruits, group = pop)) +
@@ -304,6 +312,7 @@ WYCD_recent <- wl2_FRFLs_y2_nozeros %>%
   theme(text=element_text(size=25))
 
 GD <- wl2_FRFLs_y2_nozeros %>% 
+  filter(pop != "LV1", pop != "SQ1", pop != "WR") %>% 
   group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent, Geographic_Dist) %>% 
   summarise(meanFruits=mean(FrFlN, na.rm = TRUE), semFruits=sem(FrFlN, na.rm=TRUE)) %>% 
   ggplot(aes(x=Geographic_Dist, y=meanFruits, group = pop)) +
@@ -315,6 +324,7 @@ GD <- wl2_FRFLs_y2_nozeros %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 
 ED <- wl2_FRFLs_y2_nozeros %>% 
+  filter(pop != "LV1", pop != "SQ1", pop != "WR") %>% 
   group_by(pop, elev_m, Elev_Dist) %>% 
   summarise(meanFruits=mean(FrFlN, na.rm = TRUE), semFruits=sem(FrFlN, na.rm=TRUE)) %>% 
   ggplot(aes(x=Elev_Dist, y=meanFruits, group = pop)) +
@@ -332,6 +342,7 @@ ggsave("../output/WL2_Traits/WL2_FrFlN_y2_nozeros_SCATTERS_Recent.png", width = 
 ```{r}
 #scatter plots
 GSCD_historic <- wl2_FRFLs_y2_nozeros %>% 
+  filter(pop != "LV1", pop != "SQ1", pop != "WR") %>% 
   group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
   summarise(meanFruits=mean(FrFlN, na.rm = TRUE), semFruits=sem(FrFlN, na.rm=TRUE)) %>% 
   ggplot(aes(x=GrwSsn_GD_Recent, y=meanFruits, group = pop)) +
@@ -343,6 +354,7 @@ GSCD_historic <- wl2_FRFLs_y2_nozeros %>%
   theme(text=element_text(size=25))
 
 WYCD_historic <- wl2_FRFLs_y2_nozeros %>% 
+  filter(pop != "LV1", pop != "SQ1", pop != "WR") %>% 
   group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
   summarise(meanFruits=mean(FrFlN, na.rm = TRUE), semFruits=sem(FrFlN, na.rm=TRUE)) %>% 
   ggplot(aes(x=Wtr_Year_GD_Recent, y=meanFruits, group = pop)) +
@@ -547,18 +559,18 @@ wl2_fruits_y2_nozeros %>%
 ```{r}
 wl2_fruits_y2 %>% 
   group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent, Geographic_Dist) %>% 
-  summarise(meanFruits=mean(fruits, na.rm = TRUE), semFruits=sem(fruits, na.rm=TRUE), n=n()) 
+  summarise(n=n()) 
 #remove LV1, SQ1, WR b/c only 1 indiv each 
 
 wl2_fruits_y2_nozeros %>% 
   group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent, Geographic_Dist) %>% 
-  summarise(meanFruits=mean(fruits, na.rm = TRUE), semFruits=sem(fruits, na.rm=TRUE), n=n()) %>% 
+  summarise(n=n()) %>% 
   arrange(n)
 #remove SQ1 and WR b/c 1 indiv - without those 2 there are only 7 pops 
 
 wl2_FRFLs_y2_nozeros %>% 
   group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent, Geographic_Dist) %>% 
-  summarise(meanFrFlN=mean(FrFlN, na.rm = TRUE), semFrFlN=sem(FrFlN, na.rm=TRUE), n=n()) %>% 
+  summarise(n=n()) %>% 
   arrange(n)
 ```
 
