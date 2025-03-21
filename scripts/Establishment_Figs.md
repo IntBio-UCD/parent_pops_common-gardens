@@ -1,7 +1,7 @@
 ---
 title: "Establishment_Figures"
 author: "Brandie QC"
-date: "2025-03-18"
+date: "2025-03-21"
 output: 
   html_document: 
     keep_md: true
@@ -147,7 +147,7 @@ library(tidymodels)
 ## ✖ infer::t_test()       masks rstatix::t_test()
 ## ✖ Matrix::unpack()      masks tidyr::unpack()
 ## ✖ recipes::update()     masks Matrix::update(), stats::update()
-## • Use suppressPackageStartupMessages() to eliminate package startup messages
+## • Search for functions across packages at https://www.tidymodels.org/find/
 ```
 
 ``` r
@@ -334,7 +334,7 @@ ucd_gowers <- read_csv("../output/Climate/Gowers_UCD.csv") %>%
   pivot_wider(names_from = TimePd, values_from = c(GrwSsn_GD, Wtr_Year_GD)) %>% 
   mutate(UCD_Lat=38.53250, UCD_Long=-121.7830, UCD_Elev=16) %>% 
   mutate(Geographic_Dist=distHaversine(cbind(UCD_Long, UCD_Lat), cbind(Long, Lat)),
-         Elev_Dist=UCD_Elev-elev_m) %>% # Calculate the distance using the haversine formula (dist in meters)
+         Elev_Dist=elev_m-UCD_Elev) %>% # Calculate the distance using the haversine formula (dist in meters)
   #mutate(Lat_Dist=UCD_Lat-Lat, Long_Dist=UCD_Long-Long) %>% #Garden-Home - lat and long per Gerst et al 2011 which kept them separate for some directionality
   rename(pop=parent.pop)
 ```
@@ -356,7 +356,7 @@ wl2_gowers_2023 <- read_csv("../output/Climate/Gowers_WL2.csv") %>%
   pivot_wider(names_from = TimePd, values_from = c(GrwSsn_GD, Wtr_Year_GD)) %>% 
   mutate(WL2_Lat=38.82599, WL2_Long=-120.2509, WL2_Elev=2020) %>% 
   mutate(Geographic_Dist=distHaversine(cbind(WL2_Long, WL2_Lat), cbind(Long, Lat)),
-         Elev_Dist=WL2_Elev-elev_m) %>% # Calculate the distance using the haversine formula
+         Elev_Dist=elev_m-WL2_Elev) %>% # Calculate the distance using the haversine formula
   #mutate(Lat_Dist=WL2_Lat-Lat, Long_Dist=WL2_Long-Long) %>% #Garden-Home - lat and long per Gerst et al 2011 which kept them separate for some directionality
   rename(pop=parent.pop)
 ```
@@ -372,10 +372,10 @@ wl2_gowers_2023 <- read_csv("../output/Climate/Gowers_WL2.csv") %>%
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
 ```
 
-## For Subtraction Distances
+## Climate Subtraction Distances
 
 ``` r
-ucd_wtr_year_sub_recent <- read_csv("../output/Climate/full_year_Subtraction_Dist_from_Davis_Recent.csv") %>% 
+ucd_wtr_year_sub_recent <- read_csv("../output/Climate/full_year_Subtraction_Dist_from_Home_Davis_Recent.csv") %>% 
   select(parent.pop, Wtr_Year_TempDist_Recent=ann_tmean_dist, Wtr_Year_PPTDist_Recent=ann_ppt_dist)
 ```
 
@@ -384,14 +384,14 @@ ucd_wtr_year_sub_recent <- read_csv("../output/Climate/full_year_Subtraction_Dis
 ## ── Column specification ────────────────────────────────────────────────────────
 ## Delimiter: ","
 ## chr  (2): parent.pop, elevation.group
-## dbl (16): elev_m, cwd_dist, ppt_dist, pck_dist, tmn_dist, tmx_dist, ann_tmea...
+## dbl (16): elev_m, ppt_dist, cwd_dist, pck_dist, tmn_dist, tmx_dist, ann_tmea...
 ## 
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
 ```
 
 ``` r
-ucd_wtr_year_sub_historic <- read_csv("../output/Climate/full_year_Subtraction_Dist_from_Davis_Historical.csv") %>%
+ucd_wtr_year_sub_historic <- read_csv("../output/Climate/full_year_Subtraction_Dist_from_Home_Davis_Historical.csv") %>%
   select(parent.pop, Wtr_Year_TempDist_Historic=ann_tmean_dist, Wtr_Year_PPTDist_Historic=ann_ppt_dist)
 ```
 
@@ -400,14 +400,14 @@ ucd_wtr_year_sub_historic <- read_csv("../output/Climate/full_year_Subtraction_D
 ## ── Column specification ────────────────────────────────────────────────────────
 ## Delimiter: ","
 ## chr  (2): parent.pop, elevation.group
-## dbl (16): elev_m, cwd_dist, ppt_dist, pck_dist, tmn_dist, tmx_dist, ann_tmea...
+## dbl (16): elev_m, ppt_dist, cwd_dist, pck_dist, tmn_dist, tmx_dist, ann_tmea...
 ## 
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
 ```
 
 ``` r
-ucd_grwssn_sub_recent <- read_csv("../output/Climate/grwssn_Subtraction_Dist_from_Davis_Recent.csv") %>% 
+ucd_grwssn_sub_recent <- read_csv("../output/Climate/grwssn_Subtraction_Dist_from_Home_Davis_Recent.csv") %>% 
   select(parent.pop, GrwSsn_TempDist_Recent=ann_tmean_dist, GrwSsn_PPTDist_Recent=ann_ppt_dist)
 ```
 
@@ -416,14 +416,14 @@ ucd_grwssn_sub_recent <- read_csv("../output/Climate/grwssn_Subtraction_Dist_fro
 ## ── Column specification ────────────────────────────────────────────────────────
 ## Delimiter: ","
 ## chr  (2): parent.pop, elevation.group
-## dbl (15): elev_m, cwd_dist, ppt_dist, tmn_dist, tmx_dist, ann_tmean_dist, me...
+## dbl (15): elev_m, ppt_dist, cwd_dist, tmn_dist, tmx_dist, ann_tmean_dist, me...
 ## 
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
 ```
 
 ``` r
-ucd_grwssn_sub_historic <- read_csv("../output/Climate/grwssn_Subtraction_Dist_from_Davis_Historical.csv") %>% 
+ucd_grwssn_sub_historic <- read_csv("../output/Climate/grwssn_Subtraction_Dist_from_Home_Davis_Historical.csv") %>% 
   select(parent.pop, GrwSsn_TempDist_Historic=ann_tmean_dist, GrwSsn_PPTDist_Historic=ann_ppt_dist)
 ```
 
@@ -432,7 +432,7 @@ ucd_grwssn_sub_historic <- read_csv("../output/Climate/grwssn_Subtraction_Dist_f
 ## ── Column specification ────────────────────────────────────────────────────────
 ## Delimiter: ","
 ## chr  (2): parent.pop, elevation.group
-## dbl (15): elev_m, cwd_dist, ppt_dist, tmn_dist, tmx_dist, ann_tmean_dist, me...
+## dbl (15): elev_m, ppt_dist, cwd_dist, tmn_dist, tmx_dist, ann_tmean_dist, me...
 ## 
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
@@ -455,7 +455,7 @@ ucd_sub_dist <- ucd_wtr_year_sub_recent %>%
 ```
 
 ``` r
-wl2_wtr_year_sub_recent <- read_csv("../output/Climate/full_year_Subtraction_Dist_from_WL2_Recent.csv") %>% 
+wl2_wtr_year_sub_recent <- read_csv("../output/Climate/full_year_Subtraction_Dist_from_Home_WL2_Recent.csv") %>% 
   select(parent.pop, Wtr_Year_TempDist_Recent=ann_tmean_dist, Wtr_Year_PPTDist_Recent=ann_ppt_dist)
 ```
 
@@ -471,7 +471,7 @@ wl2_wtr_year_sub_recent <- read_csv("../output/Climate/full_year_Subtraction_Dis
 ```
 
 ``` r
-wl2_wtr_year_sub_historic <- read_csv("../output/Climate/full_year_Subtraction_Dist_from_WL2_Historical.csv") %>% 
+wl2_wtr_year_sub_historic <- read_csv("../output/Climate/full_year_Subtraction_Dist_from_Home_WL2_Historical.csv") %>% 
   select(parent.pop, Wtr_Year_TempDist_Historic=ann_tmean_dist, Wtr_Year_PPTDist_Historic=ann_ppt_dist)
 ```
 
@@ -487,7 +487,7 @@ wl2_wtr_year_sub_historic <- read_csv("../output/Climate/full_year_Subtraction_D
 ```
 
 ``` r
-wl2_grwssn_sub_recent <- read_csv("../output/Climate/grwssn_Subtraction_Dist_from_WL2_Recent.csv") %>% 
+wl2_grwssn_sub_recent <- read_csv("../output/Climate/grwssn_Subtraction_Dist_from_Home_WL2_Recent.csv") %>% 
   select(parent.pop, GrwSsn_TempDist_Recent=ann_tmean_dist, GrwSsn_PPTDist_Recent=ann_ppt_dist)
 ```
 
@@ -503,7 +503,7 @@ wl2_grwssn_sub_recent <- read_csv("../output/Climate/grwssn_Subtraction_Dist_fro
 ```
 
 ``` r
-wl2_grwssn_sub_historic <- read_csv("../output/Climate/grwssn_Subtraction_Dist_from_WL2_Historical.csv") %>% 
+wl2_grwssn_sub_historic <- read_csv("../output/Climate/grwssn_Subtraction_Dist_from_Home_WL2_Historical.csv") %>% 
   select(parent.pop, GrwSsn_TempDist_Historic=ann_tmean_dist, GrwSsn_PPTDist_Historic=ann_ppt_dist)
 ```
 
@@ -1546,6 +1546,27 @@ ucd_establishment_scaled <- ucd_establishment %>% mutate_at(c("GrwSsn_GD_Recent"
                                                             scale) 
 
 #CHECK MODEL PARAMS
+wl2_establishment_scaled %>% group_by(pop) %>% summarise(n=n()) %>% arrange(n)
+```
+
+```
+## # A tibble: 23 × 2
+##    pop       n
+##    <chr> <int>
+##  1 WV        3
+##  2 WR       14
+##  3 LV3      27
+##  4 SQ1      30
+##  5 SQ3      33
+##  6 YO4      40
+##  7 FR       48
+##  8 WL1      48
+##  9 SQ2      61
+## 10 TM2      84
+## # ℹ 13 more rows
+```
+
+``` r
 unique(wl2_establishment_scaled$pop)
 ```
 
@@ -1616,14 +1637,35 @@ summary(wl2_establishment_scaled)
 ##  3rd Qu.: 0.8398030    3rd Qu.: 0.8455327        3rd Qu.: 0.5059584  
 ##  Max.   : 2.3349702    Max.   : 2.1290787        Max.   : 2.5153459  
 ##                                                                      
-##    Elev_Dist           death.date         Establishment   
-##  Min.   :-852.2950   Min.   :2023-07-11   Min.   :0.0000  
-##  1st Qu.:-449.9787   1st Qu.:2023-07-26   1st Qu.:0.0000  
-##  Median :  -0.1158   Median :2023-08-02   Median :0.0000  
-##  Mean   : 353.6799   Mean   :2023-08-12   Mean   :0.4628  
-##  3rd Qu.:1508.5706   3rd Qu.:2023-08-09   3rd Qu.:1.0000  
-##  Max.   :1707.0000   Max.   :2023-10-27   Max.   :1.0000  
-##                      NA's   :470
+##    Elev_Dist            death.date         Establishment   
+##  Min.   :-1707.0000   Min.   :2023-07-11   Min.   :0.0000  
+##  1st Qu.:-1508.5706   1st Qu.:2023-07-26   1st Qu.:0.0000  
+##  Median :    0.1158   Median :2023-08-02   Median :0.0000  
+##  Mean   : -353.6799   Mean   :2023-08-12   Mean   :0.4628  
+##  3rd Qu.:  449.9787   3rd Qu.:2023-08-09   3rd Qu.:1.0000  
+##  Max.   :  852.2950   Max.   :2023-10-27   Max.   :1.0000  
+##                       NA's   :470
+```
+
+``` r
+ucd_establishment_scaled %>% group_by(pop) %>% summarise(n=n()) %>% arrange(n)
+```
+
+```
+## # A tibble: 23 × 2
+##    pop       n
+##    <chr> <int>
+##  1 WV        2
+##  2 LV1       3
+##  3 YO4       6
+##  4 CP3       8
+##  5 WR        9
+##  6 SQ3      10
+##  7 YO8      13
+##  8 YO11     14
+##  9 LVTR1    15
+## 10 YO7      17
+## # ℹ 13 more rows
 ```
 
 ``` r
@@ -1689,14 +1731,14 @@ summary(ucd_establishment_scaled)
 ##  3rd Qu.: 0.2432655      3rd Qu.: 0.7606050    3rd Qu.: 0.7204253       
 ##  Max.   : 2.2719145      Max.   : 2.0452643    Max.   : 2.0596897       
 ##                                                                         
-##   Geographic_Dist.V1    Elev_Dist         death.date         Establishment   
-##  Min.   :-1.2373721   Min.   :-2856.3   Min.   :2022-11-30   Min.   :0.0000  
-##  1st Qu.:-0.7812455   1st Qu.:-2004.1   1st Qu.:2023-02-10   1st Qu.:1.0000  
-##  Median :-0.4795199   Median :-1597.8   Median :2023-03-03   Median :1.0000  
-##  Mean   : 0.0000000   Mean   :-1346.2   Mean   :2023-03-07   Mean   :0.9723  
-##  3rd Qu.: 0.5648152   3rd Qu.: -495.4   3rd Qu.:2023-03-24   3rd Qu.:1.0000  
-##  Max.   : 2.4171164   Max.   : -297.0   Max.   :2023-10-16   Max.   :1.0000  
-##                                         NA's   :9
+##   Geographic_Dist.V1    Elev_Dist        death.date         Establishment   
+##  Min.   :-1.2373721   Min.   : 297.0   Min.   :2022-11-30   Min.   :0.0000  
+##  1st Qu.:-0.7812455   1st Qu.: 495.4   1st Qu.:2023-02-10   1st Qu.:1.0000  
+##  Median :-0.4795199   Median :1597.8   Median :2023-03-03   Median :1.0000  
+##  Mean   : 0.0000000   Mean   :1346.2   Mean   :2023-03-07   Mean   :0.9723  
+##  3rd Qu.: 0.5648152   3rd Qu.:2004.1   3rd Qu.:2023-03-24   3rd Qu.:1.0000  
+##  Max.   : 2.4171164   Max.   :2856.3   Max.   :2023-10-16   Max.   :1.0000  
+##                                        NA's   :9
 ```
 
 
@@ -2003,18 +2045,18 @@ surv_GD_fits_wl2_sub %>% mutate(tidy=map(fit, tidy)) %>% unnest(tidy) %>%
 ## # A tibble: 12 × 6
 ##    name          term                       estimate std.error statistic p.value
 ##    <chr>         <chr>                         <dbl>     <dbl>     <dbl>   <dbl>
-##  1 GS_Recent     GrwSsn_TempDist_Recent      -0.222     0.125     -1.78  7.52e-2
-##  2 GS_Recent     GrwSsn_PPTDist_Recent       -0.0706    0.131     -0.537 5.91e-1
+##  1 GS_Recent     GrwSsn_TempDist_Recent       0.222     0.125      1.78  7.52e-2
+##  2 GS_Recent     GrwSsn_PPTDist_Recent        0.0706    0.131      0.537 5.91e-1
 ##  3 GS_Recent     Geographic_Dist             -0.249     0.0869    -2.86  4.18e-3
-##  4 GS_Historical GrwSsn_TempDist_Historic    -0.148     0.111     -1.34  1.81e-1
-##  5 GS_Historical GrwSsn_PPTDist_Historic     -0.178     0.106     -1.69  9.18e-2
+##  4 GS_Historical GrwSsn_TempDist_Historic     0.148     0.111      1.34  1.81e-1
+##  5 GS_Historical GrwSsn_PPTDist_Historic      0.178     0.106      1.69  9.18e-2
 ##  6 GS_Historical Geographic_Dist             -0.225     0.0877    -2.56  1.05e-2
-##  7 WY_Recent     Wtr_Year_TempDist_Recent    -0.291     0.0762    -3.82  1.33e-4
-##  8 WY_Recent     Wtr_Year_PPTDist_Recent      0.154     0.0759     2.03  4.22e-2
+##  7 WY_Recent     Wtr_Year_TempDist_Recent     0.291     0.0762     3.82  1.33e-4
+##  8 WY_Recent     Wtr_Year_PPTDist_Recent     -0.154     0.0759    -2.03  4.22e-2
 ##  9 WY_Recent     Geographic_Dist             -0.251     0.0652    -3.84  1.21e-4
-## 10 WY_Historical Wtr_Year_TempDist_Historic  -0.280     0.0798    -3.51  4.56e-4
-## 11 WY_Historical Wtr_Year_PPTDist_Historic    0.159     0.0796     2.00  4.57e-2
-## 12 WY_Historical Geographic_Dist             -0.239     0.0656    -3.63  2.79e-4
+## 10 WY_Historical Wtr_Year_TempDist_Historic   0.280     0.0798     3.51  4.56e-4
+## 11 WY_Historical Wtr_Year_PPTDist_Historic   -0.159     0.0796    -2.00  4.57e-2
+## 12 WY_Historical Geographic_Dist             -0.239     0.0656    -3.63  2.78e-4
 ```
 
 ``` r
@@ -2030,17 +2072,17 @@ surv_GD_fits_ucd_sub %>% mutate(tidy=map(fit, tidy)) %>% unnest(tidy) %>%
 ## # A tibble: 12 × 6
 ##    name          term                       estimate std.error statistic p.value
 ##    <chr>         <chr>                         <dbl>     <dbl>     <dbl>   <dbl>
-##  1 GS_Recent     GrwSsn_TempDist_Recent      -0.0172     0.360   -0.0479  0.962 
-##  2 GS_Recent     GrwSsn_PPTDist_Recent       -0.839      0.599   -1.40    0.161 
+##  1 GS_Recent     GrwSsn_TempDist_Recent       0.0172     0.360    0.0479  0.962 
+##  2 GS_Recent     GrwSsn_PPTDist_Recent        0.839      0.599    1.40    0.161 
 ##  3 GS_Recent     Geographic_Dist              0.301      0.405    0.744   0.457 
-##  4 GS_Historical GrwSsn_TempDist_Historic    -0.164      0.317   -0.520   0.603 
-##  5 GS_Historical GrwSsn_PPTDist_Historic     -0.558      0.400   -1.40    0.163 
+##  4 GS_Historical GrwSsn_TempDist_Historic     0.164      0.317    0.520   0.603 
+##  5 GS_Historical GrwSsn_PPTDist_Historic      0.558      0.400    1.40    0.163 
 ##  6 GS_Historical Geographic_Dist              0.150      0.346    0.434   0.664 
-##  7 WY_Recent     Wtr_Year_TempDist_Recent    -0.917      0.389   -2.36    0.0184
-##  8 WY_Recent     Wtr_Year_PPTDist_Recent     -0.391      0.376   -1.04    0.299 
-##  9 WY_Recent     Geographic_Dist              0.208      0.328    0.636   0.525 
-## 10 WY_Historical Wtr_Year_TempDist_Historic  -0.897      0.406   -2.21    0.0271
-## 11 WY_Historical Wtr_Year_PPTDist_Historic   -0.353      0.379   -0.931   0.352 
+##  7 WY_Recent     Wtr_Year_TempDist_Recent     0.917      0.389    2.36    0.0184
+##  8 WY_Recent     Wtr_Year_PPTDist_Recent      0.391      0.376    1.04    0.299 
+##  9 WY_Recent     Geographic_Dist              0.209      0.328    0.636   0.525 
+## 10 WY_Historical Wtr_Year_TempDist_Historic   0.897      0.406    2.21    0.0271
+## 11 WY_Historical Wtr_Year_PPTDist_Historic    0.353      0.379    0.931   0.352 
 ## 12 WY_Historical Geographic_Dist              0.180      0.325    0.555   0.579
 ```
 
