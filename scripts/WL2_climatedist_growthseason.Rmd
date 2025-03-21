@@ -1340,7 +1340,7 @@ ggarrange(cwd_dist_fig_recent, ppt_dist_fig_recent, tmn_dist_fig_recent, tmx_dis
           tmp_ann_range_dist_fig_recent, tmean_wet_dist_fig_recent, tmean_dry_dist_fig_recent,
           ann_ppt_dist_fig_recent, ppt_seasonality_dist_fig_recent, ppt_warm_dist_fig_recent,
           ppt_cold_dist_fig_recent, ncol=3,nrow=5)
-ggsave("../output/Climate/grwssn_Sub_dist_from_WL2_Recent.png", width = 24, height = 24, units = "in")
+ggsave("../output/Climate/grwssn_Sub_dist_from_Home_WL2_Recent.png", width = 24, height = 24, units = "in")
 
 ggarrange(cwd_dist_fig_historical, ppt_dist_fig_historical, 
           tmn_dist_fig_historical, tmx_dist_fig_historical,
@@ -1348,7 +1348,7 @@ ggarrange(cwd_dist_fig_historical, ppt_dist_fig_historical,
           tmp_ann_range_dist_fig_historical, tmean_wet_dist_fig_historical, tmean_dry_dist_fig_historical,
           ann_ppt_dist_fig_historical, ppt_seasonality_dist_fig_historical, ppt_warm_dist_fig_historical,
           ppt_cold_dist_fig_historical, ncol=3,nrow=5)
-ggsave("../output/Climate/grwssn_Sub_dist_from_WL2_Historical.png", width = 24, height = 24, units = "in")
+ggsave("../output/Climate/grwssn_Sub_dist_from_Home_WL2_Historical.png", width = 24, height = 24, units = "in")
 ```
 
 ## Combine all Subtraction data
