@@ -97,20 +97,20 @@ wl2_gowers_2024 <- read_csv("../output/Climate/Gowers_WL2_2024.csv") %>%
   pivot_wider(names_from = TimePd, values_from = c(GrwSsn_GD, Wtr_Year_GD)) %>% 
   mutate(WL2_Lat=38.82599, WL2_Long=-120.2509, WL2_Elev=2020) %>% 
   mutate(Geographic_Dist=distHaversine(cbind(WL2_Long, WL2_Lat), cbind(Long, Lat)),
-         Elev_Dist=WL2_Elev-elev_m) %>% # Calculate the distance using the haversine formula
+         Elev_Dist=elev_m-WL2_Elev) %>% # Calculate the distance using the haversine formula
   rename(pop=parent.pop)
 ```
 
 ## Climate Subtraction Distance
 
 ```{r}
-wl2_wtr_year_sub_recent_2024 <- read_csv("../output/Climate/full_year_Subtraction_Dist_from_WL2_2024_Recent.csv") %>% 
+wl2_wtr_year_sub_recent_2024 <- read_csv("../output/Climate/full_year_Subtraction_Dist_from_Home_WL2_2024_Recent.csv") %>% 
   select(parent.pop, Wtr_Year_TempDist_Recent=ann_tmean_dist, Wtr_Year_PPTDist_Recent=ann_ppt_dist)
-wl2_wtr_year_sub_historic_2024 <- read_csv("../output/Climate/full_year_Subtraction_Dist_from_WL2_2024_Historical.csv") %>% 
+wl2_wtr_year_sub_historic_2024 <- read_csv("../output/Climate/full_year_Subtraction_Dist_from_Home_WL2_2024_Historical.csv") %>% 
   select(parent.pop, Wtr_Year_TempDist_Historic=ann_tmean_dist, Wtr_Year_PPTDist_Historic=ann_ppt_dist)
-wl2_grwssn_sub_recent_2024 <- read_csv("../output/Climate/grwssn_Subtraction_Dist_from_WL2_2024_Recent.csv") %>% 
+wl2_grwssn_sub_recent_2024 <- read_csv("../output/Climate/grwssn_Subtraction_Dist_from_Home_WL2_2024_Recent.csv") %>% 
   select(parent.pop, GrwSsn_TempDist_Recent=ann_tmean_dist, GrwSsn_PPTDist_Recent=ann_ppt_dist)
-wl2_grwssn_sub_historic_2024 <- read_csv("../output/Climate/grwssn_Subtraction_Dist_from_WL2_2024_Historical.csv") %>% 
+wl2_grwssn_sub_historic_2024 <- read_csv("../output/Climate/grwssn_Subtraction_Dist_from_Home_WL2_2024_Historical.csv") %>% 
   select(parent.pop, GrwSsn_TempDist_Historic=ann_tmean_dist, GrwSsn_PPTDist_Historic=ann_ppt_dist)
 wl2_sub_dist_2024 <- wl2_wtr_year_sub_recent_2024 %>% 
   left_join(wl2_wtr_year_sub_historic_2024) %>% 
@@ -240,7 +240,7 @@ ED <- wl2_surv_to_rep_y2 %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 
 wl2_surv_to_rep_y2_FIG <- ggarrange(GSCD_recent, WYCD_recent, GD, ED, ncol=2, nrow=2) 
-#ggsave("../output/WL2_Traits/WL2_SurvtoRep_y2_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
+ggsave("../output/WL2_Traits/WL2_SurvtoRep_y2_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
 ```
 
 ```{r}
@@ -270,7 +270,7 @@ WYCD_historic <- wl2_surv_to_rep_y2 %>%
   theme(text=element_text(size=25))
 
 wl2_surv_to_rep_y2_FIG <- ggarrange(GSCD_historic, WYCD_historic, GD, ED, ncol=2, nrow=2) 
-#ggsave("../output/WL2_Traits/WL2_SurvtoRep_y2_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
+ggsave("../output/WL2_Traits/WL2_SurvtoRep_y2_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
 ```
 
 #### Directional Distance

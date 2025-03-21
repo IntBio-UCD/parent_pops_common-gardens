@@ -1,7 +1,7 @@
 ---
 title: "WL2_Surv_to_Rep_Y2"
 author: "Brandie QC"
-date: "2025-03-18"
+date: "2025-03-21"
 output: 
   html_document: 
     keep_md: true
@@ -147,7 +147,7 @@ library(tidymodels)
 ## ✖ infer::t_test()       masks rstatix::t_test()
 ## ✖ Matrix::unpack()      masks tidyr::unpack()
 ## ✖ recipes::update()     masks Matrix::update(), stats::update()
-## • Search for functions across packages at https://www.tidymodels.org/find/
+## • Use suppressPackageStartupMessages() to eliminate package startup messages
 ```
 
 ``` r
@@ -329,7 +329,7 @@ wl2_gowers_2024 <- read_csv("../output/Climate/Gowers_WL2_2024.csv") %>%
   pivot_wider(names_from = TimePd, values_from = c(GrwSsn_GD, Wtr_Year_GD)) %>% 
   mutate(WL2_Lat=38.82599, WL2_Long=-120.2509, WL2_Elev=2020) %>% 
   mutate(Geographic_Dist=distHaversine(cbind(WL2_Long, WL2_Lat), cbind(Long, Lat)),
-         Elev_Dist=WL2_Elev-elev_m) %>% # Calculate the distance using the haversine formula
+         Elev_Dist=elev_m-WL2_Elev) %>% # Calculate the distance using the haversine formula
   rename(pop=parent.pop)
 ```
 
@@ -348,7 +348,7 @@ wl2_gowers_2024 <- read_csv("../output/Climate/Gowers_WL2_2024.csv") %>%
 
 
 ``` r
-wl2_wtr_year_sub_recent_2024 <- read_csv("../output/Climate/full_year_Subtraction_Dist_from_WL2_2024_Recent.csv") %>% 
+wl2_wtr_year_sub_recent_2024 <- read_csv("../output/Climate/full_year_Subtraction_Dist_from_Home_WL2_2024_Recent.csv") %>% 
   select(parent.pop, Wtr_Year_TempDist_Recent=ann_tmean_dist, Wtr_Year_PPTDist_Recent=ann_ppt_dist)
 ```
 
@@ -364,7 +364,7 @@ wl2_wtr_year_sub_recent_2024 <- read_csv("../output/Climate/full_year_Subtractio
 ```
 
 ``` r
-wl2_wtr_year_sub_historic_2024 <- read_csv("../output/Climate/full_year_Subtraction_Dist_from_WL2_2024_Historical.csv") %>% 
+wl2_wtr_year_sub_historic_2024 <- read_csv("../output/Climate/full_year_Subtraction_Dist_from_Home_WL2_2024_Historical.csv") %>% 
   select(parent.pop, Wtr_Year_TempDist_Historic=ann_tmean_dist, Wtr_Year_PPTDist_Historic=ann_ppt_dist)
 ```
 
@@ -380,7 +380,7 @@ wl2_wtr_year_sub_historic_2024 <- read_csv("../output/Climate/full_year_Subtract
 ```
 
 ``` r
-wl2_grwssn_sub_recent_2024 <- read_csv("../output/Climate/grwssn_Subtraction_Dist_from_WL2_2024_Recent.csv") %>% 
+wl2_grwssn_sub_recent_2024 <- read_csv("../output/Climate/grwssn_Subtraction_Dist_from_Home_WL2_2024_Recent.csv") %>% 
   select(parent.pop, GrwSsn_TempDist_Recent=ann_tmean_dist, GrwSsn_PPTDist_Recent=ann_ppt_dist)
 ```
 
@@ -396,7 +396,7 @@ wl2_grwssn_sub_recent_2024 <- read_csv("../output/Climate/grwssn_Subtraction_Dis
 ```
 
 ``` r
-wl2_grwssn_sub_historic_2024 <- read_csv("../output/Climate/grwssn_Subtraction_Dist_from_WL2_2024_Historical.csv") %>% 
+wl2_grwssn_sub_historic_2024 <- read_csv("../output/Climate/grwssn_Subtraction_Dist_from_Home_WL2_2024_Historical.csv") %>% 
   select(parent.pop, GrwSsn_TempDist_Historic=ann_tmean_dist, GrwSsn_PPTDist_Historic=ann_ppt_dist)
 ```
 
@@ -754,7 +754,7 @@ ED <- wl2_surv_to_rep_y2 %>%
 
 ``` r
 wl2_surv_to_rep_y2_FIG <- ggarrange(GSCD_recent, WYCD_recent, GD, ED, ncol=2, nrow=2) 
-#ggsave("../output/WL2_Traits/WL2_SurvtoRep_y2_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
+ggsave("../output/WL2_Traits/WL2_SurvtoRep_y2_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
 ```
 
 
@@ -799,7 +799,7 @@ WYCD_historic <- wl2_surv_to_rep_y2 %>%
 
 ``` r
 wl2_surv_to_rep_y2_FIG <- ggarrange(GSCD_historic, WYCD_historic, GD, ED, ncol=2, nrow=2) 
-#ggsave("../output/WL2_Traits/WL2_SurvtoRep_y2_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
+ggsave("../output/WL2_Traits/WL2_SurvtoRep_y2_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
 ```
 
 #### Directional Distance
@@ -1371,6 +1371,7 @@ name=names(wflow)
 ## boundary (singular) fit: see help('isSingular')
 ## boundary (singular) fit: see help('isSingular')
 ## boundary (singular) fit: see help('isSingular')
+## boundary (singular) fit: see help('isSingular')
 ```
 
 ``` r
@@ -1401,17 +1402,17 @@ surv_GD_fits_wl2_sub %>% mutate(tidy=map(fit, tidy)) %>% unnest(tidy) %>%
 ## # A tibble: 12 × 6
 ##    name          term                       estimate std.error statistic p.value
 ##    <chr>         <chr>                         <dbl>     <dbl>     <dbl>   <dbl>
-##  1 GS_Recent     GrwSsn_TempDist_Recent       0.721      0.432    1.67    0.0950
-##  2 GS_Recent     GrwSsn_PPTDist_Recent       -0.202      0.410   -0.492   0.623 
+##  1 GS_Recent     GrwSsn_TempDist_Recent      -0.721      0.432   -1.67    0.0950
+##  2 GS_Recent     GrwSsn_PPTDist_Recent        0.202      0.410    0.492   0.623 
 ##  3 GS_Recent     Geographic_Dist              0.169      0.235    0.719   0.472 
-##  4 GS_Historical GrwSsn_TempDist_Historic     0.721      0.432    1.67    0.0950
-##  5 GS_Historical GrwSsn_PPTDist_Historic     -0.202      0.410   -0.492   0.623 
+##  4 GS_Historical GrwSsn_TempDist_Historic    -0.721      0.432   -1.67    0.0950
+##  5 GS_Historical GrwSsn_PPTDist_Historic      0.202      0.410    0.492   0.623 
 ##  6 GS_Historical Geographic_Dist              0.169      0.235    0.719   0.472 
-##  7 WY_Recent     Wtr_Year_TempDist_Recent     0.665      0.337    1.97    0.0486
-##  8 WY_Recent     Wtr_Year_PPTDist_Recent     -0.0413     0.312   -0.132   0.895 
+##  7 WY_Recent     Wtr_Year_TempDist_Recent    -0.665      0.337   -1.97    0.0486
+##  8 WY_Recent     Wtr_Year_PPTDist_Recent      0.0413     0.312    0.132   0.895 
 ##  9 WY_Recent     Geographic_Dist              0.316      0.262    1.21    0.228 
-## 10 WY_Historical Wtr_Year_TempDist_Historic   0.667      0.345    1.93    0.0534
-## 11 WY_Historical Wtr_Year_PPTDist_Historic   -0.0192     0.315   -0.0609  0.951 
+## 10 WY_Historical Wtr_Year_TempDist_Historic  -0.667      0.345   -1.93    0.0534
+## 11 WY_Historical Wtr_Year_PPTDist_Historic    0.0191     0.315    0.0609  0.951 
 ## 12 WY_Historical Geographic_Dist              0.284      0.255    1.11    0.266
 ```
 

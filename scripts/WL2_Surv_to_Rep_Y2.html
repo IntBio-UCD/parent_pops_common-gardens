@@ -11,7 +11,7 @@
 
 <meta name="author" content="Brandie QC" />
 
-<meta name="date" content="2025-03-18" />
+<meta name="date" content="2025-03-21" />
 
 <title>WL2_Surv_to_Rep_Y2</title>
 
@@ -352,7 +352,7 @@ display: none;
 
 <h1 class="title toc-ignore">WL2_Surv_to_Rep_Y2</h1>
 <h4 class="author">Brandie QC</h4>
-<h4 class="date">2025-03-18</h4>
+<h4 class="date">2025-03-21</h4>
 
 </div>
 
@@ -449,7 +449,7 @@ library(tidymodels)</code></pre>
 ## ✖ infer::t_test()       masks rstatix::t_test()
 ## ✖ Matrix::unpack()      masks tidyr::unpack()
 ## ✖ recipes::update()     masks Matrix::update(), stats::update()
-## • Search for functions across packages at https://www.tidymodels.org/find/</code></pre>
+## • Use suppressPackageStartupMessages() to eliminate package startup messages</code></pre>
 <pre class="r"><code>library(furrr) #Apply Mapping Functions in Parallel using Futures</code></pre>
 <pre><code>## Loading required package: future</code></pre>
 <pre class="r"><code>tidymodels_prefer()
@@ -568,7 +568,7 @@ wl2_gowers_2024 &lt;- read_csv(&quot;../output/Climate/Gowers_WL2_2024.csv&quot;
   pivot_wider(names_from = TimePd, values_from = c(GrwSsn_GD, Wtr_Year_GD)) %&gt;% 
   mutate(WL2_Lat=38.82599, WL2_Long=-120.2509, WL2_Elev=2020) %&gt;% 
   mutate(Geographic_Dist=distHaversine(cbind(WL2_Long, WL2_Lat), cbind(Long, Lat)),
-         Elev_Dist=WL2_Elev-elev_m) %&gt;% # Calculate the distance using the haversine formula
+         Elev_Dist=elev_m-WL2_Elev) %&gt;% # Calculate the distance using the haversine formula
   rename(pop=parent.pop)</code></pre>
 <pre><code>## Rows: 46 Columns: 8
 ## ── Column specification ────────────────────────────────────────────────────────
@@ -581,7 +581,7 @@ wl2_gowers_2024 &lt;- read_csv(&quot;../output/Climate/Gowers_WL2_2024.csv&quot;
 </div>
 <div id="climate-subtraction-distance" class="section level2">
 <h2>Climate Subtraction Distance</h2>
-<pre class="r"><code>wl2_wtr_year_sub_recent_2024 &lt;- read_csv(&quot;../output/Climate/full_year_Subtraction_Dist_from_WL2_2024_Recent.csv&quot;) %&gt;% 
+<pre class="r"><code>wl2_wtr_year_sub_recent_2024 &lt;- read_csv(&quot;../output/Climate/full_year_Subtraction_Dist_from_Home_WL2_2024_Recent.csv&quot;) %&gt;% 
   select(parent.pop, Wtr_Year_TempDist_Recent=ann_tmean_dist, Wtr_Year_PPTDist_Recent=ann_ppt_dist)</code></pre>
 <pre><code>## Rows: 23 Columns: 18
 ## ── Column specification ────────────────────────────────────────────────────────
@@ -591,7 +591,7 @@ wl2_gowers_2024 &lt;- read_csv(&quot;../output/Climate/Gowers_WL2_2024.csv&quot;
 ## 
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
-<pre class="r"><code>wl2_wtr_year_sub_historic_2024 &lt;- read_csv(&quot;../output/Climate/full_year_Subtraction_Dist_from_WL2_2024_Historical.csv&quot;) %&gt;% 
+<pre class="r"><code>wl2_wtr_year_sub_historic_2024 &lt;- read_csv(&quot;../output/Climate/full_year_Subtraction_Dist_from_Home_WL2_2024_Historical.csv&quot;) %&gt;% 
   select(parent.pop, Wtr_Year_TempDist_Historic=ann_tmean_dist, Wtr_Year_PPTDist_Historic=ann_ppt_dist)</code></pre>
 <pre><code>## Rows: 23 Columns: 18
 ## ── Column specification ────────────────────────────────────────────────────────
@@ -601,7 +601,7 @@ wl2_gowers_2024 &lt;- read_csv(&quot;../output/Climate/Gowers_WL2_2024.csv&quot;
 ## 
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
-<pre class="r"><code>wl2_grwssn_sub_recent_2024 &lt;- read_csv(&quot;../output/Climate/grwssn_Subtraction_Dist_from_WL2_2024_Recent.csv&quot;) %&gt;% 
+<pre class="r"><code>wl2_grwssn_sub_recent_2024 &lt;- read_csv(&quot;../output/Climate/grwssn_Subtraction_Dist_from_Home_WL2_2024_Recent.csv&quot;) %&gt;% 
   select(parent.pop, GrwSsn_TempDist_Recent=ann_tmean_dist, GrwSsn_PPTDist_Recent=ann_ppt_dist)</code></pre>
 <pre><code>## Rows: 23 Columns: 18
 ## ── Column specification ────────────────────────────────────────────────────────
@@ -611,7 +611,7 @@ wl2_gowers_2024 &lt;- read_csv(&quot;../output/Climate/Gowers_WL2_2024.csv&quot;
 ## 
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
-<pre class="r"><code>wl2_grwssn_sub_historic_2024 &lt;- read_csv(&quot;../output/Climate/grwssn_Subtraction_Dist_from_WL2_2024_Historical.csv&quot;) %&gt;% 
+<pre class="r"><code>wl2_grwssn_sub_historic_2024 &lt;- read_csv(&quot;../output/Climate/grwssn_Subtraction_Dist_from_Home_WL2_2024_Historical.csv&quot;) %&gt;% 
   select(parent.pop, GrwSsn_TempDist_Historic=ann_tmean_dist, GrwSsn_PPTDist_Historic=ann_ppt_dist)</code></pre>
 <pre><code>## Rows: 23 Columns: 18
 ## ── Column specification ────────────────────────────────────────────────────────
@@ -841,7 +841,7 @@ GSCD_recent &lt;- wl2_surv_to_rep_y2 %&gt;%
 <pre><code>## `summarise()` has grouped output by &#39;pop&#39;, &#39;elev_m&#39;. You can override using the
 ## `.groups` argument.</code></pre>
 <pre class="r"><code>wl2_surv_to_rep_y2_FIG &lt;- ggarrange(GSCD_recent, WYCD_recent, GD, ED, ncol=2, nrow=2) 
-#ggsave(&quot;../output/WL2_Traits/WL2_SurvtoRep_y2_SCATTERS_Recent.png&quot;, width = 24, height = 18, units = &quot;in&quot;)</code></pre>
+ggsave(&quot;../output/WL2_Traits/WL2_SurvtoRep_y2_SCATTERS_Recent.png&quot;, width = 24, height = 18, units = &quot;in&quot;)</code></pre>
 <pre class="r"><code>#scatter plots
 GSCD_historic &lt;- wl2_surv_to_rep_y2 %&gt;% 
   filter(pop != &quot;LV1&quot;, pop != &quot;SQ1&quot;, pop != &quot;WR&quot;) %&gt;% 
@@ -870,7 +870,7 @@ GSCD_historic &lt;- wl2_surv_to_rep_y2 %&gt;%
 <pre><code>## `summarise()` has grouped output by &#39;pop&#39;, &#39;elev_m&#39;, &#39;GrwSsn_GD_Historical&#39;.
 ## You can override using the `.groups` argument.</code></pre>
 <pre class="r"><code>wl2_surv_to_rep_y2_FIG &lt;- ggarrange(GSCD_historic, WYCD_historic, GD, ED, ncol=2, nrow=2) 
-#ggsave(&quot;../output/WL2_Traits/WL2_SurvtoRep_y2_SCATTERS_Historic.png&quot;, width = 24, height = 18, units = &quot;in&quot;)</code></pre>
+ggsave(&quot;../output/WL2_Traits/WL2_SurvtoRep_y2_SCATTERS_Historic.png&quot;, width = 24, height = 18, units = &quot;in&quot;)</code></pre>
 <div id="directional-distance" class="section level4">
 <h4>Directional Distance</h4>
 <pre class="r"><code>#scatter plots - recent
@@ -1267,6 +1267,7 @@ name=names(wflow)
   mutate(fit = map(wflow, fit, data = wl2_surv_to_rep_y2_scaled_sub))</code></pre>
 <pre><code>## boundary (singular) fit: see help(&#39;isSingular&#39;)
 ## boundary (singular) fit: see help(&#39;isSingular&#39;)
+## boundary (singular) fit: see help(&#39;isSingular&#39;)
 ## boundary (singular) fit: see help(&#39;isSingular&#39;)</code></pre>
 <pre class="r"><code>surv_GD_fits_wl2_sub %&gt;% mutate(glance=map(fit, glance)) %&gt;% unnest(glance) %&gt;% arrange(AIC) %&gt;% select(-wflow:-sigma)</code></pre>
 <pre><code>## # A tibble: 5 × 6
@@ -1286,17 +1287,17 @@ surv_GD_fits_wl2_sub %&gt;% mutate(tidy=map(fit, tidy)) %&gt;% unnest(tidy) %&gt
 <pre><code>## # A tibble: 12 × 6
 ##    name          term                       estimate std.error statistic p.value
 ##    &lt;chr&gt;         &lt;chr&gt;                         &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;   &lt;dbl&gt;
-##  1 GS_Recent     GrwSsn_TempDist_Recent       0.721      0.432    1.67    0.0950
-##  2 GS_Recent     GrwSsn_PPTDist_Recent       -0.202      0.410   -0.492   0.623 
+##  1 GS_Recent     GrwSsn_TempDist_Recent      -0.721      0.432   -1.67    0.0950
+##  2 GS_Recent     GrwSsn_PPTDist_Recent        0.202      0.410    0.492   0.623 
 ##  3 GS_Recent     Geographic_Dist              0.169      0.235    0.719   0.472 
-##  4 GS_Historical GrwSsn_TempDist_Historic     0.721      0.432    1.67    0.0950
-##  5 GS_Historical GrwSsn_PPTDist_Historic     -0.202      0.410   -0.492   0.623 
+##  4 GS_Historical GrwSsn_TempDist_Historic    -0.721      0.432   -1.67    0.0950
+##  5 GS_Historical GrwSsn_PPTDist_Historic      0.202      0.410    0.492   0.623 
 ##  6 GS_Historical Geographic_Dist              0.169      0.235    0.719   0.472 
-##  7 WY_Recent     Wtr_Year_TempDist_Recent     0.665      0.337    1.97    0.0486
-##  8 WY_Recent     Wtr_Year_PPTDist_Recent     -0.0413     0.312   -0.132   0.895 
+##  7 WY_Recent     Wtr_Year_TempDist_Recent    -0.665      0.337   -1.97    0.0486
+##  8 WY_Recent     Wtr_Year_PPTDist_Recent      0.0413     0.312    0.132   0.895 
 ##  9 WY_Recent     Geographic_Dist              0.316      0.262    1.21    0.228 
-## 10 WY_Historical Wtr_Year_TempDist_Historic   0.667      0.345    1.93    0.0534
-## 11 WY_Historical Wtr_Year_PPTDist_Historic   -0.0192     0.315   -0.0609  0.951 
+## 10 WY_Historical Wtr_Year_TempDist_Historic  -0.667      0.345   -1.93    0.0534
+## 11 WY_Historical Wtr_Year_PPTDist_Historic    0.0191     0.315    0.0609  0.951 
 ## 12 WY_Historical Geographic_Dist              0.284      0.255    1.11    0.266</code></pre>
 <pre class="r"><code>#  arrange(p.value)</code></pre>
 </div>
