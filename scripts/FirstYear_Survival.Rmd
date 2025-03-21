@@ -77,7 +77,7 @@ ucd_gowers <- read_csv("../output/Climate/Gowers_UCD.csv") %>%
   pivot_wider(names_from = TimePd, values_from = c(GrwSsn_GD, Wtr_Year_GD)) %>% 
   mutate(UCD_Lat=38.53250, UCD_Long=-121.7830, UCD_Elev=16) %>% 
   mutate(Geographic_Dist=distHaversine(cbind(UCD_Long, UCD_Lat), cbind(Long, Lat)),
-         Elev_Dist=UCD_Elev-elev_m) #%>% # Calculate the distance using the haversine formula (dist in meters)
+         Elev_Dist=elev_m-UCD_Elev) #%>% # Calculate the distance using the haversine formula (dist in meters)
   #mutate(Lat_Dist=UCD_Lat-Lat, Long_Dist=UCD_Long-Long) %>% #Garden-Home - lat and long per Gerst et al 2011 which kept them separate for some directionality
 
 wl2_gowers_2023 <- read_csv("../output/Climate/Gowers_WL2.csv") %>% 
@@ -86,19 +86,19 @@ wl2_gowers_2023 <- read_csv("../output/Climate/Gowers_WL2.csv") %>%
   pivot_wider(names_from = TimePd, values_from = c(GrwSsn_GD, Wtr_Year_GD)) %>% 
   mutate(WL2_Lat=38.82599, WL2_Long=-120.2509, WL2_Elev=2020) %>% 
   mutate(Geographic_Dist=distHaversine(cbind(WL2_Long, WL2_Lat), cbind(Long, Lat)),
-         Elev_Dist=WL2_Elev-elev_m) #%>% # Calculate the distance using the haversine formula
+         Elev_Dist=elev_m-WL2_Elev) #%>% # Calculate the distance using the haversine formula
   #mutate(Lat_Dist=WL2_Lat-Lat, Long_Dist=WL2_Long-Long) %>% #Garden-Home - lat and long per Gerst et al 2011 which kept them separate for some directionality
 ```
 
 ## Climate Subtraction Distances
 ```{r}
-ucd_wtr_year_sub_recent <- read_csv("../output/Climate/full_year_Subtraction_Dist_from_Davis_Recent.csv") %>% 
+ucd_wtr_year_sub_recent <- read_csv("../output/Climate/full_year_Subtraction_Dist_from_Home_Davis_Recent.csv") %>% 
   select(parent.pop, Wtr_Year_TempDist_Recent=ann_tmean_dist, Wtr_Year_PPTDist_Recent=ann_ppt_dist)
-ucd_wtr_year_sub_historic <- read_csv("../output/Climate/full_year_Subtraction_Dist_from_Davis_Historical.csv") %>%
+ucd_wtr_year_sub_historic <- read_csv("../output/Climate/full_year_Subtraction_Dist_from_Home_Davis_Historical.csv") %>%
   select(parent.pop, Wtr_Year_TempDist_Historic=ann_tmean_dist, Wtr_Year_PPTDist_Historic=ann_ppt_dist)
-ucd_grwssn_sub_recent <- read_csv("../output/Climate/grwssn_Subtraction_Dist_from_Davis_Recent.csv") %>% 
+ucd_grwssn_sub_recent <- read_csv("../output/Climate/grwssn_Subtraction_Dist_from_Home_Davis_Recent.csv") %>% 
   select(parent.pop, GrwSsn_TempDist_Recent=ann_tmean_dist, GrwSsn_PPTDist_Recent=ann_ppt_dist)
-ucd_grwssn_sub_historic <- read_csv("../output/Climate/grwssn_Subtraction_Dist_from_Davis_Historical.csv") %>% 
+ucd_grwssn_sub_historic <- read_csv("../output/Climate/grwssn_Subtraction_Dist_from_Home_Davis_Historical.csv") %>% 
   select(parent.pop, GrwSsn_TempDist_Historic=ann_tmean_dist, GrwSsn_PPTDist_Historic=ann_ppt_dist)
 ucd_sub_dist <- ucd_wtr_year_sub_recent %>% 
   left_join(ucd_wtr_year_sub_historic) %>% 
@@ -107,13 +107,13 @@ ucd_sub_dist <- ucd_wtr_year_sub_recent %>%
   rename(pop=parent.pop) %>% 
   left_join(ucd_gowers)
 
-wl2_wtr_year_sub_recent <- read_csv("../output/Climate/full_year_Subtraction_Dist_from_WL2_Recent.csv") %>% 
+wl2_wtr_year_sub_recent <- read_csv("../output/Climate/full_year_Subtraction_Dist_from_Home_WL2_Recent.csv") %>% 
   select(parent.pop, Wtr_Year_TempDist_Recent=ann_tmean_dist, Wtr_Year_PPTDist_Recent=ann_ppt_dist)
-wl2_wtr_year_sub_historic <- read_csv("../output/Climate/full_year_Subtraction_Dist_from_WL2_Historical.csv") %>% 
+wl2_wtr_year_sub_historic <- read_csv("../output/Climate/full_year_Subtraction_Dist_from_Home_WL2_Historical.csv") %>% 
   select(parent.pop, Wtr_Year_TempDist_Historic=ann_tmean_dist, Wtr_Year_PPTDist_Historic=ann_ppt_dist)
-wl2_grwssn_sub_recent <- read_csv("../output/Climate/grwssn_Subtraction_Dist_from_WL2_Recent.csv") %>% 
+wl2_grwssn_sub_recent <- read_csv("../output/Climate/grwssn_Subtraction_Dist_from_Home_WL2_Recent.csv") %>% 
   select(parent.pop, GrwSsn_TempDist_Recent=ann_tmean_dist, GrwSsn_PPTDist_Recent=ann_ppt_dist)
-wl2_grwssn_sub_historic <- read_csv("../output/Climate/grwssn_Subtraction_Dist_from_WL2_Historical.csv") %>% 
+wl2_grwssn_sub_historic <- read_csv("../output/Climate/grwssn_Subtraction_Dist_from_Home_WL2_Historical.csv") %>% 
   select(parent.pop, GrwSsn_TempDist_Historic=ann_tmean_dist, GrwSsn_PPTDist_Historic=ann_ppt_dist)
 wl2_sub_dist_2023 <- wl2_wtr_year_sub_recent %>% 
   left_join(wl2_wtr_year_sub_historic) %>% 
@@ -343,7 +343,7 @@ ED <- wl2_y1_surv %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 
 wl2_y1_surv_FIG <- ggarrange(GSCD_recent, WYCD_recent, GD, ED, ncol=2, nrow=2) 
-#ggsave("../output/WL2_Traits/WL2_Y1_Surv_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
+ggsave("../output/WL2_Traits/WL2_Y1_Surv_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
 ```
 
 ```{r}
@@ -371,13 +371,14 @@ WYCD_historic <- wl2_y1_surv %>%
   theme(text=element_text(size=25))
 
 wl2_y1_surv_FIG <- ggarrange(GSCD_historic, WYCD_historic, GD, ED, ncol=2, nrow=2) 
-#ggsave("../output/WL2_Traits/WL2_Y1_Surv_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
+ggsave("../output/WL2_Traits/WL2_Y1_Surv_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
 ```
 
 Davis
 ```{r}
 #scatter plots
 GSCD_recent <- ucd_y1_surv %>% 
+  filter(pop!="WV") %>% #Only 2 indivs for WV
   group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
   summarise(meanSurv=mean(Survival, na.rm = TRUE), semSurv=sem(Survival, na.rm=TRUE)) %>% 
   ggplot(aes(x=GrwSsn_GD_Recent, y=meanSurv, group = pop)) +
@@ -389,6 +390,7 @@ GSCD_recent <- ucd_y1_surv %>%
   theme(text=element_text(size=25))
 
 WYCD_recent <- ucd_y1_surv %>% 
+  filter(pop!="WV") %>% #Only 2 indivs for WV
   group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
   summarise(meanSurv=mean(Survival, na.rm = TRUE), semSurv=sem(Survival, na.rm=TRUE)) %>% 
   ggplot(aes(x=Wtr_Year_GD_Recent, y=meanSurv, group = pop)) +
@@ -400,6 +402,7 @@ WYCD_recent <- ucd_y1_surv %>%
   theme(text=element_text(size=25))
 
 GD <- ucd_y1_surv %>% 
+  filter(pop!="WV") %>% #Only 2 indivs for WV
   group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent, Geographic_Dist) %>% 
   summarise(meanSurv=mean(Survival, na.rm = TRUE), semSurv=sem(Survival, na.rm=TRUE)) %>% 
   ggplot(aes(x=Geographic_Dist, y=meanSurv, group = pop)) +
@@ -411,6 +414,7 @@ GD <- ucd_y1_surv %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 
 ED <- ucd_y1_surv %>% 
+  filter(pop!="WV") %>% #Only 2 indivs for WV
   group_by(pop, elev_m, Elev_Dist) %>% 
   summarise(meanSurv=mean(Survival, na.rm = TRUE), semSurv=sem(Survival, na.rm=TRUE)) %>% 
   ggplot(aes(x=Elev_Dist, y=meanSurv, group = pop)) +
@@ -422,12 +426,13 @@ ED <- ucd_y1_surv %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 
 ucd_y1_surv_FIG <- ggarrange(GSCD_recent, WYCD_recent, GD, ED, ncol=2, nrow=2) 
-#ggsave("../output/UCD_Traits/UCD_Y1_Surv_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
+ggsave("../output/UCD_Traits/UCD_Y1_Surv_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
 ```
 
 ```{r}
 #scatter plots
 GSCD_historic <- ucd_y1_surv %>% 
+  filter(pop!="WV") %>% #Only 2 indivs for WV
   group_by(pop, elev_m, GrwSsn_GD_Historical, Wtr_Year_GD_Historical) %>% 
   summarise(meanSurv=mean(Survival, na.rm = TRUE), semSurv=sem(Survival, na.rm=TRUE)) %>% 
   ggplot(aes(x=GrwSsn_GD_Historical, y=meanSurv, group = pop)) +
@@ -439,6 +444,7 @@ GSCD_historic <- ucd_y1_surv %>%
   theme(text=element_text(size=25))
 
 WYCD_historic <- ucd_y1_surv %>% 
+  filter(pop!="WV") %>% #Only 2 indivs for WV
   group_by(pop, elev_m, GrwSsn_GD_Historical, Wtr_Year_GD_Historical) %>% 
   summarise(meanSurv=mean(Survival, na.rm = TRUE), semSurv=sem(Survival, na.rm=TRUE)) %>% 
   ggplot(aes(x=Wtr_Year_GD_Historical, y=meanSurv, group = pop)) +
@@ -450,7 +456,7 @@ WYCD_historic <- ucd_y1_surv %>%
   theme(text=element_text(size=25))
 
 ucd_y1_surv_FIG <- ggarrange(GSCD_historic, WYCD_historic, GD, ED, ncol=2, nrow=2) 
-#ggsave("../output/UCD_Traits/UCD_Y1_Surv_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
+ggsave("../output/UCD_Traits/UCD_Y1_Surv_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
 ```
 
 #### Directional Distance
@@ -535,6 +541,7 @@ ggsave("../output/WL2_Traits/WL2_Y1_Surv_TmpSubDist_SCATTERS_Historic.png", widt
 ```{r}
 #scatter plots - recent
 GSCD_prob_recent <- ucd_y1_surv_sub_dist %>% 
+  filter(pop!="WV") %>% #Only 2 indivs for WV
   group_by(pop, elev_m, GrwSsn_TempDist_Recent, GrwSsn_TempDist_Historic) %>% 
   summarise(meanEst=mean(Survival, na.rm = TRUE), semEst=sem(Survival, na.rm=TRUE)) %>% 
   ggplot(aes(x=GrwSsn_TempDist_Recent, y=meanEst, group = pop)) +
@@ -546,6 +553,7 @@ GSCD_prob_recent <- ucd_y1_surv_sub_dist %>%
   theme(text=element_text(size=30))
 
 WYCD_prob_recent <- ucd_y1_surv_sub_dist %>% 
+  filter(pop!="WV") %>% #Only 2 indivs for WV
   group_by(pop, elev_m, Wtr_Year_TempDist_Recent, Wtr_Year_TempDist_Historic) %>% 
   summarise(meanEst=mean(Survival, na.rm = TRUE), semEst=sem(Survival, na.rm=TRUE)) %>% 
   ggplot(aes(x=Wtr_Year_TempDist_Recent, y=meanEst, group = pop)) +
@@ -557,6 +565,7 @@ WYCD_prob_recent <- ucd_y1_surv_sub_dist %>%
   theme(text=element_text(size=30))
 
 GD_prob <- ucd_y1_surv_sub_dist %>% 
+  filter(pop!="WV") %>% #Only 2 indivs for WV
   group_by(pop, elev_m, GrwSsn_TempDist_Recent, Wtr_Year_TempDist_Recent, Geographic_Dist) %>% 
   summarise(meanEst=mean(Survival, na.rm = TRUE), semEst=sem(Survival, na.rm=TRUE)) %>% 
   ggplot(aes(x=Geographic_Dist, y=meanEst, group = pop)) +
@@ -568,6 +577,7 @@ GD_prob <- ucd_y1_surv_sub_dist %>%
   theme(text=element_text(size=30), axis.text.x = element_text(angle = 45,  hjust = 1))
 
 ED_prob <- ucd_y1_surv_sub_dist %>% 
+  filter(pop!="WV") %>% #Only 2 indivs for WV
   group_by(pop, elev_m, Elev_Dist) %>% 
   summarise(meanEst=mean(Survival, na.rm = TRUE), semEst=sem(Survival, na.rm=TRUE)) %>% 
   ggplot(aes(x=Elev_Dist, y=meanEst, group = pop)) +
@@ -585,6 +595,7 @@ ggsave("../output/UCD_Traits/UCD_Y1_Surv_TmpSubDist_SCATTERS_Recent.png", width 
 ```{r}
 #scatter plots - historic
 GSCD_prob_historic <- ucd_y1_surv_sub_dist %>% 
+  filter(pop!="WV") %>% #Only 2 indivs for WV
   group_by(pop, elev_m, GrwSsn_TempDist_Recent, GrwSsn_TempDist_Historic) %>% 
   summarise(meanEst=mean(Survival, na.rm = TRUE), semEst=sem(Survival, na.rm=TRUE)) %>% 
   ggplot(aes(x=GrwSsn_TempDist_Historic, y=meanEst, group = pop)) +
@@ -596,6 +607,7 @@ GSCD_prob_historic <- ucd_y1_surv_sub_dist %>%
   theme(text=element_text(size=30))
 
 WYCD_prob_historic <- ucd_y1_surv_sub_dist %>% 
+  filter(pop!="WV") %>% #Only 2 indivs for WV
   group_by(pop, elev_m, Wtr_Year_TempDist_Recent, Wtr_Year_TempDist_Historic) %>% 
   summarise(meanEst=mean(Survival, na.rm = TRUE), semEst=sem(Survival, na.rm=TRUE)) %>% 
   ggplot(aes(x=Wtr_Year_TempDist_Historic, y=meanEst, group = pop)) +
@@ -691,6 +703,7 @@ ggsave("../output/WL2_Traits/WL2_Y1_Surv_PPTSubDist_SCATTERS_Historic.png", widt
 ```{r}
 #scatter plots - recent
 GSCD_prob_recent <- ucd_y1_surv_sub_dist %>% 
+  filter(pop!="WV") %>% #Only 2 indivs for WV
   group_by(pop, elev_m, GrwSsn_PPTDist_Recent, GrwSsn_PPTDist_Historic) %>% 
   summarise(meanEst=mean(Survival, na.rm = TRUE), semEst=sem(Survival, na.rm=TRUE)) %>% 
   ggplot(aes(x=GrwSsn_PPTDist_Recent, y=meanEst, group = pop)) +
@@ -702,6 +715,7 @@ GSCD_prob_recent <- ucd_y1_surv_sub_dist %>%
   theme(text=element_text(size=30))
 
 WYCD_prob_recent <- ucd_y1_surv_sub_dist %>% 
+  filter(pop!="WV") %>% #Only 2 indivs for WV
   group_by(pop, elev_m, Wtr_Year_PPTDist_Recent, Wtr_Year_PPTDist_Historic) %>% 
   summarise(meanEst=mean(Survival, na.rm = TRUE), semEst=sem(Survival, na.rm=TRUE)) %>% 
   ggplot(aes(x=Wtr_Year_PPTDist_Recent, y=meanEst, group = pop)) +
@@ -713,6 +727,7 @@ WYCD_prob_recent <- ucd_y1_surv_sub_dist %>%
   theme(text=element_text(size=30))
 
 GD_prob <- ucd_y1_surv_sub_dist %>% 
+  filter(pop!="WV") %>% #Only 2 indivs for WV
   group_by(pop, elev_m, GrwSsn_PPTDist_Recent, Wtr_Year_PPTDist_Recent, Geographic_Dist) %>% 
   summarise(meanEst=mean(Survival, na.rm = TRUE), semEst=sem(Survival, na.rm=TRUE)) %>% 
   ggplot(aes(x=Geographic_Dist, y=meanEst, group = pop)) +
@@ -724,6 +739,7 @@ GD_prob <- ucd_y1_surv_sub_dist %>%
   theme(text=element_text(size=30), axis.text.x = element_text(angle = 45,  hjust = 1))
 
 ED_prob <- ucd_y1_surv_sub_dist %>% 
+  filter(pop!="WV") %>% #Only 2 indivs for WV
   group_by(pop, elev_m, Elev_Dist) %>% 
   summarise(meanEst=mean(Survival, na.rm = TRUE), semEst=sem(Survival, na.rm=TRUE)) %>% 
   ggplot(aes(x=Elev_Dist, y=meanEst, group = pop)) +
@@ -741,6 +757,7 @@ ggsave("../output/UCD_Traits/UCD_Y1_Surv_PPTSubDist_SCATTERS_Recent.png", width 
 ```{r}
 #scatter plots - historic
 GSCD_prob_historic <- ucd_y1_surv_sub_dist %>% 
+  filter(pop!="WV") %>% #Only 2 indivs for WV
   group_by(pop, elev_m, GrwSsn_PPTDist_Recent, GrwSsn_PPTDist_Historic) %>% 
   summarise(meanEst=mean(Survival, na.rm = TRUE), semEst=sem(Survival, na.rm=TRUE)) %>% 
   ggplot(aes(x=GrwSsn_PPTDist_Historic, y=meanEst, group = pop)) +
@@ -752,6 +769,7 @@ GSCD_prob_historic <- ucd_y1_surv_sub_dist %>%
   theme(text=element_text(size=30))
 
 WYCD_prob_historic <- ucd_y1_surv_sub_dist %>% 
+  filter(pop!="WV") %>% #Only 2 indivs for WV
   group_by(pop, elev_m, Wtr_Year_PPTDist_Recent, Wtr_Year_PPTDist_Historic) %>% 
   summarise(meanEst=mean(Survival, na.rm = TRUE), semEst=sem(Survival, na.rm=TRUE)) %>% 
   ggplot(aes(x=Wtr_Year_PPTDist_Historic, y=meanEst, group = pop)) +
@@ -770,10 +788,14 @@ ggsave("../output/UCD_Traits/UCD_Y1_Surv_PPTSubDist_SCATTERS_Historic.png", widt
 
 ### Scaling 
 ```{r}
+wl2_y1_surv %>% group_by(pop) %>% summarise(n=n()) %>% arrange(n) #CHECK SAMPLE SIZE
 wl2_y1_surv_scaled <- wl2_y1_surv %>% mutate_at(c("GrwSsn_GD_Recent","Wtr_Year_GD_Recent",                                                           "GrwSsn_GD_Historical","Wtr_Year_GD_Historical","Geographic_Dist"),
                                                             scale) 
 
-ucd_y1_surv_scaled <- ucd_y1_surv %>% mutate_at(c("GrwSsn_GD_Recent","Wtr_Year_GD_Recent",                                                           "GrwSsn_GD_Historical","Wtr_Year_GD_Historical","Geographic_Dist"),
+ucd_y1_surv %>% group_by(pop) %>% summarise(n=n()) %>% arrange(n) #CHECK SAMPLE SIZE
+ucd_y1_surv_scaled <- ucd_y1_surv %>% 
+  filter(pop!="WV") %>% #Only 2 indivs for WV
+  mutate_at(c("GrwSsn_GD_Recent","Wtr_Year_GD_Recent",                                                           "GrwSsn_GD_Historical","Wtr_Year_GD_Historical","Geographic_Dist"),
                                                             scale) 
 
 #CHECK MODEL PARAMS
@@ -797,6 +819,7 @@ wl2_y1_surv_scaled_sub <- wl2_y1_surv_sub_dist %>%
               "Geographic_Dist"), scale)
 
 ucd_y1_surv_scaled_sub <- ucd_y1_surv_sub_dist %>% 
+  filter(pop!="WV") %>% #Only 2 indivs for WV
   mutate_at(c("Wtr_Year_TempDist_Recent",  "Wtr_Year_PPTDist_Recent", 
                  "Wtr_Year_TempDist_Historic", "Wtr_Year_PPTDist_Historic",
                  "GrwSsn_TempDist_Recent", "GrwSsn_PPTDist_Recent",
