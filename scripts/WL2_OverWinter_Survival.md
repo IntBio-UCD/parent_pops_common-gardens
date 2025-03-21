@@ -1,7 +1,7 @@
 ---
 title: "WL2_OverWinter_Survival"
 author: "Brandie Quarles"
-date: "2025-03-18"
+date: "2025-03-21"
 output: 
   html_document: 
     keep_md: yes
@@ -10,6 +10,9 @@ output:
 
 
 # Over-winter survival at WL2 garden 
+
+To Do:
+- sum scaled temp and ppt distance (scale but don't center) and see if that has a relat with winter surv
 
 ## Libraries
 
@@ -147,7 +150,7 @@ library(tidymodels)
 ## ✖ infer::t_test()       masks rstatix::t_test()
 ## ✖ Matrix::unpack()      masks tidyr::unpack()
 ## ✖ recipes::update()     masks Matrix::update(), stats::update()
-## • Learn how to get started at https://www.tidymodels.org/start/
+## • Dig deeper into tidy modeling with R at https://www.tmwr.org
 ```
 
 ``` r
@@ -275,7 +278,7 @@ wl2_gowers_2024 <- read_csv("../output/Climate/Gowers_WL2_2024.csv") %>%
   pivot_wider(names_from = TimePd, values_from = c(GrwSsn_GD, Wtr_Year_GD)) %>% 
   mutate(WL2_Lat=38.82599, WL2_Long=-120.2509, WL2_Elev=2020) %>% 
   mutate(Geographic_Dist=distHaversine(cbind(WL2_Long, WL2_Lat), cbind(Long, Lat)),
-         Elev_Dist=WL2_Elev-elev_m) %>% # Calculate the distance using the haversine formula
+         Elev_Dist=elev_m-WL2_Elev) %>% # Calculate the distance using the haversine formula
   rename(pop=parent.pop)
 ```
 
@@ -294,7 +297,7 @@ wl2_gowers_2024 <- read_csv("../output/Climate/Gowers_WL2_2024.csv") %>%
 
 
 ``` r
-wl2_wtr_year_sub_recent_2024 <- read_csv("../output/Climate/full_year_Subtraction_Dist_from_WL2_2024_Recent.csv") %>% 
+wl2_wtr_year_sub_recent_2024 <- read_csv("../output/Climate/full_year_Subtraction_Dist_from_Home_WL2_2024_Recent.csv") %>% 
   select(parent.pop, Wtr_Year_TempDist_Recent=ann_tmean_dist, Wtr_Year_PPTDist_Recent=ann_ppt_dist)
 ```
 
@@ -310,7 +313,7 @@ wl2_wtr_year_sub_recent_2024 <- read_csv("../output/Climate/full_year_Subtractio
 ```
 
 ``` r
-wl2_wtr_year_sub_historic_2024 <- read_csv("../output/Climate/full_year_Subtraction_Dist_from_WL2_2024_Historical.csv") %>% 
+wl2_wtr_year_sub_historic_2024 <- read_csv("../output/Climate/full_year_Subtraction_Dist_from_Home_WL2_2024_Historical.csv") %>% 
   select(parent.pop, Wtr_Year_TempDist_Historic=ann_tmean_dist, Wtr_Year_PPTDist_Historic=ann_ppt_dist)
 ```
 
@@ -326,7 +329,7 @@ wl2_wtr_year_sub_historic_2024 <- read_csv("../output/Climate/full_year_Subtract
 ```
 
 ``` r
-wl2_grwssn_sub_recent_2024 <- read_csv("../output/Climate/grwssn_Subtraction_Dist_from_WL2_2024_Recent.csv") %>% 
+wl2_grwssn_sub_recent_2024 <- read_csv("../output/Climate/grwssn_Subtraction_Dist_from_Home_WL2_2024_Recent.csv") %>% 
   select(parent.pop, GrwSsn_TempDist_Recent=ann_tmean_dist, GrwSsn_PPTDist_Recent=ann_ppt_dist)
 ```
 
@@ -342,7 +345,7 @@ wl2_grwssn_sub_recent_2024 <- read_csv("../output/Climate/grwssn_Subtraction_Dis
 ```
 
 ``` r
-wl2_grwssn_sub_historic_2024 <- read_csv("../output/Climate/grwssn_Subtraction_Dist_from_WL2_2024_Historical.csv") %>% 
+wl2_grwssn_sub_historic_2024 <- read_csv("../output/Climate/grwssn_Subtraction_Dist_from_Home_WL2_2024_Historical.csv") %>% 
   select(parent.pop, GrwSsn_TempDist_Historic=ann_tmean_dist, GrwSsn_PPTDist_Historic=ann_ppt_dist)
 ```
 
@@ -593,7 +596,7 @@ wl2_winter_surv_FIG_recent <- ggarrange("",WYCD_recent, GD,ED, ncol=2, nrow=2)
 ```
 
 ``` r
-#ggsave("../output/WL2_Traits/WL2_WinterSurv_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
+ggsave("../output/WL2_Traits/WL2_WinterSurv_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
 ```
 
 
@@ -626,7 +629,7 @@ wl2_winter_surv_FIG_historic <- ggarrange("", WYCD_historic, GD,ED, ncol=2, nrow
 ```
 
 ``` r
-#ggsave("../output/WL2_Traits/WL2_WinterSurv_SCATTERS_Historical.png", width = 24, height = 18, units = "in")
+ggsave("../output/WL2_Traits/WL2_WinterSurv_SCATTERS_Historical.png", width = 24, height = 18, units = "in")
 ```
 
 
@@ -838,7 +841,8 @@ ggsave("../output/WL2_Traits/WL2_WinterSurv_PPTSubDist_SCATTERS_Historic.png", w
 
 ``` r
 winter_surv %>% group_by(pop, elev_m, GrwSsn_GD_Historical, Wtr_Year_GD_Historical) %>% 
-  summarise(meanSurv=mean(WinterSurv, na.rm = TRUE), semSurv=sem(WinterSurv, na.rm=TRUE), n=n()) #WR only has 1 individual, remove 
+  summarise(n=n()) %>% 
+  arrange(n)#WR only has 1 individual, remove 
 ```
 
 ```
@@ -847,22 +851,21 @@ winter_surv %>% group_by(pop, elev_m, GrwSsn_GD_Historical, Wtr_Year_GD_Historic
 ```
 
 ```
-## # A tibble: 22 × 7
+## # A tibble: 22 × 5
 ## # Groups:   pop, elev_m, GrwSsn_GD_Historical [22]
-##    pop   elev_m GrwSsn_GD_Historical Wtr_Year_GD_Historical meanSurv semSurv
-##    <chr>  <dbl>                <dbl>                  <dbl>    <dbl>   <dbl>
-##  1 BH      511.                0.382                  0.521    0.547  0.0690
-##  2 CC      313                 0.510                  0.415    0.327  0.0657
-##  3 CP2    2244.                0.336                  0.296    0      0     
-##  4 CP3    2266.                0.371                  0.317    0      0     
-##  5 DPR    1019.                0.418                  0.361    0      0     
-##  6 FR      787                 0.349                  0.387    0      0     
-##  7 IH      454.                0.456                  0.387    0.618  0.0661
-##  8 LV1    2593.                0.615                  0.499    0.2    0.2   
-##  9 LV3    2354.                0.626                  0.510    0      0     
-## 10 LVTR1  2741.                0.631                  0.507    0      0     
+##    pop   elev_m GrwSsn_GD_Historical Wtr_Year_GD_Historical     n
+##    <chr>  <dbl>                <dbl>                  <dbl> <int>
+##  1 WR     1158                 0.372                  0.326     1
+##  2 LV3    2354.                0.626                  0.510     3
+##  3 FR      787                 0.349                  0.387     5
+##  4 LV1    2593.                0.615                  0.499     5
+##  5 LVTR1  2741.                0.631                  0.507     5
+##  6 SQ3    2373.                0.304                  0.290     6
+##  7 YO11   2872.                0.420                  0.451     8
+##  8 YO4    2158.                0.261                  0.250     9
+##  9 YO8    2591.                0.346                  0.338     9
+## 10 SQ1    1921.                0.217                  0.293    10
 ## # ℹ 12 more rows
-## # ℹ 1 more variable: n <int>
 ```
 
 ``` r
@@ -1062,11 +1065,11 @@ surv_GD_fits_wl2_sub %>% mutate(tidy=map(fit, tidy)) %>% unnest(tidy) %>%
 ## # A tibble: 6 × 6
 ##   name          term                       estimate std.error statistic p.value
 ##   <chr>         <chr>                         <dbl>     <dbl>     <dbl>   <dbl>
-## 1 WY_Recent     Wtr_Year_TempDist_Recent    -1.04       0.649   -1.61     0.108
-## 2 WY_Recent     Wtr_Year_PPTDist_Recent      0.412      0.616    0.668    0.504
+## 1 WY_Recent     Wtr_Year_TempDist_Recent     1.04       0.649    1.61     0.108
+## 2 WY_Recent     Wtr_Year_PPTDist_Recent     -0.412      0.616   -0.668    0.504
 ## 3 WY_Recent     Geographic_Dist             -0.0277     0.459   -0.0604   0.952
-## 4 WY_Historical Wtr_Year_TempDist_Historic  -1.00       0.664   -1.51     0.131
-## 5 WY_Historical Wtr_Year_PPTDist_Historic    0.446      0.629    0.710    0.478
+## 4 WY_Historical Wtr_Year_TempDist_Historic   1.00       0.664    1.51     0.131
+## 5 WY_Historical Wtr_Year_PPTDist_Historic   -0.446      0.629   -0.710    0.478
 ## 6 WY_Historical Geographic_Dist              0.0239     0.445    0.0537   0.957
 ```
 
