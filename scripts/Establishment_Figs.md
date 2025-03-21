@@ -147,7 +147,7 @@ library(tidymodels)
 ## ✖ infer::t_test()       masks rstatix::t_test()
 ## ✖ Matrix::unpack()      masks tidyr::unpack()
 ## ✖ recipes::update()     masks Matrix::update(), stats::update()
-## • Search for functions across packages at https://www.tidymodels.org/find/
+## • Use tidymodels_prefer() to resolve common conflicts.
 ```
 
 ``` r
@@ -875,7 +875,7 @@ ED <- ucd_establishment %>%
 
 ``` r
 ucd_establishment_FIG <- ggarrange(GSCD_recent, WYCD_recent, GD, ED, ncol=2, nrow=2) 
-#ggsave("../output/UCD_Traits/UCD_Establishment_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
+ggsave("../output/UCD_Traits/UCD_Establishment_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
 ```
 
 
@@ -918,7 +918,7 @@ WYCD_historic <- ucd_establishment %>%
 
 ``` r
 ucd_establishment_FIG <- ggarrange(GSCD_historic, WYCD_historic, GD, ED, ncol=2, nrow=2) 
-#ggsave("../output/UCD_Traits/UCD_Establishment_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
+ggsave("../output/UCD_Traits/UCD_Establishment_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
 ```
 
 ### WL2
@@ -998,7 +998,7 @@ ED <- wl2_establishment %>%
 
 ``` r
 wl2_establishment_FIG <- ggarrange(GSCD_recent, WYCD_recent, GD, ED, ncol=2, nrow=2) 
-#ggsave("../output/WL2_Traits/WL2_Establishment_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
+ggsave("../output/WL2_Traits/WL2_Establishment_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
 ```
 
 
@@ -1041,7 +1041,7 @@ WYCD_historic <- wl2_establishment %>%
 
 ``` r
 wl2_establishment_FIG <- ggarrange(GSCD_historic, WYCD_historic, GD, ED, ncol=2, nrow=2) 
-#ggsave("../output/WL2_Traits/WL2_Establishment_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
+ggsave("../output/WL2_Traits/WL2_Establishment_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
 ```
 
 ### Directional Distance
@@ -1539,14 +1539,7 @@ ggsave("../output/UCD_Traits/UCD_Establishment_PPTSubDist_SCATTERS_Historic.png"
 ### Scaling 
 
 ``` r
-wl2_establishment_scaled <- wl2_establishment %>% mutate_at(c("GrwSsn_GD_Recent","Wtr_Year_GD_Recent",                                                           "GrwSsn_GD_Historical","Wtr_Year_GD_Historical","Geographic_Dist"),
-                                                            scale) 
-
-ucd_establishment_scaled <- ucd_establishment %>% mutate_at(c("GrwSsn_GD_Recent","Wtr_Year_GD_Recent",                                                           "GrwSsn_GD_Historical","Wtr_Year_GD_Historical","Geographic_Dist"),
-                                                            scale) 
-
-#CHECK MODEL PARAMS
-wl2_establishment_scaled %>% group_by(pop) %>% summarise(n=n()) %>% arrange(n)
+wl2_establishment %>% group_by(pop) %>% summarise(n=n()) %>% arrange(n) #CHECK SAMPLE SIZE
 ```
 
 ```
@@ -1567,6 +1560,36 @@ wl2_establishment_scaled %>% group_by(pop) %>% summarise(n=n()) %>% arrange(n)
 ```
 
 ``` r
+wl2_establishment_scaled <- wl2_establishment %>% mutate_at(c("GrwSsn_GD_Recent","Wtr_Year_GD_Recent",                                                           "GrwSsn_GD_Historical","Wtr_Year_GD_Historical","Geographic_Dist"),
+                                                            scale) 
+
+ucd_establishment %>% group_by(pop) %>% summarise(n=n()) %>% arrange(n) #CHECK SAMPLE SIZE
+```
+
+```
+## # A tibble: 23 × 2
+##    pop       n
+##    <chr> <int>
+##  1 WV        2
+##  2 LV1       3
+##  3 YO4       6
+##  4 CP3       8
+##  5 WR        9
+##  6 SQ3      10
+##  7 YO8      13
+##  8 YO11     14
+##  9 LVTR1    15
+## 10 YO7      17
+## # ℹ 13 more rows
+```
+
+``` r
+ucd_establishment_scaled <- ucd_establishment %>% 
+  filter(pop!="WV") %>% #Only 2 indivs for WV
+  mutate_at(c("GrwSsn_GD_Recent","Wtr_Year_GD_Recent",                                                           "GrwSsn_GD_Historical","Wtr_Year_GD_Historical","Geographic_Dist"),
+                                                            scale) 
+
+#CHECK MODEL PARAMS
 unique(wl2_establishment_scaled$pop)
 ```
 
@@ -1648,34 +1671,13 @@ summary(wl2_establishment_scaled)
 ```
 
 ``` r
-ucd_establishment_scaled %>% group_by(pop) %>% summarise(n=n()) %>% arrange(n)
-```
-
-```
-## # A tibble: 23 × 2
-##    pop       n
-##    <chr> <int>
-##  1 WV        2
-##  2 LV1       3
-##  3 YO4       6
-##  4 CP3       8
-##  5 WR        9
-##  6 SQ3      10
-##  7 YO8      13
-##  8 YO11     14
-##  9 LVTR1    15
-## 10 YO7      17
-## # ℹ 13 more rows
-```
-
-``` r
 unique(ucd_establishment_scaled$pop)
 ```
 
 ```
 ##  [1] "WL2"   "CP2"   "YO11"  "CC"    "FR"    "BH"    "IH"    "LV3"   "SC"   
 ## [10] "LVTR1" "SQ3"   "TM2"   "WL1"   "YO7"   "DPR"   "SQ2"   "SQ1"   "YO8"  
-## [19] "YO4"   "WR"    "WV"    "CP3"   "LV1"
+## [19] "YO4"   "WR"    "CP3"   "LV1"
 ```
 
 ``` r
@@ -1700,44 +1702,44 @@ summary(ucd_establishment_scaled)
 
 ```
 ##     block                row            col              Genotype        
-##  Length:757         Min.   : 3.00   Length:757         Length:757        
+##  Length:755         Min.   : 3.00   Length:755         Length:755        
 ##  Class :character   1st Qu.:12.00   Class :character   Class :character  
 ##  Mode  :character   Median :22.00   Mode  :character   Mode  :character  
-##                     Mean   :21.84                                        
+##                     Mean   :21.88                                        
 ##                     3rd Qu.:32.00                                        
 ##                     Max.   :42.00                                        
 ##                                                                          
 ##      pop                  mf              rep          elevation.group   
-##  Length:757         Min.   : 1.000   Min.   :  1.000   Length:757        
+##  Length:755         Min.   : 1.000   Min.   :  1.000   Length:755        
 ##  Class :character   1st Qu.: 2.000   1st Qu.:  4.000   Class :character  
 ##  Mode  :character   Median : 4.000   Median :  8.000   Mode  :character  
-##                     Mean   : 4.363   Mean   :  8.688                     
+##                     Mean   : 4.364   Mean   :  8.693                     
 ##                     3rd Qu.: 6.000   3rd Qu.: 12.000                     
 ##                     Max.   :12.000   Max.   :100.000                     
 ##                                                                          
 ##      elev_m            Lat             Long        GrwSsn_GD_Recent.V1 
-##  Min.   : 313.0   Min.   :36.56   Min.   :-123.0   Min.   :-1.1768979  
-##  1st Qu.: 511.4   1st Qu.:37.41   1st Qu.:-121.2   1st Qu.:-0.8536523  
-##  Median :1613.8   Median :38.79   Median :-120.2   Median :-0.2555757  
-##  Mean   :1362.2   Mean   :38.65   Mean   :-120.4   Mean   : 0.0000000  
-##  3rd Qu.:2020.1   3rd Qu.:39.59   3rd Qu.:-120.0   3rd Qu.: 0.6460069  
-##  Max.   :2872.3   Max.   :40.74   Max.   :-118.8   Max.   : 2.5696645  
+##  Min.   : 313.0   Min.   :36.56   Min.   :-121.6   Min.   :-1.1761926  
+##  1st Qu.: 511.4   1st Qu.:37.41   1st Qu.:-121.2   1st Qu.:-0.8533420  
+##  Median :1613.8   Median :38.79   Median :-120.2   Median :-0.2559962  
+##  Mean   :1363.8   Mean   :38.64   Mean   :-120.4   Mean   : 0.0000000  
+##  3rd Qu.:2088.8   3rd Qu.:39.59   3rd Qu.:-120.0   3rd Qu.: 0.6444846  
+##  Max.   :2872.3   Max.   :40.48   Max.   :-118.8   Max.   : 2.5657915  
 ##                                                                        
 ##  GrwSsn_GD_Historical.V1 Wtr_Year_GD_Recent.V1 Wtr_Year_GD_Historical.V1
-##  Min.   :-0.9835052      Min.   :-1.3643995    Min.   :-1.2260429       
-##  1st Qu.:-0.8935147      1st Qu.:-0.9050347    1st Qu.:-1.0338074       
-##  Median :-0.3851817      Median : 0.0556001    Median : 0.1122115       
+##  Min.   :-0.9828976      Min.   :-1.3630119    Min.   :-1.2243858       
+##  1st Qu.:-0.8930196      1st Qu.:-0.9042425    1st Qu.:-1.0324047       
+##  Median :-0.3853222      Median : 0.0551472    Median : 0.1120976       
 ##  Mean   : 0.0000000      Mean   : 0.0000000    Mean   : 0.0000000       
-##  3rd Qu.: 0.2432655      3rd Qu.: 0.7606050    3rd Qu.: 0.7204253       
-##  Max.   : 2.2719145      Max.   : 2.0452643    Max.   : 2.0596897       
+##  3rd Qu.: 0.2423392      3rd Qu.: 0.7592383    3rd Qu.: 0.7195065       
+##  Max.   : 2.2684516      Max.   : 2.0422324    Max.   : 2.0569985       
 ##                                                                         
 ##   Geographic_Dist.V1    Elev_Dist        death.date         Establishment   
-##  Min.   :-1.2373721   Min.   : 297.0   Min.   :2022-11-30   Min.   :0.0000  
-##  1st Qu.:-0.7812455   1st Qu.: 495.4   1st Qu.:2023-02-10   1st Qu.:1.0000  
-##  Median :-0.4795199   Median :1597.8   Median :2023-03-03   Median :1.0000  
-##  Mean   : 0.0000000   Mean   :1346.2   Mean   :2023-03-07   Mean   :0.9723  
-##  3rd Qu.: 0.5648152   3rd Qu.:2004.1   3rd Qu.:2023-03-24   3rd Qu.:1.0000  
-##  Max.   : 2.4171164   Max.   :2856.3   Max.   :2023-10-16   Max.   :1.0000  
+##  Min.   :-1.2350681   Min.   : 297.0   Min.   :2022-11-30   Min.   :0.0000  
+##  1st Qu.:-0.7785193   1st Qu.: 495.4   1st Qu.:2023-02-10   1st Qu.:1.0000  
+##  Median :-0.4765143   Median :1597.8   Median :2023-03-03   Median :1.0000  
+##  Mean   : 0.0000000   Mean   :1347.8   Mean   :2023-03-07   Mean   :0.9722  
+##  3rd Qu.: 0.5224838   3rd Qu.:2072.8   3rd Qu.:2023-03-24   3rd Qu.:1.0000  
+##  Max.   : 2.4228036   Max.   :2856.3   Max.   :2023-10-16   Max.   :1.0000  
 ##                                        NA's   :9
 ```
 
@@ -1751,6 +1753,7 @@ wl2_establishment_scaled_sub <- wl2_establishment_sub_dist %>%
               "Geographic_Dist"), scale)
 
 ucd_establishment_scaled_sub <- ucd_establishment_sub_dist %>% 
+  filter(pop!="WV") %>% #Only 2 indivs for WV
   mutate_at(c("Wtr_Year_TempDist_Recent",  "Wtr_Year_PPTDist_Recent", 
                  "Wtr_Year_TempDist_Historic", "Wtr_Year_PPTDist_Historic",
                  "GrwSsn_TempDist_Recent", "GrwSsn_PPTDist_Recent",
@@ -1807,15 +1810,6 @@ surv_fits_ucd <- surv_fits %>%
 ## boundary (singular) fit: see help('isSingular')
 ```
 
-```
-## Warning: There were 2 warnings in `mutate()`.
-## The first warning was:
-## ℹ In argument: `fit = map(wflow, fit, data = ucd_establishment_scaled)`.
-## Caused by warning in `checkConv()`:
-## ! unable to evaluate scaled gradient
-## ℹ Run `dplyr::last_dplyr_warnings()` to see the 1 remaining warning.
-```
-
 ``` r
 #mod_test <- glmer(Establishment ~ (1|pop/mf) + (1|block), data=ucd_establishment_scaled, family=binomial)
 #summary(mod_test)
@@ -1845,10 +1839,10 @@ surv_fits_ucd %>% mutate(glance=map(fit, glance)) %>% unnest(glance) %>% arrange
 ## # A tibble: 4 × 6
 ##   name         logLik   AIC   BIC deviance df.residual
 ##   <chr>         <dbl> <dbl> <dbl>    <dbl>       <int>
-## 1 pop.block     -93.4  193.  207.     160.         754
-## 2 pop           -94.7  193.  203.     172.         755
-## 3 pop.mf.block  -93.4  195.  213.     160.         753
-## 4 pop.mf        -94.7  195.  209.     172.         754
+## 1 pop.block     -93.3  193.  207.     160.         752
+## 2 pop           -94.7  193.  203.     172.         753
+## 3 pop.mf.block  -93.3  195.  213.     152.         751
+## 4 pop.mf        -94.7  195.  209.     172.         752
 ```
 
 ``` r
@@ -1912,11 +1906,11 @@ surv_GD_fits_ucd %>% mutate(glance=map(fit, glance)) %>% unnest(glance) %>% arra
 ## # A tibble: 5 × 6
 ##   name          logLik   AIC   BIC deviance df.residual
 ##   <chr>          <dbl> <dbl> <dbl>    <dbl>       <int>
-## 1 pop.block      -93.4  193.  207.     160.         754
-## 2 WY_Historical  -91.5  193.  216.     160.         752
-## 3 WY_Recent      -91.7  193.  217.     160.         752
-## 4 GS_Recent      -92.7  195.  219.     161.         752
-## 5 GS_Historical  -92.9  196.  219.     160.         752
+## 1 pop.block      -93.3  193.  207.     160.         752
+## 2 WY_Historical  -91.5  193.  216.     160.         750
+## 3 WY_Recent      -91.6  193.  216.     160.         750
+## 4 GS_Recent      -92.6  195.  218.     161.         750
+## 5 GS_Historical  -92.8  196.  219.     160.         750
 ```
 
 ``` r
@@ -1955,14 +1949,14 @@ surv_GD_fits_ucd %>% mutate(tidy=map(fit, tidy)) %>% unnest(tidy) %>%
 ## # A tibble: 8 × 6
 ##   name          term                   estimate std.error statistic p.value
 ##   <chr>         <chr>                     <dbl>     <dbl>     <dbl>   <dbl>
-## 1 GS_Recent     GrwSsn_GD_Recent        -0.279      0.308    -0.904  0.366 
-## 2 GS_Recent     Geographic_Dist         -0.124      0.296    -0.420  0.674 
-## 3 GS_Historical GrwSsn_GD_Historical    -0.197      0.317    -0.620  0.535 
-## 4 GS_Historical Geographic_Dist         -0.145      0.307    -0.471  0.637 
-## 5 WY_Recent     Wtr_Year_GD_Recent      -0.511      0.303    -1.68   0.0920
-## 6 WY_Recent     Geographic_Dist         -0.105      0.285    -0.369  0.712 
-## 7 WY_Historical Wtr_Year_GD_Historical  -0.547      0.310    -1.77   0.0771
-## 8 WY_Historical Geographic_Dist         -0.0532     0.291    -0.183  0.855
+## 1 GS_Recent     GrwSsn_GD_Recent        -0.274      0.310    -0.886  0.376 
+## 2 GS_Recent     Geographic_Dist         -0.130      0.296    -0.438  0.661 
+## 3 GS_Historical GrwSsn_GD_Historical    -0.192      0.319    -0.603  0.547 
+## 4 GS_Historical Geographic_Dist         -0.151      0.308    -0.492  0.623 
+## 5 WY_Recent     Wtr_Year_GD_Recent      -0.509      0.304    -1.68   0.0939
+## 6 WY_Recent     Geographic_Dist         -0.110      0.285    -0.384  0.701 
+## 7 WY_Historical Wtr_Year_GD_Historical  -0.545      0.310    -1.76   0.0786
+## 8 WY_Historical Geographic_Dist         -0.0579     0.291    -0.199  0.842
 ```
 
 ``` r
@@ -2025,11 +2019,11 @@ surv_GD_fits_ucd_sub %>% mutate(glance=map(fit, glance)) %>% unnest(glance) %>% 
 ## # A tibble: 5 × 6
 ##   name          logLik   AIC   BIC deviance df.residual
 ##   <chr>          <dbl> <dbl> <dbl>    <dbl>       <int>
-## 1 WY_Recent      -90.4  193.  221.     161.         751
-## 2 pop.block      -93.4  193.  207.     160.         754
-## 3 WY_Historical  -90.6  193.  221.     161.         751
-## 4 GS_Recent      -91.1  194.  222.     159.         751
-## 5 GS_Historical  -91.5  195.  223.     160.         751
+## 1 pop.block      -93.3  193.  207.     160.         752
+## 2 WY_Recent      -90.3  193.  220.     161.         749
+## 3 WY_Historical  -90.6  193.  221.     161.         749
+## 4 GS_Recent      -91.1  194.  222.     159.         749
+## 5 GS_Historical  -91.5  195.  223.     160.         749
 ```
 
 ``` r
@@ -2072,18 +2066,18 @@ surv_GD_fits_ucd_sub %>% mutate(tidy=map(fit, tidy)) %>% unnest(tidy) %>%
 ## # A tibble: 12 × 6
 ##    name          term                       estimate std.error statistic p.value
 ##    <chr>         <chr>                         <dbl>     <dbl>     <dbl>   <dbl>
-##  1 GS_Recent     GrwSsn_TempDist_Recent       0.0172     0.360    0.0479  0.962 
-##  2 GS_Recent     GrwSsn_PPTDist_Recent        0.839      0.599    1.40    0.161 
-##  3 GS_Recent     Geographic_Dist              0.301      0.405    0.744   0.457 
-##  4 GS_Historical GrwSsn_TempDist_Historic     0.164      0.317    0.520   0.603 
-##  5 GS_Historical GrwSsn_PPTDist_Historic      0.558      0.400    1.40    0.163 
-##  6 GS_Historical Geographic_Dist              0.150      0.346    0.434   0.664 
-##  7 WY_Recent     Wtr_Year_TempDist_Recent     0.917      0.389    2.36    0.0184
-##  8 WY_Recent     Wtr_Year_PPTDist_Recent      0.391      0.376    1.04    0.299 
-##  9 WY_Recent     Geographic_Dist              0.209      0.328    0.636   0.525 
-## 10 WY_Historical Wtr_Year_TempDist_Historic   0.897      0.406    2.21    0.0271
-## 11 WY_Historical Wtr_Year_PPTDist_Historic    0.353      0.379    0.931   0.352 
-## 12 WY_Historical Geographic_Dist              0.180      0.325    0.555   0.579
+##  1 GS_Recent     GrwSsn_TempDist_Recent       0.0141     0.360    0.0391  0.969 
+##  2 GS_Recent     GrwSsn_PPTDist_Recent        0.838      0.600    1.40    0.162 
+##  3 GS_Recent     Geographic_Dist              0.296      0.405    0.731   0.465 
+##  4 GS_Historical GrwSsn_TempDist_Historic     0.158      0.318    0.498   0.619 
+##  5 GS_Historical GrwSsn_PPTDist_Historic      0.559      0.400    1.40    0.163 
+##  6 GS_Historical Geographic_Dist              0.144      0.346    0.416   0.677 
+##  7 WY_Recent     Wtr_Year_TempDist_Recent     0.914      0.390    2.34    0.0191
+##  8 WY_Recent     Wtr_Year_PPTDist_Recent      0.390      0.377    1.03    0.301 
+##  9 WY_Recent     Geographic_Dist              0.204      0.328    0.623   0.534 
+## 10 WY_Historical Wtr_Year_TempDist_Historic   0.894      0.407    2.20    0.0280
+## 11 WY_Historical Wtr_Year_PPTDist_Historic    0.351      0.379    0.927   0.354 
+## 12 WY_Historical Geographic_Dist              0.176      0.325    0.542   0.588
 ```
 
 ``` r

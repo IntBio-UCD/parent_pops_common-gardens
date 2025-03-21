@@ -324,7 +324,7 @@ ED <- ucd_establishment %>%
   theme(text=element_text(size=25))
 
 ucd_establishment_FIG <- ggarrange(GSCD_recent, WYCD_recent, GD, ED, ncol=2, nrow=2) 
-#ggsave("../output/UCD_Traits/UCD_Establishment_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
+ggsave("../output/UCD_Traits/UCD_Establishment_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
 ```
 
 ```{r}
@@ -352,7 +352,7 @@ WYCD_historic <- ucd_establishment %>%
   theme(text=element_text(size=25))
 
 ucd_establishment_FIG <- ggarrange(GSCD_historic, WYCD_historic, GD, ED, ncol=2, nrow=2) 
-#ggsave("../output/UCD_Traits/UCD_Establishment_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
+ggsave("../output/UCD_Traits/UCD_Establishment_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
 ```
 
 ### WL2
@@ -404,7 +404,7 @@ ED <- wl2_establishment %>%
   theme(text=element_text(size=25))
 
 wl2_establishment_FIG <- ggarrange(GSCD_recent, WYCD_recent, GD, ED, ncol=2, nrow=2) 
-#ggsave("../output/WL2_Traits/WL2_Establishment_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
+ggsave("../output/WL2_Traits/WL2_Establishment_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
 ```
 
 ```{r}
@@ -432,7 +432,7 @@ WYCD_historic <- wl2_establishment %>%
   theme(text=element_text(size=25))
 
 wl2_establishment_FIG <- ggarrange(GSCD_historic, WYCD_historic, GD, ED, ncol=2, nrow=2) 
-#ggsave("../output/WL2_Traits/WL2_Establishment_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
+ggsave("../output/WL2_Traits/WL2_Establishment_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
 ```
 
 ### Directional Distance
@@ -753,20 +753,22 @@ ggsave("../output/UCD_Traits/UCD_Establishment_PPTSubDist_SCATTERS_Historic.png"
 
 ### Scaling 
 ```{r}
+wl2_establishment %>% group_by(pop) %>% summarise(n=n()) %>% arrange(n) #CHECK SAMPLE SIZE
 wl2_establishment_scaled <- wl2_establishment %>% mutate_at(c("GrwSsn_GD_Recent","Wtr_Year_GD_Recent",                                                           "GrwSsn_GD_Historical","Wtr_Year_GD_Historical","Geographic_Dist"),
                                                             scale) 
 
-ucd_establishment_scaled <- ucd_establishment %>% mutate_at(c("GrwSsn_GD_Recent","Wtr_Year_GD_Recent",                                                           "GrwSsn_GD_Historical","Wtr_Year_GD_Historical","Geographic_Dist"),
+ucd_establishment %>% group_by(pop) %>% summarise(n=n()) %>% arrange(n) #CHECK SAMPLE SIZE
+ucd_establishment_scaled <- ucd_establishment %>% 
+  filter(pop!="WV") %>% #Only 2 indivs for WV
+  mutate_at(c("GrwSsn_GD_Recent","Wtr_Year_GD_Recent",                                                           "GrwSsn_GD_Historical","Wtr_Year_GD_Historical","Geographic_Dist"),
                                                             scale) 
 
 #CHECK MODEL PARAMS
-wl2_establishment_scaled %>% group_by(pop) %>% summarise(n=n()) %>% arrange(n)
 unique(wl2_establishment_scaled$pop)
 unique(wl2_establishment_scaled$mf)
 unique(wl2_establishment_scaled$block)
 summary(wl2_establishment_scaled)
 
-ucd_establishment_scaled %>% group_by(pop) %>% summarise(n=n()) %>% arrange(n)
 unique(ucd_establishment_scaled$pop)
 unique(ucd_establishment_scaled$mf)
 unique(ucd_establishment_scaled$block)
@@ -782,6 +784,7 @@ wl2_establishment_scaled_sub <- wl2_establishment_sub_dist %>%
               "Geographic_Dist"), scale)
 
 ucd_establishment_scaled_sub <- ucd_establishment_sub_dist %>% 
+  filter(pop!="WV") %>% #Only 2 indivs for WV
   mutate_at(c("Wtr_Year_TempDist_Recent",  "Wtr_Year_PPTDist_Recent", 
                  "Wtr_Year_TempDist_Historic", "Wtr_Year_PPTDist_Historic",
                  "GrwSsn_TempDist_Recent", "GrwSsn_PPTDist_Recent",
