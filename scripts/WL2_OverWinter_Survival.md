@@ -11,9 +11,6 @@ output:
 
 # Over-winter survival at WL2 garden 
 
-To Do:
-- sum scaled temp and ppt distance (scale but don't center) and see if that has a relat with winter surv
-
 ## Libraries
 
 ``` r
@@ -150,7 +147,7 @@ library(tidymodels)
 ## ✖ infer::t_test()       masks rstatix::t_test()
 ## ✖ Matrix::unpack()      masks tidyr::unpack()
 ## ✖ recipes::update()     masks Matrix::update(), stats::update()
-## • Dig deeper into tidy modeling with R at https://www.tmwr.org
+## • Use tidymodels_prefer() to resolve common conflicts.
 ```
 
 ``` r
@@ -329,49 +326,17 @@ wl2_wtr_year_sub_historic_2024 <- read_csv("../output/Climate/full_year_Subtract
 ```
 
 ``` r
-wl2_grwssn_sub_recent_2024 <- read_csv("../output/Climate/grwssn_Subtraction_Dist_from_Home_WL2_2024_Recent.csv") %>% 
-  select(parent.pop, GrwSsn_TempDist_Recent=ann_tmean_dist, GrwSsn_PPTDist_Recent=ann_ppt_dist)
-```
-
-```
-## Rows: 23 Columns: 18
-## ── Column specification ────────────────────────────────────────────────────────
-## Delimiter: ","
-## chr  (2): parent.pop, elevation.group
-## dbl (16): elev_m, ppt_dist, cwd_dist, pck_dist, tmn_dist, tmx_dist, ann_tmea...
-## 
-## ℹ Use `spec()` to retrieve the full column specification for this data.
-## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
-```
-
-``` r
-wl2_grwssn_sub_historic_2024 <- read_csv("../output/Climate/grwssn_Subtraction_Dist_from_Home_WL2_2024_Historical.csv") %>% 
-  select(parent.pop, GrwSsn_TempDist_Historic=ann_tmean_dist, GrwSsn_PPTDist_Historic=ann_ppt_dist)
-```
-
-```
-## Rows: 23 Columns: 18
-## ── Column specification ────────────────────────────────────────────────────────
-## Delimiter: ","
-## chr  (2): parent.pop, elevation.group
-## dbl (16): elev_m, ppt_dist, cwd_dist, pck_dist, tmn_dist, tmx_dist, ann_tmea...
-## 
-## ℹ Use `spec()` to retrieve the full column specification for this data.
-## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
-```
-
-``` r
 wl2_sub_dist_2024 <- wl2_wtr_year_sub_recent_2024 %>% 
   left_join(wl2_wtr_year_sub_historic_2024) %>% 
-  left_join(wl2_grwssn_sub_recent_2024) %>% 
-  left_join(wl2_grwssn_sub_historic_2024) %>% 
   rename(pop=parent.pop) %>% 
-  left_join(wl2_gowers_2024)
+  left_join(wl2_gowers_2024) %>% 
+  mutate(Wtr_Year_TempPpt_Recent=scale(Wtr_Year_TempDist_Recent,center=FALSE) +
+           scale(Wtr_Year_PPTDist_Recent,center=FALSE),
+         Wtr_Year_TempPpt_Historic=scale(Wtr_Year_TempDist_Historic,center=FALSE) +
+           scale(Wtr_Year_PPTDist_Historic,center=FALSE))
 ```
 
 ```
-## Joining with `by = join_by(parent.pop)`
-## Joining with `by = join_by(parent.pop)`
 ## Joining with `by = join_by(parent.pop)`
 ## Joining with `by = join_by(pop)`
 ```
@@ -534,7 +499,7 @@ winter_surv %>%
 ``` r
 #scatter plots
 WYCD_recent <- winter_surv %>% 
-  group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
+  group_by(pop, elev_m, Wtr_Year_GD_Recent) %>% 
   summarise(meanSurv=mean(WinterSurv, na.rm = TRUE), semSurv=sem(WinterSurv, na.rm=TRUE)) %>% 
   ggplot(aes(x=Wtr_Year_GD_Recent, y=meanSurv, group = pop)) +
   geom_point(size=6) + 
@@ -546,13 +511,13 @@ WYCD_recent <- winter_surv %>%
 ```
 
 ```
-## `summarise()` has grouped output by 'pop', 'elev_m', 'GrwSsn_GD_Recent'. You
-## can override using the `.groups` argument.
+## `summarise()` has grouped output by 'pop', 'elev_m'. You can override using the
+## `.groups` argument.
 ```
 
 ``` r
 GD <- winter_surv %>% 
-  group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent, Geographic_Dist) %>% 
+  group_by(pop, elev_m, Wtr_Year_GD_Recent, Geographic_Dist) %>% 
   summarise(meanSurv=mean(WinterSurv, na.rm = TRUE), semSurv=sem(WinterSurv, na.rm=TRUE)) %>% 
   ggplot(aes(x=Geographic_Dist, y=meanSurv, group = pop)) +
   geom_point(size=6) + 
@@ -564,8 +529,8 @@ GD <- winter_surv %>%
 ```
 
 ```
-## `summarise()` has grouped output by 'pop', 'elev_m', 'GrwSsn_GD_Recent',
-## 'Wtr_Year_GD_Recent'. You can override using the `.groups` argument.
+## `summarise()` has grouped output by 'pop', 'elev_m', 'Wtr_Year_GD_Recent'. You
+## can override using the `.groups` argument.
 ```
 
 ``` r
@@ -603,7 +568,7 @@ ggsave("../output/WL2_Traits/WL2_WinterSurv_SCATTERS_Recent.png", width = 24, he
 ``` r
 #scatter plots
 WYCD_historic <- winter_surv %>% 
-  group_by(pop, elev_m, GrwSsn_GD_Historical, Wtr_Year_GD_Historical) %>% 
+  group_by(pop, elev_m, Wtr_Year_GD_Historical) %>% 
   summarise(meanSurv=mean(WinterSurv, na.rm = TRUE), semSurv=sem(WinterSurv, na.rm=TRUE)) %>% 
   ggplot(aes(x=Wtr_Year_GD_Historical, y=meanSurv, group = pop)) +
   geom_point(size=6) + 
@@ -615,8 +580,8 @@ WYCD_historic <- winter_surv %>%
 ```
 
 ```
-## `summarise()` has grouped output by 'pop', 'elev_m', 'GrwSsn_GD_Historical'.
-## You can override using the `.groups` argument.
+## `summarise()` has grouped output by 'pop', 'elev_m'. You can override using the
+## `.groups` argument.
 ```
 
 ``` r
@@ -654,7 +619,7 @@ WYCD_prob_recent <- winter_surv_sub_dist %>%
 
 ``` r
 GD_prob <- winter_surv_sub_dist %>% 
-  group_by(pop, elev_m, GrwSsn_TempDist_Recent, Wtr_Year_TempDist_Recent, Geographic_Dist) %>% 
+  group_by(pop, elev_m, Wtr_Year_TempDist_Recent, Geographic_Dist) %>% 
   summarise(meanEst=mean(WinterSurv, na.rm = TRUE), semEst=sem(WinterSurv, na.rm=TRUE)) %>% 
   ggplot(aes(x=Geographic_Dist, y=meanEst, group = pop)) +
   geom_point(size=6) + 
@@ -666,7 +631,7 @@ GD_prob <- winter_surv_sub_dist %>%
 ```
 
 ```
-## `summarise()` has grouped output by 'pop', 'elev_m', 'GrwSsn_TempDist_Recent',
+## `summarise()` has grouped output by 'pop', 'elev_m',
 ## 'Wtr_Year_TempDist_Recent'. You can override using the `.groups` argument.
 ```
 
@@ -756,7 +721,7 @@ WYCD_prob_recent <- winter_surv_sub_dist %>%
 
 ``` r
 GD_prob <- winter_surv_sub_dist %>% 
-  group_by(pop, elev_m, GrwSsn_PPTDist_Recent, Wtr_Year_PPTDist_Recent, Geographic_Dist) %>% 
+  group_by(pop, elev_m, Wtr_Year_PPTDist_Recent, Geographic_Dist) %>% 
   summarise(meanEst=mean(WinterSurv, na.rm = TRUE), semEst=sem(WinterSurv, na.rm=TRUE)) %>% 
   ggplot(aes(x=Geographic_Dist, y=meanEst, group = pop)) +
   geom_point(size=6) + 
@@ -768,8 +733,8 @@ GD_prob <- winter_surv_sub_dist %>%
 ```
 
 ```
-## `summarise()` has grouped output by 'pop', 'elev_m', 'GrwSsn_PPTDist_Recent',
-## 'Wtr_Year_PPTDist_Recent'. You can override using the `.groups` argument.
+## `summarise()` has grouped output by 'pop', 'elev_m', 'Wtr_Year_PPTDist_Recent'.
+## You can override using the `.groups` argument.
 ```
 
 ``` r
@@ -836,43 +801,139 @@ wl2_winter_surv_sub_FIG_historic <- ggarrange("", WYCD_prob_historic, GD_prob, E
 ggsave("../output/WL2_Traits/WL2_WinterSurv_PPTSubDist_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
 ```
 
+
+``` r
+#scatter plots - recent
+WYCD_prob_recent <- winter_surv_sub_dist %>% 
+  group_by(pop, elev_m, Wtr_Year_TempPpt_Recent, Wtr_Year_TempPpt_Historic) %>% 
+  summarise(meanEst=mean(WinterSurv, na.rm = TRUE), semEst=sem(WinterSurv, na.rm=TRUE)) %>% 
+  ggplot(aes(x=Wtr_Year_TempPpt_Recent, y=meanEst, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.3,linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Winter Surv", x="Recent Water Year Temp + PPT Dist") +
+  theme(text=element_text(size=30))
+```
+
+```
+## `summarise()` has grouped output by 'pop', 'elev_m', 'Wtr_Year_TempPpt_Recent'.
+## You can override using the `.groups` argument.
+```
+
+``` r
+GD_prob <- winter_surv_sub_dist %>% 
+  group_by(pop, elev_m, Wtr_Year_TempPpt_Recent, Geographic_Dist) %>% 
+  summarise(meanEst=mean(WinterSurv, na.rm = TRUE), semEst=sem(WinterSurv, na.rm=TRUE)) %>% 
+  ggplot(aes(x=Geographic_Dist, y=meanEst, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.2, linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Winter Surv", x="Geographic Distance (m)") +
+  theme(text=element_text(size=30), axis.text.x = element_text(angle = 45,  hjust = 1))
+```
+
+```
+## `summarise()` has grouped output by 'pop', 'elev_m', 'Wtr_Year_TempPpt_Recent'.
+## You can override using the `.groups` argument.
+```
+
+``` r
+ED_prob <- winter_surv_sub_dist %>% 
+  group_by(pop, elev_m, Elev_Dist) %>% 
+  summarise(meanEst=mean(WinterSurv, na.rm = TRUE), semEst=sem(WinterSurv, na.rm=TRUE)) %>% 
+  ggplot(aes(x=Elev_Dist, y=meanEst, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.3, linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Winter Surv", x="Elevation Distance (m)") +
+  theme(text=element_text(size=30))
+```
+
+```
+## `summarise()` has grouped output by 'pop', 'elev_m'. You can override using the
+## `.groups` argument.
+```
+
+``` r
+wl2_winter_surv_sub_FIG_recent <- ggarrange("", WYCD_prob_recent, GD_prob, ED_prob, ncol=2, nrow=2) 
+```
+
+```
+## Warning in as_grob.default(plot): Cannot convert object of class character into
+## a grob.
+```
+
+``` r
+ggsave("../output/WL2_Traits/WL2_WinterSurv_TempPptSubDist_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
+```
+
+
+``` r
+#scatter plots - historic
+WYCD_prob_historic <- winter_surv_sub_dist %>% 
+  group_by(pop, elev_m, Wtr_Year_TempPpt_Recent, Wtr_Year_TempPpt_Historic) %>% 
+  summarise(meanEst=mean(WinterSurv, na.rm = TRUE), semEst=sem(WinterSurv, na.rm=TRUE)) %>% 
+  ggplot(aes(x=Wtr_Year_TempPpt_Historic, y=meanEst, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.3,linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Winter Surv", x="Historic Water Year Temp + PPT Dist") +
+  theme(text=element_text(size=30))
+```
+
+```
+## `summarise()` has grouped output by 'pop', 'elev_m', 'Wtr_Year_TempPpt_Recent'.
+## You can override using the `.groups` argument.
+```
+
+``` r
+wl2_winter_surv_sub_FIG_historic <- ggarrange("", WYCD_prob_historic, GD_prob, ED_prob, ncol=2, nrow=2) 
+```
+
+```
+## Warning in as_grob.default(plot): Cannot convert object of class character into
+## a grob.
+```
+
+``` r
+ggsave("../output/WL2_Traits/WL2_WinterSurv_TempPptSubDist_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
+```
+
 ## Stats
 ### Scaling 
 
 ``` r
-winter_surv %>% group_by(pop, elev_m, GrwSsn_GD_Historical, Wtr_Year_GD_Historical) %>% 
+winter_surv %>% group_by(pop) %>% 
   summarise(n=n()) %>% 
   arrange(n)#WR only has 1 individual, remove 
 ```
 
 ```
-## `summarise()` has grouped output by 'pop', 'elev_m', 'GrwSsn_GD_Historical'.
-## You can override using the `.groups` argument.
-```
-
-```
-## # A tibble: 22 × 5
-## # Groups:   pop, elev_m, GrwSsn_GD_Historical [22]
-##    pop   elev_m GrwSsn_GD_Historical Wtr_Year_GD_Historical     n
-##    <chr>  <dbl>                <dbl>                  <dbl> <int>
-##  1 WR     1158                 0.372                  0.326     1
-##  2 LV3    2354.                0.626                  0.510     3
-##  3 FR      787                 0.349                  0.387     5
-##  4 LV1    2593.                0.615                  0.499     5
-##  5 LVTR1  2741.                0.631                  0.507     5
-##  6 SQ3    2373.                0.304                  0.290     6
-##  7 YO11   2872.                0.420                  0.451     8
-##  8 YO4    2158.                0.261                  0.250     9
-##  9 YO8    2591.                0.346                  0.338     9
-## 10 SQ1    1921.                0.217                  0.293    10
+## # A tibble: 22 × 2
+##    pop       n
+##    <chr> <int>
+##  1 WR        1
+##  2 LV3       3
+##  3 FR        5
+##  4 LV1       5
+##  5 LVTR1     5
+##  6 SQ3       6
+##  7 YO11      8
+##  8 YO4       9
+##  9 YO8       9
+## 10 SQ1      10
 ## # ℹ 12 more rows
 ```
 
 ``` r
 wl2_winter_surv_scaled <- winter_surv %>% 
   filter(pop!="WR") %>% 
-  mutate_at(c("GrwSsn_GD_Recent","Wtr_Year_GD_Recent",                                                           "GrwSsn_GD_Historical","Wtr_Year_GD_Historical","Geographic_Dist"),
-                                                            scale) 
+  mutate_at(c("Wtr_Year_GD_Recent","Wtr_Year_GD_Historical", 
+              "Geographic_Dist"), scale) 
 
 #check predictors
 unique(wl2_winter_surv_scaled$pop)
@@ -906,8 +967,14 @@ winter_surv_sub_dist_scaled <- winter_surv_sub_dist %>%
   filter(pop!="WR") %>% 
   mutate_at(c("Wtr_Year_TempDist_Recent",  "Wtr_Year_PPTDist_Recent", 
                  "Wtr_Year_TempDist_Historic", "Wtr_Year_PPTDist_Historic",
-                 "GrwSsn_TempDist_Recent", "GrwSsn_PPTDist_Recent",
-                 "GrwSsn_TempDist_Historic", "GrwSsn_PPTDist_Historic",
+              "Geographic_Dist"), scale) 
+```
+
+
+``` r
+winter_surv_tp_sub_dist_scaled <- winter_surv_sub_dist %>% 
+  filter(pop!="WR") %>% 
+  mutate_at(c("Wtr_Year_TempPpt_Recent", "Wtr_Year_TempPpt_Historic",
               "Geographic_Dist"), scale) 
 ```
 
@@ -1071,6 +1138,56 @@ surv_GD_fits_wl2_sub %>% mutate(tidy=map(fit, tidy)) %>% unnest(tidy) %>%
 ## 4 WY_Historical Wtr_Year_TempDist_Historic   1.00       0.664    1.51     0.131
 ## 5 WY_Historical Wtr_Year_PPTDist_Historic   -0.446      0.629   -0.710    0.478
 ## 6 WY_Historical Geographic_Dist              0.0239     0.445    0.0537   0.957
+```
+
+``` r
+#  arrange(p.value)
+```
+
+
+``` r
+surv_GD_wflow_wl2_sub_tp <- workflow() %>%
+  add_variables(outcomes = WinterSurv, predictors = c(pop, mf, block, contains("TempPpt"), Geographic_Dist)) 
+
+surv_GD_fits_wl2_sub_tp <- tibble(wflow=list(
+  pop.mf.block = {surv_GD_wflow_wl2_sub_tp %>% 
+      add_model(glmer.model_binomial, formula = WinterSurv ~ (1|pop/mf) + (1|block))},
+  
+  WY_Recent = {surv_GD_wflow_wl2_sub_tp %>% 
+      add_model(glmer.model_binomial, formula = WinterSurv ~ Wtr_Year_TempPpt_Recent + Geographic_Dist + (1|pop/mf) + (1|block))},
+  
+  WY_Historical = {surv_GD_wflow_wl2_sub_tp %>% 
+      add_model(glmer.model_binomial, formula = WinterSurv ~ Wtr_Year_TempPpt_Historic + Geographic_Dist + (1|pop/mf) + (1|block))}
+  
+),
+name=names(wflow)
+) %>% 
+  select(name,wflow) %>%
+  mutate(fit = map(wflow, fit, data = winter_surv_tp_sub_dist_scaled))
+
+surv_GD_fits_wl2_sub_tp %>% mutate(glance=map(fit, glance)) %>% unnest(glance) %>% arrange(AIC) %>% select(-wflow:-sigma)
+```
+
+```
+## # A tibble: 3 × 6
+##   name          logLik   AIC   BIC deviance df.residual
+##   <chr>          <dbl> <dbl> <dbl>    <dbl>       <int>
+## 1 pop.mf.block   -229.  466.  483.     381.         464
+## 2 WY_Recent      -229.  470.  495.     381.         462
+## 3 WY_Historical  -229.  470.  495.     381.         462
+```
+
+``` r
+surv_GD_fits_wl2_sub_tp %>% mutate(tidy=map(fit, tidy)) %>% unnest(tidy) %>%
+  filter(str_detect(term, "TempPpt"), term=="Geographic_Dist") %>%
+  drop_na(p.value) %>%
+  select(-wflow:-group)# %>%
+```
+
+```
+## # A tibble: 0 × 6
+## # ℹ 6 variables: name <chr>, term <chr>, estimate <dbl>, std.error <dbl>,
+## #   statistic <dbl>, p.value <dbl>
 ```
 
 ``` r
