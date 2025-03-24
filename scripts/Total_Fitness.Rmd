@@ -33,6 +33,7 @@ library(rstatix) #performing cor_test
 
 library(lmerTest) #mixed models
 conflicted::conflicts_prefer(lmerTest::lmer)
+ library(emmeans) #least squared means 
 library(broom.mixed)
 library(tidymodels)
 library(furrr) #Apply Mapping Functions in Parallel using Futures
@@ -1435,9 +1436,6 @@ prob_fitness_SUB_fits_wl2 %>% mutate(tidy=map(fit, tidy)) %>% unnest(tidy) %>%
 
 mod_test <- glmer(ProbFitness ~ GrwSsn_TempDist_Recent + GrwSsn_PPTDist_Recent+ Geographic_Dist + (1|pop) + (1|block), data=wl2_prob_fitness_sub, family=binomial)
 summary(mod_test)
-#Error for base model:
-#Warning: Model failed to converge with max|grad| = 0.0786268 (tol = 0.002, component 1)Warning: Model is nearly unidentifiable: very large eigenvalue
- #- Rescale variables?
 ```
 
 Model comparison
@@ -1484,7 +1482,9 @@ prob_fitness_GD_fits_ucd %>% mutate(tidy=map(fit, tidy)) %>% unnest(tidy) %>%
   drop_na(p.value) %>%
   select(-wflow:-group)# %>%
 #  arrange(p.value)
-# no distances significant 
+
+mod_test <- glmer(ProbFitness ~ Wtr_Year_GD_Historical + Geographic_Dist + (1|pop/mf) + (1|block), data=ucd_prob_fitness, family=binomial)
+#model failed to converge for growth season and water year recent 
 ```
 
 ```{r}
@@ -1521,9 +1521,8 @@ prob_fitness_SUB_fits_ucd %>% mutate(tidy=map(fit, tidy)) %>% unnest(tidy) %>%
   select(-wflow:-group)# %>%
 #  arrange(p.value)
 
-#mod_test <- glmer(ProbFitness ~ GrwSsn_TempDist_Historic + GrwSsn_PPTDist_Historic + Geographic_Dist + (1|pop/mf) + (1|block), data=ucd_prob_fitness_sub, family=binomial)
-#summary(mod_test)
-#Warning: Model failed to converge with max|grad| = 0.0481004 (tol = 0.002, component 1) - for GRWSSN Historic
+mod_test <- glmer(ProbFitness ~ Wtr_Year_TempDist_Historic + Wtr_Year_PPTDist_Historic + Geographic_Dist + (1|pop/mf) + (1|block), data=ucd_prob_fitness_sub, family=binomial)
+#Water year recent and historic models failed to converge 
 ```
 
 ### Total Fitness for plants with any rep
@@ -2120,4 +2119,38 @@ qqline(resid(mod_test))
 summary(mod_test)
 #boundary (singular) fit: see help('isSingular') for GRWSSN historic model - pop explains 0 variance 
 ```
+
+Troubleshoot weird GrwSsn-Temp_Dist results (positive coefficient, but figure indicates it should be neg...)
+```{r}
+wl2_rep_output_sub %>% group_by(pop, GrwSsn_TempDist_Historic) %>% summarise(meanFruits=mean(logTotalFitness)) %>% arrange(GrwSsn_TempDist_Historic)
+
+mod_test <- lmer(logTotalFitness ~  GrwSsn_TempDist_Historic + GrwSsn_PPTDist_Historic + Geographic_Dist + (1|block), data=wl2_rep_output_sub)
+summary(mod_test)
+ranova(mod_test)
+anova(mod_test)
+
+wl2_rep_output_sub %>% 
+  cbind(predicted={rep_output_SUB_models_log_CD_GD %>% filter(name=="3_GS_Historical") %>% pull(predict) %>% unlist()}) %>%
+  ggplot(aes(x=logTotalFitness, y = predicted)) +
+  geom_point(alpha=.2) +
+  geom_abline(color="skyblue2") 
+#overall, the predictions seem to match the observed data...
+
+wl2_rep_output_sub %>% 
+  cbind(predicted={rep_output_SUB_models_log_CD_GD %>% filter(name=="3_GS_Historical") %>% pull(predict) %>% unlist()}) %>%
+  ggplot(aes(x=logTotalFitness, y = predicted)) +
+  geom_point(alpha=.2) +
+  geom_abline(color="skyblue2") +
+  facet_wrap(~block, scales="free")
+#some blocks with fewer data points --> weaker predictions 
+
+
+wl2_rep_output_sub %>% 
+  cbind(predicted={rep_output_SUB_models_log_CD_GD %>% filter(name=="3_GS_Historical") %>% pull(predict) %>% unlist()}) %>%
+  ggplot(aes(x=GrwSsn_TempDist_Historic, y = predicted)) +
+  geom_point() 
+```
+
+
+
 

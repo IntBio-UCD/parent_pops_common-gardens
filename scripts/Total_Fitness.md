@@ -1,7 +1,7 @@
 ---
 title: "Total Fitness"
 author: "Brandie QC"
-date: "2025-03-21"
+date: "2025-03-24"
 output: 
   html_document: 
     keep_md: true
@@ -118,6 +118,16 @@ conflicted::conflicts_prefer(lmerTest::lmer)
 
 ```
 ## [conflicted] Will prefer lmerTest::lmer over any other package.
+```
+
+``` r
+ library(emmeans) #least squared means 
+```
+
+```
+## Welcome to emmeans.
+## Caution: You lose important information if you filter this package's results.
+## See '? untidy'
 ```
 
 ``` r
@@ -2997,12 +3007,6 @@ summary(mod_test)
 ## Gegrphc_Dst -0.088 -0.132  0.327
 ```
 
-``` r
-#Error for base model:
-#Warning: Model failed to converge with max|grad| = 0.0786268 (tol = 0.002, component 1)Warning: Model is nearly unidentifiable: very large eigenvalue
- #- Rescale variables?
-```
-
 Model comparison
 
 ``` r
@@ -3105,7 +3109,9 @@ prob_fitness_GD_fits_ucd %>% mutate(tidy=map(fit, tidy)) %>% unnest(tidy) %>%
 
 ``` r
 #  arrange(p.value)
-# no distances significant 
+
+mod_test <- glmer(ProbFitness ~ Wtr_Year_GD_Historical + Geographic_Dist + (1|pop/mf) + (1|block), data=ucd_prob_fitness, family=binomial)
+#model failed to converge for growth season and water year recent 
 ```
 
 
@@ -3188,9 +3194,16 @@ prob_fitness_SUB_fits_ucd %>% mutate(tidy=map(fit, tidy)) %>% unnest(tidy) %>%
 ``` r
 #  arrange(p.value)
 
-#mod_test <- glmer(ProbFitness ~ GrwSsn_TempDist_Historic + GrwSsn_PPTDist_Historic + Geographic_Dist + (1|pop/mf) + (1|block), data=ucd_prob_fitness_sub, family=binomial)
-#summary(mod_test)
-#Warning: Model failed to converge with max|grad| = 0.0481004 (tol = 0.002, component 1) - for GRWSSN Historic
+mod_test <- glmer(ProbFitness ~ Wtr_Year_TempDist_Historic + Wtr_Year_PPTDist_Historic + Geographic_Dist + (1|pop/mf) + (1|block), data=ucd_prob_fitness_sub, family=binomial)
+```
+
+```
+## Warning in checkConv(attr(opt, "derivs"), opt$par, ctrl = control$checkConv, :
+## Model failed to converge with max|grad| = 0.0468076 (tol = 0.002, component 1)
+```
+
+``` r
+#Water year recent and historic models failed to converge 
 ```
 
 ### Total Fitness for plants with any rep
@@ -4355,4 +4368,138 @@ summary(mod_test)
 ``` r
 #boundary (singular) fit: see help('isSingular') for GRWSSN historic model - pop explains 0 variance 
 ```
+
+Troubleshoot weird GrwSsn-Temp_Dist results (positive coefficient, but figure indicates it should be neg...)
+
+``` r
+wl2_rep_output_sub %>% group_by(pop, GrwSsn_TempDist_Historic) %>% summarise(meanFruits=mean(logTotalFitness)) %>% arrange(GrwSsn_TempDist_Historic)
+```
+
+```
+## `summarise()` has grouped output by 'pop'. You can override using the `.groups`
+## argument.
+```
+
+```
+## # A tibble: 7 × 3
+## # Groups:   pop [7]
+##   pop   GrwSsn_TempDist_Historic[,1] meanFruits
+##   <chr>                        <dbl>      <dbl>
+## 1 YO7                       -0.841         2.57
+## 2 WL2                       -0.00213       2.45
+## 3 SC                         0.464         2.57
+## 4 BH                         0.512         3.03
+## 5 TM2                        0.579         1.54
+## 6 CC                         1.04          2.28
+## 7 IH                         1.29          2.26
+```
+
+``` r
+mod_test <- lmer(logTotalFitness ~  GrwSsn_TempDist_Historic + GrwSsn_PPTDist_Historic + Geographic_Dist + (1|block), data=wl2_rep_output_sub)
+summary(mod_test)
+```
+
+```
+## Linear mixed model fit by REML. t-tests use Satterthwaite's method [
+## lmerModLmerTest]
+## Formula: 
+## logTotalFitness ~ GrwSsn_TempDist_Historic + GrwSsn_PPTDist_Historic +  
+##     Geographic_Dist + (1 | block)
+##    Data: wl2_rep_output_sub
+## 
+## REML criterion at convergence: 265.2
+## 
+## Scaled residuals: 
+##      Min       1Q   Median       3Q      Max 
+## -2.64842 -0.55573  0.08092  0.55407  2.62888 
+## 
+## Random effects:
+##  Groups   Name        Variance Std.Dev.
+##  block    (Intercept) 0.2928   0.5412  
+##  Residual             0.7575   0.8703  
+## Number of obs: 96, groups:  block, 12
+## 
+## Fixed effects:
+##                          Estimate Std. Error      df t value Pr(>|t|)    
+## (Intercept)                2.4550     0.1969 16.5927  12.468 7.55e-10 ***
+## GrwSsn_TempDist_Historic   0.5351     0.2388 88.8694   2.240   0.0276 *  
+## GrwSsn_PPTDist_Historic   -0.6004     0.1337 87.0820  -4.489 2.18e-05 ***
+## Geographic_Dist            0.1185     0.1691 85.6158   0.701   0.4853    
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Correlation of Fixed Effects:
+##             (Intr) GS_TD_ GS_PPT
+## GrwSsn_TD_H -0.046              
+## GrwS_PPTD_H -0.170 -0.789       
+## Gegrphc_Dst  0.024  0.190 -0.161
+```
+
+``` r
+ranova(mod_test)
+```
+
+```
+## ANOVA-like table for random-effects: Single term deletions
+## 
+## Model:
+## logTotalFitness ~ GrwSsn_TempDist_Historic + GrwSsn_PPTDist_Historic + Geographic_Dist + (1 | block)
+##             npar  logLik    AIC    LRT Df Pr(>Chisq)    
+## <none>         6 -132.59 277.18                         
+## (1 | block)    5 -143.50 297.00 21.819  1  2.997e-06 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+```
+
+``` r
+anova(mod_test)
+```
+
+```
+## Type III Analysis of Variance Table with Satterthwaite's method
+##                           Sum Sq Mean Sq NumDF  DenDF F value    Pr(>F)    
+## GrwSsn_TempDist_Historic  3.8017  3.8017     1 88.869  5.0187   0.02757 *  
+## GrwSsn_PPTDist_Historic  15.2647 15.2647     1 87.082 20.1512 2.181e-05 ***
+## Geographic_Dist           0.3720  0.3720     1 85.616  0.4911   0.48534    
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+```
+
+``` r
+wl2_rep_output_sub %>% 
+  cbind(predicted={rep_output_SUB_models_log_CD_GD %>% filter(name=="3_GS_Historical") %>% pull(predict) %>% unlist()}) %>%
+  ggplot(aes(x=logTotalFitness, y = predicted)) +
+  geom_point(alpha=.2) +
+  geom_abline(color="skyblue2") 
+```
+
+![](Total_Fitness_files/figure-html/unnamed-chunk-67-1.png)<!-- -->
+
+``` r
+#overall, the predictions seem to match the observed data...
+
+wl2_rep_output_sub %>% 
+  cbind(predicted={rep_output_SUB_models_log_CD_GD %>% filter(name=="3_GS_Historical") %>% pull(predict) %>% unlist()}) %>%
+  ggplot(aes(x=logTotalFitness, y = predicted)) +
+  geom_point(alpha=.2) +
+  geom_abline(color="skyblue2") +
+  facet_wrap(~block, scales="free")
+```
+
+![](Total_Fitness_files/figure-html/unnamed-chunk-67-2.png)<!-- -->
+
+``` r
+#some blocks with fewer data points --> weaker predictions 
+
+
+wl2_rep_output_sub %>% 
+  cbind(predicted={rep_output_SUB_models_log_CD_GD %>% filter(name=="3_GS_Historical") %>% pull(predict) %>% unlist()}) %>%
+  ggplot(aes(x=GrwSsn_TempDist_Historic, y = predicted)) +
+  geom_point() 
+```
+
+![](Total_Fitness_files/figure-html/unnamed-chunk-67-3.png)<!-- -->
+
+
+
 
