@@ -1,7 +1,7 @@
 ---
 title: "Total Fitness"
 author: "Brandie QC"
-date: "2025-03-24"
+date: "2025-03-25"
 output: 
   html_document: 
     keep_md: true
@@ -160,7 +160,7 @@ library(tidymodels)
 ## ✖ infer::t_test()       masks rstatix::t_test()
 ## ✖ Matrix::unpack()      masks tidyr::unpack()
 ## ✖ recipes::update()     masks Matrix::update(), stats::update()
-## • Use suppressPackageStartupMessages() to eliminate package startup messages
+## • Use tidymodels_prefer() to resolve common conflicts.
 ```
 
 ``` r
@@ -2619,6 +2619,94 @@ UCD_total_fitness_sub_FIG_prob_historic_historic <- ggarrange(GSCD_prob_historic
 ggsave("../output/UCD_Traits/UCD_ProbFitness_PPTSubDist_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
 ```
 
+#### Figure for paper
+
+``` r
+GD_prob <- wl2_total_fitness_sub_dist %>% 
+  mutate(ProbFitness=if_else(Total_Fitness==0, 0, 1)) %>% 
+  group_by(pop, elev_m, GrwSsn_PPTDist_Recent, Wtr_Year_PPTDist_Recent, Geographic_Dist) %>% 
+  summarise(meanEst=mean(ProbFitness, na.rm = TRUE), semEst=sem(ProbFitness, na.rm=TRUE)) %>% 
+  ggplot(aes(x=Geographic_Dist, y=meanEst, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.2, linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Probability of \n Successfully Reproducing", x="Geographic Distance (m)") +
+  theme(text=element_text(size=30), axis.text.x = element_text(angle = 45,  hjust = 1))
+```
+
+```
+## `summarise()` has grouped output by 'pop', 'elev_m', 'GrwSsn_PPTDist_Recent',
+## 'Wtr_Year_PPTDist_Recent'. You can override using the `.groups` argument.
+```
+
+``` r
+WYCD_prob_recent <- wl2_total_fitness %>% 
+  mutate(ProbFitness=if_else(Total_Fitness==0, 0, 1)) %>% 
+  group_by(pop, elev_m, Wtr_Year_GD_Recent, Wtr_Year_GD_Historical) %>% 
+  summarise(meanEst=mean(ProbFitness, na.rm = TRUE), semEst=sem(ProbFitness, na.rm=TRUE)) %>% 
+  ggplot(aes(x=Wtr_Year_GD_Recent, y=meanEst, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.02,linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Probability of \n Successfully Reproducing", x="Recent Water Year Climate Dist") +
+  theme(text=element_text(size=30))
+```
+
+```
+## `summarise()` has grouped output by 'pop', 'elev_m', 'Wtr_Year_GD_Recent'. You
+## can override using the `.groups` argument.
+```
+
+``` r
+WYtemp_prob_recent <- wl2_total_fitness_sub_dist %>% 
+  mutate(ProbFitness=if_else(Total_Fitness==0, 0, 1)) %>% 
+  group_by(pop, elev_m, Wtr_Year_TempDist_Recent, Wtr_Year_TempDist_Historic) %>% 
+  summarise(meanEst=mean(ProbFitness, na.rm = TRUE), semEst=sem(ProbFitness, na.rm=TRUE)) %>% 
+  ggplot(aes(x=Wtr_Year_TempDist_Recent, y=meanEst, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.3,linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Probability of \n Successfully Reproducing", x="Recent Water Year Temp Dist (°C)") +
+  theme(text=element_text(size=30))
+```
+
+```
+## `summarise()` has grouped output by 'pop', 'elev_m',
+## 'Wtr_Year_TempDist_Recent'. You can override using the `.groups` argument.
+```
+
+``` r
+WYppt_prob_recent <- wl2_total_fitness_sub_dist %>% 
+  mutate(ProbFitness=if_else(Total_Fitness==0, 0, 1)) %>% 
+  group_by(pop, elev_m, Wtr_Year_PPTDist_Recent, Wtr_Year_PPTDist_Historic) %>% 
+  summarise(meanEst=mean(ProbFitness, na.rm = TRUE), semEst=sem(ProbFitness, na.rm=TRUE)) %>% 
+  ggplot(aes(x=Wtr_Year_PPTDist_Recent, y=meanEst, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.3,linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Probability of \n Successfully Reproducing", x="Recent Water Year PPT Dist (mm)") +
+  theme(text=element_text(size=30))
+```
+
+```
+## `summarise()` has grouped output by 'pop', 'elev_m', 'Wtr_Year_PPTDist_Recent'.
+## You can override using the `.groups` argument.
+```
+
+``` r
+WL2_prob_fitness_for_paper <- ggarrange(GD_prob, WYCD_prob_recent, 
+                                        WYtemp_prob_recent, WYppt_prob_recent, 
+                                        labels = c("A)", "B)", "C)", "D)"), 
+                                        font.label = list(size=30, face = "plain"), 
+                                        ncol=2, nrow=2) 
+ggsave("../output/WL2_Traits/WL2_ProbFitness_SCATTERS_Summary_Recent.png", width = 24, height = 18, units = "in")
+```
+
+
 #### Basic Model Workflow
 
 
@@ -3251,7 +3339,7 @@ wl2_rep_output %>% #still skewed
 ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-49-1.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-50-1.png)<!-- -->
 
 ``` r
 wl2_rep_output %>% #good enough!
@@ -3263,7 +3351,7 @@ wl2_rep_output %>% #good enough!
 ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-49-2.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-50-2.png)<!-- -->
 
 ``` r
 wl2_rep_output %>% #helped some
@@ -3275,7 +3363,7 @@ wl2_rep_output %>% #helped some
 ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-49-3.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-50-3.png)<!-- -->
 
 ``` r
 wl2_rep_output %>% #helped some
@@ -3287,7 +3375,7 @@ wl2_rep_output %>% #helped some
 ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-49-4.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-50-4.png)<!-- -->
 
 ``` r
 wl2_fitness_means <- wl2_rep_output %>% # summary for plotting
@@ -3312,7 +3400,7 @@ wl2_rep_output_sub %>% #still skewed
 ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-50-1.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-51-1.png)<!-- -->
 
 ``` r
 wl2_rep_output_sub %>% #good enough!
@@ -3324,7 +3412,7 @@ wl2_rep_output_sub %>% #good enough!
 ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-50-2.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-51-2.png)<!-- -->
 
 
 ``` r
@@ -3365,7 +3453,7 @@ ucd_rep_output %>%
 ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-51-1.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-52-1.png)<!-- -->
 
 ``` r
 ucd_rep_output %>%  #looks fine 
@@ -3377,7 +3465,7 @@ ucd_rep_output %>%  #looks fine
 ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-51-2.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-52-2.png)<!-- -->
 
 ``` r
 ucd_rep_output %>% 
@@ -3389,7 +3477,7 @@ ucd_rep_output %>%
 ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-51-3.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-52-3.png)<!-- -->
 
 ``` r
 ucd_fitness_means <- ucd_rep_output %>% 
@@ -3423,7 +3511,7 @@ ucd_rep_output_sub %>% #still skewed
 ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-52-1.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-53-1.png)<!-- -->
 
 ``` r
 ucd_rep_output_sub %>% #okayish
@@ -3435,7 +3523,7 @@ ucd_rep_output_sub %>% #okayish
 ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-52-2.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-53-2.png)<!-- -->
 
 #### Plots 
 
@@ -4019,7 +4107,7 @@ wl2_rep_output %>%
   facet_wrap(~pop, scales="free_y")
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-62-1.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-63-1.png)<!-- -->
 
 #### Basic Model Workflow
 
@@ -4080,14 +4168,14 @@ mod_test <- lmer(logTotalFitness ~  (1|pop) + (1|block), data=wl2_rep_output)
 plot(mod_test, which = 1) 
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-63-1.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-64-1.png)<!-- -->
 
 ``` r
 qqnorm(resid(mod_test))
 qqline(resid(mod_test)) 
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-63-2.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-64-2.png)<!-- -->
 
 ``` r
 summary(mod_test)
@@ -4135,7 +4223,7 @@ wl2_rep_output %>%
   facet_wrap(~pop, scales="free")
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-64-1.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-65-1.png)<!-- -->
 
 #### Test climate and geographic distance
 
@@ -4311,14 +4399,14 @@ mod_test <- lmer(logTotalFitness ~  GrwSsn_TempDist_Historic + GrwSsn_PPTDist_Hi
 plot(mod_test, which = 1) 
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-66-1.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-67-1.png)<!-- -->
 
 ``` r
 qqnorm(resid(mod_test))
 qqline(resid(mod_test)) 
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-66-2.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-67-2.png)<!-- -->
 
 ``` r
 summary(mod_test)
@@ -4471,7 +4559,7 @@ wl2_rep_output_sub %>%
   geom_abline(color="skyblue2") 
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-67-1.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-68-1.png)<!-- -->
 
 ``` r
 #overall, the predictions seem to match the observed data...
@@ -4484,7 +4572,7 @@ wl2_rep_output_sub %>%
   facet_wrap(~block, scales="free")
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-67-2.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-68-2.png)<!-- -->
 
 ``` r
 #some blocks with fewer data points --> weaker predictions 
@@ -4496,7 +4584,7 @@ wl2_rep_output_sub %>%
   geom_point() 
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-67-3.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-68-3.png)<!-- -->
 
 
 

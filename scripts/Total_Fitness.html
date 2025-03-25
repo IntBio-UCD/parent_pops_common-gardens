@@ -11,7 +11,7 @@
 
 <meta name="author" content="Brandie QC" />
 
-<meta name="date" content="2025-03-24" />
+<meta name="date" content="2025-03-25" />
 
 <title>Total Fitness</title>
 
@@ -352,7 +352,7 @@ display: none;
 
 <h1 class="title toc-ignore">Total Fitness</h1>
 <h4 class="author">Brandie QC</h4>
-<h4 class="date">2025-03-24</h4>
+<h4 class="date">2025-03-25</h4>
 
 </div>
 
@@ -455,7 +455,7 @@ library(tidymodels)</code></pre>
 ## ✖ infer::t_test()       masks rstatix::t_test()
 ## ✖ Matrix::unpack()      masks tidyr::unpack()
 ## ✖ recipes::update()     masks Matrix::update(), stats::update()
-## • Use suppressPackageStartupMessages() to eliminate package startup messages</code></pre>
+## • Use tidymodels_prefer() to resolve common conflicts.</code></pre>
 <pre class="r"><code>library(furrr) #Apply Mapping Functions in Parallel using Futures</code></pre>
 <pre><code>## Loading required package: future</code></pre>
 <pre class="r"><code>tidymodels_prefer()
@@ -2073,6 +2073,67 @@ GSCD_prob_historic &lt;- ucd_total_fitness_sub_dist %&gt;%
 ## You can override using the `.groups` argument.</code></pre>
 <pre class="r"><code>UCD_total_fitness_sub_FIG_prob_historic_historic &lt;- ggarrange(GSCD_prob_historic, WYCD_prob_historic, GD_prob, ED_prob, ncol=2, nrow=2) 
 ggsave(&quot;../output/UCD_Traits/UCD_ProbFitness_PPTSubDist_SCATTERS_Historic.png&quot;, width = 24, height = 18, units = &quot;in&quot;)</code></pre>
+</div>
+<div id="figure-for-paper" class="section level4">
+<h4>Figure for paper</h4>
+<pre class="r"><code>GD_prob &lt;- wl2_total_fitness_sub_dist %&gt;% 
+  mutate(ProbFitness=if_else(Total_Fitness==0, 0, 1)) %&gt;% 
+  group_by(pop, elev_m, GrwSsn_PPTDist_Recent, Wtr_Year_PPTDist_Recent, Geographic_Dist) %&gt;% 
+  summarise(meanEst=mean(ProbFitness, na.rm = TRUE), semEst=sem(ProbFitness, na.rm=TRUE)) %&gt;% 
+  ggplot(aes(x=Geographic_Dist, y=meanEst, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.2, linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y=&quot;Probability of \n Successfully Reproducing&quot;, x=&quot;Geographic Distance (m)&quot;) +
+  theme(text=element_text(size=30), axis.text.x = element_text(angle = 45,  hjust = 1))</code></pre>
+<pre><code>## `summarise()` has grouped output by &#39;pop&#39;, &#39;elev_m&#39;, &#39;GrwSsn_PPTDist_Recent&#39;,
+## &#39;Wtr_Year_PPTDist_Recent&#39;. You can override using the `.groups` argument.</code></pre>
+<pre class="r"><code>WYCD_prob_recent &lt;- wl2_total_fitness %&gt;% 
+  mutate(ProbFitness=if_else(Total_Fitness==0, 0, 1)) %&gt;% 
+  group_by(pop, elev_m, Wtr_Year_GD_Recent, Wtr_Year_GD_Historical) %&gt;% 
+  summarise(meanEst=mean(ProbFitness, na.rm = TRUE), semEst=sem(ProbFitness, na.rm=TRUE)) %&gt;% 
+  ggplot(aes(x=Wtr_Year_GD_Recent, y=meanEst, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.02,linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y=&quot;Probability of \n Successfully Reproducing&quot;, x=&quot;Recent Water Year Climate Dist&quot;) +
+  theme(text=element_text(size=30))</code></pre>
+<pre><code>## `summarise()` has grouped output by &#39;pop&#39;, &#39;elev_m&#39;, &#39;Wtr_Year_GD_Recent&#39;. You
+## can override using the `.groups` argument.</code></pre>
+<pre class="r"><code>WYtemp_prob_recent &lt;- wl2_total_fitness_sub_dist %&gt;% 
+  mutate(ProbFitness=if_else(Total_Fitness==0, 0, 1)) %&gt;% 
+  group_by(pop, elev_m, Wtr_Year_TempDist_Recent, Wtr_Year_TempDist_Historic) %&gt;% 
+  summarise(meanEst=mean(ProbFitness, na.rm = TRUE), semEst=sem(ProbFitness, na.rm=TRUE)) %&gt;% 
+  ggplot(aes(x=Wtr_Year_TempDist_Recent, y=meanEst, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.3,linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y=&quot;Probability of \n Successfully Reproducing&quot;, x=&quot;Recent Water Year Temp Dist (°C)&quot;) +
+  theme(text=element_text(size=30))</code></pre>
+<pre><code>## `summarise()` has grouped output by &#39;pop&#39;, &#39;elev_m&#39;,
+## &#39;Wtr_Year_TempDist_Recent&#39;. You can override using the `.groups` argument.</code></pre>
+<pre class="r"><code>WYppt_prob_recent &lt;- wl2_total_fitness_sub_dist %&gt;% 
+  mutate(ProbFitness=if_else(Total_Fitness==0, 0, 1)) %&gt;% 
+  group_by(pop, elev_m, Wtr_Year_PPTDist_Recent, Wtr_Year_PPTDist_Historic) %&gt;% 
+  summarise(meanEst=mean(ProbFitness, na.rm = TRUE), semEst=sem(ProbFitness, na.rm=TRUE)) %&gt;% 
+  ggplot(aes(x=Wtr_Year_PPTDist_Recent, y=meanEst, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.3,linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y=&quot;Probability of \n Successfully Reproducing&quot;, x=&quot;Recent Water Year PPT Dist (mm)&quot;) +
+  theme(text=element_text(size=30))</code></pre>
+<pre><code>## `summarise()` has grouped output by &#39;pop&#39;, &#39;elev_m&#39;, &#39;Wtr_Year_PPTDist_Recent&#39;.
+## You can override using the `.groups` argument.</code></pre>
+<pre class="r"><code>WL2_prob_fitness_for_paper &lt;- ggarrange(GD_prob, WYCD_prob_recent, 
+                                        WYtemp_prob_recent, WYppt_prob_recent, 
+                                        labels = c(&quot;A)&quot;, &quot;B)&quot;, &quot;C)&quot;, &quot;D)&quot;), 
+                                        font.label = list(size=30, face = &quot;plain&quot;), 
+                                        ncol=2, nrow=2) 
+ggsave(&quot;../output/WL2_Traits/WL2_ProbFitness_SCATTERS_Summary_Recent.png&quot;, width = 24, height = 18, units = &quot;in&quot;)</code></pre>
 </div>
 <div id="basic-model-workflow" class="section level4">
 <h4>Basic Model Workflow</h4>

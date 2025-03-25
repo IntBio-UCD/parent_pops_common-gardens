@@ -11,7 +11,7 @@
 
 <meta name="author" content="Brandie QC" />
 
-<meta name="date" content="2025-03-21" />
+<meta name="date" content="2025-03-25" />
 
 <title>WL2_Surv_to_Rep_Y2</title>
 
@@ -352,7 +352,7 @@ display: none;
 
 <h1 class="title toc-ignore">WL2_Surv_to_Rep_Y2</h1>
 <h4 class="author">Brandie QC</h4>
-<h4 class="date">2025-03-21</h4>
+<h4 class="date">2025-03-25</h4>
 
 </div>
 
@@ -1041,6 +1041,67 @@ GSCD_prob_historic &lt;- wl2_surv_to_rep_y2_sub_dist %&gt;%
 ## You can override using the `.groups` argument.</code></pre>
 <pre class="r"><code>WL2_surv_to_rep_y2_sub_FIG_prob_historic &lt;- ggarrange(GSCD_prob_historic, WYCD_prob_historic, GD_prob, ED_prob, ncol=2, nrow=2) 
 ggsave(&quot;../output/WL2_Traits/WL2_SurvtoRep_y2_PPTSubDist_SCATTERS_Historic.png&quot;, width = 24, height = 18, units = &quot;in&quot;)</code></pre>
+</div>
+<div id="figure-for-paper" class="section level4">
+<h4>Figure for paper</h4>
+<pre class="r"><code>GD_prob &lt;- wl2_surv_to_rep_y2_sub_dist %&gt;% 
+  filter(pop != &quot;LV1&quot;, pop != &quot;SQ1&quot;, pop != &quot;WR&quot;) %&gt;% 
+  group_by(pop, elev_m, GrwSsn_PPTDist_Recent, Wtr_Year_PPTDist_Recent, Geographic_Dist) %&gt;% 
+  summarise(meanEst=mean(SurvtoRep_y2, na.rm = TRUE), semEst=sem(SurvtoRep_y2, na.rm=TRUE)) %&gt;% 
+  ggplot(aes(x=Geographic_Dist, y=meanEst, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.2, linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y=&quot;Survival to Budding Y2&quot;, x=&quot;Geographic Distance (m)&quot;) +
+  theme(text=element_text(size=30), axis.text.x = element_text(angle = 45,  hjust = 1))</code></pre>
+<pre><code>## `summarise()` has grouped output by &#39;pop&#39;, &#39;elev_m&#39;, &#39;GrwSsn_PPTDist_Recent&#39;,
+## &#39;Wtr_Year_PPTDist_Recent&#39;. You can override using the `.groups` argument.</code></pre>
+<pre class="r"><code>WYCD_recent &lt;- wl2_surv_to_rep_y2 %&gt;% 
+  filter(pop != &quot;LV1&quot;, pop != &quot;SQ1&quot;, pop != &quot;WR&quot;) %&gt;% 
+  group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %&gt;% 
+  summarise(meanSurv=mean(SurvtoRep_y2, na.rm = TRUE), semSurv=sem(SurvtoRep_y2, na.rm=TRUE)) %&gt;% 
+  ggplot(aes(x=Wtr_Year_GD_Recent, y=meanSurv, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanSurv-semSurv,ymax=meanSurv+semSurv),width=.02,linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y=&quot;Survival to Budding Y2&quot;, x=&quot;Recent Water Year CD&quot;) +
+  theme(text=element_text(size=25))</code></pre>
+<pre><code>## `summarise()` has grouped output by &#39;pop&#39;, &#39;elev_m&#39;, &#39;GrwSsn_GD_Recent&#39;. You
+## can override using the `.groups` argument.</code></pre>
+<pre class="r"><code>WYtemp_prob_recent &lt;- wl2_surv_to_rep_y2_sub_dist %&gt;% 
+  filter(pop != &quot;LV1&quot;, pop != &quot;SQ1&quot;, pop != &quot;WR&quot;) %&gt;% 
+  group_by(pop, elev_m, Wtr_Year_TempDist_Recent, Wtr_Year_TempDist_Historic) %&gt;% 
+  summarise(meanEst=mean(SurvtoRep_y2, na.rm = TRUE), semEst=sem(SurvtoRep_y2, na.rm=TRUE)) %&gt;% 
+  ggplot(aes(x=Wtr_Year_TempDist_Recent, y=meanEst, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.3,linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y=&quot;Survival to Budding Y2&quot;, x=&quot;Recent Water Year Temp Dist (°C)&quot;) +
+  theme(text=element_text(size=30))</code></pre>
+<pre><code>## `summarise()` has grouped output by &#39;pop&#39;, &#39;elev_m&#39;,
+## &#39;Wtr_Year_TempDist_Recent&#39;. You can override using the `.groups` argument.</code></pre>
+<pre class="r"><code>WYppt_prob_recent &lt;- wl2_surv_to_rep_y2_sub_dist %&gt;% 
+  filter(pop != &quot;LV1&quot;, pop != &quot;SQ1&quot;, pop != &quot;WR&quot;) %&gt;% 
+  group_by(pop, elev_m, Wtr_Year_PPTDist_Recent, Wtr_Year_PPTDist_Historic) %&gt;% 
+  summarise(meanEst=mean(SurvtoRep_y2, na.rm = TRUE), semEst=sem(SurvtoRep_y2, na.rm=TRUE)) %&gt;% 
+  ggplot(aes(x=Wtr_Year_PPTDist_Recent, y=meanEst, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.3,linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y=&quot;Survival to Budding Y2&quot;, x=&quot;Recent Water Year PPT Dist (mm)&quot;) +
+  theme(text=element_text(size=30))</code></pre>
+<pre><code>## `summarise()` has grouped output by &#39;pop&#39;, &#39;elev_m&#39;, &#39;Wtr_Year_PPTDist_Recent&#39;.
+## You can override using the `.groups` argument.</code></pre>
+<pre class="r"><code>WL2_surv_to_rep_y2_for_paper &lt;- ggarrange(GD_prob, WYCD_recent, 
+                                        WYtemp_prob_recent, WYppt_prob_recent, 
+                                        labels = c(&quot;A)&quot;, &quot;B)&quot;, &quot;C)&quot;, &quot;D)&quot;), 
+                                        font.label = list(size=30, face = &quot;plain&quot;), 
+                                        ncol=2, nrow=2) 
+ggsave(&quot;../output/WL2_Traits/WL2_SurvtoRep_y2_SCATTERS_Summary_Recent.png&quot;, width = 24, height = 18, units = &quot;in&quot;)</code></pre>
 </div>
 </div>
 </div>
