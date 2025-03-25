@@ -167,18 +167,8 @@ wl2_gowers_2023 %>%
   scale_y_continuous(expand = c(0, 0)) +
   theme(text=element_text(size=30), axis.text.x = element_text(angle = 45,  hjust = 1)) 
 #ggsave("../output/WL2_GeoDist.png", width = 12, height = 8, units = "in")
-
-## Correlation between geo distance and climate distance
-dist_normalized_ucd <- ucd_gowers %>% select(GrwSsn_GD_Recent:Wtr_Year_GD_Historical, Geographic_Dist) %>% scale() #normalize the data so they're all on the same scale
-head(dist_normalized_ucd)
-cor.norm_ucd = cor(dist_normalized_ucd) #test correlations among the traits
-corrplot(cor.norm_ucd) #geo dist not strongly correlated to any of the climate distances, yay!
-
-dist_normalized_wl2 <- wl2_gowers_2023 %>% select(GrwSsn_GD_Recent:Wtr_Year_GD_Historical, Geographic_Dist) %>% scale() #normalize the data so they're all on the same scale
-head(dist_normalized_wl2)
-cor.norm_wl2 = cor(dist_normalized_wl2) #test correlations among the traits
-corrplot(cor.norm_wl2) #geo dist not strongly correlated to any of the climate distances, yay!
 ```
+
 
 ### Checking elevation distance
 
@@ -203,16 +193,30 @@ wl2_gowers_2023 %>%
   theme(text=element_text(size=30), axis.text.x = element_text(angle = 45,  hjust = 1)) 
 #ggsave("../output/WL2_ElevDist.png", width = 12, height = 8, units = "in")
 
-## Correlation between elev distance and climate distance
-dist_normalized_ucd <- ucd_gowers %>% select(GrwSsn_GD_Recent:Wtr_Year_GD_Historical, Elev_Dist) %>% scale() #normalize the data so they're all on the same scale
-head(dist_normalized_ucd)
+## Correlation between geo dist, elev distance and climate distance
+dist_normalized_ucd <- ucd_gowers %>% select(GrwSsn_GD_Recent:Wtr_Year_GD_Historical, Geographic_Dist, Elev_Dist) %>% scale() #normalize the data so they're all on the same scale
+#head(dist_normalized_ucd)
 cor.norm_ucd = cor(dist_normalized_ucd) #test correlations among the traits
-corrplot(cor.norm_ucd) ##elev dist strongly neg correlated w/ water year climate distances
+cor.sig_ucd <- cor.mtest(dist_normalized_ucd, method="pearson") #test significance of corrs
+corrplot(cor.norm_ucd, type = "upper",
+         tl.srt = 45, p.mat = cor.sig_ucd$p, 
+         sig.level = 0.05, insig="blank") 
+#geo dist not strongly correlated to any of the climate distances, yay!
+##elev dist strongly neg correlated w/ water year climate distances
+cor.norm_ucd
+cor.sig_ucd$p
 
-dist_normalized_wl2 <- wl2_gowers_2023 %>% select(GrwSsn_GD_Recent:Wtr_Year_GD_Historical, Elev_Dist) %>% scale() #normalize the data so they're all on the same scale
-head(dist_normalized_wl2)
+dist_normalized_wl2 <- wl2_gowers_2023 %>% select(GrwSsn_GD_Recent:Wtr_Year_GD_Historical, Geographic_Dist, Elev_Dist) %>% scale() #normalize the data so they're all on the same scale
+#head(dist_normalized_wl2)
 cor.norm_wl2 = cor(dist_normalized_wl2) #test correlations among the traits
-corrplot(cor.norm_wl2) #elev positively correlated with recent water year climate distance 
+cor.sig_wl2 <- cor.mtest(dist_normalized_wl2, method="pearson") #test significance of corrs
+corrplot(cor.norm_wl2, type = "upper",
+         tl.srt = 45, p.mat = cor.sig_wl2$p, 
+         sig.level = 0.05, insig="blank")  
+#geo dist not strongly correlated to any of the climate distances, yay!
+#elev positively correlated with recent water year climate distance 
+cor.norm_wl2
+cor.sig_wl2$p
 ```
 
 ### WL2 Avg Gowers

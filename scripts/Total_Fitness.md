@@ -160,7 +160,7 @@ library(tidymodels)
 ## ✖ infer::t_test()       masks rstatix::t_test()
 ## ✖ Matrix::unpack()      masks tidyr::unpack()
 ## ✖ recipes::update()     masks Matrix::update(), stats::update()
-## • Use tidymodels_prefer() to resolve common conflicts.
+## • Use suppressPackageStartupMessages() to eliminate package startup messages
 ```
 
 ``` r
@@ -587,64 +587,8 @@ wl2_gowers_2023 %>%
 
 ``` r
 #ggsave("../output/WL2_GeoDist.png", width = 12, height = 8, units = "in")
-
-## Correlation between geo distance and climate distance
-dist_normalized_ucd <- ucd_gowers %>% select(GrwSsn_GD_Recent:Wtr_Year_GD_Historical, Geographic_Dist) %>% scale() #normalize the data so they're all on the same scale
-head(dist_normalized_ucd)
 ```
 
-```
-##      GrwSsn_GD_Recent GrwSsn_GD_Historical Wtr_Year_GD_Recent
-## [1,]       -1.6097060           -1.2333603         -0.1315203
-## [2,]       -1.3382567           -1.1474561         -1.1969789
-## [3,]       -1.2850999           -0.4727036         -1.2642964
-## [4,]       -1.0167626           -0.7218352         -1.5426334
-## [5,]       -0.9763752           -1.1382829          0.1207765
-## [6,]       -0.7209606           -0.6622060         -0.8308996
-##      Wtr_Year_GD_Historical Geographic_Dist
-## [1,]            -0.23592699      -0.6952727
-## [2,]            -1.20442321      -1.2574269
-## [3,]            -1.41622323      -0.9389442
-## [4,]            -1.56054173       0.1566691
-## [5,]            -0.09358015      -0.9043893
-## [6,]            -0.68940252      -0.2454393
-```
-
-``` r
-cor.norm_ucd = cor(dist_normalized_ucd) #test correlations among the traits
-corrplot(cor.norm_ucd) #geo dist not strongly correlated to any of the climate distances, yay!
-```
-
-![](Total_Fitness_files/figure-html/unnamed-chunk-4-3.png)<!-- -->
-
-``` r
-dist_normalized_wl2 <- wl2_gowers_2023 %>% select(GrwSsn_GD_Recent:Wtr_Year_GD_Historical, Geographic_Dist) %>% scale() #normalize the data so they're all on the same scale
-head(dist_normalized_wl2)
-```
-
-```
-##      GrwSsn_GD_Recent GrwSsn_GD_Historical Wtr_Year_GD_Recent
-## [1,]        -1.833317           -1.2596750        -0.55370936
-## [2,]        -1.455148           -0.9558987        -0.70954714
-## [3,]        -1.125343           -0.8544994         2.59044284
-## [4,]        -1.101859           -0.8071114        -0.68765718
-## [5,]        -1.030343           -1.3312671        -0.42580349
-## [6,]        -1.007116           -1.0792942        -0.09912854
-##      Wtr_Year_GD_Historical Geographic_Dist
-## [1,]             -0.9912435      -0.1460960
-## [2,]             -0.8148273      -1.4956828
-## [3,]              2.3402079       0.2224374
-## [4,]             -0.9594762       1.3552251
-## [5,]             -0.8741359       1.4205701
-## [6,]             -0.4711787       1.5545268
-```
-
-``` r
-cor.norm_wl2 = cor(dist_normalized_wl2) #test correlations among the traits
-corrplot(cor.norm_wl2) #geo dist not strongly correlated to any of the climate distances, yay!
-```
-
-![](Total_Fitness_files/figure-html/unnamed-chunk-4-4.png)<!-- -->
 
 ### Checking elevation distance
 
@@ -680,63 +624,117 @@ wl2_gowers_2023 %>%
 ``` r
 #ggsave("../output/WL2_ElevDist.png", width = 12, height = 8, units = "in")
 
-## Correlation between elev distance and climate distance
-dist_normalized_ucd <- ucd_gowers %>% select(GrwSsn_GD_Recent:Wtr_Year_GD_Historical, Elev_Dist) %>% scale() #normalize the data so they're all on the same scale
-head(dist_normalized_ucd)
-```
-
-```
-##      GrwSsn_GD_Recent GrwSsn_GD_Historical Wtr_Year_GD_Recent
-## [1,]       -1.6097060           -1.2333603         -0.1315203
-## [2,]       -1.3382567           -1.1474561         -1.1969789
-## [3,]       -1.2850999           -0.4727036         -1.2642964
-## [4,]       -1.0167626           -0.7218352         -1.5426334
-## [5,]       -0.9763752           -1.1382829          0.1207765
-## [6,]       -0.7209606           -0.6622060         -0.8308996
-##      Wtr_Year_GD_Historical  Elev_Dist
-## [1,]            -0.23592699 -0.0405207
-## [2,]            -1.20442321 -1.3494437
-## [3,]            -1.41622323 -1.5087322
-## [4,]            -1.56054173 -1.2847715
-## [5,]            -0.09358015 -0.5550090
-## [6,]            -0.68940252 -0.9737443
-```
-
-``` r
+## Correlation between geo dist, elev distance and climate distance
+dist_normalized_ucd <- ucd_gowers %>% select(GrwSsn_GD_Recent:Wtr_Year_GD_Historical, Geographic_Dist, Elev_Dist) %>% scale() #normalize the data so they're all on the same scale
+#head(dist_normalized_ucd)
 cor.norm_ucd = cor(dist_normalized_ucd) #test correlations among the traits
-corrplot(cor.norm_ucd) ##elev dist strongly neg correlated w/ water year climate distances
+cor.sig_ucd <- cor.mtest(dist_normalized_ucd, method="pearson") #test significance of corrs
+corrplot(cor.norm_ucd, type = "upper",
+         tl.srt = 45, p.mat = cor.sig_ucd$p, 
+         sig.level = 0.05, insig="blank") 
 ```
 
 ![](Total_Fitness_files/figure-html/unnamed-chunk-5-3.png)<!-- -->
 
 ``` r
-dist_normalized_wl2 <- wl2_gowers_2023 %>% select(GrwSsn_GD_Recent:Wtr_Year_GD_Historical, Elev_Dist) %>% scale() #normalize the data so they're all on the same scale
-head(dist_normalized_wl2)
+#geo dist not strongly correlated to any of the climate distances, yay!
+##elev dist strongly neg correlated w/ water year climate distances
+cor.norm_ucd
 ```
 
 ```
-##      GrwSsn_GD_Recent GrwSsn_GD_Historical Wtr_Year_GD_Recent
-## [1,]        -1.833317           -1.2596750        -0.55370936
-## [2,]        -1.455148           -0.9558987        -0.70954714
-## [3,]        -1.125343           -0.8544994         2.59044284
-## [4,]        -1.101859           -0.8071114        -0.68765718
-## [5,]        -1.030343           -1.3312671        -0.42580349
-## [6,]        -1.007116           -1.0792942        -0.09912854
-##      Wtr_Year_GD_Historical  Elev_Dist
-## [1,]             -0.9912435  0.5731767
-## [2,]             -0.8148273  0.4180323
-## [3,]              2.3402079 -1.2847715
-## [4,]             -0.9594762  0.8165136
-## [5,]             -0.8741359  0.3213456
-## [6,]             -0.4711787  0.3062049
+##                        GrwSsn_GD_Recent GrwSsn_GD_Historical Wtr_Year_GD_Recent
+## GrwSsn_GD_Recent              1.0000000            0.8972582          0.6482056
+## GrwSsn_GD_Historical          0.8972582            1.0000000          0.7379906
+## Wtr_Year_GD_Recent            0.6482056            0.7379906          1.0000000
+## Wtr_Year_GD_Historical        0.6657164            0.7572907          0.9917719
+## Geographic_Dist               0.3460049            0.4052347          0.2653609
+## Elev_Dist                     0.7271052            0.7224108          0.8675939
+##                        Wtr_Year_GD_Historical Geographic_Dist Elev_Dist
+## GrwSsn_GD_Recent                    0.6657164       0.3460049 0.7271052
+## GrwSsn_GD_Historical                0.7572907       0.4052347 0.7224108
+## Wtr_Year_GD_Recent                  0.9917719       0.2653609 0.8675939
+## Wtr_Year_GD_Historical              1.0000000       0.3561851 0.8925871
+## Geographic_Dist                     0.3561851       1.0000000 0.4878989
+## Elev_Dist                           0.8925871       0.4878989 1.0000000
 ```
 
 ``` r
+cor.sig_ucd$p
+```
+
+```
+##                        GrwSsn_GD_Recent GrwSsn_GD_Historical Wtr_Year_GD_Recent
+## GrwSsn_GD_Recent           0.000000e+00         6.636656e-09       8.230289e-04
+## GrwSsn_GD_Historical       6.636656e-09         0.000000e+00       5.831530e-05
+## Wtr_Year_GD_Recent         8.230289e-04         5.831530e-05       0.000000e+00
+## Wtr_Year_GD_Historical     5.261204e-04         2.867690e-05       3.101678e-20
+## Geographic_Dist            1.058240e-01         5.507529e-02       2.210493e-01
+## Elev_Dist                  8.478282e-05         9.910339e-05       8.314402e-08
+##                        Wtr_Year_GD_Historical Geographic_Dist    Elev_Dist
+## GrwSsn_GD_Recent                 5.261204e-04      0.10582403 8.478282e-05
+## GrwSsn_GD_Historical             2.867690e-05      0.05507529 9.910339e-05
+## Wtr_Year_GD_Recent               3.101678e-20      0.22104926 8.314402e-08
+## Wtr_Year_GD_Historical           0.000000e+00      0.09528187 1.036304e-08
+## Geographic_Dist                  9.528187e-02      0.00000000 1.818720e-02
+## Elev_Dist                        1.036304e-08      0.01818720 0.000000e+00
+```
+
+``` r
+dist_normalized_wl2 <- wl2_gowers_2023 %>% select(GrwSsn_GD_Recent:Wtr_Year_GD_Historical, Geographic_Dist, Elev_Dist) %>% scale() #normalize the data so they're all on the same scale
+#head(dist_normalized_wl2)
 cor.norm_wl2 = cor(dist_normalized_wl2) #test correlations among the traits
-corrplot(cor.norm_wl2) #elev positively correlated with recent water year climate distance 
+cor.sig_wl2 <- cor.mtest(dist_normalized_wl2, method="pearson") #test significance of corrs
+corrplot(cor.norm_wl2, type = "upper",
+         tl.srt = 45, p.mat = cor.sig_wl2$p, 
+         sig.level = 0.05, insig="blank")  
 ```
 
 ![](Total_Fitness_files/figure-html/unnamed-chunk-5-4.png)<!-- -->
+
+``` r
+#geo dist not strongly correlated to any of the climate distances, yay!
+#elev positively correlated with recent water year climate distance 
+cor.norm_wl2
+```
+
+```
+##                        GrwSsn_GD_Recent GrwSsn_GD_Historical Wtr_Year_GD_Recent
+## GrwSsn_GD_Recent             1.00000000          0.705771990         0.14809664
+## GrwSsn_GD_Historical         0.70577199          1.000000000        -0.03628892
+## Wtr_Year_GD_Recent           0.14809664         -0.036288921         1.00000000
+## Wtr_Year_GD_Historical       0.19667486          0.178860737         0.90975192
+## Geographic_Dist             -0.04557585          0.158902960        -0.03289052
+## Elev_Dist                   -0.29181347         -0.002644714        -0.83765753
+##                        Wtr_Year_GD_Historical Geographic_Dist    Elev_Dist
+## GrwSsn_GD_Recent                   0.19667486     -0.04557585 -0.291813470
+## GrwSsn_GD_Historical               0.17886074      0.15890296 -0.002644714
+## Wtr_Year_GD_Recent                 0.90975192     -0.03289052 -0.837657531
+## Wtr_Year_GD_Historical             1.00000000     -0.01638341 -0.630953627
+## Geographic_Dist                   -0.01638341      1.00000000  0.120265996
+## Elev_Dist                         -0.63095363      0.12026600  1.000000000
+```
+
+``` r
+cor.sig_wl2$p
+```
+
+```
+##                        GrwSsn_GD_Recent GrwSsn_GD_Historical Wtr_Year_GD_Recent
+## GrwSsn_GD_Recent           0.0000000000         0.0001682413       5.000746e-01
+## GrwSsn_GD_Historical       0.0001682413         0.0000000000       8.694290e-01
+## Wtr_Year_GD_Recent         0.5000746180         0.8694289858       0.000000e+00
+## Wtr_Year_GD_Historical     0.3684133774         0.4141764059       1.799870e-09
+## Geographic_Dist            0.8364067730         0.4689460802       8.815688e-01
+## Elev_Dist                  0.1766734200         0.9904445606       6.154535e-07
+##                        Wtr_Year_GD_Historical Geographic_Dist    Elev_Dist
+## GrwSsn_GD_Recent                 3.684134e-01       0.8364068 1.766734e-01
+## GrwSsn_GD_Historical             4.141764e-01       0.4689461 9.904446e-01
+## Wtr_Year_GD_Recent               1.799870e-09       0.8815688 6.154535e-07
+## Wtr_Year_GD_Historical           0.000000e+00       0.9408552 1.245920e-03
+## Geographic_Dist                  9.408552e-01       0.0000000 5.846527e-01
+## Elev_Dist                        1.245920e-03       0.5846527 0.000000e+00
+```
 
 ### WL2 Avg Gowers
 
