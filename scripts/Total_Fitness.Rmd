@@ -652,6 +652,11 @@ wl2_estab_means <- wl2_prob_fitness %>% # summary for plotting
   arrange(n)
 wl2_estab_means
 #wl2_prob_fitness %>% group_by(pop, mf, ProbFitness) %>% summarise(n())
+
+wl2_prob_fitness_to_save <- wl2_total_fitness %>% 
+   mutate(ProbFitness=if_else(Total_Fitness==0, 0, 1)) %>% 
+  select(block:Elev_Dist, ProbFitness)
+#write_csv(wl2_prob_fitness_to_save, "../output/WL2_Traits/WL2_ProbFitness.csv")
 ```
 
 ```{r}
@@ -1621,6 +1626,12 @@ wl2_rep_output %>% #helped some
 wl2_fitness_means <- wl2_rep_output %>% # summary for plotting
   group_by(pop) %>%
   summarize(meanTotalFitness = mean(Total_Fitness), n=n())
+
+wl2_rep_output_to_save <- wl2_total_fitness %>% 
+  filter(Total_Fitness > 0) %>% 
+  mutate(logTotalFitness=log(Total_Fitness)) %>% 
+  select(block:Elev_Dist, Total_Fitness:logTotalFitness)
+#write_csv(wl2_rep_output_to_save, "../output/WL2_Traits/WL2_TotalRepOutput.csv")
 ```
 
 ```{r}
