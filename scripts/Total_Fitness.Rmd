@@ -2152,7 +2152,10 @@ rep_output_SUB_models_log_CD_GD <- tribble(
   ~name,          ~f,
   "1_pop.block",      "logTotalFitness ~  (1|pop) + (1|block)", 
   "2_GS_Recent",      "logTotalFitness ~  GrwSsn_TempDist_Recent + GrwSsn_PPTDist_Recent + Geographic_Dist + (1|pop) + (1|block)", 
-  "3_GS_Historical",  "logTotalFitness ~  GrwSsn_TempDist_Historic + GrwSsn_PPTDist_Historic + Geographic_Dist + (1|pop) + (1|block)", 
+  "3a_GS_Historical",  "logTotalFitness ~  GrwSsn_TempDist_Historic + GrwSsn_PPTDist_Historic + Geographic_Dist + (1|pop) + (1|block)", 
+  "3b_GS_Historical",  "logTotalFitness ~  GrwSsn_TempDist_Historic*GrwSsn_PPTDist_Historic + Geographic_Dist + (1|pop) + (1|block)", 
+  "3c_GS_Historical",  "logTotalFitness ~  GrwSsn_TempDist_Historic + Geographic_Dist + (1|pop) + (1|block)", 
+  "3d_GS_Historical",  "logTotalFitness ~  GrwSsn_PPTDist_Historic + Geographic_Dist + (1|pop) + (1|block)", 
   "4_WY_Recent",      "logTotalFitness ~  Wtr_Year_TempDist_Recent + Wtr_Year_PPTDist_Recent + Geographic_Dist +(1|pop) + (1|block)",
   "5_WY_Historical",  "logTotalFitness ~  Wtr_Year_TempDist_Historic + Wtr_Year_PPTDist_Historic + Geographic_Dist + (1|pop) + (1|block)"
 )
@@ -2175,12 +2178,12 @@ rep_output_SUB_models_log_CD_GD %>% mutate(tidy=map(lmer, tidy)) %>% unnest(tidy
   drop_na(p.value)
 #  arrange(p.value)
 
-mod_test <- lmer(logTotalFitness ~  GrwSsn_TempDist_Historic + GrwSsn_PPTDist_Historic + Geographic_Dist + (1|pop) + (1|block), data=wl2_rep_output_sub)
+mod_test <- lmer(logTotalFitness ~  GrwSsn_TempDist_Historic + Geographic_Dist + (1|pop) + (1|block), data=wl2_rep_output_sub)
 plot(mod_test, which = 1) 
 qqnorm(resid(mod_test))
 qqline(resid(mod_test)) 
 summary(mod_test)
-#boundary (singular) fit: see help('isSingular') for GRWSSN historic model - pop explains 0 variance 
+#boundary (singular) fit: see help('isSingular') for GRWSSN historic models a&b - pop explains 0 variance 
 ```
 
 Troubleshoot weird GrwSsn-Temp_Dist results (positive coefficient, but figure indicates it should be neg...)
@@ -2193,14 +2196,14 @@ ranova(mod_test)
 anova(mod_test)
 
 wl2_rep_output_sub %>% 
-  cbind(predicted={rep_output_SUB_models_log_CD_GD %>% filter(name=="3_GS_Historical") %>% pull(predict) %>% unlist()}) %>%
+  cbind(predicted={rep_output_SUB_models_log_CD_GD %>% filter(name=="3a_GS_Historical") %>% pull(predict) %>% unlist()}) %>%
   ggplot(aes(x=logTotalFitness, y = predicted)) +
   geom_point(alpha=.2) +
   geom_abline(color="skyblue2") 
 #overall, the predictions seem to match the observed data...
 
 wl2_rep_output_sub %>% 
-  cbind(predicted={rep_output_SUB_models_log_CD_GD %>% filter(name=="3_GS_Historical") %>% pull(predict) %>% unlist()}) %>%
+  cbind(predicted={rep_output_SUB_models_log_CD_GD %>% filter(name=="3a_GS_Historical") %>% pull(predict) %>% unlist()}) %>%
   ggplot(aes(x=logTotalFitness, y = predicted)) +
   geom_point(alpha=.2) +
   geom_abline(color="skyblue2") +
@@ -2209,7 +2212,7 @@ wl2_rep_output_sub %>%
 
 
 wl2_rep_output_sub %>% 
-  cbind(predicted={rep_output_SUB_models_log_CD_GD %>% filter(name=="3_GS_Historical") %>% pull(predict) %>% unlist()}) %>%
+  cbind(predicted={rep_output_SUB_models_log_CD_GD %>% filter(name=="3a_GS_Historical") %>% pull(predict) %>% unlist()}) %>%
   ggplot(aes(x=GrwSsn_TempDist_Historic, y = predicted)) +
   geom_point() 
 ```

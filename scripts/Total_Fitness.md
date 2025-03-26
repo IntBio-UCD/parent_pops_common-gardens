@@ -1,7 +1,7 @@
 ---
 title: "Total Fitness"
 author: "Brandie QC"
-date: "2025-03-25"
+date: "2025-03-26"
 output: 
   html_document: 
     keep_md: true
@@ -160,7 +160,7 @@ library(tidymodels)
 ## ✖ infer::t_test()       masks rstatix::t_test()
 ## ✖ Matrix::unpack()      masks tidyr::unpack()
 ## ✖ recipes::update()     masks Matrix::update(), stats::update()
-## • Use tidymodels_prefer() to resolve common conflicts.
+## • Learn how to get started at https://www.tidymodels.org/start/
 ```
 
 ``` r
@@ -4310,7 +4310,10 @@ rep_output_SUB_models_log_CD_GD <- tribble(
   ~name,          ~f,
   "1_pop.block",      "logTotalFitness ~  (1|pop) + (1|block)", 
   "2_GS_Recent",      "logTotalFitness ~  GrwSsn_TempDist_Recent + GrwSsn_PPTDist_Recent + Geographic_Dist + (1|pop) + (1|block)", 
-  "3_GS_Historical",  "logTotalFitness ~  GrwSsn_TempDist_Historic + GrwSsn_PPTDist_Historic + Geographic_Dist + (1|pop) + (1|block)", 
+  "3a_GS_Historical",  "logTotalFitness ~  GrwSsn_TempDist_Historic + GrwSsn_PPTDist_Historic + Geographic_Dist + (1|pop) + (1|block)", 
+  "3b_GS_Historical",  "logTotalFitness ~  GrwSsn_TempDist_Historic*GrwSsn_PPTDist_Historic + Geographic_Dist + (1|pop) + (1|block)", 
+  "3c_GS_Historical",  "logTotalFitness ~  GrwSsn_TempDist_Historic + Geographic_Dist + (1|pop) + (1|block)", 
+  "3d_GS_Historical",  "logTotalFitness ~  GrwSsn_PPTDist_Historic + Geographic_Dist + (1|pop) + (1|block)", 
   "4_WY_Recent",      "logTotalFitness ~  Wtr_Year_TempDist_Recent + Wtr_Year_PPTDist_Recent + Geographic_Dist +(1|pop) + (1|block)",
   "5_WY_Historical",  "logTotalFitness ~  Wtr_Year_TempDist_Historic + Wtr_Year_PPTDist_Historic + Geographic_Dist + (1|pop) + (1|block)"
 )
@@ -4325,6 +4328,7 @@ rep_output_SUB_models_log_CD_GD <- rep_output_SUB_models_log_CD_GD %>%
 
 ```
 ## boundary (singular) fit: see help('isSingular')
+## boundary (singular) fit: see help('isSingular')
 ```
 
 ``` r
@@ -4332,14 +4336,17 @@ rep_output_SUB_models_log_CD_GD %>% select(-f, -lmer) %>% unnest(glance) %>% arr
 ```
 
 ```
-## # A tibble: 5 × 9
-##   name            predict     nobs sigma logLik   AIC   BIC REMLcrit df.residual
-##   <chr>           <list>     <int> <dbl>  <dbl> <dbl> <dbl>    <dbl>       <int>
-## 1 1_pop.block     <dbl [96]>    96 0.871  -135.  278.  288.     270.          92
-## 2 3_GS_Historical <dbl [96]>    96 0.870  -133.  279.  297.     265.          89
-## 3 2_GS_Recent     <dbl [96]>    96 0.875  -133.  281.  299.     267.          89
-## 4 5_WY_Historical <dbl [96]>    96 0.875  -134.  282.  300.     268.          89
-## 5 4_WY_Recent     <dbl [96]>    96 0.876  -134.  282.  300.     268.          89
+## # A tibble: 8 × 9
+##   name             predict  nobs sigma logLik   AIC   BIC REMLcrit df.residual
+##   <chr>            <list>  <int> <dbl>  <dbl> <dbl> <dbl>    <dbl>       <int>
+## 1 1_pop.block      <dbl>      96 0.871  -135.  278.  288.     270.          92
+## 2 3d_GS_Historical <dbl>      96 0.871  -134.  280.  296.     268.          90
+## 3 3a_GS_Historical <dbl>      96 0.870  -133.  279.  297.     265.          89
+## 4 3c_GS_Historical <dbl>      96 0.872  -135.  283.  298.     271.          90
+## 5 2_GS_Recent      <dbl>      96 0.875  -133.  281.  299.     267.          89
+## 6 5_WY_Historical  <dbl>      96 0.875  -134.  282.  300.     268.          89
+## 7 4_WY_Recent      <dbl>      96 0.876  -134.  282.  300.     268.          89
+## 8 3b_GS_Historical <dbl>      96 0.870  -133.  282.  303.     266.          88
 ```
 
 ``` r
@@ -4347,14 +4354,17 @@ rep_output_SUB_models_log_CD_GD %>% select(-f, -lmer) %>% unnest(glance) %>% arr
 ```
 
 ```
-## # A tibble: 5 × 9
-##   name            predict     nobs sigma logLik   AIC   BIC REMLcrit df.residual
-##   <chr>           <list>     <int> <dbl>  <dbl> <dbl> <dbl>    <dbl>       <int>
-## 1 1_pop.block     <dbl [96]>    96 0.871  -135.  278.  288.     270.          92
-## 2 3_GS_Historical <dbl [96]>    96 0.870  -133.  279.  297.     265.          89
-## 3 2_GS_Recent     <dbl [96]>    96 0.875  -133.  281.  299.     267.          89
-## 4 5_WY_Historical <dbl [96]>    96 0.875  -134.  282.  300.     268.          89
-## 5 4_WY_Recent     <dbl [96]>    96 0.876  -134.  282.  300.     268.          89
+## # A tibble: 8 × 9
+##   name             predict  nobs sigma logLik   AIC   BIC REMLcrit df.residual
+##   <chr>            <list>  <int> <dbl>  <dbl> <dbl> <dbl>    <dbl>       <int>
+## 1 1_pop.block      <dbl>      96 0.871  -135.  278.  288.     270.          92
+## 2 3a_GS_Historical <dbl>      96 0.870  -133.  279.  297.     265.          89
+## 3 3d_GS_Historical <dbl>      96 0.871  -134.  280.  296.     268.          90
+## 4 2_GS_Recent      <dbl>      96 0.875  -133.  281.  299.     267.          89
+## 5 5_WY_Historical  <dbl>      96 0.875  -134.  282.  300.     268.          89
+## 6 4_WY_Recent      <dbl>      96 0.876  -134.  282.  300.     268.          89
+## 7 3b_GS_Historical <dbl>      96 0.870  -133.  282.  303.     266.          88
+## 8 3c_GS_Historical <dbl>      96 0.872  -135.  283.  298.     271.          90
 ```
 
 ``` r
@@ -4368,34 +4378,35 @@ rep_output_SUB_models_log_CD_GD %>% mutate(tidy=map(lmer, tidy)) %>% unnest(tidy
 ```
 
 ```
-## # A tibble: 12 × 7
-##    name            term               estimate std.error statistic    df p.value
-##    <chr>           <chr>                 <dbl>     <dbl>     <dbl> <dbl>   <dbl>
-##  1 2_GS_Recent     GrwSsn_TempDist_R…   0.309      0.180    1.72    2.27 2.13e-1
-##  2 2_GS_Recent     GrwSsn_PPTDist_Re…  -0.552      0.131   -4.22    1.36 9.64e-2
-##  3 2_GS_Recent     Geographic_Dist      0.126      0.174    0.729   4.15 5.05e-1
-##  4 3_GS_Historical GrwSsn_TempDist_H…   0.535      0.239    2.24   88.9  2.76e-2
-##  5 3_GS_Historical GrwSsn_PPTDist_Hi…  -0.600      0.134   -4.49   87.1  2.18e-5
-##  6 3_GS_Historical Geographic_Dist      0.119      0.169    0.701  85.6  4.85e-1
-##  7 4_WY_Recent     Wtr_Year_TempDist…  -0.450      0.157   -2.86    2.17 9.41e-2
-##  8 4_WY_Recent     Wtr_Year_PPTDist_…  -0.587      0.197   -2.98    1.94 1.00e-1
-##  9 4_WY_Recent     Geographic_Dist     -0.0172     0.210   -0.0822  3.57 9.39e-1
-## 10 5_WY_Historical Wtr_Year_TempDist…  -0.497      0.173   -2.87    2.32 8.71e-2
-## 11 5_WY_Historical Wtr_Year_PPTDist_…  -0.614      0.218   -2.82    2.16 9.71e-2
-## 12 5_WY_Historical Geographic_Dist      0.0127     0.213    0.0598  3.90 9.55e-1
+## # A tibble: 20 × 7
+##    name             term              estimate std.error statistic    df p.value
+##    <chr>            <chr>                <dbl>     <dbl>     <dbl> <dbl>   <dbl>
+##  1 2_GS_Recent      GrwSsn_TempDist_…   0.309      0.180    1.72    2.27 2.13e-1
+##  2 2_GS_Recent      GrwSsn_PPTDist_R…  -0.552      0.131   -4.22    1.36 9.64e-2
+##  3 2_GS_Recent      Geographic_Dist     0.126      0.174    0.729   4.15 5.05e-1
+##  4 3a_GS_Historical GrwSsn_TempDist_…   0.535      0.239    2.24   88.9  2.76e-2
+##  5 3a_GS_Historical GrwSsn_PPTDist_H…  -0.600      0.134   -4.49   87.1  2.18e-5
+##  6 3a_GS_Historical Geographic_Dist     0.119      0.169    0.701  85.6  4.85e-1
+##  7 3b_GS_Historical GrwSsn_TempDist_…   0.539      0.239    2.25   87.6  2.67e-2
+##  8 3b_GS_Historical GrwSsn_PPTDist_H…  -0.681      0.162   -4.22   85.9  6.13e-5
+##  9 3b_GS_Historical Geographic_Dist     0.157      0.174    0.900  84.6  3.71e-1
+## 10 3b_GS_Historical GrwSsn_TempDist_…   0.156      0.173    0.902  86.9  3.70e-1
+## 11 3c_GS_Historical GrwSsn_TempDist_…  -0.248      0.296   -0.839   4.89 4.40e-1
+## 12 3c_GS_Historical Geographic_Dist     0.0788     0.303    0.260   6.09 8.03e-1
+## 13 3d_GS_Historical GrwSsn_PPTDist_H…  -0.332      0.115   -2.88    3.67 5.00e-2
+## 14 3d_GS_Historical Geographic_Dist     0.0880     0.210    0.420   6.54 6.88e-1
+## 15 4_WY_Recent      Wtr_Year_TempDis…  -0.450      0.157   -2.86    2.17 9.41e-2
+## 16 4_WY_Recent      Wtr_Year_PPTDist…  -0.587      0.197   -2.98    1.94 1.00e-1
+## 17 4_WY_Recent      Geographic_Dist    -0.0172     0.210   -0.0822  3.57 9.39e-1
+## 18 5_WY_Historical  Wtr_Year_TempDis…  -0.497      0.173   -2.87    2.32 8.71e-2
+## 19 5_WY_Historical  Wtr_Year_PPTDist…  -0.614      0.218   -2.82    2.16 9.71e-2
+## 20 5_WY_Historical  Geographic_Dist     0.0127     0.213    0.0598  3.90 9.55e-1
 ```
 
 ``` r
 #  arrange(p.value)
 
-mod_test <- lmer(logTotalFitness ~  GrwSsn_TempDist_Historic + GrwSsn_PPTDist_Historic + Geographic_Dist + (1|pop) + (1|block), data=wl2_rep_output_sub)
-```
-
-```
-## boundary (singular) fit: see help('isSingular')
-```
-
-``` r
+mod_test <- lmer(logTotalFitness ~  GrwSsn_TempDist_Historic + Geographic_Dist + (1|pop) + (1|block), data=wl2_rep_output_sub)
 plot(mod_test, which = 1) 
 ```
 
@@ -4415,44 +4426,39 @@ summary(mod_test)
 ```
 ## Linear mixed model fit by REML. t-tests use Satterthwaite's method [
 ## lmerModLmerTest]
-## Formula: 
-## logTotalFitness ~ GrwSsn_TempDist_Historic + GrwSsn_PPTDist_Historic +  
-##     Geographic_Dist + (1 | pop) + (1 | block)
+## Formula: logTotalFitness ~ GrwSsn_TempDist_Historic + Geographic_Dist +  
+##     (1 | pop) + (1 | block)
 ##    Data: wl2_rep_output_sub
 ## 
-## REML criterion at convergence: 265.2
+## REML criterion at convergence: 270.6
 ## 
 ## Scaled residuals: 
 ##      Min       1Q   Median       3Q      Max 
-## -2.64842 -0.55573  0.08092  0.55407  2.62888 
+## -2.73480 -0.51559  0.01782  0.56428  2.55589 
 ## 
 ## Random effects:
 ##  Groups   Name        Variance Std.Dev.
-##  block    (Intercept) 0.2928   0.5412  
-##  pop      (Intercept) 0.0000   0.0000  
-##  Residual             0.7575   0.8703  
+##  block    (Intercept) 0.3234   0.5687  
+##  pop      (Intercept) 0.1903   0.4363  
+##  Residual             0.7608   0.8723  
 ## Number of obs: 96, groups:  block, 12; pop, 7
 ## 
 ## Fixed effects:
-##                          Estimate Std. Error      df t value Pr(>|t|)    
-## (Intercept)                2.4550     0.1969 16.5927  12.468 7.55e-10 ***
-## GrwSsn_TempDist_Historic   0.5351     0.2388 88.8694   2.240   0.0276 *  
-## GrwSsn_PPTDist_Historic   -0.6004     0.1337 87.0820  -4.489 2.18e-05 ***
-## Geographic_Dist            0.1185     0.1691 85.6158   0.701   0.4853    
+##                          Estimate Std. Error       df t value Pr(>|t|)    
+## (Intercept)               2.36595    0.29153  8.85560   8.116 2.17e-05 ***
+## GrwSsn_TempDist_Historic -0.24821    0.29569  4.89325  -0.839    0.440    
+## Geographic_Dist           0.07883    0.30311  6.09160   0.260    0.803    
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
 ## Correlation of Fixed Effects:
-##             (Intr) GS_TD_ GS_PPT
-## GrwSsn_TD_H -0.046              
-## GrwS_PPTD_H -0.170 -0.789       
-## Gegrphc_Dst  0.024  0.190 -0.161
-## optimizer (nloptwrap) convergence code: 0 (OK)
-## boundary (singular) fit: see help('isSingular')
+##             (Intr) GS_TD_
+## GrwSsn_TD_H -0.430       
+## Gegrphc_Dst  0.190  0.026
 ```
 
 ``` r
-#boundary (singular) fit: see help('isSingular') for GRWSSN historic model - pop explains 0 variance 
+#boundary (singular) fit: see help('isSingular') for GRWSSN historic models a&b - pop explains 0 variance 
 ```
 
 Troubleshoot weird GrwSsn-Temp_Dist results (positive coefficient, but figure indicates it should be neg...)
@@ -4553,7 +4559,7 @@ anova(mod_test)
 
 ``` r
 wl2_rep_output_sub %>% 
-  cbind(predicted={rep_output_SUB_models_log_CD_GD %>% filter(name=="3_GS_Historical") %>% pull(predict) %>% unlist()}) %>%
+  cbind(predicted={rep_output_SUB_models_log_CD_GD %>% filter(name=="3a_GS_Historical") %>% pull(predict) %>% unlist()}) %>%
   ggplot(aes(x=logTotalFitness, y = predicted)) +
   geom_point(alpha=.2) +
   geom_abline(color="skyblue2") 
@@ -4565,7 +4571,7 @@ wl2_rep_output_sub %>%
 #overall, the predictions seem to match the observed data...
 
 wl2_rep_output_sub %>% 
-  cbind(predicted={rep_output_SUB_models_log_CD_GD %>% filter(name=="3_GS_Historical") %>% pull(predict) %>% unlist()}) %>%
+  cbind(predicted={rep_output_SUB_models_log_CD_GD %>% filter(name=="3a_GS_Historical") %>% pull(predict) %>% unlist()}) %>%
   ggplot(aes(x=logTotalFitness, y = predicted)) +
   geom_point(alpha=.2) +
   geom_abline(color="skyblue2") +
@@ -4579,7 +4585,7 @@ wl2_rep_output_sub %>%
 
 
 wl2_rep_output_sub %>% 
-  cbind(predicted={rep_output_SUB_models_log_CD_GD %>% filter(name=="3_GS_Historical") %>% pull(predict) %>% unlist()}) %>%
+  cbind(predicted={rep_output_SUB_models_log_CD_GD %>% filter(name=="3a_GS_Historical") %>% pull(predict) %>% unlist()}) %>%
   ggplot(aes(x=GrwSsn_TempDist_Historic, y = predicted)) +
   geom_point() 
 ```
