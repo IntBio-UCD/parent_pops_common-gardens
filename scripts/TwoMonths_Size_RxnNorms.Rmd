@@ -12,11 +12,10 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 To Do:
-- Try using ggcirlce to make different sized points for environmental distance 
 
-Lines = elevation
-Points = distance from home, filter by site?
-- how to represent it though? dark black = close, light gray = far?
+-   Try using ggcirlce to make different sized points for environmental distance
+
+-   Lines = elevation Points = distance from home, filter by site? - how to represent it though? dark black = close, light gray = far?
 
 # Reaction Norms of Size (between UCD and WL2) - Two Months Post-Transplanting
 
@@ -25,12 +24,13 @@ Points = distance from home, filter by site?
 ```{r}
 library(tidyverse)
 library(lmerTest) #for mixed effect models
-conflicted::conflicts_prefer(lmerTest::lmer)
-conflicted::conflicts_prefer(dplyr::filter)
 library(emmeans) #for post-hoc pairwise comparisons 
 library(naniar) #replaces values with NA
 library(ggnewscale)
 library(corrplot) #plotting correlations 
+library(geosphere) #for calculating geographic distance
+conflicted::conflicts_prefer(lmerTest::lmer)
+conflicted::conflicts_prefer(dplyr::filter)
 
 sem <- function(x, na.rm=FALSE) {           #for calculating standard error
   sd(x,na.rm=na.rm)/sqrt(length(na.omit(x)))
@@ -40,42 +40,22 @@ elev_three_palette <- c("#0043F0", "#C9727F", "#F5A540") #colors from Gremer et 
 elev_order <- c("High", "Mid", "Low") #for proper arrangement in figures 
 ```
 
-## Load the pop and location data
-
-```{r}
-gowersdist_UCD <- read_csv("../output/Climate/Pops_GowersEnvtalDist_UCD.csv") %>% 
-  rename(Recent_Gowers_Dist_UCD = Recent_Gowers_Dist, Historic_Gowers_Dist_UCD = Historic_Gowers_Dist)
-
-gowersdist_WL2 <- read_csv("../output/Climate/Pops_GowersEnvtalDist_WL2.csv") %>% 
-  rename(Recent_Gowers_Dist_WL2 = Recent_Gowers_Dist, Historic_Gowers_Dist_WL2 = Historic_Gowers_Dist)
-
-gowersdist_all <- full_join(gowersdist_UCD, gowersdist_WL2)
-head(gowersdist_all)
-```
-
-Combined into 2 columns 
-```{r}
-gowersdist_UCD2 <- read_csv("../output/Climate/Pops_GowersEnvtalDist_UCD.csv") %>% 
-  mutate(Site="UCD")
-
-gowersdist_WL22 <- read_csv("../output/Climate/Pops_GowersEnvtalDist_WL2.csv") %>% 
-  mutate(Site="WL2") 
-
-gowersdist_all2 <- full_join(gowersdist_UCD2, gowersdist_WL22)
-head(gowersdist_all2)
-tail(gowersdist_all2)
-```
-
 ## Load Size data from both Gardens
+
 ```{r}
 WL2_twomonths_size <- read_csv("../input/WL2_Data/CorrectedCSVs/WL2_size_survey_20230913_corrected.csv", 
                                na = c("", "NA", "-", "N/A")) %>% 
+  filter(!is.na(pop)) %>% 
   rename(parent.pop=pop) %>% 
   mutate(parent.pop= str_replace(parent.pop, ".*VTR.*", "LVTR1")) %>% 
+  unite(BedLoc, bed:bed.col, sep="_", remove = FALSE) %>% 
+  filter(BedLoc!="K_5_C") %>% 
+  filter(BedLoc!="B_32_A") %>% 
   unite(Genotype, parent.pop:rep, sep="_", remove = FALSE) %>% 
+  filter(!str_detect(Genotype, ".*buff*")) %>% 
   unite(pop.mf, parent.pop:mf, sep="_", remove = FALSE)
-#head(WL2_twomonths_size)
-#dim(WL2_twomonths_size)
+head(WL2_twomonths_size)
+dim(WL2_twomonths_size) #2 extra rows...
 #summary(WL2_twomonths_size)
 WL2_twomonths_size %>% rowwise() %>% filter(!is.na(mf), mf != "buffer") %>%  filter(is.na(as.numeric(mf)))
 WL2_twomonths_size %>% rowwise() %>% filter(!is.na(rep), rep != "buffer") %>%  filter(is.na(as.numeric(rep))) #all buffer rows 
@@ -85,40 +65,73 @@ UCD_twomonths_size <- read_csv("../input/UCD_Data/CorrectedCSVs/Size_survey_tran
                                na = c("", "NA", "-", "N/A")) %>% 
   rename(height.cm = `height (cm)`, long.leaf.cm = `longest leaf (cm)`, parent.pop=pop) %>% 
   mutate(parent.pop= str_replace(parent.pop, ".*VTR.*", "LVTR1")) %>% 
+  unite(BedLoc, block:col, sep="_", remove = FALSE) %>% 
   filter(rep != 100)  %>% #get rid of individuals that germinated in the field 
   unite(Genotype, parent.pop:rep, sep="_", remove = FALSE) %>% 
+  filter(!str_detect(Genotype, ".*buff*")) %>% 
   unite(pop.mf, parent.pop:mf, sep="_", remove = FALSE)
-#head(UCD_twomonths_size)
-#dim(UCD_twomonths_size)
-summary(UCD_twomonths_size)
+head(UCD_twomonths_size)
+dim(UCD_twomonths_size) #correct number of rows 
+#summary(UCD_twomonths_size)
+unique(UCD_twomonths_size$parent.pop) #all pops with * are buffers
 
 UCD_twomonths_size %>% filter(!is.na(...10)) #extra notes 
 ```
 
-## Merge the Data
+### Merge the Data
+
 ```{r}
-WL2_twomonths_size_prep <- WL2_twomonths_size %>% select(Genotype:long.leaf.cm) %>% mutate(Site="WL2") %>%
-  mutate(mf=as.double(mf), rep=as.double(rep))
+WL2_twomonths_size_prep <- WL2_twomonths_size %>% 
+  filter(BedLoc!="C_4_D", BedLoc!="C_5_D") %>% 
+  select(block:BedLoc, Genotype:long.leaf.cm) %>% 
+  mutate(Site="WL2") %>%
+  mutate(mf=as.double(mf), rep=as.double(rep)) 
 names(WL2_twomonths_size_prep)
 
-UCD_twomonths_size_prep <- UCD_twomonths_size %>% select(Genotype:long.leaf.cm) %>% mutate(Site="UCD")
+UCD_twomonths_size_prep <- UCD_twomonths_size %>% 
+  select(BedLoc:block, Genotype:long.leaf.cm) %>% mutate(Site="UCD")
 names(UCD_twomonths_size_prep)
 
 twomonths_rxnnorms <- bind_rows(UCD_twomonths_size_prep, WL2_twomonths_size_prep) %>% 
-  filter(!str_detect(Genotype, ".*buffer.*")) %>% 
   arrange(pop.mf, Site)
 head(twomonths_rxnnorms)
 ```
 
-## Add in location info
+## Load the pop and location data
+
 ```{r}
-twomonths_rxnnorms_loc <-left_join(twomonths_rxnnorms, gowersdist_all2) 
-head(twomonths_rxnnorms_loc)
+ucd_gowers_size <- read_csv("../output/Climate/Gowers_UCD.csv") %>% 
+  select(parent.pop:GrwSsn_GD, Wtr_Year_GD) %>% 
+  pivot_wider(names_from = TimePd, values_from = c(GrwSsn_GD, Wtr_Year_GD)) %>% 
+  mutate(Site="UCD", Garden_Lat=38.53250, Garden_Long=-121.7830, Garden_Elev=16) %>% 
+  mutate(Geographic_Dist=distHaversine(cbind(Garden_Long, Garden_Lat), cbind(Long, Lat)),
+         Elev_Dist=elev_m-Garden_Elev) # Calculate the distance using the haversine formula (dist in meters)
+
+wl2_gowers_2023_size <- read_csv("../output/Climate/Gowers_WL2.csv") %>% 
+  select(parent.pop:GrwSsn_GD, Wtr_Year_GD) %>% 
+  pivot_wider(names_from = TimePd, values_from = c(GrwSsn_GD, Wtr_Year_GD)) %>% 
+  mutate(Site="WL2", Garden_Lat=38.82599, Garden_Long=-120.2509, Garden_Elev=2020) %>% 
+  mutate(Geographic_Dist=distHaversine(cbind(Garden_Long, Garden_Lat), cbind(Long, Lat)),
+         Elev_Dist=elev_m-Garden_Elev) # Calculate the distance using the haversine formula
+
+gowersdist_all <- bind_rows(ucd_gowers_size, wl2_gowers_2023_size) %>% 
+  select(Site, Garden_Lat:Garden_Elev, parent.pop:Wtr_Year_GD_Historical, Geographic_Dist:Elev_Dist)
+head(gowersdist_all)
 ```
 
+## Add in location info
+
+```{r}
+twomonths_rxnnorms_loc <-left_join(twomonths_rxnnorms, gowersdist_all) 
+head(twomonths_rxnnorms_loc)
+
+#write_csv(twomonths_rxnnorms_loc, "../output/TwoMonths_Size_BothSites.csv")
+```
 
 ## Plot Reaction Norms
-### Means by maternal family 
+
+### Means by maternal family
+
 ```{r}
 twomonths_rxnnorms_summary_mfs <- twomonths_rxnnorms_loc %>% 
   group_by(pop.mf, parent.pop, Site, elev_m) %>% 
@@ -137,7 +150,7 @@ twomonths_rxnnorms_summary_mfs_wide <- twomonths_rxnnorms_summary_mfs %>%
 #twomonths_rxnnorms_summary_mfs_wide %>% arrange(Both.Sites)
 
 twomonths_rxnnorms_summary_mfs_bothsites <- left_join(twomonths_rxnnorms_summary_mfs_wide, twomonths_rxnnorms_summary_mfs)
-twomonths_rxnnorms_summary_mfs_bothsites
+#twomonths_rxnnorms_summary_mfs_bothsites
 
 twomonths_rxnnorms_summary_mfs2 <- twomonths_rxnnorms_summary_mfs_bothsites %>% 
   mutate(Site=str_replace_all(Site, "UCD", "Low Elev"), 
@@ -150,6 +163,7 @@ twomonths_rxnnorms_summary_mfs2 %>% filter(N_height!=1) %>% filter(is.na(sem_hei
 ```
 
 ### Plot mf avgs
+
 ```{r, eval=FALSE}
 twomonths_rxnnorms_summary_mfs %>% 
    ggplot(aes(x=Site, y=mean_height.cm, group=pop.mf, color=pop.mf)) + 
@@ -200,7 +214,7 @@ twomonths_rxnnorms_summary_mfs2 %>%
   theme_classic() + scale_colour_gradient(low = "#F5A540", high = "#0043F0")  +
   labs(y="Height (cm)", color="Elevation (m)") +
   theme(text=element_text(size=28))
-ggsave("../output/TwoMonths_RxNorms_Height_BH_WL1_CP2_MFAvgs.png", width = 14, height = 8, units = "in")
+#ggsave("../output/TwoMonths_RxNorms_Height_BH_WL1_CP2_MFAvgs.png", width = 14, height = 8, units = "in")
 
 twomonths_rxnnorms_summary_mfs2 %>% 
   filter(N_length != 1) %>% 
@@ -212,15 +226,15 @@ twomonths_rxnnorms_summary_mfs2 %>%
   theme_classic() + scale_colour_gradient(low = "#F5A540", high = "#0043F0")  +
   labs(y="Leaf Length (cm)", color="Elevation (m)") +
   theme(text=element_text(size=28))
-ggsave("../output/TwoMonths_RxNorms_LongestLength_BH_WL1_CP2_MFAvgs.png", width = 14, height = 8, units = "in")
+#ggsave("../output/TwoMonths_RxNorms_LongestLength_BH_WL1_CP2_MFAvgs.png", width = 14, height = 8, units = "in")
 ```
 
-
 ### Means by Pop
+
 ```{r}
 twomonths_rxnnorms_summary_pops <- twomonths_rxnnorms_loc %>% 
   filter(!is.na(parent.pop)) %>% 
-  group_by(parent.pop, Site, elev_m, Recent_Gowers_Dist, Historic_Gowers_Dist) %>% 
+  group_by(parent.pop, Site, elev_m, Wtr_Year_GD_Recent, Wtr_Year_GD_Historical) %>% 
   summarise(N_height = sum(!is.na(height.cm)), mean_height.cm = mean(height.cm,na.rm=(TRUE)), 
             sem_height.cm=sem(height.cm, na.rm=(TRUE)), N_length = sum(!is.na(long.leaf.cm)),
             mean_long.leaf.cm=mean(long.leaf.cm, na.rm=(TRUE)), 
@@ -240,6 +254,7 @@ twomonths_rxnnorms_summary_pops2$Site <- factor(twomonths_rxnnorms_summary_pops2
 ```
 
 ### Plot Pop Avgs
+
 ```{r}
 twomonths_rxnnorms_summary_pops %>% 
    ggplot(aes(x=Site, y=mean_height.cm, group=parent.pop, color=parent.pop)) + 
@@ -283,48 +298,6 @@ ggsave("../output/TwoMonths_RxNorms_LongestLength_ALL_PopAvgs.png", width = 14, 
 ```
 
 ### By Gowers Distance
-```{r}
-twomonths_rxnnorms_summary_pops2 %>% 
-  filter(N_height != 1) %>% 
-  ggplot(aes(x=Site, y=mean_height.cm, group=parent.pop, color=Recent_Gowers_Dist_WL2)) + 
-  geom_point(size=1.5) + 
-  geom_line(linewidth=1.5) +
-  geom_errorbar(aes(ymin=mean_height.cm-sem_height.cm,ymax=mean_height.cm+sem_height.cm),width=.1) +
-  theme_classic() + scale_colour_gradient(low = "#0043F0", high = "#F5A540")  +
-  labs(y="Height (cm)", color="Recent Envtal Distance") +
-  theme(text=element_text(size=28))
-
-twomonths_rxnnorms_summary_pops2 %>% 
-  filter(N_height != 1) %>% 
-  ggplot(aes(x=Site, y=mean_height.cm, group=parent.pop, color=Historic_Gowers_Dist_WL2)) + 
-  geom_point(size=1.5) + 
-  geom_line(linewidth=1.5) +
-  geom_errorbar(aes(ymin=mean_height.cm-sem_height.cm,ymax=mean_height.cm+sem_height.cm),width=.1) +
-  theme_classic() + scale_colour_gradient(low = "#0043F0", high = "#F5A540")  +
-  labs(y="Height (cm)", color="Historic Envtal Distance") +
-  theme(text=element_text(size=28))
-
-twomonths_rxnnorms_summary_pops2 %>% 
-  filter(N_height != 1) %>% 
-  ggplot(aes(x=Site, y=mean_height.cm, group=parent.pop, color=Recent_Gowers_Dist_UCD)) + 
-  geom_point(size=1.5) + 
-  geom_line(linewidth=1.5) +
-  geom_errorbar(aes(ymin=mean_height.cm-sem_height.cm,ymax=mean_height.cm+sem_height.cm),width=.1) +
-  theme_classic() + scale_colour_gradient(low = "#F5A540", high = "#0043F0")  +
-  labs(y="Height (cm)", color="Recent Envtal Distance") +
-  theme(text=element_text(size=28))
-
-twomonths_rxnnorms_summary_pops2 %>% 
-  filter(N_height != 1) %>% 
-  ggplot(aes(x=Site, y=mean_height.cm, group=parent.pop, color=Historic_Gowers_Dist_UCD)) + 
-  geom_point(size=1.5) + 
-  geom_line(linewidth=1.5) +
-  geom_errorbar(aes(ymin=mean_height.cm-sem_height.cm,ymax=mean_height.cm+sem_height.cm),width=.1) +
-  theme_classic() + scale_colour_gradient(low = "#F5A540", high = "#0043F0")  +
-  labs(y="Height (cm)", color="Historic Envtal Distance") +
-  theme(text=element_text(size=28))
-
-```
 
 ```{r}
 ggplot() +
@@ -335,10 +308,10 @@ ggplot() +
   new_scale_colour() +
   
   geom_point(data = filter(twomonths_rxnnorms_summary_pops2, N_height != 1), 
-             size=2.5, aes(x = Site,y = mean_height.cm, color=Recent_Gowers_Dist), alpha=0.9) +
+             size=2.5, aes(x = Site,y = mean_height.cm, color=Wtr_Year_GD_Recent), alpha=0.9) +
   geom_errorbar(data = filter(twomonths_rxnnorms_summary_pops2, N_height != 1), 
                 aes(x=Site, y=mean_height.cm,ymin=mean_height.cm-sem_height.cm,ymax=mean_height.cm+sem_height.cm,
-                    color=Recent_Gowers_Dist), alpha=0.9, width=.1) +
+                    color=Wtr_Year_GD_Recent), alpha=0.9, width=.1) +
   theme_classic() + scale_colour_gradientn(colours = c("black", "grey80")) +
   labs(y="Height (cm)", color="Envtal Dist \n(from garden year)") +
   theme(text=element_text(size=28))
@@ -354,46 +327,18 @@ ggplot() +
   new_scale_colour() +
   
   geom_point(data = filter(twomonths_rxnnorms_summary_pops2, N_length != 1), 
-             size=2.5, aes(x = Site,y = mean_long.leaf.cm, color=Recent_Gowers_Dist), alpha=0.9) +
+             size=2.5, aes(x = Site,y = mean_long.leaf.cm, color=Wtr_Year_GD_Recent), alpha=0.9) +
   geom_errorbar(data = filter(twomonths_rxnnorms_summary_pops2, N_length != 1), 
                 aes(x=Site, y=mean_long.leaf.cm,ymin=mean_long.leaf.cm-sem_long.leaf.cm,ymax=mean_long.leaf.cm+sem_long.leaf.cm,
-                    color=Recent_Gowers_Dist), alpha=0.9, width=.1) +
+                    color=Wtr_Year_GD_Recent), alpha=0.9, width=.1) +
   theme_classic() + scale_colour_gradientn(colours = c("black", "grey80")) +
   labs(y="Leaf Length (cm)", color="Envtal Dist \n(from garden year)") +
   theme(text=element_text(size=28))
 ggsave("../output/TwoMonths_RxNorms_LongestLength_ALL_PopAvgs_Gowers.png", width = 14, height = 8, units = "in")
 ```
 
+### Combine mf and pop averages
 
-```{r}
-gowersdist_all %>% 
-  ggplot(aes(x=elev_m, y=Recent_Gowers_Dist_UCD)) +
-  geom_point()
-cor.test(gowersdist_all$elev_m, gowersdist_all$Recent_Gowers_Dist_UCD)
-
-
-
-gower_normalized <- gowersdist_all %>% 
-  select(elev_m, Recent_Gowers_Dist_UCD, Recent_Gowers_Dist_WL2, Historic_Gowers_Dist_UCD, Historic_Gowers_Dist_WL2) %>% scale()
-cor.norm = cor(gower_normalized) #test correlations among the traits
-corrplot(cor.norm)
-
-gowersdist_all %>% 
-  ggplot(aes(x=elev_m, y=Recent_Gowers_Dist_WL2)) +
-  geom_point()
-cor.test(gowersdist_all$elev_m, gowersdist_all$Recent_Gowers_Dist_WL2)
-
-gowersdist_all %>% 
-  ggplot(aes(x=elev_m, y=Historic_Gowers_Dist_UCD)) +
-  geom_point()
-
-gowersdist_all %>% 
-  ggplot(aes(x=elev_m, y=Historic_Gowers_Dist_WL2)) +
-  geom_point()
-```
-
-
-Combine mf and pop averages
 ```{r}
 twomonths_rxnnorms_summary_pops2 %>% 
   mutate(pop.mf=parent.pop) %>% 
@@ -423,7 +368,6 @@ geom_line(data = twomonths_rxnnorms_summary_mfs2, size=0.2) +
 ggsave("../output/TwoMonths_RxNorms_LongestLength_ALL_PopMFAvgs.png", width = 14, height = 8, units = "in")
 ```
 
-
 ```{r}
 twomonths_rxnnorms_summary_pops2 %>% 
   filter(parent.pop=="TM2"|parent.pop=="WL2") %>%  
@@ -444,8 +388,8 @@ twomonths_rxnnorms_summary_pops2 %>%
 ggsave("../output/TwoMonths_RxNorms_LongestLength_TM2_WL2_PopAvgs.png", width = 12, height = 8, units = "in")
 ```
 
-
 ### Means by Elevation
+
 ```{r}
 twomonths_rxnnorms_summary_elev <- twomonths_rxnnorms_loc %>% 
   group_by(elevation.group, Site) %>% 
@@ -455,7 +399,6 @@ twomonths_rxnnorms_summary_elev <- twomonths_rxnnorms_loc %>%
             sem_long.leaf.cm=sem(long.leaf.cm, na.rm=TRUE))
 twomonths_rxnnorms_summary_elev
 ```
-
 
 ```{r}
 twomonths_rxnnorms_summary_elev$elevation.group <- factor(twomonths_rxnnorms_summary_elev$elevation.group, levels = c('High','Mid', 'Low'))
@@ -472,18 +415,19 @@ twomonths_rxnnorms_summary_elev %>%
   theme_classic() + scale_colour_manual(values=elev_three_palette)
 ```
 
-
 ## Stats
+
 Height
+
 ```{r}
 scale_this <- function(x){
   (x - mean(x, na.rm=TRUE)) / sd(x, na.rm=TRUE)
 }
 summary(twomonths_rxnnorms_loc)
 twomonths_rxnnorms_loc_scale <- twomonths_rxnnorms_loc %>% 
-  mutate(Recent_Gowers_Dist_s = scale_this(Recent_Gowers_Dist), 
+  mutate(Wtr_Year_GD_Recent = scale_this(Wtr_Year_GD_Recent), 
          elev_m_s = scale_this(elev_m))
-lmeheight <- lmer(height.cm ~ elev_m_s*(Site/Recent_Gowers_Dist_s) + (1|parent.pop/mf), data = twomonths_rxnnorms_loc_scale) 
+lmeheight <- lmer(height.cm ~ elev_m_s*(Site/Wtr_Year_GD_Recent) + (1|parent.pop/mf), data = twomonths_rxnnorms_loc_scale) 
 summary(lmeheight)
 ranova(lmeheight) 
 anova(lmeheight)
@@ -491,11 +435,12 @@ anova(lmeheight)
 #rnef 
 #or fixed effects
 
-emtrends(lmeheight, pairwise ~ Site, var = "elev_m")
-emmip(lmeheight, Site ~ elev_m, cov.reduce = range)
+emtrends(lmeheight, pairwise ~ Site, var = "elev_m_s")
+emmip(lmeheight, Site ~ elev_m_s, cov.reduce = range)
 ```
 
 Length
+
 ```{r}
 summary(twomonths_rxnnorms_loc)
 lmelength <- lmer(long.leaf.cm ~ elev_m*Site + (1|parent.pop/mf), data = twomonths_rxnnorms_loc) 
@@ -510,4 +455,3 @@ emtrends(lmelength, pairwise ~ Site, var = "elev_m")
 emmip(lmelength, Site ~ elev_m, cov.reduce = range)
 
 ```
-
