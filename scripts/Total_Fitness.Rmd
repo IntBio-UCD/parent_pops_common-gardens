@@ -1232,9 +1232,9 @@ ggsave("../output/UCD_Traits/UCD_ProbFitness_PPTSubDist_SCATTERS_Historic.png", 
 
 #### Figure for paper
 ```{r}
-GD_prob <- wl2_total_fitness_sub_dist %>% 
+GD_prob <- wl2_total_fitness_sub_dist %>%  
   mutate(ProbFitness=if_else(Total_Fitness==0, 0, 1)) %>% 
-  group_by(pop, elev_m, GrwSsn_PPTDist_Recent, Wtr_Year_PPTDist_Recent, Geographic_Dist) %>% 
+  group_by(pop, elev_m, Geographic_Dist) %>% 
   summarise(meanEst=mean(ProbFitness, na.rm = TRUE), semEst=sem(ProbFitness, na.rm=TRUE)) %>% 
   ggplot(aes(x=Geographic_Dist, y=meanEst, group = pop)) +
   geom_point(size=6) + 
@@ -1286,6 +1286,39 @@ WL2_prob_fitness_for_paper <- ggarrange(GD_prob, WYCD_prob_recent,
                                         font.label = list(size=30, face = "plain"), 
                                         ncol=2, nrow=2) 
 ggsave("../output/WL2_Traits/WL2_ProbFitness_SCATTERS_Summary_Recent.png", width = 24, height = 18, units = "in")
+```
+
+### Attempt at calculating mean and standard error in logit scale 
+```{r}
+##logit scale
+wl2_total_fitness_sub_dist %>%  
+  mutate(ProbFitness=if_else(Total_Fitness==0, 0, 1)) %>% 
+  group_by(pop, block, Geographic_Dist) %>% 
+  summarise(meanProb=mean(ProbFitness, na.rm = TRUE), n=n()) %>% 
+  mutate(logitMean=boot::logit(meanProb + 0.001)) %>% 
+  group_by(pop, Geographic_Dist) %>% 
+  summarise(meanLogit=mean(logitMean), 
+            semLogit=sem(logitMean)) %>% 
+  mutate(btProb=boot::inv.logit(meanLogit)-0.001, btSEM=boot::inv.logit(semLogit)-0.001) %>% 
+  ggplot(aes(x=Geographic_Dist, y=btProb, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=btProb-btSEM,ymax=btProb+btSEM),width=.2, linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0))
+
+##non-logit scale 
+wl2_total_fitness_sub_dist %>%  
+  mutate(ProbFitness=if_else(Total_Fitness==0, 0, 1)) %>% 
+  group_by(pop, block, Geographic_Dist) %>% 
+  summarise(meanProbBlock=mean(ProbFitness, na.rm = TRUE) + 0.001, n=n()) %>% 
+  group_by(pop, Geographic_Dist) %>% 
+  summarise(meanProb=mean(meanProbBlock, na.rm = TRUE), 
+            semProb=sem(meanProbBlock,  na.rm=TRUE)) %>% 
+  ggplot(aes(x=Geographic_Dist, y=meanProb, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanProb-semProb,ymax=meanProb+semProb),width=.2, linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0))
 ```
 
 
