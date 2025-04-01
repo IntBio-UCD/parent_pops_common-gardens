@@ -1,0 +1,233 @@
+---
+title: "Ann_Cens_Size_RxnNorms"
+author: "Brandie QC"
+date: "`r Sys.Date()`"
+output: 
+  html_document: 
+    keep_md: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Reaction Norms of Size (between UCD and WL2) - Stem Diameter and Branch Number 
+
+## Relevant Libraries and Functions
+
+```{r}
+library(tidyverse)
+library(lmerTest) #for mixed effect models
+library(emmeans) #for post-hoc pairwise comparisons 
+library(naniar) #replaces values with NA
+library(ggnewscale)
+library(corrplot) #plotting correlations 
+library(geosphere) #for calculating geographic distance
+conflicted::conflicts_prefer(lmerTest::lmer)
+conflicted::conflicts_prefer(dplyr::filter)
+
+sem <- function(x, na.rm=FALSE) {           #for calculating standard error
+  sd(x,na.rm=na.rm)/sqrt(length(na.omit(x)))
+} 
+
+elev_three_palette <- c("#0043F0", "#C9727F", "#F5A540") #colors from Gremer et al 2019
+elev_order <- c("High", "Mid", "Low") #for proper arrangement in figures 
+```
+
+## Load Size data from both Gardens
+
+Year 1 
+```{r}
+ucd_ann_cens <- read_csv("../output/UCD_Traits/UCD2023_Annual_Census_Combined.csv") %>%  #note this is only for plants that survived to rep 
+  filter(!is.na(parent.pop)) %>% 
+  unite(BedLoc, block:col, sep="_", remove = FALSE) %>% 
+  filter(rep != 100) %>% #get rid of individuals that germinated in the field 
+  unite(Genotype, parent.pop:rep, sep="_", remove = FALSE) %>% 
+  unite(pop.mf, parent.pop:mf, sep="_", remove = FALSE)
+
+wl2_ann_cens <- read_csv("../input/WL2_Data/CorrectedCSVs/WL2_annual_census_20231027_corrected.csv") %>% 
+  rename(parent.pop=pop) %>% 
+  unite(Genotype, parent.pop:rep, sep="_", remove = FALSE) %>% 
+  unite(BedLoc, bed:`bed-col`, sep="_", remove = FALSE) %>% 
+  filter(BedLoc!="K_5_C") %>% #get rid of duplicate locations
+  filter(BedLoc!="B_32_A") %>% #get rid of duplicate locations
+  filter(!is.na(parent.pop), !str_detect(Genotype, ".*buff*")) %>% #remove buffers 
+  unite(pop.mf, parent.pop:mf, sep="_", remove = FALSE)
+```
+
+### Merge the Data
+```{r}
+wl2_ann_cens_prep <- wl2_ann_cens %>% 
+  select(block:BedLoc, Genotype:long.leaf.cm, total.branch:repro.branch) %>% 
+  mutate(Site="WL2") %>%
+  mutate(mf=as.double(mf), rep=as.double(rep)) 
+names(wl2_ann_cens_prep)
+
+ucd_ann_cens_prep <- ucd_ann_cens %>% 
+  select(BedLoc:block, Genotype:rep, diam.mm=diam, height.cm=height, long.leaf.cm=longest_leaf, 
+         total.branch=total_branch, repro.branch=repro_branch) %>% 
+  mutate(Site="UCD")
+names(ucd_ann_cens_prep)
+
+anncens_rxnnorms <- bind_rows(ucd_ann_cens_prep, wl2_ann_cens_prep) %>% 
+  select(-pheno) %>% 
+  arrange(pop.mf, Site)
+head(anncens_rxnnorms)
+```
+
+### Year 2 at WL2
+```{r}
+wl2_y2_pops <- read_csv("../input/WL2_Data/Final_2023_2024_Pop_Loc_Info.csv") %>%
+  select(Pop.Type:unique.ID) %>% 
+  filter(Pop.Type=="2023-survivor") %>% 
+  select(Pop.Type, loc:bed, row=bedrow, col=bedcol, pop:unique.ID)
+
+wl2_blocks <- read_csv("../input/WL2_Data/CorrectedCSVs/WL2_mort_pheno_20231020_corrected.csv") %>% 
+  unite(BedLoc, bed:bed.col, sep="_", remove = FALSE) %>% 
+  filter(BedLoc!="K_5_C") %>% #get rid of duplicate locations
+  select(block, pop, mf, rep) %>% #add in block info 
+  mutate(mf=as.double(mf), rep=as.double(rep)) #convert to num
+
+wl2_y2_pops_blocks <- left_join(wl2_y2_pops, wl2_blocks)
+
+wl2_ann_cens_2024 <- read_csv("../input/WL2_Data/WL2_Annual_Census_20241023_corrected.csv")
+wl2_ann_cens_2024_pops <- left_join(wl2_y2_pops_blocks, wl2_ann_cens_2024) %>%  
+  rename(Genotype=unique.ID, parent.pop=pop)
+```
+
+## Load the pop and location data
+
+```{r}
+ucd_gowers_size <- read_csv("../output/Climate/Gowers_UCD.csv") %>% 
+  select(parent.pop:GrwSsn_GD, Wtr_Year_GD) %>% 
+  pivot_wider(names_from = TimePd, values_from = c(GrwSsn_GD, Wtr_Year_GD)) %>% 
+  mutate(Site="UCD", Garden_Lat=38.53250, Garden_Long=-121.7830, Garden_Elev=16) %>% 
+  mutate(Geographic_Dist=distHaversine(cbind(Garden_Long, Garden_Lat), cbind(Long, Lat)),
+         Elev_Dist=elev_m-Garden_Elev) # Calculate the distance using the haversine formula (dist in meters)
+
+wl2_gowers_2023_size <- read_csv("../output/Climate/Gowers_WL2.csv") %>% 
+  select(parent.pop:GrwSsn_GD, Wtr_Year_GD) %>% 
+  pivot_wider(names_from = TimePd, values_from = c(GrwSsn_GD, Wtr_Year_GD)) %>% 
+  mutate(Site="WL2", Garden_Lat=38.82599, Garden_Long=-120.2509, Garden_Elev=2020) %>% 
+  mutate(Geographic_Dist=distHaversine(cbind(Garden_Long, Garden_Lat), cbind(Long, Lat)),
+         Elev_Dist=elev_m-Garden_Elev) # Calculate the distance using the haversine formula
+
+gowersdist_all <- bind_rows(ucd_gowers_size, wl2_gowers_2023_size) %>% 
+  select(Site, Garden_Lat:Garden_Elev, parent.pop:Wtr_Year_GD_Historical, Geographic_Dist:Elev_Dist)
+head(gowersdist_all)
+
+wl2_gowers_2024 <- read_csv("../output/Climate/Gowers_WL2_2024.csv") %>% 
+  pivot_wider(names_from = TimePd, values_from = c(GrwSsn_GD, Wtr_Year_GD)) %>% 
+  mutate(WL2_Lat=38.82599, WL2_Long=-120.2509, WL2_Elev=2020) %>% 
+  mutate(Geographic_Dist=distHaversine(cbind(WL2_Long, WL2_Lat), cbind(Long, Lat)),
+         Elev_Dist=elev_m-WL2_Elev) # Calculate the distance using the haversine formula
+```
+
+## Add in location info
+
+```{r}
+anncens_rxnnorms_loc <-left_join(anncens_rxnnorms, gowersdist_all) 
+head(anncens_rxnnorms_loc)
+
+#write_csv(anncens_rxnnorms_loc, "../output/AnnCens_Size_BothSites_Y1.csv")
+```
+
+```{r}
+wl2_ann_cens_2024_pops_loc <- left_join(wl2_ann_cens_2024_pops, wl2_gowers_2024)
+head(wl2_ann_cens_2024_pops_loc)
+```
+
+## Plot Reaction Norms
+### Means by Pop
+
+```{r}
+anncens_rxnnorms_summary_pops <- anncens_rxnnorms_loc %>% 
+  group_by(parent.pop, Site, elev_m) %>% 
+  summarise(N_diam = sum(!is.na(diam.mm)), mean_diam.mm = mean(diam.mm,na.rm=(TRUE)), 
+            sem_diam.mm=sem(diam.mm, na.rm=(TRUE)), N_branch = sum(!is.na(total.branch)),
+            mean_total.branch=mean(total.branch, na.rm=(TRUE)), 
+            sem_total.branch=sem(total.branch, na.rm=TRUE))
+#anncens_rxnnorms_summary_pops
+#No CC, CP3, FR, LV1, LV3, LVTR1, SQ1, SQ2, WR, WV, YO11, YO4, YO8 at UCD
+
+#anncens_rxnnorms_summary_pops %>% arrange(N_diam) 
+#1 SQ3, WL1 at UCD, 1 WR at WL2, 2 DPR, YO7 at UCD
+
+anncens_rxnnorms_summary_pops2 <- anncens_rxnnorms_summary_pops %>% 
+  filter(N_diam>2) %>% 
+  filter(parent.pop=="BH" | parent.pop=="CP2" | parent.pop=="IH" | parent.pop=="SC" | 
+           parent.pop=="TM2" | parent.pop=="WL2") %>% 
+  mutate(Site=str_replace_all(Site, "UCD", "Low Elev"), 
+         Site=str_replace_all(Site, "WL2", "High Elev"))
+anncens_rxnnorms_summary_pops2$Site <- factor(anncens_rxnnorms_summary_pops2$Site,
+                                               levels = c('Low Elev','High Elev'))
+```
+
+### Plot Pop Avgs
+
+```{r}
+anncens_rxnnorms_summary_pops2 %>% 
+  ggplot(aes(x=Site, y=mean_diam.mm, group=parent.pop, color=elev_m)) + 
+  geom_point(size=1.5) + geom_line(linewidth=1.5) +
+  geom_errorbar(aes(ymin=mean_diam.mm-sem_diam.mm,ymax=mean_diam.mm+sem_diam.mm),width=.1) +
+  theme_classic() + scale_colour_gradient(low = "#F5A540", high = "#0043F0")  +
+  labs(y="Stem Diam (mm)", color="Elevation (m)") +
+  theme(text=element_text(size=28))
+ggsave("../output/AnnCens_RxNorms_Diam_ALL_PopAvgs.png", width = 14, height = 8, units = "in")
+
+anncens_rxnnorms_summary_pops2 %>% 
+  ggplot(aes(x=Site, y=mean_total.branch, group=parent.pop, color=elev_m)) + 
+  geom_point(size=1.5) + geom_line(linewidth=1.5) +
+  geom_errorbar(aes(ymin=mean_total.branch-sem_total.branch,
+                    ymax=mean_total.branch+sem_total.branch),width=.1) +
+  theme_classic() + scale_colour_gradient(low = "#F5A540", high = "#0043F0")  +
+  labs(y="Total Basal Branches", color="Elevation (m)") +
+  theme(text=element_text(size=28))
+ggsave("../output/AnnCens_RxNorms_Tot_Bas_Branch_ALL_PopAvgs.png", width = 14, height = 8, units = "in")
+```
+
+## Year 2 Pop Trends at WL2
+
+```{r}
+wl2_ann_cens_2024_pops_loc %>% 
+  filter(!is.na(diam.mm)) %>% 
+  ggplot(aes(x=parent.pop, y=diam.mm)) +
+  geom_boxplot()
+
+wl2_ann_cens_2024_pops_loc %>% 
+  filter(!is.na(total.branch)) %>% 
+  ggplot(aes(x=parent.pop, y=total.branch)) +
+  geom_boxplot()
+
+wl2_ann_cens_2024_pops_loc %>% 
+  filter(!is.na(overhd.diam)) %>% 
+  ggplot(aes(x=parent.pop, y=overhd.diam)) +
+  geom_boxplot()
+
+wl2_ann_cens_2024_pops_loc %>% 
+  filter(!is.na(overhd.perp)) %>% 
+  ggplot(aes(x=parent.pop, y=overhd.perp)) +
+  geom_boxplot()
+```
+
+
+```{r}
+wl2_ann_cens_2024_summary <- wl2_ann_cens_2024_pops_loc %>% 
+  group_by(parent.pop, GrwSsn_GD_Recent, GrwSsn_GD_Historical, 
+           Wtr_Year_GD_Recent, Wtr_Year_GD_Historical, 
+           Geographic_Dist, Elev_Dist) %>% 
+  summarise(N_diam = sum(!is.na(diam.mm)), 
+            mean_diam.mm = mean(diam.mm, na.rm=TRUE), sem_diam.mm=sem(diam.mm, na.rm=TRUE), 
+            #N_branch = sum(!is.na(total.branch)), #very little variation in this trait 
+            #mean_total.branch=mean(total.branch, na.rm=TRUE), sem_total.branch=sem(total.branch, na.rm=TRUE),
+            N_overhd.diam = sum(!is.na(overhd.diam)),
+            mean_overhd.diam=mean(overhd.diam, na.rm=TRUE), sem_overhd.diam=sem(overhd.diam, na.rm=TRUE),
+            N_overhd.perp = sum(!is.na(overhd.perp)),
+            mean_overhd.perp=mean(overhd.perp, na.rm=TRUE), sem_overhd.perp=sem(overhd.perp, na.rm=TRUE))
+
+wl2_ann_cens_2024_summary %>% arrange(N_diam) #different sample sizes depending on the trait 
+```
+
+
+
+
