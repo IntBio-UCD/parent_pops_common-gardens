@@ -1,7 +1,7 @@
 ---
 title: "FirstYear_Survival"
 author: "Brandie Quarles"
-date: "2025-03-21"
+date: "2025-04-01"
 output: 
   html_document: 
     keep_md: true
@@ -10,9 +10,8 @@ output:
 # First Year Survival (surv to ann census)
 
 To Do:
-- Look at relationship between size and survival
-- Standard error correction on scatter plots?
 
+-   Standard error correction on scatter plots
 
 
 
@@ -153,7 +152,7 @@ library(tidymodels)
 ## ✖ infer::t_test()       masks rstatix::t_test()
 ## ✖ Matrix::unpack()      masks tidyr::unpack()
 ## ✖ recipes::update()     masks Matrix::update(), stats::update()
-## • Use tidymodels_prefer() to resolve common conflicts.
+## • Learn how to get started at https://www.tidymodels.org/start/
 ```
 
 ``` r
@@ -204,6 +203,7 @@ options(mc.cores = parallel::detectCores())
 ```
 
 ## Gower's Distance
+
 
 ``` r
 garden_climate <- read_csv("../output/Climate/flint_climate_UCDpops.csv") %>% 
@@ -288,6 +288,7 @@ wl2_gowers_2023 <- read_csv("../output/Climate/Gowers_WL2.csv") %>%
 ```
 
 ## Climate Subtraction Distances
+
 
 ``` r
 ucd_wtr_year_sub_recent <- read_csv("../output/Climate/full_year_Subtraction_Dist_from_Home_Davis_Recent.csv") %>% 
@@ -450,6 +451,7 @@ wl2_sub_dist_2023 <- wl2_wtr_year_sub_recent %>%
 ```
 
 ## Load Survival data from both Gardens
+
 
 ``` r
 WL2_firstyear_mort <- read_csv("../input/WL2_Data/CorrectedCSVs/WL2_annual_census_20231027_corrected.csv",
@@ -647,7 +649,8 @@ WL2_firstyear_mort %>% filter(pheno=="X") %>% filter(!is.na(num.fruit)) #no dead
 ## #   survey.notes <chr>
 ```
 
-## Clean the data 
+## Clean the data
+
 
 ``` r
 WL2_firstyear_mort_prep <- WL2_firstyear_mort %>%
@@ -678,6 +681,7 @@ names(UCD_firstyear_mort_prep)
 ```
 
 ## Establishment
+
 
 ``` r
 ucd_est <- read_csv("../output/UCD_Traits/UCD_Establishment.csv") %>% select(block:rep, Establishment) 
@@ -711,7 +715,8 @@ wl2_est <- read_csv("../output/WL2_Traits/WL2_Establishment.csv") %>% select(blo
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
 ```
 
-## Calculate First Year Survival 
+## Calculate First Year Survival
+
 
 ``` r
 #WL2_firstyear_mort %>% filter(is.na(pheno)) %>% filter(!is.na(survey.notes)) #double checking that all NAs = dead 
@@ -827,8 +832,10 @@ unique(ucd_y1_surv_sub_dist$mf)
 ##  [1]  4 10  5  3  6  1  8  7  2  9 12
 ```
 
-### Bar plots 
+### Bar plots
+
 WL2
+
 
 ``` r
 wl2_y1_surv %>% 
@@ -882,6 +889,7 @@ wl2_y1_surv %>%
 
 Davis
 
+
 ``` r
 ucd_y1_surv %>% 
   group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
@@ -933,7 +941,9 @@ ucd_y1_surv %>%
 ```
 
 ### Scatterplots
+
 WL2
+
 
 ``` r
 #scatter plots
@@ -1057,6 +1067,7 @@ ggsave("../output/WL2_Traits/WL2_Y1_Surv_SCATTERS_Historic.png", width = 24, hei
 ```
 
 Davis
+
 
 ``` r
 #scatter plots
@@ -1186,6 +1197,7 @@ ggsave("../output/UCD_Traits/UCD_Y1_Surv_SCATTERS_Historic.png", width = 24, hei
 ```
 
 #### Directional Distance
+
 
 ``` r
 #scatter plots - recent
@@ -1688,7 +1700,8 @@ ggsave("../output/UCD_Traits/UCD_Y1_Surv_PPTSubDist_SCATTERS_Historic.png", widt
 
 ## Stats
 
-### Scaling 
+### Scaling
+
 
 ``` r
 wl2_y1_surv %>% group_by(pop) %>% summarise(n=n()) %>% arrange(n) #CHECK SAMPLE SIZE
@@ -1895,8 +1908,8 @@ ucd_y1_surv_scaled_sub <- ucd_y1_surv_sub_dist %>%
               "Geographic_Dist"), scale)
 ```
 
+### Basic Model Workflow
 
-### Basic Model Workflow 
 
 ``` r
 glmer.model_binomial <- 
@@ -1966,7 +1979,8 @@ surv_fits_ucd %>% mutate(glance=map(fit, glance)) %>% unnest(glance) %>% arrange
 #pop.mf model best by AIC and BIC, but full model = close behind and has no issues so will use that 
 ```
 
-#### Test climate and geographic distance 
+#### Test climate and geographic distance
+
 
 ``` r
 surv_GD_wflow <- workflow() %>%
@@ -2204,339 +2218,1107 @@ surv_GD_fits_ucd_sub %>% mutate(tidy=map(fit, tidy)) %>% unnest(tidy) %>%
 #  arrange(p.value)
 ```
 
+## Fitness \~ Size
 
-## Reaction Norms (old code)
+### Load the size data & Combine with Survival 
+
+#### Size (two months)
+
 
 ``` r
-firstyear_mort_rxnnorms <- bind_rows(UCD_firstyear_mort_prep, WL2_firstyear_mort_prep) %>% 
-  mutate(Survival=if_else(pheno=="X" | is.na(pheno), 0, 1)) %>% 
-  arrange(Genotype, Site)
-xtabs(~pop.mf+Site, data=firstyear_mort_rxnnorms) #some pop/mfs without data at one of the sites 
-head(firstyear_mort_rxnnorms)
-
-firstyear_mort_rxnnorms_loc <- left_join(firstyear_mort_rxnnorms, gowersdist_all)
-head(firstyear_mort_rxnnorms_loc)
-#write_csv(firstyear_mort_rxnnorms_loc, "../output/firstyear_mort_both_sites.csv")
+twomonths_size <- read_csv("../output/TwoMonths_Size_BothSites.csv")
 ```
 
-### Means by maternal family
-
-``` r
-firstyear_mort_rxnnorms_mfs <- firstyear_mort_rxnnorms_loc %>% 
-  group_by(pop.mf, pop, Site, elev_m, Recent_Gowers_Dist_WL2) %>% 
-  summarise(N_Surv = sum(!is.na(Survival)), mean_Surv = mean(Survival,na.rm=(TRUE)), 
-            sem_surv=sem(Survival, na.rm=(TRUE)))
-firstyear_mort_rxnnorms_mfs %>% arrange(N_Surv)
-
-#restrict to mfs with plants at both sites
-firstyear_mort_rxnnorms_summary_mfs_wide <- firstyear_mort_rxnnorms_mfs %>% 
-  select(pop.mf, Site, N_Surv) %>% 
-  spread(Site, N_Surv) %>% 
-  mutate(Both.Sites=if_else(!is.na(UCD) & !is.na(WL2), TRUE, FALSE)) %>% 
- filter(Both.Sites != "FALSE")
-firstyear_mort_rxnnorms_summary_mfs_wide %>% arrange(Both.Sites)
-
-firstyear_mort_rxnnorms_summary_mfs_bothsites <- left_join(firstyear_mort_rxnnorms_summary_mfs_wide, firstyear_mort_rxnnorms_mfs)
-head(firstyear_mort_rxnnorms_summary_mfs_bothsites)
-unique(firstyear_mort_rxnnorms_summary_mfs_bothsites$pop) #still have all 23 pops 
-
-firstyear_mort_rxnnorms_summary_mfs2 <- firstyear_mort_rxnnorms_summary_mfs_bothsites %>% 
-  mutate(Site=str_replace_all(Site, "UCD", "Low Elev"), 
-         Site=str_replace_all(Site, "WL2", "High Elev")) 
-firstyear_mort_rxnnorms_summary_mfs2$Site <- factor(firstyear_mort_rxnnorms_summary_mfs2$Site,
-                                               levels = c('Low Elev','High Elev'))
-
-firstyear_mort_rxnnorms_summary_mfs2 %>% arrange(desc(mean_Surv))
-firstyear_mort_rxnnorms_summary_mfs2 %>% 
-  filter(N_Surv == 1) #26 maternal families with only 1 plant at one of the sites
+```
+## Rows: 2330 Columns: 23
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: ","
+## chr  (7): BedLoc, block, Genotype, pop.mf, parent.pop, Site, elevation.group
+## dbl (16): mf, rep, height.cm, long.leaf.cm, Garden_Lat, Garden_Long, Garden_...
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
 ```
 
-#### Plot mf avgs 
-
 ``` r
-firstyear_mort_rxnnorms_summary_mfs2 %>% 
-   ggplot(aes(x=Site, y=mean_Surv, group=pop.mf, color=pop.mf)) + 
-  geom_point(size=0.8) + geom_line(linewidth=0.8) +
-  geom_errorbar(aes(ymin=mean_Surv-sem_surv,ymax=mean_Surv+sem_surv),width=.1) +
-  theme_classic() +
-   theme(text=element_text(size=25))
+names(twomonths_size)
 ```
 
-
-``` r
-#note that there are a lot of maternal families with only 1 plant - removed those from these figures 
-firstyear_mort_rxnnorms_summary_mfs2 %>% 
-  filter(N_Surv != 1) %>% 
-  ggplot(aes(x=Site, y=mean_Surv, group=pop.mf, color=elev_m)) + 
-  geom_point(size=0.8) + geom_line(linewidth=0.8) +
- geom_errorbar(aes(ymin=mean_Surv-sem_surv,ymax=mean_Surv+sem_surv),width=.1) +
-  theme_classic() + scale_colour_gradient(low = "#F5A540", high = "#0043F0")  +
-  labs(y="Survival", color="Elevation (m)") +
-  theme(text=element_text(size=28))
-#ggsave("../output/Surv_FirstYear_RxNorms_MFAvgs.png", width = 14, height = 8, units = "in")
+```
+##  [1] "BedLoc"                 "block"                  "Genotype"              
+##  [4] "pop.mf"                 "parent.pop"             "mf"                    
+##  [7] "rep"                    "height.cm"              "long.leaf.cm"          
+## [10] "Site"                   "Garden_Lat"             "Garden_Long"           
+## [13] "Garden_Elev"            "elevation.group"        "elev_m"                
+## [16] "Lat"                    "Long"                   "GrwSsn_GD_Recent"      
+## [19] "GrwSsn_GD_Historical"   "Wtr_Year_GD_Recent"     "Wtr_Year_GD_Historical"
+## [22] "Geographic_Dist"        "Elev_Dist"
 ```
 
-
 ``` r
-firstyear_mort_rxnnorms_summary_mfs2 %>% 
-  filter(N_Surv != 1) %>% 
-  filter(pop=="TM2"|pop=="WL2") %>%  
-  ggplot(aes(x=Site, y=mean_Surv, group=pop.mf, color=pop)) + 
-  geom_point(size=0.8) + geom_line(linewidth=0.8) +
-  geom_errorbar(aes(ymin=mean_Surv-sem_surv,ymax=mean_Surv+sem_surv),width=.1) +
-  theme_classic() + 
-  labs(y="Survival", color="Elevation (m)") +
-  theme(text=element_text(size=25))
-#ggsave("../output/Surv_FirstYear_RxNorms_TM2_WL2_MFAvgs.png", width = 12, height = 8, units = "in")
-
-firstyear_mort_rxnnorms_summary_mfs2 %>% 
-  filter(N_Surv != 1) %>% 
-  filter(pop=="WL2") %>%  
-  ggplot(aes(x=Site, y=mean_Surv, group=pop.mf, color=pop)) + 
-  geom_point(size=0.8) + geom_line(linewidth=0.8) +
-  geom_errorbar(aes(ymin=mean_Surv-sem_surv,ymax=mean_Surv+sem_surv),width=.1) +
-  theme_classic() + 
-  labs(y="Survival", color="Elevation (m)") +
-  theme(text=element_text(size=25))
+twomonths_size_ucd <- twomonths_size %>% filter(Site=="UCD") %>% select(BedLoc:Site) %>% rename(pop=parent.pop)
+head(twomonths_size_ucd)
 ```
 
-### Means by Pop
-
-``` r
-xtabs(~pop+Survival, data=firstyear_mort_rxnnorms_loc)
-firstyear_mort_rxnnorms_summary <- firstyear_mort_rxnnorms_loc %>% 
-  group_by(pop, Site, elev_m) %>% 
-  summarise(N_Surv = sum(!is.na(Survival)), mean_Surv = mean(Survival,na.rm=(TRUE)), 
-            sem_surv=sem(Survival, na.rm=(TRUE)))
-firstyear_mort_rxnnorms_summary
-
-firstyear_mort_rxnnorms_summary %>% arrange(N_Surv)
-firstyear_mort_rxnnorms_summary %>% arrange(desc(mean_Surv))
-
-firstyear_mort_rxnnorms_summary2 <- firstyear_mort_rxnnorms_summary %>% 
-  mutate(Site=str_replace_all(Site, "UCD", "Low Elev"), 
-         Site=str_replace_all(Site, "WL2", "High Elev"))
-firstyear_mort_rxnnorms_summary2$Site <- factor(firstyear_mort_rxnnorms_summary2$Site,
-                                               levels = c('Low Elev','High Elev'))
+```
+## # A tibble: 6 × 10
+##   BedLoc  block Genotype pop.mf pop      mf   rep height.cm long.leaf.cm Site 
+##   <chr>   <chr> <chr>    <chr>  <chr> <dbl> <dbl>     <dbl>        <dbl> <chr>
+## 1 D1_9_C  D1    BH_1_8   BH_1   BH        1     8       2.1          2.2 UCD  
+## 2 D2_30_D D2    BH_1_10  BH_1   BH        1    10       2.3          1.8 UCD  
+## 3 J2_37_B J2    BH_1_7   BH_1   BH        1     7       3            3.2 UCD  
+## 4 D1_19_B D1    BH_2_8   BH_2   BH        2     8       3.7          2.7 UCD  
+## 5 D2_29_D D2    BH_2_9   BH_2   BH        2     9       2.9          3.3 UCD  
+## 6 F1_17_B F1    BH_2_10  BH_2   BH        2    10       3.4          2.8 UCD
 ```
 
-#### Plot Pop Avgs
-
 ``` r
-firstyear_mort_rxnnorms_summary %>% 
-   ggplot(aes(x=Site, y=mean_Surv, group=pop, color=pop)) + 
-  geom_point(size=0.8) + geom_line(linewidth=0.8) +
-  geom_errorbar(aes(ymin=mean_Surv-sem_surv,ymax=mean_Surv+sem_surv),width=.1) +
-  theme_classic() +
-   theme(text=element_text(size=25))
+ucd_y1_surv_mossize <- left_join(ucd_y1_surv, twomonths_size_ucd) 
 ```
 
-
-``` r
-firstyear_mort_rxnnorms_summary2 %>% 
-  filter(N_Surv != 1) %>% 
-  ggplot(aes(x=Site, y=mean_Surv, group=pop, color=elev_m)) + 
-  geom_point(size=1.5) + geom_line(linewidth=1.5) +
-  geom_errorbar(aes(ymin=mean_Surv-sem_surv,ymax=mean_Surv+sem_surv),width=.1) +
-  theme_classic() + scale_colour_gradient(low = "#F5A540", high = "#0043F0")  +
-  labs(y="Survival", color="Elevation (m)") + #ylim(0,1) +
-  theme(text=element_text(size=28))
-#ggsave("../output/Surv_FirstYear_RxNorms_ALL_PopAvgs.png", width = 14, height = 8, units = "in")
+```
+## Joining with `by = join_by(block, Genotype, pop, mf, rep)`
 ```
 
-
 ``` r
-firstyear_mort_rxnnorms_summary2 %>% 
-  filter(N_Surv != 1) %>% 
-  filter(Site=="High Elev") %>% 
-  ggplot(aes(x=fct_reorder(pop, mean_Surv), y=mean_Surv, group=pop, fill=elev_m)) + 
-  geom_col(width = 0.7,position = position_dodge(0.75)) +
-  geom_errorbar(aes(ymin=mean_Surv-sem_surv,ymax=mean_Surv+sem_surv),width=.1) +
-  theme_classic() + scale_fill_gradient(low = "#F5A540", high = "#0043F0")  +
-  labs(y="Survival", fill="Elevation (m)", x="Population") + #ylim(0,1) +
-  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-#ggsave("../output/Surv_FirstYear_WL2ONLY_ALL_PopAvgs.png", width = 14, height = 8, units = "in")
+twomonths_size_wl2 <- twomonths_size %>% filter(Site=="WL2") %>% select(BedLoc:Site) %>% rename(pop=parent.pop)
+head(twomonths_size_wl2)
 ```
 
-Combine pop and mf avgs 
-
-``` r
-firstyear_mort_rxnnorms_summary2 %>% 
-  mutate(pop.mf=pop) %>% 
-  filter(N_Surv != 1) %>% 
-  ggplot(aes(x=Site, y=mean_Surv, group=pop.mf, color=elev_m)) + 
-  geom_point(size=1.5) + geom_line(linewidth=1.5, alpha=0.7) +
-  geom_errorbar(aes(ymin=mean_Surv-sem_surv,ymax=mean_Surv+sem_surv),width=.1) +
-  theme_classic() + scale_colour_gradient(low = "#F5A540", high = "#0043F0")  +
-  labs(y="Survival", color="Elevation (m)") + #ylim(0,1) +
-  theme(text=element_text(size=28)) +
- geom_line(data = firstyear_mort_rxnnorms_summary_mfs2, size=0.2) +
-  geom_point(data = firstyear_mort_rxnnorms_summary_mfs2, size=0.8) 
-#ggsave("../output/Surv_FirstYear_RxNorms_ALL_PopMFAvgs.png", width = 14, height = 8, units = "in")
+```
+## # A tibble: 6 × 10
+##   BedLoc block Genotype pop.mf pop      mf   rep height.cm long.leaf.cm Site 
+##   <chr>  <chr> <chr>    <chr>  <chr> <dbl> <dbl>     <dbl>        <dbl> <chr>
+## 1 A_7_D  A     BH_1_3   BH_1   BH        1     3      NA           NA   WL2  
+## 2 A_37_D B     BH_1_4   BH_1   BH        1     4       2.1          3.4 WL2  
+## 3 B_6_C  D     BH_1_6   BH_1   BH        1     6      NA           NA   WL2  
+## 4 B_46_D C     BH_1_5   BH_1   BH        1     5      NA           NA   WL2  
+## 5 C_40_B E     BH_1_7   BH_1   BH        1     7       3.8          2.6 WL2  
+## 6 D_30_B G     BH_1_9   BH_1   BH        1     9      NA           NA   WL2
 ```
 
-
 ``` r
-firstyear_mort_rxnnorms_summary2 %>% 
-  filter(!is.na(pop), pop!="YO8*") %>% 
-  filter(N_Surv != 1) %>% 
-  filter(pop=="TM2"|pop=="WL2") %>%  
-  ggplot(aes(x=Site, y=mean_Surv, group=pop, color=pop)) + 
-  geom_point(size=0.8) + geom_line(linewidth=0.8) +
-  geom_errorbar(aes(ymin=mean_Surv-sem_surv,ymax=mean_Surv+sem_surv),width=.1) +
-  theme_classic() + 
- ylim(0,1) +
-  labs(y="Survival", color="Elevation (m)") +
-  theme(text=element_text(size=25))
-#ggsave("../output/Surv_FirstYear_RxNorms_TM2_WL2_PopAvgs.png", width = 12, height = 8, units = "in")
+wl2_y1_surv_mossize <- left_join(wl2_y1_surv, twomonths_size_wl2)
 ```
 
-### Stats
-
-#### Combine size (two months) and survival (three months)
-
-``` r
-size_survival <- left_join(twomonths_rxnnorms_loc, firstyear_mort_rxnnorms_loc) %>% 
-  #twomonths_rxnnorms_loc is from "Single_Time_Size_RxnNorms.Rmd"
-  mutate(mf=as.character(mf))
-head(size_survival)
-names(size_survival)
-summary(size_survival)
+```
+## Joining with `by = join_by(block, Genotype, pop, mf, rep)`
 ```
 
-#### Log Reg Survival 
+#### Stem Diameter and Basal Branches from Annual Census 
+
 
 ``` r
-lmesurv1 <- glmer(Survival ~ elev_m*Site + (1|pop/mf), 
-                  data = size_survival, 
-                  family = binomial(link = "logit"), 
-                  nAGQ=0, #uses the adaptive Gaussian quadrature instead the Laplace approximation. Ask Julin about this 
-                  control=glmerControl(optimizer="bobyqa",optCtrl=list(maxfun=2e5))) 
-lmesurv2 <- glmer(Survival ~ elev_m*Site + (1|pop/mf), data = size_survival, family = binomial(link = "logit"), nAGQ=0) 
-lmesurv3 <- glmer(Survival ~ elev_m*Site + (1|pop/mf), data = size_survival, family = binomial(link = "logit"), control=glmerControl(optimizer="bobyqa",optCtrl=list(maxfun=2e5))) #this one results in a warnign 
-summary(lmesurv1)
-anova(lmesurv1)
-glance(lmesurv1)
-emtrends(lmesurv1, pairwise ~ Site, var = "elev_m")
-emmip(lmesurv1, Site ~ elev_m, cov.reduce = range) #low elev pops have a steeper increase in survival from low to high elev garden than higher elev pops 
-#ranova(lmesurv) doesn't work for lme4
-#to test for significance of random effect: 
-#the most common way to do this is to use a likelihood ratio test, i.e. fit the full and reduced models (the reduced model is the model with the focal variance(s) set to zero). 
-m0 <- glmer(Survival ~ elev_m + (1|pop), data = size_survival, family = binomial("logit")) 
-m00 <- glm(Survival~ elev_m, size_survival, family = binomial("logit"))
-anova(lmesurv1,m0, m00) #model with both random effects has a higher likelihood (better fit)
+ann_cens_size <- read_csv("../output/AnnCens_Size_BothSites_Y1.csv")
 ```
 
-#### Log Reg survival ~ size 
-Height
-
-``` r
-basiclogit_height <- glm(Survival ~ height.cm, data = size_survival, family = "binomial")
-basiclogit_height
-summary(basiclogit_height)
-
-logit_height <- glm(Survival ~ height.cm + Site, data = size_survival, family = "binomial")
-summary(logit_height)
-
-logit_height2 <- glmer(Survival ~ height.cm*Site + (1|pop/mf), data = size_survival, family = binomial(link = "logit"), nAGQ=0) 
-summary(logit_height2)
-emtrends(logit_height2, pairwise ~ Site, var = "height.cm")
-emmip(logit_height2, Site ~ height.cm, cov.reduce = range)
+```
+## Rows: 1636 Columns: 26
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: ","
+## chr  (7): BedLoc, block, Genotype, pop.mf, parent.pop, Site, elevation.group
+## dbl (19): mf, rep, diam.mm, height.cm, long.leaf.cm, total.branch, repro.bra...
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
 ```
 
-Length
-
 ``` r
-logit_length2 <- glmer(Survival ~ long.leaf.cm*Site + (1|pop/mf), data = size_survival, family = binomial(link = "logit"), nAGQ=0) 
-summary(logit_length2)
-emtrends(logit_length2, pairwise ~ Site, var = "long.leaf.cm")
-emmip(logit_length2, Site ~ long.leaf.cm, cov.reduce = range)
+names(ann_cens_size)
 ```
 
-
-#### Figures 
+```
+##  [1] "BedLoc"                 "block"                  "Genotype"              
+##  [4] "pop.mf"                 "parent.pop"             "mf"                    
+##  [7] "rep"                    "diam.mm"                "height.cm"             
+## [10] "long.leaf.cm"           "total.branch"           "repro.branch"          
+## [13] "Site"                   "Garden_Lat"             "Garden_Long"           
+## [16] "Garden_Elev"            "elevation.group"        "elev_m"                
+## [19] "Lat"                    "Long"                   "GrwSsn_GD_Recent"      
+## [22] "GrwSsn_GD_Historical"   "Wtr_Year_GD_Recent"     "Wtr_Year_GD_Historical"
+## [25] "Geographic_Dist"        "Elev_Dist"
+```
 
 ``` r
-size_survival %>% 
+ann_cens_size_ucd <- ann_cens_size %>% filter(Site=="UCD") %>% select(BedLoc:diam.mm, total.branch, Site) %>% rename(pop=parent.pop)
+head(ann_cens_size_ucd)
+```
+
+```
+## # A tibble: 6 × 10
+##   BedLoc  block Genotype pop.mf pop      mf   rep diam.mm total.branch Site 
+##   <chr>   <chr> <chr>    <chr>  <chr> <dbl> <dbl>   <dbl>        <dbl> <chr>
+## 1 J2_37_B J2    BH_1_7   BH_1   BH        1     7    16.1           11 UCD  
+## 2 D2_29_D D2    BH_2_9   BH_2   BH        2     9    12.5            3 UCD  
+## 3 F2_35_D F2    BH_2_1   BH_2   BH        2     1    14.2            3 UCD  
+## 4 H1_4_B  H1    BH_2_12  BH_2   BH        2    12    13.0            1 UCD  
+## 5 J2_25_D J2    BH_2_5   BH_2   BH        2     5    15.4            3 UCD  
+## 6 L1_10_A L1    BH_2_14  BH_2   BH        2    14    20.1            5 UCD
+```
+
+``` r
+ucd_y1_surv_annsize <- left_join(ucd_y1_surv, ann_cens_size_ucd) 
+```
+
+```
+## Joining with `by = join_by(block, Genotype, pop, mf, rep)`
+```
+
+``` r
+ann_cens_size_wl2 <- ann_cens_size %>% filter(Site=="WL2") %>% select(BedLoc:diam.mm, total.branch, Site) %>% rename(pop=parent.pop)
+head(ann_cens_size_wl2)
+```
+
+```
+## # A tibble: 6 × 10
+##   BedLoc block Genotype pop.mf pop      mf   rep diam.mm total.branch Site 
+##   <chr>  <chr> <chr>    <chr>  <chr> <dbl> <dbl>   <dbl>        <dbl> <chr>
+## 1 A_7_D  A     BH_1_3   BH_1   BH        1     3   NA              NA WL2  
+## 2 A_37_D B     BH_1_4   BH_1   BH        1     4    1.89            1 WL2  
+## 3 B_6_C  D     BH_1_6   BH_1   BH        1     6   NA              NA WL2  
+## 4 B_46_D C     BH_1_5   BH_1   BH        1     5   NA              NA WL2  
+## 5 C_40_B E     BH_1_7   BH_1   BH        1     7    2.06            1 WL2  
+## 6 D_30_B G     BH_1_9   BH_1   BH        1     9   NA              NA WL2
+```
+
+``` r
+wl2_y1_surv_annsize <- left_join(wl2_y1_surv, ann_cens_size_wl2)
+```
+
+```
+## Joining with `by = join_by(block, Genotype, pop, mf, rep)`
+```
+
+#### Merge all 
+
+``` r
+ucd_y1_surv_size <- left_join(ucd_y1_surv_mossize, ucd_y1_surv_annsize)
+```
+
+```
+## Joining with `by = join_by(block, Genotype, pop, mf, rep, elevation.group,
+## elev_m, Lat, Long, GrwSsn_GD_Recent, GrwSsn_GD_Historical, Wtr_Year_GD_Recent,
+## Wtr_Year_GD_Historical, Geographic_Dist, Elev_Dist, pheno, Survival, BedLoc,
+## pop.mf, Site)`
+```
+
+``` r
+ucd_y1_surv_size %>% filter(!is.na(diam.mm))
+```
+
+```
+## # A tibble: 63 × 24
+##    block Genotype pop      mf   rep elevation.group elev_m   Lat  Long
+##    <chr> <chr>    <chr> <dbl> <dbl> <chr>            <dbl> <dbl> <dbl>
+##  1 D2    BH_5_15  BH        5    15 Low               511.  37.4 -120.
+##  2 D2    BH_4_3   BH        4     3 Low               511.  37.4 -120.
+##  3 D2    TM2_4_11 TM2       4    11 Low               379.  39.6 -122.
+##  4 D1    YO7_8_1  YO7       8     1 High             2470.  37.8 -120.
+##  5 D2    BH_4_13  BH        4    13 Low               511.  37.4 -120.
+##  6 D2    BH_2_9   BH        2     9 Low               511.  37.4 -120.
+##  7 D2    BH_3_6   BH        3     6 Low               511.  37.4 -120.
+##  8 F1    BH_6_9   BH        6     9 Low               511.  37.4 -120.
+##  9 F2    WL2_3_13 WL2       3    13 High             2020.  38.8 -120.
+## 10 F2    BH_4_5   BH        4     5 Low               511.  37.4 -120.
+## # ℹ 53 more rows
+## # ℹ 15 more variables: GrwSsn_GD_Recent <dbl>, GrwSsn_GD_Historical <dbl>,
+## #   Wtr_Year_GD_Recent <dbl>, Wtr_Year_GD_Historical <dbl>,
+## #   Geographic_Dist <dbl>, Elev_Dist <dbl>, pheno <chr>, Survival <dbl>,
+## #   BedLoc <chr>, pop.mf <chr>, height.cm <dbl>, long.leaf.cm <dbl>,
+## #   Site <chr>, diam.mm <dbl>, total.branch <dbl>
+```
+
+``` r
+wl2_y1_surv_size <- left_join(wl2_y1_surv_mossize, wl2_y1_surv_annsize)
+```
+
+```
+## Joining with `by = join_by(block, Genotype, pop, mf, rep, elevation.group,
+## elev_m, Lat, Long, GrwSsn_GD_Recent, GrwSsn_GD_Historical, Wtr_Year_GD_Recent,
+## Wtr_Year_GD_Historical, Geographic_Dist, Elev_Dist, pheno, Survival, BedLoc,
+## pop.mf, Site)`
+```
+
+``` r
+wl2_y1_surv_size %>% filter(!is.na(diam.mm))
+```
+
+```
+## # A tibble: 469 × 24
+##    block Genotype pop      mf   rep elevation.group elev_m   Lat  Long
+##    <chr> <chr>    <chr> <dbl> <dbl> <chr>            <dbl> <dbl> <dbl>
+##  1 A     TM2_6_11 TM2       6    11 Low               379.  39.6 -122.
+##  2 A     CC_2_3   CC        2     3 Low               313   39.6 -121.
+##  3 A     CP2_5_1  CP2       5     1 High             2244.  38.7 -120.
+##  4 A     CC_5_3   CC        5     3 Low               313   39.6 -121.
+##  5 A     CC_3_3   CC        3     3 Low               313   39.6 -121.
+##  6 A     IH_5_3   IH        5     3 Low               454.  39.1 -121.
+##  7 A     CP3_5_9  CP3       5     9 High             2266.  38.7 -120.
+##  8 A     SQ2_8_9  SQ2       8     9 Mid              1934.  36.7 -119.
+##  9 A     YO11_7_9 YO11      7     9 High             2872.  37.9 -119.
+## 10 A     CP2_4_1  CP2       4     1 High             2244.  38.7 -120.
+## # ℹ 459 more rows
+## # ℹ 15 more variables: GrwSsn_GD_Recent <dbl>, GrwSsn_GD_Historical <dbl>,
+## #   Wtr_Year_GD_Recent <dbl>, Wtr_Year_GD_Historical <dbl>,
+## #   Geographic_Dist <dbl>, Elev_Dist <dbl>, pheno <chr>, Survival <dbl>,
+## #   BedLoc <chr>, pop.mf <chr>, height.cm <dbl>, long.leaf.cm <dbl>,
+## #   Site <chr>, diam.mm <dbl>, total.branch <dbl>
+```
+
+### Figures of Survival \~ Size 
+
+
+``` r
+ucd_y1_surv_size %>% 
   ggplot(aes(x=height.cm, y=Survival)) +
   geom_point()
 ```
 
+```
+## Warning: Removed 122 rows containing missing values or values outside the scale range
+## (`geom_point()`).
+```
+
+![](FirstYear_Survival_files/figure-html/unnamed-chunk-32-1.png)<!-- -->
 
 ``` r
-size_surv_pop_avgs <- size_survival %>% 
-  group_by(pop, Site, elev_m) %>% 
-  summarise(N_Surv = sum(!is.na(Survival)), mean_Surv = mean(Survival,na.rm=(TRUE)), 
-            sem_surv=sem(Survival, na.rm=(TRUE)), 
-            N_height = sum(!is.na(height.cm)), mean_height.cm = mean(height.cm,na.rm=(TRUE)), 
-            sem_height.cm=sem(height.cm, na.rm=(TRUE)), N_length = sum(!is.na(long.leaf.cm)),
-            mean_long.leaf.cm=mean(long.leaf.cm, na.rm=(TRUE)), 
-            sem_long.leaf.cm=sem(long.leaf.cm, na.rm=TRUE))
+ucd_y1_surv_size %>% 
+  ggplot(aes(x=long.leaf.cm, y=Survival)) +
+  geom_point()
+```
 
-size_surv_pop_avgs %>% arrange(desc(mean_height.cm))
+```
+## Warning: Removed 123 rows containing missing values or values outside the scale range
+## (`geom_point()`).
+```
 
-size_surv_pop_avgs2 <- size_surv_pop_avgs %>% 
-  mutate(Site=str_replace_all(Site, "UCD", "Low Elev"), 
-         Site=str_replace_all(Site, "WL2", "High Elev"))
-size_surv_pop_avgs2$Site <- factor(size_surv_pop_avgs2$Site,
-                                               levels = c('Low Elev','High Elev'))
+![](FirstYear_Survival_files/figure-html/unnamed-chunk-32-2.png)<!-- -->
+
+``` r
+ucd_y1_surv_size %>% 
+  ggplot(aes(x=diam.mm, y=Survival)) +
+  geom_point()
+```
+
+```
+## Warning: Removed 673 rows containing missing values or values outside the scale range
+## (`geom_point()`).
+```
+
+![](FirstYear_Survival_files/figure-html/unnamed-chunk-32-3.png)<!-- -->
+
+``` r
+ucd_y1_surv_size %>% #not enough variation in surv
+  ggplot(aes(x=total.branch, y=Survival)) +
+  geom_point()
+```
+
+```
+## Warning: Removed 673 rows containing missing values or values outside the scale range
+## (`geom_point()`).
+```
+
+![](FirstYear_Survival_files/figure-html/unnamed-chunk-32-4.png)<!-- -->
+
+
+``` r
+wl2_y1_surv_size %>% 
+  ggplot(aes(x=height.cm, y=Survival)) +
+  geom_point()
+```
+
+```
+## Warning: Removed 86 rows containing missing values or values outside the scale range
+## (`geom_point()`).
+```
+
+![](FirstYear_Survival_files/figure-html/unnamed-chunk-33-1.png)<!-- -->
+
+``` r
+wl2_y1_surv_size %>% 
+  ggplot(aes(x=long.leaf.cm, y=Survival)) +
+  geom_point()
+```
+
+```
+## Warning: Removed 170 rows containing missing values or values outside the scale range
+## (`geom_point()`).
+```
+
+![](FirstYear_Survival_files/figure-html/unnamed-chunk-33-2.png)<!-- -->
+
+``` r
+wl2_y1_surv_size %>% #prob not enough var in surv
+  ggplot(aes(x=diam.mm, y=Survival)) +
+  geom_point()
+```
+
+```
+## Warning: Removed 259 rows containing missing values or values outside the scale range
+## (`geom_point()`).
+```
+
+![](FirstYear_Survival_files/figure-html/unnamed-chunk-33-3.png)<!-- -->
+
+``` r
+wl2_y1_surv_size %>% #not enough variation in surv
+  ggplot(aes(x=total.branch, y=Survival)) +
+  geom_point()
+```
+
+```
+## Warning: Removed 257 rows containing missing values or values outside the scale range
+## (`geom_point()`).
+```
+
+![](FirstYear_Survival_files/figure-html/unnamed-chunk-33-4.png)<!-- -->
+
+
+``` r
+ucd_size_surv_pop_avgs <- ucd_y1_surv_size %>% 
+  group_by(pop, elev_m) %>% 
+  summarise(N_Surv = sum(!is.na(Survival)), 
+            mean_Surv = mean(Survival,na.rm=(TRUE)), sem_surv=sem(Survival, na.rm=(TRUE)), 
+            N_height = sum(!is.na(height.cm)), 
+            mean_height.cm = mean(height.cm,na.rm=(TRUE)), sem_height.cm=sem(height.cm, na.rm=(TRUE)), 
+            N_length = sum(!is.na(long.leaf.cm)),
+            mean_long.leaf.cm=mean(long.leaf.cm, na.rm=(TRUE)), sem_long.leaf.cm=sem(long.leaf.cm, na.rm=TRUE),
+            N_diam = sum(!is.na(diam.mm)), 
+            mean_diam.mm = mean(diam.mm,na.rm=(TRUE)), sem_diam.mm=sem(diam.mm, na.rm=(TRUE)), 
+            N_total.branch = sum(!is.na(total.branch)),
+            mean_total.branch=mean(total.branch, na.rm=(TRUE)), sem_total.branch=sem(total.branch, na.rm=TRUE))
+```
+
+```
+## `summarise()` has grouped output by 'pop'. You can override using the `.groups`
+## argument.
+```
+
+``` r
+ucd_size_surv_pop_avgs %>% arrange(N_height)
+```
+
+```
+## # A tibble: 23 × 17
+## # Groups:   pop [23]
+##    pop   elev_m N_Surv mean_Surv sem_surv N_height mean_height.cm sem_height.cm
+##    <chr>  <dbl>  <int>     <dbl>    <dbl>    <int>          <dbl>         <dbl>
+##  1 LV1    2593.      3     0        0            1           1.2         NA    
+##  2 WV      749.      2     0        0            1           3.9         NA    
+##  3 YO4    2158.      5     0        0            5           2.24         0.191
+##  4 CP3    2266.      6     0        0            6           1.23         0.436
+##  5 WR     1158       9     0        0            7           2.77         0.534
+##  6 YO11   2872.     13     0        0            8           2.44         0.304
+##  7 LVTR1  2741.     13     0        0            9           1.78         0.293
+##  8 SQ3    2373.      9     0.111    0.111        9           1.01         0.223
+##  9 YO8    2591.     13     0        0            9           2.51         0.425
+## 10 SQ2    1934.     21     0        0           14           1.11         0.177
+## # ℹ 13 more rows
+## # ℹ 9 more variables: N_length <int>, mean_long.leaf.cm <dbl>,
+## #   sem_long.leaf.cm <dbl>, N_diam <int>, mean_diam.mm <dbl>,
+## #   sem_diam.mm <dbl>, N_total.branch <int>, mean_total.branch <dbl>,
+## #   sem_total.branch <dbl>
 ```
 
 
 ``` r
-size_surv_pop_avgs2 %>% 
-  ggplot(aes(x=mean_height.cm, y=mean_Surv, group=pop, color=elev_m)) +
-  geom_point(size=8) +
-  theme_classic() + scale_colour_gradient(low = "#F5A540", high = "#0043F0")  +
-  labs(x="Height (cm)" ,y="Survival", color="Elevation (m)") +
-  theme(text=element_text(size=28)) +
-  facet_wrap(vars(Site), scales="free")
-#ggsave("../output/Surv_Height_BothGardens.png", width = 18, height = 8, units = "in")
+wl2_size_surv_pop_avgs <- wl2_y1_surv_size %>% 
+  group_by(pop, elev_m) %>% 
+  summarise(N_Surv = sum(!is.na(Survival)), 
+            mean_Surv = mean(Survival,na.rm=(TRUE)), sem_surv=sem(Survival, na.rm=(TRUE)), 
+            N_height = sum(!is.na(height.cm)), 
+            mean_height.cm = mean(height.cm,na.rm=(TRUE)), sem_height.cm=sem(height.cm, na.rm=(TRUE)), 
+            N_length = sum(!is.na(long.leaf.cm)),
+            mean_long.leaf.cm=mean(long.leaf.cm, na.rm=(TRUE)), sem_long.leaf.cm=sem(long.leaf.cm, na.rm=TRUE),
+            N_diam = sum(!is.na(diam.mm)), 
+            mean_diam.mm = mean(diam.mm,na.rm=(TRUE)), sem_diam.mm=sem(diam.mm, na.rm=(TRUE)), 
+            N_total.branch = sum(!is.na(total.branch)),
+            mean_total.branch=mean(total.branch, na.rm=(TRUE)), sem_total.branch=sem(total.branch, na.rm=TRUE))
+```
 
-size_surv_pop_avgs2 %>% 
+```
+## `summarise()` has grouped output by 'pop'. You can override using the `.groups`
+## argument.
+```
+
+``` r
+wl2_size_surv_pop_avgs %>% arrange(N_height)
+```
+
+```
+## # A tibble: 22 × 17
+## # Groups:   pop [22]
+##    pop   elev_m N_Surv mean_Surv sem_surv N_height mean_height.cm sem_height.cm
+##    <chr>  <dbl>  <int>     <dbl>    <dbl>    <int>          <dbl>         <dbl>
+##  1 WR     1158       4     0.25    0.25          3           5.07         1.42 
+##  2 LV3    2354.      9     0.333   0.167         8           2.55         0.338
+##  3 SQ3    2373.     13     0.462   0.144        11           1.43         0.189
+##  4 FR      787      17     0.294   0.114        13           4.39         0.986
+##  5 SQ1    1921.     13     0.769   0.122        13           2.59         0.271
+##  6 LV1    2593.     24     0.208   0.0847       18           2.06         0.234
+##  7 LVTR1  2741.     24     0.208   0.0847       19           2.13         0.278
+##  8 YO4    2158.     20     0.45    0.114        19           3.87         0.484
+##  9 SQ2    1934.     21     0.476   0.112        21           2.06         0.278
+## 10 YO8    2591.     29     0.310   0.0874       23           2.93         0.284
+## # ℹ 12 more rows
+## # ℹ 9 more variables: N_length <int>, mean_long.leaf.cm <dbl>,
+## #   sem_long.leaf.cm <dbl>, N_diam <int>, mean_diam.mm <dbl>,
+## #   sem_diam.mm <dbl>, N_total.branch <int>, mean_total.branch <dbl>,
+## #   sem_total.branch <dbl>
+```
+
+
+``` r
+ucd_y1_surv_size %>% 
+  drop_na(Survival, height.cm) %>% 
+  group_by(pop, elev_m) %>% 
+  summarise(N_Surv = sum(!is.na(Survival)), 
+            mean_Surv = mean(Survival,na.rm=(TRUE)), sem_surv=sem(Survival, na.rm=(TRUE)), 
+            N_height = sum(!is.na(height.cm)), 
+            mean_height.cm = mean(height.cm,na.rm=(TRUE)), sem_height.cm=sem(height.cm, na.rm=(TRUE))) %>% 
+  filter(N_height>2) %>% 
+  ggplot(aes(x=mean_height.cm, y=mean_Surv, group=pop, color=elev_m)) +
+  geom_point(size=4) +
+  theme_classic() + 
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0")  +
+  labs(x="Height (cm)", y="First Year Survival", color="Elevation (m)", title="Low Elevation Garden") +
+  theme(text=element_text(size=25))
+```
+
+```
+## `summarise()` has grouped output by 'pop'. You can override using the `.groups`
+## argument.
+```
+
+![](FirstYear_Survival_files/figure-html/unnamed-chunk-36-1.png)<!-- -->
+
+``` r
+ucd_y1_surv_size %>% 
+  drop_na(Survival, long.leaf.cm) %>% 
+  group_by(pop, elev_m) %>% 
+  summarise(N_Surv = sum(!is.na(Survival)), 
+            mean_Surv = mean(Survival,na.rm=(TRUE)), sem_surv=sem(Survival, na.rm=(TRUE)), 
+            N_length = sum(!is.na(long.leaf.cm)),
+            mean_long.leaf.cm=mean(long.leaf.cm, na.rm=(TRUE)), sem_long.leaf.cm=sem(long.leaf.cm, na.rm=TRUE)) %>% 
+  filter(N_length>2) %>% 
   ggplot(aes(x=mean_long.leaf.cm, y=mean_Surv, group=pop, color=elev_m)) +
-  geom_point(size=8) +
-  theme_classic() + scale_colour_gradient(low = "#F5A540", high = "#0043F0")  +
-  labs(x="Leaf Length (cm)" ,y="Survival", color="Elevation (m)") +
-  theme(text=element_text(size=28)) +
-  facet_wrap(vars(Site), scales="free")
-#ggsave("../output/Surv_Length_BothGardens.png", width = 18, height = 8, units = "in")
-
-size_surv_pop_avgs %>% 
-  filter(Site=="UCD") %>% 
-  ggplot(aes(x=mean_height.cm, y=mean_Surv, group=pop, color=elev_m)) +
-  geom_point(size=1) +
-  theme_classic() + scale_colour_gradient(low = "#F5A540", high = "#0043F0")  +
-  labs(x="Height (cm)" ,y="Survival", color="Elevation (m)", title="Low Elevation Garden") +
-  theme(text=element_text(size=25))
-
-size_surv_pop_avgs %>% 
-  filter(Site=="UCD") %>% 
-  ggplot(aes(x=mean_height.cm, y=mean_Surv)) +
-  geom_point(size=1) +
-  geom_smooth() +
-  theme_classic()  +
-  labs(x="Height (cm)" ,y="Survival", color="Elevation (m)", title="Low Elevation Garden") +
-  theme(text=element_text(size=25))
-
-size_surv_pop_avgs %>% 
-  filter(Site=="WL2") %>% 
-  ggplot(aes(x=mean_height.cm, y=mean_Surv, group=pop, color=elev_m)) +
-  geom_point(size=1) +
-  theme_classic() + scale_colour_gradient(low = "#F5A540", high = "#0043F0")  +
-  labs(x="Height (cm)" ,y="Survival", color="Elevation (m)", title="High Elevation Garden") +
-  theme(text=element_text(size=25))
-
-size_surv_pop_avgs %>% 
-  filter(Site=="WL2") %>% 
-  ggplot(aes(x=mean_height.cm, y=mean_Surv)) +
-  geom_point(size=1) +
-  geom_smooth() +
-  theme_classic()  +
-  labs(x="Height (cm)" ,y="Survival", color="Elevation (m)", title="High Elevation Garden") +
+  geom_point(size=4) +
+  scale_y_continuous(expand = c(0.01, 0.01)) +
+  theme_classic() + 
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0")  +
+  labs(x="Leaf Length (cm)" ,y="First Year Survival", color="Elevation (m)", title="Low Elevation Garden") +
   theme(text=element_text(size=25))
 ```
 
+```
+## `summarise()` has grouped output by 'pop'. You can override using the `.groups`
+## argument.
+```
+
+![](FirstYear_Survival_files/figure-html/unnamed-chunk-36-2.png)<!-- -->
+
+``` r
+ucd_y1_surv_size %>% 
+  drop_na(Survival, diam.mm) %>% 
+  group_by(pop, elev_m) %>% 
+  summarise(N_Surv = sum(!is.na(Survival)), 
+            mean_Surv = mean(Survival,na.rm=(TRUE)), sem_surv=sem(Survival, na.rm=(TRUE)), 
+            N_diam = sum(!is.na(diam.mm)), 
+            mean_diam.mm = mean(diam.mm,na.rm=(TRUE)), sem_diam.mm=sem(diam.mm, na.rm=(TRUE))) %>% 
+  filter(N_diam>2) %>% 
+  ggplot(aes(x=mean_diam.mm, y=mean_Surv, group=pop, color=elev_m)) +
+  geom_point(size=4) +
+  scale_y_continuous(expand = c(0.01, 0.01)) +
+  theme_classic() + 
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0")  +
+  labs(x="Stem Diameter (mm)" ,y="First Year Survival", color="Elevation (m)", title="Low Elevation Garden") +
+  theme(text=element_text(size=25))
+```
+
+```
+## `summarise()` has grouped output by 'pop'. You can override using the `.groups`
+## argument.
+```
+
+![](FirstYear_Survival_files/figure-html/unnamed-chunk-36-3.png)<!-- -->
+
+``` r
+ucd_y1_surv_size %>% 
+  drop_na(Survival, total.branch) %>% 
+  group_by(pop, elev_m) %>% 
+  summarise(N_Surv = sum(!is.na(Survival)), 
+            mean_Surv = mean(Survival,na.rm=(TRUE)), sem_surv=sem(Survival, na.rm=(TRUE)), 
+            N_total.branch = sum(!is.na(total.branch)),
+            mean_total.branch=mean(total.branch, na.rm=(TRUE)), sem_total.branch=sem(total.branch, na.rm=TRUE)) %>% 
+  filter(N_total.branch>2) %>% 
+  ggplot(aes(x=mean_total.branch, y=mean_Surv, group=pop, color=elev_m)) +
+  geom_point(size=4) +
+  scale_y_continuous(expand = c(0.01, 0.01)) +
+  theme_classic() +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0")  +
+  labs(x="Basal Branch N" ,y="First Year Survival", color="Elevation (m)", title="Low Elevation Garden") +
+  theme(text=element_text(size=25))
+```
+
+```
+## `summarise()` has grouped output by 'pop'. You can override using the `.groups`
+## argument.
+```
+
+![](FirstYear_Survival_files/figure-html/unnamed-chunk-36-4.png)<!-- -->
 
 
+``` r
+wl2_y1_surv_size %>% 
+  drop_na(Survival, height.cm) %>% 
+  group_by(pop, elev_m) %>% 
+  summarise(N_Surv = sum(!is.na(Survival)), 
+            mean_Surv = mean(Survival,na.rm=(TRUE)), sem_surv=sem(Survival, na.rm=(TRUE)), 
+            N_height = sum(!is.na(height.cm)), 
+            mean_height.cm = mean(height.cm,na.rm=(TRUE)), sem_height.cm=sem(height.cm, na.rm=(TRUE))) %>% 
+  filter(N_height>2) %>% 
+  ggplot(aes(x=mean_height.cm, y=mean_Surv, group=pop, color=elev_m)) +
+  geom_point(size=4) +
+  theme_classic() + 
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0")  +
+  labs(x="Height (cm)", y="First Year Survival", color="Elevation (m)", title="High Elevation Garden") +
+  theme(text=element_text(size=25))
+```
+
+```
+## `summarise()` has grouped output by 'pop'. You can override using the `.groups`
+## argument.
+```
+
+![](FirstYear_Survival_files/figure-html/unnamed-chunk-37-1.png)<!-- -->
+
+``` r
+wl2_y1_surv_size %>% 
+  drop_na(Survival, long.leaf.cm) %>% 
+  group_by(pop, elev_m) %>% 
+  summarise(N_Surv = sum(!is.na(Survival)), 
+            mean_Surv = mean(Survival,na.rm=(TRUE)), sem_surv=sem(Survival, na.rm=(TRUE)), 
+            N_length = sum(!is.na(long.leaf.cm)),
+            mean_long.leaf.cm=mean(long.leaf.cm, na.rm=(TRUE)), sem_long.leaf.cm=sem(long.leaf.cm, na.rm=TRUE)) %>% 
+  filter(N_length>2) %>% 
+  ggplot(aes(x=mean_long.leaf.cm, y=mean_Surv, group=pop, color=elev_m)) +
+  geom_point(size=4) +
+  scale_y_continuous(expand = c(0.01, 0.01)) +
+  theme_classic() + 
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0")  +
+  labs(x="Leaf Length (cm)" ,y="First Year Survival", color="Elevation (m)", title="High Elevation Garden") +
+  theme(text=element_text(size=25))
+```
+
+```
+## `summarise()` has grouped output by 'pop'. You can override using the `.groups`
+## argument.
+```
+
+![](FirstYear_Survival_files/figure-html/unnamed-chunk-37-2.png)<!-- -->
+
+``` r
+wl2_y1_surv_size %>% 
+  drop_na(Survival, diam.mm) %>% 
+  group_by(pop, elev_m) %>% 
+  summarise(N_Surv = sum(!is.na(Survival)), 
+            mean_Surv = mean(Survival,na.rm=(TRUE)), sem_surv=sem(Survival, na.rm=(TRUE)), 
+            N_diam = sum(!is.na(diam.mm)), 
+            mean_diam.mm = mean(diam.mm,na.rm=(TRUE)), sem_diam.mm=sem(diam.mm, na.rm=(TRUE))) %>% 
+  filter(N_diam>2) %>% 
+  ggplot(aes(x=mean_diam.mm, y=mean_Surv, group=pop, color=elev_m)) +
+  geom_point(size=4) +
+  scale_y_continuous(expand = c(0.01, 0.01)) +
+  theme_classic() + 
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0")  +
+  labs(x="Stem Diameter (mm)" ,y="First Year Survival", color="Elevation (m)", title="High Elevation Garden") +
+  theme(text=element_text(size=25))
+```
+
+```
+## `summarise()` has grouped output by 'pop'. You can override using the `.groups`
+## argument.
+```
+
+![](FirstYear_Survival_files/figure-html/unnamed-chunk-37-3.png)<!-- -->
+
+``` r
+wl2_y1_surv_size %>% 
+  drop_na(Survival, total.branch) %>% 
+  group_by(pop, elev_m) %>% 
+  summarise(N_Surv = sum(!is.na(Survival)), 
+            mean_Surv = mean(Survival,na.rm=(TRUE)), sem_surv=sem(Survival, na.rm=(TRUE)), 
+            N_total.branch = sum(!is.na(total.branch)),
+            mean_total.branch=mean(total.branch, na.rm=(TRUE)), sem_total.branch=sem(total.branch, na.rm=TRUE)) %>% 
+  filter(N_total.branch>2) %>% 
+  ggplot(aes(x=mean_total.branch, y=mean_Surv, group=pop, color=elev_m)) +
+  geom_point(size=4) +
+  scale_y_continuous(expand = c(0.01, 0.01)) +
+  theme_classic() +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0")  +
+  labs(x="Basal Branch N" ,y="First Year Survival", color="Elevation (m)", title="High Elevation Garden") +
+  theme(text=element_text(size=25))
+```
+
+```
+## `summarise()` has grouped output by 'pop'. You can override using the `.groups`
+## argument.
+```
+
+![](FirstYear_Survival_files/figure-html/unnamed-chunk-37-4.png)<!-- -->
+
+### Stats
+
+Log Reg survival \~ size
+
+#### Check for correlations between traits 
+
+
+``` r
+size_normalized_ucd <- ucd_y1_surv_size %>% 
+  select(height.cm, long.leaf.cm, diam.mm, total.branch) %>% 
+  drop_na(height.cm, long.leaf.cm, diam.mm, total.branch) %>% scale() #normalize the data so they're all on the same scale
+#head(size_normalized_ucd)
+cor.norm_ucd = cor(size_normalized_ucd) #test correlations among the traits
+cor.sig_ucd <- cor.mtest(size_normalized_ucd, method="pearson") #test significance of corrs
+corrplot(cor.norm_ucd, type = "upper",
+         tl.srt = 45, p.mat = cor.sig_ucd$p, 
+         sig.level = 0.05, insig="blank") 
+```
+
+![](FirstYear_Survival_files/figure-html/unnamed-chunk-38-1.png)<!-- -->
+
+``` r
+#no strong correlations
+cor.norm_ucd
+```
+
+```
+##               height.cm long.leaf.cm    diam.mm total.branch
+## height.cm     1.0000000    0.4834421 -0.0844292   -0.4471783
+## long.leaf.cm  0.4834421    1.0000000  0.1732493   -0.3172139
+## diam.mm      -0.0844292    0.1732493  1.0000000    0.2818504
+## total.branch -0.4471783   -0.3172139  0.2818504    1.0000000
+```
+
+``` r
+cor.sig_ucd$p
+```
+
+```
+##                 height.cm long.leaf.cm    diam.mm total.branch
+## height.cm    0.000000e+00 5.980653e-05 0.51060705 0.0002385214
+## long.leaf.cm 5.980653e-05 0.000000e+00 0.17450156 0.0113032763
+## diam.mm      5.106071e-01 1.745016e-01 0.00000000 0.0252274608
+## total.branch 2.385214e-04 1.130328e-02 0.02522746 0.0000000000
+```
+
+``` r
+size_normalized_wl2 <- wl2_y1_surv_size %>% 
+  select(height.cm, long.leaf.cm, diam.mm, total.branch) %>% 
+  drop_na(height.cm, long.leaf.cm, diam.mm, total.branch) %>% scale() #normalize the data so they're all on the same scale
+#head(size_normalized_wl2)
+cor.norm_wl2 = cor(size_normalized_wl2) #test correlations among the traits
+cor.sig_wl2 <- cor.mtest(size_normalized_wl2, method="pearson") #test significance of corrs
+corrplot(cor.norm_wl2, type = "upper",
+         tl.srt = 45, p.mat = cor.sig_wl2$p, 
+         sig.level = 0.05, insig="blank")  
+```
+
+![](FirstYear_Survival_files/figure-html/unnamed-chunk-38-2.png)<!-- -->
+
+``` r
+#longest leaf and diam are 65% correlated, no other strong corrs
+cor.norm_wl2
+```
+
+```
+##                height.cm long.leaf.cm      diam.mm total.branch
+## height.cm     1.00000000   0.09103923  0.265216745 -0.162316479
+## long.leaf.cm  0.09103923   1.00000000  0.657810905 -0.076327518
+## diam.mm       0.26521675   0.65781091  1.000000000 -0.001915143
+## total.branch -0.16231648  -0.07632752 -0.001915143  1.000000000
+```
+
+``` r
+cor.sig_wl2$p
+```
+
+```
+##                 height.cm long.leaf.cm      diam.mm total.branch
+## height.cm    0.000000e+00 5.282735e-02 9.914070e-09 0.0005239727
+## long.leaf.cm 5.282735e-02 0.000000e+00 1.727520e-57 0.1047137866
+## diam.mm      9.914070e-09 1.727520e-57 0.000000e+00 0.9675757751
+## total.branch 5.239727e-04 1.047138e-01 9.675758e-01 0.0000000000
+```
+
+
+``` r
+ucd_y1_surv_size_formod <- ucd_y1_surv_size %>% 
+  drop_na(Survival, height.cm, long.leaf.cm) %>% 
+  filter(pop!="WV", pop!="LV1")
+
+wl2_y1_surv_height_formod <- wl2_y1_surv_size %>% 
+  drop_na(Survival, height.cm) 
+
+wl2_y1_surv_length_formod <- wl2_y1_surv_size %>% 
+  drop_na(Survival, long.leaf.cm) 
+```
+
+
+#### Height
+
+
+``` r
+ucd_basiclogit_height <- glm(Survival ~ height.cm, data = ucd_y1_surv_size_formod, family = "binomial")
+summary(ucd_basiclogit_height)
+```
+
+```
+## 
+## Call:
+## glm(formula = Survival ~ height.cm, family = "binomial", data = ucd_y1_surv_size_formod)
+## 
+## Coefficients:
+##             Estimate Std. Error z value Pr(>|z|)    
+## (Intercept) -3.06930    0.29285  -10.48  < 2e-16 ***
+## height.cm    0.23878    0.07085    3.37 0.000751 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## (Dispersion parameter for binomial family taken to be 1)
+## 
+##     Null deviance: 378.92  on 610  degrees of freedom
+## Residual deviance: 368.41  on 609  degrees of freedom
+## AIC: 372.41
+## 
+## Number of Fisher Scoring iterations: 5
+```
+
+``` r
+ucd_logit_height2 <- glmer(Survival ~ height.cm + (1|pop/mf) + (1|block), data = ucd_y1_surv_size_formod, family = binomial(link = "logit")) 
+summary(ucd_logit_height2)
+```
+
+```
+## Generalized linear mixed model fit by maximum likelihood (Laplace
+##   Approximation) [glmerMod]
+##  Family: binomial  ( logit )
+## Formula: Survival ~ height.cm + (1 | pop/mf) + (1 | block)
+##    Data: ucd_y1_surv_size_formod
+## 
+##      AIC      BIC   logLik deviance df.resid 
+##    317.8    339.8   -153.9    307.8      606 
+## 
+## Scaled residuals: 
+##     Min      1Q  Median      3Q     Max 
+## -1.0910 -0.2836 -0.1159 -0.0839  5.8330 
+## 
+## Random effects:
+##  Groups Name        Variance Std.Dev.
+##  mf:pop (Intercept) 0.7265   0.8523  
+##  pop    (Intercept) 2.8982   1.7024  
+##  block  (Intercept) 0.1882   0.4338  
+## Number of obs: 611, groups:  mf:pop, 120; pop, 21; block, 10
+## 
+## Fixed effects:
+##             Estimate Std. Error z value Pr(>|z|)    
+## (Intercept)  -4.8942     0.8309  -5.890 3.86e-09 ***
+## height.cm     0.3131     0.1286   2.435   0.0149 *  
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Correlation of Fixed Effects:
+##           (Intr)
+## height.cm -0.577
+```
+
+``` r
+wl2_basiclogit_height <- glm(Survival ~ height.cm, data = wl2_y1_surv_height_formod, family = "binomial")
+summary(wl2_basiclogit_height)
+```
+
+```
+## 
+## Call:
+## glm(formula = Survival ~ height.cm, family = "binomial", data = wl2_y1_surv_height_formod)
+## 
+## Coefficients:
+##             Estimate Std. Error z value Pr(>|z|)    
+## (Intercept) -1.16873    0.20498  -5.702 1.19e-08 ***
+## height.cm    0.58278    0.06151   9.474  < 2e-16 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## (Dispersion parameter for binomial family taken to be 1)
+## 
+##     Null deviance: 752.18  on 641  degrees of freedom
+## Residual deviance: 564.67  on 640  degrees of freedom
+## AIC: 568.67
+## 
+## Number of Fisher Scoring iterations: 6
+```
+
+``` r
+wl2_logit_height2 <- glmer(Survival ~ height.cm + (1|pop/mf) + (1|block), data = wl2_y1_surv_height_formod, family = binomial(link = "logit"), nAGQ=0) 
+```
+
+```
+## boundary (singular) fit: see help('isSingular')
+```
+
+``` r
+#nAGQ = integer scalar - the number of points per axis for evaluating the adaptive Gauss-Hermite approximation to the log-likelihood.
+#A value of zero uses a faster but less exact form of parameter estimation for GLMMs by optimizing the random effects and the fixed-effects coefficients in the penalized iteratively reweighted least squares step.
+#changed it to zero here b/c got a convergence error without it 
+summary(wl2_logit_height2)
+```
+
+```
+## Generalized linear mixed model fit by maximum likelihood (Adaptive
+##   Gauss-Hermite Quadrature, nAGQ = 0) [glmerMod]
+##  Family: binomial  ( logit )
+## Formula: Survival ~ height.cm + (1 | pop/mf) + (1 | block)
+##    Data: wl2_y1_surv_height_formod
+## 
+##      AIC      BIC   logLik deviance df.resid 
+##    449.9    472.2   -220.0    439.9      637 
+## 
+## Scaled residuals: 
+##     Min      1Q  Median      3Q     Max 
+## -9.5853 -0.2774  0.0954  0.2760  2.8019 
+## 
+## Random effects:
+##  Groups Name        Variance Std.Dev.
+##  mf:pop (Intercept) 0.000    0.000   
+##  pop    (Intercept) 3.613    1.901   
+##  block  (Intercept) 1.337    1.156   
+## Number of obs: 642, groups:  mf:pop, 134; pop, 22; block, 13
+## 
+## Fixed effects:
+##             Estimate Std. Error z value Pr(>|z|)    
+## (Intercept) -0.36673    0.62866  -0.583     0.56    
+## height.cm    0.37169    0.08978   4.140 3.47e-05 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Correlation of Fixed Effects:
+##           (Intr)
+## height.cm -0.498
+## optimizer (bobyqa) convergence code: 0 (OK)
+## boundary (singular) fit: see help('isSingular')
+```
+
+``` r
+#boundary (singular) fit: see help('isSingular') - unclear why 
+```
+
+#### Length
+
+
+``` r
+ucd_logit_length2 <- glmer(Survival ~ long.leaf.cm + (1|pop/mf) + (1|block), data = ucd_y1_surv_size_formod, family = binomial(link = "logit"))
+summary(ucd_logit_length2)
+```
+
+```
+## Generalized linear mixed model fit by maximum likelihood (Laplace
+##   Approximation) [glmerMod]
+##  Family: binomial  ( logit )
+## Formula: Survival ~ long.leaf.cm + (1 | pop/mf) + (1 | block)
+##    Data: ucd_y1_surv_size_formod
+## 
+##      AIC      BIC   logLik deviance df.resid 
+##    318.5    340.6   -154.3    308.5      606 
+## 
+## Scaled residuals: 
+##     Min      1Q  Median      3Q     Max 
+## -1.2805 -0.3015 -0.1194 -0.0864  7.5789 
+## 
+## Random effects:
+##  Groups Name        Variance Std.Dev.
+##  mf:pop (Intercept) 0.6403   0.8002  
+##  pop    (Intercept) 2.7078   1.6455  
+##  block  (Intercept) 0.1704   0.4127  
+## Number of obs: 611, groups:  mf:pop, 120; pop, 21; block, 10
+## 
+## Fixed effects:
+##              Estimate Std. Error z value Pr(>|z|)    
+## (Intercept)   -5.1107     0.8725  -5.857 4.71e-09 ***
+## long.leaf.cm   0.5040     0.2211   2.279   0.0226 *  
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Correlation of Fixed Effects:
+##             (Intr)
+## long.lef.cm -0.651
+```
+
+``` r
+wl2_logit_length2 <- glmer(Survival ~ long.leaf.cm + (1|pop/mf) + (1|block), data = wl2_y1_surv_length_formod, family = binomial(link = "logit")) 
+```
+
+```
+## boundary (singular) fit: see help('isSingular')
+```
+
+``` r
+summary(wl2_logit_length2)
+```
+
+```
+## Generalized linear mixed model fit by maximum likelihood (Laplace
+##   Approximation) [glmerMod]
+##  Family: binomial  ( logit )
+## Formula: Survival ~ long.leaf.cm + (1 | pop/mf) + (1 | block)
+##    Data: wl2_y1_surv_length_formod
+## 
+##      AIC      BIC   logLik deviance df.resid 
+##    361.8    383.4   -175.9    351.8      553 
+## 
+## Scaled residuals: 
+##     Min      1Q  Median      3Q     Max 
+## -7.4797  0.0545  0.1220  0.2511  2.4122 
+## 
+## Random effects:
+##  Groups Name        Variance  Std.Dev. 
+##  mf:pop (Intercept) 1.398e-09 3.739e-05
+##  pop    (Intercept) 4.182e+00 2.045e+00
+##  block  (Intercept) 1.205e+00 1.098e+00
+## Number of obs: 558, groups:  mf:pop, 126; pop, 22; block, 13
+## 
+## Fixed effects:
+##              Estimate Std. Error z value Pr(>|z|)    
+## (Intercept)    0.3042     0.6650   0.457 0.647344    
+## long.leaf.cm   0.5876     0.1624   3.619 0.000296 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Correlation of Fixed Effects:
+##             (Intr)
+## long.lef.cm -0.504
+## optimizer (Nelder_Mead) convergence code: 0 (OK)
+## boundary (singular) fit: see help('isSingular')
+```
+
+``` r
+#boundary (singular) fit: see help('isSingular') mf starts explaining very little variation 
+```
+
+#### Height and Length
+
+``` r
+ucd_logit_size <- glmer(Survival ~ height.cm + long.leaf.cm + (1|pop/mf) + (1|block), data = ucd_y1_surv_size_formod, family = binomial(link = "logit"))
+summary(ucd_logit_size)
+```
+
+```
+## Generalized linear mixed model fit by maximum likelihood (Laplace
+##   Approximation) [glmerMod]
+##  Family: binomial  ( logit )
+## Formula: Survival ~ height.cm + long.leaf.cm + (1 | pop/mf) + (1 | block)
+##    Data: ucd_y1_surv_size_formod
+## 
+##      AIC      BIC   logLik deviance df.resid 
+##    317.8    344.3   -152.9    305.8      605 
+## 
+## Scaled residuals: 
+##     Min      1Q  Median      3Q     Max 
+## -1.1417 -0.2826 -0.1191 -0.0853  6.3088 
+## 
+## Random effects:
+##  Groups Name        Variance Std.Dev.
+##  mf:pop (Intercept) 0.7416   0.8612  
+##  pop    (Intercept) 2.7115   1.6467  
+##  block  (Intercept) 0.1505   0.3880  
+## Number of obs: 611, groups:  mf:pop, 120; pop, 21; block, 10
+## 
+## Fixed effects:
+##              Estimate Std. Error z value Pr(>|z|)    
+## (Intercept)   -5.4303     0.9178  -5.916 3.29e-09 ***
+## height.cm      0.2304     0.1406   1.638    0.101    
+## long.leaf.cm   0.3387     0.2431   1.393    0.164    
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Correlation of Fixed Effects:
+##             (Intr) hght.c
+## height.cm   -0.285       
+## long.lef.cm -0.466 -0.402
+```
+
+``` r
+tidy(ucd_logit_size)
+```
+
+```
+## # A tibble: 6 × 7
+##   effect   group  term            estimate std.error statistic  p.value
+##   <chr>    <chr>  <chr>              <dbl>     <dbl>     <dbl>    <dbl>
+## 1 fixed    <NA>   (Intercept)       -5.43      0.918     -5.92  3.29e-9
+## 2 fixed    <NA>   height.cm          0.230     0.141      1.64  1.01e-1
+## 3 fixed    <NA>   long.leaf.cm       0.339     0.243      1.39  1.64e-1
+## 4 ran_pars mf:pop sd__(Intercept)    0.861    NA         NA    NA      
+## 5 ran_pars pop    sd__(Intercept)    1.65     NA         NA    NA      
+## 6 ran_pars block  sd__(Intercept)    0.388    NA         NA    NA
+```
+
+``` r
+wl2_logit_size <- glmer(Survival ~ height.cm + long.leaf.cm + (1|pop/mf) + (1|block), data = wl2_y1_surv_length_formod, family = binomial(link = "logit")) 
+summary(wl2_logit_size)
+```
+
+```
+## Generalized linear mixed model fit by maximum likelihood (Laplace
+##   Approximation) [glmerMod]
+##  Family: binomial  ( logit )
+## Formula: Survival ~ height.cm + long.leaf.cm + (1 | pop/mf) + (1 | block)
+##    Data: wl2_y1_surv_length_formod
+## 
+##      AIC      BIC   logLik deviance df.resid 
+##    357.0    382.9   -172.5    345.0      551 
+## 
+## Scaled residuals: 
+##     Min      1Q  Median      3Q     Max 
+## -8.9931  0.0364  0.1163  0.2667  1.9498 
+## 
+## Random effects:
+##  Groups Name        Variance  Std.Dev. 
+##  mf:pop (Intercept) 5.466e-07 0.0007394
+##  pop    (Intercept) 2.817e+00 1.6783575
+##  block  (Intercept) 1.145e+00 1.0701421
+## Number of obs: 557, groups:  mf:pop, 126; pop, 22; block, 13
+## 
+## Fixed effects:
+##              Estimate Std. Error z value Pr(>|z|)   
+## (Intercept)   -0.4854     0.6712  -0.723  0.46952   
+## height.cm      0.2298     0.0961   2.391  0.01679 * 
+## long.leaf.cm   0.4895     0.1685   2.905  0.00368 **
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Correlation of Fixed Effects:
+##             (Intr) hght.c
+## height.cm   -0.415       
+## long.lef.cm -0.373 -0.264
+```
+
+``` r
+tidy(wl2_logit_size)
+```
+
+```
+## # A tibble: 6 × 7
+##   effect   group  term             estimate std.error statistic  p.value
+##   <chr>    <chr>  <chr>               <dbl>     <dbl>     <dbl>    <dbl>
+## 1 fixed    <NA>   (Intercept)     -0.485       0.671     -0.723  0.470  
+## 2 fixed    <NA>   height.cm        0.230       0.0961     2.39   0.0168 
+## 3 fixed    <NA>   long.leaf.cm     0.490       0.169      2.90   0.00368
+## 4 ran_pars mf:pop sd__(Intercept)  0.000739   NA         NA     NA      
+## 5 ran_pars pop    sd__(Intercept)  1.68       NA         NA     NA      
+## 6 ran_pars block  sd__(Intercept)  1.07       NA         NA     NA
+```
+
+
+Not enough variation in surv for stem diameter and branch # 
 
