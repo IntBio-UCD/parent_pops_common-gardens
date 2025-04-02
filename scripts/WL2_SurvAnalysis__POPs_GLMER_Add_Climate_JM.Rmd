@@ -13,11 +13,18 @@ knitr::opts_chunk$set(echo = TRUE)
 
 Having settled on suitable models for survival, this script explores adding climate data from the growing season to see if they add any explanatory power.
 
-# Survival Analysis 
+Questions:
 
-See chapters 9 - 13 in tutorial: https://bookdown.org/content/4253/extending-the-discrete-time-hazard-model.html
+1.  Bed A_2 for temp or bed avg? Avg 
+
+2.  Negative soil moisture values –\> 0 ? Yes 
+
+3.  K=13 for temp, but K=14 for moisture, why?
+
+# Survival Analysis
 
 ## Libraries
+
 ```{r}
 # install.packages("multilevelmod")
 library(tidyverse) 
@@ -36,11 +43,13 @@ options(mc.cores = parallel::detectCores())
 ```
 
 ## Read in the plant data
+
 ```{r}
 wl2_surv <- read_csv("../output/WL2_Traits/WL2_Mortality_2023.csv")
 ```
 
 As weeks
+
 ```{r}
 wl2_surv %>% filter(is.na(death.date),!is.na(survey.notes)) #no plants that seemed to disappear 
 wl2_surv %>% filter(Genotype=="YO7_4_2")
@@ -59,8 +68,8 @@ wl2_surv_dates <- wl2_surv %>%
   select(-survey.notes)
 head(wl2_surv_dates)
 unique(wl2_surv_dates$os_weeks) %>% sort()
+unique(wl2_surv_dates$death.date)
 ```
-
 
 ## Read in soil temp
 
@@ -72,6 +81,7 @@ temp <- read_csv("../input/WL2_Data/WL2_2022_2023_iButton_Data_Corrected.csv") %
 head(temp)
 skimr::skim(temp)
 ```
+
 ```{r}
 temp %>% ggplot(aes(x=Date_Time, y = SoilTemp, color= Bed)) + 
   geom_line()
@@ -89,21 +99,21 @@ temp %>% mutate(month = month(Date_Time)) %>%
   geom_line() +
   scale_color_brewer(type="qual", palette = "Accent") +
   facet_wrap(~Bed)
-
-
 ```
+
 Not sure how to deal with the differences here since we don't have something in every bed or block. For now I am going to take A_2
 
 ```{r}
 temp_summary <- temp %>%
-  filter(Bed=="A_2") %>%
+  group_by(Date_Time) %>% 
+  summarise(AvgSoilTemp=mean(SoilTemp, na.rm=TRUE)) %>% #avg across beds 
   mutate(Date=as.Date(Date_Time)) %>%
   filter(Date != min(Date), Date != max(Date)) %>% # trim ragged ends
-  group_by(Date) %>%
+  group_by(Date) %>% #summmarise hourly data by date
   summarize(
-    min_temp_d = min(SoilTemp),
-    max_temp_d = max(SoilTemp),
-    mean_temp_d = mean(SoilTemp)
+    min_temp_d = min(AvgSoilTemp),
+    max_temp_d = max(AvgSoilTemp),
+    mean_temp_d = mean(AvgSoilTemp)
   ) %>%
   mutate(
     across(ends_with("temp_d"), \(x) rollmean(x, k = 7, align = "right", fill = NA), .names="{.col}1_7"),
@@ -123,15 +133,22 @@ moisture <- read_csv("../input/WL2_Data/WL2_2023_Bed_C_Soil_Moisture_Corrected.c
 head(moisture)
 skimr::skim(moisture)
 ```
+
 ```{r}
 moisture %>% pivot_longer(-Date_Time) %>%
   ggplot(aes(x=Date_Time, y = value, color= name)) + 
   geom_line()
 ```
+
 Will average across the ports
 
 ```{r}
 moisture_summary <- moisture %>%
+  mutate(Port_1=if_else(Port_1<0, 0, Port_1),
+         Port_2=if_else(Port_2<0, 0, Port_2),
+         Port_3=if_else(Port_3<0, 0, Port_3),
+         Port_4=if_else(Port_4<0, 0, Port_4),
+         Port_5=if_else(Port_5<0, 0, Port_5)) %>%  #convert negatives to zeros (negatives result from extremely dry soil --> air pockets)
   rowwise() %>%
   mutate(s_moisture = mean(c_across(-Date_Time)) ) %>%
   select(Date_Time, s_moisture) %>%
@@ -165,7 +182,8 @@ wl2_ind <- wl2_surv_dates %>%
 wl2_ind %>% select(Genotype, last_fup_date, os_weeks, dead)
 ```
 
-Split data into establishment and survival data sets.  (We will only use survival set for this analysis)
+Split data into establishment and survival data sets. (We will only use survival set for this analysis)
+
 ```{r}
 wl2_ind_estab <- wl2_ind %>% filter(os_weeks <= 3) %>%
   # compute status at week 3 for each plant
@@ -194,7 +212,9 @@ wl2_ind_surv_climate <- wl2_ind_surv %>%
 ```
 
 ## Temp analysis
+
 check basic model forms
+
 ```{r}
 # Note: StdDev due to mf within parent.pop is essentially zero, so I am omitting this.
 glmer.model <- 
@@ -273,9 +293,10 @@ temp_fits %>%
   arrange(p.value)
 ```
 
-
 ## Moisture analysis
+
 check basic model forms
+
 ```{r}
 # Note: StdDev due to mf within parent.pop is essentially zero, so I am omitting this.
 glmer.model <- 
@@ -334,7 +355,6 @@ moisture_fits %>%
   unnest(tidy) %>%
   filter(str_detect(term, "moisture"))
 ```
-
 
 ```{r}
 save.image("../output/JM_GLMER_Climate.Rdata")
