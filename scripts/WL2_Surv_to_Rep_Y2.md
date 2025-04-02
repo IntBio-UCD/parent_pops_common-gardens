@@ -1,7 +1,7 @@
 ---
 title: "WL2_Surv_to_Rep_Y2"
 author: "Brandie QC"
-date: "2025-03-25"
+date: "2025-04-01"
 output: 
   html_document: 
     keep_md: true
@@ -11,7 +11,24 @@ output:
 
 # Survival to Bolting Year 2 at WL2
 
+To Do:
+
+-   Look at relationship between size and survival
+
+    -   size post winter
+
+    -   stem diameter y2
+
+    -   total basal branches y2
+
+    -   canopy area y2
+
+<!-- -->
+
+-   Standard error correction on scatter plots
+
 ## Libraries
+
 
 ``` r
 library(tidyverse)
@@ -147,7 +164,7 @@ library(tidymodels)
 ## ✖ infer::t_test()       masks rstatix::t_test()
 ## ✖ Matrix::unpack()      masks tidyr::unpack()
 ## ✖ recipes::update()     masks Matrix::update(), stats::update()
-## • Use suppressPackageStartupMessages() to eliminate package startup messages
+## • Learn how to get started at https://www.tidymodels.org/start/
 ```
 
 ``` r
@@ -198,6 +215,7 @@ options(mc.cores = parallel::detectCores())
 ```
 
 ## Year 2 Pop Info
+
 
 ``` r
 wl2_y2_pops <- read_csv("../input/WL2_Data/Final_2023_2024_Pop_Loc_Info.csv") %>%
@@ -260,6 +278,7 @@ wl2_y2_pops_blocks <- left_join(wl2_y2_pops, wl2_blocks)
 
 ## Year 2 Surv Data
 
+
 ``` r
 wl2_20241023 <- read_csv("../input/WL2_Data/WL2_mort_pheno_20241023_corrected.csv") %>% #note this has 2023 and 2024 plants
   select(-block)
@@ -290,6 +309,7 @@ wl2_surv_y2 <- left_join(wl2_y2_pops_blocks, wl2_20241023) %>%
 ```
 
 ## Gower's Distance
+
 
 ``` r
 garden_climate <- read_csv("../output/Climate/flint_climate_UCDpops.csv") %>% 
@@ -427,7 +447,8 @@ wl2_sub_dist_2024 <- wl2_wtr_year_sub_recent_2024 %>%
 ## Joining with `by = join_by(pop)`
 ```
 
-## Calculate Survival to Bolting 
+## Calculate Survival to Bolting
+
 
 ``` r
 wl2_surv_y2 %>% filter(!is.na(bud.date), is.na(fruit.date)) #some plants initiated reproduction but did not make fruits
@@ -618,8 +639,8 @@ unique(wl2_surv_to_rep_y2_sub_dist$mf)
 ## [1] 3 7 4 8 2 1 5 6 9
 ```
 
-
 ### Bar Plots
+
 
 ``` r
 wl2_surv_to_rep_y2 %>% 
@@ -674,6 +695,7 @@ wl2_surv_to_rep_y2 %>%
 ```
 
 ### Scatterplots
+
 
 ``` r
 #scatter plots
@@ -803,6 +825,7 @@ ggsave("../output/WL2_Traits/WL2_SurvtoRep_y2_SCATTERS_Historic.png", width = 24
 ```
 
 #### Directional Distance
+
 
 ``` r
 #scatter plots - recent
@@ -1059,8 +1082,8 @@ WL2_surv_to_rep_y2_sub_FIG_prob_historic <- ggarrange(GSCD_prob_historic, WYCD_p
 ggsave("../output/WL2_Traits/WL2_SurvtoRep_y2_PPTSubDist_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
 ```
 
-
 #### Figure for paper
+
 
 ``` r
 GD_prob <- wl2_surv_to_rep_y2_sub_dist %>% 
@@ -1147,10 +1170,10 @@ WL2_surv_to_rep_y2_for_paper <- ggarrange(GD_prob, WYCD_recent,
 ggsave("../output/WL2_Traits/WL2_SurvtoRep_y2_SCATTERS_Summary_Recent.png", width = 24, height = 18, units = "in")
 ```
 
-
 ## Stats
 
-### Scaling 
+### Scaling
+
 
 ``` r
 wl2_surv_to_rep_y2 %>% 
@@ -1238,9 +1261,8 @@ unique(wl2_surv_to_rep_y2_scaled_sub$block)
 ##  [1] "A" "B" "C" "D" "E" "F" "G" "H" "I" "J" "K" "L" "M"
 ```
 
+### Basic Model Workflow
 
-
-### Basic Model Workflow 
 
 ``` r
 glmer.model_binomial <- 
@@ -1300,7 +1322,8 @@ surv_fits_wl2 %>% mutate(glance=map(fit, glance)) %>% unnest(glance) %>% arrange
 #model with pop and block (but excluding mf) is best by AIC and BIC, convergence issues with mf included 
 ```
 
-#### Test climate and geographic distance 
+#### Test climate and geographic distance
+
 
 ``` r
 surv_GD_wflow_wl2 <- workflow() %>%
@@ -1508,3 +1531,735 @@ surv_GD_fits_wl2_sub %>% mutate(tidy=map(fit, tidy)) %>% unnest(tidy) %>%
 ``` r
 #  arrange(p.value)
 ```
+
+## Fitness \~ Size
+
+### Load the size data & Combine with Survival - need to update 
+
+#### Size (post winter)
+
+
+``` r
+postwinter_size <- read_csv("../output/WL2_Traits/WL2_PostWinter_Size.csv")
+```
+
+```
+## Rows: 135 Columns: 14
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: ","
+## chr (9): Pop.Type, loc, bed, col, pop, Genotype, block, herbiv.y.n, survey.n...
+## dbl (5): row, mf, rep, height.cm, long.leaf.cm
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+```
+
+``` r
+names(postwinter_size)
+```
+
+```
+##  [1] "Pop.Type"     "loc"          "bed"          "row"          "col"         
+##  [6] "pop"          "mf"           "rep"          "Genotype"     "block"       
+## [11] "height.cm"    "long.leaf.cm" "herbiv.y.n"   "survey.notes"
+```
+
+``` r
+wl2_surv_to_rep_y2_mossize <- left_join(wl2_surv_to_rep_y2, postwinter_size)
+```
+
+```
+## Joining with `by = join_by(Pop.Type, loc, bed, row, col, pop, mf, rep,
+## Genotype, block)`
+```
+
+#### Stem Diameter, Basal Branches, and Canopy Area from Annual Census  
+
+
+``` r
+wl2_ann_cens_2024 <- read_csv("../input/WL2_Data/WL2_Annual_Census_20241023_CanopyAdded_corrected.csv") #added canopy area for the rows were we skipped b/c we also measured it in the size survey 
+```
+
+```
+## Rows: 1217 Columns: 15
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: ","
+## chr (7): bed, col, unique.ID, phen, survey.date, collected.date, survey.notes
+## dbl (8): row, diam.mm, num.flw, num.fruit, long.fruit.cm, total.branch, over...
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+```
+
+``` r
+wl2_ann_cens_2024_pops <- left_join(wl2_y2_pops_blocks, wl2_ann_cens_2024) %>%  
+  rename(Genotype=unique.ID) %>% 
+  select(Pop.Type:block, diam.mm, total.branch, overhd.diam, overhd.perp)
+```
+
+```
+## Joining with `by = join_by(bed, row, col, unique.ID)`
+```
+
+``` r
+wl2_surv_to_rep_y2_annsize <- left_join(wl2_surv_to_rep_y2, wl2_ann_cens_2024_pops)
+```
+
+```
+## Joining with `by = join_by(Pop.Type, loc, bed, row, col, pop, mf, rep,
+## Genotype, block)`
+```
+
+#### Merge all 
+
+``` r
+wl2_surv_to_rep_y2_size <- left_join(wl2_surv_to_rep_y2_mossize, wl2_surv_to_rep_y2_annsize)
+```
+
+```
+## Joining with `by = join_by(Pop.Type, loc, bed, row, col, pop, mf, rep,
+## Genotype, block, elevation.group, elev_m, Lat, Long, GrwSsn_GD_Recent,
+## GrwSsn_GD_Historical, Wtr_Year_GD_Recent, Wtr_Year_GD_Historical,
+## Geographic_Dist, Elev_Dist, bud.date, death.date, SurvtoRep_y2)`
+```
+
+``` r
+wl2_surv_to_rep_y2_size %>% filter(!is.na(diam.mm))
+```
+
+```
+## # A tibble: 85 × 31
+##    Pop.Type      loc    bed     row col   pop      mf   rep Genotype block
+##    <chr>         <chr>  <chr> <dbl> <chr> <chr> <dbl> <dbl> <chr>    <chr>
+##  1 2023-survivor A_17_A A        17 A     BH        7     3 BH_7_3   A    
+##  2 2023-survivor A_24_A A        24 A     WL2       7     9 WL2_7_9  A    
+##  3 2023-survivor A_32_B A        32 B     IH        7     4 IH_7_4   B    
+##  4 2023-survivor A_35_A A        35 A     SC        8     4 SC_8_4   B    
+##  5 2023-survivor A_36_A A        36 A     BH        3     4 BH_3_4   B    
+##  6 2023-survivor A_39_B A        39 B     WL2       7    10 WL2_7_10 B    
+##  7 2023-survivor A_45_B A        45 B     IH        2     4 IH_2_4   B    
+##  8 2023-survivor A_49_A A        49 A     YO7       7    23 YO7_7_23 B    
+##  9 2023-survivor A_53_A A        53 A     CC        4     4 CC_4_4   B    
+## 10 2023-survivor A_53_B A        53 B     BH        7     4 BH_7_4   B    
+## # ℹ 75 more rows
+## # ℹ 21 more variables: elevation.group <chr>, elev_m <dbl>, Lat <dbl>,
+## #   Long <dbl>, GrwSsn_GD_Recent <dbl>, GrwSsn_GD_Historical <dbl>,
+## #   Wtr_Year_GD_Recent <dbl>, Wtr_Year_GD_Historical <dbl>,
+## #   Geographic_Dist <dbl>, Elev_Dist <dbl>, bud.date <chr>, death.date <chr>,
+## #   SurvtoRep_y2 <dbl>, height.cm <dbl>, long.leaf.cm <dbl>, herbiv.y.n <chr>,
+## #   survey.notes <chr>, diam.mm <dbl>, total.branch <dbl>, overhd.diam <dbl>, …
+```
+
+### Figures of Survival \~ Size 
+
+
+``` r
+wl2_surv_to_rep_y2_size %>% 
+  ggplot(aes(x=height.cm, y=SurvtoRep_y2)) +
+  geom_point()
+```
+
+```
+## Warning: Removed 32 rows containing missing values or values outside the scale range
+## (`geom_point()`).
+```
+
+![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-24-1.png)<!-- -->
+
+``` r
+wl2_surv_to_rep_y2_size %>% 
+  ggplot(aes(x=long.leaf.cm, y=SurvtoRep_y2)) +
+  geom_point()
+```
+
+```
+## Warning: Removed 35 rows containing missing values or values outside the scale range
+## (`geom_point()`).
+```
+
+![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-24-2.png)<!-- -->
+
+``` r
+wl2_surv_to_rep_y2_size %>% #prob not enough var in surv
+  ggplot(aes(x=diam.mm, y=SurvtoRep_y2)) +
+  geom_point()
+```
+
+```
+## Warning: Removed 50 rows containing missing values or values outside the scale range
+## (`geom_point()`).
+```
+
+![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-24-3.png)<!-- -->
+
+``` r
+wl2_surv_to_rep_y2_size %>% #not enough variation in surv
+  ggplot(aes(x=total.branch, y=SurvtoRep_y2)) +
+  geom_point()
+```
+
+```
+## Warning: Removed 51 rows containing missing values or values outside the scale range
+## (`geom_point()`).
+```
+
+![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-24-4.png)<!-- -->
+
+``` r
+wl2_surv_to_rep_y2_size %>% #prob not enough var in surv
+  ggplot(aes(x=overhd.diam, y=SurvtoRep_y2)) +
+  geom_point()
+```
+
+```
+## Warning: Removed 52 rows containing missing values or values outside the scale range
+## (`geom_point()`).
+```
+
+![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-24-5.png)<!-- -->
+
+``` r
+wl2_surv_to_rep_y2_size %>% #prob not enough var in surv
+  ggplot(aes(x=overhd.perp, y=SurvtoRep_y2)) +
+  geom_point()
+```
+
+```
+## Warning: Removed 52 rows containing missing values or values outside the scale range
+## (`geom_point()`).
+```
+
+![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-24-6.png)<!-- -->
+
+
+``` r
+wl2_size_surv_pop_avgs <- wl2_surv_to_rep_y2_size %>% 
+  group_by(pop, elev_m) %>% 
+  summarise(N_Surv = sum(!is.na(SurvtoRep_y2)), 
+            mean_Surv = mean(SurvtoRep_y2,na.rm=(TRUE)), sem_surv=sem(SurvtoRep_y2, na.rm=(TRUE)), 
+            N_height = sum(!is.na(height.cm)), 
+            mean_height.cm = mean(height.cm,na.rm=(TRUE)), sem_height.cm=sem(height.cm, na.rm=(TRUE)), 
+            N_length = sum(!is.na(long.leaf.cm)),
+            mean_long.leaf.cm=mean(long.leaf.cm, na.rm=(TRUE)), sem_long.leaf.cm=sem(long.leaf.cm, na.rm=TRUE),
+            N_diam = sum(!is.na(diam.mm)), 
+            mean_diam.mm = mean(diam.mm,na.rm=(TRUE)), sem_diam.mm=sem(diam.mm, na.rm=(TRUE)), 
+            N_total.branch = sum(!is.na(total.branch)),
+            mean_total.branch=mean(total.branch, na.rm=(TRUE)), sem_total.branch=sem(total.branch, na.rm=TRUE),
+            N_overhd.diam = sum(!is.na(overhd.diam)), 
+            mean_overhd.diam = mean(overhd.diam,na.rm=(TRUE)), sem_overhd.diam=sem(overhd.diam, na.rm=(TRUE)), 
+            N_overhd.perp = sum(!is.na(overhd.perp)),
+            mean_overhd.perp=mean(overhd.perp, na.rm=(TRUE)), sem_overhd.perp=sem(overhd.perp, na.rm=TRUE))
+```
+
+```
+## `summarise()` has grouped output by 'pop'. You can override using the `.groups`
+## argument.
+```
+
+``` r
+wl2_size_surv_pop_avgs %>% arrange(N_height)
+```
+
+```
+## # A tibble: 10 × 23
+## # Groups:   pop [10]
+##    pop   elev_m N_Surv mean_Surv sem_surv N_height mean_height.cm sem_height.cm
+##    <chr>  <dbl>  <int>     <dbl>    <dbl>    <int>          <dbl>         <dbl>
+##  1 LV1    2593.      1     0      NA             0          NaN           NA   
+##  2 SQ1    1921.      1     1      NA             1            9.2         NA   
+##  3 WR     1158       1     1      NA             1           25           NA   
+##  4 TM2     379.      6     0.667   0.211         4           25.5          9.38
+##  5 WL2    2020.      6     0.833   0.167         6           13.4          3.58
+##  6 CC      313      17     0.824   0.0953       13           21.7          2.87
+##  7 SC      422.     22     0.636   0.105        15           25.5          4.99
+##  8 YO7    2470.     18     0.889   0.0762       17            9.6          1.13
+##  9 BH      511.     29     0.690   0.0874       23           23.9          2.82
+## 10 IH      454.     34     0.588   0.0857       23           20.5          2.07
+## # ℹ 15 more variables: N_length <int>, mean_long.leaf.cm <dbl>,
+## #   sem_long.leaf.cm <dbl>, N_diam <int>, mean_diam.mm <dbl>,
+## #   sem_diam.mm <dbl>, N_total.branch <int>, mean_total.branch <dbl>,
+## #   sem_total.branch <dbl>, N_overhd.diam <int>, mean_overhd.diam <dbl>,
+## #   sem_overhd.diam <dbl>, N_overhd.perp <int>, mean_overhd.perp <dbl>,
+## #   sem_overhd.perp <dbl>
+```
+
+
+``` r
+wl2_surv_to_rep_y2_size %>% 
+  drop_na(SurvtoRep_y2, height.cm) %>% 
+  group_by(pop, elev_m) %>% 
+  summarise(N_Surv = sum(!is.na(SurvtoRep_y2)), 
+            mean_Surv = mean(SurvtoRep_y2,na.rm=(TRUE)), sem_surv=sem(SurvtoRep_y2, na.rm=(TRUE)), 
+            N_height = sum(!is.na(height.cm)), 
+            mean_height.cm = mean(height.cm,na.rm=(TRUE)), sem_height.cm=sem(height.cm, na.rm=(TRUE))) %>% 
+  filter(N_height>2) %>% 
+  ggplot(aes(x=mean_height.cm, y=mean_Surv, group=pop, color=elev_m)) +
+  geom_point(size=4) +
+  theme_classic() + 
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0")  +
+  labs(x="Height (cm)", y="Survival to Budding Y2", color="Elevation (m)") +
+  theme(text=element_text(size=25))
+```
+
+```
+## `summarise()` has grouped output by 'pop'. You can override using the `.groups`
+## argument.
+```
+
+![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-26-1.png)<!-- -->
+
+``` r
+wl2_surv_to_rep_y2_size %>% 
+  drop_na(SurvtoRep_y2, long.leaf.cm) %>% 
+  group_by(pop, elev_m) %>% 
+  summarise(N_Surv = sum(!is.na(SurvtoRep_y2)), 
+            mean_Surv = mean(SurvtoRep_y2,na.rm=(TRUE)), sem_surv=sem(SurvtoRep_y2, na.rm=(TRUE)), 
+            N_length = sum(!is.na(long.leaf.cm)),
+            mean_long.leaf.cm=mean(long.leaf.cm, na.rm=(TRUE)), sem_long.leaf.cm=sem(long.leaf.cm, na.rm=TRUE)) %>% 
+  filter(N_length>2) %>% 
+  ggplot(aes(x=mean_long.leaf.cm, y=mean_Surv, group=pop, color=elev_m)) +
+  geom_point(size=4) +
+  scale_y_continuous(expand = c(0.01, 0.01)) +
+  theme_classic() + 
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0")  +
+  labs(x="Leaf Length (cm)" ,y="Survival to Budding Y2", color="Elevation (m)") +
+  theme(text=element_text(size=25))
+```
+
+```
+## `summarise()` has grouped output by 'pop'. You can override using the `.groups`
+## argument.
+```
+
+![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-26-2.png)<!-- -->
+
+``` r
+wl2_surv_to_rep_y2_size %>% 
+  drop_na(SurvtoRep_y2, diam.mm) %>% 
+  group_by(pop, elev_m) %>% 
+  summarise(N_Surv = sum(!is.na(SurvtoRep_y2)), 
+            mean_Surv = mean(SurvtoRep_y2,na.rm=(TRUE)), sem_surv=sem(SurvtoRep_y2, na.rm=(TRUE)), 
+            N_diam = sum(!is.na(diam.mm)), 
+            mean_diam.mm = mean(diam.mm,na.rm=(TRUE)), sem_diam.mm=sem(diam.mm, na.rm=(TRUE))) %>% 
+  filter(N_diam>2) %>% 
+  ggplot(aes(x=mean_diam.mm, y=mean_Surv, group=pop, color=elev_m)) +
+  geom_point(size=4) +
+  scale_y_continuous(expand = c(0.01, 0.01)) +
+  theme_classic() + 
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0")  +
+  labs(x="Stem Diameter (mm)" ,y="Survival to Budding Y2", color="Elevation (m)") +
+  theme(text=element_text(size=25))
+```
+
+```
+## `summarise()` has grouped output by 'pop'. You can override using the `.groups`
+## argument.
+```
+
+![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-26-3.png)<!-- -->
+
+``` r
+wl2_surv_to_rep_y2_size %>% 
+  drop_na(SurvtoRep_y2, total.branch) %>% 
+  group_by(pop, elev_m) %>% 
+  summarise(N_Surv = sum(!is.na(SurvtoRep_y2)), 
+            mean_Surv = mean(SurvtoRep_y2,na.rm=(TRUE)), sem_surv=sem(SurvtoRep_y2, na.rm=(TRUE)), 
+            N_total.branch = sum(!is.na(total.branch)),
+            mean_total.branch=mean(total.branch, na.rm=(TRUE)), sem_total.branch=sem(total.branch, na.rm=TRUE)) %>% 
+  filter(N_total.branch>2) %>% 
+  ggplot(aes(x=mean_total.branch, y=mean_Surv, group=pop, color=elev_m)) +
+  geom_point(size=4) +
+  scale_y_continuous(expand = c(0.01, 0.01)) +
+  theme_classic() +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0")  +
+  labs(x="Basal Branch N" ,y="Survival to Budding Y2", color="Elevation (m)") +
+  theme(text=element_text(size=25))
+```
+
+```
+## `summarise()` has grouped output by 'pop'. You can override using the `.groups`
+## argument.
+```
+
+![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-26-4.png)<!-- -->
+
+``` r
+wl2_surv_to_rep_y2_size %>% 
+  drop_na(SurvtoRep_y2, overhd.diam) %>% 
+  group_by(pop, elev_m) %>% 
+  summarise(N_Surv = sum(!is.na(SurvtoRep_y2)), 
+            mean_Surv = mean(SurvtoRep_y2,na.rm=(TRUE)), sem_surv=sem(SurvtoRep_y2, na.rm=(TRUE)), 
+            N_overhd.diam = sum(!is.na(overhd.diam)), 
+            mean_overhd.diam = mean(overhd.diam,na.rm=(TRUE)), sem_overhd.diam=sem(overhd.diam, na.rm=(TRUE))) %>% 
+  filter(N_overhd.diam>2) %>% 
+  ggplot(aes(x=mean_overhd.diam, y=mean_Surv, group=pop, color=elev_m)) +
+  geom_point(size=4) +
+  scale_y_continuous(expand = c(0.01, 0.01)) +
+  theme_classic() + 
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0")  +
+  labs(x="Over-head Diameter (cm)" ,y="Survival to Budding Y2", color="Elevation (m)") +
+  theme(text=element_text(size=25))
+```
+
+```
+## `summarise()` has grouped output by 'pop'. You can override using the `.groups`
+## argument.
+```
+
+![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-26-5.png)<!-- -->
+
+``` r
+wl2_surv_to_rep_y2_size %>% 
+  drop_na(SurvtoRep_y2, overhd.perp) %>% 
+  group_by(pop, elev_m) %>% 
+  summarise(N_Surv = sum(!is.na(SurvtoRep_y2)), 
+            mean_Surv = mean(SurvtoRep_y2,na.rm=(TRUE)), sem_surv=sem(SurvtoRep_y2, na.rm=(TRUE)), 
+            N_overhd.perp = sum(!is.na(overhd.perp)),
+            mean_overhd.perp=mean(overhd.perp, na.rm=(TRUE)), sem_overhd.perp=sem(overhd.perp, na.rm=TRUE)) %>% 
+  filter(N_overhd.perp>2) %>% 
+  ggplot(aes(x=mean_overhd.perp, y=mean_Surv, group=pop, color=elev_m)) +
+  geom_point(size=4) +
+  scale_y_continuous(expand = c(0.01, 0.01)) +
+  theme_classic() +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0")  +
+  labs(x="Over-head Perp-Diameter (cm)" ,y="Survival to Budding Y2", color="Elevation (m)") +
+  theme(text=element_text(size=25))
+```
+
+```
+## `summarise()` has grouped output by 'pop'. You can override using the `.groups`
+## argument.
+```
+
+![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-26-6.png)<!-- -->
+
+### Stats
+
+Log Reg survival \~ size
+
+#### Check for correlations between traits 
+
+
+``` r
+size_normalized_wl2 <- wl2_surv_to_rep_y2_size %>% 
+  select(height.cm, long.leaf.cm, diam.mm, total.branch, overhd.diam, overhd.perp) %>% 
+  drop_na(height.cm, long.leaf.cm, diam.mm, total.branch, overhd.diam, overhd.perp) %>% scale() #normalize the data so they're all on the same scale
+#head(size_normalized_wl2)
+cor.norm_wl2 = cor(size_normalized_wl2) #test correlations among the traits
+cor.sig_wl2 <- cor.mtest(size_normalized_wl2, method="pearson") #test significance of corrs
+corrplot(cor.norm_wl2, type = "upper",
+         tl.srt = 45, p.mat = cor.sig_wl2$p, 
+         sig.level = 0.05, insig="blank")  
+```
+
+![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-27-1.png)<!-- -->
+
+``` r
+cor.norm_wl2
+```
+
+```
+##               height.cm long.leaf.cm    diam.mm total.branch overhd.diam
+## height.cm     1.0000000    0.6882307  0.7832817   -0.2578290   0.7419401
+## long.leaf.cm  0.6882307    1.0000000  0.7162108   -0.3432640   0.7232007
+## diam.mm       0.7832817    0.7162108  1.0000000   -0.2698633   0.7813298
+## total.branch -0.2578290   -0.3432640 -0.2698633    1.0000000  -0.1953430
+## overhd.diam   0.7419401    0.7232007  0.7813298   -0.1953430   1.0000000
+## overhd.perp   0.6846704    0.5471011  0.7505621   -0.1695879   0.8457311
+##              overhd.perp
+## height.cm      0.6846704
+## long.leaf.cm   0.5471011
+## diam.mm        0.7505621
+## total.branch  -0.1695879
+## overhd.diam    0.8457311
+## overhd.perp    1.0000000
+```
+
+``` r
+cor.sig_wl2$p
+```
+
+```
+##                 height.cm long.leaf.cm      diam.mm total.branch  overhd.diam
+## height.cm    0.000000e+00 1.738872e-12 9.010167e-18  0.020944463 3.445082e-15
+## long.leaf.cm 1.738872e-12 0.000000e+00 8.119739e-14  0.001825627 3.564121e-14
+## diam.mm      9.010167e-18 8.119739e-14 0.000000e+00  0.015484692 1.227704e-17
+## total.branch 2.094446e-02 1.825627e-03 1.548469e-02  0.000000000 8.248005e-02
+## overhd.diam  3.445082e-15 3.564121e-14 1.227704e-17  0.082480055 0.000000e+00
+## overhd.perp  2.505959e-12 1.512870e-07 1.097633e-15  0.132611206 5.604797e-23
+##               overhd.perp
+## height.cm    2.505959e-12
+## long.leaf.cm 1.512870e-07
+## diam.mm      1.097633e-15
+## total.branch 1.326112e-01
+## overhd.diam  5.604797e-23
+## overhd.perp  0.000000e+00
+```
+
+``` r
+#overhead.diam and perp 85% correlated
+#stem diam is 78% and 75% corr with overhead.diam and perp
+#leaf length is 72%, 72%, 55% corr with diam, overhd.diam, perp
+#height is 69%, 78%, 74%, 68% corr with length, diam, overhd.diam, perp
+```
+
+
+``` r
+wl2_surv_to_rep_y2_height_formod <- wl2_surv_to_rep_y2_size %>% 
+  drop_na(SurvtoRep_y2, height.cm) %>% 
+  filter(pop!="LV1", pop!="SQ1", pop!="WR")
+
+wl2_surv_to_rep_y2_length_formod <- wl2_surv_to_rep_y2_size %>% 
+  drop_na(SurvtoRep_y2, long.leaf.cm) %>% 
+  filter(pop!="LV1", pop!="SQ1", pop!="WR")
+
+wl2_surv_to_rep_y2_diam_formod <- wl2_surv_to_rep_y2_size %>% 
+  drop_na(SurvtoRep_y2, diam.mm) %>% 
+  filter(pop!="LV1", pop!="SQ1", pop!="WR")
+
+wl2_surv_to_rep_y2_overhd.diam_formod <- wl2_surv_to_rep_y2_size %>% 
+  drop_na(SurvtoRep_y2, overhd.diam) %>% 
+  filter(pop!="LV1", pop!="SQ1", pop!="WR")
+```
+
+
+#### Height
+
+
+``` r
+wl2_basiclogit_height <- glm(SurvtoRep_y2 ~ height.cm, data = wl2_surv_to_rep_y2_height_formod, family = "binomial")
+summary(wl2_basiclogit_height)
+```
+
+```
+## 
+## Call:
+## glm(formula = SurvtoRep_y2 ~ height.cm, family = "binomial", 
+##     data = wl2_surv_to_rep_y2_height_formod)
+## 
+## Coefficients:
+##             Estimate Std. Error z value Pr(>|z|)   
+## (Intercept) -0.05116    0.65826  -0.078  0.93805   
+## height.cm    0.15849    0.05649   2.805  0.00502 **
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## (Dispersion parameter for binomial family taken to be 1)
+## 
+##     Null deviance: 69.535  on 100  degrees of freedom
+## Residual deviance: 55.589  on  99  degrees of freedom
+## AIC: 59.589
+## 
+## Number of Fisher Scoring iterations: 7
+```
+
+``` r
+wl2_logit_height2 <- glmer(SurvtoRep_y2 ~ height.cm + (1|pop) + (1|block), data = wl2_surv_to_rep_y2_height_formod, family = binomial(link = "logit")) #, nAGQ=0) 
+```
+
+```
+## boundary (singular) fit: see help('isSingular')
+```
+
+``` r
+summary(wl2_logit_height2)
+```
+
+```
+## Generalized linear mixed model fit by maximum likelihood (Laplace
+##   Approximation) [glmerMod]
+##  Family: binomial  ( logit )
+## Formula: SurvtoRep_y2 ~ height.cm + (1 | pop) + (1 | block)
+##    Data: wl2_surv_to_rep_y2_height_formod
+## 
+##      AIC      BIC   logLik deviance df.resid 
+##     63.1     73.5    -27.5     55.1       97 
+## 
+## Scaled residuals: 
+##     Min      1Q  Median      3Q     Max 
+## -5.7768  0.0632  0.1891  0.3841  0.9849 
+## 
+## Random effects:
+##  Groups Name        Variance Std.Dev.
+##  block  (Intercept) 0.0000   0.0000  
+##  pop    (Intercept) 0.3368   0.5803  
+## Number of obs: 101, groups:  block, 13; pop, 7
+## 
+## Fixed effects:
+##             Estimate Std. Error z value Pr(>|z|)   
+## (Intercept)  -0.1777     0.7463  -0.238  0.81175   
+## height.cm     0.1760     0.0639   2.754  0.00588 **
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Correlation of Fixed Effects:
+##           (Intr)
+## height.cm -0.804
+## optimizer (Nelder_Mead) convergence code: 0 (OK)
+## boundary (singular) fit: see help('isSingular')
+```
+
+``` r
+#boundary (singular) fit: see help('isSingular') block explains 0 var
+#sig relat, estimate = 0.1760
+```
+
+#### Length
+
+
+``` r
+wl2_logit_length2 <- glmer(SurvtoRep_y2 ~ long.leaf.cm + (1|pop) + (1|block), data = wl2_surv_to_rep_y2_length_formod, family = binomial(link = "logit")) 
+```
+
+```
+## boundary (singular) fit: see help('isSingular')
+```
+
+``` r
+summary(wl2_logit_length2)
+```
+
+```
+## Generalized linear mixed model fit by maximum likelihood (Laplace
+##   Approximation) [glmerMod]
+##  Family: binomial  ( logit )
+## Formula: SurvtoRep_y2 ~ long.leaf.cm + (1 | pop) + (1 | block)
+##    Data: wl2_surv_to_rep_y2_length_formod
+## 
+##      AIC      BIC   logLik deviance df.resid 
+##     65.0     75.3    -28.5     57.0       94 
+## 
+## Scaled residuals: 
+##     Min      1Q  Median      3Q     Max 
+## -5.8358  0.1370  0.2217  0.3618  0.7804 
+## 
+## Random effects:
+##  Groups Name        Variance  Std.Dev. 
+##  block  (Intercept) 2.639e-10 1.624e-05
+##  pop    (Intercept) 5.846e-01 7.646e-01
+## Number of obs: 98, groups:  block, 13; pop, 7
+## 
+## Fixed effects:
+##              Estimate Std. Error z value Pr(>|z|)  
+## (Intercept)   0.03539    0.91901   0.039   0.9693  
+## long.leaf.cm  0.86951    0.39130   2.222   0.0263 *
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Correlation of Fixed Effects:
+##             (Intr)
+## long.lef.cm -0.838
+## optimizer (Nelder_Mead) convergence code: 0 (OK)
+## boundary (singular) fit: see help('isSingular')
+```
+
+``` r
+#boundary (singular) fit: see help('isSingular') block explains little var
+#sig relat, estimate = 0.86951
+```
+
+#### Stem Diameter
+
+``` r
+wl2_logit_diam2 <- glmer(SurvtoRep_y2 ~ diam.mm + (1|pop) + (1|block), data = wl2_surv_to_rep_y2_diam_formod, family = binomial(link = "logit")) 
+```
+
+```
+## boundary (singular) fit: see help('isSingular')
+```
+
+``` r
+summary(wl2_logit_diam2)
+```
+
+```
+## Generalized linear mixed model fit by maximum likelihood (Laplace
+##   Approximation) [glmerMod]
+##  Family: binomial  ( logit )
+## Formula: SurvtoRep_y2 ~ diam.mm + (1 | pop) + (1 | block)
+##    Data: wl2_surv_to_rep_y2_diam_formod
+## 
+##      AIC      BIC   logLik deviance df.resid 
+##     43.9     53.6    -18.0     35.9       79 
+## 
+## Scaled residuals: 
+##      Min       1Q   Median       3Q      Max 
+## -3.12165  0.06257  0.13327  0.26317  0.68685 
+## 
+## Random effects:
+##  Groups Name        Variance Std.Dev.
+##  block  (Intercept) 0.000    0.00    
+##  pop    (Intercept) 1.588    1.26    
+## Number of obs: 83, groups:  block, 13; pop, 7
+## 
+## Fixed effects:
+##             Estimate Std. Error z value Pr(>|z|)  
+## (Intercept)  -0.2211     1.4024  -0.158    0.875  
+## diam.mm       1.3730     0.7658   1.793    0.073 .
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Correlation of Fixed Effects:
+##         (Intr)
+## diam.mm -0.824
+## optimizer (Nelder_Mead) convergence code: 0 (OK)
+## boundary (singular) fit: see help('isSingular')
+```
+
+``` r
+#boundary (singular) fit: see help('isSingular') block explains 0 var
+#marg relat estiamte =  1.3730 
+```
+
+
+#### Overhead diam
+
+``` r
+wl2_logit_overhd.diam2 <- glmer(SurvtoRep_y2 ~ overhd.diam + (1|pop) + (1|block), data = wl2_surv_to_rep_y2_overhd.diam_formod, family = binomial(link = "logit")) 
+```
+
+```
+## boundary (singular) fit: see help('isSingular')
+```
+
+``` r
+summary(wl2_logit_overhd.diam2)
+```
+
+```
+## Generalized linear mixed model fit by maximum likelihood (Laplace
+##   Approximation) [glmerMod]
+##  Family: binomial  ( logit )
+## Formula: SurvtoRep_y2 ~ overhd.diam + (1 | pop) + (1 | block)
+##    Data: wl2_surv_to_rep_y2_overhd.diam_formod
+## 
+##      AIC      BIC   logLik deviance df.resid 
+##     30.9     40.5    -11.5     22.9       77 
+## 
+## Scaled residuals: 
+##      Min       1Q   Median       3Q      Max 
+## -2.13697  0.00000  0.00067  0.05638  0.71456 
+## 
+## Random effects:
+##  Groups Name        Variance  Std.Dev. 
+##  block  (Intercept) 2.859e+00 1.691e+00
+##  pop    (Intercept) 1.466e-09 3.829e-05
+## Number of obs: 81, groups:  block, 13; pop, 7
+## 
+## Fixed effects:
+##             Estimate Std. Error z value Pr(>|z|)
+## (Intercept)  -0.9468     1.5826  -0.598    0.550
+## overhd.diam   0.8010     0.5801   1.381    0.167
+## 
+## Correlation of Fixed Effects:
+##             (Intr)
+## overhd.diam -0.785
+## optimizer (Nelder_Mead) convergence code: 0 (OK)
+## boundary (singular) fit: see help('isSingular')
+```
+
+``` r
+#boundary (singular) fit: see help('isSingular') pop explains little var
+#no sig relat
+```
+
