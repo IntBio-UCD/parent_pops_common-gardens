@@ -13,6 +13,10 @@ knitr::opts_chunk$set(echo = TRUE)
 
 To Do:
 
+-   Finalize linear models
+
+-   Pull out Site slopes for each pop as estimate of plasticity to compare to prob of fitness
+
 -   Try using ggcirlce to make different sized points for environmental distance
 
 -   Lines = elevation Points = distance from home, filter by site? - how to represent it though? dark black = close, light gray = far?

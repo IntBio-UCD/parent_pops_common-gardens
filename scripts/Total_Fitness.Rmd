@@ -15,6 +15,28 @@ knitr::opts_chunk$set(echo = TRUE)
 
 Total Fitness: p(Establishment)*p(Surv to Rep - y1)*Fruits(y1) + p(Winter Surv)*p(Surv to Rep - y2)*Fruits(y2)
 
+To Do:
+
+-   Prob of fitness \~
+
+    -   plasticity in size (height, leaf length y1)
+
+    -   days to budding
+
+    -   plasticity in days to budding
+
+    -   Budding duration
+
+-   Total fitness \~
+
+    -   Days to budding
+
+    -   Plasticity in days to budding
+
+    -   Budding duration
+
+-   Standard error correction on scatter plots
+
 ## Libraries
 
 ```{r}
@@ -144,7 +166,6 @@ wl2_sub_dist_2024 <- wl2_wtr_year_sub_recent_2024 %>%
   left_join(wl2_gowers_2024)
 ```
 
-
 ### Check Geographic distance
 
 ```{r}
@@ -168,7 +189,6 @@ wl2_gowers_2023 %>%
   theme(text=element_text(size=30), axis.text.x = element_text(angle = 45,  hjust = 1)) 
 #ggsave("../output/WL2_GeoDist.png", width = 12, height = 8, units = "in")
 ```
-
 
 ### Checking elevation distance
 
@@ -232,6 +252,7 @@ wl2_gowers_avg
 ```
 
 #### For Subtraction Distances
+
 ```{r}
 wl2_sub_dist_2023_prep <- wl2_sub_dist_2023 %>% 
   select(pop:GrwSsn_PPTDist_Historic)
@@ -249,6 +270,7 @@ wl2_sub_dist_avg
 ```
 
 Correlations
+
 ```{r}
 wl2_sub_dist_avgs_scaled <- wl2_sub_dist_avg %>% ungroup() %>% 
   select(Wtr_Year_TempDist_Recent:GrwSsn_PPTDist_Historic, Geographic_Dist) %>% scale() #normalize the data so they're all on the same scale
@@ -322,7 +344,6 @@ unique(ucd_total_fitness$block)
 unique(ucd_total_fitness$pop)
 unique(ucd_total_fitness$mf)
 ```
-
 
 ```{r}
 ucd_total_fitness_sub_dist <- ucd_total_fitness %>% 
@@ -638,7 +659,8 @@ Split total fitness into probability of fitness and total reproductive output si
 
 ### Prob of total fitness \> 0
 
-#### Calculations 
+#### Calculations
+
 ```{r}
 #wl2_total_fitness_scaled %>% filter(is.na(Total_Fitness)) #no NAs
 #ucd_total_fitness_scaled  %>% filter(is.na(Total_Fitness)) #no NAs
@@ -689,7 +711,7 @@ ucd_prob_fitness_sub <- ucd_total_fitness_scaled_sub %>%
   mutate(ProbFitness=if_else(Total_Fitness==0, 0, 1))
 ```
 
-#### Plots 
+#### Plots
 
 ```{r}
 wl2_total_fitness_sub_dist %>% 
@@ -1231,6 +1253,7 @@ ggsave("../output/UCD_Traits/UCD_ProbFitness_PPTSubDist_SCATTERS_Historic.png", 
 ```
 
 #### Figure for paper
+
 ```{r}
 GD_prob <- wl2_total_fitness_sub_dist %>%  
   mutate(ProbFitness=if_else(Total_Fitness==0, 0, 1)) %>% 
@@ -1288,7 +1311,8 @@ WL2_prob_fitness_for_paper <- ggarrange(GD_prob, WYCD_prob_recent,
 ggsave("../output/WL2_Traits/WL2_ProbFitness_SCATTERS_Summary_Recent.png", width = 24, height = 18, units = "in")
 ```
 
-### Attempt at calculating mean and standard error in logit scale 
+### Attempt at calculating mean and standard error in logit scale
+
 ```{r}
 ##logit scale
 wl2_total_fitness_sub_dist %>%  
@@ -1320,7 +1344,6 @@ wl2_total_fitness_sub_dist %>%
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0))
 ```
-
 
 #### Basic Model Workflow
 
@@ -1540,6 +1563,7 @@ summary(mod_test)
 ```
 
 Model comparison
+
 ```{r}
 m1 <-  glmer(ProbFitness ~ Wtr_Year_TempDist_Recent + GrwSsn_PPTDist_Recent + Geographic_Dist + (1|pop) + (1|block), data=wl2_prob_fitness_sub, family=binomial)
 m2 <- glmer(ProbFitness ~ Wtr_Year_TempDist_Recent + Geographic_Dist + (1|pop) + (1|block), data=wl2_prob_fitness_sub, family=binomial)
@@ -1628,7 +1652,8 @@ mod_test <- glmer(ProbFitness ~ Wtr_Year_TempDist_Historic + Wtr_Year_PPTDist_Hi
 
 ### Total Fitness for plants with any rep
 
-#### Calculations 
+#### Calculations
+
 ```{r}
 wl2_total_fitness_scaled %>% filter(Total_Fitness > 0) %>% 
   group_by(pop) %>% summarise(n=n()) %>% arrange(n) #7 pops with greater than 1 indiv 
@@ -1726,7 +1751,8 @@ ucd_rep_output_sub %>% #okayish
   geom_histogram()
 ```
 
-#### Plots 
+#### Plots
+
 ```{r}
 #scatter plots - recent
 GSCD_repoutput_recent <- wl2_total_fitness %>% 
@@ -2095,7 +2121,8 @@ WL2_total_fitness_sub_dist_FIG_repoutput_historic_historic <- ggarrange(GSCD_rep
 ggsave("../output/WL2_Traits/WL2_Total_RepOutput_PPTSubDist_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
 ```
 
-#### Checking Poisson for Total Fitness 
+#### Checking Poisson for Total Fitness
+
 Poisson not appropriate b/c assumes mean = variance...
 
 ```{r}
@@ -2118,6 +2145,7 @@ wl2_rep_output %>%
 ```
 
 #### Basic Model Workflow
+
 ```{r}
 rep_output_modelslog <- tribble(
   ~name,          ~f,
@@ -2231,6 +2259,7 @@ summary(mod_test)
 ```
 
 Troubleshoot weird GrwSsn-Temp_Dist results (positive coefficient, but figure indicates it should be neg...)
+
 ```{r}
 wl2_rep_output_sub %>% group_by(pop, GrwSsn_TempDist_Historic) %>% summarise(meanFruits=mean(logTotalFitness)) %>% arrange(GrwSsn_TempDist_Historic)
 
@@ -2260,7 +2289,3 @@ wl2_rep_output_sub %>%
   ggplot(aes(x=GrwSsn_TempDist_Historic, y = predicted)) +
   geom_point() 
 ```
-
-
-
-
