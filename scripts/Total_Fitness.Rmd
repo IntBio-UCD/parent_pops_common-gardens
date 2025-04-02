@@ -1311,7 +1311,7 @@ WL2_prob_fitness_for_paper <- ggarrange(GD_prob, WYCD_prob_recent,
 ggsave("../output/WL2_Traits/WL2_ProbFitness_SCATTERS_Summary_Recent.png", width = 24, height = 18, units = "in")
 ```
 
-### Attempt at calculating mean and standard error in logit scale
+#### Attempt at calculating mean and standard error in logit scale
 
 ```{r}
 ##logit scale
@@ -1648,6 +1648,49 @@ prob_fitness_SUB_fits_ucd %>% mutate(tidy=map(fit, tidy)) %>% unnest(tidy) %>%
 
 mod_test <- glmer(ProbFitness ~ Wtr_Year_TempDist_Historic + Wtr_Year_PPTDist_Historic + Geographic_Dist + (1|pop/mf) + (1|block), data=ucd_prob_fitness_sub, family=binomial)
 #Water year recent and historic models failed to converge 
+```
+
+#### Test plasticity in size 
+```{r}
+size_plasticity <- read_csv("../output/TwoMonths_Size_Slopes.csv") %>% rename(pop=parent.pop)
+
+wl2_prob_fit_plas <- wl2_prob_fitness %>% 
+  select(block, Genotype:Elev_Dist, ProbFitness) %>% 
+  left_join(size_plasticity) %>% 
+  mutate_at(c("height_slope","length_slope"),scale) 
+head(wl2_prob_fit_plas)
+
+ucd_prob_fit_plas <- ucd_prob_fitness %>% 
+  select(block, Genotype:Elev_Dist, ProbFitness) %>% 
+  left_join(size_plasticity) %>% 
+  mutate_at(c("height_slope","length_slope"),scale) 
+head(ucd_prob_fit_plas)
+```
+
+```{r}
+wl2_glmer1 <- glmer(ProbFitness ~ height_slope + (1|pop) + (1|block), data=wl2_prob_fit_plas, family = binomial)
+summary(wl2_glmer1)
+
+wl2_glmer2 <- glmer(ProbFitness ~ length_slope + (1|pop) + (1|block), data=wl2_prob_fit_plas, family = binomial)
+summary(wl2_glmer2)
+
+wl2_glmer3 <- glmer(ProbFitness ~ height_slope + length_slope + (1|pop) + (1|block), data=wl2_prob_fit_plas, family = binomial)
+summary(wl2_glmer3)
+tidy(wl2_glmer3)
+```
+
+```{r}
+ucd_glmer1 <- glmer(ProbFitness ~ height_slope + (1|pop/mf), data=ucd_prob_fit_plas, family = binomial)
+summary(ucd_glmer1) 
+#boundary (singular) fit: see help('isSingular') #block explains little variation so removed it
+
+ucd_glmer2 <- glmer(ProbFitness ~ length_slope + (1|pop/mf), data=ucd_prob_fit_plas, family = binomial) 
+summary(ucd_glmer2)
+#convergence error with block so removed it 
+
+ucd_glmer3 <- glmer(ProbFitness ~ height_slope + length_slope + (1|pop/mf) + (1|block), data=ucd_prob_fit_plas, family = binomial)
+summary(ucd_glmer3)
+tidy(ucd_glmer3)
 ```
 
 ### Total Fitness for plants with any rep
