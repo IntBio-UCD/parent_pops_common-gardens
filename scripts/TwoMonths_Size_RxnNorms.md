@@ -1,7 +1,7 @@
 ---
 title: "Single Time Size Reaction Norms"
 author: "Brandie Quarles"
-date: "2025-03-31"
+date: "2025-04-02"
 output: 
   html_document: 
     keep_md: yes
@@ -10,6 +10,10 @@ output:
 
 
 To Do:
+
+-   Finalize linear models
+
+-   Pull out Site slopes for each pop as estimate of plasticity to compare to prob of fitness
 
 -   Try using ggcirlce to make different sized points for environmental distance
 
@@ -523,7 +527,7 @@ twomonths_rxnnorms_summary_mfs %>%
 ``` r
 #note that there are a lot of maternal families with only 1 plant - removed those from these figures 
 twomonths_rxnnorms_summary_mfs2 %>% 
-  filter(N_height != 1) %>% 
+  filter(N_height >2) %>% 
   ggplot(aes(x=Site, y=mean_height.cm, group=pop.mf, color=elev_m)) + 
   geom_point(size=0.8) + geom_line(linewidth=0.8) +
   geom_errorbar(aes(ymin=mean_height.cm-sem_height.cm,ymax=mean_height.cm+sem_height.cm),width=.1) +
@@ -532,32 +536,13 @@ twomonths_rxnnorms_summary_mfs2 %>%
   theme(text=element_text(size=28))
 ```
 
-```
-## Warning: Removed 21 rows containing missing values or values outside the scale range
-## (`geom_point()`).
-```
-
-```
-## Warning: Removed 21 rows containing missing values or values outside the scale range
-## (`geom_line()`).
-```
-
 ![](TwoMonths_Size_RxnNorms_files/figure-html/unnamed-chunk-8-1.png)<!-- -->
 
 ``` r
 ggsave("../output/TwoMonths_RxNorms_Height_MFAvgs.png", width = 14, height = 8, units = "in")
-```
 
-```
-## Warning: Removed 21 rows containing missing values or values outside the scale range
-## (`geom_point()`).
-## Removed 21 rows containing missing values or values outside the scale range
-## (`geom_line()`).
-```
-
-``` r
 twomonths_rxnnorms_summary_mfs2 %>% 
-  filter(N_length != 1) %>% 
+  filter(N_length>2) %>% 
   ggplot(aes(x=Site, y=mean_long.leaf.cm, group=pop.mf, color=elev_m)) + 
   geom_point(size=0.8) + geom_line(linewidth=0.8) +
   geom_errorbar(aes(ymin=mean_long.leaf.cm-sem_long.leaf.cm,ymax=mean_long.leaf.cm+sem_long.leaf.cm),
@@ -567,33 +552,16 @@ twomonths_rxnnorms_summary_mfs2 %>%
   theme(text=element_text(size=28))
 ```
 
-```
-## Warning: Removed 25 rows containing missing values or values outside the scale range
-## (`geom_point()`).
-```
-
-```
-## Warning: Removed 25 rows containing missing values or values outside the scale range
-## (`geom_line()`).
-```
-
 ![](TwoMonths_Size_RxnNorms_files/figure-html/unnamed-chunk-8-2.png)<!-- -->
 
 ``` r
 ggsave("../output/TwoMonths_RxNorms_LongestLength_MFAvgs.png", width = 14, height = 8, units = "in")
 ```
 
-```
-## Warning: Removed 25 rows containing missing values or values outside the scale range
-## (`geom_point()`).
-## Removed 25 rows containing missing values or values outside the scale range
-## (`geom_line()`).
-```
-
 
 ``` r
 twomonths_rxnnorms_summary_mfs2 %>% 
-  filter(N_height != 1) %>% 
+  filter(N_height >2) %>% 
   filter(parent.pop=="BH"|parent.pop=="WL1"|parent.pop=="CP2") %>%  
   ggplot(aes(x=Site, y=mean_height.cm, group=pop.mf, color=elev_m)) + 
   geom_point(size=0.8) + geom_line(linewidth=0.8) +
@@ -609,7 +577,7 @@ twomonths_rxnnorms_summary_mfs2 %>%
 #ggsave("../output/TwoMonths_RxNorms_Height_BH_WL1_CP2_MFAvgs.png", width = 14, height = 8, units = "in")
 
 twomonths_rxnnorms_summary_mfs2 %>% 
-  filter(N_length != 1) %>% 
+  filter(N_length >2) %>% 
   filter(parent.pop=="BH"|parent.pop=="WL1"|parent.pop=="CP2") %>%  
   ggplot(aes(x=Site, y=mean_long.leaf.cm, group=pop.mf, color=elev_m)) + 
   geom_point(size=0.8) + geom_line(linewidth=0.8) +
@@ -740,50 +708,26 @@ twomonths_rxnnorms_summary_pops2$Site <- factor(twomonths_rxnnorms_summary_pops2
 
 ``` r
 twomonths_rxnnorms_summary_pops %>% 
+  filter(N_height>2) %>% 
    ggplot(aes(x=Site, y=mean_height.cm, group=parent.pop, color=parent.pop)) + 
   geom_point(size=0.8) + geom_line(linewidth=0.8) +
-  geom_errorbar(aes(ymin=mean_height.cm-sem_height.cm,ymax=mean_height.cm+sem_height.cm),width=.2) +
+  geom_errorbar(aes(ymin=mean_height.cm-sem_height.cm,ymax=mean_height.cm+sem_height.cm),width=.1) +
   theme_classic() +
    theme(text=element_text(size=25))
-```
-
-```
-## Warning: Removed 1 row containing missing values or values outside the scale range
-## (`geom_point()`).
-```
-
-```
-## Warning: Removed 1 row containing missing values or values outside the scale range
-## (`geom_line()`).
 ```
 
 ![](TwoMonths_Size_RxnNorms_files/figure-html/unnamed-chunk-11-1.png)<!-- -->
 
 ``` r
 ggsave("../output/TwoMonths_RxNorms_Height_ALL_PopAvgs2.png", width = 12, height = 8, units = "in")
-```
 
-```
-## Warning: Removed 1 row containing missing values or values outside the scale range
-## (`geom_point()`).
-## Removed 1 row containing missing values or values outside the scale range
-## (`geom_line()`).
-```
-
-``` r
 twomonths_rxnnorms_summary_pops %>% 
+  filter(N_length>2) %>% 
    ggplot(aes(x=Site, y=mean_long.leaf.cm, group=parent.pop, color=parent.pop)) + 
   geom_point(size=0.8) + geom_line(linewidth=0.8) +
-  geom_errorbar(aes(ymin=mean_long.leaf.cm-sem_long.leaf.cm,ymax=mean_long.leaf.cm+sem_long.leaf.cm),width=.2) +
+  geom_errorbar(aes(ymin=mean_long.leaf.cm-sem_long.leaf.cm,ymax=mean_long.leaf.cm+sem_long.leaf.cm),width=.1) +
   theme_classic() +
    theme(text=element_text(size=25))
-```
-
-```
-## Warning: Removed 1 row containing missing values or values outside the scale range
-## (`geom_point()`).
-## Removed 1 row containing missing values or values outside the scale range
-## (`geom_line()`).
 ```
 
 ![](TwoMonths_Size_RxnNorms_files/figure-html/unnamed-chunk-11-2.png)<!-- -->
@@ -792,17 +736,10 @@ twomonths_rxnnorms_summary_pops %>%
 ggsave("../output/TwoMonths_RxNorms_LongestLength_ALL_PopAvgs2.png", width = 12, height = 8, units = "in")
 ```
 
-```
-## Warning: Removed 1 row containing missing values or values outside the scale range
-## (`geom_point()`).
-## Removed 1 row containing missing values or values outside the scale range
-## (`geom_line()`).
-```
-
 
 ``` r
 twomonths_rxnnorms_summary_pops2 %>% 
-  filter(N_height != 1) %>% 
+  filter(N_height >2) %>% 
   ggplot(aes(x=Site, y=mean_height.cm, group=parent.pop, color=elev_m)) + 
   geom_point(size=1.5) + geom_line(linewidth=1.5) +
   geom_errorbar(aes(ymin=mean_height.cm-sem_height.cm,ymax=mean_height.cm+sem_height.cm),width=.1) +
@@ -812,32 +749,13 @@ twomonths_rxnnorms_summary_pops2 %>%
   theme(text=element_text(size=28))
 ```
 
-```
-## Warning: Removed 1 row containing missing values or values outside the scale range
-## (`geom_point()`).
-```
-
-```
-## Warning: Removed 1 row containing missing values or values outside the scale range
-## (`geom_line()`).
-```
-
 ![](TwoMonths_Size_RxnNorms_files/figure-html/unnamed-chunk-12-1.png)<!-- -->
 
 ``` r
 ggsave("../output/TwoMonths_RxNorms_Height_ALL_PopAvgs.png", width = 14, height = 8, units = "in")
-```
 
-```
-## Warning: Removed 1 row containing missing values or values outside the scale range
-## (`geom_point()`).
-## Removed 1 row containing missing values or values outside the scale range
-## (`geom_line()`).
-```
-
-``` r
 twomonths_rxnnorms_summary_pops2 %>% 
-  filter(N_length != 1) %>% 
+  filter(N_length >2) %>% 
   ggplot(aes(x=Site, y=mean_long.leaf.cm, group=parent.pop, color=elev_m)) + 
   geom_point(size=1.5) + geom_line(linewidth=1.5) +
   geom_errorbar(aes(ymin=mean_long.leaf.cm-sem_long.leaf.cm,
@@ -847,24 +765,10 @@ twomonths_rxnnorms_summary_pops2 %>%
   theme(text=element_text(size=28))
 ```
 
-```
-## Warning: Removed 1 row containing missing values or values outside the scale range
-## (`geom_point()`).
-## Removed 1 row containing missing values or values outside the scale range
-## (`geom_line()`).
-```
-
 ![](TwoMonths_Size_RxnNorms_files/figure-html/unnamed-chunk-12-2.png)<!-- -->
 
 ``` r
 ggsave("../output/TwoMonths_RxNorms_LongestLength_ALL_PopAvgs.png", width = 14, height = 8, units = "in")
-```
-
-```
-## Warning: Removed 1 row containing missing values or values outside the scale range
-## (`geom_point()`).
-## Removed 1 row containing missing values or values outside the scale range
-## (`geom_line()`).
 ```
 
 ### By Gowers Distance
@@ -872,30 +776,20 @@ ggsave("../output/TwoMonths_RxNorms_LongestLength_ALL_PopAvgs.png", width = 14, 
 
 ``` r
 ggplot() +
-  geom_line(data = filter(twomonths_rxnnorms_summary_pops2, N_height != 1), linewidth=1.5, aes(x = Site, y = mean_height.cm, group=parent.pop, color=elev_m)) + scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_line(data = filter(twomonths_rxnnorms_summary_pops2, N_height>2), linewidth=1.5, aes(x = Site, y = mean_height.cm, group=parent.pop, color=elev_m)) + scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
   labs(color="Elevation (m)") +
    
   # start a new scale
   new_scale_colour() +
   
-  geom_point(data = filter(twomonths_rxnnorms_summary_pops2, N_height != 1), 
+  geom_point(data = filter(twomonths_rxnnorms_summary_pops2, N_height>2), 
              size=2.5, aes(x = Site,y = mean_height.cm, color=Wtr_Year_GD_Recent), alpha=0.9) +
-  geom_errorbar(data = filter(twomonths_rxnnorms_summary_pops2, N_height != 1), 
+  geom_errorbar(data = filter(twomonths_rxnnorms_summary_pops2, N_height >2), 
                 aes(x=Site, y=mean_height.cm,ymin=mean_height.cm-sem_height.cm,ymax=mean_height.cm+sem_height.cm,
                     color=Wtr_Year_GD_Recent), alpha=0.9, width=.1) +
   theme_classic() + scale_colour_gradientn(colours = c("black", "grey80")) +
   labs(y="Height (cm)", color="Envtal Dist \n(from garden year)") +
   theme(text=element_text(size=28))
-```
-
-```
-## Warning: Removed 1 row containing missing values or values outside the scale range
-## (`geom_line()`).
-```
-
-```
-## Warning: Removed 1 row containing missing values or values outside the scale range
-## (`geom_point()`).
 ```
 
 ![](TwoMonths_Size_RxnNorms_files/figure-html/unnamed-chunk-13-1.png)<!-- -->
@@ -904,40 +798,23 @@ ggplot() +
 ggsave("../output/TwoMonths_RxNorms_Height_ALL_PopAvgs_Gowers.png", width = 14, height = 8, units = "in")
 ```
 
-```
-## Warning: Removed 1 row containing missing values or values outside the scale range
-## (`geom_line()`).
-## Removed 1 row containing missing values or values outside the scale range
-## (`geom_point()`).
-```
-
 
 ``` r
 ggplot() +
-  geom_line(data = filter(twomonths_rxnnorms_summary_pops2, N_length != 1), linewidth=1.5, aes(x = Site, y = mean_long.leaf.cm, group=parent.pop, color=elev_m)) + scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_line(data = filter(twomonths_rxnnorms_summary_pops2, N_length >2), linewidth=1.5, aes(x = Site, y = mean_long.leaf.cm, group=parent.pop, color=elev_m)) + scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
   labs(color="Elevation (m)") +
    
   # start a new scale
   new_scale_colour() +
   
-  geom_point(data = filter(twomonths_rxnnorms_summary_pops2, N_length != 1), 
+  geom_point(data = filter(twomonths_rxnnorms_summary_pops2, N_length >2), 
              size=2.5, aes(x = Site,y = mean_long.leaf.cm, color=Wtr_Year_GD_Recent), alpha=0.9) +
-  geom_errorbar(data = filter(twomonths_rxnnorms_summary_pops2, N_length != 1), 
+  geom_errorbar(data = filter(twomonths_rxnnorms_summary_pops2, N_length >2), 
                 aes(x=Site, y=mean_long.leaf.cm,ymin=mean_long.leaf.cm-sem_long.leaf.cm,ymax=mean_long.leaf.cm+sem_long.leaf.cm,
                     color=Wtr_Year_GD_Recent), alpha=0.9, width=.1) +
   theme_classic() + scale_colour_gradientn(colours = c("black", "grey80")) +
   labs(y="Leaf Length (cm)", color="Envtal Dist \n(from garden year)") +
   theme(text=element_text(size=28))
-```
-
-```
-## Warning: Removed 1 row containing missing values or values outside the scale range
-## (`geom_line()`).
-```
-
-```
-## Warning: Removed 1 row containing missing values or values outside the scale range
-## (`geom_point()`).
 ```
 
 ![](TwoMonths_Size_RxnNorms_files/figure-html/unnamed-chunk-14-1.png)<!-- -->
@@ -946,20 +823,13 @@ ggplot() +
 ggsave("../output/TwoMonths_RxNorms_LongestLength_ALL_PopAvgs_Gowers.png", width = 14, height = 8, units = "in")
 ```
 
-```
-## Warning: Removed 1 row containing missing values or values outside the scale range
-## (`geom_line()`).
-## Removed 1 row containing missing values or values outside the scale range
-## (`geom_point()`).
-```
-
 ### Combine mf and pop averages
 
 
 ``` r
 twomonths_rxnnorms_summary_pops2 %>% 
   mutate(pop.mf=parent.pop) %>% 
-  filter(N_height != 1) %>% 
+  filter(N_height >2) %>% 
   ggplot(aes(x=Site, y=mean_height.cm, group=pop.mf, color=elev_m)) + 
   geom_point(size=1.5) + geom_line(linewidth=1.5, alpha=0.7) +
   geom_errorbar(aes(ymin=mean_height.cm-sem_height.cm,ymax=mean_height.cm+sem_height.cm),width=.1) +
@@ -979,16 +849,6 @@ twomonths_rxnnorms_summary_pops2 %>%
 ```
 
 ```
-## Warning: Removed 1 row containing missing values or values outside the scale range
-## (`geom_point()`).
-```
-
-```
-## Warning: Removed 1 row containing missing values or values outside the scale range
-## (`geom_line()`).
-```
-
-```
 ## Warning: Removed 21 rows containing missing values or values outside the scale range
 ## (`geom_line()`).
 ```
@@ -1005,29 +865,16 @@ ggsave("../output/TwoMonths_RxNorms_Height_ALL_PopMFAvgs.png", width = 14, heigh
 ```
 
 ```
-## Warning: Removed 1 row containing missing values or values outside the scale range
-## (`geom_point()`).
-```
-
-```
-## Warning: Removed 1 row containing missing values or values outside the scale range
-## (`geom_line()`).
-```
-
-```
 ## Warning: Removed 21 rows containing missing values or values outside the scale range
 ## (`geom_line()`).
-```
-
-```
-## Warning: Removed 21 rows containing missing values or values outside the scale range
+## Removed 21 rows containing missing values or values outside the scale range
 ## (`geom_point()`).
 ```
 
 ``` r
 twomonths_rxnnorms_summary_pops2 %>% 
   mutate(pop.mf=parent.pop) %>% 
-  filter(N_length != 1) %>% 
+  filter(N_length >2) %>% 
   ggplot(aes(x=Site, y=mean_long.leaf.cm, group=pop.mf, color=elev_m)) + 
   geom_point(size=1.5) + geom_line(linewidth=1.5,  alpha=0.7) +
   geom_errorbar(aes(ymin=mean_long.leaf.cm-sem_long.leaf.cm,
@@ -1037,16 +884,6 @@ twomonths_rxnnorms_summary_pops2 %>%
   theme(text=element_text(size=28)) +
 geom_line(data = twomonths_rxnnorms_summary_mfs2, size=0.2) +
   geom_point(data = twomonths_rxnnorms_summary_mfs2, size=0.8) 
-```
-
-```
-## Warning: Removed 1 row containing missing values or values outside the scale range
-## (`geom_point()`).
-```
-
-```
-## Warning: Removed 1 row containing missing values or values outside the scale range
-## (`geom_line()`).
 ```
 
 ```
@@ -1066,22 +903,9 @@ ggsave("../output/TwoMonths_RxNorms_LongestLength_ALL_PopMFAvgs.png", width = 14
 ```
 
 ```
-## Warning: Removed 1 row containing missing values or values outside the scale range
-## (`geom_point()`).
-```
-
-```
-## Warning: Removed 1 row containing missing values or values outside the scale range
-## (`geom_line()`).
-```
-
-```
 ## Warning: Removed 25 rows containing missing values or values outside the scale range
 ## (`geom_line()`).
-```
-
-```
-## Warning: Removed 25 rows containing missing values or values outside the scale range
+## Removed 25 rows containing missing values or values outside the scale range
 ## (`geom_point()`).
 ```
 
@@ -1175,266 +999,196 @@ twomonths_rxnnorms_summary_elev %>%
 
 ## Stats
 
-Height
+### Height
 
 
 ``` r
-scale_this <- function(x){
-  (x - mean(x, na.rm=TRUE)) / sd(x, na.rm=TRUE)
-}
-summary(twomonths_rxnnorms_loc)
-```
+#twomonths_rxnnorms_loc_scale <- twomonths_rxnnorms_loc %>% 
+#  mutate_at(c("GrwSsn_GD_Recent","Wtr_Year_GD_Recent","GrwSsn_GD_Historical",
+#              "Wtr_Year_GD_Historical", "Geographic_Dist", "elev_m"),scale) 
+#
+#lmeheight <- lmer(height.cm ~ elev_m*(Site/Wtr_Year_GD_Recent) + (1|parent.pop/mf) + (1|block), data = twomonths_rxnnorms_loc_scale) 
+#summary(lmeheight)
+#ranova(lmeheight) 
+#anova(lmeheight)
+##cof 
+##rnef 
+##or fixed effects
+#emtrends(lmeheight, pairwise ~ Site, var = "elev_m_s")
+#emmip(lmeheight, Site ~ elev_m_s, cov.reduce = range)
 
-```
-##     BedLoc             block             Genotype            pop.mf         
-##  Length:2330        Length:2330        Length:2330        Length:2330       
-##  Class :character   Class :character   Class :character   Class :character  
-##  Mode  :character   Mode  :character   Mode  :character   Mode  :character  
-##                                                                             
-##                                                                             
-##                                                                             
-##                                                                             
-##   parent.pop              mf              rep           height.cm     
-##  Length:2330        Min.   : 1.000   Min.   : 1.000   Min.   : 0.100  
-##  Class :character   1st Qu.: 2.000   1st Qu.: 4.000   1st Qu.: 2.100  
-##  Mode  :character   Median : 5.000   Median : 8.000   Median : 3.200  
-##                     Mean   : 4.513   Mean   : 8.102   Mean   : 4.325  
-##                     3rd Qu.: 6.000   3rd Qu.:11.000   3rd Qu.: 5.200  
-##                     Max.   :14.000   Max.   :31.000   Max.   :38.100  
-##                                                       NA's   :1074    
-##   long.leaf.cm       Site             Garden_Lat     Garden_Long    
-##  Min.   :0.100   Length:2330        Min.   :38.53   Min.   :-121.8  
-##  1st Qu.:1.800   Class :character   1st Qu.:38.53   1st Qu.:-121.8  
-##  Median :2.500   Mode  :character   Median :38.83   Median :-120.3  
-##  Mean   :2.602                      Mean   :38.73   Mean   :-120.7  
-##  3rd Qu.:3.300                      3rd Qu.:38.83   3rd Qu.:-120.3  
-##  Max.   :7.600                      Max.   :38.83   Max.   :-120.3  
-##  NA's   :1159                                                       
-##   Garden_Elev   elevation.group        elev_m            Lat       
-##  Min.   :  16   Length:2330        Min.   : 313.0   Min.   :36.56  
-##  1st Qu.:  16   Class :character   1st Qu.: 511.4   1st Qu.:37.81  
-##  Median :2020   Mode  :character   Median :1921.0   Median :38.79  
-##  Mean   :1369                      Mean   :1567.5   Mean   :38.70  
-##  3rd Qu.:2020                      3rd Qu.:2353.6   3rd Qu.:39.59  
-##  Max.   :2020                      Max.   :2872.3   Max.   :40.74  
-##                                                                    
-##       Long        GrwSsn_GD_Recent GrwSsn_GD_Historical Wtr_Year_GD_Recent
-##  Min.   :-123.0   Min.   :0.1475   Min.   :0.1837       Min.   :0.1921    
-##  1st Qu.:-121.2   1st Qu.:0.2635   1st Qu.:0.2512       1st Qu.:0.3850    
-##  Median :-120.2   Median :0.3140   Median :0.2949       Median :0.4285    
-##  Mean   :-120.4   Mean   :0.3197   Mean   :0.3313       Mean   :0.4605    
-##  3rd Qu.:-120.0   3rd Qu.:0.3995   3rd Qu.:0.4148       3rd Qu.:0.5594    
-##  Max.   :-118.8   Max.   :0.5356   Max.   :0.5749       Max.   :0.8013    
-##                                                                           
-##  Wtr_Year_GD_Historical Geographic_Dist      Elev_Dist      
-##  Min.   :0.2230         Min.   :   136.3   Min.   :-1707.0  
-##  1st Qu.:0.4235         1st Qu.: 66245.7   1st Qu.:-1001.4  
-##  Median :0.4586         Median :132940.1   Median :  363.2  
-##  Mean   :0.4748         Mean   :138584.2   Mean   :  198.6  
-##  3rd Qu.:0.5537         3rd Qu.:202681.2   3rd Qu.:  721.4  
-##  Max.   :0.8014         Max.   :344080.6   Max.   : 2856.3  
-## 
-```
-
-``` r
-twomonths_rxnnorms_loc_scale <- twomonths_rxnnorms_loc %>% 
-  mutate(Wtr_Year_GD_Recent = scale_this(Wtr_Year_GD_Recent), 
-         elev_m_s = scale_this(elev_m))
-lmeheight <- lmer(height.cm ~ elev_m_s*(Site/Wtr_Year_GD_Recent) + (1|parent.pop/mf), data = twomonths_rxnnorms_loc_scale) 
-summary(lmeheight)
+lmeheight2 <- lmer(height.cm ~ Site + (1|parent.pop/mf), data = twomonths_rxnnorms_loc) #no block b/c nested within site?
+summary(lmeheight2)
 ```
 
 ```
 ## Linear mixed model fit by REML. t-tests use Satterthwaite's method [
 ## lmerModLmerTest]
-## Formula: height.cm ~ elev_m_s * (Site/Wtr_Year_GD_Recent) + (1 | parent.pop/mf)
-##    Data: twomonths_rxnnorms_loc_scale
+## Formula: height.cm ~ Site + (1 | parent.pop/mf)
+##    Data: twomonths_rxnnorms_loc
 ## 
-## REML criterion at convergence: 5851.1
+## REML criterion at convergence: 6071.5
 ## 
 ## Scaled residuals: 
 ##     Min      1Q  Median      3Q     Max 
-## -4.8753 -0.4115 -0.0082  0.3957  8.2660 
+## -4.4769 -0.4677  0.0026  0.4018  7.9600 
 ## 
 ## Random effects:
 ##  Groups        Name        Variance Std.Dev.
-##  mf:parent.pop (Intercept) 0.8955   0.9463  
-##  parent.pop    (Intercept) 4.0113   2.0028  
-##  Residual                  5.3582   2.3148  
+##  mf:parent.pop (Intercept) 1.183    1.088   
+##  parent.pop    (Intercept) 7.994    2.827   
+##  Residual                  6.270    2.504   
 ## Number of obs: 1256, groups:  mf:parent.pop, 168; parent.pop, 23
 ## 
 ## Fixed effects:
-##                                      Estimate Std. Error        df t value
-## (Intercept)                            3.3926     0.5374   40.2038   6.313
-## elev_m_s                              -0.3762     0.6764   72.5249  -0.556
-## SiteWL2                                1.6287     0.3262 1100.4312   4.992
-## SiteUCD:Wtr_Year_GD_Recent            -0.4176     0.4102  474.7039  -1.018
-## SiteWL2:Wtr_Year_GD_Recent            -2.3167     0.7622  494.5927  -3.040
-## elev_m_s:SiteWL2                      -3.9792     0.4227 1181.2697  -9.414
-## elev_m_s:SiteUCD:Wtr_Year_GD_Recent   -0.3783     0.2938  373.2727  -1.288
-## elev_m_s:SiteWL2:Wtr_Year_GD_Recent   -0.7075     0.6560  414.1147  -1.079
-##                                     Pr(>|t|)    
-## (Intercept)                         1.68e-07 ***
-## elev_m_s                             0.57977    
-## SiteWL2                             6.93e-07 ***
-## SiteUCD:Wtr_Year_GD_Recent           0.30922    
-## SiteWL2:Wtr_Year_GD_Recent           0.00249 ** 
-## elev_m_s:SiteWL2                     < 2e-16 ***
-## elev_m_s:SiteUCD:Wtr_Year_GD_Recent  0.19867    
-## elev_m_s:SiteWL2:Wtr_Year_GD_Recent  0.28141    
+##              Estimate Std. Error        df t value Pr(>|t|)    
+## (Intercept)    2.2038     0.6157   23.5501   3.579  0.00155 ** 
+## SiteWL2        2.8577     0.1668 1233.8021  17.128  < 2e-16 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
 ## Correlation of Fixed Effects:
-##             (Intr) elv_m_ SitWL2 SUCD:W SWL2:W el__:SWL2 e__:SU
-## elev_m_s    -0.158                                             
-## SiteWL2     -0.179  0.156                                      
-## SUCD:W_Y_GD  0.109 -0.717 -0.217                               
-## SWL2:W_Y_GD  0.079  0.363  0.540 -0.540                        
-## elv_m_:SWL2  0.079 -0.509  0.049  0.590  0.190                 
-## e__:SUCD:W_ -0.539  0.302  0.211 -0.347 -0.031 -0.259          
-## e__:SWL2:W_  0.339  0.043  0.546 -0.091  0.710  0.216    -0.565
+##         (Intr)
+## SiteWL2 -0.151
 ```
 
 ``` r
-ranova(lmeheight) 
+ranova(lmeheight2) 
 ```
 
 ```
 ## ANOVA-like table for random-effects: Single term deletions
 ## 
 ## Model:
-## height.cm ~ elev_m_s + Site + (1 | mf:parent.pop) + (1 | parent.pop) + Site:Wtr_Year_GD_Recent + elev_m_s:Site + elev_m_s:Site:Wtr_Year_GD_Recent
-##                     npar  logLik    AIC    LRT Df Pr(>Chisq)    
-## <none>                11 -2925.5 5873.1                         
-## (1 | mf:parent.pop)   10 -2955.6 5931.1  60.03  1  9.343e-15 ***
-## (1 | parent.pop)      10 -2985.0 5989.9 118.86  1  < 2.2e-16 ***
+## height.cm ~ Site + (1 | mf:parent.pop) + (1 | parent.pop)
+##                     npar  logLik    AIC     LRT Df Pr(>Chisq)    
+## <none>                 5 -3035.7 6081.5                          
+## (1 | mf:parent.pop)    4 -3070.4 6148.9  69.423  1  < 2.2e-16 ***
+## (1 | parent.pop)       4 -3122.0 6252.1 172.596  1  < 2.2e-16 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
 
 ``` r
-anova(lmeheight)
+anova(lmeheight2)
 ```
 
 ```
 ## Type III Analysis of Variance Table with Satterthwaite's method
-##                                  Sum Sq Mean Sq NumDF   DenDF F value    Pr(>F)
-## elev_m_s                          84.08   84.08     1   47.86 15.6920 0.0002471
-## Site                             133.55  133.55     1 1100.43 24.9236 6.930e-07
-## Site:Wtr_Year_GD_Recent          103.03   51.51     2  586.92  9.6138 7.793e-05
-## elev_m_s:Site                    474.89  474.89     1 1181.27 88.6283 < 2.2e-16
-## elev_m_s:Site:Wtr_Year_GD_Recent  34.55   17.27     2  496.46  3.2237 0.0406432
-##                                     
-## elev_m_s                         ***
-## Site                             ***
-## Site:Wtr_Year_GD_Recent          ***
-## elev_m_s:Site                    ***
-## elev_m_s:Site:Wtr_Year_GD_Recent *  
+##      Sum Sq Mean Sq NumDF  DenDF F value    Pr(>F)    
+## Site 1839.5  1839.5     1 1233.8  293.37 < 2.2e-16 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
 
 ``` r
-#cof 
-#rnef 
-#or fixed effects
-
-emtrends(lmeheight, pairwise ~ Site, var = "elev_m_s")
+lmeheight3 <- lmer(height.cm ~ Site + (Site|parent.pop) + (1|pop.mf), data = twomonths_rxnnorms_loc) 
+summary(lmeheight3)
 ```
 
 ```
-## NOTE: Results may be misleading due to involvement in interactions
-```
-
-```
-## $emtrends
-##  Site elev_m_s.trend    SE   df lower.CL upper.CL
-##  UCD          -0.372 0.681 67.7    -1.73    0.986
-##  WL2          -4.348 0.590 43.8    -5.54   -3.159
+## Linear mixed model fit by REML. t-tests use Satterthwaite's method [
+## lmerModLmerTest]
+## Formula: height.cm ~ Site + (Site | parent.pop) + (1 | pop.mf)
+##    Data: twomonths_rxnnorms_loc
 ## 
-## Degrees-of-freedom method: kenward-roger 
-## Confidence level used: 0.95 
+## REML criterion at convergence: 5537.6
 ## 
-## $contrasts
-##  contrast  estimate    SE   df t.ratio p.value
-##  UCD - WL2     3.98 0.422 1176   9.412  <.0001
+## Scaled residuals: 
+##     Min      1Q  Median      3Q     Max 
+## -7.7557 -0.4253 -0.0432  0.3879  8.1521 
 ## 
-## Degrees-of-freedom method: kenward-roger
+## Random effects:
+##  Groups     Name        Variance Std.Dev. Corr
+##  pop.mf     (Intercept) 0.2971   0.5451       
+##  parent.pop (Intercept) 1.4489   1.2037       
+##             SiteWL2     9.8025   3.1309   0.86
+##  Residual               4.1926   2.0476       
+## Number of obs: 1256, groups:  pop.mf, 168; parent.pop, 23
+## 
+## Fixed effects:
+##             Estimate Std. Error      df t value Pr(>|t|)    
+## (Intercept)   2.7708     0.2798 21.6125   9.904 1.72e-09 ***
+## SiteWL2       1.9389     0.6817 22.2789   2.844  0.00937 ** 
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Correlation of Fixed Effects:
+##         (Intr)
+## SiteWL2 0.702
 ```
 
 ``` r
-emmip(lmeheight, Site ~ elev_m_s, cov.reduce = range)
+ranova(lmeheight3) 
 ```
 
 ```
-## NOTE: A nesting structure was detected in the fitted model:
-##     Wtr_Year_GD_Recent %in% Site
-## NOTE: Results may be misleading due to involvement in interactions
-```
-
-![](TwoMonths_Size_RxnNorms_files/figure-html/unnamed-chunk-19-1.png)<!-- -->
-
-Length
-
-
-``` r
-summary(twomonths_rxnnorms_loc)
-```
-
-```
-##     BedLoc             block             Genotype            pop.mf         
-##  Length:2330        Length:2330        Length:2330        Length:2330       
-##  Class :character   Class :character   Class :character   Class :character  
-##  Mode  :character   Mode  :character   Mode  :character   Mode  :character  
-##                                                                             
-##                                                                             
-##                                                                             
-##                                                                             
-##   parent.pop              mf              rep           height.cm     
-##  Length:2330        Min.   : 1.000   Min.   : 1.000   Min.   : 0.100  
-##  Class :character   1st Qu.: 2.000   1st Qu.: 4.000   1st Qu.: 2.100  
-##  Mode  :character   Median : 5.000   Median : 8.000   Median : 3.200  
-##                     Mean   : 4.513   Mean   : 8.102   Mean   : 4.325  
-##                     3rd Qu.: 6.000   3rd Qu.:11.000   3rd Qu.: 5.200  
-##                     Max.   :14.000   Max.   :31.000   Max.   :38.100  
-##                                                       NA's   :1074    
-##   long.leaf.cm       Site             Garden_Lat     Garden_Long    
-##  Min.   :0.100   Length:2330        Min.   :38.53   Min.   :-121.8  
-##  1st Qu.:1.800   Class :character   1st Qu.:38.53   1st Qu.:-121.8  
-##  Median :2.500   Mode  :character   Median :38.83   Median :-120.3  
-##  Mean   :2.602                      Mean   :38.73   Mean   :-120.7  
-##  3rd Qu.:3.300                      3rd Qu.:38.83   3rd Qu.:-120.3  
-##  Max.   :7.600                      Max.   :38.83   Max.   :-120.3  
-##  NA's   :1159                                                       
-##   Garden_Elev   elevation.group        elev_m            Lat       
-##  Min.   :  16   Length:2330        Min.   : 313.0   Min.   :36.56  
-##  1st Qu.:  16   Class :character   1st Qu.: 511.4   1st Qu.:37.81  
-##  Median :2020   Mode  :character   Median :1921.0   Median :38.79  
-##  Mean   :1369                      Mean   :1567.5   Mean   :38.70  
-##  3rd Qu.:2020                      3rd Qu.:2353.6   3rd Qu.:39.59  
-##  Max.   :2020                      Max.   :2872.3   Max.   :40.74  
-##                                                                    
-##       Long        GrwSsn_GD_Recent GrwSsn_GD_Historical Wtr_Year_GD_Recent
-##  Min.   :-123.0   Min.   :0.1475   Min.   :0.1837       Min.   :0.1921    
-##  1st Qu.:-121.2   1st Qu.:0.2635   1st Qu.:0.2512       1st Qu.:0.3850    
-##  Median :-120.2   Median :0.3140   Median :0.2949       Median :0.4285    
-##  Mean   :-120.4   Mean   :0.3197   Mean   :0.3313       Mean   :0.4605    
-##  3rd Qu.:-120.0   3rd Qu.:0.3995   3rd Qu.:0.4148       3rd Qu.:0.5594    
-##  Max.   :-118.8   Max.   :0.5356   Max.   :0.5749       Max.   :0.8013    
-##                                                                           
-##  Wtr_Year_GD_Historical Geographic_Dist      Elev_Dist      
-##  Min.   :0.2230         Min.   :   136.3   Min.   :-1707.0  
-##  1st Qu.:0.4235         1st Qu.: 66245.7   1st Qu.:-1001.4  
-##  Median :0.4586         Median :132940.1   Median :  363.2  
-##  Mean   :0.4748         Mean   :138584.2   Mean   :  198.6  
-##  3rd Qu.:0.5537         3rd Qu.:202681.2   3rd Qu.:  721.4  
-##  Max.   :0.8014         Max.   :344080.6   Max.   : 2856.3  
+## ANOVA-like table for random-effects: Single term deletions
 ## 
+## Model:
+## height.cm ~ Site + (Site | parent.pop) + (1 | pop.mf)
+##                             npar  logLik    AIC    LRT Df Pr(>Chisq)    
+## <none>                         7 -2768.8 5551.6                         
+## Site in (Site | parent.pop)    5 -3035.7 6081.5 533.81  2  < 2.2e-16 ***
+## (1 | pop.mf)                   6 -2777.6 5567.2  17.59  1  2.733e-05 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
 
 ``` r
-lmelength <- lmer(long.leaf.cm ~ elev_m*Site + (1|parent.pop/mf), data = twomonths_rxnnorms_loc) 
+anova(lmeheight3)
+```
+
+```
+## Type III Analysis of Variance Table with Satterthwaite's method
+##      Sum Sq Mean Sq NumDF  DenDF F value   Pr(>F)   
+## Site 33.914  33.914     1 22.279  8.0889 0.009366 **
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+```
+
+``` r
+coef(lmeheight3)$parent.pop
+```
+
+```
+##       (Intercept)      SiteWL2
+## BH       3.127450  3.387333423
+## CC       4.352803  4.758511190
+## CP2      1.938795  0.593683593
+## CP3      1.893044  0.189517769
+## DPR      4.207061  2.813698591
+## FR       3.166050  1.339323954
+## IH       3.645905  5.343247439
+## LV1      2.041798  0.056017025
+## LV3      2.181808  0.391289471
+## LVTR1    2.006573  0.132667264
+## SC       2.967156  1.741651568
+## SQ1      2.127630  0.525291246
+## SQ2      1.745101  0.375183313
+## SQ3      1.653421 -0.198574356
+## TM2      6.672299 13.984269227
+## WL1      2.621023 -0.007083989
+## WL2      2.394369  1.311118386
+## WR       2.853229  2.181474283
+## WV       3.046277  2.553417371
+## YO11     2.314804  0.367997972
+## YO4      2.445341  1.357353848
+## YO7      1.937419  0.801872813
+## YO8      2.388284  0.594503203
+```
+
+``` r
+height_slopes <- coef(lmeheight3)$parent.pop %>% 
+  rename(height_slope=SiteWL2) %>% select(-`(Intercept)`) %>% 
+  rownames_to_column(var="parent.pop")
+```
+
+### Length
+
+
+``` r
+lmelength2 <- lmer(long.leaf.cm ~ Site + (1|parent.pop/mf), data = twomonths_rxnnorms_loc) #no block b/c nested within site?
 ```
 
 ```
@@ -1442,105 +1196,244 @@ lmelength <- lmer(long.leaf.cm ~ elev_m*Site + (1|parent.pop/mf), data = twomont
 ```
 
 ``` r
-summary(lmelength)
+summary(lmelength2) #boundary (singular) fit: see help('isSingular') - mf explains little variation 
 ```
 
 ```
 ## Linear mixed model fit by REML. t-tests use Satterthwaite's method [
 ## lmerModLmerTest]
-## Formula: long.leaf.cm ~ elev_m * Site + (1 | parent.pop/mf)
+## Formula: long.leaf.cm ~ Site + (1 | parent.pop/mf)
 ##    Data: twomonths_rxnnorms_loc
 ## 
-## REML criterion at convergence: 3292.7
+## REML criterion at convergence: 3300.4
 ## 
 ## Scaled residuals: 
 ##     Min      1Q  Median      3Q     Max 
-## -3.0339 -0.6347 -0.0062  0.6189  3.9497 
+## -3.1712 -0.6218  0.0294  0.6193  4.0623 
 ## 
 ## Random effects:
-##  Groups        Name        Variance Std.Dev.
-##  mf:parent.pop (Intercept) 0.0000   0.0000  
-##  parent.pop    (Intercept) 0.1125   0.3355  
-##  Residual                  0.9115   0.9547  
+##  Groups        Name        Variance  Std.Dev. 
+##  mf:parent.pop (Intercept) 2.140e-14 1.463e-07
+##  parent.pop    (Intercept) 3.717e-01 6.097e-01
+##  Residual                  9.255e-01 9.620e-01
 ## Number of obs: 1171, groups:  mf:parent.pop, 162; parent.pop, 23
 ## 
 ## Fixed effects:
-##                  Estimate Std. Error         df t value Pr(>|t|)    
-## (Intercept)     2.931e+00  1.757e-01  2.427e+01  16.686 8.37e-15 ***
-## elev_m         -4.104e-04  9.873e-05  3.010e+01  -4.156 0.000247 ***
-## SiteWL2         6.965e-01  1.053e-01  1.163e+03   6.615 5.66e-11 ***
-## elev_m:SiteWL2 -2.985e-04  6.900e-05  1.161e+03  -4.326 1.65e-05 ***
+##              Estimate Std. Error        df t value Pr(>|t|)    
+## (Intercept) 2.161e+00  1.375e-01 2.469e+01  15.716 2.31e-14 ***
+## SiteWL2     3.202e-01  6.098e-02 1.164e+03   5.251 1.80e-07 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
 ## Correlation of Fixed Effects:
-##             (Intr) elev_m SitWL2
-## elev_m      -0.872              
-## SiteWL2     -0.311  0.312       
-## elv_m:StWL2  0.277 -0.403 -0.821
+##         (Intr)
+## SiteWL2 -0.228
 ## optimizer (nloptwrap) convergence code: 0 (OK)
 ## boundary (singular) fit: see help('isSingular')
 ```
 
 ``` r
-ranova(lmelength) 
+ranova(lmelength2) 
 ```
 
 ```
 ## ANOVA-like table for random-effects: Single term deletions
 ## 
 ## Model:
-## long.leaf.cm ~ elev_m + Site + (1 | mf:parent.pop) + (1 | parent.pop) + elev_m:Site
+## long.leaf.cm ~ Site + (1 | mf:parent.pop) + (1 | parent.pop)
 ##                     npar  logLik    AIC    LRT Df Pr(>Chisq)    
-## <none>                 7 -1646.3 3306.7                         
-## (1 | mf:parent.pop)    6 -1646.3 3304.7  0.000  1          1    
-## (1 | parent.pop)       6 -1676.2 3364.4 59.659  1  1.128e-14 ***
+## <none>                 5 -1650.2 3310.4                         
+## (1 | mf:parent.pop)    4 -1650.2 3308.4   0.00  1          1    
+## (1 | parent.pop)       4 -1720.9 3449.8 141.38  1     <2e-16 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
 
 ``` r
-anova(lmelength)
+anova(lmelength2)
 ```
 
 ```
 ## Type III Analysis of Variance Table with Satterthwaite's method
-##             Sum Sq Mean Sq NumDF   DenDF F value    Pr(>F)    
-## elev_m      34.849  34.849     1   21.68  38.231 3.400e-06 ***
-## Site        39.883  39.883     1 1163.08  43.755 5.663e-11 ***
-## elev_m:Site 17.059  17.059     1 1160.97  18.715 1.648e-05 ***
+##      Sum Sq Mean Sq NumDF  DenDF F value    Pr(>F)    
+## Site 25.515  25.515     1 1163.7  27.568 1.802e-07 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
 
 ``` r
-emmip(lmelength, elev_m ~ Site)
+lmelength3 <- lmer(long.leaf.cm ~ Site + (1|parent.pop), data = twomonths_rxnnorms_loc) #remove mf 
+summary(lmelength3)
 ```
 
-![](TwoMonths_Size_RxnNorms_files/figure-html/unnamed-chunk-20-1.png)<!-- -->
+```
+## Linear mixed model fit by REML. t-tests use Satterthwaite's method [
+## lmerModLmerTest]
+## Formula: long.leaf.cm ~ Site + (1 | parent.pop)
+##    Data: twomonths_rxnnorms_loc
+## 
+## REML criterion at convergence: 3300.4
+## 
+## Scaled residuals: 
+##     Min      1Q  Median      3Q     Max 
+## -3.1712 -0.6218  0.0294  0.6193  4.0623 
+## 
+## Random effects:
+##  Groups     Name        Variance Std.Dev.
+##  parent.pop (Intercept) 0.3717   0.6097  
+##  Residual               0.9255   0.9620  
+## Number of obs: 1171, groups:  parent.pop, 23
+## 
+## Fixed effects:
+##              Estimate Std. Error        df t value Pr(>|t|)    
+## (Intercept) 2.161e+00  1.375e-01 2.469e+01  15.716 2.31e-14 ***
+## SiteWL2     3.202e-01  6.098e-02 1.164e+03   5.251 1.80e-07 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Correlation of Fixed Effects:
+##         (Intr)
+## SiteWL2 -0.228
+```
 
 ``` r
-emtrends(lmelength, pairwise ~ Site, var = "elev_m")
+ranova(lmelength3) 
 ```
 
 ```
-## $emtrends
-##  Site elev_m.trend       SE   df  lower.CL  upper.CL
-##  UCD     -0.000410 9.90e-05 26.5 -0.000614 -0.000207
-##  WL2     -0.000709 9.51e-05 23.1 -0.000905 -0.000512
+## ANOVA-like table for random-effects: Single term deletions
 ## 
-## Degrees-of-freedom method: kenward-roger 
-## Confidence level used: 0.95 
-## 
-## $contrasts
-##  contrast  estimate       SE   df t.ratio p.value
-##  UCD - WL2 0.000298 6.94e-05 1062   4.303  <.0001
-## 
-## Degrees-of-freedom method: kenward-roger
+## Model:
+## long.leaf.cm ~ Site + (1 | parent.pop)
+##                  npar  logLik    AIC    LRT Df Pr(>Chisq)    
+## <none>              4 -1650.2 3308.4                         
+## (1 | parent.pop)    3 -1839.1 3684.3 377.85  1  < 2.2e-16 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
 
 ``` r
-emmip(lmelength, Site ~ elev_m, cov.reduce = range)
+anova(lmelength3)
 ```
 
-![](TwoMonths_Size_RxnNorms_files/figure-html/unnamed-chunk-20-2.png)<!-- -->
+```
+## Type III Analysis of Variance Table with Satterthwaite's method
+##      Sum Sq Mean Sq NumDF  DenDF F value    Pr(>F)    
+## Site 25.515  25.515     1 1163.7  27.568 1.802e-07 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+```
+
+``` r
+lmelength4 <- lmer(long.leaf.cm ~ Site + (Site|parent.pop), data = twomonths_rxnnorms_loc) 
+summary(lmelength4)
+```
+
+```
+## Linear mixed model fit by REML. t-tests use Satterthwaite's method [
+## lmerModLmerTest]
+## Formula: long.leaf.cm ~ Site + (Site | parent.pop)
+##    Data: twomonths_rxnnorms_loc
+## 
+## REML criterion at convergence: 3176.1
+## 
+## Scaled residuals: 
+##     Min      1Q  Median      3Q     Max 
+## -3.0799 -0.6201  0.0276  0.6194  3.6104 
+## 
+## Random effects:
+##  Groups     Name        Variance Std.Dev. Corr
+##  parent.pop (Intercept) 0.2207   0.4698       
+##             SiteWL2     0.3736   0.6113   0.22
+##  Residual               0.8117   0.9009       
+## Number of obs: 1171, groups:  parent.pop, 23
+## 
+## Fixed effects:
+##             Estimate Std. Error       df t value Pr(>|t|)    
+## (Intercept)  2.27969    0.11093 20.25081  20.550 4.89e-15 ***
+## SiteWL2      0.07126    0.14730 23.83477   0.484    0.633    
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Correlation of Fixed Effects:
+##         (Intr)
+## SiteWL2 0.031
+```
+
+``` r
+ranova(lmelength4) 
+```
+
+```
+## ANOVA-like table for random-effects: Single term deletions
+## 
+## Model:
+## long.leaf.cm ~ Site + (Site | parent.pop)
+##                             npar  logLik    AIC    LRT Df Pr(>Chisq)    
+## <none>                         6 -1588.0 3188.1                         
+## Site in (Site | parent.pop)    4 -1650.2 3308.4 124.32  2  < 2.2e-16 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+```
+
+``` r
+anova(lmelength4)
+```
+
+```
+## Type III Analysis of Variance Table with Satterthwaite's method
+##       Sum Sq Mean Sq NumDF  DenDF F value Pr(>F)
+## Site 0.18999 0.18999     1 23.835  0.2341 0.6329
+```
+
+``` r
+coef(lmelength4)$parent.pop
+```
+
+```
+##       (Intercept)     SiteWL2
+## BH       2.975119  1.50381413
+## CC       2.470390  0.44078003
+## CP2      2.300798  0.11272259
+## CP3      1.841032  0.33253144
+## DPR      2.906043 -0.32154640
+## FR       2.472728 -0.85919525
+## IH       2.920016  1.25481683
+## LV1      1.890912 -0.32563629
+## LV3      1.674808 -0.20667118
+## LVTR1    1.772713 -0.48591244
+## SC       2.931830  0.62565358
+## SQ1      2.517684  0.04690088
+## SQ2      2.223050 -0.07637896
+## SQ3      2.077674 -0.34229356
+## TM2      2.767338 -0.62506788
+## WL1      2.470680 -0.17538426
+## WL2      1.859793  0.09886909
+## WR       2.397664  0.34956402
+## WV       2.091628  0.01764347
+## YO11     1.807458  0.11495318
+## YO4      2.170180 -0.01173972
+## YO7      1.729646  0.08226871
+## YO8      2.163730  0.08836086
+```
+
+``` r
+length_slopes <- coef(lmelength4)$parent.pop %>% 
+  rename(length_slope=SiteWL2) %>% select(-`(Intercept)`) %>% 
+  rownames_to_column(var="parent.pop")
+```
+
+### Export Site slopes 
+
+``` r
+site_slopes <- left_join(height_slopes, length_slopes)
+```
+
+```
+## Joining with `by = join_by(parent.pop)`
+```
+
+``` r
+write_csv(site_slopes, "../output/TwoMonths_Size_Slopes.csv")
+```
+
