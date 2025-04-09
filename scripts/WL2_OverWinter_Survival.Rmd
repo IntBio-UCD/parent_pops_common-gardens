@@ -570,3 +570,214 @@ surv_GD_fits_wl2_sub_tp %>% mutate(tidy=map(fit, tidy)) %>% unnest(tidy) %>%
 #  arrange(p.value)
 ```
 
+
+## Fitness \~ Size
+
+### Load the size data & Combine with Survival 
+
+#### Stem Diameter and Basal Branches from Annual Census 
+
+```{r}
+ann_cens_size <- read_csv("../output/AnnCens_Size_BothSites_Y1.csv")
+names(ann_cens_size)
+
+ann_cens_size_wl2 <- ann_cens_size %>% filter(Site=="WL2") %>% select(BedLoc:diam.mm, total.branch, Site) %>% rename(pop=parent.pop)
+head(ann_cens_size_wl2)
+winter_surv_annsize <- left_join(winter_surv, ann_cens_size_wl2)
+summary(winter_surv_annsize)
+```
+
+#### Height and Leaf Length from 10/20 Census
+```{r}
+prewint_size <- read_csv("../input/WL2_Data/CorrectedCSVs/WL2_size_survey_20231020_corrected.csv") %>% 
+  select(block, `bed- row`=bed.row, `bed- col`=bed.col, pop:long.leaf.cm) %>% 
+  filter(!str_detect(mf, "buff")) %>% 
+  mutate(mf=as.double(mf), rep=as.double(rep))
+head(prewint_size)
+
+winter_surv_Octsize <- left_join(winter_surv, prewint_size)
+summary(winter_surv_Octsize)
+```
+
+#### Merge all 
+```{r}
+winter_surv_size <- left_join(winter_surv_Octsize, winter_surv_annsize)
+```
+
+### Figures of Survival \~ Size 
+```{r}
+winter_surv_size %>% 
+  ggplot(aes(x=height.cm, y=WinterSurv)) +
+  geom_point()
+
+winter_surv_size %>% 
+  ggplot(aes(x=long.leaf.cm, y=WinterSurv)) +
+  geom_point()
+
+winter_surv_size %>% 
+  ggplot(aes(x=diam.mm, y=WinterSurv)) +
+  geom_point()
+
+winter_surv_size %>% #not enough variation in branch #?
+  ggplot(aes(x=total.branch, y=WinterSurv)) +
+  geom_point()
+```
+
+```{r}
+winter_surv_size_pop_avgs <- winter_surv_size %>% 
+  group_by(pop, elev_m) %>% 
+  summarise(N_Surv = sum(!is.na(WinterSurv)), 
+            mean_Surv = mean(WinterSurv,na.rm=(TRUE)), sem_surv=sem(WinterSurv, na.rm=(TRUE)), 
+            N_height = sum(!is.na(height.cm)), 
+            mean_height.cm = mean(height.cm,na.rm=(TRUE)), sem_height.cm=sem(height.cm, na.rm=(TRUE)), 
+            N_length = sum(!is.na(long.leaf.cm)),
+            mean_long.leaf.cm=mean(long.leaf.cm, na.rm=(TRUE)), sem_long.leaf.cm=sem(long.leaf.cm, na.rm=TRUE),
+            N_diam = sum(!is.na(diam.mm)), 
+            mean_diam.mm = mean(diam.mm,na.rm=(TRUE)), sem_diam.mm=sem(diam.mm, na.rm=(TRUE)), 
+            N_total.branch = sum(!is.na(total.branch)),
+            mean_total.branch=mean(total.branch, na.rm=(TRUE)), sem_total.branch=sem(total.branch, na.rm=TRUE))
+
+winter_surv_size_pop_avgs %>% arrange(N_height)
+```
+```{r}
+winter_surv_size %>% 
+  drop_na(WinterSurv, height.cm) %>% 
+  group_by(pop, elev_m) %>% 
+  summarise(N_Surv = sum(!is.na(WinterSurv)), 
+            mean_Surv = mean(WinterSurv,na.rm=(TRUE)), sem_surv=sem(WinterSurv, na.rm=(TRUE)), 
+            N_height = sum(!is.na(height.cm)), 
+            mean_height.cm = mean(height.cm,na.rm=(TRUE)), sem_height.cm=sem(height.cm, na.rm=(TRUE))) %>% 
+  filter(N_height>2) %>% 
+  ggplot(aes(x=mean_height.cm, y=mean_Surv, group=pop, color=elev_m)) +
+  geom_point(size=4) +
+  theme_classic() + 
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0")  +
+  labs(x="Height (cm)", y="Winter Survival", color="Elevation (m)", title="High Elevation Garden") +
+  theme(text=element_text(size=25))
+  
+winter_surv_size %>% 
+  drop_na(WinterSurv, long.leaf.cm) %>% 
+  group_by(pop, elev_m) %>% 
+  summarise(N_Surv = sum(!is.na(WinterSurv)), 
+            mean_Surv = mean(WinterSurv,na.rm=(TRUE)), sem_surv=sem(WinterSurv, na.rm=(TRUE)), 
+            N_length = sum(!is.na(long.leaf.cm)),
+            mean_long.leaf.cm=mean(long.leaf.cm, na.rm=(TRUE)), sem_long.leaf.cm=sem(long.leaf.cm, na.rm=TRUE)) %>% 
+  filter(N_length>2) %>% 
+  ggplot(aes(x=mean_long.leaf.cm, y=mean_Surv, group=pop, color=elev_m)) +
+  geom_point(size=4) +
+  scale_y_continuous(expand = c(0.01, 0.01)) +
+  theme_classic() + 
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0")  +
+  labs(x="Leaf Length (cm)" ,y="Winter Survival", color="Elevation (m)", title="High Elevation Garden") +
+  theme(text=element_text(size=25))
+
+winter_surv_size %>% 
+  drop_na(WinterSurv, diam.mm) %>% 
+  group_by(pop, elev_m) %>% 
+  summarise(N_Surv = sum(!is.na(WinterSurv)), 
+            mean_Surv = mean(WinterSurv,na.rm=(TRUE)), sem_surv=sem(WinterSurv, na.rm=(TRUE)), 
+            N_diam = sum(!is.na(diam.mm)), 
+            mean_diam.mm = mean(diam.mm,na.rm=(TRUE)), sem_diam.mm=sem(diam.mm, na.rm=(TRUE))) %>% 
+  filter(N_diam>2) %>% 
+  ggplot(aes(x=mean_diam.mm, y=mean_Surv, group=pop, color=elev_m)) +
+  geom_point(size=4) +
+  scale_y_continuous(expand = c(0.01, 0.01)) +
+  theme_classic() + 
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0")  +
+  labs(x="Stem Diameter (mm)" ,y="Winter Survival", color="Elevation (m)", title="High Elevation Garden") +
+  theme(text=element_text(size=25))
+
+winter_surv_size %>% 
+  drop_na(WinterSurv, total.branch) %>% 
+  group_by(pop, elev_m) %>% 
+  summarise(N_Surv = sum(!is.na(WinterSurv)), 
+            mean_Surv = mean(WinterSurv,na.rm=(TRUE)), sem_surv=sem(WinterSurv, na.rm=(TRUE)), 
+            N_total.branch = sum(!is.na(total.branch)),
+            mean_total.branch=mean(total.branch, na.rm=(TRUE)), sem_total.branch=sem(total.branch, na.rm=TRUE)) %>% 
+  filter(N_total.branch>2) %>% 
+  ggplot(aes(x=mean_total.branch, y=mean_Surv, group=pop, color=elev_m)) +
+  geom_point(size=4) +
+  scale_y_continuous(expand = c(0.01, 0.01)) +
+  theme_classic() +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0")  +
+  labs(x="Basal Branch N" ,y="Winter Survival", color="Elevation (m)", title="High Elevation Garden") +
+  theme(text=element_text(size=25))
+```
+
+### Stats
+
+Log Reg survival \~ size
+
+#### Check for correlations between traits 
+```{r}
+size_normalized_wl2 <- winter_surv_size %>% 
+  select(height.cm, long.leaf.cm, diam.mm, total.branch) %>% 
+  drop_na(height.cm, long.leaf.cm, diam.mm, total.branch) %>% scale() #normalize the data so they're all on the same scale
+#head(size_normalized_wl2)
+cor.norm_wl2 = cor(size_normalized_wl2) #test correlations among the traits
+cor.sig_wl2 <- cor.mtest(size_normalized_wl2, method="pearson") #test significance of corrs
+corrplot(cor.norm_wl2, type = "upper",
+         tl.srt = 45, p.mat = cor.sig_wl2$p, 
+         sig.level = 0.05, insig="blank")  
+#longest leaf and diam are 70% correlated, no other strong corrs
+cor.norm_wl2
+cor.sig_wl2$p
+```
+
+```{r}
+#summary(winter_surv_size) different amounts of NAs depending on trait 
+winter_surv_height_formod <- winter_surv_size %>% 
+  drop_na(WinterSurv, height.cm) %>% 
+  filter(pop!="WR")
+
+winter_surv_length_formod <- winter_surv_size %>% 
+  drop_na(WinterSurv, long.leaf.cm) %>% 
+  filter(pop!="WR", pop!="LV3", pop!="FR", pop!="LVTR1")
+
+winter_surv_diam_formod <- winter_surv_size %>% 
+  drop_na(WinterSurv, diam.mm) %>% 
+  filter(pop!="WR")
+
+winter_surv_branch_formod <- winter_surv_size %>% 
+  drop_na(WinterSurv, total.branch) %>% 
+  filter(pop!="WR")
+```
+
+#### Height
+```{r}
+wl2_basiclogit_height <- glm(WinterSurv ~ height.cm, data = winter_surv_height_formod, family = "binomial")
+summary(wl2_basiclogit_height)
+
+wl2_logit_height2 <- glmer(WinterSurv ~ height.cm + (1|pop/mf) + (1|block), data = winter_surv_height_formod, family = binomial(link = "logit"))
+summary(wl2_logit_height2) #height not significant in full model 
+```
+
+#### Length
+```{r}
+wl2_basiclogit_length <- glm(WinterSurv ~ long.leaf.cm, data = winter_surv_length_formod, family = "binomial")
+summary(wl2_basiclogit_length)
+
+wl2_logit_length2 <- glmer(WinterSurv ~ long.leaf.cm + (1|pop/mf) + (1|block), data = winter_surv_length_formod, family = binomial(link = "logit"))
+summary(wl2_logit_length2)
+#positive effect of leaf length in both models 
+```
+
+#### Stem Diameter 
+```{r}
+wl2_basiclogit_diam <- glm(WinterSurv ~ diam.mm, data = winter_surv_diam_formod, family = "binomial")
+summary(wl2_basiclogit_diam)
+
+wl2_logit_diam2 <- glmer(WinterSurv ~ diam.mm + (1|pop/mf) + (1|block), data = winter_surv_diam_formod, family = binomial(link = "logit"))
+summary(wl2_logit_diam2)
+#positive effect of stem diam in both models
+```
+
+#### Basal Branches
+```{r}
+wl2_basiclogit_branch <- glm(WinterSurv ~ total.branch, data = winter_surv_branch_formod, family = "binomial")
+summary(wl2_basiclogit_branch)
+
+wl2_logit_branch2 <- glmer(WinterSurv ~ total.branch + (1|pop/mf) + (1|block), data = winter_surv_branch_formod, family = binomial(link = "logit"))
+summary(wl2_logit_branch2)
+#no effect of branch # 
+```
