@@ -1,7 +1,7 @@
 ---
 title: "Single Time Size Reaction Norms"
 author: "Brandie Quarles"
-date: "2025-04-02"
+date: "2025-04-09"
 output: 
   html_document: 
     keep_md: yes
@@ -999,123 +999,214 @@ twomonths_rxnnorms_summary_elev %>%
 
 ## Stats
 
+### Scaling
+
+Center and scale/transform height and longest leaf in the plasticity models to get slopes that aren’t biased by plant size
+
+#### Check distributions 
+
+``` r
+twomonths_rxnnorms_loc %>% 
+  ggplot(aes(height.cm)) +
+  geom_histogram() #pretty skewed
+```
+
+```
+## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+```
+
+```
+## Warning: Removed 1074 rows containing non-finite outside the scale range
+## (`stat_bin()`).
+```
+
+![](TwoMonths_Size_RxnNorms_files/figure-html/unnamed-chunk-19-1.png)<!-- -->
+
+``` r
+twomonths_rxnnorms_loc %>% 
+  mutate(logHeight=log(height.cm)) %>% 
+  ggplot(aes(logHeight))+
+  geom_histogram() #looks better 
+```
+
+```
+## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+```
+
+```
+## Warning: Removed 1074 rows containing non-finite outside the scale range
+## (`stat_bin()`).
+```
+
+![](TwoMonths_Size_RxnNorms_files/figure-html/unnamed-chunk-19-2.png)<!-- -->
+
+``` r
+twomonths_rxnnorms_loc %>% 
+  ggplot(aes(long.leaf.cm)) +
+  geom_histogram() #looks fine 
+```
+
+```
+## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+```
+
+```
+## Warning: Removed 1159 rows containing non-finite outside the scale range
+## (`stat_bin()`).
+```
+
+![](TwoMonths_Size_RxnNorms_files/figure-html/unnamed-chunk-19-3.png)<!-- -->
+
+Test that log transformation will help 
+
+``` r
+#Case where size doubles between sites:
+##Plant 1: 2.3 --> 4.6
+4.6-2.3 #2.3
+```
+
+```
+## [1] 2.3
+```
+
+``` r
+log(4.6)-log(2.3) #0.6931472
+```
+
+```
+## [1] 0.6931472
+```
+
+``` r
+##Plant 2: 4.5 --> 9 
+9-4.5 #4.5
+```
+
+```
+## [1] 4.5
+```
+
+``` r
+log(9)-log(4.5) #0.6931472
+```
+
+```
+## [1] 0.6931472
+```
+
+``` r
+#Log transformation makes the difference between the two be on the same scale 
+```
+
+Test Centering and Scaling for Length
+
+``` r
+#use same case as above chunk 
+test <- tibble(length=c(2.3, 4.6, 4.5, 9), Site=c("UCD", "WL2","UCD", "WL2"), pop=c(1,1,2,2)) %>% 
+  group_by(pop) %>% 
+  mutate(length_scaled = scale(length))
+test #the same 
+```
+
+```
+## # A tibble: 4 × 4
+## # Groups:   pop [2]
+##   length Site    pop length_scaled[,1]
+##    <dbl> <chr> <dbl>             <dbl>
+## 1    2.3 UCD       1            -0.707
+## 2    4.6 WL2       1             0.707
+## 3    4.5 UCD       2            -0.707
+## 4    9   WL2       2             0.707
+```
+
+
+
+``` r
+twomonths_rxnnorms_loc_scale <- twomonths_rxnnorms_loc %>% 
+  mutate(logHeight=log(height.cm)) %>% 
+  group_by(parent.pop) %>% 
+  mutate(length_scaled = scale(long.leaf.cm)) %>% 
+  ungroup()
+```
+
+
 ### Height
 
 
 ``` r
-#twomonths_rxnnorms_loc_scale <- twomonths_rxnnorms_loc %>% 
-#  mutate_at(c("GrwSsn_GD_Recent","Wtr_Year_GD_Recent","GrwSsn_GD_Historical",
-#              "Wtr_Year_GD_Historical", "Geographic_Dist", "elev_m"),scale) 
-#
-#lmeheight <- lmer(height.cm ~ elev_m*(Site/Wtr_Year_GD_Recent) + (1|parent.pop/mf) + (1|block), data = twomonths_rxnnorms_loc_scale) 
-#summary(lmeheight)
-#ranova(lmeheight) 
-#anova(lmeheight)
-##cof 
-##rnef 
-##or fixed effects
-#emtrends(lmeheight, pairwise ~ Site, var = "elev_m_s")
-#emmip(lmeheight, Site ~ elev_m_s, cov.reduce = range)
-
-lmeheight2 <- lmer(height.cm ~ Site + (1|parent.pop/mf), data = twomonths_rxnnorms_loc) #no block b/c nested within site?
+lmeheight2 <- lmer(logHeight ~ Site + (1|parent.pop/mf), data = twomonths_rxnnorms_loc_scale) #no block b/c nested within site?
 summary(lmeheight2)
 ```
 
 ```
 ## Linear mixed model fit by REML. t-tests use Satterthwaite's method [
 ## lmerModLmerTest]
-## Formula: height.cm ~ Site + (1 | parent.pop/mf)
-##    Data: twomonths_rxnnorms_loc
+## Formula: logHeight ~ Site + (1 | parent.pop/mf)
+##    Data: twomonths_rxnnorms_loc_scale
 ## 
-## REML criterion at convergence: 6071.5
+## REML criterion at convergence: 2044.7
 ## 
 ## Scaled residuals: 
 ##     Min      1Q  Median      3Q     Max 
-## -4.4769 -0.4677  0.0026  0.4018  7.9600 
+## -5.7925 -0.4749  0.1362  0.6345  2.4934 
 ## 
 ## Random effects:
 ##  Groups        Name        Variance Std.Dev.
-##  mf:parent.pop (Intercept) 1.183    1.088   
-##  parent.pop    (Intercept) 7.994    2.827   
-##  Residual                  6.270    2.504   
+##  mf:parent.pop (Intercept) 0.02616  0.1617  
+##  parent.pop    (Intercept) 0.34471  0.5871  
+##  Residual                  0.26065  0.5105  
 ## Number of obs: 1256, groups:  mf:parent.pop, 168; parent.pop, 23
 ## 
 ## Fixed effects:
 ##              Estimate Std. Error        df t value Pr(>|t|)    
-## (Intercept)    2.2038     0.6157   23.5501   3.579  0.00155 ** 
-## SiteWL2        2.8577     0.1668 1233.8021  17.128  < 2e-16 ***
+## (Intercept) 7.275e-01  1.270e-01 2.300e+01   5.731 7.76e-06 ***
+## SiteWL2     5.138e-01  3.329e-02 1.196e+03  15.437  < 2e-16 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
 ## Correlation of Fixed Effects:
 ##         (Intr)
-## SiteWL2 -0.151
+## SiteWL2 -0.146
 ```
 
 ``` r
-ranova(lmeheight2) 
-```
+#ranova(lmeheight2) 
+#anova(lmeheight2)
 
-```
-## ANOVA-like table for random-effects: Single term deletions
-## 
-## Model:
-## height.cm ~ Site + (1 | mf:parent.pop) + (1 | parent.pop)
-##                     npar  logLik    AIC     LRT Df Pr(>Chisq)    
-## <none>                 5 -3035.7 6081.5                          
-## (1 | mf:parent.pop)    4 -3070.4 6148.9  69.423  1  < 2.2e-16 ***
-## (1 | parent.pop)       4 -3122.0 6252.1 172.596  1  < 2.2e-16 ***
-## ---
-## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-```
-
-``` r
-anova(lmeheight2)
-```
-
-```
-## Type III Analysis of Variance Table with Satterthwaite's method
-##      Sum Sq Mean Sq NumDF  DenDF F value    Pr(>F)    
-## Site 1839.5  1839.5     1 1233.8  293.37 < 2.2e-16 ***
-## ---
-## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-```
-
-``` r
-lmeheight3 <- lmer(height.cm ~ Site + (Site|parent.pop) + (1|pop.mf), data = twomonths_rxnnorms_loc) 
+lmeheight3 <- lmer(logHeight ~ Site + (Site|parent.pop) + (1|pop.mf), data = twomonths_rxnnorms_loc_scale) 
 summary(lmeheight3)
 ```
 
 ```
 ## Linear mixed model fit by REML. t-tests use Satterthwaite's method [
 ## lmerModLmerTest]
-## Formula: height.cm ~ Site + (Site | parent.pop) + (1 | pop.mf)
-##    Data: twomonths_rxnnorms_loc
+## Formula: logHeight ~ Site + (Site | parent.pop) + (1 | pop.mf)
+##    Data: twomonths_rxnnorms_loc_scale
 ## 
-## REML criterion at convergence: 5537.6
+## REML criterion at convergence: 1976.2
 ## 
 ## Scaled residuals: 
 ##     Min      1Q  Median      3Q     Max 
-## -7.7557 -0.4253 -0.0432  0.3879  8.1521 
+## -6.0749 -0.4233  0.1162  0.6168  2.6307 
 ## 
 ## Random effects:
 ##  Groups     Name        Variance Std.Dev. Corr
-##  pop.mf     (Intercept) 0.2971   0.5451       
-##  parent.pop (Intercept) 1.4489   1.2037       
-##             SiteWL2     9.8025   3.1309   0.86
-##  Residual               4.1926   2.0476       
+##  pop.mf     (Intercept) 0.02095  0.1447       
+##  parent.pop (Intercept) 0.27178  0.5213       
+##             SiteWL2     0.08582  0.2929   0.24
+##  Residual               0.24305  0.4930       
 ## Number of obs: 1256, groups:  pop.mf, 168; parent.pop, 23
 ## 
 ## Fixed effects:
-##             Estimate Std. Error      df t value Pr(>|t|)    
-## (Intercept)   2.7708     0.2798 21.6125   9.904 1.72e-09 ***
-## SiteWL2       1.9389     0.6817 22.2789   2.844  0.00937 ** 
+##             Estimate Std. Error       df t value Pr(>|t|)    
+## (Intercept)  0.76116    0.11414 21.54946   6.669 1.17e-06 ***
+## SiteWL2      0.44431    0.07307 23.50924   6.081 3.05e-06 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
 ## Correlation of Fixed Effects:
 ##         (Intr)
-## SiteWL2 0.702
+## SiteWL2 0.098
 ```
 
 ``` r
@@ -1126,11 +1217,11 @@ ranova(lmeheight3)
 ## ANOVA-like table for random-effects: Single term deletions
 ## 
 ## Model:
-## height.cm ~ Site + (Site | parent.pop) + (1 | pop.mf)
-##                             npar  logLik    AIC    LRT Df Pr(>Chisq)    
-## <none>                         7 -2768.8 5551.6                         
-## Site in (Site | parent.pop)    5 -3035.7 6081.5 533.81  2  < 2.2e-16 ***
-## (1 | pop.mf)                   6 -2777.6 5567.2  17.59  1  2.733e-05 ***
+## logHeight ~ Site + (Site | parent.pop) + (1 | pop.mf)
+##                             npar   logLik    AIC    LRT Df Pr(>Chisq)    
+## <none>                         7  -988.08 1990.2                         
+## Site in (Site | parent.pop)    5 -1022.35 2054.7 68.530  2  1.315e-15 ***
+## (1 | pop.mf)                   6  -996.06 2004.1 15.954  1  6.489e-05 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
@@ -1141,8 +1232,8 @@ anova(lmeheight3)
 
 ```
 ## Type III Analysis of Variance Table with Satterthwaite's method
-##      Sum Sq Mean Sq NumDF  DenDF F value   Pr(>F)   
-## Site 33.914  33.914     1 22.279  8.0889 0.009366 **
+##      Sum Sq Mean Sq NumDF  DenDF F value    Pr(>F)    
+## Site 8.9873  8.9873     1 23.509  36.977 3.048e-06 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
@@ -1152,30 +1243,30 @@ coef(lmeheight3)$parent.pop
 ```
 
 ```
-##       (Intercept)      SiteWL2
-## BH       3.127450  3.387333423
-## CC       4.352803  4.758511190
-## CP2      1.938795  0.593683593
-## CP3      1.893044  0.189517769
-## DPR      4.207061  2.813698591
-## FR       3.166050  1.339323954
-## IH       3.645905  5.343247439
-## LV1      2.041798  0.056017025
-## LV3      2.181808  0.391289471
-## LVTR1    2.006573  0.132667264
-## SC       2.967156  1.741651568
-## SQ1      2.127630  0.525291246
-## SQ2      1.745101  0.375183313
-## SQ3      1.653421 -0.198574356
-## TM2      6.672299 13.984269227
-## WL1      2.621023 -0.007083989
-## WL2      2.394369  1.311118386
-## WR       2.853229  2.181474283
-## WV       3.046277  2.553417371
-## YO11     2.314804  0.367997972
-## YO4      2.445341  1.357353848
-## YO7      1.937419  0.801872813
-## YO8      2.388284  0.594503203
+##       (Intercept)     SiteWL2
+## BH     1.09078096  0.71457060
+## CC     1.48235134  0.65115754
+## CP2    0.38699547  0.40032009
+## CP3    0.05078109  0.46011979
+## DPR    1.50931161  0.41255208
+## FR     1.12250564  0.18114834
+## IH     1.20556708  0.91887060
+## LV1    0.28818394  0.28644982
+## LV3    0.64647405  0.28103149
+## LVTR1  0.37746452  0.24684576
+## SC     1.05930158  0.40128365
+## SQ1    0.58001591  0.35377840
+## SQ2    0.04073006  0.53364976
+## SQ3   -0.17033316  0.41193631
+## TM2    1.79764724  1.08468465
+## WL1    0.92782709 -0.06915743
+## WL2    0.67512643  0.51740523
+## WR     0.91404923  0.54141617
+## WV     1.06541874  0.48574373
+## YO11   0.73194359  0.12284829
+## YO4    0.72631821  0.43515213
+## YO7    0.30935876  0.56318421
+## YO8    0.68879322  0.28416135
 ```
 
 ``` r
@@ -1188,7 +1279,7 @@ height_slopes <- coef(lmeheight3)$parent.pop %>%
 
 
 ``` r
-lmelength2 <- lmer(long.leaf.cm ~ Site + (1|parent.pop/mf), data = twomonths_rxnnorms_loc) #no block b/c nested within site?
+lmelength2 <- lmer(length_scaled ~ Site + (1|parent.pop/mf), data = twomonths_rxnnorms_loc_scale) #no block b/c nested within site?
 ```
 
 ```
@@ -1202,98 +1293,82 @@ summary(lmelength2) #boundary (singular) fit: see help('isSingular') - mf explai
 ```
 ## Linear mixed model fit by REML. t-tests use Satterthwaite's method [
 ## lmerModLmerTest]
-## Formula: long.leaf.cm ~ Site + (1 | parent.pop/mf)
-##    Data: twomonths_rxnnorms_loc
+## Formula: length_scaled ~ Site + (1 | parent.pop/mf)
+##    Data: twomonths_rxnnorms_loc_scale
 ## 
-## REML criterion at convergence: 3300.4
+## REML criterion at convergence: 3291.3
 ## 
 ## Scaled residuals: 
 ##     Min      1Q  Median      3Q     Max 
-## -3.1712 -0.6218  0.0294  0.6193  4.0623 
+## -3.1261 -0.6624  0.0322  0.6547  3.4844 
 ## 
 ## Random effects:
 ##  Groups        Name        Variance  Std.Dev. 
-##  mf:parent.pop (Intercept) 2.140e-14 1.463e-07
-##  parent.pop    (Intercept) 3.717e-01 6.097e-01
-##  Residual                  9.255e-01 9.620e-01
-## Number of obs: 1171, groups:  mf:parent.pop, 162; parent.pop, 23
+##  mf:parent.pop (Intercept) 0.000e+00 0.000e+00
+##  parent.pop    (Intercept) 7.259e-31 8.520e-16
+##  Residual                  9.696e-01 9.847e-01
+## Number of obs: 1170, groups:  mf:parent.pop, 161; parent.pop, 22
 ## 
 ## Fixed effects:
-##              Estimate Std. Error        df t value Pr(>|t|)    
-## (Intercept) 2.161e+00  1.375e-01 2.469e+01  15.716 2.31e-14 ***
-## SiteWL2     3.202e-01  6.098e-02 1.164e+03   5.251 1.80e-07 ***
+##               Estimate Std. Error         df t value Pr(>|t|)    
+## (Intercept)   -0.10987    0.03980 1168.00000  -2.760  0.00587 ** 
+## SiteWL2        0.23036    0.05764 1168.00000   3.997 6.82e-05 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
 ## Correlation of Fixed Effects:
 ##         (Intr)
-## SiteWL2 -0.228
+## SiteWL2 -0.691
 ## optimizer (nloptwrap) convergence code: 0 (OK)
 ## boundary (singular) fit: see help('isSingular')
 ```
 
 ``` r
-ranova(lmelength2) 
+#ranova(lmelength2) 
+#anova(lmelength2)
+
+lmelength3 <- lmer(length_scaled ~ Site + (1|parent.pop), data = twomonths_rxnnorms_loc_scale) #remove mf 
 ```
 
 ```
-## ANOVA-like table for random-effects: Single term deletions
-## 
-## Model:
-## long.leaf.cm ~ Site + (1 | mf:parent.pop) + (1 | parent.pop)
-##                     npar  logLik    AIC    LRT Df Pr(>Chisq)    
-## <none>                 5 -1650.2 3310.4                         
-## (1 | mf:parent.pop)    4 -1650.2 3308.4   0.00  1          1    
-## (1 | parent.pop)       4 -1720.9 3449.8 141.38  1     <2e-16 ***
-## ---
-## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## boundary (singular) fit: see help('isSingular')
 ```
 
 ``` r
-anova(lmelength2)
-```
-
-```
-## Type III Analysis of Variance Table with Satterthwaite's method
-##      Sum Sq Mean Sq NumDF  DenDF F value    Pr(>F)    
-## Site 25.515  25.515     1 1163.7  27.568 1.802e-07 ***
-## ---
-## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-```
-
-``` r
-lmelength3 <- lmer(long.leaf.cm ~ Site + (1|parent.pop), data = twomonths_rxnnorms_loc) #remove mf 
-summary(lmelength3)
+#boundary (singular) fit: see help('isSingular') - pop also explains little variation 
+summary(lmelength3) 
 ```
 
 ```
 ## Linear mixed model fit by REML. t-tests use Satterthwaite's method [
 ## lmerModLmerTest]
-## Formula: long.leaf.cm ~ Site + (1 | parent.pop)
-##    Data: twomonths_rxnnorms_loc
+## Formula: length_scaled ~ Site + (1 | parent.pop)
+##    Data: twomonths_rxnnorms_loc_scale
 ## 
-## REML criterion at convergence: 3300.4
+## REML criterion at convergence: 3291.3
 ## 
 ## Scaled residuals: 
 ##     Min      1Q  Median      3Q     Max 
-## -3.1712 -0.6218  0.0294  0.6193  4.0623 
+## -3.1261 -0.6624  0.0322  0.6547  3.4844 
 ## 
 ## Random effects:
-##  Groups     Name        Variance Std.Dev.
-##  parent.pop (Intercept) 0.3717   0.6097  
-##  Residual               0.9255   0.9620  
-## Number of obs: 1171, groups:  parent.pop, 23
+##  Groups     Name        Variance  Std.Dev. 
+##  parent.pop (Intercept) 6.438e-31 8.024e-16
+##  Residual               9.696e-01 9.847e-01
+## Number of obs: 1170, groups:  parent.pop, 22
 ## 
 ## Fixed effects:
-##              Estimate Std. Error        df t value Pr(>|t|)    
-## (Intercept) 2.161e+00  1.375e-01 2.469e+01  15.716 2.31e-14 ***
-## SiteWL2     3.202e-01  6.098e-02 1.164e+03   5.251 1.80e-07 ***
+##               Estimate Std. Error         df t value Pr(>|t|)    
+## (Intercept)   -0.10987    0.03980 1168.00000  -2.760  0.00587 ** 
+## SiteWL2        0.23036    0.05764 1168.00000   3.997 6.82e-05 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
 ## Correlation of Fixed Effects:
 ##         (Intr)
-## SiteWL2 -0.228
+## SiteWL2 -0.691
+## optimizer (nloptwrap) convergence code: 0 (OK)
+## boundary (singular) fit: see help('isSingular')
 ```
 
 ``` r
@@ -1304,12 +1379,10 @@ ranova(lmelength3)
 ## ANOVA-like table for random-effects: Single term deletions
 ## 
 ## Model:
-## long.leaf.cm ~ Site + (1 | parent.pop)
-##                  npar  logLik    AIC    LRT Df Pr(>Chisq)    
-## <none>              4 -1650.2 3308.4                         
-## (1 | parent.pop)    3 -1839.1 3684.3 377.85  1  < 2.2e-16 ***
-## ---
-## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## length_scaled ~ Site + (1 | parent.pop)
+##                  npar  logLik    AIC LRT Df Pr(>Chisq)
+## <none>              4 -1645.7 3299.3                  
+## (1 | parent.pop)    3 -1645.7 3297.3   0  1          1
 ```
 
 ``` r
@@ -1318,46 +1391,80 @@ anova(lmelength3)
 
 ```
 ## Type III Analysis of Variance Table with Satterthwaite's method
-##      Sum Sq Mean Sq NumDF  DenDF F value    Pr(>F)    
-## Site 25.515  25.515     1 1163.7  27.568 1.802e-07 ***
+##      Sum Sq Mean Sq NumDF DenDF F value    Pr(>F)    
+## Site 15.489  15.489     1  1168  15.975 6.822e-05 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
 
 ``` r
-lmelength4 <- lmer(long.leaf.cm ~ Site + (Site|parent.pop), data = twomonths_rxnnorms_loc) 
+lmtest <- lm(length_scaled ~ Site, data = twomonths_rxnnorms_loc_scale)
+summary(lmtest) #taking pop out doesn't change Site effect - keep pop in 
+```
+
+```
+## 
+## Call:
+## lm(formula = length_scaled ~ Site, data = twomonths_rxnnorms_loc_scale)
+## 
+## Residuals:
+##     Min      1Q  Median      3Q     Max 
+## -3.0783 -0.6523  0.0318  0.6446  3.4311 
+## 
+## Coefficients:
+##             Estimate Std. Error t value Pr(>|t|)    
+## (Intercept) -0.10987    0.03980  -2.760  0.00587 ** 
+## SiteWL2      0.23036    0.05764   3.997 6.82e-05 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 0.9847 on 1168 degrees of freedom
+##   (1160 observations deleted due to missingness)
+## Multiple R-squared:  0.01349,	Adjusted R-squared:  0.01265 
+## F-statistic: 15.97 on 1 and 1168 DF,  p-value: 6.822e-05
+```
+
+``` r
+lmelength4 <- lmer(length_scaled ~ Site + (Site|parent.pop), data = twomonths_rxnnorms_loc_scale) 
+```
+
+```
+## boundary (singular) fit: see help('isSingular')
+```
+
+``` r
 summary(lmelength4)
 ```
 
 ```
 ## Linear mixed model fit by REML. t-tests use Satterthwaite's method [
 ## lmerModLmerTest]
-## Formula: long.leaf.cm ~ Site + (Site | parent.pop)
-##    Data: twomonths_rxnnorms_loc
+## Formula: length_scaled ~ Site + (Site | parent.pop)
+##    Data: twomonths_rxnnorms_loc_scale
 ## 
-## REML criterion at convergence: 3176.1
+## REML criterion at convergence: 3213.8
 ## 
 ## Scaled residuals: 
 ##     Min      1Q  Median      3Q     Max 
-## -3.0799 -0.6201  0.0276  0.6194  3.6104 
+## -3.1062 -0.6439  0.0140  0.6176  3.3294 
 ## 
 ## Random effects:
-##  Groups     Name        Variance Std.Dev. Corr
-##  parent.pop (Intercept) 0.2207   0.4698       
-##             SiteWL2     0.3736   0.6113   0.22
-##  Residual               0.8117   0.9009       
-## Number of obs: 1171, groups:  parent.pop, 23
+##  Groups     Name        Variance Std.Dev. Corr 
+##  parent.pop (Intercept) 0.04863  0.2205        
+##             SiteWL2     0.27536  0.5247   -1.00
+##  Residual               0.88318  0.9398        
+## Number of obs: 1170, groups:  parent.pop, 22
 ## 
 ## Fixed effects:
-##             Estimate Std. Error       df t value Pr(>|t|)    
-## (Intercept)  2.27969    0.11093 20.25081  20.550 4.89e-15 ***
-## SiteWL2      0.07126    0.14730 23.83477   0.484    0.633    
-## ---
-## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+##             Estimate Std. Error       df t value Pr(>|t|)
+## (Intercept) -0.06400    0.06360 26.59342  -1.006    0.323
+## SiteWL2      0.08615    0.12953 23.58025   0.665    0.512
 ## 
 ## Correlation of Fixed Effects:
 ##         (Intr)
-## SiteWL2 0.031
+## SiteWL2 -0.886
+## optimizer (nloptwrap) convergence code: 0 (OK)
+## boundary (singular) fit: see help('isSingular')
 ```
 
 ``` r
@@ -1365,13 +1472,17 @@ ranova(lmelength4)
 ```
 
 ```
+## boundary (singular) fit: see help('isSingular')
+```
+
+```
 ## ANOVA-like table for random-effects: Single term deletions
 ## 
 ## Model:
-## long.leaf.cm ~ Site + (Site | parent.pop)
+## length_scaled ~ Site + (Site | parent.pop)
 ##                             npar  logLik    AIC    LRT Df Pr(>Chisq)    
-## <none>                         6 -1588.0 3188.1                         
-## Site in (Site | parent.pop)    4 -1650.2 3308.4 124.32  2  < 2.2e-16 ***
+## <none>                         6 -1606.9 3225.8                         
+## Site in (Site | parent.pop)    4 -1645.7 3299.3 77.559  2  < 2.2e-16 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
@@ -1382,8 +1493,8 @@ anova(lmelength4)
 
 ```
 ## Type III Analysis of Variance Table with Satterthwaite's method
-##       Sum Sq Mean Sq NumDF  DenDF F value Pr(>F)
-## Site 0.18999 0.18999     1 23.835  0.2341 0.6329
+##      Sum Sq Mean Sq NumDF DenDF F value Pr(>F)
+## Site 0.3907  0.3907     1 23.58  0.4424 0.5124
 ```
 
 ``` r
@@ -1391,30 +1502,29 @@ coef(lmelength4)$parent.pop
 ```
 
 ```
-##       (Intercept)     SiteWL2
-## BH       2.975119  1.50381413
-## CC       2.470390  0.44078003
-## CP2      2.300798  0.11272259
-## CP3      1.841032  0.33253144
-## DPR      2.906043 -0.32154640
-## FR       2.472728 -0.85919525
-## IH       2.920016  1.25481683
-## LV1      1.890912 -0.32563629
-## LV3      1.674808 -0.20667118
-## LVTR1    1.772713 -0.48591244
-## SC       2.931830  0.62565358
-## SQ1      2.517684  0.04690088
-## SQ2      2.223050 -0.07637896
-## SQ3      2.077674 -0.34229356
-## TM2      2.767338 -0.62506788
-## WL1      2.470680 -0.17538426
-## WL2      1.859793  0.09886909
-## WR       2.397664  0.34956402
-## WV       2.091628  0.01764347
-## YO11     1.807458  0.11495318
-## YO4      2.170180 -0.01173972
-## YO7      1.729646  0.08226871
-## YO8      2.163730  0.08836086
+##        (Intercept)       SiteWL2
+## BH    -0.537016167  1.2117139500
+## CC    -0.251307555  0.5318569781
+## CP2   -0.077032343  0.1171609842
+## CP3   -0.165698841  0.3281470497
+## DPR    0.125267356 -0.3642205855
+## FR     0.294751164 -0.7675152139
+## IH    -0.377851766  0.8329748288
+## LV1   -0.076386787  0.1156248523
+## LV3    0.036413845 -0.1527895127
+## LVTR1  0.167380453 -0.4644306633
+## SC    -0.241364007  0.5081958421
+## SQ1   -0.027444948 -0.0008345362
+## SQ2   -0.004144857 -0.0562781889
+## SQ3    0.047410879 -0.1789574670
+## TM2    0.231934284 -0.6180395157
+## WL1    0.062435966 -0.2147103629
+## WL2   -0.102201124  0.1770512717
+## WR    -0.113480485  0.2038910370
+## YO11  -0.122290950  0.2248559492
+## YO4   -0.054541248  0.0636423744
+## YO7   -0.144198041  0.2769848941
+## YO8   -0.078680300  0.1210823738
 ```
 
 ``` r

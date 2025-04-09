@@ -423,29 +423,69 @@ twomonths_rxnnorms_summary_elev %>%
 
 ## Stats
 
+### Scaling
+
+Center and scale/transform height and longest leaf in the plasticity models to get slopes that aren’t biased by plant size
+
+#### Check distributions 
+```{r}
+twomonths_rxnnorms_loc %>% 
+  ggplot(aes(height.cm)) +
+  geom_histogram() #pretty skewed
+
+twomonths_rxnnorms_loc %>% 
+  mutate(logHeight=log(height.cm)) %>% 
+  ggplot(aes(logHeight))+
+  geom_histogram() #looks better 
+
+twomonths_rxnnorms_loc %>% 
+  ggplot(aes(long.leaf.cm)) +
+  geom_histogram() #looks fine 
+
+```
+
+Test that log transformation will help 
+```{r}
+#Case where size doubles between sites:
+##Plant 1: 2.3 --> 4.6
+4.6-2.3 #2.3
+log(4.6)-log(2.3) #0.6931472
+
+##Plant 2: 4.5 --> 9 
+9-4.5 #4.5
+log(9)-log(4.5) #0.6931472
+
+#Log transformation makes the difference between the two be on the same scale 
+```
+
+Test Centering and Scaling for Length
+```{r}
+#use same case as above chunk 
+test <- tibble(length=c(2.3, 4.6, 4.5, 9), Site=c("UCD", "WL2","UCD", "WL2"), pop=c(1,1,2,2)) %>% 
+  group_by(pop) %>% 
+  mutate(length_scaled = scale(length))
+test #the same 
+```
+
+
+```{r}
+twomonths_rxnnorms_loc_scale <- twomonths_rxnnorms_loc %>% 
+  mutate(logHeight=log(height.cm)) %>% 
+  group_by(parent.pop) %>% 
+  mutate(length_scaled = scale(long.leaf.cm)) %>% 
+  ungroup()
+```
+
+
 ### Height
 
 ```{r}
-#twomonths_rxnnorms_loc_scale <- twomonths_rxnnorms_loc %>% 
-#  mutate_at(c("GrwSsn_GD_Recent","Wtr_Year_GD_Recent","GrwSsn_GD_Historical",
-#              "Wtr_Year_GD_Historical", "Geographic_Dist", "elev_m"),scale) 
-#
-#lmeheight <- lmer(height.cm ~ elev_m*(Site/Wtr_Year_GD_Recent) + (1|parent.pop/mf) + (1|block), data = twomonths_rxnnorms_loc_scale) 
-#summary(lmeheight)
-#ranova(lmeheight) 
-#anova(lmeheight)
-##cof 
-##rnef 
-##or fixed effects
-#emtrends(lmeheight, pairwise ~ Site, var = "elev_m_s")
-#emmip(lmeheight, Site ~ elev_m_s, cov.reduce = range)
-
-lmeheight2 <- lmer(height.cm ~ Site + (1|parent.pop/mf), data = twomonths_rxnnorms_loc) #no block b/c nested within site?
+lmeheight2 <- lmer(logHeight ~ Site + (1|parent.pop/mf), data = twomonths_rxnnorms_loc_scale) #no block b/c nested within site?
 summary(lmeheight2)
-ranova(lmeheight2) 
-anova(lmeheight2)
+#ranova(lmeheight2) 
+#anova(lmeheight2)
 
-lmeheight3 <- lmer(height.cm ~ Site + (Site|parent.pop) + (1|pop.mf), data = twomonths_rxnnorms_loc) 
+lmeheight3 <- lmer(logHeight ~ Site + (Site|parent.pop) + (1|pop.mf), data = twomonths_rxnnorms_loc_scale) 
 summary(lmeheight3)
 ranova(lmeheight3) 
 anova(lmeheight3)
@@ -459,17 +499,20 @@ height_slopes <- coef(lmeheight3)$parent.pop %>%
 ### Length
 
 ```{r}
-lmelength2 <- lmer(long.leaf.cm ~ Site + (1|parent.pop/mf), data = twomonths_rxnnorms_loc) #no block b/c nested within site?
+lmelength2 <- lmer(length_scaled ~ Site + (1|parent.pop/mf), data = twomonths_rxnnorms_loc_scale) #no block b/c nested within site?
 summary(lmelength2) #boundary (singular) fit: see help('isSingular') - mf explains little variation 
-ranova(lmelength2) 
-anova(lmelength2)
+#ranova(lmelength2) 
+#anova(lmelength2)
 
-lmelength3 <- lmer(long.leaf.cm ~ Site + (1|parent.pop), data = twomonths_rxnnorms_loc) #remove mf 
-summary(lmelength3)
+lmelength3 <- lmer(length_scaled ~ Site + (1|parent.pop), data = twomonths_rxnnorms_loc_scale) #remove mf 
+#boundary (singular) fit: see help('isSingular') - pop also explains little variation 
+summary(lmelength3) 
 ranova(lmelength3) 
 anova(lmelength3)
+lmtest <- lm(length_scaled ~ Site, data = twomonths_rxnnorms_loc_scale)
+summary(lmtest) #taking pop out doesn't change Site effect - keep pop in 
 
-lmelength4 <- lmer(long.leaf.cm ~ Site + (Site|parent.pop), data = twomonths_rxnnorms_loc) 
+lmelength4 <- lmer(length_scaled ~ Site + (Site|parent.pop), data = twomonths_rxnnorms_loc_scale) 
 summary(lmelength4)
 ranova(lmelength4) 
 anova(lmelength4)
