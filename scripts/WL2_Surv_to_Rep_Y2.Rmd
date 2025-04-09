@@ -13,19 +13,21 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # Survival to Bolting Year 2 at WL2
 
-To Do:
+Looked at relationship between size and survival
 
--   Look at relationship between size and survival
+```         
+-   size post winter
 
-    -   size post winter
+-   stem diameter y2
 
-    -   stem diameter y2
+-   total basal branches y2
 
-    -   total basal branches y2
-
-    -   canopy area y2 - 2 months in?
+-   canopy area y2 - 2 months post winter surv check 
+```
 
 <!-- -->
+
+To Do:
 
 -   Standard error correction on scatter plots
 
@@ -677,7 +679,7 @@ surv_GD_fits_wl2_sub %>% mutate(tidy=map(fit, tidy)) %>% unnest(tidy) %>%
 
 ## Fitness \~ Size
 
-### Load the size data & Combine with Survival - need to update 
+### Load the size data & Combine with Survival - need to update
 
 #### Size (post winter)
 
@@ -688,7 +690,7 @@ names(postwinter_size)
 wl2_surv_to_rep_y2_mossize <- left_join(wl2_surv_to_rep_y2, postwinter_size)
 ```
 
-#### Stem Diameter, Basal Branches, and Canopy Area from Annual Census  
+#### Stem Diameter, Basal Branches, and Canopy Area from Annual Census
 
 ```{r}
 wl2_ann_cens_2024 <- read_csv("../input/WL2_Data/WL2_Annual_Census_20241023_CanopyAdded_corrected.csv") #added canopy area for the rows were we skipped b/c we also measured it in the size survey 
@@ -699,13 +701,28 @@ wl2_ann_cens_2024_pops <- left_join(wl2_y2_pops_blocks, wl2_ann_cens_2024) %>%
 wl2_surv_to_rep_y2_annsize <- left_join(wl2_surv_to_rep_y2, wl2_ann_cens_2024_pops)
 ```
 
-#### Merge all 
+#### Canopy area - 2 months post winter surv check
+
+```{r}
+post_wint_canopy <- read_csv("../input/WL2_Data/WL2_size_survey_20240730_corrected.csv") %>% 
+  select(-block) %>% 
+  mutate(canopy_area=pi*overhd.diam*overhd.perp) #A = πab = area of an ellipse 
+
+post_wint_canopy_pops <- left_join(wl2_y2_pops_blocks, post_wint_canopy) %>%  
+  rename(Genotype=unique.ID) %>% 
+  select(Pop.Type:block,overhd.diam, overhd.perp, canopy_area)
+
+wl2_surv_to_rep_y2_canopy <- left_join(wl2_surv_to_rep_y2, post_wint_canopy_pops)
+```
+
+#### Merge all
+
 ```{r}
 wl2_surv_to_rep_y2_size <- left_join(wl2_surv_to_rep_y2_mossize, wl2_surv_to_rep_y2_annsize)
 wl2_surv_to_rep_y2_size %>% filter(!is.na(diam.mm))
 ```
 
-### Figures of Survival \~ Size 
+### Figures of Survival \~ Size
 
 ```{r}
 wl2_surv_to_rep_y2_size %>% 
@@ -733,6 +750,21 @@ wl2_surv_to_rep_y2_size %>% #prob not enough var in surv
   geom_point()
 
 wl2_surv_to_rep_y2_size %>% filter(SurvtoRep_y2==0, !is.na(overhd.diam)) #only 6 dead indivs with size info (died the day of the census, likely )
+
+##Canopy Area 2months post winter 
+wl2_surv_to_rep_y2_canopy %>% 
+  ggplot(aes(x=canopy_area, y=SurvtoRep_y2)) +
+  geom_point()
+
+wl2_surv_to_rep_y2_canopy %>% 
+  ggplot(aes(x=overhd.diam, y=SurvtoRep_y2)) +
+  geom_point()
+
+wl2_surv_to_rep_y2_canopy %>% 
+  ggplot(aes(x=overhd.perp, y=SurvtoRep_y2)) +
+  geom_point()
+
+wl2_surv_to_rep_y2_canopy %>% filter(SurvtoRep_y2==0, !is.na(canopy_area)) #only 7 dead indivs with size info --> not enough to analyze 
 ```
 
 ```{r}
@@ -857,7 +889,7 @@ wl2_surv_to_rep_y2_size %>%
 
 Log Reg survival \~ size
 
-#### Check for correlations between traits 
+#### Check for correlations between traits
 
 ```{r}
 size_normalized_wl2 <- wl2_surv_to_rep_y2_size %>% 
@@ -895,7 +927,6 @@ wl2_surv_to_rep_y2_overhd.diam_formod <- wl2_surv_to_rep_y2_size %>%
   filter(pop!="LV1", pop!="SQ1", pop!="WR")
 ```
 
-
 #### Height
 
 ```{r}
@@ -918,6 +949,7 @@ summary(wl2_logit_length2)
 ```
 
 #### Stem Diameter
+
 ```{r}
 wl2_logit_diam2 <- glmer(SurvtoRep_y2 ~ diam.mm + (1|pop) + (1|block), data = wl2_surv_to_rep_y2_diam_formod, family = binomial(link = "logit")) 
 summary(wl2_logit_diam2)
@@ -925,12 +957,11 @@ summary(wl2_logit_diam2)
 #marg relat estiamte =  1.3730 
 ```
 
-
 #### Overhead diam
+
 ```{r}
 wl2_logit_overhd.diam2 <- glmer(SurvtoRep_y2 ~ overhd.diam + (1|pop) + (1|block), data = wl2_surv_to_rep_y2_overhd.diam_formod, family = binomial(link = "logit")) 
 summary(wl2_logit_overhd.diam2)
 #boundary (singular) fit: see help('isSingular') pop explains little var
 #no sig relat
 ```
-

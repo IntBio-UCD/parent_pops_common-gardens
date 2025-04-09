@@ -1,7 +1,7 @@
 ---
 title: "WL2_Surv_to_Rep_Y2"
 author: "Brandie QC"
-date: "2025-04-01"
+date: "2025-04-09"
 output: 
   html_document: 
     keep_md: true
@@ -11,19 +11,21 @@ output:
 
 # Survival to Bolting Year 2 at WL2
 
-To Do:
+Looked at relationship between size and survival
 
--   Look at relationship between size and survival
+```         
+-   size post winter
 
-    -   size post winter
+-   stem diameter y2
 
-    -   stem diameter y2
+-   total basal branches y2
 
-    -   total basal branches y2
-
-    -   canopy area y2
+-   canopy area y2 - 2 months post winter surv check 
+```
 
 <!-- -->
+
+To Do:
 
 -   Standard error correction on scatter plots
 
@@ -164,7 +166,7 @@ library(tidymodels)
 ## ✖ infer::t_test()       masks rstatix::t_test()
 ## ✖ Matrix::unpack()      masks tidyr::unpack()
 ## ✖ recipes::update()     masks Matrix::update(), stats::update()
-## • Learn how to get started at https://www.tidymodels.org/start/
+## • Use tidymodels_prefer() to resolve common conflicts.
 ```
 
 ``` r
@@ -1534,7 +1536,7 @@ surv_GD_fits_wl2_sub %>% mutate(tidy=map(fit, tidy)) %>% unnest(tidy) %>%
 
 ## Fitness \~ Size
 
-### Load the size data & Combine with Survival - need to update 
+### Load the size data & Combine with Survival - need to update
 
 #### Size (post winter)
 
@@ -1573,7 +1575,7 @@ wl2_surv_to_rep_y2_mossize <- left_join(wl2_surv_to_rep_y2, postwinter_size)
 ## Genotype, block)`
 ```
 
-#### Stem Diameter, Basal Branches, and Canopy Area from Annual Census  
+#### Stem Diameter, Basal Branches, and Canopy Area from Annual Census
 
 
 ``` r
@@ -1610,7 +1612,47 @@ wl2_surv_to_rep_y2_annsize <- left_join(wl2_surv_to_rep_y2, wl2_ann_cens_2024_po
 ## Genotype, block)`
 ```
 
-#### Merge all 
+#### Canopy area - 2 months post winter surv check
+
+
+``` r
+post_wint_canopy <- read_csv("../input/WL2_Data/WL2_size_survey_20240730_corrected.csv") %>% 
+  select(-block) %>% 
+  mutate(canopy_area=pi*overhd.diam*overhd.perp) #A = πab = area of an ellipse 
+```
+
+```
+## Rows: 1217 Columns: 10
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: ","
+## chr (7): block, bed, col, unique.ID, height.cm, herbiv.y.n, survey.notes
+## dbl (3): row, overhd.diam, overhd.perp
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+```
+
+``` r
+post_wint_canopy_pops <- left_join(wl2_y2_pops_blocks, post_wint_canopy) %>%  
+  rename(Genotype=unique.ID) %>% 
+  select(Pop.Type:block,overhd.diam, overhd.perp, canopy_area)
+```
+
+```
+## Joining with `by = join_by(bed, row, col, unique.ID)`
+```
+
+``` r
+wl2_surv_to_rep_y2_canopy <- left_join(wl2_surv_to_rep_y2, post_wint_canopy_pops)
+```
+
+```
+## Joining with `by = join_by(Pop.Type, loc, bed, row, col, pop, mf, rep,
+## Genotype, block)`
+```
+
+#### Merge all
+
 
 ``` r
 wl2_surv_to_rep_y2_size <- left_join(wl2_surv_to_rep_y2_mossize, wl2_surv_to_rep_y2_annsize)
@@ -1650,7 +1692,7 @@ wl2_surv_to_rep_y2_size %>% filter(!is.na(diam.mm))
 ## #   survey.notes <chr>, diam.mm <dbl>, total.branch <dbl>, overhd.diam <dbl>, …
 ```
 
-### Figures of Survival \~ Size 
+### Figures of Survival \~ Size
 
 
 ``` r
@@ -1664,7 +1706,7 @@ wl2_surv_to_rep_y2_size %>%
 ## (`geom_point()`).
 ```
 
-![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-24-1.png)<!-- -->
+![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-25-1.png)<!-- -->
 
 ``` r
 wl2_surv_to_rep_y2_size %>% 
@@ -1677,7 +1719,7 @@ wl2_surv_to_rep_y2_size %>%
 ## (`geom_point()`).
 ```
 
-![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-24-2.png)<!-- -->
+![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-25-2.png)<!-- -->
 
 ``` r
 wl2_surv_to_rep_y2_size %>% #prob not enough var in surv
@@ -1690,7 +1732,7 @@ wl2_surv_to_rep_y2_size %>% #prob not enough var in surv
 ## (`geom_point()`).
 ```
 
-![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-24-3.png)<!-- -->
+![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-25-3.png)<!-- -->
 
 ``` r
 wl2_surv_to_rep_y2_size %>% #not enough variation in surv
@@ -1703,7 +1745,7 @@ wl2_surv_to_rep_y2_size %>% #not enough variation in surv
 ## (`geom_point()`).
 ```
 
-![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-24-4.png)<!-- -->
+![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-25-4.png)<!-- -->
 
 ``` r
 wl2_surv_to_rep_y2_size %>% #prob not enough var in surv
@@ -1716,7 +1758,7 @@ wl2_surv_to_rep_y2_size %>% #prob not enough var in surv
 ## (`geom_point()`).
 ```
 
-![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-24-5.png)<!-- -->
+![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-25-5.png)<!-- -->
 
 ``` r
 wl2_surv_to_rep_y2_size %>% #prob not enough var in surv
@@ -1729,7 +1771,92 @@ wl2_surv_to_rep_y2_size %>% #prob not enough var in surv
 ## (`geom_point()`).
 ```
 
-![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-24-6.png)<!-- -->
+![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-25-6.png)<!-- -->
+
+``` r
+wl2_surv_to_rep_y2_size %>% filter(SurvtoRep_y2==0, !is.na(overhd.diam)) #only 6 dead indivs with size info (died the day of the census, likely )
+```
+
+```
+## # A tibble: 6 × 31
+##   Pop.Type      loc    bed     row col   pop      mf   rep Genotype block
+##   <chr>         <chr>  <chr> <dbl> <chr> <chr> <dbl> <dbl> <chr>    <chr>
+## 1 2023-survivor F_8_C  F         8 C     SC        6    12 SC_6_12  J    
+## 2 2023-survivor F_44_C F        44 C     IH        4    11 IH_4_11  I    
+## 3 2023-survivor I_18_A I        18 A     BH        1     1 BH_1_1   L    
+## 4 2023-survivor J_10_A J        10 A     BH        4     2 BH_4_2   M    
+## 5 2023-survivor J_15_A J        15 A     YO7       7    11 YO7_7_11 M    
+## 6 2023-survivor J_13_C J        13 C     BH        6     2 BH_6_2   M    
+## # ℹ 21 more variables: elevation.group <chr>, elev_m <dbl>, Lat <dbl>,
+## #   Long <dbl>, GrwSsn_GD_Recent <dbl>, GrwSsn_GD_Historical <dbl>,
+## #   Wtr_Year_GD_Recent <dbl>, Wtr_Year_GD_Historical <dbl>,
+## #   Geographic_Dist <dbl>, Elev_Dist <dbl>, bud.date <chr>, death.date <chr>,
+## #   SurvtoRep_y2 <dbl>, height.cm <dbl>, long.leaf.cm <dbl>, herbiv.y.n <chr>,
+## #   survey.notes <chr>, diam.mm <dbl>, total.branch <dbl>, overhd.diam <dbl>,
+## #   overhd.perp <dbl>
+```
+
+``` r
+##Canopy Area 2months post winter 
+wl2_surv_to_rep_y2_canopy %>% 
+  ggplot(aes(x=canopy_area, y=SurvtoRep_y2)) +
+  geom_point()
+```
+
+```
+## Warning: Removed 38 rows containing missing values or values outside the scale range
+## (`geom_point()`).
+```
+
+![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-25-7.png)<!-- -->
+
+``` r
+wl2_surv_to_rep_y2_canopy %>% 
+  ggplot(aes(x=overhd.diam, y=SurvtoRep_y2)) +
+  geom_point()
+```
+
+```
+## Warning: Removed 38 rows containing missing values or values outside the scale range
+## (`geom_point()`).
+```
+
+![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-25-8.png)<!-- -->
+
+``` r
+wl2_surv_to_rep_y2_canopy %>% 
+  ggplot(aes(x=overhd.perp, y=SurvtoRep_y2)) +
+  geom_point()
+```
+
+```
+## Warning: Removed 38 rows containing missing values or values outside the scale range
+## (`geom_point()`).
+```
+
+![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-25-9.png)<!-- -->
+
+``` r
+wl2_surv_to_rep_y2_canopy %>% filter(SurvtoRep_y2==0, !is.na(canopy_area)) #only 7 dead indivs with size info --> not enough to analyze 
+```
+
+```
+## # A tibble: 7 × 26
+##   Pop.Type      loc    bed     row col   pop      mf   rep Genotype block
+##   <chr>         <chr>  <chr> <dbl> <chr> <chr> <dbl> <dbl> <chr>    <chr>
+## 1 2023-survivor F_8_C  F         8 C     SC        6    12 SC_6_12  J    
+## 2 2023-survivor F_44_C F        44 C     IH        4    11 IH_4_11  I    
+## 3 2023-survivor H_5_A  H         5 A     SC        4     1 SC_4_1   L    
+## 4 2023-survivor I_18_A I        18 A     BH        1     1 BH_1_1   L    
+## 5 2023-survivor J_10_A J        10 A     BH        4     2 BH_4_2   M    
+## 6 2023-survivor J_15_A J        15 A     YO7       7    11 YO7_7_11 M    
+## 7 2023-survivor J_13_C J        13 C     BH        6     2 BH_6_2   M    
+## # ℹ 16 more variables: elevation.group <chr>, elev_m <dbl>, Lat <dbl>,
+## #   Long <dbl>, GrwSsn_GD_Recent <dbl>, GrwSsn_GD_Historical <dbl>,
+## #   Wtr_Year_GD_Recent <dbl>, Wtr_Year_GD_Historical <dbl>,
+## #   Geographic_Dist <dbl>, Elev_Dist <dbl>, bud.date <chr>, death.date <chr>,
+## #   SurvtoRep_y2 <dbl>, overhd.diam <dbl>, overhd.perp <dbl>, canopy_area <dbl>
+```
 
 
 ``` r
@@ -1806,7 +1933,7 @@ wl2_surv_to_rep_y2_size %>%
 ## argument.
 ```
 
-![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-26-1.png)<!-- -->
+![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-27-1.png)<!-- -->
 
 ``` r
 wl2_surv_to_rep_y2_size %>% 
@@ -1831,7 +1958,7 @@ wl2_surv_to_rep_y2_size %>%
 ## argument.
 ```
 
-![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-26-2.png)<!-- -->
+![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-27-2.png)<!-- -->
 
 ``` r
 wl2_surv_to_rep_y2_size %>% 
@@ -1856,7 +1983,7 @@ wl2_surv_to_rep_y2_size %>%
 ## argument.
 ```
 
-![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-26-3.png)<!-- -->
+![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-27-3.png)<!-- -->
 
 ``` r
 wl2_surv_to_rep_y2_size %>% 
@@ -1881,7 +2008,7 @@ wl2_surv_to_rep_y2_size %>%
 ## argument.
 ```
 
-![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-26-4.png)<!-- -->
+![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-27-4.png)<!-- -->
 
 ``` r
 wl2_surv_to_rep_y2_size %>% 
@@ -1906,7 +2033,7 @@ wl2_surv_to_rep_y2_size %>%
 ## argument.
 ```
 
-![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-26-5.png)<!-- -->
+![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-27-5.png)<!-- -->
 
 ``` r
 wl2_surv_to_rep_y2_size %>% 
@@ -1931,13 +2058,13 @@ wl2_surv_to_rep_y2_size %>%
 ## argument.
 ```
 
-![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-26-6.png)<!-- -->
+![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-27-6.png)<!-- -->
 
 ### Stats
 
 Log Reg survival \~ size
 
-#### Check for correlations between traits 
+#### Check for correlations between traits
 
 
 ``` r
@@ -1952,7 +2079,7 @@ corrplot(cor.norm_wl2, type = "upper",
          sig.level = 0.05, insig="blank")  
 ```
 
-![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-27-1.png)<!-- -->
+![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-28-1.png)<!-- -->
 
 ``` r
 cor.norm_wl2
@@ -2021,7 +2148,6 @@ wl2_surv_to_rep_y2_overhd.diam_formod <- wl2_surv_to_rep_y2_size %>%
   drop_na(SurvtoRep_y2, overhd.diam) %>% 
   filter(pop!="LV1", pop!="SQ1", pop!="WR")
 ```
-
 
 #### Height
 
@@ -2160,6 +2286,7 @@ summary(wl2_logit_length2)
 
 #### Stem Diameter
 
+
 ``` r
 wl2_logit_diam2 <- glmer(SurvtoRep_y2 ~ diam.mm + (1|pop) + (1|block), data = wl2_surv_to_rep_y2_diam_formod, family = binomial(link = "logit")) 
 ```
@@ -2211,8 +2338,8 @@ summary(wl2_logit_diam2)
 #marg relat estiamte =  1.3730 
 ```
 
-
 #### Overhead diam
+
 
 ``` r
 wl2_logit_overhd.diam2 <- glmer(SurvtoRep_y2 ~ overhd.diam + (1|pop) + (1|block), data = wl2_surv_to_rep_y2_overhd.diam_formod, family = binomial(link = "logit")) 
@@ -2262,4 +2389,3 @@ summary(wl2_logit_overhd.diam2)
 #boundary (singular) fit: see help('isSingular') pop explains little var
 #no sig relat
 ```
-
