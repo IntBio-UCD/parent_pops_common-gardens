@@ -23,7 +23,7 @@ To Do:
 
     -   total basal branches y2
 
-    -   canopy area y2
+    -   canopy area y2 - 2 months in?
 
 <!-- -->
 
@@ -731,6 +731,8 @@ wl2_surv_to_rep_y2_size %>% #prob not enough var in surv
 wl2_surv_to_rep_y2_size %>% #prob not enough var in surv
   ggplot(aes(x=overhd.perp, y=SurvtoRep_y2)) +
   geom_point()
+
+wl2_surv_to_rep_y2_size %>% filter(SurvtoRep_y2==0, !is.na(overhd.diam)) #only 6 dead indivs with size info (died the day of the census, likely )
 ```
 
 ```{r}
