@@ -15,7 +15,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 Total Fitness: p(Establishment)*p(Surv to Rep - y1)*Fruits(y1) + p(Winter Surv)*p(Surv to Rep - y2)*Fruits(y2)
 
-To Do:
+Relating phenology and plasticity to fitness:
 
 -   Prob of fitness \~
 
@@ -1734,37 +1734,48 @@ size_plasticity <- read_csv("../output/TwoMonths_Size_Slopes.csv") %>% rename(po
 
 wl2_prob_fit_plas <- wl2_prob_fitness %>% 
   select(block, Genotype:Elev_Dist, ProbFitness) %>% 
-  left_join(size_plasticity) %>% 
-  mutate_at(c("height_slope","length_slope"),scale) 
+  left_join(size_plasticity) #%>% 
+  #mutate_at(c("height_slope","length_slope"),scale) 
 head(wl2_prob_fit_plas)
+wl2_prob_fit_plas %>% 
+  ggplot(aes(length_slope)) +
+  geom_histogram()
+wl2_prob_fit_plas %>% 
+  ggplot(aes(height_slope)) +
+  geom_histogram()
 
 ucd_prob_fit_plas <- ucd_prob_fitness %>% 
   select(block, Genotype:Elev_Dist, ProbFitness) %>% 
-  left_join(size_plasticity) %>% 
-  mutate_at(c("height_slope","length_slope"),scale) 
+  left_join(size_plasticity) #%>% 
+# mutate_at(c("height_slope","length_slope"),scale) 
 head(ucd_prob_fit_plas)
+ucd_prob_fit_plas %>% 
+  ggplot(aes(length_slope)) +
+  geom_histogram()
+ucd_prob_fit_plas %>% 
+  ggplot(aes(height_slope)) +
+  geom_histogram()
 ```
 
 ```{r}
 wl2_glmer1 <- glmer(ProbFitness ~ height_slope + (1|pop) + (1|block), data=wl2_prob_fit_plas, family = binomial)
-summary(wl2_glmer1)
+summary(wl2_glmer1) #plasticity in height sig and positive 
 
 wl2_glmer2 <- glmer(ProbFitness ~ length_slope + (1|pop) + (1|block), data=wl2_prob_fit_plas, family = binomial)
-summary(wl2_glmer2)
+summary(wl2_glmer2) #plasticity in length sig and positive 
 
 wl2_glmer3 <- glmer(ProbFitness ~ height_slope + length_slope + (1|pop) + (1|block), data=wl2_prob_fit_plas, family = binomial)
-summary(wl2_glmer3)
+summary(wl2_glmer3) #when both in the model, only height plasticity = sig 
 tidy(wl2_glmer3)
 ```
 
 ```{r}
-ucd_glmer1 <- glmer(ProbFitness ~ height_slope + (1|pop/mf), data=ucd_prob_fit_plas, family = binomial)
-summary(ucd_glmer1) 
-#boundary (singular) fit: see help('isSingular') #block explains little variation so removed it
+ucd_glmer1 <- glmer(ProbFitness ~ height_slope + (1|pop/mf) + (1|block), data=ucd_prob_fit_plas, family = binomial)
+#boundary (singular) fit: see help('isSingular') - block explains 0 var 
+summary(ucd_glmer1) #plasticity in height is sig and positive 
 
-ucd_glmer2 <- glmer(ProbFitness ~ length_slope + (1|pop/mf), data=ucd_prob_fit_plas, family = binomial) 
-summary(ucd_glmer2)
-#convergence error with block so removed it 
+ucd_glmer2 <- glmer(ProbFitness ~ length_slope + (1|pop/mf) + (1|block), data=ucd_prob_fit_plas, family = binomial) 
+summary(ucd_glmer2) #plasticity in length not sig
 
 ucd_glmer3 <- glmer(ProbFitness ~ height_slope + length_slope + (1|pop/mf) + (1|block), data=ucd_prob_fit_plas, family = binomial)
 summary(ucd_glmer3)

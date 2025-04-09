@@ -1,7 +1,7 @@
 ---
 title: "Total Fitness"
 author: "Brandie QC"
-date: "2025-04-02"
+date: "2025-04-09"
 output: 
   html_document: 
     keep_md: true
@@ -13,7 +13,7 @@ output:
 
 Total Fitness: p(Establishment)*p(Surv to Rep - y1)*Fruits(y1) + p(Winter Surv)*p(Surv to Rep - y2)*Fruits(y2)
 
-To Do:
+Relating phenology and plasticity to fitness:
 
 -   Prob of fitness \~
 
@@ -182,7 +182,7 @@ library(tidymodels)
 ## ✖ infer::t_test()       masks rstatix::t_test()
 ## ✖ Matrix::unpack()      masks tidyr::unpack()
 ## ✖ recipes::update()     masks Matrix::update(), stats::update()
-## • Learn how to get started at https://www.tidymodels.org/start/
+## • Use suppressPackageStartupMessages() to eliminate package startup messages
 ```
 
 ``` r
@@ -2738,21 +2738,198 @@ ggsave("../output/WL2_Traits/WL2_ProbFitness_SCATTERS_Summary_Recent.png", width
 
 
 ``` r
+##block summary
+wl2_prob_fit_block_summary <- wl2_total_fitness %>%  
+  mutate(ProbFitness=if_else(Total_Fitness==0, 0, 1)) %>% 
+  group_by(pop, block, Geographic_Dist) %>% 
+  summarise(meanProbBlock=mean(ProbFitness, na.rm = TRUE), n=n())
+```
+
+```
+## `summarise()` has grouped output by 'pop', 'block'. You can override using the
+## `.groups` argument.
+```
+
+``` r
+#double check this mostly matches getting means across blocks 
+wl2_prob_fit_block_summary %>% group_by(pop, Geographic_Dist) %>% 
+  summarise(meanProb=mean(meanProbBlock, na.rm = TRUE), 
+            semProb=sem(meanProbBlock,  na.rm=TRUE))
+```
+
+```
+## `summarise()` has grouped output by 'pop'. You can override using the `.groups`
+## argument.
+```
+
+```
+## # A tibble: 23 × 4
+## # Groups:   pop [23]
+##    pop   Geographic_Dist meanProb semProb
+##    <chr>           <dbl>    <dbl>   <dbl>
+##  1 BH            159626.   0.176   0.0540
+##  2 CC            132498.   0.0989  0.0298
+##  3 CP2            21060.   0       0     
+##  4 CP3            19415.   0       0     
+##  5 DPR            66246.   0       0     
+##  6 FR            154694.   0       0     
+##  7 IH             65203.   0.143   0.0458
+##  8 LV1           212682.   0       0     
+##  9 LV3           213902.   0       0     
+## 10 LVTR1         213038.   0       0     
+## # ℹ 13 more rows
+```
+
+``` r
+wl2_total_fitness %>%  
+  mutate(ProbFitness=if_else(Total_Fitness==0, 0, 1)) %>%
+  group_by(pop, Geographic_Dist) %>% 
+  summarise(meanProb=mean(ProbFitness, na.rm = TRUE), 
+            semProb=sem(ProbFitness,  na.rm=TRUE))
+```
+
+```
+## `summarise()` has grouped output by 'pop'. You can override using the `.groups`
+## argument.
+```
+
+```
+## # A tibble: 23 × 4
+## # Groups:   pop [23]
+##    pop   Geographic_Dist meanProb semProb
+##    <chr>           <dbl>    <dbl>   <dbl>
+##  1 BH            159626.   0.176   0.0401
+##  2 CC            132498.   0.0989  0.0315
+##  3 CP2            21060.   0       0     
+##  4 CP3            19415.   0       0     
+##  5 DPR            66246.   0       0     
+##  6 FR            154694.   0       0     
+##  7 IH             65203.   0.141   0.0365
+##  8 LV1           212682.   0       0     
+##  9 LV3           213902.   0       0     
+## 10 LVTR1         213038.   0       0     
+## # ℹ 13 more rows
+```
+
+``` r
+#double check that back transformation works 
+wl2_prob_fit_block_summary %>% 
+  mutate(logitBlockMean=boot::logit(meanProbBlock + 0.001)) %>% 
+  mutate(btProb=boot::inv.logit(logitBlockMean)-0.001)
+```
+
+```
+## # A tibble: 288 × 7
+## # Groups:   pop, block [288]
+##    pop   block Geographic_Dist meanProbBlock     n logitBlockMean    btProb
+##    <chr> <chr>           <dbl>         <dbl> <int>          <dbl>     <dbl>
+##  1 BH    A             159626.         0.286     7         -0.911  2.86e- 1
+##  2 BH    B             159626.         0.429     7         -0.284  4.29e- 1
+##  3 BH    C             159626.         0.429     7         -0.284  4.29e- 1
+##  4 BH    D             159626.         0         7         -6.91  -4.34e-19
+##  5 BH    E             159626.         0.571     7          0.292  5.71e- 1
+##  6 BH    F             159626.         0.143     7         -1.78   1.43e- 1
+##  7 BH    G             159626.         0         7         -6.91  -4.34e-19
+##  8 BH    H             159626.         0.143     7         -1.78   1.43e- 1
+##  9 BH    I             159626.         0.143     7         -1.78   1.43e- 1
+## 10 BH    J             159626.         0.143     7         -1.78   1.43e- 1
+## # ℹ 278 more rows
+```
+
+``` r
+#means are wrong b/c of 0 conversions 
+boot::inv.logit((-0.911395862 +  -6.906754779)/2)-0.001 ##logit =  0.01866459
+```
+
+```
+## [1] 0.01866459
+```
+
+``` r
+(2.857143e-01 + -4.336809e-19)/2 #non-logit = 0.1428571
+```
+
+```
+## [1] 0.1428571
+```
+
+``` r
+boot::inv.logit((-0.911395862 +  0)/2)-0.001 #convert logit zeros = 0.3870069 - also wrong ...
+```
+
+```
+## [1] 0.3870069
+```
+
+``` r
+#likely b/c when I'm taking the mean, the +0.001 is being manipulated??
+#((x - lb) / (ub - lb))
+```
+
+
+``` r
 ##logit scale
+wl2_prob_fit_block_summary %>% 
+  mutate(logitBlockMean=boot::logit(meanProbBlock + 0.001)) %>% 
+  group_by(pop, Geographic_Dist) %>% 
+  summarise(meanLogit=mean(logitBlockMean), 
+            semLogit=sem(logitBlockMean)) %>% 
+  ggplot(aes(x=Geographic_Dist, y=meanLogit, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanLogit+semLogit,ymax=meanLogit-semLogit),width=.2, linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  ggtitle("Logit Scale")
+```
+
+```
+## `summarise()` has grouped output by 'pop'. You can override using the `.groups`
+## argument.
+```
+
+![](Total_Fitness_files/figure-html/unnamed-chunk-43-1.png)<!-- -->
+
+``` r
+##back transformed from logit 
+wl2_prob_fit_block_summary %>% 
+  mutate(logitBlockMean=boot::logit(meanProbBlock + 0.001)) %>% 
+  group_by(pop, Geographic_Dist) %>% 
+  summarise(meanLogit=mean(logitBlockMean), 
+            semLogit=sem(logitBlockMean)) %>% 
+    mutate(HighError=meanLogit+semLogit, LowError=meanLogit-semLogit) %>% 
+  mutate(btProb=boot::inv.logit(meanLogit)-0.001, 
+         btHighError=boot::inv.logit(HighError)-0.001,
+         btLowError=boot::inv.logit(LowError)-0.001) %>% 
+  ggplot(aes(x=Geographic_Dist, y=btProb, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=btLowError,ymax=btHighError),width=.2, linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  ggtitle("Back-Transformed from Logit Scale")
+```
+
+```
+## `summarise()` has grouped output by 'pop'. You can override using the `.groups`
+## argument.
+```
+
+![](Total_Fitness_files/figure-html/unnamed-chunk-43-2.png)<!-- -->
+
+``` r
+##non-logit scale 
 wl2_total_fitness_sub_dist %>%  
   mutate(ProbFitness=if_else(Total_Fitness==0, 0, 1)) %>% 
   group_by(pop, block, Geographic_Dist) %>% 
-  summarise(meanProb=mean(ProbFitness, na.rm = TRUE), n=n()) %>% 
-  mutate(logitMean=boot::logit(meanProb + 0.001)) %>% 
+  summarise(meanProbBlock=mean(ProbFitness, na.rm = TRUE) + 0.001, n=n()) %>% 
   group_by(pop, Geographic_Dist) %>% 
-  summarise(meanLogit=mean(logitMean), 
-            semLogit=sem(logitMean)) %>% 
-  mutate(btProb=boot::inv.logit(meanLogit)-0.001, btSEM=boot::inv.logit(semLogit)-0.001) %>% 
-  ggplot(aes(x=Geographic_Dist, y=btProb, group = pop)) +
+  summarise(meanProb=mean(meanProbBlock, na.rm = TRUE), 
+            semProb=sem(meanProbBlock,  na.rm=TRUE)) %>% 
+  ggplot(aes(x=Geographic_Dist, y=meanProb, group = pop)) +
   geom_point(size=6) + 
-  geom_errorbar(aes(ymin=btProb-btSEM,ymax=btProb+btSEM),width=.2, linewidth = 2) +
+  geom_errorbar(aes(ymin=meanProb-semProb,ymax=meanProb+semProb),width=.2, linewidth = 2) +
   theme_classic() + 
-  scale_y_continuous(expand = c(0.01, 0))
+  scale_y_continuous(expand = c(0.01, 0)) +
+  ggtitle("Raw Means")
 ```
 
 ```
@@ -2762,7 +2939,35 @@ wl2_total_fitness_sub_dist %>%
 ## argument.
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-42-1.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-43-3.png)<!-- -->
+
+``` r
+#wl2_prob_fit_block_summary %>% group_by(pop, Geographic_Dist) %>% 
+ # summarise(meanProb=mean(meanProbBlock, na.rm = TRUE), 
+  #          semProb=sem(meanProbBlock,  na.rm=TRUE))
+```
+
+
+``` r
+wl2_prob_fit_block_summary %>% 
+  mutate(logitBlockMean=boot::logit(meanProbBlock + 0.001)) %>% 
+  group_by(pop, Geographic_Dist) %>% 
+  summarise(meanLogit=mean(logitBlockMean), 
+            semLogit=sem(logitBlockMean)) %>% 
+  mutate(btProb=boot::inv.logit(meanLogit)-0.001, btSEM=boot::inv.logit(semLogit)-0.001) %>% 
+  ggplot(aes(x=Geographic_Dist, y=btProb, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=btProb-btSEM,ymax=btProb+btSEM),width=.2, linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0))
+```
+
+```
+## `summarise()` has grouped output by 'pop'. You can override using the `.groups`
+## argument.
+```
+
+![](Total_Fitness_files/figure-html/unnamed-chunk-44-1.png)<!-- -->
 
 ``` r
 ##non-logit scale 
@@ -2787,7 +2992,7 @@ wl2_total_fitness_sub_dist %>%
 ## argument.
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-42-2.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-44-2.png)<!-- -->
 
 #### Basic Model Workflow
 
@@ -3395,8 +3600,7 @@ size_plasticity <- read_csv("../output/TwoMonths_Size_Slopes.csv") %>% rename(po
 ``` r
 wl2_prob_fit_plas <- wl2_prob_fitness %>% 
   select(block, Genotype:Elev_Dist, ProbFitness) %>% 
-  left_join(size_plasticity) %>% 
-  mutate_at(c("height_slope","length_slope"),scale) 
+  left_join(size_plasticity) #%>% 
 ```
 
 ```
@@ -3404,6 +3608,7 @@ wl2_prob_fit_plas <- wl2_prob_fitness %>%
 ```
 
 ``` r
+  #mutate_at(c("height_slope","length_slope"),scale) 
 head(wl2_prob_fit_plas)
 ```
 
@@ -3420,15 +3625,42 @@ head(wl2_prob_fit_plas)
 ## # ℹ 9 more variables: GrwSsn_GD_Recent <dbl[,1]>,
 ## #   GrwSsn_GD_Historical <dbl[,1]>, Wtr_Year_GD_Recent <dbl[,1]>,
 ## #   Wtr_Year_GD_Historical <dbl[,1]>, Geographic_Dist <dbl[,1]>,
-## #   Elev_Dist <dbl>, ProbFitness <dbl>, height_slope <dbl[,1]>,
-## #   length_slope <dbl[,1]>
+## #   Elev_Dist <dbl>, ProbFitness <dbl>, height_slope <dbl>, length_slope <dbl>
 ```
+
+``` r
+wl2_prob_fit_plas %>% 
+  ggplot(aes(length_slope)) +
+  geom_histogram()
+```
+
+```
+## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+```
+
+```
+## Warning: Removed 3 rows containing non-finite outside the scale range
+## (`stat_bin()`).
+```
+
+![](Total_Fitness_files/figure-html/unnamed-chunk-53-1.png)<!-- -->
+
+``` r
+wl2_prob_fit_plas %>% 
+  ggplot(aes(height_slope)) +
+  geom_histogram()
+```
+
+```
+## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+```
+
+![](Total_Fitness_files/figure-html/unnamed-chunk-53-2.png)<!-- -->
 
 ``` r
 ucd_prob_fit_plas <- ucd_prob_fitness %>% 
   select(block, Genotype:Elev_Dist, ProbFitness) %>% 
-  left_join(size_plasticity) %>% 
-  mutate_at(c("height_slope","length_slope"),scale) 
+  left_join(size_plasticity) #%>% 
 ```
 
 ```
@@ -3436,6 +3668,7 @@ ucd_prob_fit_plas <- ucd_prob_fitness %>%
 ```
 
 ``` r
+# mutate_at(c("height_slope","length_slope"),scale) 
 head(ucd_prob_fit_plas)
 ```
 
@@ -3452,14 +3685,37 @@ head(ucd_prob_fit_plas)
 ## # ℹ 9 more variables: GrwSsn_GD_Recent <dbl[,1]>,
 ## #   GrwSsn_GD_Historical <dbl[,1]>, Wtr_Year_GD_Recent <dbl[,1]>,
 ## #   Wtr_Year_GD_Historical <dbl[,1]>, Geographic_Dist <dbl[,1]>,
-## #   Elev_Dist <dbl>, ProbFitness <dbl>, height_slope <dbl[,1]>,
-## #   length_slope <dbl[,1]>
+## #   Elev_Dist <dbl>, ProbFitness <dbl>, height_slope <dbl>, length_slope <dbl>
 ```
+
+``` r
+ucd_prob_fit_plas %>% 
+  ggplot(aes(length_slope)) +
+  geom_histogram()
+```
+
+```
+## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+```
+
+![](Total_Fitness_files/figure-html/unnamed-chunk-53-3.png)<!-- -->
+
+``` r
+ucd_prob_fit_plas %>% 
+  ggplot(aes(height_slope)) +
+  geom_histogram()
+```
+
+```
+## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+```
+
+![](Total_Fitness_files/figure-html/unnamed-chunk-53-4.png)<!-- -->
 
 
 ``` r
 wl2_glmer1 <- glmer(ProbFitness ~ height_slope + (1|pop) + (1|block), data=wl2_prob_fit_plas, family = binomial)
-summary(wl2_glmer1)
+summary(wl2_glmer1) #plasticity in height sig and positive 
 ```
 
 ```
@@ -3470,33 +3726,33 @@ summary(wl2_glmer1)
 ##    Data: wl2_prob_fit_plas
 ## 
 ##      AIC      BIC   logLik deviance df.resid 
-##    560.2    581.6   -276.1    552.2     1569 
+##    552.5    573.9   -272.2    544.5     1569 
 ## 
 ## Scaled residuals: 
 ##     Min      1Q  Median      3Q     Max 
-## -1.4514 -0.2611 -0.0486 -0.0351  5.3033 
+## -1.4518 -0.2598 -0.0595 -0.0323  5.3036 
 ## 
 ## Random effects:
 ##  Groups Name        Variance Std.Dev.
-##  pop    (Intercept) 4.538    2.1304  
-##  block  (Intercept) 0.701    0.8373  
+##  pop    (Intercept) 2.2973   1.5157  
+##  block  (Intercept) 0.6984   0.8357  
 ## Number of obs: 1573, groups:  pop, 23; block, 13
 ## 
 ## Fixed effects:
 ##              Estimate Std. Error z value Pr(>|z|)    
-## (Intercept)   -5.0957     0.8448  -6.032 1.62e-09 ***
-## height_slope   1.6641     0.5875   2.833  0.00462 ** 
+## (Intercept)    -8.767      1.505  -5.825  5.7e-09 ***
+## height_slope    8.293      2.170   3.823 0.000132 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
 ## Correlation of Fixed Effects:
 ##             (Intr)
-## height_slop -0.390
+## height_slop -0.924
 ```
 
 ``` r
 wl2_glmer2 <- glmer(ProbFitness ~ length_slope + (1|pop) + (1|block), data=wl2_prob_fit_plas, family = binomial)
-summary(wl2_glmer2)
+summary(wl2_glmer2) #plasticity in length sig and positive 
 ```
 
 ```
@@ -3507,33 +3763,33 @@ summary(wl2_glmer2)
 ##    Data: wl2_prob_fit_plas
 ## 
 ##      AIC      BIC   logLik deviance df.resid 
-##    563.3    584.7   -277.6    555.3     1569 
+##    564.1    585.5   -278.0    556.1     1566 
 ## 
 ## Scaled residuals: 
 ##     Min      1Q  Median      3Q     Max 
-## -1.3911 -0.2666 -0.0425 -0.0260  4.8269 
+## -1.3906 -0.2678 -0.0436 -0.0257  4.9073 
 ## 
 ## Random effects:
 ##  Groups Name        Variance Std.Dev.
-##  pop    (Intercept) 7.5412   2.7461  
-##  block  (Intercept) 0.7008   0.8372  
-## Number of obs: 1573, groups:  pop, 23; block, 13
+##  pop    (Intercept) 7.7827   2.7898  
+##  block  (Intercept) 0.7004   0.8369  
+## Number of obs: 1570, groups:  pop, 22; block, 13
 ## 
 ## Fixed effects:
 ##              Estimate Std. Error z value Pr(>|z|)    
-## (Intercept)   -5.5342     1.0213  -5.419 6.01e-08 ***
-## length_slope   1.6496     0.7813   2.111   0.0348 *  
+## (Intercept)    -5.973      1.122  -5.326 1.01e-07 ***
+## length_slope    3.328      1.689   1.970   0.0489 *  
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
 ## Correlation of Fixed Effects:
 ##             (Intr)
-## length_slop -0.360
+## length_slop -0.500
 ```
 
 ``` r
 wl2_glmer3 <- glmer(ProbFitness ~ height_slope + length_slope + (1|pop) + (1|block), data=wl2_prob_fit_plas, family = binomial)
-summary(wl2_glmer3)
+summary(wl2_glmer3) #when both in the model, only height plasticity = sig 
 ```
 
 ```
@@ -3545,30 +3801,30 @@ summary(wl2_glmer3)
 ##    Data: wl2_prob_fit_plas
 ## 
 ##      AIC      BIC   logLik deviance df.resid 
-##    554.3    581.1   -272.2    544.3     1568 
+##    551.4    578.2   -270.7    541.4     1565 
 ## 
 ## Scaled residuals: 
 ##     Min      1Q  Median      3Q     Max 
-## -1.4289 -0.2539 -0.0529 -0.0325  5.3083 
+## -1.4188 -0.2590 -0.0582 -0.0295  5.4444 
 ## 
 ## Random effects:
 ##  Groups Name        Variance Std.Dev.
-##  pop    (Intercept) 2.5349   1.5921  
-##  block  (Intercept) 0.6962   0.8344  
-## Number of obs: 1573, groups:  pop, 23; block, 13
+##  pop    (Intercept) 1.8370   1.3554  
+##  block  (Intercept) 0.6926   0.8322  
+## Number of obs: 1570, groups:  pop, 22; block, 13
 ## 
 ## Fixed effects:
 ##              Estimate Std. Error z value Pr(>|z|)    
-## (Intercept)   -4.8688     0.6942  -7.014 2.32e-12 ***
-## height_slope   1.5380     0.4512   3.408 0.000654 ***
-## length_slope   1.2675     0.4920   2.576 0.009987 ** 
+## (Intercept)   -8.6638     1.4152  -6.122 9.24e-10 ***
+## height_slope   7.6508     1.9574   3.909 9.28e-05 ***
+## length_slope   1.4977     0.9032   1.658   0.0973 .  
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
 ## Correlation of Fixed Effects:
 ##             (Intr) hght_s
-## height_slop -0.414       
-## length_slop -0.420  0.285
+## height_slop -0.902       
+## length_slop -0.303  0.097
 ```
 
 ``` r
@@ -3579,93 +3835,101 @@ tidy(wl2_glmer3)
 ## # A tibble: 5 × 7
 ##   effect   group term            estimate std.error statistic   p.value
 ##   <chr>    <chr> <chr>              <dbl>     <dbl>     <dbl>     <dbl>
-## 1 fixed    <NA>  (Intercept)       -4.87      0.694     -7.01  2.32e-12
-## 2 fixed    <NA>  height_slope       1.54      0.451      3.41  6.54e- 4
-## 3 fixed    <NA>  length_slope       1.27      0.492      2.58  9.99e- 3
-## 4 ran_pars pop   sd__(Intercept)    1.59     NA         NA    NA       
-## 5 ran_pars block sd__(Intercept)    0.834    NA         NA    NA
+## 1 fixed    <NA>  (Intercept)       -8.66      1.42      -6.12  9.24e-10
+## 2 fixed    <NA>  height_slope       7.65      1.96       3.91  9.28e- 5
+## 3 fixed    <NA>  length_slope       1.50      0.903      1.66  9.73e- 2
+## 4 ran_pars pop   sd__(Intercept)    1.36     NA         NA    NA       
+## 5 ran_pars block sd__(Intercept)    0.832    NA         NA    NA
 ```
 
 
 ``` r
-ucd_glmer1 <- glmer(ProbFitness ~ height_slope + (1|pop/mf), data=ucd_prob_fit_plas, family = binomial)
-summary(ucd_glmer1) 
+ucd_glmer1 <- glmer(ProbFitness ~ height_slope + (1|pop/mf) + (1|block), data=ucd_prob_fit_plas, family = binomial)
+```
+
+```
+## boundary (singular) fit: see help('isSingular')
+```
+
+``` r
+#boundary (singular) fit: see help('isSingular') - block explains 0 var 
+summary(ucd_glmer1) #plasticity in height is sig and positive 
 ```
 
 ```
 ## Generalized linear mixed model fit by maximum likelihood (Laplace
 ##   Approximation) [glmerMod]
 ##  Family: binomial  ( logit )
-## Formula: ProbFitness ~ height_slope + (1 | pop/mf)
+## Formula: ProbFitness ~ height_slope + (1 | pop/mf) + (1 | block)
 ##    Data: ucd_prob_fit_plas
 ## 
 ##      AIC      BIC   logLik deviance df.resid 
-##    197.2    215.7    -94.6    189.2      751 
+##    197.5    220.7    -93.8    187.5      750 
 ## 
 ## Scaled residuals: 
 ##     Min      1Q  Median      3Q     Max 
-## -1.0510 -0.1025 -0.0532 -0.0442  6.4940 
+## -1.0176 -0.1183 -0.0677 -0.0308  6.8424 
 ## 
 ## Random effects:
 ##  Groups Name        Variance Std.Dev.
-##  mf:pop (Intercept) 1.123    1.060   
-##  pop    (Intercept) 2.224    1.491   
-## Number of obs: 755, groups:  mf:pop, 132; pop, 22
+##  mf:pop (Intercept) 1.082    1.040   
+##  pop    (Intercept) 1.651    1.285   
+##  block  (Intercept) 0.000    0.000   
+## Number of obs: 755, groups:  mf:pop, 132; pop, 22; block, 10
 ## 
 ## Fixed effects:
 ##              Estimate Std. Error z value Pr(>|z|)    
-## (Intercept)   -5.2881     0.8216  -6.436 1.23e-10 ***
-## height_slope   1.0881     0.4217   2.580  0.00988 ** 
+## (Intercept)    -7.919      1.462  -5.415 6.12e-08 ***
+## height_slope    5.657      1.959   2.888  0.00388 ** 
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
 ## Correlation of Fixed Effects:
 ##             (Intr)
-## height_slop -0.320
+## height_slop -0.874
+## optimizer (Nelder_Mead) convergence code: 0 (OK)
+## boundary (singular) fit: see help('isSingular')
 ```
 
 ``` r
-#boundary (singular) fit: see help('isSingular') #block explains little variation so removed it
-
-ucd_glmer2 <- glmer(ProbFitness ~ length_slope + (1|pop/mf), data=ucd_prob_fit_plas, family = binomial) 
-summary(ucd_glmer2)
+ucd_glmer2 <- glmer(ProbFitness ~ length_slope + (1|pop/mf) + (1|block), data=ucd_prob_fit_plas, family = binomial) 
+summary(ucd_glmer2) #plasticity in length not sig
 ```
 
 ```
 ## Generalized linear mixed model fit by maximum likelihood (Laplace
 ##   Approximation) [glmerMod]
 ##  Family: binomial  ( logit )
-## Formula: ProbFitness ~ length_slope + (1 | pop/mf)
+## Formula: ProbFitness ~ length_slope + (1 | pop/mf) + (1 | block)
 ##    Data: ucd_prob_fit_plas
 ## 
 ##      AIC      BIC   logLik deviance df.resid 
-##    202.0    220.6    -97.0    194.0      751 
+##    204.0    227.2    -97.0    194.0      750 
 ## 
 ## Scaled residuals: 
 ##     Min      1Q  Median      3Q     Max 
-## -0.9791 -0.1237 -0.0430 -0.0332  5.4094 
+## -0.9877 -0.1255 -0.0427 -0.0334  5.4912 
 ## 
 ## Random effects:
 ##  Groups Name        Variance Std.Dev.
-##  mf:pop (Intercept) 1.034    1.017   
-##  pop    (Intercept) 6.302    2.510   
-## Number of obs: 755, groups:  mf:pop, 132; pop, 22
+##  mf:pop (Intercept) 1.05178  1.0256  
+##  pop    (Intercept) 6.43133  2.5360  
+##  block  (Intercept) 0.05533  0.2352  
+## Number of obs: 755, groups:  mf:pop, 132; pop, 22; block, 10
 ## 
 ## Fixed effects:
 ##              Estimate Std. Error z value Pr(>|z|)    
-## (Intercept)   -5.8852     1.2070  -4.876 1.08e-06 ***
-## length_slope   0.4214     0.8512   0.495    0.621    
+## (Intercept)   -6.0754     1.2648  -4.803 1.56e-06 ***
+## length_slope   0.6628     1.4814   0.447    0.655    
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
 ## Correlation of Fixed Effects:
 ##             (Intr)
-## length_slop 0.015
+## length_slop -0.238
 ```
 
 ``` r
-#convergence error with block so removed it 
-
 ucd_glmer3 <- glmer(ProbFitness ~ height_slope + length_slope + (1|pop/mf) + (1|block), data=ucd_prob_fit_plas, family = binomial)
 summary(ucd_glmer3)
 ```
@@ -3679,31 +3943,31 @@ summary(ucd_glmer3)
 ##    Data: ucd_prob_fit_plas
 ## 
 ##      AIC      BIC   logLik deviance df.resid 
-##    200.1    227.9    -94.0    188.1      749 
+##    199.5    227.2    -93.7    187.5      749 
 ## 
 ## Scaled residuals: 
 ##     Min      1Q  Median      3Q     Max 
-## -1.0457 -0.1089 -0.0528 -0.0395  7.1911 
+## -1.0238 -0.1202 -0.0655 -0.0304  6.8758 
 ## 
 ## Random effects:
 ##  Groups Name        Variance Std.Dev.
-##  mf:pop (Intercept) 1.17498  1.0840  
-##  pop    (Intercept) 1.50755  1.2278  
-##  block  (Intercept) 0.05745  0.2397  
+##  mf:pop (Intercept) 1.10033  1.0490  
+##  pop    (Intercept) 1.64932  1.2843  
+##  block  (Intercept) 0.05596  0.2366  
 ## Number of obs: 755, groups:  mf:pop, 132; pop, 22; block, 10
 ## 
 ## Fixed effects:
 ##              Estimate Std. Error z value Pr(>|z|)    
-## (Intercept)   -5.1498     0.7839  -6.569 5.06e-11 ***
-## height_slope   1.1436     0.3782   3.023   0.0025 ** 
-## length_slope   0.5687     0.5102   1.115   0.2650    
+## (Intercept)  -7.96390    1.48160  -5.375 7.65e-08 ***
+## height_slope  5.66724    1.96670   2.882  0.00396 ** 
+## length_slope  0.04907    0.90140   0.054  0.95658    
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
 ## Correlation of Fixed Effects:
 ##             (Intr) hght_s
-## height_slop -0.349       
-## length_slop -0.060  0.223
+## height_slop -0.862       
+## length_slop -0.086 -0.046
 ```
 
 ``` r
@@ -3712,14 +3976,14 @@ tidy(ucd_glmer3)
 
 ```
 ## # A tibble: 6 × 7
-##   effect   group  term            estimate std.error statistic   p.value
-##   <chr>    <chr>  <chr>              <dbl>     <dbl>     <dbl>     <dbl>
-## 1 fixed    <NA>   (Intercept)       -5.15      0.784     -6.57  5.06e-11
-## 2 fixed    <NA>   height_slope       1.14      0.378      3.02  2.50e- 3
-## 3 fixed    <NA>   length_slope       0.569     0.510      1.11  2.65e- 1
-## 4 ran_pars mf:pop sd__(Intercept)    1.08     NA         NA    NA       
-## 5 ran_pars pop    sd__(Intercept)    1.23     NA         NA    NA       
-## 6 ran_pars block  sd__(Intercept)    0.240    NA         NA    NA
+##   effect   group  term            estimate std.error statistic       p.value
+##   <chr>    <chr>  <chr>              <dbl>     <dbl>     <dbl>         <dbl>
+## 1 fixed    <NA>   (Intercept)      -7.96       1.48    -5.38    0.0000000765
+## 2 fixed    <NA>   height_slope      5.67       1.97     2.88    0.00396     
+## 3 fixed    <NA>   length_slope      0.0491     0.901    0.0544  0.957       
+## 4 ran_pars mf:pop sd__(Intercept)   1.05      NA       NA      NA           
+## 5 ran_pars pop    sd__(Intercept)   1.28      NA       NA      NA           
+## 6 ran_pars block  sd__(Intercept)   0.237     NA       NA      NA
 ```
 
 ### Total Fitness for plants with any rep
@@ -3770,7 +4034,7 @@ wl2_rep_output %>% #still skewed
 ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-54-1.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-56-1.png)<!-- -->
 
 ``` r
 wl2_rep_output %>% #good enough!
@@ -3782,7 +4046,7 @@ wl2_rep_output %>% #good enough!
 ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-54-2.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-56-2.png)<!-- -->
 
 ``` r
 wl2_rep_output %>% #helped some
@@ -3794,7 +4058,7 @@ wl2_rep_output %>% #helped some
 ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-54-3.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-56-3.png)<!-- -->
 
 ``` r
 wl2_rep_output %>% #helped some
@@ -3806,7 +4070,7 @@ wl2_rep_output %>% #helped some
 ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-54-4.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-56-4.png)<!-- -->
 
 ``` r
 wl2_fitness_means <- wl2_rep_output %>% # summary for plotting
@@ -3837,7 +4101,7 @@ wl2_rep_output_sub %>% #still skewed
 ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-55-1.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-57-1.png)<!-- -->
 
 ``` r
 wl2_rep_output_sub %>% #good enough!
@@ -3849,7 +4113,7 @@ wl2_rep_output_sub %>% #good enough!
 ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-55-2.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-57-2.png)<!-- -->
 
 
 ``` r
@@ -3890,7 +4154,7 @@ ucd_rep_output %>%
 ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-56-1.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-58-1.png)<!-- -->
 
 ``` r
 ucd_rep_output %>%  #looks fine 
@@ -3902,7 +4166,7 @@ ucd_rep_output %>%  #looks fine
 ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-56-2.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-58-2.png)<!-- -->
 
 ``` r
 ucd_rep_output %>% 
@@ -3914,7 +4178,7 @@ ucd_rep_output %>%
 ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-56-3.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-58-3.png)<!-- -->
 
 ``` r
 ucd_fitness_means <- ucd_rep_output %>% 
@@ -3948,7 +4212,7 @@ ucd_rep_output_sub %>% #still skewed
 ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-57-1.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-59-1.png)<!-- -->
 
 ``` r
 ucd_rep_output_sub %>% #okayish
@@ -3960,7 +4224,7 @@ ucd_rep_output_sub %>% #okayish
 ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-57-2.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-59-2.png)<!-- -->
 
 #### Plots
 
@@ -4546,7 +4810,7 @@ wl2_rep_output %>%
   facet_wrap(~pop, scales="free_y")
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-67-1.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-69-1.png)<!-- -->
 
 #### Basic Model Workflow
 
@@ -4608,14 +4872,14 @@ mod_test <- lmer(logTotalFitness ~  (1|pop) + (1|block), data=wl2_rep_output)
 plot(mod_test, which = 1) 
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-68-1.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-70-1.png)<!-- -->
 
 ``` r
 qqnorm(resid(mod_test))
 qqline(resid(mod_test)) 
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-68-2.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-70-2.png)<!-- -->
 
 ``` r
 summary(mod_test)
@@ -4663,7 +4927,7 @@ wl2_rep_output %>%
   facet_wrap(~pop, scales="free")
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-69-1.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-71-1.png)<!-- -->
 
 #### Test climate and geographic distance
 
@@ -4850,14 +5114,14 @@ mod_test <- lmer(logTotalFitness ~  GrwSsn_TempDist_Historic + Geographic_Dist +
 plot(mod_test, which = 1) 
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-71-1.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-73-1.png)<!-- -->
 
 ``` r
 qqnorm(resid(mod_test))
 qqline(resid(mod_test)) 
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-71-2.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-73-2.png)<!-- -->
 
 ``` r
 summary(mod_test)
@@ -5006,7 +5270,7 @@ wl2_rep_output_sub %>%
   geom_abline(color="skyblue2") 
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-72-1.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-74-1.png)<!-- -->
 
 ``` r
 #overall, the predictions seem to match the observed data...
@@ -5019,7 +5283,7 @@ wl2_rep_output_sub %>%
   facet_wrap(~block, scales="free")
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-72-2.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-74-2.png)<!-- -->
 
 ``` r
 #some blocks with fewer data points --> weaker predictions 
@@ -5031,4 +5295,4 @@ wl2_rep_output_sub %>%
   geom_point() 
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-72-3.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-74-3.png)<!-- -->
