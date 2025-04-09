@@ -1314,15 +1314,93 @@ ggsave("../output/WL2_Traits/WL2_ProbFitness_SCATTERS_Summary_Recent.png", width
 #### Attempt at calculating mean and standard error in logit scale
 
 ```{r}
+##block summary
+wl2_prob_fit_block_summary <- wl2_total_fitness %>%  
+  mutate(ProbFitness=if_else(Total_Fitness==0, 0, 1)) %>% 
+  group_by(pop, block, Geographic_Dist) %>% 
+  summarise(meanProbBlock=mean(ProbFitness, na.rm = TRUE), n=n())
+
+#double check this mostly matches getting means across blocks 
+wl2_prob_fit_block_summary %>% group_by(pop, Geographic_Dist) %>% 
+  summarise(meanProb=mean(meanProbBlock, na.rm = TRUE), 
+            semProb=sem(meanProbBlock,  na.rm=TRUE))
+wl2_total_fitness %>%  
+  mutate(ProbFitness=if_else(Total_Fitness==0, 0, 1)) %>%
+  group_by(pop, Geographic_Dist) %>% 
+  summarise(meanProb=mean(ProbFitness, na.rm = TRUE), 
+            semProb=sem(ProbFitness,  na.rm=TRUE))
+
+#double check that back transformation works 
+wl2_prob_fit_block_summary %>% 
+  mutate(logitBlockMean=boot::logit(meanProbBlock + 0.001)) %>% 
+  mutate(btProb=boot::inv.logit(logitBlockMean)-0.001)
+
+#means are wrong b/c of 0 conversions 
+boot::inv.logit((-0.911395862 +  -6.906754779)/2)-0.001 ##logit =  0.01866459
+(2.857143e-01 + -4.336809e-19)/2 #non-logit = 0.1428571
+boot::inv.logit((-0.911395862 +  0)/2)-0.001 #convert logit zeros = 0.3870069 - also wrong ...
+#likely b/c when I'm taking the mean, the +0.001 is being manipulated??
+#((x - lb) / (ub - lb))
+```
+
+```{r}
 ##logit scale
+wl2_prob_fit_block_summary %>% 
+  mutate(logitBlockMean=boot::logit(meanProbBlock + 0.001)) %>% 
+  group_by(pop, Geographic_Dist) %>% 
+  summarise(meanLogit=mean(logitBlockMean), 
+            semLogit=sem(logitBlockMean)) %>% 
+  ggplot(aes(x=Geographic_Dist, y=meanLogit, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanLogit+semLogit,ymax=meanLogit-semLogit),width=.2, linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  ggtitle("Logit Scale")
+
+##back transformed from logit 
+wl2_prob_fit_block_summary %>% 
+  mutate(logitBlockMean=boot::logit(meanProbBlock + 0.001)) %>% 
+  group_by(pop, Geographic_Dist) %>% 
+  summarise(meanLogit=mean(logitBlockMean), 
+            semLogit=sem(logitBlockMean)) %>% 
+    mutate(HighError=meanLogit+semLogit, LowError=meanLogit-semLogit) %>% 
+  mutate(btProb=boot::inv.logit(meanLogit)-0.001, 
+         btHighError=boot::inv.logit(HighError)-0.001,
+         btLowError=boot::inv.logit(LowError)-0.001) %>% 
+  ggplot(aes(x=Geographic_Dist, y=btProb, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=btLowError,ymax=btHighError),width=.2, linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  ggtitle("Back-Transformed from Logit Scale")
+
+##non-logit scale 
 wl2_total_fitness_sub_dist %>%  
   mutate(ProbFitness=if_else(Total_Fitness==0, 0, 1)) %>% 
   group_by(pop, block, Geographic_Dist) %>% 
-  summarise(meanProb=mean(ProbFitness, na.rm = TRUE), n=n()) %>% 
-  mutate(logitMean=boot::logit(meanProb + 0.001)) %>% 
+  summarise(meanProbBlock=mean(ProbFitness, na.rm = TRUE) + 0.001, n=n()) %>% 
   group_by(pop, Geographic_Dist) %>% 
-  summarise(meanLogit=mean(logitMean), 
-            semLogit=sem(logitMean)) %>% 
+  summarise(meanProb=mean(meanProbBlock, na.rm = TRUE), 
+            semProb=sem(meanProbBlock,  na.rm=TRUE)) %>% 
+  ggplot(aes(x=Geographic_Dist, y=meanProb, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanProb-semProb,ymax=meanProb+semProb),width=.2, linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  ggtitle("Raw Means")
+
+
+#wl2_prob_fit_block_summary %>% group_by(pop, Geographic_Dist) %>% 
+ # summarise(meanProb=mean(meanProbBlock, na.rm = TRUE), 
+  #          semProb=sem(meanProbBlock,  na.rm=TRUE))
+```
+
+```{r}
+wl2_prob_fit_block_summary %>% 
+  mutate(logitBlockMean=boot::logit(meanProbBlock + 0.001)) %>% 
+  group_by(pop, Geographic_Dist) %>% 
+  summarise(meanLogit=mean(logitBlockMean), 
+            semLogit=sem(logitBlockMean)) %>% 
   mutate(btProb=boot::inv.logit(meanLogit)-0.001, btSEM=boot::inv.logit(semLogit)-0.001) %>% 
   ggplot(aes(x=Geographic_Dist, y=btProb, group = pop)) +
   geom_point(size=6) + 
