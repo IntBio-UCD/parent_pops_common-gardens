@@ -19,7 +19,6 @@ Questions:
 
 2.  Negative soil moisture values –\> 0 ? Yes 
 
-3.  K=13 for temp, but K=14 for moisture, why?
 
 # Survival Analysis
 
@@ -159,7 +158,7 @@ moisture_summary <- moisture %>%
   ) %>%
   mutate(
     s_moisture_1_7 = rollmean(mean_moisture_d, k = 7, align = "right", fill = "extend"),
-    s_moisture_1_14 = rollmean(mean_moisture_d, k = 14, align = "right", fill = "extend"),
+    s_moisture_1_14 = rollmean(mean_moisture_d, k = 13, align = "right", fill = "extend"),
     s_moisture_7_14 = dplyr::lag(s_moisture_1_7, 7)
   )
 

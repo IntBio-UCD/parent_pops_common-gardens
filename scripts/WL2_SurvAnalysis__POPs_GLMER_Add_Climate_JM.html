@@ -11,7 +11,7 @@
 
 <meta name="author" content="Julin Maloof" />
 
-<meta name="date" content="2025-04-02" />
+<meta name="date" content="2025-04-09" />
 
 <title>WL2_Survival-Analysis–GLMER</title>
 
@@ -352,7 +352,7 @@ display: none;
 
 <h1 class="title toc-ignore">WL2_Survival-Analysis–GLMER</h1>
 <h4 class="author">Julin Maloof</h4>
-<h4 class="date">2025-04-02</h4>
+<h4 class="date">2025-04-09</h4>
 
 </div>
 
@@ -364,7 +364,6 @@ explanatory power.</p>
 <ol style="list-style-type: decimal">
 <li><p>Bed A_2 for temp or bed avg? Avg</p></li>
 <li><p>Negative soil moisture values –&gt; 0 ? Yes</p></li>
-<li><p>K=13 for temp, but K=14 for moisture, why?</p></li>
 </ol>
 <div id="survival-analysis" class="section level1">
 <h1>Survival Analysis</h1>
@@ -424,7 +423,7 @@ library(tidymodels)</code></pre>
 ## ✖ recipes::step()       masks stats::step()
 ## ✖ Matrix::unpack()      masks tidyr::unpack()
 ## ✖ recipes::update()     masks Matrix::update(), stats::update()
-## • Use suppressPackageStartupMessages() to eliminate package startup messages</code></pre>
+## • Search for functions across packages at https://www.tidymodels.org/find/</code></pre>
 <pre class="r"><code>library(multilevelmod)
 library(broom.mixed)
 library(modelr)</code></pre>
@@ -976,7 +975,7 @@ temp_summary</code></pre>
   ) %&gt;%
   mutate(
     s_moisture_1_7 = rollmean(mean_moisture_d, k = 7, align = &quot;right&quot;, fill = &quot;extend&quot;),
-    s_moisture_1_14 = rollmean(mean_moisture_d, k = 14, align = &quot;right&quot;, fill = &quot;extend&quot;),
+    s_moisture_1_14 = rollmean(mean_moisture_d, k = 13, align = &quot;right&quot;, fill = &quot;extend&quot;),
     s_moisture_7_14 = dplyr::lag(s_moisture_1_7, 7)
   )
 
@@ -984,16 +983,16 @@ moisture_summary</code></pre>
 <pre><code>## # A tibble: 93 × 5
 ##    Date       mean_moisture_d s_moisture_1_7 s_moisture_1_14 s_moisture_7_14
 ##    &lt;date&gt;               &lt;dbl&gt;          &lt;dbl&gt;           &lt;dbl&gt;           &lt;dbl&gt;
-##  1 2023-07-20          0.0853         0.0714          0.0548         NA     
-##  2 2023-07-21          0.0809         0.0714          0.0548         NA     
-##  3 2023-07-22          0.0754         0.0714          0.0548         NA     
-##  4 2023-07-23          0.0711         0.0714          0.0548         NA     
-##  5 2023-07-24          0.0668         0.0714          0.0548         NA     
-##  6 2023-07-25          0.0622         0.0714          0.0548         NA     
-##  7 2023-07-26          0.0581         0.0714          0.0548         NA     
-##  8 2023-07-27          0.0537         0.0669          0.0548          0.0714
-##  9 2023-07-28          0.0484         0.0622          0.0548          0.0714
-## 10 2023-07-29          0.0436         0.0577          0.0548          0.0714
+##  1 2023-07-20          0.0853         0.0714          0.0571         NA     
+##  2 2023-07-21          0.0809         0.0714          0.0571         NA     
+##  3 2023-07-22          0.0754         0.0714          0.0571         NA     
+##  4 2023-07-23          0.0711         0.0714          0.0571         NA     
+##  5 2023-07-24          0.0668         0.0714          0.0571         NA     
+##  6 2023-07-25          0.0622         0.0714          0.0571         NA     
+##  7 2023-07-26          0.0581         0.0714          0.0571         NA     
+##  8 2023-07-27          0.0537         0.0669          0.0571          0.0714
+##  9 2023-07-28          0.0484         0.0622          0.0571          0.0714
+## 10 2023-07-29          0.0436         0.0577          0.0571          0.0714
 ## # ℹ 83 more rows</code></pre>
 </div>
 <div id="reformat-to-be-one-row-per-plant-per-week" class="section level2">
@@ -1116,11 +1115,11 @@ temp_fits</code></pre>
   mutate(fit = map(wflow, fit, data = drop_na(wl2_ind_surv_climate, contains(&quot;temp_d&quot;)), .progress = TRUE))
 )</code></pre>
 <pre><code>## ■■■■■■■■■■ 30% | ETA: 3s ■■■■■■■■■■■■■ 40% | ETA: 3s ■■■■■■■■■■■■■■■■ 50% |
-## ETA: 3s ■■■■■■■■■■■■■■■■■■■ 60% | ETA: 2s ■■■■■■■■■■■■■■■■■■■■■■ 70% | ETA: 2s
+## ETA: 2s ■■■■■■■■■■■■■■■■■■■ 60% | ETA: 2s ■■■■■■■■■■■■■■■■■■■■■■ 70% | ETA: 2s
 ## ■■■■■■■■■■■■■■■■■■■■■■■■■ 80% | ETA: 1s ■■■■■■■■■■■■■■■■■■■■■■■■■■■■ 90% | ETA:
 ## 1s</code></pre>
 <pre><code>##    user  system elapsed 
-##   5.257   0.217   5.480</code></pre>
+##   5.242   0.155   5.404</code></pre>
 <pre class="r"><code>temp_fits %&gt;% pull(fit)</code></pre>
 <pre><code>## $pop.weeks.block
 ## ══ Workflow [trained] ══════════════════════════════════════════════════════════
@@ -1460,9 +1459,8 @@ moisture_fits</code></pre>
   moisture_fits &lt;- moisture_fits %&gt;%
   mutate(fit = map(wflow, fit, data = drop_na(wl2_ind_surv_climate, contains(&quot;s_moisture&quot;)), .progress = TRUE))
 )</code></pre>
-<pre><code>## ■■■■■■■■■■■■■■■■ 50% | ETA: 1s</code></pre>
 <pre><code>##    user  system elapsed 
-##   2.272   0.028   2.302</code></pre>
+##   2.242   0.026   2.269</code></pre>
 <pre class="r"><code>moisture_fits %&gt;% pull(fit)</code></pre>
 <pre><code>## $pop.weeks.block
 ## ══ Workflow [trained] ══════════════════════════════════════════════════════════
@@ -1532,15 +1530,15 @@ moisture_fits</code></pre>
 ## Formula: dead ~ s_moisture_1_14 + os_weeks + (1 | parent.pop) + (1 | block)
 ##    Data: data
 ##       AIC       BIC    logLik  deviance  df.resid 
-## 1691.0448 1724.4133 -840.5224 1681.0448      5842 
+## 1691.2517 1724.6201 -840.6259 1681.2517      5842 
 ## Random effects:
 ##  Groups     Name        Std.Dev.
-##  parent.pop (Intercept) 0.9579  
-##  block      (Intercept) 0.4375  
+##  parent.pop (Intercept) 0.9575  
+##  block      (Intercept) 0.4372  
 ## Number of obs: 5847, groups:  parent.pop, 22; block, 13
 ## Fixed Effects:
 ##     (Intercept)  s_moisture_1_14         os_weeks  
-##         -4.4500          -5.7505           0.1907  
+##         -4.4515          -5.4941           0.1885  
 ## 
 ## $s_moisture7.14
 ## ══ Workflow [trained] ══════════════════════════════════════════════════════════
@@ -1576,8 +1574,8 @@ moisture_fits</code></pre>
 ##   name             nobs logLik   AIC   BIC deviance df.residual
 ##   &lt;chr&gt;           &lt;int&gt;  &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;    &lt;dbl&gt;       &lt;int&gt;
 ## 1 pop.weeks.block  5847  -842. 1692. 1719.    1596.        5843
-## 2 s_moisture1.14   5847  -841. 1691. 1724.    1593.        5842
-## 3 s_moisture1.7    5847  -841. 1691. 1725.    1593.        5842
+## 2 s_moisture1.7    5847  -841. 1691. 1725.    1593.        5842
+## 3 s_moisture1.14   5847  -841. 1691. 1725.    1593.        5842
 ## 4 s_moisture7.14   5847  -841. 1692. 1725.    1593.        5842</code></pre>
 <p>get p-values</p>
 <pre class="r"><code>moisture_fits %&gt;%
@@ -1589,7 +1587,7 @@ moisture_fits</code></pre>
 ##   name           effect group term          estimate std.error statistic p.value
 ##   &lt;chr&gt;          &lt;chr&gt;  &lt;chr&gt; &lt;chr&gt;            &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;   &lt;dbl&gt;
 ## 1 s_moisture1.7  fixed  &lt;NA&gt;  s_moisture_1…    -5.92      3.53     -1.67  0.0941
-## 2 s_moisture1.14 fixed  &lt;NA&gt;  s_moisture_1…    -5.75      3.30     -1.74  0.0816
+## 2 s_moisture1.14 fixed  &lt;NA&gt;  s_moisture_1…    -5.49      3.29     -1.67  0.0948
 ## 3 s_moisture7.14 fixed  &lt;NA&gt;  s_moisture_7…    -4.36      2.79     -1.56  0.119</code></pre>
 <pre class="r"><code>save.image(&quot;../output/JM_GLMER_Climate.Rdata&quot;)</code></pre>
 </div>

@@ -1,7 +1,7 @@
 ---
 title: "WL2_Survival-Analysis--GLMER"
 author: "Julin Maloof"
-date: '2025-04-02'
+date: '2025-04-09'
 output: 
   html_document: 
     keep_md: yes
@@ -17,7 +17,6 @@ Questions:
 
 2.  Negative soil moisture values –\> 0 ? Yes 
 
-3.  K=13 for temp, but K=14 for moisture, why?
 
 # Survival Analysis
 
@@ -100,7 +99,7 @@ library(tidymodels)
 ## ✖ recipes::step()       masks stats::step()
 ## ✖ Matrix::unpack()      masks tidyr::unpack()
 ## ✖ recipes::update()     masks Matrix::update(), stats::update()
-## • Use suppressPackageStartupMessages() to eliminate package startup messages
+## • Search for functions across packages at https://www.tidymodels.org/find/
 ```
 
 ``` r
@@ -506,7 +505,7 @@ moisture_summary <- moisture %>%
   ) %>%
   mutate(
     s_moisture_1_7 = rollmean(mean_moisture_d, k = 7, align = "right", fill = "extend"),
-    s_moisture_1_14 = rollmean(mean_moisture_d, k = 14, align = "right", fill = "extend"),
+    s_moisture_1_14 = rollmean(mean_moisture_d, k = 13, align = "right", fill = "extend"),
     s_moisture_7_14 = dplyr::lag(s_moisture_1_7, 7)
   )
 
@@ -517,16 +516,16 @@ moisture_summary
 ## # A tibble: 93 × 5
 ##    Date       mean_moisture_d s_moisture_1_7 s_moisture_1_14 s_moisture_7_14
 ##    <date>               <dbl>          <dbl>           <dbl>           <dbl>
-##  1 2023-07-20          0.0853         0.0714          0.0548         NA     
-##  2 2023-07-21          0.0809         0.0714          0.0548         NA     
-##  3 2023-07-22          0.0754         0.0714          0.0548         NA     
-##  4 2023-07-23          0.0711         0.0714          0.0548         NA     
-##  5 2023-07-24          0.0668         0.0714          0.0548         NA     
-##  6 2023-07-25          0.0622         0.0714          0.0548         NA     
-##  7 2023-07-26          0.0581         0.0714          0.0548         NA     
-##  8 2023-07-27          0.0537         0.0669          0.0548          0.0714
-##  9 2023-07-28          0.0484         0.0622          0.0548          0.0714
-## 10 2023-07-29          0.0436         0.0577          0.0548          0.0714
+##  1 2023-07-20          0.0853         0.0714          0.0571         NA     
+##  2 2023-07-21          0.0809         0.0714          0.0571         NA     
+##  3 2023-07-22          0.0754         0.0714          0.0571         NA     
+##  4 2023-07-23          0.0711         0.0714          0.0571         NA     
+##  5 2023-07-24          0.0668         0.0714          0.0571         NA     
+##  6 2023-07-25          0.0622         0.0714          0.0571         NA     
+##  7 2023-07-26          0.0581         0.0714          0.0571         NA     
+##  8 2023-07-27          0.0537         0.0669          0.0571          0.0714
+##  9 2023-07-28          0.0484         0.0622          0.0571          0.0714
+## 10 2023-07-29          0.0436         0.0577          0.0571          0.0714
 ## # ℹ 83 more rows
 ```
 
@@ -679,14 +678,14 @@ system.time(
 
 ```
 ## ■■■■■■■■■■ 30% | ETA: 3s ■■■■■■■■■■■■■ 40% | ETA: 3s ■■■■■■■■■■■■■■■■ 50% |
-## ETA: 3s ■■■■■■■■■■■■■■■■■■■ 60% | ETA: 2s ■■■■■■■■■■■■■■■■■■■■■■ 70% | ETA: 2s
+## ETA: 2s ■■■■■■■■■■■■■■■■■■■ 60% | ETA: 2s ■■■■■■■■■■■■■■■■■■■■■■ 70% | ETA: 2s
 ## ■■■■■■■■■■■■■■■■■■■■■■■■■ 80% | ETA: 1s ■■■■■■■■■■■■■■■■■■■■■■■■■■■■ 90% | ETA:
 ## 1s
 ```
 
 ```
 ##    user  system elapsed 
-##   5.257   0.217   5.480
+##   5.242   0.155   5.404
 ```
 
 
@@ -1062,12 +1061,8 @@ system.time(
 ```
 
 ```
-## ■■■■■■■■■■■■■■■■ 50% | ETA: 1s
-```
-
-```
 ##    user  system elapsed 
-##   2.272   0.028   2.302
+##   2.242   0.026   2.269
 ```
 
 
@@ -1144,15 +1139,15 @@ moisture_fits %>% pull(fit)
 ## Formula: dead ~ s_moisture_1_14 + os_weeks + (1 | parent.pop) + (1 | block)
 ##    Data: data
 ##       AIC       BIC    logLik  deviance  df.resid 
-## 1691.0448 1724.4133 -840.5224 1681.0448      5842 
+## 1691.2517 1724.6201 -840.6259 1681.2517      5842 
 ## Random effects:
 ##  Groups     Name        Std.Dev.
-##  parent.pop (Intercept) 0.9579  
-##  block      (Intercept) 0.4375  
+##  parent.pop (Intercept) 0.9575  
+##  block      (Intercept) 0.4372  
 ## Number of obs: 5847, groups:  parent.pop, 22; block, 13
 ## Fixed Effects:
 ##     (Intercept)  s_moisture_1_14         os_weeks  
-##         -4.4500          -5.7505           0.1907  
+##         -4.4515          -5.4941           0.1885  
 ## 
 ## $s_moisture7.14
 ## ══ Workflow [trained] ══════════════════════════════════════════════════════════
@@ -1195,8 +1190,8 @@ moisture_fits %>%
 ##   name             nobs logLik   AIC   BIC deviance df.residual
 ##   <chr>           <int>  <dbl> <dbl> <dbl>    <dbl>       <int>
 ## 1 pop.weeks.block  5847  -842. 1692. 1719.    1596.        5843
-## 2 s_moisture1.14   5847  -841. 1691. 1724.    1593.        5842
-## 3 s_moisture1.7    5847  -841. 1691. 1725.    1593.        5842
+## 2 s_moisture1.7    5847  -841. 1691. 1725.    1593.        5842
+## 3 s_moisture1.14   5847  -841. 1691. 1725.    1593.        5842
 ## 4 s_moisture7.14   5847  -841. 1692. 1725.    1593.        5842
 ```
 
@@ -1216,7 +1211,7 @@ moisture_fits %>%
 ##   name           effect group term          estimate std.error statistic p.value
 ##   <chr>          <chr>  <chr> <chr>            <dbl>     <dbl>     <dbl>   <dbl>
 ## 1 s_moisture1.7  fixed  <NA>  s_moisture_1…    -5.92      3.53     -1.67  0.0941
-## 2 s_moisture1.14 fixed  <NA>  s_moisture_1…    -5.75      3.30     -1.74  0.0816
+## 2 s_moisture1.14 fixed  <NA>  s_moisture_1…    -5.49      3.29     -1.67  0.0948
 ## 3 s_moisture7.14 fixed  <NA>  s_moisture_7…    -4.36      2.79     -1.56  0.119
 ```
 
