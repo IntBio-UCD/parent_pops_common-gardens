@@ -100,7 +100,7 @@ temp %>% mutate(month = month(Date_Time)) %>%
   facet_wrap(~Bed)
 ```
 
-Not sure how to deal with the differences here since we don't have something in every bed or block. For now I am going to take A_2
+Not sure how to deal with the differences here since we don't have something in every bed or block. Average across beds. 
 
 ```{r}
 temp_summary <- temp %>%
