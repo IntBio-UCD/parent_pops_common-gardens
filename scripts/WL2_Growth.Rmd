@@ -8,21 +8,30 @@ output:
 ---
 
 # Analyze Growth
-To Do: Truncate analysis to only grow months (model likely cannot handle shrinkage)
+
+To Do:
+
+-   Get base models working
+
+    -   Truncate analysis to only grow months (model likely cannot handle shrinkage)
+
+-   Add weekly temperature (not enough soil moisture data)
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## Libraries 
+## Libraries
+
 ```{r}
 library(tidyverse)
 library(brms)
 ```
 
-## Need to make a csv file with all survey data for each plant 
+## Need to make a csv file with all survey data for each plant
 
-Get list of size files 
+Get list of size files
+
 ```{r}
 pretrans_wl2 <-  dir("../input/WL2_Data/CorrectedCSVs/",
              pattern=".*DNA.*csv",
@@ -36,6 +45,7 @@ posttrans_wl2
 ```
 
 Add data to a tibble
+
 ```{r}
 pretrans_dat_wl2 <- tibble(path=pretrans_wl2, filename=basename(path))
 pretrans_dat_wl2
@@ -49,6 +59,7 @@ all_wl2_size
 ```
 
 Read in the files
+
 ```{r}
 all_wl2_size2 <- all_wl2_size %>%
   mutate(sheets=map(path, 
@@ -62,8 +73,8 @@ all_wl2_size2 <- all_wl2_size %>%
 all_wl2_size2
 ```
 
-
 Check for merging issues
+
 ```{r}
 map(all_wl2_size2$sheets, colnames) %>% #get unique column names 
   unlist() %>%
@@ -109,6 +120,7 @@ unique(all_wl2_size2$sheets[[12]]$block)
 ```
 
 Combine the data
+
 ```{r}
 all_wl2_size_all <- all_wl2_size2 %>% unnest(sheets) %>%
   rename(parent.pop=pop) %>% 
@@ -139,6 +151,7 @@ unique(all_wl2_size_all_nobuffers$block)
 ```
 
 ## Pop Location Info
+
 ```{r}
 gowersdist_WL2 <- read_csv("../output/Climate/Gowers_WL2.csv")
 
@@ -148,6 +161,7 @@ head(gowersdist_WL2_wider)
 ```
 
 Merge
+
 ```{r}
 all_wl2_size_loc <- left_join(all_wl2_size_all_nobuffers, gowersdist_WL2_wider) %>% 
   mutate(day=if_else(survey_date=="2023-07-03" | survey_date=="2023-07-06", 0, #day 0 = pre-transplant
@@ -158,6 +172,7 @@ all_wl2_size_loc %>% select(survey_date, day) %>% unique()
 ```
 
 ## Check Sample Sizes
+
 ```{r}
 all_wl2_size_loc %>% 
   filter(!is.na(height.cm)) %>% 
@@ -177,7 +192,9 @@ all_wl2_size_for_models <- all_wl2_size_loc %>%
 ```
 
 ## Quick figure
+
 Height
+
 ```{r}
 all_wl2_size_loc$parent.pop = factor(all_wl2_size_loc$parent.pop, levels=c('CC','TM2','SC','IH','BH','WV','FR','DPR','WR','WL1','SQ1','SQ2','WL2','YO4','CP2','CP3','LV3','SQ3','YO7','YO8','LV1','LVTR1','YO11'))
   
@@ -189,6 +206,7 @@ all_wl2_size_loc %>%
 ```
 
 Leaf Length
+
 ```{r}
 all_wl2_size_loc %>% 
   ggplot(aes(group=Genotype, x=survey_date, y=long.leaf.cm, col=elev_m)) + 
@@ -197,6 +215,7 @@ all_wl2_size_loc %>%
 ```
 
 ### Check weird cases
+
 ```{r, eval=FALSE}
 #Check strange lines
 all_wl2_size_loc %>% filter(parent.pop=="WL2") %>% filter(height.cm>7) #data entry error, fixed on csv
@@ -220,7 +239,7 @@ all_wl2_size_loc %>% filter(parent.pop=="FR") %>% filter(Genotype=="FR_7_3") #no
 all_wl2_size_loc %>% filter(parent.pop=="BH") %>% filter(long.leaf.cm>7.5) #no error, the plant grew and then shrinked 
 ```
 
-## Model growth with the Weibull model 
+## Model growth with the Weibull model
 
 ```{r}
 weibull <- function (t, alpha, beta, k, delta) {
@@ -239,8 +258,8 @@ growth %>%  ggplot(aes(x=time, y=model1)) +
   geom_line()
 ```
 
-
 ### Base Model
+
 ```{r}
 f1_WL2 <- brmsformula(height.cm ~ Hmax - (Hmax - Hmin) * exp(-(k/100 * day)^delta), #Weibull formula, divide k by 100 to get it on a more reasonable scale
     Hmax + Hmin + k + delta ~ 1, # how each parameter should be fit with respect to the predictors 
@@ -249,6 +268,7 @@ f1_WL2 <- brmsformula(height.cm ~ Hmax - (Hmax - Hmin) * exp(-(k/100 * day)^delt
 ```
 
 ### Set Priors
+
 ```{r}
 prior1_WL2 <- c(set_prior("normal(4,3)", nlpar="Hmin"), #(mean, sd)
             set_prior("normal(25,10)",  nlpar="Hmax"),
@@ -262,7 +282,8 @@ prior1_WL2 <- c(set_prior("normal(4,3)", nlpar="Hmin"), #(mean, sd)
 #delta - Sets the inflection point - when you shift b/t concave to convex
 ```
 
-Code for plotting different normal distributions 
+Code for plotting different normal distributions
+
 ```{r}
 #define population mean and standard deviation
 population_mean <- 25
@@ -287,7 +308,9 @@ axis_bounds <- seq(-sd_axis_bounds * population_sd + population_mean,
                     by = population_sd)
 axis(side = 1, at = axis_bounds, pos = 0)
 ```
+
 Gamma dist:
+
 ```{r}
 #define population mean and standard deviation
 population_mean <- 4
@@ -314,6 +337,7 @@ axis(side = 1, at = axis_bounds, pos = 0)
 ```
 
 ### Fit the model
+
 ```{r}
 fit1_WL2 <- brm(formula=f1_WL2, data=all_wl2_size_for_models, prior=prior1_WL2, cores = 4,  iter = 4000)
 
@@ -324,6 +348,7 @@ fit1_WL2 <- brm(formula=f1_WL2, data=all_wl2_size_for_models, prior=prior1_WL2, 
 ```
 
 Summary
+
 ```{r}
 summary(fit1_WL2)
 #Rhat and ESS are terrible  
@@ -332,12 +357,14 @@ pairs(fit1_WL2, regex = TRUE) #doesn't look great, these should be more cloud li
 ```
 
 Plots
+
 ```{r}
 plot(fit1_WL2, nvariables = 3, ask=FALSE)
 #posterior distributions look bad
 ```
 
 ### Predictions
+
 ```{r}
 fit1_WL2.prediction <- cbind(all_wl2_size_for_models, pred1=predict(fit1_WL2)[,"Estimate"])
 
@@ -349,7 +376,8 @@ fit1_WL2.prediction %>% ggplot(aes(x=day)) +
 #Predictions are clearly off, esp for TM2, good for BH 
 ```
 
-## Let Hmax vary 
+## Let Hmax vary
+
 ```{r}
 random_f2_WL2 <- brmsformula(height.cm ~ Hmax - (Hmax - Hmin) * exp(-(k/100 * day)^delta),
                   Hmin + k + delta ~ 1,
@@ -358,6 +386,7 @@ random_f2_WL2 <- brmsformula(height.cm ~ Hmax - (Hmax - Hmin) * exp(-(k/100 * da
 ```
 
 Default Priors
+
 ```{r}
 get_prior(random_f2_WL2, data = all_wl2_size_for_models)
 #there's now a prior for sd of Hmax due to pop
@@ -371,6 +400,7 @@ prior2_WL2 <- c(set_prior("normal(5,3)", nlpar="Hmin"),
 ```
 
 ### Fit the model
+
 ```{r}
 random_fit2_WL2 <- brm(formula=random_f2_WL2, data=all_wl2_size_for_models, prior=prior1_WL2, cores = 4, iter = 3000) #increase iterations b/c more complex (helps with Rhat and ESS)
 #Warning: There were 2482 divergent transitions after warmup. 
@@ -381,6 +411,7 @@ random_fit2_WL2 <- brm(formula=random_f2_WL2, data=all_wl2_size_for_models, prio
 ```
 
 Summary
+
 ```{r}
 summary(random_fit2_WL2)
 
@@ -391,7 +422,9 @@ plot(random_fit2_WL2, nvariables = 3, ask=FALSE)
 ```
 
 ### Predictions
+
 The function expand_grid creates a data frame with all combinations of the items it is given (days and pops in this case).
+
 ```{r}
 pred.df <- expand_grid(day=min(all_wl2_size_for_models$day):max(all_wl2_size_for_models$day),
                        parent.pop=unique(all_wl2_size_for_models$parent.pop))
@@ -418,6 +451,7 @@ random_fit2_WL2.predictions %>% filter(parent.pop=="BH") %>%
 ```
 
 ## Vary slope (k) and asymptote (Hmax) by pop
+
 ```{r}
 random_f3_WL2 <- brmsformula(height.cm ~ Hmax - (Hmax - Hmin) * exp(-(k/100 * day)^delta),
                   Hmin + delta ~ 1,
@@ -428,6 +462,7 @@ random_f3_WL2 <- brmsformula(height.cm ~ Hmax - (Hmax - Hmin) * exp(-(k/100 * da
 ```
 
 ### Priors
+
 ```{r}
 get_prior(random_f3_WL2, data=all_wl2_size_for_models)
 
@@ -439,30 +474,35 @@ prior3_WL2 <- c(set_prior("normal(5,3)", nlpar="Hmin"),
 ```
 
 ### Fit the model
+
 ```{r}
 random_fit3_WL2 <- brm(formula=random_f3_WL2, data=all_wl2_size_for_models, prior=prior3_WL2, cores = 4, iter = 4000)
 
 ```
 
 Summary
+
 ```{r}
 summary(random_fit3_WL2)
 
 ```
 
 Plots
+
 ```{r}
 plot(random_fit3_WL2, N = 3, ask=FALSE)
 
 ```
 
-### Pairs 
+### Pairs
+
 ```{r}
 pairs(random_fit3_WL2, variable = "TM2", regex = TRUE) 
 #look at correlation b/t hmax and k for each pop 
 ```
 
-Predictions 
+Predictions
+
 ```{r}
 random_fit3_WL2.predictions <- cbind(pred.df, prediction=predict(random_fit3_WL2, newdata = pred.df)[,"Estimate"]) %>%
   full_join(all_wl2_size_for_models, by=c("day", "parent.pop"))
@@ -474,7 +514,8 @@ random_fit3_WL2.predictions %>% ggplot(aes(x=day)) +
 
 ```
 
-## Let delta and hmax vary 
+## Let delta and hmax vary
+
 ```{r}
 random_f4_WL2 <- brmsformula(height.cm ~ Hmax - (Hmax - Hmin) * exp(-(k/100 * day)^delta),
                   Hmin + k ~ 1,
@@ -503,7 +544,8 @@ summary(random_fit4_WL2)
 plot(random_fit4_WL2, N = 3, ask=FALSE)
 ```
 
-Predictions 
+Predictions
+
 ```{r}
 random_fit4_WL2.predictions <- cbind(pred.df, prediction=predict(random_fit4_WL2, newdata = pred.df)[,"Estimate"]) %>%
   full_join(all_wl2_size_for_models, by=c("day", "parent.pop"))
@@ -514,8 +556,8 @@ random_fit4_WL2.predictions %>% ggplot(aes(x=day)) +
   facet_wrap(~parent.pop)
 ```
 
-
 ## Let delta, k, and hmax vary
+
 ```{r}
 random_f5_WL2 <- brmsformula(height.cm ~ Hmax - (Hmax - Hmin) * exp(-(k/100 * day)^delta),
                   Hmin ~ 1,
@@ -548,7 +590,8 @@ plot(random_fit5_WL2, N = 3, ask=FALSE)
 pairs(random_fit5_WL2, variable = "DPR", regex = TRUE) #Want the correlations to be more cloud like (no obvious correlations among parameters)
 ```
 
-Predictions 
+Predictions
+
 ```{r}
 random_fit5_WL2.predictions <- cbind(pred.df, prediction=predict(random_fit5_WL2, newdata = pred.df)[,"Estimate"]) %>%
   full_join(all_wl2_size_for_models, by=c("day", "parent.pop"))
@@ -559,7 +602,8 @@ random_fit5_WL2.predictions %>% ggplot(aes(x=day)) +
   facet_wrap(~parent.pop)
 ```
 
-## Model Comparison 
+## Model Comparison
+
 ```{r}
 fit1_WL2 <- add_criterion(fit1_WL2, "loo")
 random_fit2_WL2 <- add_criterion(random_fit2_WL2, "loo")
