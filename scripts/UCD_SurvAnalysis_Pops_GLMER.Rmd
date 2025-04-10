@@ -1,0 +1,337 @@
+---
+title: "UCD_SurvAnalysis_Pops_GLMER"
+author: "Brandie QC"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Decide on base models to use for climate 
+
+# Survival Analysis
+
+## Libraries
+
+```{r}
+# install.packages("multilevelmod")
+library(tidyverse) 
+library(magrittr)
+library(ggrepel)
+library(lme4)
+library(ggdist)
+library(tidymodels)
+library(multilevelmod)
+library(broom.mixed)
+library(modelr)
+library(furrr)
+library(zoo)
+tidymodels_prefer()
+options(mc.cores = parallel::detectCores())
+```
+
+## Read in the plant data
+```{r}
+ucd_surv <- read_csv("../input/UCD_Data/CorrectedCSVs/UCD_transplants_pheno_mort_20231016_corrected.csv") %>% 
+  filter(rep != 100) #get rid of individuals that germinated in the field
+head(ucd_surv)
+unique(ucd_surv$pop) #pops look correct 
+```
+
+As weeks
+```{r}
+ucd_surv %>% filter(is.na(`Death Date`),!is.na(Notes)) #no plants that seemed to disappear 
+
+ucd_surv_dates <- ucd_surv %>%  
+  rename(parent.pop = pop, death.date=`Death Date`) %>%
+  unite("Genotype", parent.pop:rep, remove = FALSE) %>% 
+  filter(!is.na(parent.pop)) %>% 
+  mutate(planting.date="11/30/22", #could try to make this more specific to when certain blocks were planted 
+         last_fup_date=if_else(is.na(death.date), "10/16/23", death.date)) %>%  #need this to calculate survival times
+  mutate(planting.date=mdy(planting.date), last_fup_date=mdy(last_fup_date)) %>% #convert to date objects
+  mutate(os_weeks=as.duration(planting.date %--% last_fup_date) / dweeks(1), #observed number of weeks
+         status=if_else(is.na(death.date), 0, 1)) %>% #0=censured (alive in this case), 1=dead
+  filter(os_weeks > 0) %>% #remove any that died at planting since this is survival post- transplanting
+  select(block:rep, death.date, planting.date:status)
+head(ucd_surv_dates)
+unique(ucd_surv_dates$os_weeks) %>% sort()
+```
+
+## Location Info
+```{r}
+ucd_gowers <- read_csv("../output/Climate/Gowers_UCD.csv") %>% 
+  select(parent.pop:GrwSsn_GD, Wtr_Year_GD) %>% 
+  pivot_wider(names_from = TimePd, values_from = c(GrwSsn_GD, Wtr_Year_GD)) %>% 
+  mutate(Garden_Lat=38.53250, Garden_Long=-121.7830, Garden_Elev=16) %>% 
+  mutate(Geographic_Dist=distHaversine(cbind(Garden_Long, Garden_Lat), cbind(Long, Lat)),
+         Elev_Dist=elev_m-Garden_Elev) # Calculate the distance using the haversine formula (dist in meters)
+```
+
+```{r}
+ucd_surv_dates_loc <- left_join(ucd_surv_dates, ucd_gowers)
+```
+
+
+## Reformat to be one row per plant per week
+
+```{r, eval=TRUE}
+ucd_ind <- ucd_surv_dates %>% 
+  complete(Genotype, last_fup_date) %>%
+  group_by(Genotype) %>%
+  mutate(across(c(-status, -last_fup_date, -os_weeks, -planting.date), \(x) ifelse(all(is.na(unique(x))), NA,unique(na.omit(x))))) %>%
+  mutate(planting.date = unique(na.omit(planting.date)),
+         os_weeks=as.duration(planting.date %--% last_fup_date) / dweeks(1),
+           dead = ifelse((is.na(death.date) | mdy(death.date) > last_fup_date), 0, 1)) %>% # 0 is alive, 1 is dead
+  filter(cumsum(dead) < 2) %>% # you can't die more than once
+  ungroup() %>%  
+  left_join(ucd_gowers)
+
+ucd_ind %>% select(Genotype, last_fup_date, os_weeks, dead)
+```
+
+# Modeling probability of event rather than event time
+
+An alternative approach to hazard analysis is to model the probably of death as a function of time.  This is approach taken here.
+
+## Discrete intervals
+
+Modify the input data to add some factor variables
+```{r}
+ucd_ind <- ucd_ind %>% mutate(
+  os_weeks_f = factor(str_pad(round(os_weeks, 1), 2, pad = "0")), # padding so it will sort correctly
+  os_weeks_pop = factor(str_c(parent.pop,"_", os_weeks_f))
+)
+ucd_ind
+```
+
+Remove Establishment Phase 
+```{r}
+ucd_ind_surv <- ucd_ind %>% filter(os_weeks > 3) %>%
+  mutate(os_weeks_f = factor(os_weeks))
+
+ucd_surv_means <- ucd_ind_surv %>%
+  group_by(parent.pop, os_weeks) %>%
+  summarize(survival = 1-mean(dead))
+```
+
+# Survival data set
+
+```{r}
+glmer.model <- 
+  linear_reg() %>%
+  set_engine("glmer", family = binomial)
+```
+
+check basic model forms
+```{r}
+# Note: StdDev due to mf within parent.pop is essentially zero, so I am omitting this.
+##mod_test <- glmer(dead ~ (1|parent.pop/mf) + (1|block), data=ucd_ind_surv, family=binomial)
+##summary(mod_test)
+
+
+surv_wflow <- workflow() %>%
+  add_variables(outcomes = dead, predictors = c(parent.pop, mf, block, os_weeks, os_weeks_f)) 
+
+surv_fits_1 <- tibble(wflow=list(
+
+  pop.block = {surv_wflow %>% 
+      add_model(glmer.model, formula = dead ~ (1|parent.pop) + (1|block))},
+  
+  pop.weeks_f.block ={surv_wflow %>% 
+      add_model(glmer.model, formula = dead ~ os_weeks_f + (1|parent.pop) + (1|block))},
+
+  pop.weeks.block ={surv_wflow %>% 
+      add_model(glmer.model, formula = dead ~ os_weeks + (1|parent.pop) + (1|block))},
+
+  pop.weeks.quad.block ={surv_wflow %>% 
+      add_model(glmer.model, formula = dead ~ os_weeks + I(os_weeks^2) + (1|parent.pop) + (1|block))}
+      
+  # Models commented out fail to converge, so not running them.
+  # Any model that has a RE slope temer for weeks fails.
+  # Note:only having os_weeks as RE slope does not fix this.
+  
+  # pop.weeks_f.int ={surv_wflow %>% 
+  #     add_model(glmer.model, formula = dead ~ os_weeks_f + (os_weeks_f|parent.pop))},
+  # 
+  # pop.weeks_f.int.block ={surv_wflow %>% 
+  #     add_model(glmer.model, formula = dead ~ os_weeks_f + (os_weeks_f|parent.pop) + (1|block))},
+  # 
+
+  # pop.weeks.int ={surv_wflow %>% 
+  #     add_model(glmer.model, formula = dead ~ os_weeks + (os_weeks_f|parent.pop))},
+  # 
+  # pop.weeks.int.block ={surv_wflow %>% 
+  #     add_model(glmer.model, formula = dead ~ os_weeks + (os_weeks_f|parent.pop) + (1|block))},
+
+  # Models below fail to converge, so not running them.
+  # Note:only having os_weeks as RE slope does not fix this.
+  
+  # pop.weeks.quad.int ={surv_wflow %>% 
+  #     add_model(glmer.model, formula = dead ~ os_weeks + I(os_weeks^2) + (os_weeks_f|parent.pop))},
+  # 
+  # pop.weeks.quad.quad.int ={surv_wflow %>% 
+  #     add_model(glmer.model, formula = dead ~ os_weeks + I(os_weeks^2) + (os_weeks_f + I(os_weeks^2)|parent.pop))},
+  # 
+  # pop.weeks.quad.int.block ={surv_wflow %>% 
+  #     add_model(glmer.model, formula = dead ~ os_weeks + I(os_weeks^2) + (os_weeks_f|parent.pop) + (1|block))},
+  # 
+  # pop.weeks.quad.quad.int.block ={surv_wflow %>% 
+  #     add_model(glmer.model, formula = dead ~ os_weeks + I(os_weeks^2) + (os_weeks_f + I(os_weeks^2)|parent.pop) + (1|block))}
+    
+),
+name=names(wflow)
+) %>% 
+  select(name,wflow)
+surv_fits_1
+
+#mod_test <- glmer(dead ~ os_weeks + I(os_weeks^2) + (1|parent.pop) + (1|block), data=ucd_ind_surv, family=binomial)
+#Warning: Model failed to converge with max|grad| = 0.00241906 (tol = 0.002, component 1) - pop.weeks_f.block model
+#Warning: Model failed to converge with max|grad| = 0.0174841 (tol = 0.002, component 1)Warning: Model is nearly unidentifiable: very large eigenvalue - pop.weeks.quad.block
+```
+
+```{r}
+system.time(
+  surv_fits_1 <- surv_fits_1 %>%
+  mutate(fit = map(wflow, fit, data = ucd_ind_surv))
+)
+```
+get warnings
+```{r}
+surv_fits_1 <- surv_fits_1 %>%
+  mutate(message=map_chr(fit, \(x) {extract_fit_engine(x) %>% .@optinfo %>% magrittr::extract2("message")}))
+
+surv_fits_1 %>% select(name, message) %>%
+  arrange(message, name)
+```
+A little strange since I get a warning when running about failure to converge for the model with os_weeks_f
+
+```{r}
+surv_fits_1 %>% pull(fit)
+```
+
+```{r}
+surv_fits_1 %>% 
+  filter(!str_detect(message, "failure")) %>%
+  mutate(glance=map(fit, glance)) %>% 
+  unnest(glance) %>% 
+  arrange(BIC) %>%
+  select(-wflow:-sigma)
+```
+
+All models with a random slope for time for each pop don't converge.
+
+get bootstrap predictions and plot
+```{r}
+surv_nd <- data_grid(ucd_ind_surv, parent.pop, os_weeks) %>%
+  mutate(os_weeks_f = factor(os_weeks))
+
+surv_predict_fun <- function(m, nd = surv_nd) {
+  predict(m, 
+          newdata = nd,
+          type = "response",
+          re.form = ~(1|parent.pop)
+  ) %>%
+    subtract(1, .) # convert hazard to survival
+}
+
+# ~975 seconds for 100.  Need to go somewhere other than my laptop for more
+system.time (surv_fits_1 <- surv_fits_1 %>% 
+                 filter(!str_detect(message, "failure")) %>%
+               mutate(
+                 bootstrap = map(fit, \(x) {
+                   extract_fit_engine(x) %>% 
+                     bootMer(FUN = surv_predict_fun,
+                             re.form = ~ (1|parent.pop),
+                             nsim = 100,
+                             parallel = "multicore",
+                             ncpus = 7
+                     ) } #bootMer
+                 ),  
+                 tidyboot = map(bootstrap, tidy, conf.int = TRUE),
+                 tidyboot = map(tidyboot, \(x) cbind(surv_nd, x))
+               ) # mutate
+) # system.time
+```
+some bootstrap runs failed (33/100) 
+
+```{r}
+save.image("../output/JM_GLMER_UCD.Rdata")
+```
+
+```{r}
+surv_fits_1 %>%
+  select(name, tidyboot) %>%
+  unnest(tidyboot) %>%
+  mutate(survival = statistic) %>%
+  ggplot(aes(x=os_weeks, y = survival)) +
+  geom_line(aes(color=name)) +
+  geom_point(data = ucd_surv_means, pch=1) + 
+  facet_wrap(~parent.pop) +
+  scale_color_viridis_d() # +
+  #theme(axis.text.x = element_text(angle=90, hjust=1, vjust=.5))
+  
+```
+
+Go with pop.weeks.block - best of the two models that actually converged
+
+### is Gower's distance an important predictor? 
+
+Also: check mf for final model
+
+```{r}
+surv_GD_wflow <- workflow() %>%
+  add_variables(outcomes = dead, predictors = c(parent.pop, mf, block, os_weeks,  contains("GD"))) 
+
+surv_GD_fits <- tibble(wflow=list(
+
+  pop.weeks.block = {surv_GD_wflow %>% 
+      add_model(glmer.model, formula = dead ~ os_weeks + (1|parent.pop) + (1|block))},
+  
+  pop.mf.weeks.block = {surv_GD_wflow %>% 
+      add_model(glmer.model, formula = dead ~ os_weeks + (1|parent.pop/mf) + (1|block))},
+  
+  GS_Recent = {surv_GD_wflow %>% 
+      add_model(glmer.model, formula = dead ~ os_weeks + GrwSsn_GD_Recent + (1|parent.pop) + (1|block))},
+  
+  GS_Historical = {surv_GD_wflow %>% 
+      add_model(glmer.model, formula = dead ~ os_weeks + GrwSsn_GD_Historical + (1|parent.pop) + (1|block))},
+  
+  WY_Recent = {surv_GD_wflow %>% 
+      add_model(glmer.model, formula = dead ~ os_weeks + Wtr_Year_GD_Recent + (1|parent.pop) + (1|block))},
+  
+  WY_Historical = {surv_GD_wflow %>% 
+      add_model(glmer.model, formula = dead ~ os_weeks + Wtr_Year_GD_Historical + (1|parent.pop) + (1|block))}
+
+),
+name=names(wflow)
+) %>% 
+  select(name,wflow) %>%
+  mutate(fit = map(wflow, fit, data = ucd_ind_surv))
+
+```
+
+```{r}
+surv_GD_fits %>% 
+  mutate(glance=map(fit, glance)) %>% 
+  unnest(glance) %>% 
+  arrange(BIC) %>%
+  select(-wflow:-sigma)
+```
+
+Model with mf better by AIC and BIC
+```{r}
+mod_test <- glmer(dead ~ os_weeks + (1|parent.pop/mf) + (1|block), data=ucd_ind_surv, family=binomial)
+summary(mod_test)
+```
+
+
+```{r}
+surv_GD_fits %>% 
+  mutate(tidy=map(fit, tidy)) %>% 
+  unnest(tidy) %>% 
+  filter(str_detect(term, "GD")) %>%
+  select(-wflow:-group) %>%
+  arrange(p.value)
+```
