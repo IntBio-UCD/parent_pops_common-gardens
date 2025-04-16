@@ -30,6 +30,7 @@ library(gridExtra)
 library(corrplot) #plotting correlations 
 library(QBMS) #for function calc_biovars to calculate bioclim variables
 library(ggfortify) #easier PCA figures
+library(vegan) #for permanova 
 sem <- function(x, na.rm=FALSE) {
   sd(x,na.rm=na.rm)/sqrt(length(na.omit(x)))
 } #standard error function 
@@ -303,14 +304,6 @@ bioclim_all_year_avgs_2024 <- bind_rows(bioclim_all_year_recent_2024_avgs, biocl
 #head(bioclim_all_year_avgs_2024)
 #tail(bioclim_all_year_avgs_2024)
 #write_csv(bioclim_all_year_avgs_2024, "../output/Climate/fullyear_BioClimAvgs_wtr_year_2024.csv")
-```
-
-Merge with flint
-
-```{r}
-bioclim_flint_all_year_avgs <- full_join(flint_all_year_avgs, bioclim_all_year_avgs) %>% 
-  select(TimePd, parent.pop:ppt_coldest_quarter)
-head(bioclim_flint_all_year_avgs)
 ```
 
 ### Yearly averages for Flint
@@ -1076,7 +1069,19 @@ all_bioclim_flint_avgs_locs.pc_avg %>%
 
 ```
 
-## LM on PCs
+## Permanova
+See Jenny's github: https://github.com/jrgremer/Seedbanks_drought_deluge  
+```{r}
+all_bioclim_flint_avgs_locs.pc_dist <- all_bioclim_flint_avgs_locs.pc %>% ungroup() %>% select(PC1:PC7)
+dist_matrix_all_year <- dist(all_bioclim_flint_avgs_locs.pc_dist, method = "euclidian") #use a distance function to calculate euclidian distance in PCA space
+permanova_results_all_year <- adonis2(dist_matrix_all_year ~ TimePd*elev_m*Lat, data = all_bioclim_flint_avgs_locs.pc) #use adonis2 to run the permanova
+#rows in data must be in same order as rows in distance matrix 
+summary(permanova_results_all_year)
+permanova_results_all_year
+```
+
+
+## LM on PCs (follow up on permanova)
 
 For each PC fit a model with timepd and parent.pop/elev to test for climate change
 
