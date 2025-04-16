@@ -1,0 +1,606 @@
+---
+title: "WL2_Growth_Climate"
+author: "Brandie QC"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+# WL2 Growth + Climate
+
+Add climate to best base model 
+
+## Libraries
+
+```{r}
+library(tidyverse)
+library(brms)
+library(zoo) #rollmean
+```
+
+## Need to make a csv file with all survey data for each plant
+
+Get list of size files
+
+```{r}
+pretrans_wl2 <-  dir("../input/WL2_Data/CorrectedCSVs/",
+             pattern=".*DNA.*csv",
+             full.names=TRUE)
+pretrans_wl2
+
+posttrans_wl2 <- dir("../input/WL2_Data/CorrectedCSVs/",
+             pattern="WL2_size_survey.*corrected.*csv",
+             full.names=TRUE)
+posttrans_wl2
+```
+
+Add data to a tibble
+
+```{r}
+pretrans_dat_wl2 <- tibble(path=pretrans_wl2, filename=basename(path))
+pretrans_dat_wl2
+posttrans_dat_wl2 <- tibble(path=posttrans_wl2, filename=basename(path))
+posttrans_dat_wl2
+
+all_wl2_size <- bind_rows(pretrans_dat_wl2, posttrans_dat_wl2) %>% 
+  mutate(survey_date=str_extract(filename, "20[0-9]*"),
+         survey_date=lubridate::ymd(survey_date))
+all_wl2_size
+```
+
+Read in the files
+
+```{r}
+all_wl2_size2 <- all_wl2_size %>%
+  mutate(sheets=map(path, 
+                    read_csv, 
+                    #col_types=cols(.default=col_character()), # forces all columns to be character
+                                                              # this is needed because of data sheet problems that cause some numerics to be imported as character  
+                    na = c("", "NA", "-", "N/A") # sets NA strings. 
+                    )) %>%
+  select(-path)
+
+all_wl2_size2
+```
+
+Check for merging issues
+
+```{r}
+all_wl2_size2$sheets[[1]] <- all_wl2_size2$sheets[[1]] %>% 
+  rename(pop=Pop, height.cm=`height (cm)`, long.leaf.cm=`longest leaf (cm)`, survey.notes=Notes) %>% 
+  mutate(mf=as.character(mf), rep=as.character(rep)) #convert to character since the majority of the sheets have these columns as characters 
+
+all_wl2_size2$sheets[[2]] <- all_wl2_size2$sheets[[2]] %>% 
+  rename(pop=Pop, height.cm=`height (cm)`, long.leaf.cm=`longest leaf (cm)`, survey.notes=Notes) %>% 
+  filter(!is.na(height.cm))  %>% #to get rid of genotypes that were measured on the other data sheet (NAs on this sheet)
+  mutate(mf=as.character(mf), rep=as.character(rep)) #convert to character since the majority of the sheets have these columns as characters 
+
+all_wl2_size2$sheets[[3]] <- all_wl2_size2$sheets[[3]] %>% 
+  rename(long.leaf.cm=`long.leaf. cm`, herbiv.y.n=`herbiv.y. n`)
+
+all_wl2_size2$sheets[[5]] <- all_wl2_size2$sheets[[5]] %>% 
+  rename(long.leaf.cm=`long.leaf.c m`)
+
+all_wl2_size2$sheets[[7]] <- all_wl2_size2$sheets[[7]] %>% 
+  rename(long.leaf.cm=`long.leaf.c m`)
+
+all_wl2_size2$sheets[[11]] <- all_wl2_size2$sheets[[11]] %>% 
+  rename(survey.notes=`survey-notes`) %>% 
+  filter(block=="A"|block=="B"|block=="C"|block=="D"|block=="E"|block=="F")
+unique(all_wl2_size2$sheets[[11]]$block) #only blocks A-F censused on this day 
+
+all_wl2_size2$sheets[[12]] <- all_wl2_size2$sheets[[12]] %>% 
+  filter(block=="G"|block=="H"|block=="I"|block=="J"|block=="K"|block=="L"|block=="M") #only blocks G-M censused on this day 
+unique(all_wl2_size2$sheets[[12]]$block)
+```
+
+Combine the data
+
+```{r}
+all_wl2_size_all <- all_wl2_size2 %>% unnest(sheets) %>%
+  rename(parent.pop=pop) %>% 
+  filter(parent.pop != "buffer") %>% 
+  mutate(parent.pop= str_replace(parent.pop, ".*VTR.*", "LVTR1")) %>% 
+  unite(Genotype, parent.pop:rep, sep="_", remove = FALSE) %>% 
+  unite(pop.mf, parent.pop:mf, sep="_", remove = FALSE) %>% 
+  select(survey_date, block, Genotype:survey.notes)
+head(all_wl2_size_all)
+unique(all_wl2_size_all$parent.pop) #all 23 pops! + buffers though 
+
+all_wl2_size_all %>% filter(!str_detect(mf, "buff")) %>% rowwise() %>% 
+  filter(!is.na(mf)) %>%  filter(is.na(as.numeric(mf))) #all buffers --> safe to convert to numeric 
+all_wl2_size_all %>% filter(!str_detect(rep, "buff")) %>% rowwise() %>% 
+  filter(!is.na(rep)) %>%  filter(is.na(as.numeric(rep))) #all buffers --> safe to convert to numeric 
+
+all_wl2_size_all_nobuffers <- all_wl2_size_all %>% 
+  filter(!str_detect(mf, "buff")) %>% 
+  mutate(mf=as.double(mf), rep=as.double(rep)) %>% 
+  select(!DNA)
+unique(all_wl2_size_all_nobuffers$parent.pop) #buffers removed!
+unique(all_wl2_size_all_nobuffers$survey_date) 
+tail(all_wl2_size_all_nobuffers)
+```
+
+## Pop Location Info
+
+```{r}
+wl2_gowers_2023 <- read_csv("../output/Climate/Gowers_WL2.csv") %>% 
+  select(parent.pop:GrwSsn_GD, Wtr_Year_GD) %>% 
+  pivot_wider(names_from = TimePd, values_from = c(GrwSsn_GD, Wtr_Year_GD)) 
+head(wl2_gowers_2023)
+```
+
+Merge
+
+```{r}
+all_wl2_size_loc <- left_join(all_wl2_size_all_nobuffers, wl2_gowers_2023) %>% 
+  mutate(day=if_else(survey_date=="2023-07-03" | survey_date=="2023-07-06", 0, #day 0 = pre-transplant
+                 as.numeric(survey_date-min(survey_date)-7))) #days in the field starts on 7/11 (day all plants taken to the field) rather than the exact planting date 
+head(all_wl2_size_loc)
+```
+
+## Data set for the model (remove WV and shrinkage months)
+```{r}
+all_wl2_size_for_models <- all_wl2_size_loc %>% 
+  filter(parent.pop!="WV") %>% 
+  group_by(Genotype) %>% 
+  mutate(height_next = lead(height.cm, order_by = survey_date),
+         height_diff=height_next-height.cm,
+         shrink_day=if_else(height_diff>-2, NA, day),
+         min_shrink_day=min(shrink_day, na.rm = TRUE)) %>% #deals with problem of if something shrinks and then starts to grow again
+  filter(day<min_shrink_day | min_shrink_day==Inf) %>% 
+  ungroup() %>% 
+  drop_na(height.cm)
+```
+
+## Read in soil temp
+
+```{r}
+temp_WL2 <- read_csv("../input/WL2_Data/WL2_2022_2023_iButton_Data_Corrected.csv") %>%
+  select(-`...3`) %>%
+  mutate(Date_Time = mdy_hm(Date_Time)) %>%
+  filter(Date_Time > ymd("2023-07-06"))
+head(temp_WL2)
+skimr::skim(temp_WL2)
+```
+
+Average across beds. 
+
+```{r}
+temp_WL2_summary <- temp_WL2 %>%
+  group_by(Date_Time) %>% 
+  summarise(AvgSoilTemp=mean(SoilTemp, na.rm=TRUE)) %>% #avg across beds 
+  mutate(Date=as.Date(Date_Time)) %>%
+  filter(Date != min(Date), Date != max(Date)) %>% # trim ragged ends
+  group_by(Date) %>% #summmarise hourly data by date
+  summarize(
+    min_temp_d = min(AvgSoilTemp),
+    max_temp_d = max(AvgSoilTemp),
+    mean_temp_d = mean(AvgSoilTemp)
+  ) %>%
+  mutate(
+    across(ends_with("temp_d"), \(x) rollmean(x, k = 7, align = "right", fill = NA), .names="{.col}1_7"),
+    across(ends_with("temp_d"), \(x) rollmean(x, k = 13, align = "right", fill = NA), .names="{.col}1_13"), # 13 so I can get the first survey date
+    across(ends_with("1_7"), \(x) dplyr::lag(x, 6), .names = "{.col}_13") 
+  ) %>%
+  rename_with(\(x) str_replace(x, "1_7_13", "6_13"))
+
+temp_WL2_summary
+```
+
+## Read in soil moisture
+
+```{r}
+moisture_WL2 <- read_csv("../input/WL2_Data/WL2_2023_Bed_C_Soil_Moisture_Corrected.csv") %>%
+  mutate(Date_Time = mdy_hm(Date_Time)) 
+head(moisture_WL2)
+skimr::skim(moisture_WL2)
+```
+
+Will average across the ports
+
+```{r}
+moisture_WL2_summary <- moisture_WL2 %>%
+  mutate(Port_1=if_else(Port_1<0, 0, Port_1),
+         Port_2=if_else(Port_2<0, 0, Port_2),
+         Port_3=if_else(Port_3<0, 0, Port_3),
+         Port_4=if_else(Port_4<0, 0, Port_4),
+         Port_5=if_else(Port_5<0, 0, Port_5)) %>%  #convert negatives to zeros (negatives result from extremely dry soil --> air pockets)
+  rowwise() %>%
+  mutate(s_moisture = mean(c_across(-Date_Time)) ) %>%
+  select(Date_Time, s_moisture) %>%
+  mutate(Date=as.Date(Date_Time)) %>%
+  group_by(Date) %>%
+  summarize(
+    mean_moisture_d = mean(s_moisture)
+  ) %>%
+  mutate(
+    s_moisture_1_7 = rollmean(mean_moisture_d, k = 7, align = "right", fill = "extend"),
+    s_moisture_1_14 = rollmean(mean_moisture_d, k = 13, align = "right", fill = "extend"),
+    s_moisture_7_14 = dplyr::lag(s_moisture_1_7, 7)
+  )
+
+moisture_WL2_summary
+```
+
+## add climate data
+
+```{r}
+all_wl2_size_for_models_climate <- all_wl2_size_for_models %>% 
+  left_join(temp_WL2_summary, by = c("survey_date" = "Date")) %>%
+  left_join(moisture_WL2_summary, by = c("survey_date" = "Date")) %>% 
+  filter(day>0) #remove day pre-field size b/c no climate data 
+
+all_wl2_size_for_models_climate %>% 
+  ggplot(aes(group=Genotype, x=survey_date, y=height.cm, col=elev_m)) + 
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_line() + facet_wrap(~parent.pop, scales = "free")
+#without day 0, min is different...
+```
+
+
+## Priors 
+
+```{r}
+prior1_wl2 <- c(set_prior("normal(5,3)", nlpar="Hmin"),
+            set_prior("normal(60,15)",  nlpar="Hmax"),
+            set_prior("gamma(2,2)", nlpar = "k", lb = 0), #gamma constrains to be > 0 
+            set_prior("gamma(20,3)", nlpar = "delta", lb = 0)
+)
+            #first number = avg, second number = the space around that average to search 
+```
+
+
+## Temp Models 
+
+```{r}
+#best base model:
+temp_f1 <- brmsformula(height.cm ~ Hmax - (Hmax - Hmin) * exp(-(k/100 * day)^delta),
+                  Hmin + k + delta ~ 1,
+                  Hmax ~ (1|parent.pop),
+                  nl=TRUE)
+
+temp_f2 <- brmsformula(height.cm ~ Hmax - (Hmax - Hmin) * exp(-(k/100 * day)^delta),
+                  Hmin + k + delta ~ 1,
+                  Hmax ~ min_temp_d1_7 + (1|parent.pop),
+                  nl=TRUE)
+
+temp_f3 <- brmsformula(height.cm ~ Hmax - (Hmax - Hmin) * exp(-(k/100 * day)^delta),
+                  Hmin + k + delta ~ 1,
+                  Hmax ~ mean_temp_d1_7 + (1|parent.pop),
+                  nl=TRUE)
+
+temp_f4 <- brmsformula(height.cm ~ Hmax - (Hmax - Hmin) * exp(-(k/100 * day)^delta),
+                  Hmin + k + delta ~ 1,
+                  Hmax ~ max_temp_d1_7 + (1|parent.pop),
+                  nl=TRUE)
+
+temp_f5 <- brmsformula(height.cm ~ Hmax - (Hmax - Hmin) * exp(-(k/100 * day)^delta),
+                  Hmin + k + delta ~ 1,
+                  Hmax ~ min_temp_d1_13 + (1|parent.pop),
+                  nl=TRUE)
+
+temp_f6 <- brmsformula(height.cm ~ Hmax - (Hmax - Hmin) * exp(-(k/100 * day)^delta),
+                  Hmin + k + delta ~ 1,
+                  Hmax ~ mean_temp_d1_13 + (1|parent.pop),
+                  nl=TRUE)
+
+temp_f7 <- brmsformula(height.cm ~ Hmax - (Hmax - Hmin) * exp(-(k/100 * day)^delta),
+                  Hmin + k + delta ~ 1,
+                  Hmax ~ max_temp_d1_13 + (1|parent.pop),
+                  nl=TRUE)
+
+temp_f8 <- brmsformula(height.cm ~ Hmax - (Hmax - Hmin) * exp(-(k/100 * day)^delta),
+                  Hmin + k + delta ~ 1,
+                  Hmax ~ min_temp_d6_13 + (1|parent.pop), 
+                  nl=TRUE)
+
+temp_f9 <- brmsformula(height.cm ~ Hmax - (Hmax - Hmin) * exp(-(k/100 * day)^delta),
+                  Hmin + k + delta ~ 1,
+                  Hmax~ mean_temp_d6_13 + (1|parent.pop), 
+                  nl=TRUE)
+
+temp_f10 <- brmsformula(height.cm ~ Hmax - (Hmax - Hmin) * exp(-(k/100 * day)^delta),
+                  Hmin + k + delta ~ 1,
+                  Hmax ~ max_temp_d6_13 + (1|parent.pop),
+                  nl=TRUE)
+```
+
+
+## Temp Model Fits 
+
+### Base model (fit1)
+```{r}
+temp_fit1 <- brm(formula=temp_f1, data=all_wl2_size_for_models_climate, prior=prior1_wl2, iter = 3800, cores=4)
+
+summary(temp_fit1)
+plot(temp_fit1, nvariables = 3, ask=FALSE)
+
+pred.df <- expand_grid(day=min(all_wl2_size_for_models_climate$day):max(all_wl2_size_for_models_climate$day),
+                       parent.pop=unique(all_wl2_size_for_models_climate$parent.pop))
+temp_fit1.predictions <- cbind(pred.df, prediction=predict(temp_fit1, newdata = pred.df)[,"Estimate"]) %>%
+  full_join(all_wl2_size_for_models_climate, by=c("day", "parent.pop"))
+
+temp_fit1.predictions %>% ggplot(aes(x=day)) +
+  geom_line(aes(group=Genotype, y=height.cm, color=parent.pop), alpha=.2) +
+  geom_line(aes(y=prediction, color=parent.pop)) +
+  facet_wrap(~parent.pop)
+```
+
+### Min D1-7 (fit2)
+```{r}
+all_wl2_size_for_models_temp_fit2 <- all_wl2_size_for_models_climate %>% drop_na(min_temp_d1_7)
+
+temp_fit2 <- brm(formula=temp_f2, data=all_wl2_size_for_models_temp_fit2, prior=prior1_wl2, iter = 3800, cores=4)
+#Warning: There were 102 transitions after warmup that exceeded the maximum treedepth. Increase max_treedepth above 10. See https://mc-stan.org/misc/warnings.html#maximum-treedepth-exceeded
+#Warning: Examine the pairs() plot to diagnose sampling problems
+summary(temp_fit2)
+plot(temp_fit2, nvariables = 3, ask=FALSE)
+```
+
+### Mean D1-7 (fit3)
+```{r}
+all_wl2_size_for_models_temp_fit3 <- all_wl2_size_for_models_climate %>% drop_na(mean_temp_d1_7)
+
+temp_fit3 <- brm(formula=temp_f3, data=all_wl2_size_for_models_temp_fit3, prior=prior1_wl2, iter = 3800, cores=4)
+
+summary(temp_fit3)
+plot(temp_fit3, nvariables = 3, ask=FALSE)
+
+temp_fit3.predictions <- cbind(pred.df, prediction=predict(temp_fit3, newdata = pred.df)[,"Estimate"]) %>%
+  full_join(all_wl2_size_for_models, by=c("day", "parent.pop"))
+
+temp_fit3.predictions %>% ggplot(aes(x=day)) +
+  geom_line(aes(group=Genotype, y=height.cm, color=parent.pop), alpha=.2) +
+  geom_line(aes(y=prediction, color=parent.pop)) +
+  facet_wrap(~parent.pop)
+```
+
+### Max D1-7 (fit4)
+```{r}
+all_wl2_size_for_models_temp_fit4 <- all_wl2_size_for_models_climate %>% drop_na(max_temp_d1_7)
+
+temp_fit4 <- brm(formula=temp_f4, data=all_wl2_size_for_models_temp_fit4, prior=prior1_wl2, iter = 3800, cores=4)
+
+summary(temp_fit4)
+plot(temp_fit4, nvariables = 3, ask=FALSE)
+
+temp_fit4.predictions <- cbind(pred.df, prediction=predict(temp_fit4, newdata = pred.df)[,"Estimate"]) %>%
+  full_join(all_wl2_size_for_models, by=c("day", "parent.pop"))
+
+temp_fit4.predictions %>% ggplot(aes(x=day)) +
+  geom_line(aes(group=Genotype, y=height.cm, color=parent.pop), alpha=.2) +
+  geom_line(aes(y=prediction, color=parent.pop)) +
+  facet_wrap(~parent.pop)
+```
+
+### Min D1-13 (fit5)
+```{r}
+all_wl2_size_for_models_temp_fit5 <- all_wl2_size_for_models_climate %>% drop_na(min_temp_d1_13)
+
+temp_fit5 <- brm(formula=temp_f5, data=all_wl2_size_for_models_temp_fit5, prior=prior1_wl2, iter = 3800, cores=4)
+
+summary(temp_fit5)
+plot(temp_fit5, nvariables = 3, ask=FALSE)
+
+temp_fit5.predictions <- cbind(pred.df, prediction=predict(temp_fit5, newdata = pred.df)[,"Estimate"]) %>%
+  full_join(all_wl2_size_for_models, by=c("day", "parent.pop"))
+
+temp_fit5.predictions %>% ggplot(aes(x=day)) +
+  geom_line(aes(group=Genotype, y=height.cm, color=parent.pop), alpha=.2) +
+  geom_line(aes(y=prediction, color=parent.pop)) +
+  facet_wrap(~parent.pop)
+```
+
+### Mean D1-13 (fit6)
+```{r}
+all_wl2_size_for_models_temp_fit6 <- all_wl2_size_for_models_climate %>% drop_na(meam_temp_d1_13)
+
+temp_fit6 <- brm(formula=temp_f6, data=all_wl2_size_for_models_temp_fit6, prior=prior1_wl2, iter = 3800, cores=4)
+
+summary(temp_fit6)
+plot(temp_fit6, nvariables = 3, ask=FALSE)
+
+temp_fit6.predictions <- cbind(pred.df, prediction=predict(temp_fit6, newdata = pred.df)[,"Estimate"]) %>%
+  full_join(all_wl2_size_for_models, by=c("day", "parent.pop"))
+
+temp_fit6.predictions %>% ggplot(aes(x=day)) +
+  geom_line(aes(group=Genotype, y=height.cm, color=parent.pop), alpha=.2) +
+  geom_line(aes(y=prediction, color=parent.pop)) +
+  facet_wrap(~parent.pop)
+```
+
+### Max D1-13 (fit7)
+```{r}
+all_wl2_size_for_models_temp_fit7 <- all_wl2_size_for_models_climate %>% drop_na(max_temp_d1_13)
+
+temp_fit7 <- brm(formula=temp_f7, data=all_wl2_size_for_models_temp_fit7, prior=prior1_wl2, iter = 3800, cores=4)
+
+summary(temp_fit7)
+plot(temp_fit7, nvariables = 3, ask=FALSE)
+
+temp_fit7.predictions <- cbind(pred.df, prediction=predict(temp_fit7, newdata = pred.df)[,"Estimate"]) %>%
+  full_join(all_wl2_size_for_models, by=c("day", "parent.pop"))
+
+temp_fit7.predictions %>% ggplot(aes(x=day)) +
+  geom_line(aes(group=Genotype, y=height.cm, color=parent.pop), alpha=.2) +
+  geom_line(aes(y=prediction, color=parent.pop)) +
+  facet_wrap(~parent.pop)
+```
+
+### Min D6-13 (fit8)
+```{r}
+all_wl2_size_for_models_temp_fit8 <- all_wl2_size_for_models_climate %>% drop_na(min_temp_d6_13)
+
+temp_fit8 <- brm(formula=temp_f8, data=all_wl2_size_for_models_temp_fit8, prior=prior1_wl2, iter = 3800, cores=4)
+
+summary(temp_fit8)
+plot(temp_fit8, nvariables = 3, ask=FALSE)
+
+temp_fit8.predictions <- cbind(pred.df, prediction=predict(temp_fit8, newdata = pred.df)[,"Estimate"]) %>%
+  full_join(all_wl2_size_for_models, by=c("day", "parent.pop"))
+
+temp_fit8.predictions %>% ggplot(aes(x=day)) +
+  geom_line(aes(group=Genotype, y=height.cm, color=parent.pop), alpha=.2) +
+  geom_line(aes(y=prediction, color=parent.pop)) +
+  facet_wrap(~parent.pop)
+```
+
+### Mean D6-13 (fit9)
+```{r}
+all_wl2_size_for_models_temp_fit9 <- all_wl2_size_for_models_climate %>% drop_na(mean_temp_d6_13)
+
+temp_fit9 <- brm(formula=temp_f9, data=all_wl2_size_for_models_temp_fit9, prior=prior1_wl2, iter = 3800, cores=4)
+
+summary(temp_fit9)
+plot(temp_fit9, nvariables = 3, ask=FALSE)
+
+temp_fit9.predictions <- cbind(pred.df, prediction=predict(temp_fit9, newdata = pred.df)[,"Estimate"]) %>%
+  full_join(all_wl2_size_for_models, by=c("day", "parent.pop"))
+
+temp_fit9.predictions %>% ggplot(aes(x=day)) +
+  geom_line(aes(group=Genotype, y=height.cm, color=parent.pop), alpha=.2) +
+  geom_line(aes(y=prediction, color=parent.pop)) +
+  facet_wrap(~parent.pop)
+```
+
+### Max D6-13 (fit10)
+```{r}
+all_wl2_size_for_models_temp_fit10 <- all_wl2_size_for_models_climate %>% drop_na(max_temp_d6_13)
+
+temp_fit10 <- brm(formula=temp_f10, data=all_wl2_size_for_models_temp_fit10, prior=prior1_wl2, iter = 3800, cores=4)
+
+summary(temp_fit10)
+plot(temp_fit10, nvariables = 3, ask=FALSE)
+
+temp_fit10.predictions <- cbind(pred.df, prediction=predict(temp_fit10, newdata = pred.df)[,"Estimate"]) %>%
+  full_join(all_wl2_size_for_models, by=c("day", "parent.pop"))
+
+temp_fit10.predictions %>% ggplot(aes(x=day)) +
+  geom_line(aes(group=Genotype, y=height.cm, color=parent.pop), alpha=.2) +
+  geom_line(aes(y=prediction, color=parent.pop)) +
+  facet_wrap(~parent.pop)
+```
+
+## Temp Model Comparison
+
+```{r}
+temp_fit1 <- add_criterion(temp_fit1, "loo")
+temp_fit2 <- add_criterion(temp_fit2, "loo")
+temp_fit3 <- add_criterion(temp_fit3, "loo")
+temp_fit4 <- add_criterion(temp_fit4, "loo")
+temp_fit5 <- add_criterion(temp_fit5, "loo") 
+temp_fit6 <- add_criterion(temp_fit6, "loo") 
+temp_fit7 <- add_criterion(temp_fit7, "loo") 
+temp_fit8 <- add_criterion(temp_fit8, "loo") 
+temp_fit9 <- add_criterion(temp_fit9, "loo") 
+temp_fit10 <- add_criterion(temp_fit10, "loo") 
+loo_compare(temp_fit1, temp_fit2, temp_fit3, temp_fit4, temp_fit5, temp_fit6, temp_fit7,temp_fit8, temp_fit9, temp_fit10)
+```
+
+## Moisture Models
+```{r}
+moisture_f1 <- brmsformula(height.cm ~ Hmax - (Hmax - Hmin) * exp(-(k/100 * day)^delta),
+                  Hmin + k + delta ~ 1,
+                  Hmax ~ (1|parent.pop),
+                  nl=TRUE)
+
+moisture_f2 <- brmsformula(height.cm ~ Hmax - (Hmax - Hmin) * exp(-(k/100 * day)^delta),
+                  Hmin + k + delta ~ 1,
+                  Hmax ~ s_moisture_1_7 + (1|parent.pop),
+                  nl=TRUE)
+
+moisture_f3 <- brmsformula(height.cm ~ Hmax - (Hmax - Hmin) * exp(-(k/100 * day)^delta),
+                  Hmin + k + delta ~ 1,
+                  Hmax ~ s_moisture_1_14 + (1|parent.pop),
+                  nl=TRUE)
+
+moisture_f4 <- brmsformula(height.cm ~ Hmax - (Hmax - Hmin) * exp(-(k/100 * day)^delta),
+                  Hmin + k + delta ~ 1,
+                  Hmax ~ s_moisture_7_14 + (1|parent.pop),
+                  nl=TRUE)
+```
+
+## Moisture Model Fits 
+
+### Base model (fit1)
+```{r}
+moisture_fit1 <- brm(formula=moisture_f1, data=all_wl2_size_for_models_climate, prior=prior1_wl2, iter = 3800, cores=4)
+
+summary(moisture_fit1)
+plot(moisture_fit1, nvariables = 3, ask=FALSE)
+
+moisture_fit1.predictions <- cbind(pred.df, prediction=predict(moisture_fit1, newdata = pred.df)[,"Estimate"]) %>%
+  full_join(all_wl2_size_for_models, by=c("day", "parent.pop"))
+
+moisture_fit1.predictions %>% ggplot(aes(x=day)) +
+  geom_line(aes(group=Genotype, y=height.cm, color=parent.pop), alpha=.2) +
+  geom_line(aes(y=prediction, color=parent.pop)) +
+  facet_wrap(~parent.pop)
+```
+
+### Min D1-7 (fit2)
+```{r}
+all_wl2_size_for_models_moisture_fit2 <- all_wl2_size_for_models_climate %>% drop_na(s_moisture_1_7)
+
+moisture_fit2 <- brm(formula=moisture_f2, data=all_wl2_size_for_models_moisture_fit2, prior=prior1_wl2, iter = 3800, cores=4)
+
+summary(moisture_fit2)
+plot(moisture_fit2, nvariables = 3, ask=FALSE)
+
+moisture_fit2.predictions <- cbind(pred.df, prediction=predict(moisture_fit2, newdata = pred.df)[,"Estimate"]) %>%
+  full_join(all_wl2_size_for_models, by=c("day", "parent.pop"))
+
+moisture_fit2.predictions %>% ggplot(aes(x=day)) +
+  geom_line(aes(group=Genotype, y=height.cm, color=parent.pop), alpha=.2) +
+  geom_line(aes(y=prediction, color=parent.pop)) +
+  facet_wrap(~parent.pop)
+```
+
+### Mean D1-14 (fit3)
+```{r}
+all_wl2_size_for_models_moisture_fit3 <- all_wl2_size_for_models_climate %>% drop_na(s_moisture_1_14)
+
+moisture_fit3 <- brm(formula=moisture_f3, data=all_wl2_size_for_models_moisture_fit3, prior=prior1_wl2, iter = 3800, cores=4)
+
+summary(moisture_fit3)
+plot(moisture_fit3, nvariables = 3, ask=FALSE)
+
+moisture_fit3.predictions <- cbind(pred.df, prediction=predict(moisture_fit3, newdata = pred.df)[,"Estimate"]) %>%
+  full_join(all_wl2_size_for_models, by=c("day", "parent.pop"))
+
+moisture_fit3.predictions %>% ggplot(aes(x=day)) +
+  geom_line(aes(group=Genotype, y=height.cm, color=parent.pop), alpha=.2) +
+  geom_line(aes(y=prediction, color=parent.pop)) +
+  facet_wrap(~parent.pop)
+```
+
+### Mean D7-14 (fit4)
+```{r}
+all_wl2_size_for_models_moisture_fit4 <- all_wl2_size_for_models_climate %>% drop_na(s_moisture_7_14)
+
+moisture_fit4 <- brm(formula=moisture_f4, data=all_wl2_size_for_models_moisture_fit4, prior=prior1_wl2, iter = 3800, cores=4)
+
+summary(moisture_fit4)
+plot(moisture_fit4, nvariables = 3, ask=FALSE)
+
+moisture_fit4.predictions <- cbind(pred.df, prediction=predict(moisture_fit4, newdata = pred.df)[,"Estimate"]) %>%
+  full_join(all_wl2_size_for_models, by=c("day", "parent.pop"))
+
+moisture_fit4.predictions %>% ggplot(aes(x=day)) +
+  geom_line(aes(group=Genotype, y=height.cm, color=parent.pop), alpha=.2) +
+  geom_line(aes(y=prediction, color=parent.pop)) +
+  facet_wrap(~parent.pop)
+```
+
+## Moisture Model Comparison
+
+```{r}
+moisture_fit1 <- add_criterion(moisture_fit1, "loo")
+moisture_fit2 <- add_criterion(moisture_fit2, "loo")
+moisture_fit3 <- add_criterion(moisture_fit3, "loo")
+moisture_fit4 <- add_criterion(moisture_fit4, "loo")
+loo_compare(moisture_fit1, moisture_fit2, moisture_fit3, moisture_fit4)
+```
