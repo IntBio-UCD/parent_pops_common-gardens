@@ -9,13 +9,13 @@ output:
 
 # Analyze Growth
 
-To Do:
+Notes:
 
--   Get base models working
+-   Used sample size cut off of 3 or greater post-establishment, removed WV
 
-    -   Truncate analysis to only grow months (model likely cannot handle shrinkage)
+-   Truncated analysis to only grow months 
 
--   Add weekly temperature (not enough soil moisture data)
+-   Best base model = fit 2 (hmax varies)
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -153,17 +153,16 @@ unique(all_wl2_size_all_nobuffers$block)
 ## Pop Location Info
 
 ```{r}
-gowersdist_WL2 <- read_csv("../output/Climate/Gowers_WL2.csv")
-
-gowersdist_WL2_wider <- gowersdist_WL2 %>% 
-  pivot_wider(names_from = TimePd, values_from = c(GrwSsn_GD, GrwSsn_FLINT_GD, GrwSsn_BIOCLIM_GD, Wtr_Year_GD, Wtr_Year_FLINT_GD, Wtr_Year_BIOCLIM_GD))
-head(gowersdist_WL2_wider)
+wl2_gowers_2023 <- read_csv("../output/Climate/Gowers_WL2.csv") %>% 
+  select(parent.pop:GrwSsn_GD, Wtr_Year_GD) %>% 
+  pivot_wider(names_from = TimePd, values_from = c(GrwSsn_GD, Wtr_Year_GD)) 
+head(wl2_gowers_2023)
 ```
 
 Merge
 
 ```{r}
-all_wl2_size_loc <- left_join(all_wl2_size_all_nobuffers, gowersdist_WL2_wider) %>% 
+all_wl2_size_loc <- left_join(all_wl2_size_all_nobuffers, wl2_gowers_2023) %>% 
   mutate(day=if_else(survey_date=="2023-07-03" | survey_date=="2023-07-06", 0, #day 0 = pre-transplant
                  as.numeric(survey_date-min(survey_date)-7))) #days in the field starts on 7/11 (day all plants taken to the field) rather than the exact planting date 
 head(all_wl2_size_loc)
@@ -174,21 +173,24 @@ all_wl2_size_loc %>% select(survey_date, day) %>% unique()
 ## Check Sample Sizes
 
 ```{r}
+#all_wl2_size_loc %>% arrange(Genotype, day) %>% select(Genotype, day, survey_date)
+
 all_wl2_size_loc %>% 
   filter(!is.na(height.cm)) %>% 
-  group_by(parent.pop, day) %>% 
+  group_by(day, survey_date, parent.pop) %>% 
   summarise(Sample_Size=n()) %>% 
-  filter(day==0) %>% 
+  filter(day<38) %>% #look at first 4 weeks (1st 3 = establishment) 
   arrange(Sample_Size)
 
-#WV only has 3 individuals, none survived transplant 
-
-all_wl2_size_for_models <- all_wl2_size_loc %>% 
-  filter(parent.pop != "WV") %>% 
-  filter(!is.na(height.cm))
-
-#Sam said that you want 10x the number of parameters (4) you are estimating. So should I remove everything with a sample size of less than ~35? 
-#That would be pretty conservative so let's set 5 as a minimum sample size 
+ 
+#WV only has 3 individuals, none survived transplant
+all_wl2_size_loc %>% 
+  filter(!is.na(height.cm)) %>% 
+  group_by(day, survey_date, parent.pop) %>% 
+  summarise(Sample_Size=n()) %>% 
+  filter(day<38) %>% #look at first 4 weeks (1st 3 = establishment) 
+  arrange(Sample_Size) %>% 
+  filter(parent.pop=="WV")
 ```
 
 ## Quick figure
@@ -196,9 +198,9 @@ all_wl2_size_for_models <- all_wl2_size_loc %>%
 Height
 
 ```{r}
-all_wl2_size_loc$parent.pop = factor(all_wl2_size_loc$parent.pop, levels=c('CC','TM2','SC','IH','BH','WV','FR','DPR','WR','WL1','SQ1','SQ2','WL2','YO4','CP2','CP3','LV3','SQ3','YO7','YO8','LV1','LVTR1','YO11'))
+all_wl2_size_all_nobuffers$parent.pop = factor(all_wl2_size_all_nobuffers$parent.pop, levels=c('CC','TM2','SC','IH','BH','WV','FR','DPR','WR','WL1','SQ1','SQ2','WL2','YO4','CP2','CP3','LV3','SQ3','YO7','YO8','LV1','LVTR1','YO11'))
   
-all_wl2_size_loc %>% 
+all_wl2_size_all_nobuffers %>% 
   ggplot(aes(group=Genotype, x=survey_date, y=height.cm, col=elev_m)) + 
   scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
   geom_line() + facet_wrap(~parent.pop, scales = "free")
@@ -239,6 +241,44 @@ all_wl2_size_loc %>% filter(parent.pop=="FR") %>% filter(Genotype=="FR_7_3") #no
 all_wl2_size_loc %>% filter(parent.pop=="BH") %>% filter(long.leaf.cm>7.5) #no error, the plant grew and then shrinked 
 ```
 
+## Data set for the model (remove WV and shrinkage months)
+```{r}
+#all_wl2_size_loc %>% filter(Genotype=="YO8_2_8") %>% #shrinkage test 
+# arrange(survey_date) %>% 
+# select(survey_date:height.cm, day) %>% 
+# mutate(height_next=lead(height.cm)) %>% 
+# mutate(height_diff=height_next-height.cm) %>% 
+#  mutate(shrink_day=if_else(height_diff>-2, NA, day)) %>% 
+#  mutate(min_shrink_day=min(shrink_day, na.rm = TRUE)) %>% 
+#  filter(day<min_shrink_day)
+
+all_wl2_size_for_models <- all_wl2_size_loc %>% 
+  filter(parent.pop!="WV") %>% 
+  group_by(Genotype) %>% 
+  mutate(height_next = lead(height.cm, order_by = survey_date),
+         height_diff=height_next-height.cm,
+         shrink_day=if_else(height_diff>-2, NA, day),
+         min_shrink_day=min(shrink_day, na.rm = TRUE)) %>% #deals with problem of if something shrinks and then starts to grow again
+  filter(day<min_shrink_day | min_shrink_day==Inf) %>% 
+  ungroup() %>% 
+  drop_na(height.cm)
+
+all_wl2_size_for_models %>% 
+  ggplot(aes(group=Genotype, x=survey_date, y=height.cm, col=elev_m)) + 
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_line() + facet_wrap(~parent.pop, scales = "free")
+
+all_wl2_size_for_models %>% 
+  filter(!is.na(height.cm)) %>% 
+  group_by(day, survey_date, parent.pop) %>% 
+  summarise(Sample_Size=n()) %>% 
+  filter(day<38) %>% #look at first 4 weeks (1st 3 = establishment) 
+  arrange(Sample_Size)
+#no new pops to remove 
+
+```
+
+
 ## Model growth with the Weibull model
 
 ```{r}
@@ -272,8 +312,8 @@ f1_WL2 <- brmsformula(height.cm ~ Hmax - (Hmax - Hmin) * exp(-(k/100 * day)^delt
 ```{r}
 prior1_WL2 <- c(set_prior("normal(4,3)", nlpar="Hmin"), #(mean, sd)
             set_prior("normal(25,10)",  nlpar="Hmax"),
-            set_prior("gamma(1,2)", nlpar = "k"), #gamma constrains to be > 0 
-            set_prior("gamma(4,2)", nlpar = "delta")
+            set_prior("gamma(1,2)", nlpar = "k", lb = 0), #gamma constrains to be > 0 
+            set_prior("gamma(4,2)", nlpar = "delta", lb = 0)
 )
 
 #Hmax = alpha -  Sets the asymptote (max growth)
@@ -339,28 +379,28 @@ axis(side = 1, at = axis_bounds, pos = 0)
 ### Fit the model
 
 ```{r}
-fit1_WL2 <- brm(formula=f1_WL2, data=all_wl2_size_for_models, prior=prior1_WL2, cores = 4,  iter = 4000)
+fit1_WL2 <- brm(formula=f1_WL2, data=all_wl2_size_for_models, prior=prior1_WL2, cores = 4, iter=3000)
 
-#Warning: There were 2722 divergent transitions after warmup.
-#Warning: The largest R-hat is 1.69, indicating chains have not mixed.
-#Bulk Effective Samples Size (ESS) is too low, indicating posterior means and medians may be unreliable
-#Tail Effective Samples Size (ESS) is too low, indicating posterior variances and tail quantiles may be unreliable.
+#Warning: There were 17 divergent transitions after warmup. See https://mc-stan.org/misc/warnings.html#divergent-transitions-after-warmup to find out why this is a problem and how to eliminate them.Warning: Examine the pairs() plot to diagnose sampling problems
 ```
 
 Summary
 
 ```{r}
 summary(fit1_WL2)
-#Rhat and ESS are terrible  
+#Rhat and ESS are good
 
-pairs(fit1_WL2, regex = TRUE) #doesn't look great, these should be more cloud like than show patterns, I think...
+pairs(fit1_WL2, regex = TRUE) 
+#some don't look great, these should be more cloud like than show patterns
+#k and Hmax negatively correlated
+#delta and k positively correlated 
 ```
 
 Plots
 
 ```{r}
 plot(fit1_WL2, nvariables = 3, ask=FALSE)
-#posterior distributions look bad
+#some chains don't look good (hmax, k)
 ```
 
 ### Predictions
@@ -392,33 +432,32 @@ get_prior(random_f2_WL2, data = all_wl2_size_for_models)
 #there's now a prior for sd of Hmax due to pop
 #don't need a specific prior for each pop now 
 
-prior2_WL2 <- c(set_prior("normal(5,3)", nlpar="Hmin"),
-            set_prior("normal(60,15)",  nlpar="Hmax"),
-            set_prior("gamma(2,2)", nlpar = "k"), #gamma constrains to be > 0 
-            set_prior("gamma(20,3)", nlpar = "delta")
+prior2_WL2 <- c(set_prior("normal(4,3)", nlpar="Hmin"),
+            set_prior("normal(25,10)",  nlpar="Hmax"),
+            set_prior("gamma(1,2)", nlpar = "k", lb = 0), #gamma constrains to be > 0 
+            set_prior("gamma(4,2)", nlpar = "delta", lb = 0)
 ) #same as prior 1 for now 
 ```
 
 ### Fit the model
 
 ```{r}
-random_fit2_WL2 <- brm(formula=random_f2_WL2, data=all_wl2_size_for_models, prior=prior1_WL2, cores = 4, iter = 3000) #increase iterations b/c more complex (helps with Rhat and ESS)
-#Warning: There were 2482 divergent transitions after warmup. 
-#Warning: There were 1 chains where the estimated Bayesian Fraction of Missing Information was low. Examine the pairs() plot to diagnose sampling problems
-#Warning: The largest R-hat is 1.95, indicating chains have not mixed. Running the chains for more iterations may help.
-#Bulk Effective Samples Size (ESS) is too low, indicating posterior means and medians may be unreliable.
-#Tail Effective Samples Size (ESS) is too low, indicating posterior variances and tail quantiles may be unreliable.
+random_fit2_WL2 <- brm(formula=random_f2_WL2, data=all_wl2_size_for_models, prior=prior2_WL2, cores = 4, 
+                       iter = 3000, #increase iterations b/c more complex (helps with Rhat and ESS)
+                       control = list(max_treedepth = 12)) #default = 10 
 ```
 
 Summary
 
 ```{r}
 summary(random_fit2_WL2)
-
+#rhat and ESS mostly good 
+#hmax intercept ESS < 1000
 ```
 
 ```{r}
 plot(random_fit2_WL2, nvariables = 3, ask=FALSE)
+#Hmax chains look a little weird 
 ```
 
 ### Predictions
@@ -428,7 +467,7 @@ The function expand_grid creates a data frame with all combinations of the items
 ```{r}
 pred.df <- expand_grid(day=min(all_wl2_size_for_models$day):max(all_wl2_size_for_models$day),
                        parent.pop=unique(all_wl2_size_for_models$parent.pop))
-pred.df
+#pred.df
 ```
 
 ```{r}
@@ -447,7 +486,7 @@ random_fit2_WL2.predictions %>% filter(parent.pop=="BH") %>%
   geom_line(aes(y=prediction, color=parent.pop)) +
   facet_wrap(~parent.pop)
 
-
+#predictions look pretty good 
 ```
 
 ## Vary slope (k) and asymptote (Hmax) by pop
@@ -466,32 +505,37 @@ random_f3_WL2 <- brmsformula(height.cm ~ Hmax - (Hmax - Hmin) * exp(-(k/100 * da
 ```{r}
 get_prior(random_f3_WL2, data=all_wl2_size_for_models)
 
-prior3_WL2 <- c(set_prior("normal(5,3)", nlpar="Hmin"),
-            set_prior("normal(60,15)",  nlpar="Hmax"),
-            set_prior("normal(0,1)", nlpar = "k"), #gamma constrains to be > 0 
-            set_prior("gamma(20,3)", nlpar = "delta")
+prior3_WL2 <- c(set_prior("normal(4,3)", nlpar="Hmin"),
+            set_prior("normal(25,10)",  nlpar="Hmax"),
+            set_prior("normal(1,2)", nlpar = "k", lb = 0), #gamma constrains to be > 0 
+            set_prior("gamma(4,2)", nlpar = "delta", lb = 0)
 )
 ```
 
 ### Fit the model
 
 ```{r}
-random_fit3_WL2 <- brm(formula=random_f3_WL2, data=all_wl2_size_for_models, prior=prior3_WL2, cores = 4, iter = 4000)
-
+random_fit3_WL2 <- brm(formula=random_f3_WL2, data=all_wl2_size_for_models, prior=prior3_WL2, cores = 4, iter = 3000)
+#Warning: There were 5024 divergent transitions after warmup. See https://mc-stan.org/misc/warnings.html#divergent-transitions-after-warmup to find out why this is a problem and how to eliminate them.
+#Warning: There were 3 transitions after warmup that exceeded the maximum treedepth. Increase max_treedepth above 10. See https://mc-stan.org/misc/warnings.html#maximum-treedepth-exceeded
+#Warning: There were 1 chains where the estimated Bayesian Fraction of Missing Information was low. See https://mc-stan.org/misc/warnings.html#bfmi-lowWarning: Examine the pairs() plot to diagnose sampling problems
+#Warning: The largest R-hat is 2.52, indicating chains have not mixed. Running the chains for more iterations may help. See https://mc-stan.org/misc/warnings.html#r-hat
+#Warning: Bulk Effective Samples Size (ESS) is too low, indicating posterior means and medians may be unreliable. Running the chains for more iterations may help. Seehttps://mc-stan.org/misc/warnings.html#bulk-ess
+#Warning: Tail Effective Samples Size (ESS) is too low, indicating posterior variances and tail quantiles may be unreliable. Running the chains for more iterations may help. See https://mc-stan.org/misc/warnings.html#tail-ess
 ```
 
 Summary
 
 ```{r}
 summary(random_fit3_WL2)
-
+#pretty terrible
 ```
 
 Plots
 
 ```{r}
 plot(random_fit3_WL2, N = 3, ask=FALSE)
-
+#pretty terrible
 ```
 
 ### Pairs
@@ -499,6 +543,7 @@ plot(random_fit3_WL2, N = 3, ask=FALSE)
 ```{r}
 pairs(random_fit3_WL2, variable = "TM2", regex = TRUE) 
 #look at correlation b/t hmax and k for each pop 
+#looks bad
 ```
 
 Predictions
@@ -511,7 +556,7 @@ random_fit3_WL2.predictions %>% ggplot(aes(x=day)) +
   geom_line(aes(group=Genotype, y=height.cm, color=parent.pop), alpha=.2) +
   geom_line(aes(y=prediction, color=parent.pop)) +
   facet_wrap(~parent.pop)
-
+#predictions look fine, but pretty similar to just Hmax varying 
 ```
 
 ## Let delta and hmax vary
@@ -525,23 +570,31 @@ random_f4_WL2 <- brmsformula(height.cm ~ Hmax - (Hmax - Hmin) * exp(-(k/100 * da
 ```
 
 ```{r}
-prior4_WL2 <- c(set_prior("normal(5,3)", nlpar="Hmin"),
-            set_prior("normal(60,15)",  nlpar="Hmax"),
-            set_prior("gamma(2,2)", nlpar = "k"), #gamma constrains to be > 0 
-            set_prior("gamma(20,3)", nlpar = "delta")
+prior4_WL2 <- c(set_prior("normal(4,3)", nlpar="Hmin"),
+            set_prior("normal(25,10)",  nlpar="Hmax"),
+            set_prior("gamma(1,2)", nlpar = "k", lb = 0), #gamma constrains to be > 0 
+            set_prior("gamma(4,2)", nlpar = "delta", lb = 0)
 )
 ```
 
 ```{r}
-random_fit4_WL2 <- brm(formula=random_f4_WL2, data=all_wl2_size_for_models, prior=prior4_WL2, cores = 4, iter = 4000)
+random_fit4_WL2 <- brm(formula=random_f4_WL2, data=all_wl2_size_for_models, prior=prior4_WL2, cores = 4, iter = 3000)
+
+#Warning: There were 6000 transitions after warmup that exceeded the maximum treedepth. Increase max_treedepth above 10. See https://mc-stan.org/misc/warnings.html#maximum-treedepth-exceeded
+#Warning: There were 1 chains where the estimated Bayesian Fraction of Missing Information was low. See https://mc-stan.org/misc/warnings.html#bfmi-lowWarning: Examine the pairs() plot to diagnose sampling problems
+#Warning: The largest R-hat is 3.16, indicating chains have not mixed. Running the chains for more iterations may help. See https://mc-stan.org/misc/warnings.html#r-hat
+#Warning: Bulk Effective Samples Size (ESS) is too low, indicating posterior means and medians may be unreliable. Running the chains for more iterations may help. See https://mc-stan.org/misc/warnings.html#bulk-ess
+#Warning: Tail Effective Samples Size (ESS) is too low, indicating posterior variances and tail quantiles may be unreliable. Running the chains for more iterations may help. See https://mc-stan.org/misc/warnings.html#tail-ess
 ```
 
 ```{r}
 summary(random_fit4_WL2)
+#pretty terrible
 ```
 
 ```{r}
 plot(random_fit4_WL2, N = 3, ask=FALSE)
+#pretty terrible
 ```
 
 Predictions
@@ -554,52 +607,7 @@ random_fit4_WL2.predictions %>% ggplot(aes(x=day)) +
   geom_line(aes(group=Genotype, y=height.cm, color=parent.pop), alpha=.2) +
   geom_line(aes(y=prediction, color=parent.pop)) +
   facet_wrap(~parent.pop)
-```
-
-## Let delta, k, and hmax vary
-
-```{r}
-random_f5_WL2 <- brmsformula(height.cm ~ Hmax - (Hmax - Hmin) * exp(-(k/100 * day)^delta),
-                  Hmin ~ 1,
-                  Hmax ~ (1|parent.pop), #different hmax for each pop #could also do Hmax + k  ~pop
-                  k ~ (1|parent.pop), #different hmax for each pop
-                  delta ~ (1|parent.pop),
-                  nl=TRUE)
-```
-
-```{r}
-prior5_WL2 <- c(set_prior("normal(5,3)", nlpar="Hmin"),
-            set_prior("normal(60,15)",  nlpar="Hmax"),
-            set_prior("gamma(2,2)", nlpar = "k"), #gamma constrains to be > 0 
-            set_prior("gamma(20,3)", nlpar = "delta")
-)
-            #first number = avg, second number = the space around that average to search 
-```
-
-```{r}
-random_fit5_WL2 <- brm(formula=random_f5_WL2, data=all_wl2_size_for_models, prior=prior5_WL2, cores = 4, iter = 4000)
-```
-
-```{r}
-summary(random_fit5_WL2)
-```
-
-```{r}
-plot(random_fit5_WL2, N = 3, ask=FALSE)
-
-pairs(random_fit5_WL2, variable = "DPR", regex = TRUE) #Want the correlations to be more cloud like (no obvious correlations among parameters)
-```
-
-Predictions
-
-```{r}
-random_fit5_WL2.predictions <- cbind(pred.df, prediction=predict(random_fit5_WL2, newdata = pred.df)[,"Estimate"]) %>%
-  full_join(all_wl2_size_for_models, by=c("day", "parent.pop"))
-
-random_fit5_WL2.predictions %>% ggplot(aes(x=day)) +
-  geom_line(aes(group=Genotype, y=height.cm, color=parent.pop), alpha=.2) +
-  geom_line(aes(y=prediction, color=parent.pop)) +
-  facet_wrap(~parent.pop)
+#predictions look fine but not much different from Hmax model 
 ```
 
 ## Model Comparison
@@ -607,8 +615,9 @@ random_fit5_WL2.predictions %>% ggplot(aes(x=day)) +
 ```{r}
 fit1_WL2 <- add_criterion(fit1_WL2, "loo")
 random_fit2_WL2 <- add_criterion(random_fit2_WL2, "loo")
-random_fit3_WL2 <- add_criterion(random_fit3_WL2, "loo")
-random_fit4_WL2 <- add_criterion(random_fit4_WL2, "loo")
-random_fit5_WL2 <- add_criterion(random_fit5_WL2, "loo")
-loo_compare(fit1_WL2, random_fit2_WL2, random_fit3_WL2, random_fit4_WL2, random_fit5_WL2)
+random_fit3_WL2 <- add_criterion(random_fit3_WL2, "loo") #Warning: Found 43 observations with a pareto_k > 0.7 in model 'random_fit3_WL2'. We recommend to set 'moment_match = TRUE' in order to perform moment matching for problematic observations.
+random_fit4_WL2 <- add_criterion(random_fit4_WL2, "loo") #Warning: Found 275 observations with a pareto_k > 0.7 in model 'random_fit4_WL2'. We recommend to set 'moment_match = TRUE' in order to perform moment matching for problematic observations. 
+loo_compare(fit1_WL2, random_fit2_WL2, random_fit3_WL2, random_fit4_WL2)
+#fit 2 the best as expected 
 ```
+

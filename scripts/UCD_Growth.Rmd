@@ -11,11 +11,12 @@ output:
 
 -   Is the growth rate lower for high elev b/c drier and biennial?
 
-To Do:
 
--   Get base models working
+Notes:
 
--   Add weekly temperature (not enough soil moisture data)
+-   Used sample size cut off of 3 or greater post-establishment, removed LV1 and WV
+
+-   Best base model = fit 5 (hmax, k, and delta vary)
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -30,7 +31,7 @@ library(brms)
 
 ## Need to make a csv file with all survey data for each plant
 
-Get list of size files
+### Get list of size files
 
 ```{r}
 pretrans_ucd <-  dir("../input/UCD_Data/CorrectedCSVs/",
@@ -44,7 +45,7 @@ posttrans_ucd <- dir("../input/UCD_Data/CorrectedCSVs/",
 posttrans_ucd
 ```
 
-Add data to a tibble
+### Add data to a tibble
 
 ```{r}
 pretrans_dat_ucd <- tibble(path=pretrans_ucd, filename=basename(path))
@@ -58,7 +59,7 @@ all_ucd_size <- bind_rows(pretrans_dat_ucd, posttrans_dat_ucd) %>%
 all_ucd_size
 ```
 
-Read in the files
+### Read in the files
 
 ```{r}
 all_ucd_size2 <- all_ucd_size %>%
@@ -73,9 +74,9 @@ all_ucd_size2 <- all_ucd_size %>%
 all_ucd_size2
 ```
 
-Check for data issues
+### Check for data issues
 
-```{r, eval=FALSE}
+```{r}
 map(all_ucd_size2$sheets, colnames) %>% #get unique column names 
   unlist() %>%
   unique() %>%
@@ -98,7 +99,7 @@ all_ucd_size2$sheets[[1]] <- all_ucd_size2$sheets[[1]] %>% filter(`germinated?`=
 #ALL ISSUES FIXED!
 ```
 
-Combine the data
+### Combine the data
 
 ```{r}
 all_ucd_size_all <- all_ucd_size2 %>% unnest(sheets) %>%
@@ -119,17 +120,16 @@ unique(all_ucd_size_all$parent.pop) #all 23 pops!
 ## Pop Location Info
 
 ```{r}
-gowersdist_UCD <- read_csv("../output/Climate/Gowers_UCD.csv")
-
-gowersdist_UCD_wider <- gowersdist_UCD %>% 
-  pivot_wider(names_from = TimePd, values_from = c(GrwSsn_GD, GrwSsn_FLINT_GD, GrwSsn_BIOCLIM_GD, Wtr_Year_GD, Wtr_Year_FLINT_GD, Wtr_Year_BIOCLIM_GD))
-head(gowersdist_UCD_wider)
+ucd_gowers <- read_csv("../output/Climate/Gowers_UCD.csv") %>% 
+  select(parent.pop:GrwSsn_GD, Wtr_Year_GD) %>% 
+  pivot_wider(names_from = TimePd, values_from = c(GrwSsn_GD, Wtr_Year_GD)) 
+head(ucd_gowers)
 ```
 
 Merge
 
 ```{r}
-all_ucd_size_loc <- left_join(all_ucd_size_all, gowersdist_UCD_wider) %>% 
+all_ucd_size_loc <- left_join(all_ucd_size_all, ucd_gowers) %>% 
   mutate(day=as.numeric(survey_date-min(survey_date)))
 head(all_ucd_size_loc)
 unique(all_ucd_size_loc$day)
@@ -140,20 +140,13 @@ unique(all_ucd_size_loc$day)
 ```{r}
 all_ucd_size_loc %>% 
   filter(!is.na(height.cm)) %>% 
-  group_by(survey_date, parent.pop) %>% 
+  group_by(day, survey_date, parent.pop) %>% 
   summarise(Sample_Size=n()) %>% 
-  #filter(day==0) %>% 
-  arrange(desc(survey_date))
+  filter(day<74) %>% #look at first 4 weeks (1st 3 = establishment) 
+  arrange(Sample_Size)
 
-all_ucd_size_loc %>% filter(day==0) 
-#WV only has 2 individuals so going to remove it 
-#LV1 only has 3 individuals, still keep it?
-
-all_ucd_size_for_models <- all_ucd_size_loc %>% 
-  filter(parent.pop != "WV") %>% 
-  filter(!is.na(height.cm))
-
-#Sam said that you want 10x the number of parameters (4) you are estimating. So should I remove everything with a saple size of less than ~35?
+#Use sample size cut off of 3 or greater post-establishment, remove:
+#WV, LV1
 ```
 
 ## Quick figure
@@ -189,11 +182,23 @@ all_ucd_size_all %>% filter(parent.pop=="WV") %>% arrange(Genotype) #no issues
 all_ucd_size_all %>% filter(parent.pop=="LV3") %>% filter(Genotype=="LV3_6_3") #grew and then immediately started to shrink 
 
 all_ucd_size_all %>% filter(parent.pop=="CP3") %>% arrange(Genotype) #Weird drop then increase in height for CP3_12_1
-all_ucd_size_all %>% filter(parent.pop=="SQ3") %>% filter(Genotype=="SQ3_4_3") #SOMETHING WEIRD HAPPENED WITH THIS PLANT 
+all_ucd_size_all %>% filter(parent.pop=="SQ3") %>% filter(Genotype=="SQ3_4_3") #SOMETHING WEIRD HAPPENED WITH THIS PLANT - remove it 
 
 ```
 
-## Model growth with the Weibull model
+```{r}
+all_ucd_size_for_models <- all_ucd_size_loc %>% 
+  filter(parent.pop != "WV", parent.pop!="LV1") %>% #consider also removing CP3 since no data after 1/27 
+  filter(Genotype !="SQ3_4_3") %>% 
+  filter(!is.na(height.cm))
+
+all_ucd_size_for_models %>% 
+  ggplot(aes(group=Genotype, x=survey_date, y=height.cm, col=elev_m)) + 
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_line() + facet_wrap(~parent.pop, scales = "free")
+```
+
+## Model growth with the Weibull model (fit1)
 
 ### Base Model
 
@@ -209,8 +214,8 @@ f1 <- brmsformula(height.cm ~ Hmax - (Hmax - Hmin) * exp(-(k/100 * day)^delta), 
 ```{r}
 prior1 <- c(set_prior("normal(5,3)", nlpar="Hmin"),
             set_prior("normal(60,15)",  nlpar="Hmax"),
-            set_prior("gamma(2,2)", nlpar = "k"), #gamma constrains to be > 0 
-            set_prior("gamma(20,3)", nlpar = "delta")
+            set_prior("gamma(2,2)", nlpar = "k", lb = 0), #gamma constrains to be > 0 
+            set_prior("gamma(20,3)", nlpar = "delta", lb = 0)
 )
 
 #Hmax = alpha -  Sets the asymptote (max growth)
@@ -229,7 +234,7 @@ Summary
 
 ```{r}
 summary(fit1)
-#Rhat and ESS are fine 
+#Rhat (1) and ESS (>100) are fine 
 ```
 
 Plots
@@ -252,7 +257,7 @@ fit1.prediction %>% ggplot(aes(x=day)) +
 #Predictions are clearly off, esp for TM2, good for BH 
 ```
 
-## Let Hmax vary
+## Let Hmax vary (fit2)
 
 ```{r}
 random_f2 <- brmsformula(height.cm ~ Hmax - (Hmax - Hmin) * exp(-(k/100 * day)^delta),
@@ -270,15 +275,15 @@ get_prior(random_f2, data = all_ucd_size_for_models)
 
 prior2 <- c(set_prior("normal(5,3)", nlpar="Hmin"),
             set_prior("normal(60,15)",  nlpar="Hmax"),
-            set_prior("gamma(2,2)", nlpar = "k"), #gamma constrains to be > 0 
-            set_prior("gamma(20,3)", nlpar = "delta")
+            set_prior("gamma(2,2)", nlpar = "k", lb = 0), #gamma constrains to be > 0 
+            set_prior("gamma(20,3)", nlpar = "delta", lb = 0)
 ) #same as prior 1 for now 
 ```
 
 ### Fit the model
 
 ```{r}
-random_fit2 <- brm(formula=random_f2, data=all_ucd_size_for_models, prior=prior2, cores = 4, iter = 3000) #increase iterations b/c more complex (helps with Rhat and ESS)
+random_fit2 <- brm(formula=random_f2, data=all_ucd_size_for_models, prior=prior2, cores = 4, iter = 2500) #increase iterations b/c more complex (helps with Rhat and ESS)
 ```
 
 Summary
@@ -321,7 +326,7 @@ random_fit2.predictions %>% filter(parent.pop=="BH") %>%
 #not really capturing the curve well for any parent.pop
 ```
 
-## Vary slope (k) and asymptote (Hmax) by pop
+## Vary slope (k) and asymptote (Hmax) by pop (fit3)
 
 ```{r}
 random_f3 <- brmsformula(height.cm ~ Hmax - (Hmax - Hmin) * exp(-(k/100 * day)^delta),
@@ -339,27 +344,41 @@ get_prior(random_f3, data=all_ucd_size_for_models)
 
 prior3 <- c(set_prior("normal(5,3)", nlpar="Hmin"),
             set_prior("normal(60,15)",  nlpar="Hmax"),
-            set_prior("normal(0,1)", nlpar = "k"), #gamma constrains to be > 0 
-            set_prior("gamma(20,3)", nlpar = "delta")
+            set_prior("normal(0,1)", nlpar = "k", lb = 0), #gamma constrains to be > 0 
+            set_prior("gamma(20,3)", nlpar = "delta", lb = 0)
 )
 ```
 
 ### Fit the model
 
 ```{r}
-random_fit3 <- brm(formula=random_f3, data=all_ucd_size_for_models, prior=prior3, cores = 4, iter = 4000)
-#Warning: There were 1299 divergent transitions after warmup. See
-#https://mc-stan.org/misc/warnings.html#divergent-transitions-after-warmup
-#to find out why this is a problem and how to eliminate them.Warning: There were 181 transitions after warmup that exceeded #the maximum treedepth. Increase max_treedepth above 10. See
-#https://mc-stan.org/misc/warnings.html#maximum-treedepth-exceededWarning: Examine the pairs() plot to diagnose sampling #problems
+random_fit3 <- brm(formula=random_f3, data=all_ucd_size_for_models, prior=prior3, cores = 4, iter = 3000)
+#Warnings!
 ```
+
+Tried 2500 iterations:
+
+-   Warning: There were 2146 divergent transitions after warmup. See <https://mc-stan.org/misc/warnings.html#divergent-transitions-after-warmup> to find out why this is a problem and how to eliminate them.
+
+-   Warning: There were 66 transitions after warmup that exceeded the maximum treedepth. Increase max_treedepth above 10. See <https://mc-stan.org/misc/warnings.html#maximum-treedepth-exceededWarning>: Examine the pairs() plot to diagnose sampling problems
+
+-   Warning: The largest R-hat is 1.59, indicating chains have not mixed. Running the chains for more iterations may help. See <https://mc-stan.org/misc/warnings.html#r-hatWarning>:
+
+-   Bulk Effective Samples Size (ESS) is too low, indicating posterior means and medians may be unreliable. Running the chains for more iterations may help. See <https://mc-stan.org/misc/warnings.html#bulk-essWarning>:
+
+-   Tail Effective Samples Size (ESS) is too low, indicating posterior variances and tail quantiles may be unreliable. Running the chains for more iterations may help. See <https://mc-stan.org/misc/warnings.html#tail-ess>
+
+Tried 3000 iterations:
+
+-   Warning: There were 1601 divergent transitions after warmup. See <https://mc-stan.org/misc/warnings.html#divergent-transitions-after-warmup> to find out why this is a problem and how to eliminate them.
+
+-   Warning: Examine the pairs() plot to diagnose sampling problems
 
 Summary
 
 ```{r}
 summary(random_fit3)
-#Rhat is high, but ESS is low for sd(k_Intercept) and k_Intercept
-#Warning: There were 2350 divergent transitions after warmup. Increasing adapt_delta above 0.8 may help.
+#Rhat and ESS/BESS pretty bad 
 ```
 
 Plots
@@ -389,30 +408,33 @@ random_fit3.predictions %>% ggplot(aes(x=day)) +
 #looks better even though the fit diagnostics aren't perfect
 ```
 
-## Let delta and hmax vary
+## Let delta and hmax vary (fit4)
 
 ```{r}
 random_f4 <- brmsformula(height.cm ~ Hmax - (Hmax - Hmin) * exp(-(k/100 * day)^delta),
                   Hmin + k ~ 1,
-                  Hmax ~ (1|parent.pop), #different hmax for each pop #could also do Hmax + k  ~pop
-                  delta ~ (1|parent.pop), #different hmax for each pop
+                  Hmax ~ (1|parent.pop), #different hmax for each pop 
+                  delta ~ (1|parent.pop), #different delta for each pop
                   nl=TRUE)
 ```
 
 ```{r}
 prior4 <- c(set_prior("normal(5,3)", nlpar="Hmin"),
             set_prior("normal(60,15)",  nlpar="Hmax"),
-            set_prior("gamma(2,2)", nlpar = "k"), #gamma constrains to be > 0 
-            set_prior("gamma(20,3)", nlpar = "delta")
+            set_prior("gamma(2,2)", nlpar = "k", lb = 0), #gamma constrains to be > 0 
+            set_prior("gamma(20,3)", nlpar = "delta", lb = 0)
 )
 ```
 
 ```{r}
-random_fit4 <- brm(formula=random_f4, data=all_ucd_size_for_models, prior=prior4, cores = 4, iter = 4000)
+random_fit4 <- brm(formula=random_f4, data=all_ucd_size_for_models, prior=prior4, cores = 4, iter = 3000)
 ```
+
+With 3000 iterations: Warning: There were 12 divergent transitions after warmup. See <https://mc-stan.org/misc/warnings.html#divergent-transitions-after-warmup> to find out why this is a problem and how to eliminate them.Warning: Examine the pairs() plot to diagnose sampling problems
 
 ```{r}
 summary(random_fit4)
+#rhat and ESS look fine 
 ```
 
 ```{r}
@@ -431,13 +453,15 @@ random_fit4.predictions %>% ggplot(aes(x=day)) +
   facet_wrap(~parent.pop)
 ```
 
-## Let delta, k, and hmax vary
+Predictions look decent, TM2 still a little weird
+
+## Let delta, k, and hmax vary (fit5)
 
 ```{r}
 random_f5 <- brmsformula(height.cm ~ Hmax - (Hmax - Hmin) * exp(-(k/100 * day)^delta),
                   Hmin ~ 1,
-                  Hmax ~ (1|parent.pop), #different hmax for each pop #could also do Hmax + k  ~pop
-                  k ~ (1|parent.pop), #different hmax for each pop
+                  Hmax ~ (1|parent.pop), 
+                  k ~ (1|parent.pop),
                   delta ~ (1|parent.pop),
                   nl=TRUE)
 ```
@@ -445,15 +469,81 @@ random_f5 <- brmsformula(height.cm ~ Hmax - (Hmax - Hmin) * exp(-(k/100 * day)^d
 ```{r}
 prior5 <- c(set_prior("normal(5,3)", nlpar="Hmin"),
             set_prior("normal(60,15)",  nlpar="Hmax"),
-            set_prior("gamma(2,2)", nlpar = "k"), #gamma constrains to be > 0 
-            set_prior("gamma(20,3)", nlpar = "delta")
+            set_prior("gamma(2,2)", nlpar = "k", lb = 0), #gamma constrains to be > 0 
+            set_prior("gamma(20,3)", nlpar = "delta", lb = 0)
 )
             #first number = avg, second number = the space around that average to search 
 ```
 
+
 ```{r}
-random_fit5 <- brm(formula=random_f5, data=all_ucd_size_for_models, prior=prior5, cores = 4, iter = 4000)
+random_fit5 <- brm(formula=random_f5, data=all_ucd_size_for_models, prior=prior5, iter = 3800, cores=4)
+#cores = 3
+                    #,control = list(adapt_delta=0.82)) #attempt to reduce divergent transitions 
+
+#keep getting errors like this: Error in serialize(data, node$con, xdr = FALSE) : ignoring SIGPIPE signal Calls: <Anonymous> ... doTryCatch -> sendData -> sendData.SOCK0node -> serialize Execution halted
+
+#8 total cores
+#Warning: There were 2498 divergent transitions after warmup. See https://mc-stan.org/misc/warnings.html#divergent-transitions-after-warmup to find out why this is a problem and how to eliminate them.Warning: Examine the pairs() plot to diagnose sampling problems
 ```
+
+With 3000 iterations, adapt_delta=0.8:
+
+-   Warning: There were 2104 divergent transitions after warmup. See <https://mc-stan.org/misc/warnings.html#divergent-transitions-after-warmup> to find out why this is a problem and how to eliminate them.
+
+-   Warning: Examine the pairs() plot to diagnose sampling problems
+
+With 3000 iterations, adapt_delta=0.85:
+
+-   Warning: There were 3153 divergent transitions after warmup. See <https://mc-stan.org/misc/warnings.html#divergent-transitions-after-warmup> to find out why this is a problem and how to eliminate them.
+
+-   Warning: There were 1 chains where the estimated Bayesian Fraction of Missing Information was low. See <https://mc-stan.org/misc/warnings.html#bfmi-lowWarning>:
+
+-   Examine the pairs() plot to diagnose sampling problems
+
+-   Warning: The largest R-hat is 2.51, indicating chains have not mixed. Running the chains for more iterations may help. See <https://mc-stan.org/misc/warnings.html#r-hatWarning>:
+
+-   Bulk Effective Samples Size (ESS) is too low, indicating posterior means and medians may be unreliable. Running the chains for more iterations may help. See <https://mc-stan.org/misc/warnings.html#bulk-essWarning>:
+
+-   Tail Effective Samples Size (ESS) is too low, indicating posterior variances and tail quantiles may be unreliable. Running the chains for more iterations may help. See <https://mc-stan.org/misc/warnings.html#tail-ess>
+
+With 3500 iterations, adapt_delta=0.85:
+
+-   Warning: There were 3560 divergent transitions after warmup. See <https://mc-stan.org/misc/warnings.html#divergent-transitions-after-warmup> to find out why this is a problem and how to eliminate them.
+
+-   Warning: Examine the pairs() plot to diagnose sampling problems
+
+-   Warning: The largest R-hat is 1.61, indicating chains have not mixed. Running the chains for more iterations may help. See <https://mc-stan.org/misc/warnings.html#r-hatWarning>:
+
+-   Bulk Effective Samples Size (ESS) is too low, indicating posterior means and medians may be unreliable. Running the chains for more iterations may help. See <https://mc-stan.org/misc/warnings.html#bulk-essWarning>:
+
+-   Tail Effective Samples Size (ESS) is too low, indicating posterior variances and tail quantiles may be unreliable. Running the chains for more iterations may help. See <https://mc-stan.org/misc/warnings.html#tail-ess>
+
+With 3500 iterations, adapt_delta=0.8:
+
+-   Warning: There were 2708 divergent transitions after warmup. See <https://mc-stan.org/misc/warnings.html#divergent-transitions-after-warmup> to find out why this is a problem and how to eliminate them.
+
+-   Warning: Examine the pairs() plot to diagnose sampling problems
+
+-   Warning: The largest R-hat is 1.53, indicating chains have not mixed. Running the chains for more iterations may help. See <https://mc-stan.org/misc/warnings.html#r-hatWarning>:
+
+-   Bulk Effective Samples Size (ESS) is too low, indicating posterior means and medians may be unreliable. Running the chains for more iterations may help. See <https://mc-stan.org/misc/warnings.html#bulk-essWarning>:
+
+-   Tail Effective Samples Size (ESS) is too low, indicating posterior variances and tail quantiles may be unreliable. Running the chains for more iterations may help. See <https://mc-stan.org/misc/warnings.html#tail-ess>
+
+With 2000 iterations, adapt_delta=0.8:
+
+-   Warning: There were 1929 divergent transitions after warmup. See <https://mc-stan.org/misc/warnings.html#divergent-transitions-after-warmup> to find out why this is a problem and how to eliminate them.
+
+-   Warning: There were 1 chains where the estimated Bayesian Fraction of Missing Information was low. See <https://mc-stan.org/misc/warnings.html#bfmi-lowWarning>:
+
+-   Examine the pairs() plot to diagnose sampling problems
+
+-   Warning: The largest R-hat is 1.62, indicating chains have not mixed. Running the chains for more iterations may help. See <https://mc-stan.org/misc/warnings.html#r-hatWarning>:
+
+-   Bulk Effective Samples Size (ESS) is too low, indicating posterior means and medians may be unreliable. Running the chains for more iterations may help. See <https://mc-stan.org/misc/warnings.html#bulk-essWarning>:
+
+-   Tail Effective Samples Size (ESS) is too low, indicating posterior variances and tail quantiles may be unreliable. Running the chains for more iterations may help. See <https://mc-stan.org/misc/warnings.html#tail-ess>
 
 ```{r}
 summary(random_fit5)
@@ -461,8 +551,10 @@ summary(random_fit5)
 
 ```{r}
 plot(random_fit5, N = 3, ask=FALSE)
+#some chain weridness
 
 pairs(random_fit5, variable = "DPR", regex = TRUE) #Want the correlations to be more cloud like (no obvious correlations among parameters)
+#clear correlations between Hmax, r, and delta 
 ```
 
 Predictions
@@ -476,6 +568,119 @@ random_fit5.predictions %>% ggplot(aes(x=day)) +
   geom_line(aes(y=prediction, color=parent.pop)) +
   facet_wrap(~parent.pop)
 ```
+## Let only k vary (fit6)
+```{r}
+random_f6 <- brmsformula(height.cm ~ Hmax - (Hmax - Hmin) * exp(-(k/100 * day)^delta),
+                  Hmin + Hmax + delta ~ 1,
+                  k ~ (1|parent.pop),
+                  nl=TRUE)
+
+prior6 <- c(set_prior("normal(5,3)", nlpar="Hmin"),
+            set_prior("normal(60,15)",  nlpar="Hmax"),
+            set_prior("gamma(2,2)", nlpar = "k", lb = 0), #gamma constrains to be > 0 
+            set_prior("gamma(20,3)", nlpar = "delta", lb = 0)
+)
+
+random_fit6 <- brm(formula=random_f6, data=all_ucd_size_for_models, prior=prior6, iter = 4000, cores=4)
+```
+
+```{r}
+summary(random_fit6)
+```
+
+```{r}
+plot(random_fit6, nvariables = 3, ask=FALSE)
+```
+
+Predictions
+
+```{r}
+random_fit6.predictions <- cbind(pred.df, prediction=predict(random_fit6, newdata = pred.df)[,"Estimate"]) %>%
+  full_join(all_ucd_size_for_models, by=c("day", "parent.pop"))
+
+random_fit6.predictions %>% ggplot(aes(x=day)) +
+  geom_line(aes(group=Genotype, y=height.cm, color=parent.pop), alpha=.2) +
+  geom_line(aes(y=prediction, color=parent.pop)) +
+  facet_wrap(~parent.pop)
+```
+
+## Let delta vary (fit7)
+```{r}
+random_f7 <- brmsformula(height.cm ~ Hmax - (Hmax - Hmin) * exp(-(k/100 * day)^delta),
+                  Hmin + Hmax + k ~ 1,
+                  delta ~ (1|parent.pop),
+                  nl=TRUE)
+
+prior7 <- c(set_prior("normal(5,3)", nlpar="Hmin"),
+            set_prior("normal(60,15)",  nlpar="Hmax"),
+            set_prior("gamma(2,2)", nlpar = "k", lb = 0), #gamma constrains to be > 0 
+            set_prior("gamma(20,3)", nlpar = "delta", lb = 0)
+)
+
+random_fit7 <- brm(formula=random_f7, data=all_ucd_size_for_models, prior=prior7, iter = 4000, cores=4)
+```
+
+```{r}
+summary(random_fit7)
+#pretty bad fit diagnostics 
+```
+
+```{r}
+plot(random_fit7, nvariables = 3, ask=FALSE)
+#some chain weridness
+```
+
+Predictions
+
+```{r}
+random_fit7.predictions <- cbind(pred.df, prediction=predict(random_fit7, newdata = pred.df)[,"Estimate"]) %>%
+  full_join(all_ucd_size_for_models, by=c("day", "parent.pop"))
+
+random_fit7.predictions %>% ggplot(aes(x=day)) +
+  geom_line(aes(group=Genotype, y=height.cm, color=parent.pop), alpha=.2) +
+  geom_line(aes(y=prediction, color=parent.pop)) +
+  facet_wrap(~parent.pop)
+#not great
+```
+
+## Let k and delta vary (fit8)
+```{r}
+random_f8 <- brmsformula(height.cm ~ Hmax - (Hmax - Hmin) * exp(-(k/100 * day)^delta),
+                  Hmin + Hmax ~ 1,
+                  k + delta ~ (1|parent.pop),
+                  nl=TRUE)
+
+prior8 <- c(set_prior("normal(5,3)", nlpar="Hmin"),
+            set_prior("normal(60,15)",  nlpar="Hmax"),
+            set_prior("gamma(2,2)", nlpar = "k", lb = 0), #gamma constrains to be > 0 
+            set_prior("gamma(20,3)", nlpar = "delta", lb = 0)
+)
+
+random_fit8 <- brm(formula=random_f8, data=all_ucd_size_for_models, prior=prior8, iter = 4000, cores=4)
+```
+
+```{r}
+summary(random_fit8)
+#pretty bad fit diagnostics 
+```
+
+```{r}
+plot(random_fit8, nvariables = 3, ask=FALSE)
+#some chain weridness
+```
+
+Predictions
+
+```{r}
+random_fit8.predictions <- cbind(pred.df, prediction=predict(random_fit8, newdata = pred.df)[,"Estimate"]) %>%
+  full_join(all_ucd_size_for_models, by=c("day", "parent.pop"))
+
+random_fit8.predictions %>% ggplot(aes(x=day)) +
+  geom_line(aes(group=Genotype, y=height.cm, color=parent.pop), alpha=.2) +
+  geom_line(aes(y=prediction, color=parent.pop)) +
+  facet_wrap(~parent.pop)
+```
+
 
 ## Model Comparison
 
@@ -484,6 +689,16 @@ fit1 <- add_criterion(fit1, "loo")
 random_fit2 <- add_criterion(random_fit2, "loo")
 random_fit3 <- add_criterion(random_fit3, "loo")
 random_fit4 <- add_criterion(random_fit4, "loo")
-random_fit5 <- add_criterion(random_fit5, "loo")
-loo_compare(fit1, random_fit2, random_fit3, random_fit4, random_fit5)
+random_fit5 <- add_criterion(random_fit5, "loo") 
+random_fit6 <- add_criterion(random_fit6, "loo") #Warning: Found 1 observations with a pareto_k > 0.7 in model 'random_fit6'. We recommend to set 'moment_match = TRUE' in order to perform moment matching for problematic observations.
+random_fit7 <- add_criterion(random_fit7, "loo") #Warning: Found 9 observations with a pareto_k > 0.7 in model 'random_fit7'. We recommend to set 'moment_match = TRUE' in order to perform moment matching for problematic observations.
+random_fit8 <- add_criterion(random_fit8, "loo") #Warning: Found 12 observations with a pareto_k > 0.7 in model 'random_fit8'. We recommend to set 'moment_match = TRUE' in order to perform moment matching for problematic observations. 
+loo_compare(fit1, random_fit2, random_fit3, random_fit4, random_fit5, random_fit6, random_fit7,random_fit8)
+#fit5 the best, fit3 2nd best, fit4 3rd best, fit6 4th best 
 ```
+
+## Fit 5 + Temp
+```{r}
+
+```
+
