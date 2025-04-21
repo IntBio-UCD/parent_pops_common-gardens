@@ -893,13 +893,14 @@ all_bioclim_flint_avgs_locs.pc_dist <- all_bioclim_flint_avgs_locs.pc %>% ungrou
 dist_matrix_grwssn <- dist(all_bioclim_flint_avgs_locs.pc_dist, method = "euclidian") #use a distance function to calculate euclidian distance in PCA space
 permanova_results_grwssn <- adonis2(dist_matrix_grwssn ~ TimePd*elev_m*Lat, data = all_bioclim_flint_avgs_locs.pc) #use adonis2 to run the permanova
 #rows in data must be in same order as rows in distance matrix 
+#by = NULL will assess the overall significance of all terms together
 
 #look at output 
 summary(permanova_results_grwssn)
 permanova_results_grwssn
 permanova_results_grwssn$`Pr(>F)`
 
-permanova_results_grwssn_terms <- adonis2(dist_matrix_grwssn ~ TimePd*elev_m*Lat, data = all_bioclim_flint_avgs_locs.pc, by = "terms")
+permanova_results_grwssn_terms <- adonis2(dist_matrix_grwssn ~ TimePd*elev_m*Lat, data = all_bioclim_flint_avgs_locs.pc, by = "terms") #by = "terms" will assess significance for each term (sequentially from first to last)
 permanova_results_grwssn_terms
 ```
 
