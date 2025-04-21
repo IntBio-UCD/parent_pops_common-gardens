@@ -334,10 +334,9 @@ temp_fit1.predictions %>% ggplot(aes(x=day)) +
 all_wl2_size_for_models_temp_fit2 <- all_wl2_size_for_models_climate %>% drop_na(min_temp_d1_7)
 
 temp_fit2 <- brm(formula=temp_f2, data=all_wl2_size_for_models_temp_fit2, prior=prior1_wl2, iter = 3800, cores=4)
-#Warning: There were 102 transitions after warmup that exceeded the maximum treedepth. Increase max_treedepth above 10. See https://mc-stan.org/misc/warnings.html#maximum-treedepth-exceeded
-#Warning: Examine the pairs() plot to diagnose sampling problems
-summary(temp_fit2)
-plot(temp_fit2, nvariables = 3, ask=FALSE)
+#Warning: There were 257 transitions after warmup that exceeded the maximum treedepth. Increase max_treedepth above 10. See https://mc-stan.org/misc/warnings.html#maximum-treedepth-exceededWarning: Examine the pairs() plot to diagnose sampling problems
+summary(temp_fit2) #some ESS kind of low 
+plot(temp_fit2, nvariables = 3, ask=FALSE) #some Hmax chain weirdness 
 ```
 
 ### Mean D1-7 (fit3)
