@@ -890,11 +890,17 @@ all_bioclim_flint_avgs_locs.pc_avg %>%
 See Jenny's github: https://github.com/jrgremer/Seedbanks_drought_deluge  
 ```{r}
 all_bioclim_flint_avgs_locs.pc_dist <- all_bioclim_flint_avgs_locs.pc %>% ungroup() %>% select(PC1:PC7)
-dist_matrix_all_year <- dist(all_bioclim_flint_avgs_locs.pc_dist, method = "euclidian") #use a distance function to calculate euclidian distance in PCA space
-permanova_results_all_year <- adonis2(dist_matrix_all_year ~ TimePd*elev_m*Lat, data = all_bioclim_flint_avgs_locs.pc) #use adonis2 to run the permanova
+dist_matrix_grwssn <- dist(all_bioclim_flint_avgs_locs.pc_dist, method = "euclidian") #use a distance function to calculate euclidian distance in PCA space
+permanova_results_grwssn <- adonis2(dist_matrix_grwssn ~ TimePd*elev_m*Lat, data = all_bioclim_flint_avgs_locs.pc) #use adonis2 to run the permanova
 #rows in data must be in same order as rows in distance matrix 
-summary(permanova_results_all_year)
-permanova_results_all_year
+
+#look at output 
+summary(permanova_results_grwssn)
+permanova_results_grwssn
+permanova_results_grwssn$`Pr(>F)`
+
+permanova_results_grwssn_terms <- adonis2(dist_matrix_grwssn ~ TimePd*elev_m*Lat, data = all_bioclim_flint_avgs_locs.pc, by = "terms")
+permanova_results_grwssn_terms
 ```
 
 ## LM on PCs (follow up on permanova)
@@ -902,7 +908,7 @@ permanova_results_all_year
 For each PC fit a model with timepd and parent.pop/elev to test for climate change
 
 ```{r}
-lmer_results <- all_bioclim_flint_avgs_locs.pc %>%
+lmer_results_grwssn <- all_bioclim_flint_avgs_locs.pc %>%
   ungroup() %>% 
   select(TimePd, parent.pop, elev_m, Lat, Long, PC1:PC10) %>% 
   pivot_longer(starts_with("PC", ignore.case = FALSE), 
@@ -913,23 +919,23 @@ lmer_results <- all_bioclim_flint_avgs_locs.pc %>%
                                data=.x)),
          anova = map(glm, ~ broom.mixed::tidy(anova(.x))))
 
-lmer_results
+lmer_results_grwssn
 ```
 
 ```{r}
-PC_anova <- lmer_results %>% select(-data, -glm) %>% unnest(anova) %>%
+PC_anova <- lmer_results_grwssn %>% select(-data, -glm) %>% unnest(anova) %>%
   select(PC, term, p.value) %>%
   filter(p.value < 0.05) %>%
   arrange(term, p.value)
 
 PC_anova
 
-lmer_results %>% select(-data, -glm) %>% unnest(anova) %>%
-  filter(PC=="PC2"| PC=="PC4")
+lmer_results_grwssn %>% select(-data, -glm) %>% unnest(anova) %>%
+  filter(PC=="PC2"| PC=="PC4") #the two PCs with most sig p-values for timepd
 
-mod_test <- glm(PC4 ~ TimePd*elev_m*Lat, data=all_bioclim_flint_avgs_locs.pc)
+#mod_test <- glm(PC4 ~ TimePd*elev_m*Lat, data=all_bioclim_flint_avgs_locs.pc)
 #summary(mod_test)
-anova(mod_test)
+#anova(mod_test)
 ```
 
 ```{r}
