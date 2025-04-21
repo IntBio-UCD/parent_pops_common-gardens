@@ -1,7 +1,7 @@
 ---
 title: "Total Fitness"
 author: "Brandie QC"
-date: "2025-04-09"
+date: "2025-04-21"
 output: 
   html_document: 
     keep_md: true
@@ -182,7 +182,7 @@ library(tidymodels)
 ## ✖ infer::t_test()       masks rstatix::t_test()
 ## ✖ Matrix::unpack()      masks tidyr::unpack()
 ## ✖ recipes::update()     masks Matrix::update(), stats::update()
-## • Use suppressPackageStartupMessages() to eliminate package startup messages
+## • Use tidymodels_prefer() to resolve common conflicts.
 ```
 
 ``` r
@@ -225,6 +225,12 @@ library(modelr) #for data grid
 sem <- function(x, na.rm=FALSE) {           #for caclulating standard error
   sd(x,na.rm=na.rm)/sqrt(length(na.omit(x)))
 } 
+
+#load inv.logit function
+inv.logit <- function(f,a) {
+  a <- (1-2*a)
+  (a*(1+exp(f))+(exp(f)-1))/(2*a*(1+exp(f)))
+}
 
 cbbPalette2 <- c("#E69F00","#000000", "#56B4E9","#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
 timepd_palette <- c("#56B4E9","#D55E00")
@@ -2736,18 +2742,21 @@ ggsave("../output/WL2_Traits/WL2_ProbFitness_SCATTERS_Summary_Recent.png", width
 
 #### Attempt at calculating mean and standard error in logit scale
 
+Get Block means
 
 ``` r
 ##block summary
 wl2_prob_fit_block_summary <- wl2_total_fitness %>%  
   mutate(ProbFitness=if_else(Total_Fitness==0, 0, 1)) %>% 
-  group_by(pop, block, Geographic_Dist) %>% 
+  group_by(pop, block, Geographic_Dist, 
+           Wtr_Year_GD_Recent, Wtr_Year_GD_Historical, GrwSsn_GD_Recent, GrwSsn_GD_Historical) %>% 
   summarise(meanProbBlock=mean(ProbFitness, na.rm = TRUE), n=n())
 ```
 
 ```
-## `summarise()` has grouped output by 'pop', 'block'. You can override using the
-## `.groups` argument.
+## `summarise()` has grouped output by 'pop', 'block', 'Geographic_Dist',
+## 'Wtr_Year_GD_Recent', 'Wtr_Year_GD_Historical', 'GrwSsn_GD_Recent'. You can
+## override using the `.groups` argument.
 ```
 
 ``` r
@@ -2811,6 +2820,204 @@ wl2_total_fitness %>%
 ## # ℹ 13 more rows
 ```
 
+Use Car::loigt and Jenny's inv.logit function 
+
+``` r
+#check back transformation works 
+wl2_prob_fit_block_summary %>% 
+  mutate(logitBlockMean=car::logit(meanProbBlock, adjust = 0.025)) %>% 
+  mutate(BTlogit=inv.logit(logitBlockMean, a=0.025))
+```
+
+```
+## # A tibble: 288 × 11
+## # Groups:   pop, block, Geographic_Dist, Wtr_Year_GD_Recent,
+## #   Wtr_Year_GD_Historical, GrwSsn_GD_Recent [288]
+##    pop   block Geographic_Dist Wtr_Year_GD_Recent Wtr_Year_GD_Historical
+##    <chr> <chr>           <dbl>              <dbl>                  <dbl>
+##  1 BH    A             159626.              0.714                  0.647
+##  2 BH    B             159626.              0.714                  0.647
+##  3 BH    C             159626.              0.714                  0.647
+##  4 BH    D             159626.              0.714                  0.647
+##  5 BH    E             159626.              0.714                  0.647
+##  6 BH    F             159626.              0.714                  0.647
+##  7 BH    G             159626.              0.714                  0.647
+##  8 BH    H             159626.              0.714                  0.647
+##  9 BH    I             159626.              0.714                  0.647
+## 10 BH    J             159626.              0.714                  0.647
+## # ℹ 278 more rows
+## # ℹ 6 more variables: GrwSsn_GD_Recent <dbl>, GrwSsn_GD_Historical <dbl>,
+## #   meanProbBlock <dbl>, n <int>, logitBlockMean <dbl>, BTlogit <dbl>
+```
+
+``` r
+#check back transformation of means 
+wl2_prob_fit_block_summary %>% 
+  mutate(logitBlockMean=car::logit(meanProbBlock, adjust = 0.025)) %>% 
+  ungroup() %>% 
+  group_by(pop, Geographic_Dist, 
+           Wtr_Year_GD_Recent, Wtr_Year_GD_Historical, 
+           GrwSsn_GD_Recent, GrwSsn_GD_Historical) %>% 
+  summarise(meanProb=mean(meanProbBlock, na.rm=TRUE), 
+            semProb=sem(meanProbBlock, na.rm=TRUE),
+            meanLogit=mean(logitBlockMean, na.rm=TRUE), 
+            semLogit=sem(logitBlockMean, na.rm=TRUE)) %>% 
+  mutate(Btmean=inv.logit(meanLogit, a=0.025)) #much smaller values than meanProb...
+```
+
+```
+## `summarise()` has grouped output by 'pop', 'Geographic_Dist',
+## 'Wtr_Year_GD_Recent', 'Wtr_Year_GD_Historical', 'GrwSsn_GD_Recent'. You can
+## override using the `.groups` argument.
+```
+
+```
+## # A tibble: 23 × 11
+## # Groups:   pop, Geographic_Dist, Wtr_Year_GD_Recent, Wtr_Year_GD_Historical,
+## #   GrwSsn_GD_Recent [23]
+##    pop   Geographic_Dist Wtr_Year_GD_Recent Wtr_Year_GD_Historical
+##    <chr>           <dbl>              <dbl>                  <dbl>
+##  1 BH            159626.              0.714                  0.647
+##  2 CC            132498.              0.606                  0.569
+##  3 CP2            21060.              0.387                  0.437
+##  4 CP3            19415.              0.364                  0.423
+##  5 DPR            66246.              0.468                  0.457
+##  6 FR            154694.              0.559                  0.554
+##  7 IH             65203.              0.551                  0.530
+##  8 LV1           212682.              0.378                  0.463
+##  9 LV3           213902.              0.373                  0.466
+## 10 LVTR1         213038.              0.385                  0.465
+## # ℹ 13 more rows
+## # ℹ 7 more variables: GrwSsn_GD_Recent <dbl>, GrwSsn_GD_Historical <dbl>,
+## #   meanProb <dbl>, semProb <dbl>, meanLogit <dbl>, semLogit <dbl>,
+## #   Btmean <dbl>
+```
+
+``` r
+#try without 0s and 1s
+wl2_logit_compare2 <- wl2_prob_fit_block_summary %>% 
+  filter(meanProbBlock>0, meanProbBlock<1) %>% 
+  mutate(logitBlockMean=car::logit(meanProbBlock, adjust = 0.025)) %>% 
+  ungroup() %>% 
+  group_by(pop, Geographic_Dist, 
+           Wtr_Year_GD_Recent, Wtr_Year_GD_Historical, 
+           GrwSsn_GD_Recent, GrwSsn_GD_Historical) %>% 
+  summarise(meanProb=mean(meanProbBlock, na.rm=TRUE), 
+            semProb=sem(meanProbBlock, na.rm=TRUE),
+            meanLogit=mean(logitBlockMean, na.rm=TRUE), 
+            semLogit=sem(logitBlockMean, na.rm=TRUE)) %>% 
+  mutate(Btmean=inv.logit(meanLogit, a=0.025)) #much smaller values than meanProb...
+```
+
+```
+## `summarise()` has grouped output by 'pop', 'Geographic_Dist',
+## 'Wtr_Year_GD_Recent', 'Wtr_Year_GD_Historical', 'GrwSsn_GD_Recent'. You can
+## override using the `.groups` argument.
+```
+
+Make comparison figures 
+
+``` r
+wl2_logit_compare <- wl2_prob_fit_block_summary %>% 
+  mutate(logitBlockMean=car::logit(meanProbBlock, adjust = 0.025)) %>% 
+  ungroup() %>% 
+  group_by(pop, Geographic_Dist, 
+           Wtr_Year_GD_Recent, Wtr_Year_GD_Historical, 
+           GrwSsn_GD_Recent, GrwSsn_GD_Historical) %>% 
+  summarise(meanProb=mean(meanProbBlock, na.rm=TRUE), 
+            semProb=sem(meanProbBlock, na.rm=TRUE),
+            meanLogit=mean(logitBlockMean, na.rm=TRUE), 
+            semLogit=sem(logitBlockMean, na.rm=TRUE)) %>% 
+  mutate(Btmean=inv.logit(meanLogit, a=0.025)) %>% 
+  mutate(HighError=meanLogit+semLogit, LowError=meanLogit-semLogit) %>% 
+  mutate(Btmean=inv.logit(meanLogit, a=0.025),
+         BtHigh=inv.logit(HighError, a=0.025),
+         BtLow=inv.logit(LowError, a=0.025))
+```
+
+```
+## `summarise()` has grouped output by 'pop', 'Geographic_Dist',
+## 'Wtr_Year_GD_Recent', 'Wtr_Year_GD_Historical', 'GrwSsn_GD_Recent'. You can
+## override using the `.groups` argument.
+```
+
+``` r
+wl2_logit_compare %>% 
+  ggplot(aes(x=Wtr_Year_GD_Recent, y=Btmean, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=BtLow,ymax=BtHigh), width=.02, linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  ggtitle("Back-Transformed from Logit Scale")
+```
+
+![](Total_Fitness_files/figure-html/unnamed-chunk-44-1.png)<!-- -->
+
+``` r
+wl2_logit_compare %>% 
+  ggplot(aes(x=Wtr_Year_GD_Recent, y=meanProb, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanProb-semProb,ymax=meanProb+semProb), width=.02, linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  ggtitle("Raw Means")
+```
+
+![](Total_Fitness_files/figure-html/unnamed-chunk-44-2.png)<!-- -->
+
+Make comparison figures - With 0s removed 
+
+``` r
+wl2_logit_compare2 <- wl2_prob_fit_block_summary %>% 
+  filter(meanProbBlock>0, meanProbBlock<1) %>% 
+  mutate(logitBlockMean=car::logit(meanProbBlock, adjust = 0.025)) %>% 
+  ungroup() %>% 
+  group_by(pop, Geographic_Dist, 
+           Wtr_Year_GD_Recent, Wtr_Year_GD_Historical, 
+           GrwSsn_GD_Recent, GrwSsn_GD_Historical) %>% 
+  summarise(meanProb=mean(meanProbBlock, na.rm=TRUE), 
+            semProb=sem(meanProbBlock, na.rm=TRUE),
+            meanLogit=mean(logitBlockMean, na.rm=TRUE), 
+            semLogit=sem(logitBlockMean, na.rm=TRUE)) %>% 
+  mutate(Btmean=inv.logit(meanLogit, a=0.025)) %>% 
+  mutate(HighError=meanLogit+semLogit, LowError=meanLogit-semLogit) %>% 
+  mutate(Btmean=inv.logit(meanLogit, a=0.025),
+         BtHigh=inv.logit(HighError, a=0.025),
+         BtLow=inv.logit(LowError, a=0.025))
+```
+
+```
+## `summarise()` has grouped output by 'pop', 'Geographic_Dist',
+## 'Wtr_Year_GD_Recent', 'Wtr_Year_GD_Historical', 'GrwSsn_GD_Recent'. You can
+## override using the `.groups` argument.
+```
+
+``` r
+wl2_logit_compare2 %>% 
+  ggplot(aes(x=Wtr_Year_GD_Recent, y=Btmean, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=BtLow,ymax=BtHigh), width=.02, linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  ggtitle("Back-Transformed from Logit Scale - No 0s and 1s")
+```
+
+![](Total_Fitness_files/figure-html/unnamed-chunk-45-1.png)<!-- -->
+
+``` r
+wl2_logit_compare2 %>% 
+  ggplot(aes(x=Wtr_Year_GD_Recent, y=meanProb, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanProb-semProb,ymax=meanProb+semProb), width=.02, linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  ggtitle("Raw Means - No 0s and 1s")
+```
+
+![](Total_Fitness_files/figure-html/unnamed-chunk-45-2.png)<!-- -->
+
+Try boot::logit and boot::inv.logit 
+
 ``` r
 #double check that back transformation works 
 wl2_prob_fit_block_summary %>% 
@@ -2819,21 +3026,24 @@ wl2_prob_fit_block_summary %>%
 ```
 
 ```
-## # A tibble: 288 × 7
-## # Groups:   pop, block [288]
-##    pop   block Geographic_Dist meanProbBlock     n logitBlockMean    btProb
-##    <chr> <chr>           <dbl>         <dbl> <int>          <dbl>     <dbl>
-##  1 BH    A             159626.         0.286     7         -0.911  2.86e- 1
-##  2 BH    B             159626.         0.429     7         -0.284  4.29e- 1
-##  3 BH    C             159626.         0.429     7         -0.284  4.29e- 1
-##  4 BH    D             159626.         0         7         -6.91  -4.34e-19
-##  5 BH    E             159626.         0.571     7          0.292  5.71e- 1
-##  6 BH    F             159626.         0.143     7         -1.78   1.43e- 1
-##  7 BH    G             159626.         0         7         -6.91  -4.34e-19
-##  8 BH    H             159626.         0.143     7         -1.78   1.43e- 1
-##  9 BH    I             159626.         0.143     7         -1.78   1.43e- 1
-## 10 BH    J             159626.         0.143     7         -1.78   1.43e- 1
+## # A tibble: 288 × 11
+## # Groups:   pop, block, Geographic_Dist, Wtr_Year_GD_Recent,
+## #   Wtr_Year_GD_Historical, GrwSsn_GD_Recent [288]
+##    pop   block Geographic_Dist Wtr_Year_GD_Recent Wtr_Year_GD_Historical
+##    <chr> <chr>           <dbl>              <dbl>                  <dbl>
+##  1 BH    A             159626.              0.714                  0.647
+##  2 BH    B             159626.              0.714                  0.647
+##  3 BH    C             159626.              0.714                  0.647
+##  4 BH    D             159626.              0.714                  0.647
+##  5 BH    E             159626.              0.714                  0.647
+##  6 BH    F             159626.              0.714                  0.647
+##  7 BH    G             159626.              0.714                  0.647
+##  8 BH    H             159626.              0.714                  0.647
+##  9 BH    I             159626.              0.714                  0.647
+## 10 BH    J             159626.              0.714                  0.647
 ## # ℹ 278 more rows
+## # ℹ 6 more variables: GrwSsn_GD_Recent <dbl>, GrwSsn_GD_Historical <dbl>,
+## #   meanProbBlock <dbl>, n <int>, logitBlockMean <dbl>, btProb <dbl>
 ```
 
 ``` r
@@ -2887,7 +3097,7 @@ wl2_prob_fit_block_summary %>%
 ## argument.
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-43-1.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-47-1.png)<!-- -->
 
 ``` r
 ##back transformed from logit 
@@ -2913,7 +3123,7 @@ wl2_prob_fit_block_summary %>%
 ## argument.
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-43-2.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-47-2.png)<!-- -->
 
 ``` r
 ##non-logit scale 
@@ -2939,60 +3149,7 @@ wl2_total_fitness_sub_dist %>%
 ## argument.
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-43-3.png)<!-- -->
-
-``` r
-#wl2_prob_fit_block_summary %>% group_by(pop, Geographic_Dist) %>% 
- # summarise(meanProb=mean(meanProbBlock, na.rm = TRUE), 
-  #          semProb=sem(meanProbBlock,  na.rm=TRUE))
-```
-
-
-``` r
-wl2_prob_fit_block_summary %>% 
-  mutate(logitBlockMean=boot::logit(meanProbBlock + 0.001)) %>% 
-  group_by(pop, Geographic_Dist) %>% 
-  summarise(meanLogit=mean(logitBlockMean), 
-            semLogit=sem(logitBlockMean)) %>% 
-  mutate(btProb=boot::inv.logit(meanLogit)-0.001, btSEM=boot::inv.logit(semLogit)-0.001) %>% 
-  ggplot(aes(x=Geographic_Dist, y=btProb, group = pop)) +
-  geom_point(size=6) + 
-  geom_errorbar(aes(ymin=btProb-btSEM,ymax=btProb+btSEM),width=.2, linewidth = 2) +
-  theme_classic() + 
-  scale_y_continuous(expand = c(0.01, 0))
-```
-
-```
-## `summarise()` has grouped output by 'pop'. You can override using the `.groups`
-## argument.
-```
-
-![](Total_Fitness_files/figure-html/unnamed-chunk-44-1.png)<!-- -->
-
-``` r
-##non-logit scale 
-wl2_total_fitness_sub_dist %>%  
-  mutate(ProbFitness=if_else(Total_Fitness==0, 0, 1)) %>% 
-  group_by(pop, block, Geographic_Dist) %>% 
-  summarise(meanProbBlock=mean(ProbFitness, na.rm = TRUE) + 0.001, n=n()) %>% 
-  group_by(pop, Geographic_Dist) %>% 
-  summarise(meanProb=mean(meanProbBlock, na.rm = TRUE), 
-            semProb=sem(meanProbBlock,  na.rm=TRUE)) %>% 
-  ggplot(aes(x=Geographic_Dist, y=meanProb, group = pop)) +
-  geom_point(size=6) + 
-  geom_errorbar(aes(ymin=meanProb-semProb,ymax=meanProb+semProb),width=.2, linewidth = 2) +
-  theme_classic() + 
-  scale_y_continuous(expand = c(0.01, 0))
-```
-
-```
-## `summarise()` has grouped output by 'pop', 'block'. You can override using the
-## `.groups` argument.
-## `summarise()` has grouped output by 'pop'. You can override using the `.groups`
-## argument.
-```
-
-![](Total_Fitness_files/figure-html/unnamed-chunk-44-2.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-47-3.png)<!-- -->
 
 #### Basic Model Workflow
 
@@ -3643,7 +3800,7 @@ wl2_prob_fit_plas %>%
 ## (`stat_bin()`).
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-53-1.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-56-1.png)<!-- -->
 
 ``` r
 wl2_prob_fit_plas %>% 
@@ -3655,7 +3812,7 @@ wl2_prob_fit_plas %>%
 ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-53-2.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-56-2.png)<!-- -->
 
 ``` r
 ucd_prob_fit_plas <- ucd_prob_fitness %>% 
@@ -3698,7 +3855,7 @@ ucd_prob_fit_plas %>%
 ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-53-3.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-56-3.png)<!-- -->
 
 ``` r
 ucd_prob_fit_plas %>% 
@@ -3710,7 +3867,7 @@ ucd_prob_fit_plas %>%
 ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-53-4.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-56-4.png)<!-- -->
 
 
 ``` r
@@ -4034,7 +4191,7 @@ wl2_rep_output %>% #still skewed
 ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-56-1.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-59-1.png)<!-- -->
 
 ``` r
 wl2_rep_output %>% #good enough!
@@ -4046,7 +4203,7 @@ wl2_rep_output %>% #good enough!
 ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-56-2.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-59-2.png)<!-- -->
 
 ``` r
 wl2_rep_output %>% #helped some
@@ -4058,7 +4215,7 @@ wl2_rep_output %>% #helped some
 ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-56-3.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-59-3.png)<!-- -->
 
 ``` r
 wl2_rep_output %>% #helped some
@@ -4070,7 +4227,7 @@ wl2_rep_output %>% #helped some
 ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-56-4.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-59-4.png)<!-- -->
 
 ``` r
 wl2_fitness_means <- wl2_rep_output %>% # summary for plotting
@@ -4101,7 +4258,7 @@ wl2_rep_output_sub %>% #still skewed
 ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-57-1.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-60-1.png)<!-- -->
 
 ``` r
 wl2_rep_output_sub %>% #good enough!
@@ -4113,7 +4270,7 @@ wl2_rep_output_sub %>% #good enough!
 ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-57-2.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-60-2.png)<!-- -->
 
 
 ``` r
@@ -4154,7 +4311,7 @@ ucd_rep_output %>%
 ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-58-1.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-61-1.png)<!-- -->
 
 ``` r
 ucd_rep_output %>%  #looks fine 
@@ -4166,7 +4323,7 @@ ucd_rep_output %>%  #looks fine
 ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-58-2.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-61-2.png)<!-- -->
 
 ``` r
 ucd_rep_output %>% 
@@ -4178,7 +4335,7 @@ ucd_rep_output %>%
 ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-58-3.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-61-3.png)<!-- -->
 
 ``` r
 ucd_fitness_means <- ucd_rep_output %>% 
@@ -4212,7 +4369,7 @@ ucd_rep_output_sub %>% #still skewed
 ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-59-1.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-62-1.png)<!-- -->
 
 ``` r
 ucd_rep_output_sub %>% #okayish
@@ -4224,7 +4381,7 @@ ucd_rep_output_sub %>% #okayish
 ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-59-2.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-62-2.png)<!-- -->
 
 #### Plots
 
@@ -4810,7 +4967,7 @@ wl2_rep_output %>%
   facet_wrap(~pop, scales="free_y")
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-69-1.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-72-1.png)<!-- -->
 
 #### Basic Model Workflow
 
@@ -4872,14 +5029,14 @@ mod_test <- lmer(logTotalFitness ~  (1|pop) + (1|block), data=wl2_rep_output)
 plot(mod_test, which = 1) 
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-70-1.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-73-1.png)<!-- -->
 
 ``` r
 qqnorm(resid(mod_test))
 qqline(resid(mod_test)) 
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-70-2.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-73-2.png)<!-- -->
 
 ``` r
 summary(mod_test)
@@ -4927,7 +5084,7 @@ wl2_rep_output %>%
   facet_wrap(~pop, scales="free")
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-71-1.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-74-1.png)<!-- -->
 
 #### Test climate and geographic distance
 
@@ -5114,14 +5271,14 @@ mod_test <- lmer(logTotalFitness ~  GrwSsn_TempDist_Historic + Geographic_Dist +
 plot(mod_test, which = 1) 
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-73-1.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-76-1.png)<!-- -->
 
 ``` r
 qqnorm(resid(mod_test))
 qqline(resid(mod_test)) 
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-73-2.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-76-2.png)<!-- -->
 
 ``` r
 summary(mod_test)
@@ -5270,7 +5427,7 @@ wl2_rep_output_sub %>%
   geom_abline(color="skyblue2") 
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-74-1.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-77-1.png)<!-- -->
 
 ``` r
 #overall, the predictions seem to match the observed data...
@@ -5283,7 +5440,7 @@ wl2_rep_output_sub %>%
   facet_wrap(~block, scales="free")
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-74-2.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-77-2.png)<!-- -->
 
 ``` r
 #some blocks with fewer data points --> weaker predictions 
@@ -5295,4 +5452,4 @@ wl2_rep_output_sub %>%
   geom_point() 
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-74-3.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-77-3.png)<!-- -->

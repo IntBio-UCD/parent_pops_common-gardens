@@ -74,6 +74,12 @@ sem <- function(x, na.rm=FALSE) {           #for caclulating standard error
   sd(x,na.rm=na.rm)/sqrt(length(na.omit(x)))
 } 
 
+#load inv.logit function
+inv.logit <- function(f,a) {
+  a <- (1-2*a)
+  (a*(1+exp(f))+(exp(f)-1))/(2*a*(1+exp(f)))
+}
+
 cbbPalette2 <- c("#E69F00","#000000", "#56B4E9","#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
 timepd_palette <- c("#56B4E9","#D55E00")
 
@@ -1313,11 +1319,13 @@ ggsave("../output/WL2_Traits/WL2_ProbFitness_SCATTERS_Summary_Recent.png", width
 
 #### Attempt at calculating mean and standard error in logit scale
 
+Get Block means
 ```{r}
 ##block summary
 wl2_prob_fit_block_summary <- wl2_total_fitness %>%  
   mutate(ProbFitness=if_else(Total_Fitness==0, 0, 1)) %>% 
-  group_by(pop, block, Geographic_Dist) %>% 
+  group_by(pop, block, Geographic_Dist, 
+           Wtr_Year_GD_Recent, Wtr_Year_GD_Historical, GrwSsn_GD_Recent, GrwSsn_GD_Historical) %>% 
   summarise(meanProbBlock=mean(ProbFitness, na.rm = TRUE), n=n())
 
 #double check this mostly matches getting means across blocks 
@@ -1329,7 +1337,116 @@ wl2_total_fitness %>%
   group_by(pop, Geographic_Dist) %>% 
   summarise(meanProb=mean(ProbFitness, na.rm = TRUE), 
             semProb=sem(ProbFitness,  na.rm=TRUE))
+```
 
+Use Car::loigt and Jenny's inv.logit function 
+```{r}
+#check back transformation works 
+wl2_prob_fit_block_summary %>% 
+  mutate(logitBlockMean=car::logit(meanProbBlock, adjust = 0.025)) %>% 
+  mutate(BTlogit=inv.logit(logitBlockMean, a=0.025))
+
+#check back transformation of means 
+wl2_prob_fit_block_summary %>% 
+  mutate(logitBlockMean=car::logit(meanProbBlock, adjust = 0.025)) %>% 
+  ungroup() %>% 
+  group_by(pop, Geographic_Dist, 
+           Wtr_Year_GD_Recent, Wtr_Year_GD_Historical, 
+           GrwSsn_GD_Recent, GrwSsn_GD_Historical) %>% 
+  summarise(meanProb=mean(meanProbBlock, na.rm=TRUE), 
+            semProb=sem(meanProbBlock, na.rm=TRUE),
+            meanLogit=mean(logitBlockMean, na.rm=TRUE), 
+            semLogit=sem(logitBlockMean, na.rm=TRUE)) %>% 
+  mutate(Btmean=inv.logit(meanLogit, a=0.025)) #much smaller values than meanProb...
+
+#try without 0s and 1s
+wl2_logit_compare2 <- wl2_prob_fit_block_summary %>% 
+  filter(meanProbBlock>0, meanProbBlock<1) %>% 
+  mutate(logitBlockMean=car::logit(meanProbBlock, adjust = 0.025)) %>% 
+  ungroup() %>% 
+  group_by(pop, Geographic_Dist, 
+           Wtr_Year_GD_Recent, Wtr_Year_GD_Historical, 
+           GrwSsn_GD_Recent, GrwSsn_GD_Historical) %>% 
+  summarise(meanProb=mean(meanProbBlock, na.rm=TRUE), 
+            semProb=sem(meanProbBlock, na.rm=TRUE),
+            meanLogit=mean(logitBlockMean, na.rm=TRUE), 
+            semLogit=sem(logitBlockMean, na.rm=TRUE)) %>% 
+  mutate(Btmean=inv.logit(meanLogit, a=0.025)) #much smaller values than meanProb...
+```
+
+Make comparison figures 
+```{r}
+wl2_logit_compare <- wl2_prob_fit_block_summary %>% 
+  mutate(logitBlockMean=car::logit(meanProbBlock, adjust = 0.025)) %>% 
+  ungroup() %>% 
+  group_by(pop, Geographic_Dist, 
+           Wtr_Year_GD_Recent, Wtr_Year_GD_Historical, 
+           GrwSsn_GD_Recent, GrwSsn_GD_Historical) %>% 
+  summarise(meanProb=mean(meanProbBlock, na.rm=TRUE), 
+            semProb=sem(meanProbBlock, na.rm=TRUE),
+            meanLogit=mean(logitBlockMean, na.rm=TRUE), 
+            semLogit=sem(logitBlockMean, na.rm=TRUE)) %>% 
+  mutate(Btmean=inv.logit(meanLogit, a=0.025)) %>% 
+  mutate(HighError=meanLogit+semLogit, LowError=meanLogit-semLogit) %>% 
+  mutate(Btmean=inv.logit(meanLogit, a=0.025),
+         BtHigh=inv.logit(HighError, a=0.025),
+         BtLow=inv.logit(LowError, a=0.025))
+
+wl2_logit_compare %>% 
+  ggplot(aes(x=Wtr_Year_GD_Recent, y=Btmean, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=BtLow,ymax=BtHigh), width=.02, linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  ggtitle("Back-Transformed from Logit Scale")
+
+wl2_logit_compare %>% 
+  ggplot(aes(x=Wtr_Year_GD_Recent, y=meanProb, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanProb-semProb,ymax=meanProb+semProb), width=.02, linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  ggtitle("Raw Means")
+```
+
+Make comparison figures - With 0s removed 
+```{r}
+wl2_logit_compare2 <- wl2_prob_fit_block_summary %>% 
+  filter(meanProbBlock>0, meanProbBlock<1) %>% 
+  mutate(logitBlockMean=car::logit(meanProbBlock, adjust = 0.025)) %>% 
+  ungroup() %>% 
+  group_by(pop, Geographic_Dist, 
+           Wtr_Year_GD_Recent, Wtr_Year_GD_Historical, 
+           GrwSsn_GD_Recent, GrwSsn_GD_Historical) %>% 
+  summarise(meanProb=mean(meanProbBlock, na.rm=TRUE), 
+            semProb=sem(meanProbBlock, na.rm=TRUE),
+            meanLogit=mean(logitBlockMean, na.rm=TRUE), 
+            semLogit=sem(logitBlockMean, na.rm=TRUE)) %>% 
+  mutate(Btmean=inv.logit(meanLogit, a=0.025)) %>% 
+  mutate(HighError=meanLogit+semLogit, LowError=meanLogit-semLogit) %>% 
+  mutate(Btmean=inv.logit(meanLogit, a=0.025),
+         BtHigh=inv.logit(HighError, a=0.025),
+         BtLow=inv.logit(LowError, a=0.025))
+
+wl2_logit_compare2 %>% 
+  ggplot(aes(x=Wtr_Year_GD_Recent, y=Btmean, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=BtLow,ymax=BtHigh), width=.02, linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  ggtitle("Back-Transformed from Logit Scale - No 0s and 1s")
+
+wl2_logit_compare2 %>% 
+  ggplot(aes(x=Wtr_Year_GD_Recent, y=meanProb, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanProb-semProb,ymax=meanProb+semProb), width=.02, linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  ggtitle("Raw Means - No 0s and 1s")
+```
+
+Try boot::logit and boot::inv.logit 
+```{r}
 #double check that back transformation works 
 wl2_prob_fit_block_summary %>% 
   mutate(logitBlockMean=boot::logit(meanProbBlock + 0.001)) %>% 
@@ -1388,39 +1505,6 @@ wl2_total_fitness_sub_dist %>%
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
   ggtitle("Raw Means")
-
-
-#wl2_prob_fit_block_summary %>% group_by(pop, Geographic_Dist) %>% 
- # summarise(meanProb=mean(meanProbBlock, na.rm = TRUE), 
-  #          semProb=sem(meanProbBlock,  na.rm=TRUE))
-```
-
-```{r}
-wl2_prob_fit_block_summary %>% 
-  mutate(logitBlockMean=boot::logit(meanProbBlock + 0.001)) %>% 
-  group_by(pop, Geographic_Dist) %>% 
-  summarise(meanLogit=mean(logitBlockMean), 
-            semLogit=sem(logitBlockMean)) %>% 
-  mutate(btProb=boot::inv.logit(meanLogit)-0.001, btSEM=boot::inv.logit(semLogit)-0.001) %>% 
-  ggplot(aes(x=Geographic_Dist, y=btProb, group = pop)) +
-  geom_point(size=6) + 
-  geom_errorbar(aes(ymin=btProb-btSEM,ymax=btProb+btSEM),width=.2, linewidth = 2) +
-  theme_classic() + 
-  scale_y_continuous(expand = c(0.01, 0))
-
-##non-logit scale 
-wl2_total_fitness_sub_dist %>%  
-  mutate(ProbFitness=if_else(Total_Fitness==0, 0, 1)) %>% 
-  group_by(pop, block, Geographic_Dist) %>% 
-  summarise(meanProbBlock=mean(ProbFitness, na.rm = TRUE) + 0.001, n=n()) %>% 
-  group_by(pop, Geographic_Dist) %>% 
-  summarise(meanProb=mean(meanProbBlock, na.rm = TRUE), 
-            semProb=sem(meanProbBlock,  na.rm=TRUE)) %>% 
-  ggplot(aes(x=Geographic_Dist, y=meanProb, group = pop)) +
-  geom_point(size=6) + 
-  geom_errorbar(aes(ymin=meanProb-semProb,ymax=meanProb+semProb),width=.2, linewidth = 2) +
-  theme_classic() + 
-  scale_y_continuous(expand = c(0.01, 0))
 ```
 
 #### Basic Model Workflow
