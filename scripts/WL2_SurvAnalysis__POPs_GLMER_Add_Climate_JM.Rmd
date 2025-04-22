@@ -13,11 +13,11 @@ knitr::opts_chunk$set(echo = TRUE)
 
 Having settled on suitable models for survival, this script explores adding climate data from the growing season to see if they add any explanatory power.
 
-Questions:
+Notes:
 
-1.  Bed A_2 for temp or bed avg? Avg 
+1.  Used avg of all beds for temp 
 
-2.  Negative soil moisture values –\> 0 ? Yes 
+2.  Changed negative soil moisture values –\> 0  
 
 
 # Survival Analysis
