@@ -1,7 +1,7 @@
 ---
 title: "WL2_OverWinter_Survival"
 author: "Brandie Quarles"
-date: "2025-03-21"
+date: "2025-04-22"
 output: 
   html_document: 
     keep_md: yes
@@ -147,7 +147,7 @@ library(tidymodels)
 ## ✖ infer::t_test()       masks rstatix::t_test()
 ## ✖ Matrix::unpack()      masks tidyr::unpack()
 ## ✖ recipes::update()     masks Matrix::update(), stats::update()
-## • Learn how to get started at https://www.tidymodels.org/start/
+## • Search for functions across packages at https://www.tidymodels.org/find/
 ```
 
 ``` r
@@ -1214,3 +1214,779 @@ surv_GD_fits_wl2_sub_tp %>% mutate(tidy=map(fit, tidy)) %>% unnest(tidy) %>%
 #  arrange(p.value)
 ```
 
+
+## Fitness \~ Size
+
+### Load the size data & Combine with Survival 
+
+#### Stem Diameter and Basal Branches from Annual Census 
+
+
+``` r
+ann_cens_size <- read_csv("../output/AnnCens_Size_BothSites_Y1.csv")
+```
+
+```
+## Rows: 1636 Columns: 26
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: ","
+## chr  (7): BedLoc, block, Genotype, pop.mf, parent.pop, Site, elevation.group
+## dbl (19): mf, rep, diam.mm, height.cm, long.leaf.cm, total.branch, repro.bra...
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+```
+
+``` r
+names(ann_cens_size)
+```
+
+```
+##  [1] "BedLoc"                 "block"                  "Genotype"              
+##  [4] "pop.mf"                 "parent.pop"             "mf"                    
+##  [7] "rep"                    "diam.mm"                "height.cm"             
+## [10] "long.leaf.cm"           "total.branch"           "repro.branch"          
+## [13] "Site"                   "Garden_Lat"             "Garden_Long"           
+## [16] "Garden_Elev"            "elevation.group"        "elev_m"                
+## [19] "Lat"                    "Long"                   "GrwSsn_GD_Recent"      
+## [22] "GrwSsn_GD_Historical"   "Wtr_Year_GD_Recent"     "Wtr_Year_GD_Historical"
+## [25] "Geographic_Dist"        "Elev_Dist"
+```
+
+``` r
+ann_cens_size_wl2 <- ann_cens_size %>% filter(Site=="WL2") %>% select(BedLoc:diam.mm, total.branch, Site) %>% rename(pop=parent.pop)
+head(ann_cens_size_wl2)
+```
+
+```
+## # A tibble: 6 × 10
+##   BedLoc block Genotype pop.mf pop      mf   rep diam.mm total.branch Site 
+##   <chr>  <chr> <chr>    <chr>  <chr> <dbl> <dbl>   <dbl>        <dbl> <chr>
+## 1 A_7_D  A     BH_1_3   BH_1   BH        1     3   NA              NA WL2  
+## 2 A_37_D B     BH_1_4   BH_1   BH        1     4    1.89            1 WL2  
+## 3 B_6_C  D     BH_1_6   BH_1   BH        1     6   NA              NA WL2  
+## 4 B_46_D C     BH_1_5   BH_1   BH        1     5   NA              NA WL2  
+## 5 C_40_B E     BH_1_7   BH_1   BH        1     7    2.06            1 WL2  
+## 6 D_30_B G     BH_1_9   BH_1   BH        1     9   NA              NA WL2
+```
+
+``` r
+winter_surv_annsize <- left_join(winter_surv, ann_cens_size_wl2)
+```
+
+```
+## Joining with `by = join_by(block, BedLoc, Genotype, pop, mf, rep)`
+```
+
+``` r
+summary(winter_surv_annsize)
+```
+
+```
+##     block              BedLoc              bed               bed- row    
+##  Length:469         Length:469         Length:469         Min.   : 1.00  
+##  Class :character   Class :character   Class :character   1st Qu.:11.00  
+##  Mode  :character   Mode  :character   Mode  :character   Median :22.00  
+##                                                           Mean   :24.88  
+##                                                           3rd Qu.:40.00  
+##                                                           Max.   :59.00  
+##                                                                          
+##    bed- col           Genotype             pop                  mf        
+##  Length:469         Length:469         Length:469         Min.   : 1.000  
+##  Class :character   Class :character   Class :character   1st Qu.: 2.000  
+##  Mode  :character   Mode  :character   Mode  :character   Median : 5.000  
+##                                                           Mean   : 4.625  
+##                                                           3rd Qu.: 7.000  
+##                                                           Max.   :14.000  
+##                                                                           
+##       rep        elevation.group        elev_m            Lat       
+##  Min.   : 1.00   Length:469         Min.   : 313.0   Min.   :36.56  
+##  1st Qu.: 4.00   Class :character   1st Qu.: 421.5   1st Qu.:37.81  
+##  Median : 7.00   Mode  :character   Median : 511.4   Median :38.83  
+##  Mean   : 7.55                      Mean   :1187.7   Mean   :38.62  
+##  3rd Qu.:11.00                      3rd Qu.:2020.1   3rd Qu.:39.23  
+##  Max.   :27.00                      Max.   :2872.3   Max.   :40.48  
+##                                                                     
+##       Long        GrwSsn_GD_Recent GrwSsn_GD_Historical Wtr_Year_GD_Recent
+##  Min.   :-121.6   Min.   :0.1462   Min.   :0.2165       Min.   :0.2256    
+##  1st Qu.:-120.9   1st Qu.:0.3343   1st Qu.:0.3432       1st Qu.:0.3097    
+##  Median :-120.7   Median :0.4232   Median :0.4179       Median :0.4063    
+##  Mean   :-120.5   Mean   :0.3823   Mean   :0.4107       Mean   :0.3924    
+##  3rd Qu.:-120.0   3rd Qu.:0.4493   3rd Qu.:0.4560       3rd Qu.:0.4450    
+##  Max.   :-118.8   Max.   :0.5655   Max.   :0.6310       Max.   :0.5660    
+##                                                                           
+##  Wtr_Year_GD_Historical Geographic_Dist      Elev_Dist         
+##  Min.   :0.2442         Min.   :   136.3   Min.   :-1707.0000  
+##  1st Qu.:0.3132         1st Qu.: 62498.9   1st Qu.:-1598.4822  
+##  Median :0.3859         Median :128036.9   Median :-1508.5706  
+##  Mean   :0.3799         Mean   :104558.4   Mean   : -832.2842  
+##  3rd Qu.:0.4510         3rd Qu.:140893.4   3rd Qu.:    0.1158  
+##  Max.   :0.5207         Max.   :283280.5   Max.   :  852.2950  
+##                                                                
+##   death.date          WinterSurv        pop.mf             diam.mm     
+##  Length:469         Min.   :0.0000   Length:469         Min.   :0.310  
+##  Class :character   1st Qu.:0.0000   Class :character   1st Qu.:1.490  
+##  Mode  :character   Median :0.0000   Mode  :character   Median :1.850  
+##                     Mean   :0.2878                      Mean   :1.999  
+##                     3rd Qu.:1.0000                      3rd Qu.:2.415  
+##                     Max.   :1.0000                      Max.   :5.610  
+##                                                         NA's   :2      
+##   total.branch       Site          
+##  Min.   :1.000   Length:469        
+##  1st Qu.:1.000   Class :character  
+##  Median :1.000   Mode  :character  
+##  Mean   :1.249                     
+##  3rd Qu.:1.000                     
+##  Max.   :5.000                     
+## 
+```
+
+#### Height and Leaf Length from 10/20 Census
+
+``` r
+prewint_size <- read_csv("../input/WL2_Data/CorrectedCSVs/WL2_size_survey_20231020_corrected.csv") %>% 
+  select(block, `bed- row`=bed.row, `bed- col`=bed.col, pop:long.leaf.cm) %>% 
+  filter(!str_detect(mf, "buff")) %>% 
+  mutate(mf=as.double(mf), rep=as.double(rep))
+```
+
+```
+## Rows: 1826 Columns: 12
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: ","
+## chr (9): date, block, bed, bed.col, pop, mf, rep, herbiv.y.n, survey.notes
+## dbl (3): bed.row, height.cm, long.leaf.cm
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+```
+
+``` r
+head(prewint_size)
+```
+
+```
+## # A tibble: 6 × 8
+##   block `bed- row` `bed- col` pop      mf   rep height.cm long.leaf.cm
+##   <chr>      <dbl> <chr>      <chr> <dbl> <dbl>     <dbl>        <dbl>
+## 1 A              1 A          TM2       6    11      16.7          0.8
+## 2 A              1 B          LVTR1     7     1      NA           NA  
+## 3 A              2 A          SQ2       6    14      NA           NA  
+## 4 A              2 B          YO8       8     3      NA           NA  
+## 5 A              3 A          CC        2     3       7.3          1.1
+## 6 A              3 B          YO11      5    14      NA           NA
+```
+
+``` r
+winter_surv_Octsize <- left_join(winter_surv, prewint_size)
+```
+
+```
+## Joining with `by = join_by(block, `bed- row`, `bed- col`, pop, mf, rep)`
+```
+
+``` r
+summary(winter_surv_Octsize)
+```
+
+```
+##     block              BedLoc              bed               bed- row    
+##  Length:469         Length:469         Length:469         Min.   : 1.00  
+##  Class :character   Class :character   Class :character   1st Qu.:11.00  
+##  Mode  :character   Mode  :character   Mode  :character   Median :22.00  
+##                                                           Mean   :24.88  
+##                                                           3rd Qu.:40.00  
+##                                                           Max.   :59.00  
+##                                                                          
+##    bed- col           Genotype             pop                  mf        
+##  Length:469         Length:469         Length:469         Min.   : 1.000  
+##  Class :character   Class :character   Class :character   1st Qu.: 2.000  
+##  Mode  :character   Mode  :character   Mode  :character   Median : 5.000  
+##                                                           Mean   : 4.625  
+##                                                           3rd Qu.: 7.000  
+##                                                           Max.   :14.000  
+##                                                                           
+##       rep        elevation.group        elev_m            Lat       
+##  Min.   : 1.00   Length:469         Min.   : 313.0   Min.   :36.56  
+##  1st Qu.: 4.00   Class :character   1st Qu.: 421.5   1st Qu.:37.81  
+##  Median : 7.00   Mode  :character   Median : 511.4   Median :38.83  
+##  Mean   : 7.55                      Mean   :1187.7   Mean   :38.62  
+##  3rd Qu.:11.00                      3rd Qu.:2020.1   3rd Qu.:39.23  
+##  Max.   :27.00                      Max.   :2872.3   Max.   :40.48  
+##                                                                     
+##       Long        GrwSsn_GD_Recent GrwSsn_GD_Historical Wtr_Year_GD_Recent
+##  Min.   :-121.6   Min.   :0.1462   Min.   :0.2165       Min.   :0.2256    
+##  1st Qu.:-120.9   1st Qu.:0.3343   1st Qu.:0.3432       1st Qu.:0.3097    
+##  Median :-120.7   Median :0.4232   Median :0.4179       Median :0.4063    
+##  Mean   :-120.5   Mean   :0.3823   Mean   :0.4107       Mean   :0.3924    
+##  3rd Qu.:-120.0   3rd Qu.:0.4493   3rd Qu.:0.4560       3rd Qu.:0.4450    
+##  Max.   :-118.8   Max.   :0.5655   Max.   :0.6310       Max.   :0.5660    
+##                                                                           
+##  Wtr_Year_GD_Historical Geographic_Dist      Elev_Dist         
+##  Min.   :0.2442         Min.   :   136.3   Min.   :-1707.0000  
+##  1st Qu.:0.3132         1st Qu.: 62498.9   1st Qu.:-1598.4822  
+##  Median :0.3859         Median :128036.9   Median :-1508.5706  
+##  Mean   :0.3799         Mean   :104558.4   Mean   : -832.2842  
+##  3rd Qu.:0.4510         3rd Qu.:140893.4   3rd Qu.:    0.1158  
+##  Max.   :0.5207         Max.   :283280.5   Max.   :  852.2950  
+##                                                                
+##   death.date          WinterSurv       height.cm       long.leaf.cm  
+##  Length:469         Min.   :0.0000   Min.   : 0.100   Min.   :0.100  
+##  Class :character   1st Qu.:0.0000   1st Qu.: 2.900   1st Qu.:0.800  
+##  Mode  :character   Median :0.0000   Median : 5.500   Median :1.900  
+##                     Mean   :0.2878   Mean   : 7.477   Mean   :2.441  
+##                     3rd Qu.:1.0000   3rd Qu.:10.500   3rd Qu.:3.900  
+##                     Max.   :1.0000   Max.   :38.100   Max.   :9.000  
+##                                      NA's   :2        NA's   :59
+```
+
+#### Merge all 
+
+``` r
+winter_surv_size <- left_join(winter_surv_Octsize, winter_surv_annsize)
+```
+
+```
+## Joining with `by = join_by(block, BedLoc, bed, `bed- row`, `bed- col`,
+## Genotype, pop, mf, rep, elevation.group, elev_m, Lat, Long, GrwSsn_GD_Recent,
+## GrwSsn_GD_Historical, Wtr_Year_GD_Recent, Wtr_Year_GD_Historical,
+## Geographic_Dist, Elev_Dist, death.date, WinterSurv)`
+```
+
+### Figures of Survival \~ Size 
+
+``` r
+winter_surv_size %>% 
+  ggplot(aes(x=height.cm, y=WinterSurv)) +
+  geom_point()
+```
+
+```
+## Warning: Removed 2 rows containing missing values or values outside the scale range
+## (`geom_point()`).
+```
+
+![](WL2_OverWinter_Survival_files/figure-html/unnamed-chunk-27-1.png)<!-- -->
+
+``` r
+winter_surv_size %>% 
+  ggplot(aes(x=long.leaf.cm, y=WinterSurv)) +
+  geom_point()
+```
+
+```
+## Warning: Removed 59 rows containing missing values or values outside the scale range
+## (`geom_point()`).
+```
+
+![](WL2_OverWinter_Survival_files/figure-html/unnamed-chunk-27-2.png)<!-- -->
+
+``` r
+winter_surv_size %>% 
+  ggplot(aes(x=diam.mm, y=WinterSurv)) +
+  geom_point()
+```
+
+```
+## Warning: Removed 2 rows containing missing values or values outside the scale range
+## (`geom_point()`).
+```
+
+![](WL2_OverWinter_Survival_files/figure-html/unnamed-chunk-27-3.png)<!-- -->
+
+``` r
+winter_surv_size %>% #not enough variation in branch #?
+  ggplot(aes(x=total.branch, y=WinterSurv)) +
+  geom_point()
+```
+
+![](WL2_OverWinter_Survival_files/figure-html/unnamed-chunk-27-4.png)<!-- -->
+
+
+``` r
+winter_surv_size_pop_avgs <- winter_surv_size %>% 
+  group_by(pop, elev_m) %>% 
+  summarise(N_Surv = sum(!is.na(WinterSurv)), 
+            mean_Surv = mean(WinterSurv,na.rm=(TRUE)), sem_surv=sem(WinterSurv, na.rm=(TRUE)), 
+            N_height = sum(!is.na(height.cm)), 
+            mean_height.cm = mean(height.cm,na.rm=(TRUE)), sem_height.cm=sem(height.cm, na.rm=(TRUE)), 
+            N_length = sum(!is.na(long.leaf.cm)),
+            mean_long.leaf.cm=mean(long.leaf.cm, na.rm=(TRUE)), sem_long.leaf.cm=sem(long.leaf.cm, na.rm=TRUE),
+            N_diam = sum(!is.na(diam.mm)), 
+            mean_diam.mm = mean(diam.mm,na.rm=(TRUE)), sem_diam.mm=sem(diam.mm, na.rm=(TRUE)), 
+            N_total.branch = sum(!is.na(total.branch)),
+            mean_total.branch=mean(total.branch, na.rm=(TRUE)), sem_total.branch=sem(total.branch, na.rm=TRUE))
+```
+
+```
+## `summarise()` has grouped output by 'pop'. You can override using the `.groups`
+## argument.
+```
+
+``` r
+winter_surv_size_pop_avgs %>% arrange(N_height)
+```
+
+```
+## # A tibble: 22 × 17
+## # Groups:   pop [22]
+##    pop   elev_m N_Surv mean_Surv sem_surv N_height mean_height.cm sem_height.cm
+##    <chr>  <dbl>  <int>     <dbl>    <dbl>    <int>          <dbl>         <dbl>
+##  1 WR     1158       1       1       NA          1          12.6         NA    
+##  2 LV3    2354.      3       0        0          3           1.27         0.639
+##  3 FR      787       5       0        0          5           2.84         0.798
+##  4 LV1    2593.      5       0.2      0.2        5           2.24         0.473
+##  5 LVTR1  2741.      5       0        0          5           2.54         0.543
+##  6 SQ3    2373.      6       0        0          6           1.38         0.263
+##  7 YO11   2872.      8       0        0          8           1.9          0.572
+##  8 YO4    2158.      9       0        0          9           3.24         0.530
+##  9 YO8    2591.      9       0        0          9           1.77         0.412
+## 10 SQ1    1921.     10       0.1      0.1       10           3.11         0.305
+## # ℹ 12 more rows
+## # ℹ 9 more variables: N_length <int>, mean_long.leaf.cm <dbl>,
+## #   sem_long.leaf.cm <dbl>, N_diam <int>, mean_diam.mm <dbl>,
+## #   sem_diam.mm <dbl>, N_total.branch <int>, mean_total.branch <dbl>,
+## #   sem_total.branch <dbl>
+```
+
+``` r
+winter_surv_size %>% 
+  drop_na(WinterSurv, height.cm) %>% 
+  group_by(pop, elev_m) %>% 
+  summarise(N_Surv = sum(!is.na(WinterSurv)), 
+            mean_Surv = mean(WinterSurv,na.rm=(TRUE)), sem_surv=sem(WinterSurv, na.rm=(TRUE)), 
+            N_height = sum(!is.na(height.cm)), 
+            mean_height.cm = mean(height.cm,na.rm=(TRUE)), sem_height.cm=sem(height.cm, na.rm=(TRUE))) %>% 
+  filter(N_height>2) %>% 
+  ggplot(aes(x=mean_height.cm, y=mean_Surv, group=pop, color=elev_m)) +
+  geom_point(size=4) +
+  theme_classic() + 
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0")  +
+  labs(x="Height (cm)", y="Winter Survival", color="Elevation (m)", title="High Elevation Garden") +
+  theme(text=element_text(size=25))
+```
+
+```
+## `summarise()` has grouped output by 'pop'. You can override using the `.groups`
+## argument.
+```
+
+![](WL2_OverWinter_Survival_files/figure-html/unnamed-chunk-29-1.png)<!-- -->
+
+``` r
+winter_surv_size %>% 
+  drop_na(WinterSurv, long.leaf.cm) %>% 
+  group_by(pop, elev_m) %>% 
+  summarise(N_Surv = sum(!is.na(WinterSurv)), 
+            mean_Surv = mean(WinterSurv,na.rm=(TRUE)), sem_surv=sem(WinterSurv, na.rm=(TRUE)), 
+            N_length = sum(!is.na(long.leaf.cm)),
+            mean_long.leaf.cm=mean(long.leaf.cm, na.rm=(TRUE)), sem_long.leaf.cm=sem(long.leaf.cm, na.rm=TRUE)) %>% 
+  filter(N_length>2) %>% 
+  ggplot(aes(x=mean_long.leaf.cm, y=mean_Surv, group=pop, color=elev_m)) +
+  geom_point(size=4) +
+  scale_y_continuous(expand = c(0.01, 0.01)) +
+  theme_classic() + 
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0")  +
+  labs(x="Leaf Length (cm)" ,y="Winter Survival", color="Elevation (m)", title="High Elevation Garden") +
+  theme(text=element_text(size=25))
+```
+
+```
+## `summarise()` has grouped output by 'pop'. You can override using the `.groups`
+## argument.
+```
+
+![](WL2_OverWinter_Survival_files/figure-html/unnamed-chunk-29-2.png)<!-- -->
+
+``` r
+winter_surv_size %>% 
+  drop_na(WinterSurv, diam.mm) %>% 
+  group_by(pop, elev_m) %>% 
+  summarise(N_Surv = sum(!is.na(WinterSurv)), 
+            mean_Surv = mean(WinterSurv,na.rm=(TRUE)), sem_surv=sem(WinterSurv, na.rm=(TRUE)), 
+            N_diam = sum(!is.na(diam.mm)), 
+            mean_diam.mm = mean(diam.mm,na.rm=(TRUE)), sem_diam.mm=sem(diam.mm, na.rm=(TRUE))) %>% 
+  filter(N_diam>2) %>% 
+  ggplot(aes(x=mean_diam.mm, y=mean_Surv, group=pop, color=elev_m)) +
+  geom_point(size=4) +
+  scale_y_continuous(expand = c(0.01, 0.01)) +
+  theme_classic() + 
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0")  +
+  labs(x="Stem Diameter (mm)" ,y="Winter Survival", color="Elevation (m)", title="High Elevation Garden") +
+  theme(text=element_text(size=25))
+```
+
+```
+## `summarise()` has grouped output by 'pop'. You can override using the `.groups`
+## argument.
+```
+
+![](WL2_OverWinter_Survival_files/figure-html/unnamed-chunk-29-3.png)<!-- -->
+
+``` r
+winter_surv_size %>% 
+  drop_na(WinterSurv, total.branch) %>% 
+  group_by(pop, elev_m) %>% 
+  summarise(N_Surv = sum(!is.na(WinterSurv)), 
+            mean_Surv = mean(WinterSurv,na.rm=(TRUE)), sem_surv=sem(WinterSurv, na.rm=(TRUE)), 
+            N_total.branch = sum(!is.na(total.branch)),
+            mean_total.branch=mean(total.branch, na.rm=(TRUE)), sem_total.branch=sem(total.branch, na.rm=TRUE)) %>% 
+  filter(N_total.branch>2) %>% 
+  ggplot(aes(x=mean_total.branch, y=mean_Surv, group=pop, color=elev_m)) +
+  geom_point(size=4) +
+  scale_y_continuous(expand = c(0.01, 0.01)) +
+  theme_classic() +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0")  +
+  labs(x="Basal Branch N" ,y="Winter Survival", color="Elevation (m)", title="High Elevation Garden") +
+  theme(text=element_text(size=25))
+```
+
+```
+## `summarise()` has grouped output by 'pop'. You can override using the `.groups`
+## argument.
+```
+
+![](WL2_OverWinter_Survival_files/figure-html/unnamed-chunk-29-4.png)<!-- -->
+
+### Stats
+
+Log Reg survival \~ size
+
+#### Check for correlations between traits 
+
+``` r
+size_normalized_wl2 <- winter_surv_size %>% 
+  select(height.cm, long.leaf.cm, diam.mm, total.branch) %>% 
+  drop_na(height.cm, long.leaf.cm, diam.mm, total.branch) %>% scale() #normalize the data so they're all on the same scale
+#head(size_normalized_wl2)
+cor.norm_wl2 = cor(size_normalized_wl2) #test correlations among the traits
+cor.sig_wl2 <- cor.mtest(size_normalized_wl2, method="pearson") #test significance of corrs
+corrplot(cor.norm_wl2, type = "upper",
+         tl.srt = 45, p.mat = cor.sig_wl2$p, 
+         sig.level = 0.05, insig="blank")  
+```
+
+![](WL2_OverWinter_Survival_files/figure-html/unnamed-chunk-30-1.png)<!-- -->
+
+``` r
+#longest leaf and diam are 70% correlated, no other strong corrs
+cor.norm_wl2
+```
+
+```
+##               height.cm long.leaf.cm     diam.mm total.branch
+## height.cm     1.0000000    0.3495199  0.36560154  -0.21526252
+## long.leaf.cm  0.3495199    1.0000000  0.70004129  -0.10779362
+## diam.mm       0.3656015    0.7000413  1.00000000  -0.05023877
+## total.branch -0.2152625   -0.1077936 -0.05023877   1.00000000
+```
+
+``` r
+cor.sig_wl2$p
+```
+
+```
+##                 height.cm long.leaf.cm      diam.mm total.branch
+## height.cm    0.000000e+00 3.626585e-13 2.388020e-14 1.153071e-05
+## long.leaf.cm 3.626585e-13 0.000000e+00 2.387471e-61 2.948125e-02
+## diam.mm      2.388020e-14 2.387471e-61 0.000000e+00 3.113949e-01
+## total.branch 1.153071e-05 2.948125e-02 3.113949e-01 0.000000e+00
+```
+
+
+``` r
+#summary(winter_surv_size) different amounts of NAs depending on trait 
+winter_surv_height_formod <- winter_surv_size %>% 
+  drop_na(WinterSurv, height.cm) %>% 
+  filter(pop!="WR")
+
+winter_surv_length_formod <- winter_surv_size %>% 
+  drop_na(WinterSurv, long.leaf.cm) %>% 
+  filter(pop!="WR", pop!="LV3", pop!="FR", pop!="LVTR1")
+
+winter_surv_diam_formod <- winter_surv_size %>% 
+  drop_na(WinterSurv, diam.mm) %>% 
+  filter(pop!="WR")
+
+winter_surv_branch_formod <- winter_surv_size %>% 
+  drop_na(WinterSurv, total.branch) %>% 
+  filter(pop!="WR")
+```
+
+#### Height
+
+``` r
+wl2_basiclogit_height <- glm(WinterSurv ~ height.cm, data = winter_surv_height_formod, family = "binomial")
+summary(wl2_basiclogit_height)
+```
+
+```
+## 
+## Call:
+## glm(formula = WinterSurv ~ height.cm, family = "binomial", data = winter_surv_height_formod)
+## 
+## Coefficients:
+##             Estimate Std. Error z value Pr(>|z|)    
+## (Intercept) -1.20041    0.15772  -7.611 2.72e-14 ***
+## height.cm    0.03774    0.01490   2.533   0.0113 *  
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## (Dispersion parameter for binomial family taken to be 1)
+## 
+##     Null deviance: 559.15  on 465  degrees of freedom
+## Residual deviance: 552.81  on 464  degrees of freedom
+## AIC: 556.81
+## 
+## Number of Fisher Scoring iterations: 4
+```
+
+``` r
+wl2_logit_height2 <- glmer(WinterSurv ~ height.cm + (1|pop/mf) + (1|block), data = winter_surv_height_formod, family = binomial(link = "logit"))
+summary(wl2_logit_height2) #height not significant in full model 
+```
+
+```
+## Generalized linear mixed model fit by maximum likelihood (Laplace
+##   Approximation) [glmerMod]
+##  Family: binomial  ( logit )
+## Formula: WinterSurv ~ height.cm + (1 | pop/mf) + (1 | block)
+##    Data: winter_surv_height_formod
+## 
+##      AIC      BIC   logLik deviance df.resid 
+##    464.6    485.3   -227.3    454.6      461 
+## 
+## Scaled residuals: 
+##     Min      1Q  Median      3Q     Max 
+## -1.2979 -0.6159 -0.1403  0.6873  3.2445 
+## 
+## Random effects:
+##  Groups Name        Variance Std.Dev.
+##  mf:pop (Intercept) 0.20309  0.4507  
+##  pop    (Intercept) 4.80113  2.1911  
+##  block  (Intercept) 0.08821  0.2970  
+## Number of obs: 466, groups:  mf:pop, 111; pop, 21; block, 13
+## 
+## Fixed effects:
+##             Estimate Std. Error z value Pr(>|z|)    
+## (Intercept) -3.32441    0.82115  -4.048 5.15e-05 ***
+## height.cm    0.05332    0.03556   1.499    0.134    
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Correlation of Fixed Effects:
+##           (Intr)
+## height.cm -0.193
+```
+
+#### Length
+
+``` r
+wl2_basiclogit_length <- glm(WinterSurv ~ long.leaf.cm, data = winter_surv_length_formod, family = "binomial")
+summary(wl2_basiclogit_length)
+```
+
+```
+## 
+## Call:
+## glm(formula = WinterSurv ~ long.leaf.cm, family = "binomial", 
+##     data = winter_surv_length_formod)
+## 
+## Coefficients:
+##              Estimate Std. Error z value Pr(>|z|)    
+## (Intercept)  -2.30809    0.23047 -10.015   <2e-16 ***
+## long.leaf.cm  0.59211    0.06844   8.651   <2e-16 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## (Dispersion parameter for binomial family taken to be 1)
+## 
+##     Null deviance: 514.98  on 405  degrees of freedom
+## Residual deviance: 419.38  on 404  degrees of freedom
+## AIC: 423.38
+## 
+## Number of Fisher Scoring iterations: 4
+```
+
+``` r
+wl2_logit_length2 <- glmer(WinterSurv ~ long.leaf.cm + (1|pop/mf) + (1|block), data = winter_surv_length_formod, family = binomial(link = "logit"))
+summary(wl2_logit_length2)
+```
+
+```
+## Generalized linear mixed model fit by maximum likelihood (Laplace
+##   Approximation) [glmerMod]
+##  Family: binomial  ( logit )
+## Formula: WinterSurv ~ long.leaf.cm + (1 | pop/mf) + (1 | block)
+##    Data: winter_surv_length_formod
+## 
+##      AIC      BIC   logLik deviance df.resid 
+##    407.6    427.7   -198.8    397.6      401 
+## 
+## Scaled residuals: 
+##     Min      1Q  Median      3Q     Max 
+## -2.2923 -0.5079 -0.2261  0.6026  2.6180 
+## 
+## Random effects:
+##  Groups Name        Variance Std.Dev.
+##  mf:pop (Intercept) 0.3011   0.5488  
+##  pop    (Intercept) 1.0561   1.0277  
+##  block  (Intercept) 0.1992   0.4463  
+## Number of obs: 406, groups:  mf:pop, 94; pop, 18; block, 13
+## 
+## Fixed effects:
+##              Estimate Std. Error z value Pr(>|z|)    
+## (Intercept)   -3.1920     0.5289  -6.036 1.58e-09 ***
+## long.leaf.cm   0.6980     0.1164   5.995 2.03e-09 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Correlation of Fixed Effects:
+##             (Intr)
+## long.lef.cm -0.542
+```
+
+``` r
+#positive effect of leaf length in both models 
+```
+
+#### Stem Diameter 
+
+``` r
+wl2_basiclogit_diam <- glm(WinterSurv ~ diam.mm, data = winter_surv_diam_formod, family = "binomial")
+summary(wl2_basiclogit_diam)
+```
+
+```
+## 
+## Call:
+## glm(formula = WinterSurv ~ diam.mm, family = "binomial", data = winter_surv_diam_formod)
+## 
+## Coefficients:
+##             Estimate Std. Error z value Pr(>|z|)    
+## (Intercept)  -3.0346     0.3611  -8.405  < 2e-16 ***
+## diam.mm       1.0185     0.1614   6.310 2.79e-10 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## (Dispersion parameter for binomial family taken to be 1)
+## 
+##     Null deviance: 557.33  on 465  degrees of freedom
+## Residual deviance: 511.28  on 464  degrees of freedom
+## AIC: 515.28
+## 
+## Number of Fisher Scoring iterations: 4
+```
+
+``` r
+wl2_logit_diam2 <- glmer(WinterSurv ~ diam.mm + (1|pop/mf) + (1|block), data = winter_surv_diam_formod, family = binomial(link = "logit"))
+summary(wl2_logit_diam2)
+```
+
+```
+## Generalized linear mixed model fit by maximum likelihood (Laplace
+##   Approximation) [glmerMod]
+##  Family: binomial  ( logit )
+## Formula: WinterSurv ~ diam.mm + (1 | pop/mf) + (1 | block)
+##    Data: winter_surv_diam_formod
+## 
+##      AIC      BIC   logLik deviance df.resid 
+##    461.6    482.3   -225.8    451.6      461 
+## 
+## Scaled residuals: 
+##     Min      1Q  Median      3Q     Max 
+## -1.7687 -0.5808 -0.1530  0.6750  2.5754 
+## 
+## Random effects:
+##  Groups Name        Variance Std.Dev.
+##  mf:pop (Intercept) 0.17973  0.4239  
+##  pop    (Intercept) 4.11736  2.0291  
+##  block  (Intercept) 0.08376  0.2894  
+## Number of obs: 466, groups:  mf:pop, 111; pop, 21; block, 13
+## 
+## Fixed effects:
+##             Estimate Std. Error z value Pr(>|z|)    
+## (Intercept)  -3.8492     0.8394  -4.586 4.52e-06 ***
+## diam.mm       0.5240     0.2296   2.282   0.0225 *  
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Correlation of Fixed Effects:
+##         (Intr)
+## diam.mm -0.419
+```
+
+``` r
+#positive effect of stem diam in both models
+```
+
+#### Basal Branches
+
+``` r
+wl2_basiclogit_branch <- glm(WinterSurv ~ total.branch, data = winter_surv_branch_formod, family = "binomial")
+summary(wl2_basiclogit_branch)
+```
+
+```
+## 
+## Call:
+## glm(formula = WinterSurv ~ total.branch, family = "binomial", 
+##     data = winter_surv_branch_formod)
+## 
+## Coefficients:
+##              Estimate Std. Error z value Pr(>|z|)    
+## (Intercept)  -1.02230    0.22134  -4.619 3.86e-06 ***
+## total.branch  0.08669    0.15523   0.558    0.577    
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## (Dispersion parameter for binomial family taken to be 1)
+## 
+##     Null deviance: 560.5  on 467  degrees of freedom
+## Residual deviance: 560.2  on 466  degrees of freedom
+## AIC: 564.2
+## 
+## Number of Fisher Scoring iterations: 4
+```
+
+``` r
+wl2_logit_branch2 <- glmer(WinterSurv ~ total.branch + (1|pop/mf) + (1|block), data = winter_surv_branch_formod, family = binomial(link = "logit"))
+summary(wl2_logit_branch2)
+```
+
+```
+## Generalized linear mixed model fit by maximum likelihood (Laplace
+##   Approximation) [glmerMod]
+##  Family: binomial  ( logit )
+## Formula: WinterSurv ~ total.branch + (1 | pop/mf) + (1 | block)
+##    Data: winter_surv_branch_formod
+## 
+##      AIC      BIC   logLik deviance df.resid 
+##    468.4    489.2   -229.2    458.4      463 
+## 
+## Scaled residuals: 
+##     Min      1Q  Median      3Q     Max 
+## -1.4705 -0.6110 -0.1379  0.7012  2.5409 
+## 
+## Random effects:
+##  Groups Name        Variance Std.Dev.
+##  mf:pop (Intercept) 0.21630  0.4651  
+##  pop    (Intercept) 5.64587  2.3761  
+##  block  (Intercept) 0.07891  0.2809  
+## Number of obs: 468, groups:  mf:pop, 111; pop, 21; block, 13
+## 
+## Fixed effects:
+##               Estimate Std. Error z value Pr(>|z|)    
+## (Intercept)  -3.153100   0.904154  -3.487 0.000488 ***
+## total.branch -0.002734   0.199644  -0.014 0.989072    
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Correlation of Fixed Effects:
+##             (Intr)
+## total.brnch -0.254
+```
+
+``` r
+#no effect of branch # 
+```
