@@ -1,7 +1,7 @@
 ---
 title: "Climate PCAs_Growth Season"
 author: "Brandie Quarles"
-date: "2025-04-21"
+date: "2025-04-22"
 output: 
   html_document: 
     keep_md: true
@@ -2305,6 +2305,7 @@ all_bioclim_flint_avgs_locs.pc_dist <- all_bioclim_flint_avgs_locs.pc %>% ungrou
 dist_matrix_grwssn <- dist(all_bioclim_flint_avgs_locs.pc_dist, method = "euclidian") #use a distance function to calculate euclidian distance in PCA space
 permanova_results_grwssn <- adonis2(dist_matrix_grwssn ~ TimePd*elev_m*Lat, data = all_bioclim_flint_avgs_locs.pc) #use adonis2 to run the permanova
 #rows in data must be in same order as rows in distance matrix 
+#by = NULL will assess the overall significance of all terms together
 
 #look at output 
 summary(permanova_results_grwssn)
@@ -2356,7 +2357,7 @@ permanova_results_grwssn$`Pr(>F)`
 ```
 
 ``` r
-permanova_results_grwssn_terms <- adonis2(dist_matrix_grwssn ~ TimePd*elev_m*Lat, data = all_bioclim_flint_avgs_locs.pc, by = "terms")
+permanova_results_grwssn_terms <- adonis2(dist_matrix_grwssn ~ TimePd*elev_m*Lat, data = all_bioclim_flint_avgs_locs.pc, by = "terms") #by = "terms" will assess significance for each term (sequentially from first to last)
 permanova_results_grwssn_terms
 ```
 
@@ -2368,13 +2369,13 @@ permanova_results_grwssn_terms
 ## 
 ## adonis2(formula = dist_matrix_grwssn ~ TimePd * elev_m * Lat, data = all_bioclim_flint_avgs_locs.pc, by = "terms")
 ##                   Df SumOfSqs      R2       F Pr(>F)    
-## TimePd             1    25.33 0.05156  4.3809  0.004 ** 
+## TimePd             1    25.33 0.05156  4.3809  0.003 ** 
 ## elev_m             1   158.95 0.32363 27.4956  0.001 ***
 ## Lat                1    47.90 0.09753  8.2858  0.001 ***
-## TimePd:elev_m      1     7.18 0.01462  1.2425  0.253    
-## TimePd:Lat         1     4.44 0.00904  0.7682  0.538    
-## elev_m:Lat         1    24.89 0.05067  4.3050  0.002 ** 
-## TimePd:elev_m:Lat  1     2.79 0.00567  0.4818  0.757    
+## TimePd:elev_m      1     7.18 0.01462  1.2425  0.259    
+## TimePd:Lat         1     4.44 0.00904  0.7682  0.536    
+## elev_m:Lat         1    24.89 0.05067  4.3050  0.004 ** 
+## TimePd:elev_m:Lat  1     2.79 0.00567  0.4818  0.740    
 ## Residual          38   219.67 0.44727                   
 ## Total             45   491.13 1.00000                   
 ## ---
@@ -2502,31 +2503,38 @@ all_bioclim_flint_avgs_locs.pc_avg %>%
   mutate(group=str_c(parent.pop,elev_m))  %>%
   ggplot(aes(x=PC2, y=PC4, shape=TimePd, color=elev_m)) +
   scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
-  #geom_point(size=2, alpha=0.7) +
-  labs(x="PC2 (30.76%)", y="PC4 (10.65%)") +
-  geom_vline(xintercept = 0, linetype="dashed") + geom_hline(yintercept = 0, linetype="dashed") +
-  geom_path(aes(group=group),arrow = arrow(length=unit(5, "points")), linewidth = .8)
-```
-
-![](Climate_PCAs_Growth_Season_files/figure-html/unnamed-chunk-73-2.png)<!-- -->
-
-``` r
-#ggsave("../output/Climate/GRWSSN_PC2-PC4.png", width = 8, height = 8, units = "in")
-
-all_bioclim_flint_avgs_locs.pc_avg %>% 
-  mutate(group=str_c(parent.pop,elev_m))  %>%
-  ggplot(aes(x=PC2, y=PC4, shape=TimePd, color=elev_m)) +
-  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
   geom_point(size=2, alpha=0.7) +
   geom_text_repel(aes(label = parent.pop)) +
   geom_vline(xintercept = 0, linetype="dashed") + geom_hline(yintercept = 0, linetype="dashed")  +
   geom_path(aes(group=group),arrow = arrow(length=unit(5, "points")), linewidth = .8)
 ```
 
-![](Climate_PCAs_Growth_Season_files/figure-html/unnamed-chunk-73-3.png)<!-- -->
+![](Climate_PCAs_Growth_Season_files/figure-html/unnamed-chunk-73-2.png)<!-- -->
 
 ``` r
 #high elev climate seems to be shifting to be more similar to low elev 
+
+all_bioclim_flint_avgs_locs.pc_avg %>% 
+  mutate(group=str_c(parent.pop,elev_m))  %>%
+  ggplot(aes(x=PC2, y=PC4, shape=TimePd, color=elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  #geom_point(size=2, alpha=0.7) +
+  labs(x="PC2 (30.76%)", y="PC4 (10.65%)", color="Elevation (m)") +
+  geom_vline(xintercept = 0, linetype="dashed") + geom_hline(yintercept = 0, linetype="dashed") +
+  geom_path(aes(group=group),arrow = arrow(length=unit(5, "points")), linewidth = .8) +
+  annotate("text", x = -4.2, y = -2.5, label = "Low Temp \n Seasonality") +
+  annotate("text", x = 3.6, y = -2.5, label = "High Temp \n Seasonality") +
+  annotate("text", x = -5.28, y = -1.5, label = "Low Diurnal \n Range") +
+  annotate("text", x = -5.31, y = 2.5, label = "High Diurnal \n Range") +
+  coord_cartesian(ylim = c(-1.7, 3), xlim = c(-4, 3.5), clip = "off") +
+  theme_classic() +
+  theme(text=element_text(size=28))
+```
+
+![](Climate_PCAs_Growth_Season_files/figure-html/unnamed-chunk-73-3.png)<!-- -->
+
+``` r
+ggsave("../output/Climate/GRWSSN_PC2-PC4.png", width = 7, height = 5.5, units = "in")
 ```
 
 

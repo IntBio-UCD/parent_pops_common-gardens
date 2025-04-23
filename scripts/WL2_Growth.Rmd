@@ -9,6 +9,11 @@ output:
 
 # Analyze Growth
 
+To Do
+
+-   Add individual as a random effect to account for repeated measures
+
+
 Notes:
 
 -   Used sample size cut off of 3 or greater post-establishment, removed WV

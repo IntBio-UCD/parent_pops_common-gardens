@@ -955,21 +955,28 @@ all_bioclim_flint_avgs_locs.pc_avg %>%
   mutate(group=str_c(parent.pop,elev_m))  %>%
   ggplot(aes(x=PC2, y=PC4, shape=TimePd, color=elev_m)) +
   scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
-  #geom_point(size=2, alpha=0.7) +
-  labs(x="PC2 (30.76%)", y="PC4 (10.65%)") +
-  geom_vline(xintercept = 0, linetype="dashed") + geom_hline(yintercept = 0, linetype="dashed") +
-  geom_path(aes(group=group),arrow = arrow(length=unit(5, "points")), linewidth = .8)
-#ggsave("../output/Climate/GRWSSN_PC2-PC4.png", width = 8, height = 8, units = "in")
-
-all_bioclim_flint_avgs_locs.pc_avg %>% 
-  mutate(group=str_c(parent.pop,elev_m))  %>%
-  ggplot(aes(x=PC2, y=PC4, shape=TimePd, color=elev_m)) +
-  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
   geom_point(size=2, alpha=0.7) +
   geom_text_repel(aes(label = parent.pop)) +
   geom_vline(xintercept = 0, linetype="dashed") + geom_hline(yintercept = 0, linetype="dashed")  +
   geom_path(aes(group=group),arrow = arrow(length=unit(5, "points")), linewidth = .8)
 #high elev climate seems to be shifting to be more similar to low elev 
+
+all_bioclim_flint_avgs_locs.pc_avg %>% 
+  mutate(group=str_c(parent.pop,elev_m))  %>%
+  ggplot(aes(x=PC2, y=PC4, shape=TimePd, color=elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  #geom_point(size=2, alpha=0.7) +
+  labs(x="PC2 (30.76%)", y="PC4 (10.65%)", color="Elevation (m)") +
+  geom_vline(xintercept = 0, linetype="dashed") + geom_hline(yintercept = 0, linetype="dashed") +
+  geom_path(aes(group=group),arrow = arrow(length=unit(5, "points")), linewidth = .8) +
+  annotate("text", x = -4.2, y = -2.5, label = "Low Temp \n Seasonality") +
+  annotate("text", x = 3.6, y = -2.5, label = "High Temp \n Seasonality") +
+  annotate("text", x = -5.28, y = -1.5, label = "Low Diurnal \n Range") +
+  annotate("text", x = -5.31, y = 2.5, label = "High Diurnal \n Range") +
+  coord_cartesian(ylim = c(-1.7, 3), xlim = c(-4, 3.5), clip = "off") +
+  theme_classic() +
+  theme(text=element_text(size=28))
+ggsave("../output/Climate/GRWSSN_PC2-PC4.png", width = 7, height = 5.5, units = "in")
 ```
 
 ```{r}

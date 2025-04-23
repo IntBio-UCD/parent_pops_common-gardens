@@ -11,6 +11,10 @@ output:
 
 -   Is the growth rate lower for high elev b/c drier and biennial?
 
+To Do
+
+-   Add individual as a random effect to account for repeated measures
+
 
 Notes:
 

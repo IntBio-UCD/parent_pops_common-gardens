@@ -1,7 +1,7 @@
 ---
 title: "Climate_PCAs_AllYear"
 author: "Brandie QC"
-date: "2025-04-21"
+date: "2025-04-22"
 output: 
   html_document: 
     keep_md: true
@@ -2532,20 +2532,27 @@ all_bioclim_flint_avgs_locs.pc_avg %>%
 
 
 ``` r
-all_bioclim_flint_avgs_locs.pc_avg %>% 
+all_bioclim_flint_avgs_locs.pc_avg %>%  
   mutate(group=str_c(parent.pop,elev_m))  %>%
   ggplot(aes(x=PC1, y=PC4, shape=TimePd, color=elev_m)) +
   scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
   #geom_point(size=2, alpha=0.7) +
-  labs(x="PC1 (51.11%)", y="PC4 (8.07%)") +
+  labs(x="PC1 (51.11%)", y="PC4 (8.07%)", color="Elevation (m)") +
   geom_vline(xintercept = 0, linetype="dashed") + geom_hline(yintercept = 0, linetype="dashed") +
-  geom_path(aes(group=group),arrow = arrow(length=unit(5, "points")), linewidth = .8)
+  geom_path(aes(group=group),arrow = arrow(length=unit(5, "points")), linewidth = .8) +
+  annotate("text", x = -4, y = -2.7, label = "Warm \n No Snow") +
+  annotate("text", x = 4, y = -2.7, label = "Cold \n Snow") +
+  annotate("text", x = -5.4, y = -1.5, label = "High Temp \n Seasonality") +
+  annotate("text", x = -5.4, y = 1.5, label = "Low Temp \n Seasonality") +
+  coord_cartesian(ylim = c(-2, 2), xlim = c(-4,4), clip = "off") +
+  theme_classic() +
+  theme(text=element_text(size=28))
 ```
 
 ![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-78-1.png)<!-- -->
 
 ``` r
-#ggsave("../output/Climate/Wtr_Year_PC1-PC4.png", width = 8, height = 8, units = "in")
+ggsave("../output/Climate/Wtr_Year_PC1-PC4.png", width = 7.4, height = 6, units = "in")
 
 #all_bioclim_flint_avgs_locs.pc_avg %>% 
 #  mutate(group=str_c(parent.pop,elev_m))  %>%
@@ -2632,10 +2639,10 @@ permanova_results_all_year_terms
 ## TimePd             1   28.589 0.09076 10.3137  0.001 ***
 ## elev_m             1  109.439 0.34743 39.4811  0.001 ***
 ## Lat                1   55.665 0.17671 20.0816  0.001 ***
-## TimePd:elev_m      1    3.008 0.00955  1.0853  0.320    
-## TimePd:Lat         1    3.629 0.01152  1.3092  0.244    
-## elev_m:Lat         1    9.033 0.02868  3.2587  0.028 *  
-## TimePd:elev_m:Lat  1    0.303 0.00096  0.1093  0.991    
+## TimePd:elev_m      1    3.008 0.00955  1.0853  0.316    
+## TimePd:Lat         1    3.629 0.01152  1.3092  0.228    
+## elev_m:Lat         1    9.033 0.02868  3.2587  0.024 *  
+## TimePd:elev_m:Lat  1    0.303 0.00096  0.1093  0.990    
 ## Residual          38  105.334 0.33439                   
 ## Total             45  315.000 1.00000                   
 ## ---
