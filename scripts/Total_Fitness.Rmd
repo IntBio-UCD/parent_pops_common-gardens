@@ -47,6 +47,7 @@ library(viridis) #for pretty colors
 library(ggrepel) #for non-overlapping labels on plots
 library(ggdist) #visualizations of distributions and uncertainty 
 library(ggpubr)
+library(cowplot) #plot_grid
 
 #library(sp) #for calculating geographic distance 
 library(geosphere) #for calculating geographic distance
@@ -255,6 +256,54 @@ wl2_gowers_avg <- bind_rows(wl2_gowers_2023, wl2_gowers_2024) %>%
   group_by(pop, elevation.group, elev_m, Geographic_Dist, Elev_Dist) %>% 
   summarise_at(c("GrwSsn_GD_Recent",  "GrwSsn_GD_Historical", "Wtr_Year_GD_Recent", "Wtr_Year_GD_Historical"), c(mean), na.rm = TRUE)
 wl2_gowers_avg
+```
+
+```{r}
+grw_recent_fig <- wl2_gowers_avg %>% 
+  ggplot(aes(x=fct_reorder(pop, GrwSsn_GD_Recent), y=GrwSsn_GD_Recent, group=pop, fill=elev_m)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  labs(y="Gowers Envtal Distance \n from WL2", fill="Elevation (m)", x="Population", title = "Recent Climate") +
+  theme_classic() +
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+
+grw_historical_fig <- wl2_gowers_avg %>% 
+  ggplot(aes(x=fct_reorder(pop, GrwSsn_GD_Historical), y=GrwSsn_GD_Historical, group=pop, fill=elev_m)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  labs(y="Gowers Envtal Distance \n from WL2", fill="Elevation (m)", x="Population", title="Historic Climate") +
+  theme_classic() +
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1)) 
+  
+
+plot_grid(grw_historical_fig, grw_recent_fig)
+ggsave("../output/Climate/AVG_growthseason_Gowers_fromWL2.png", width = 24, height = 8, units = "in")
+```
+
+```{r}
+wtr_recent_fig <- wl2_gowers_avg %>% 
+  ggplot(aes(x=fct_reorder(pop, Wtr_Year_GD_Recent), y=Wtr_Year_GD_Recent, group=pop, fill=elev_m)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  labs(y="Gowers Envtal Distance \n from WL2", fill="Elevation (m)", x="Population", title = "Recent Climate") +
+  theme_classic() +
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+
+wtr_historical_fig <- wl2_gowers_avg %>% 
+  ggplot(aes(x=fct_reorder(pop, Wtr_Year_GD_Historical), y=Wtr_Year_GD_Historical, group=pop, fill=elev_m)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  labs(y="Gowers Envtal Distance \n from WL2", fill="Elevation (m)", x="Population", title="Historic Climate") +
+  theme_classic() +
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1)) 
+  
+
+plot_grid(wtr_historical_fig, wtr_recent_fig)
+ggsave("../output/Climate/AVG_wtryr_Gowers_fromWL2.png", width = 24, height = 8, units = "in")
 ```
 
 #### For Subtraction Distances
