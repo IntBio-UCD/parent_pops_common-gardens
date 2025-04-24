@@ -203,9 +203,10 @@ all_wl2_size_loc %>%
 Height
 
 ```{r}
-all_wl2_size_all_nobuffers$parent.pop = factor(all_wl2_size_all_nobuffers$parent.pop, levels=c('CC','TM2','SC','IH','BH','WV','FR','DPR','WR','WL1','SQ1','SQ2','WL2','YO4','CP2','CP3','LV3','SQ3','YO7','YO8','LV1','LVTR1','YO11'))
+all_wl2_size_forfig <- all_wl2_size_loc
+all_wl2_size_forfig$parent.pop = factor(all_wl2_size_forfig$parent.pop, levels=c('CC','TM2','SC','IH','BH','WV','FR','DPR','WR','WL1','SQ1','SQ2','WL2','YO4','CP2','CP3','LV3','SQ3','YO7','YO8','LV1','LVTR1','YO11'))
   
-all_wl2_size_all_nobuffers %>% 
+all_wl2_size_forfig %>% 
   ggplot(aes(group=Genotype, x=survey_date, y=height.cm, col=elev_m)) + 
   scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
   geom_line() + facet_wrap(~parent.pop, scales = "free")
@@ -281,6 +282,7 @@ all_wl2_size_for_models %>%
   arrange(Sample_Size)
 #no new pops to remove 
 
+write_csv(all_wl2_size_for_models, "../output/WL2_Traits/WL2_growth_for_models.csv")
 ```
 
 
@@ -486,6 +488,82 @@ random_fit2_WL2.predictions %>% ggplot(aes(x=day)) +
   facet_wrap(~parent.pop)
 
 random_fit2_WL2.predictions %>% filter(parent.pop=="BH") %>% 
+  ggplot(aes(x=day)) +
+  geom_line(aes(group=Genotype, y=height.cm, color=parent.pop), alpha=.2) +
+  geom_line(aes(y=prediction, color=parent.pop)) +
+  facet_wrap(~parent.pop)
+
+#predictions look pretty good 
+```
+
+## Let Hmax vary - Add Indiv for Repeated Measures 
+
+```{r}
+random_f2b_WL2 <- brmsformula(height.cm ~ Hmax - (Hmax - Hmin) * exp(-(k/100 * day)^delta),
+                  Hmin + k + delta ~ 1,
+                  Hmax ~ (1|parent.pop) + (1|Genotype), #different hmax for each pop + random effect of pop + random effect of genotype for repeated measures 
+                  nl=TRUE)
+```
+
+Default Priors
+
+```{r}
+get_prior(random_f2b_WL2, data = all_wl2_size_for_models)
+#there's now a prior for sd of Hmax due to pop
+#don't need a specific prior for each pop now 
+
+prior2_WL2 <- c(set_prior("normal(4,3)", nlpar="Hmin"),
+            set_prior("normal(25,10)",  nlpar="Hmax"),
+            set_prior("gamma(1,2)", nlpar = "k", lb = 0), #gamma constrains to be > 0 
+            set_prior("gamma(4,2)", nlpar = "delta", lb = 0)
+) #same as prior 1 for now 
+```
+
+### Fit the model
+
+```{r}
+random_fit2b_WL2 <- brm(formula=random_f2b_WL2, data=all_wl2_size_for_models, prior=prior2_WL2, cores = 4, 
+                       iter = 3800, #increase iterations b/c more complex (helps with Rhat and ESS)
+                       control = list(max_treedepth = 12)) #default = 10 
+#Warning: Bulk Effective Samples Size (ESS) is too low, indicating posterior means and medians may be unreliable. Running the chains for more iterations may help. See https://mc-stan.org/misc/warnings.html#bulk-ess
+```
+
+Summary
+
+```{r}
+summary(random_fit2b_WL2)
+#rhat good 
+#ESS too low
+```
+
+```{r}
+plot(random_fit2b_WL2, nvariables = 3, ask=FALSE)
+#Hmax chains look a little weird 
+```
+
+### Predictions
+
+The function expand_grid creates a data frame with all combinations of the items it is given (days and pops in this case).
+
+```{r}
+pred.df <- expand_grid(day=min(all_wl2_size_for_models$day):max(all_wl2_size_for_models$day),
+                       parent.pop=unique(all_wl2_size_for_models$parent.pop),
+                       Genotype=unique(all_wl2_size_for_models$Genotype),)
+#pred.df
+```
+
+```{r}
+random_fit2b_WL2.predictions <- cbind(pred.df, prediction=predict(random_fit2b_WL2, newdata = pred.df)[,"Estimate"]) %>%
+  full_join(all_wl2_size_for_models, by=c("day", "parent.pop", "Genotype"))
+#Error: vector memory limit of 16.0 Gb reached, see mem.maxVSize()
+
+random_fit2b_WL2.predictions %>% ggplot(aes(x=day)) +
+  geom_line(aes(group=Genotype, y=height.cm, color=parent.pop), alpha=.2) +
+  geom_line(aes(y=prediction, color=parent.pop)) +
+  #scale_color_brewer(type="qual", palette = "Set2", guide="none") +
+  facet_wrap(~parent.pop)
+
+random_fit2b_WL2.predictions %>% filter(parent.pop=="BH") %>% 
   ggplot(aes(x=day)) +
   geom_line(aes(group=Genotype, y=height.cm, color=parent.pop), alpha=.2) +
   geom_line(aes(y=prediction, color=parent.pop)) +
