@@ -490,6 +490,9 @@ summary(lmeheight3)
 ranova(lmeheight3) 
 anova(lmeheight3)
 coef(lmeheight3)$parent.pop
+plot(lmeheight3, which = 1)
+qqnorm(resid(lmeheight3))
+qqline(resid(lmeheight3)) #fit diagnostics not great 
 
 height_slopes <- coef(lmeheight3)$parent.pop %>% 
   rename(height_slope=SiteWL2) %>% select(-`(Intercept)`) %>% 
