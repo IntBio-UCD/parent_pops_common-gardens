@@ -2553,4 +2553,7 @@ wl2_rep_output_sub %>%
   cbind(predicted={rep_output_SUB_models_log_CD_GD %>% filter(name=="3a_GS_Historical") %>% pull(predict) %>% unlist()}) %>%
   ggplot(aes(x=GrwSsn_TempDist_Historic, y = predicted)) +
   geom_point() 
+
+mod_test2 <- lmer(logTotalFitness ~  GrwSsn_TempDist_Historic + Geographic_Dist + (1|block), data=wl2_rep_output_sub)
+summary(mod_test2)
 ```
