@@ -282,7 +282,7 @@ all_wl2_size_for_models %>%
   arrange(Sample_Size)
 #no new pops to remove 
 
-write_csv(all_wl2_size_for_models, "../output/WL2_Traits/WL2_growth_for_models.csv")
+#write_csv(all_wl2_size_for_models, "../output/WL2_Traits/WL2_growth_for_models.csv")
 ```
 
 
@@ -534,6 +534,9 @@ Summary
 summary(random_fit2b_WL2)
 #rhat good 
 #ESS too low
+
+results <- as.data.frame(summary(random_fit2b_WL2))
+write_csv(results, "~/growth/WL2_Growth_RptMeas_Results.csv")
 ```
 
 ```{r}
