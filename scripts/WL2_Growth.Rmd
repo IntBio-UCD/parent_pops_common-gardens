@@ -155,6 +155,11 @@ unique(all_wl2_size_all_nobuffers$block)
 #write_csv(all_wl2_size_all_nobuffers, "../output/WL2_Traits/WL2-2023_Size_Combined.csv")
 ```
 
+```{r}
+all_wl2_size_all_nobuffers <- read_csv("../output/WL2_Traits/WL2-2023_Size_Combined.csv")
+```
+
+
 ## Pop Location Info
 
 ```{r}
@@ -282,7 +287,7 @@ all_wl2_size_for_models %>%
   arrange(Sample_Size)
 #no new pops to remove 
 
-write_csv(all_wl2_size_for_models, "../output/WL2_Traits/WL2_growth_for_models.csv")
+#write_csv(all_wl2_size_for_models, "../output/WL2_Traits/WL2_growth_for_models.csv")
 ```
 
 
@@ -523,7 +528,7 @@ prior2_WL2 <- c(set_prior("normal(4,3)", nlpar="Hmin"),
 
 ```{r}
 random_fit2b_WL2 <- brm(formula=random_f2b_WL2, data=all_wl2_size_for_models, prior=prior2_WL2, cores = 4, 
-                       iter = 3800, #increase iterations b/c more complex (helps with Rhat and ESS)
+                       iter = 4000, #increase iterations b/c more complex (helps with Rhat and ESS)
                        control = list(max_treedepth = 12)) #default = 10 
 #Warning: Bulk Effective Samples Size (ESS) is too low, indicating posterior means and medians may be unreliable. Running the chains for more iterations may help. See https://mc-stan.org/misc/warnings.html#bulk-ess
 ```
@@ -534,6 +539,9 @@ Summary
 summary(random_fit2b_WL2)
 #rhat good 
 #ESS too low
+
+results <- as.data.frame(summary(random_fit2b_WL2))
+write_csv(results, "~/growth/WL2_Growth_RptMeas_Results.csv")
 ```
 
 ```{r}
