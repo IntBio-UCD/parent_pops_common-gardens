@@ -530,7 +530,25 @@ prior2_WL2 <- c(set_prior("normal(4,3)", nlpar="Hmin"),
 random_fit2b_WL2 <- brm(formula=random_f2b_WL2, data=all_wl2_size_for_models, prior=prior2_WL2, cores = 4, 
                        iter = 4000, #increase iterations b/c more complex (helps with Rhat and ESS)
                        control = list(max_treedepth = 12)) #default = 10 
-#Warning: Bulk Effective Samples Size (ESS) is too low, indicating posterior means and medians may be unreliable. Running the chains for more iterations may help. See https://mc-stan.org/misc/warnings.html#bulk-ess
+
+summary(random_fit2b_WL2)
+
+results <- as.data.frame(summary(random_fit2b_WL2))
+write_csv(results, "../output/WL2_Traits/WL2_Growth_RptMeas_Results.csv")
+
+pred.df <- expand_grid(day=min(all_wl2_size_for_models$day):max(all_wl2_size_for_models$day),
+                       Genotype=unique(all_wl2_size_for_models$Genotype)) %>% 
+  separate(Genotype, c("parent.pop", "mf","rep"), remove = FALSE)
+
+random_fit2b_WL2.predictions <- cbind(pred.df, prediction=predict(random_fit2b_WL2, newdata = pred.df)[,"Estimate"]) %>%
+  full_join(all_wl2_size_for_models, by=c("day", "parent.pop", "Genotype"))
+
+random_fit2b_WL2.predictions %>% ggplot(aes(x=day)) +
+  geom_line(aes(group=Genotype, y=height.cm, color=parent.pop), alpha=.2) +
+  geom_line(aes(y=prediction, color=parent.pop)) +
+  #scale_color_brewer(type="qual", palette = "Set2", guide="none") +
+  facet_wrap(~parent.pop)
+ggsave("../output/WL2_Traits/WL2_Growth_Predictions_HmaxRptMeas.png", width = 14, height = 8, units = "in")
 ```
 
 Summary
@@ -538,10 +556,10 @@ Summary
 ```{r}
 summary(random_fit2b_WL2)
 #rhat good 
-#ESS too low
+#hmax intercept ESS kind of low (876)
 
-results <- as.data.frame(summary(random_fit2b_WL2))
-write_csv(results, "~/growth/WL2_Growth_RptMeas_Results.csv")
+#results <- as.data.frame(summary(random_fit2b_WL2))
+#write_csv(results, "~/growth/WL2_Growth_RptMeas_Results.csv")
 ```
 
 ```{r}
@@ -555,8 +573,8 @@ The function expand_grid creates a data frame with all combinations of the items
 
 ```{r}
 pred.df <- expand_grid(day=min(all_wl2_size_for_models$day):max(all_wl2_size_for_models$day),
-                       parent.pop=unique(all_wl2_size_for_models$parent.pop),
-                       Genotype=unique(all_wl2_size_for_models$Genotype),)
+                       Genotype=unique(all_wl2_size_for_models$Genotype)) %>% 
+  separate(Genotype, c("parent.pop", "mf","rep"), remove = FALSE)
 #pred.df
 ```
 
@@ -570,6 +588,7 @@ random_fit2b_WL2.predictions %>% ggplot(aes(x=day)) +
   geom_line(aes(y=prediction, color=parent.pop)) +
   #scale_color_brewer(type="qual", palette = "Set2", guide="none") +
   facet_wrap(~parent.pop)
+ggsave("../output/WL2_Growth_Predictions_HmaxRptMeas.png", width = 14, height = 8, units = "in")
 
 random_fit2b_WL2.predictions %>% filter(parent.pop=="BH") %>% 
   ggplot(aes(x=day)) +
