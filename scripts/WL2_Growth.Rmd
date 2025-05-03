@@ -561,10 +561,13 @@ pred.df <- expand_grid(day=min(all_wl2_size_for_models$day):max(all_wl2_size_for
                        Genotype=unique(all_wl2_size_for_models$Genotype)) %>% 
   separate(Genotype, c("parent.pop", "mf","rep"), remove = FALSE)
 #pred.df
+
+pred.df2 <- all_wl2_size_for_models %>% select(day, parent.pop, Genotype)
 ```
 
 ```{r}
-random_fit2b_WL2.predictions <- cbind(pred.df, prediction=predict(random_fit2b_WL2, newdata = pred.df)[,"Estimate"]) %>%
+random_fit2b_WL2 <- readRDS("brm_object_hmaxrpteadmeas.rds")
+random_fit2b_WL2.predictions <- cbind(pred.df2, prediction=predict(random_fit2b_WL2, newdata = pred.df2)[,"Estimate"]) %>%
   full_join(all_wl2_size_for_models, by=c("day", "parent.pop", "Genotype"))
 #Error: vector memory limit of 16.0 Gb reached, see mem.maxVSize()
 
