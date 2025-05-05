@@ -16,6 +16,10 @@ knitr::opts_chunk$set(echo = TRUE)
 
 Add climate to best base model
 
+-   Weekly climate as predictor of K
+
+-   Summary of climate as predictor of Hmax and maybe delta
+
 ## Libraries
 
 ```{r}
@@ -24,78 +28,12 @@ library(brms)
 library(zoo) #rollmean
 ```
 
-## Need to make a csv file with all survey data for each plant
-
-### Get list of size files
+## Load the growth data
 
 ```{r}
-pretrans_ucd <-  dir("../input/UCD_Data/CorrectedCSVs/",
-             pattern=".*20221128.*csv",
-             full.names=TRUE)
-pretrans_ucd
-
-posttrans_ucd <- dir("../input/UCD_Data/CorrectedCSVs/",
-             pattern="Size_survey_transplants.*corrected.*csv",
-             full.names=TRUE)
-posttrans_ucd
+all_ucd_size_all <- read_csv("../output/UCD_Traits/UCD-2023_Size_Combined.csv")
 ```
 
-### Add data to a tibble
-
-```{r}
-pretrans_dat_ucd <- tibble(path=pretrans_ucd, filename=basename(path))
-pretrans_dat_ucd
-posttrans_dat_ucd <- tibble(path=posttrans_ucd, filename=basename(path))
-posttrans_dat_ucd
-
-all_ucd_size <- bind_rows(pretrans_dat_ucd, posttrans_dat_ucd) %>% 
-  mutate(survey_date=str_extract(filename, "2[0-9]*"),
-         survey_date=lubridate::ymd(survey_date))
-all_ucd_size
-```
-
-### Read in the files
-
-```{r}
-all_ucd_size2 <- all_ucd_size %>%
-  mutate(sheets=map(path, 
-                    read_csv, 
-                    #col_types=cols(.default=col_character()), # forces all columns to be character
-                                                              # this is needed because of data sheet problems that cause some numerics to be imported as character  
-                    na = c("", "NA", "-", "N/A") # sets NA strings. 
-                    )) %>%
-  select(-path)
-
-all_ucd_size2
-```
-
-### Check for data issues
-
-```{r}
-all_ucd_size2$sheets[[1]] <- all_ucd_size2$sheets[[1]] %>% rename(pop=parent.pop, `height (cm)`=`Height (cm)`, `longest leaf (cm)`=`Longest leaf (cm)`) 
-all_ucd_size2$sheets[[2]] <- all_ucd_size2$sheets[[2]] %>% rename(pop=parent.pop) 
-all_ucd_size2$sheets[[5]] <- all_ucd_size2$sheets[[5]] %>% mutate(mf=as.double(mf)) #convert mf to numeric
-all_ucd_size2$sheets[[1]] <- all_ucd_size2$sheets[[1]] %>% filter(`germinated?`== 1) #keep germs only from pretrans size 
-#ALL ISSUES FIXED!
-```
-
-### Combine the data
-
-```{r}
-all_ucd_size_all <- all_ucd_size2 %>% unnest(sheets) %>%
-  rename(germ = `germinated?`, height.cm = `height (cm)`, 
-         long.leaf.cm = `longest leaf (cm)`, parent.pop=pop) %>% 
-  filter(parent.pop != "buffer") %>% 
-  mutate(parent.pop= str_replace(parent.pop, ".*VTR.*", "LVTR1")) %>% 
-  filter(rep != 100) %>% #get rid of individuals that germinated in the field 
-  unite(Genotype, parent.pop:rep, sep="_", remove = FALSE) %>% 
-  unite(pop.mf, parent.pop:mf, sep="_", remove = FALSE) %>% 
-  select(survey_date, block, Genotype:Notes)
-head(all_ucd_size_all)
-unique(all_ucd_size_all$parent.pop) #all 23 pops!
-
-#write_csv(all_ucd_size_all, "../output/UCD_Traits/UCD_Size_Combined.csv")
-```
 
 ## Pop Location Info
 
@@ -153,10 +91,8 @@ temp_UCD_summary <- temp_UCD %>%
   ) %>%
   mutate(
     across(ends_with("temp_d"), \(x) rollmean(x, k = 7, align = "right", fill = NA), .names="{.col}1_7"),
-    across(ends_with("temp_d"), \(x) rollmean(x, k = 13, align = "right", fill = NA), .names="{.col}1_13"), # 13 so I can get the first survey date
-    across(ends_with("1_7"), \(x) dplyr::lag(x, 6), .names = "{.col}_13") 
-  ) %>%
-  rename_with(\(x) str_replace(x, "1_7_13", "6_13"))
+    across(ends_with("temp_d"), \(x) rollmean(x, k = 13, align = "right", fill = NA), .names="{.col}1_13") # 13 so I can get the first survey date
+  ) 
 
 temp_UCD_summary
 ```
@@ -165,67 +101,64 @@ temp_UCD_summary
 
 ```{r}
 all_ucd_size_for_models_climate <- all_ucd_size_for_models %>% 
-  left_join(temp_UCD_summary, by = c("survey_date" = "Date")) #%>%
-  #filter(day>0) #remove day pre-field size b/c no climate data #without day 0, min is different...
+  left_join(temp_UCD_summary, by = c("survey_date" = "Date")) %>%
+  filter(day>0) #remove day pre-field size b/c no climate data 
 
 all_ucd_size_for_models_climate %>% 
   ggplot(aes(group=Genotype, x=survey_date, y=height.cm, col=elev_m)) + 
   scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
   geom_line() + facet_wrap(~parent.pop, scales = "free")
+#without day 0, min is different...
 ```
 
 ## Models
 
 ```{r}
 #best base model:
-climate_f1 <- brmsformula(height.cm ~ Hmax - (Hmax - Hmin) * exp(-(k/100 * day)^delta),
+base_f1 <- brmsformula(height.cm ~ Hmax - (Hmax - Hmin) * exp(-(k/100 * day)^delta),
                   Hmin ~ 1,
                   Hmax + k + delta ~ (1|parent.pop), 
+                  nl=TRUE)
+
+#alternate base model
+base_f2 <- brmsformula(height.cm ~ Hmax - (Hmax - Hmin) * exp(-(k/100 * day)^delta),
+                  Hmin + Hmax + k + delta ~ (1|parent.pop), 
                   nl=TRUE)
 
 climate_f2 <- brmsformula(height.cm ~ Hmax - (Hmax - Hmin) * exp(-(k/100 * day)^delta),
                   Hmin ~ 1,
-                  Hmax + k + delta ~ min_temp_d1_7 + (1|parent.pop), 
+                  k ~ min_temp_d1_7 + (1|parent.pop),
+                  Hmax + delta ~ (1|parent.pop), 
                   nl=TRUE)
 
 climate_f3 <- brmsformula(height.cm ~ Hmax - (Hmax - Hmin) * exp(-(k/100 * day)^delta),
                   Hmin ~ 1,
-                  Hmax + k + delta ~ mean_temp_d1_7 + (1|parent.pop), 
+                  k ~  mean_temp_d1_7 + (1|parent.pop),
+                  Hmax + delta ~ (1|parent.pop), 
                   nl=TRUE)
 
 climate_f4 <- brmsformula(height.cm ~ Hmax - (Hmax - Hmin) * exp(-(k/100 * day)^delta),
                   Hmin ~ 1,
-                  Hmax + k + delta ~ max_temp_d1_7 + (1|parent.pop), 
+                  k ~ max_temp_d1_7 + (1|parent.pop), 
+                  Hmax + delta ~ (1|parent.pop), 
                   nl=TRUE)
 
 climate_f5 <- brmsformula(height.cm ~ Hmax - (Hmax - Hmin) * exp(-(k/100 * day)^delta),
                   Hmin ~ 1,
-                  Hmax + k + delta ~ min_temp_d1_13 + (1|parent.pop), 
+                  k ~ min_temp_d1_13 + (1|parent.pop), 
+                  Hmax + delta ~ (1|parent.pop), 
                   nl=TRUE)
 
 climate_f6 <- brmsformula(height.cm ~ Hmax - (Hmax - Hmin) * exp(-(k/100 * day)^delta),
                   Hmin ~ 1,
-                  Hmax + k + delta ~ max_temp_d1_13 + (1|parent.pop), 
+                  k ~ mean_temp_d1_13 + (1|parent.pop), 
+                  Hmax + delta ~ (1|parent.pop), 
                   nl=TRUE)
 
 climate_f7 <- brmsformula(height.cm ~ Hmax - (Hmax - Hmin) * exp(-(k/100 * day)^delta),
                   Hmin ~ 1,
-                  Hmax + k + delta ~ (1|parent.pop), 
-                  nl=TRUE)
-
-climate_f8 <- brmsformula(height.cm ~ Hmax - (Hmax - Hmin) * exp(-(k/100 * day)^delta),
-                  Hmin ~ 1,
-                  Hmax + k + delta ~ min_temp_d6_13 + (1|parent.pop), 
-                  nl=TRUE)
-
-climate_f9 <- brmsformula(height.cm ~ Hmax - (Hmax - Hmin) * exp(-(k/100 * day)^delta),
-                  Hmin ~ 1,
-                  Hmax + k + delta ~ mean_temp_d6_13 + (1|parent.pop), 
-                  nl=TRUE)
-
-climate_f10 <- brmsformula(height.cm ~ Hmax - (Hmax - Hmin) * exp(-(k/100 * day)^delta),
-                  Hmin ~ 1,
-                  Hmax + k + delta ~ max_temp_d6_13 + (1|parent.pop), 
+                  k ~  max_temp_d1_13 + (1|parent.pop), 
+                  Hmax + delta ~ (1|parent.pop), 
                   nl=TRUE)
 ```
 
@@ -242,24 +175,45 @@ prior1 <- c(set_prior("normal(5,3)", nlpar="Hmin"),
 
 ## Model Fits
 
-### Base model (fit1)
+### Base model 1 - Hmax, k, delta vary
 
 ```{r}
-climate_fit1 <- brm(formula=climate_f1, data=all_ucd_size_for_models_climate, prior=prior1, iter = 3800, cores=4)
+base_fit1 <- brm(formula=base_f1, data=all_ucd_size_for_models_climate, prior=prior1, iter = 3800, cores=4)
 #Warning: There were 2500 divergent transitions after warmup. See https://mc-stan.org/misc/warnings.html#divergent-transitions-after-warmup to find out why this is a problem and how to eliminate them.Warning: Examine the pairs() plot to diagnose sampling problems
-
-summary(climate_fit1)
-plot(climate_fit1, nvariables = 3, ask=FALSE)
+saveRDS(temp_fit1, file = "brm_object_UCD_base.rds")
+summary(base_fit1)
+plot(base_fit1, nvariables = 3, ask=FALSE)
 
 pred.df <- expand_grid(day=min(all_ucd_size_for_models_climate$day):max(all_ucd_size_for_models_climate$day),
                        parent.pop=unique(all_ucd_size_for_models_climate$parent.pop))
-climate_fit1.predictions <- cbind(pred.df, prediction=predict(climate_fit1, newdata = pred.df)[,"Estimate"]) %>%
+base_fit1.predictions <- cbind(pred.df, prediction=predict(base_fit1, newdata = pred.df)[,"Estimate"]) %>%
   full_join(all_ucd_size_for_models_climate, by=c("day", "parent.pop"))
 
-climate_fit1.predictions %>% ggplot(aes(x=day)) +
+base_fit1.predictions %>% ggplot(aes(x=day)) +
   geom_line(aes(group=Genotype, y=height.cm, color=parent.pop), alpha=.2) +
   geom_line(aes(y=prediction, color=parent.pop)) +
   facet_wrap(~parent.pop)
+ggsave("../output/UCD_GrowthClim_Predictions_Base1.png", width = 14, height = 8, units = "in")
+```
+
+### Base model 2 - Hmin varies too 
+
+```{r}
+base_fit2 <- brm(formula=climate_f1, data=all_ucd_size_for_models_climate, prior=prior1, iter = 3800, cores=4)
+saveRDS(temp_fit1, file = "brm_object_UCD_base.rds")
+summary(base_fit2)
+plot(base_fit2, nvariables = 3, ask=FALSE)
+
+pred.df <- expand_grid(day=min(all_ucd_size_for_models_climate$day):max(all_ucd_size_for_models_climate$day),
+                       parent.pop=unique(all_ucd_size_for_models_climate$parent.pop))
+base_fit2.predictions <- cbind(pred.df, prediction=predict(base_fit2, newdata = pred.df)[,"Estimate"]) %>%
+  full_join(all_ucd_size_for_models_climate, by=c("day", "parent.pop"))
+
+base_fit2.predictions %>% ggplot(aes(x=day)) +
+  geom_line(aes(group=Genotype, y=height.cm, color=parent.pop), alpha=.2) +
+  geom_line(aes(y=prediction, color=parent.pop)) +
+  facet_wrap(~parent.pop)
+ggsave("../output/UCD_GrowthClim_Predictions_Base2.png", width = 14, height = 8, units = "in")
 ```
 
 ### Min D1-7 (fit2)
@@ -362,54 +316,16 @@ summary(climate_fit7)
 plot(climate_fit7, nvariables = 3, ask=FALSE)
 ```
 
-### Min D6-13 (fit8)
-
-```{r}
-all_ucd_size_for_models_climate_fit8 <- all_ucd_size_for_models_climate %>% drop_na(min_temp_d6_13)
-
-climate_fit8 <- brm(formula=climate_f8, data=all_ucd_size_for_models_climate_fit8, prior=prior1, iter = 3800, cores=4)
-#Warning: There were 2498 divergent transitions after warmup. See https://mc-stan.org/misc/warnings.html#divergent-transitions-after-warmup to find out why this is a problem and how to eliminate them.Warning: Examine the pairs() plot to diagnose sampling problems
-
-summary(climate_fit8)
-plot(climate_fit8, nvariables = 3, ask=FALSE)
-```
-
-### Mean D6-13 (fit9)
-
-```{r}
-all_ucd_size_for_models_climate_fit9 <- all_ucd_size_for_models_climate %>% drop_na(mean_temp_d6_13)
-
-climate_fit9 <- brm(formula=climate_f9, data=all_ucd_size_for_models_climate_fit9, prior=prior1, iter = 3800, cores=4)
-#Warning: There were 2498 divergent transitions after warmup. See https://mc-stan.org/misc/warnings.html#divergent-transitions-after-warmup to find out why this is a problem and how to eliminate them.Warning: Examine the pairs() plot to diagnose sampling problems
-
-summary(climate_fit9)
-plot(climate_fit9, nvariables = 3, ask=FALSE)
-```
-
-### Max D6-13 (fit10)
-
-```{r}
-all_ucd_size_for_models_climate_fit10 <- all_ucd_size_for_models_climate %>% drop_na(max_temp_d6_13)
-
-climate_fit10 <- brm(formula=climate_f10, data=all_ucd_size_for_models_climate_fit10, prior=prior1, iter = 3800, cores=4)
-#Warning: There were 2498 divergent transitions after warmup. See https://mc-stan.org/misc/warnings.html#divergent-transitions-after-warmup to find out why this is a problem and how to eliminate them.Warning: Examine the pairs() plot to diagnose sampling problems
-
-summary(climate_fit10)
-plot(climate_fit10, nvariables = 3, ask=FALSE)
-```
-
 ## Model Comparison
 
 ```{r}
-climate_fit1 <- add_criterion(climate_fit1, "loo")
+base_fit1 <- add_criterion(base_fit1, "loo")
+base_fit2 <- add_criterion(base_fit2, "loo")
 climate_fit2 <- add_criterion(climate_fit2, "loo")
 climate_fit3 <- add_criterion(climate_fit3, "loo")
 climate_fit4 <- add_criterion(climate_fit4, "loo")
 climate_fit5 <- add_criterion(climate_fit5, "loo") 
 climate_fit6 <- add_criterion(climate_fit6, "loo") 
 climate_fit7 <- add_criterion(climate_fit7, "loo") 
-climate_fit8 <- add_criterion(climate_fit8, "loo") 
-climate_fit9 <- add_criterion(climate_fit9, "loo") 
-climate_fit10 <- add_criterion(climate_fit10, "loo") 
-loo_compare(climate_fit1, climate_fit2, climate_fit3, climate_fit4, climate_fit5, climate_fit6, climate_fit7,climate_fit8, climate_fit9, climate_fit10)
+loo_compare(base_fit1, base_fit2, climate_fit2, climate_fit3, climate_fit4, climate_fit5, climate_fit6, climate_fit7)
 ```
