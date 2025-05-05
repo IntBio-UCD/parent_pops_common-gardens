@@ -166,7 +166,7 @@ base_f1 <- brmsformula(height.cm ~ Hmax - (Hmax - Hmin) * exp(-(k/100 * day)^del
                   nl=TRUE)
 
 base_f2 <- brmsformula(height.cm ~ Hmax - (Hmax - Hmin) * exp(-(k/100 * day)^delta),
-                  Hmin + k + delta ~ 1,
+                  k + delta ~ 1,
                   Hmin + Hmax ~ (1|parent.pop),
                   nl=TRUE)
 ```
