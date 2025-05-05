@@ -1,7 +1,7 @@
 ---
 title: "WL2_Survival-Analysis--GLMER"
 author: "Julin Maloof"
-date: '2025-04-09'
+date: '2025-05-05'
 output: 
   html_document: 
     keep_md: yes
@@ -11,11 +11,11 @@ output:
 
 Having settled on suitable models for survival, this script explores adding climate data from the growing season to see if they add any explanatory power.
 
-Questions:
+Notes:
 
-1.  Bed A_2 for temp or bed avg? Avg 
+1.  Used avg of all beds for temp 
 
-2.  Negative soil moisture values –\> 0 ? Yes 
+2.  Changed negative soil moisture values –\> 0  
 
 
 # Survival Analysis
@@ -99,7 +99,7 @@ library(tidymodels)
 ## ✖ recipes::step()       masks stats::step()
 ## ✖ Matrix::unpack()      masks tidyr::unpack()
 ## ✖ recipes::update()     masks Matrix::update(), stats::update()
-## • Search for functions across packages at https://www.tidymodels.org/find/
+## • Learn how to get started at https://www.tidymodels.org/start/
 ```
 
 ``` r
@@ -359,7 +359,7 @@ temp %>% mutate(month = month(Date_Time)) %>%
 
 ![](WL2_SurvAnalysis__POPs_GLMER_Add_Climate_JM_files/figure-html/unnamed-chunk-5-3.png)<!-- -->
 
-Not sure how to deal with the differences here since we don't have something in every bed or block. For now I am going to take A_2
+Not sure how to deal with the differences here since we don't have something in every bed or block. Average across beds. 
 
 
 ``` r
@@ -678,14 +678,14 @@ system.time(
 
 ```
 ## ■■■■■■■■■■ 30% | ETA: 3s ■■■■■■■■■■■■■ 40% | ETA: 3s ■■■■■■■■■■■■■■■■ 50% |
-## ETA: 2s ■■■■■■■■■■■■■■■■■■■ 60% | ETA: 2s ■■■■■■■■■■■■■■■■■■■■■■ 70% | ETA: 2s
+## ETA: 3s ■■■■■■■■■■■■■■■■■■■ 60% | ETA: 2s ■■■■■■■■■■■■■■■■■■■■■■ 70% | ETA: 2s
 ## ■■■■■■■■■■■■■■■■■■■■■■■■■ 80% | ETA: 1s ■■■■■■■■■■■■■■■■■■■■■■■■■■■■ 90% | ETA:
 ## 1s
 ```
 
 ```
 ##    user  system elapsed 
-##   5.242   0.155   5.404
+##   5.272   0.183   5.470
 ```
 
 
@@ -988,23 +988,25 @@ temp_fits %>%
   mutate(tidy=map(fit, tidy)) %>%
   select(name, tidy) %>%
   unnest(tidy) %>%
-  filter(str_detect(term, "temp")) %>%
+  filter(str_detect(effect, "fixed")) %>%
   arrange(p.value)
 ```
 
 ```
-## # A tibble: 9 × 8
-##   name           effect group term          estimate std.error statistic p.value
-##   <chr>          <chr>  <chr> <chr>            <dbl>     <dbl>     <dbl>   <dbl>
-## 1 min.temp.1.13  fixed  <NA>  min_temp_d1_…  0.450      0.127      3.54  4.05e-4
-## 2 mean.temp.1.7  fixed  <NA>  mean_temp_d1…  0.174      0.0628     2.78  5.49e-3
-## 3 mean.temp.1.13 fixed  <NA>  mean_temp_d1…  0.225      0.0845     2.66  7.77e-3
-## 4 min.temp.1.7   fixed  <NA>  min_temp_d1_7  0.199      0.0768     2.59  9.62e-3
-## 5 min.temp.6.13  fixed  <NA>  min_temp_d6_…  0.238      0.0962     2.48  1.33e-2
-## 6 max.temp.1.7   fixed  <NA>  max_temp_d1_7  0.0507     0.0215     2.35  1.86e-2
-## 7 max.temp.1.13  fixed  <NA>  max_temp_d1_…  0.0346     0.0201     1.73  8.45e-2
-## 8 mean.temp.6.13 fixed  <NA>  mean_temp_d6…  0.0383     0.0517     0.740 4.59e-1
-## 9 max.temp.6.13  fixed  <NA>  max_temp_d6_…  0.00677    0.0136     0.499 6.18e-1
+## # A tibble: 29 × 8
+##    name            effect group term       estimate std.error statistic  p.value
+##    <chr>           <chr>  <chr> <chr>         <dbl>     <dbl>     <dbl>    <dbl>
+##  1 pop.weeks.block fixed  <NA>  (Intercep…   -4.54      0.369    -12.3  8.72e-35
+##  2 max.temp.1.7    fixed  <NA>  (Intercep…   -6.24      0.831     -7.51 5.91e-14
+##  3 max.temp.6.13   fixed  <NA>  (Intercep…   -4.84      0.720     -6.73 1.71e-11
+##  4 max.temp.1.13   fixed  <NA>  (Intercep…   -5.88      0.875     -6.72 1.77e-11
+##  5 min.temp.1.7    fixed  <NA>  (Intercep…   -7.36      1.15      -6.42 1.40e-10
+##  6 min.temp.1.13   fixed  <NA>  (Intercep…  -10.7       1.79      -5.95 2.65e- 9
+##  7 min.temp.6.13   fixed  <NA>  (Intercep…   -7.52      1.28      -5.88 4.01e- 9
+##  8 mean.temp.1.7   fixed  <NA>  (Intercep…   -8.43      1.45      -5.80 6.66e- 9
+##  9 mean.temp.1.13  fixed  <NA>  (Intercep…   -9.76      2.01      -4.86 1.19e- 6
+## 10 min.temp.1.13   fixed  <NA>  os_weeks      0.499     0.112      4.48 7.60e- 6
+## # ℹ 19 more rows
 ```
 
 ## Moisture analysis
@@ -1061,8 +1063,12 @@ system.time(
 ```
 
 ```
+## ■■■■■■■■■■■■■■■■ 50% | ETA: 1s
+```
+
+```
 ##    user  system elapsed 
-##   2.242   0.026   2.269
+##   2.259   0.045   2.306
 ```
 
 
@@ -1203,16 +1209,24 @@ moisture_fits %>%
   mutate(tidy=map(fit, tidy)) %>%
   select(name, tidy) %>%
   unnest(tidy) %>%
-  filter(str_detect(term, "moisture"))
+  filter(str_detect(effect, "fixed"))
 ```
 
 ```
-## # A tibble: 3 × 8
-##   name           effect group term          estimate std.error statistic p.value
-##   <chr>          <chr>  <chr> <chr>            <dbl>     <dbl>     <dbl>   <dbl>
-## 1 s_moisture1.7  fixed  <NA>  s_moisture_1…    -5.92      3.53     -1.67  0.0941
-## 2 s_moisture1.14 fixed  <NA>  s_moisture_1…    -5.49      3.29     -1.67  0.0948
-## 3 s_moisture7.14 fixed  <NA>  s_moisture_7…    -4.36      2.79     -1.56  0.119
+## # A tibble: 11 × 8
+##    name            effect group term       estimate std.error statistic  p.value
+##    <chr>           <chr>  <chr> <chr>         <dbl>     <dbl>     <dbl>    <dbl>
+##  1 pop.weeks.block fixed  <NA>  (Intercep…   -4.85     0.337     -14.4  7.73e-47
+##  2 pop.weeks.block fixed  <NA>  os_weeks      0.173    0.0239      7.24 4.49e-13
+##  3 s_moisture1.7   fixed  <NA>  (Intercep…   -4.31     0.457      -9.42 4.62e-21
+##  4 s_moisture1.7   fixed  <NA>  s_moistur…   -5.92     3.53       -1.67 9.41e- 2
+##  5 s_moisture1.7   fixed  <NA>  os_weeks      0.177    0.0238      7.44 9.82e-14
+##  6 s_moisture1.14  fixed  <NA>  (Intercep…   -4.45     0.403     -11.0  2.25e-28
+##  7 s_moisture1.14  fixed  <NA>  s_moistur…   -5.49     3.29       -1.67 9.48e- 2
+##  8 s_moisture1.14  fixed  <NA>  os_weeks      0.189    0.0256      7.38 1.63e-13
+##  9 s_moisture7.14  fixed  <NA>  (Intercep…   -4.64     0.355     -13.1  5.34e-39
+## 10 s_moisture7.14  fixed  <NA>  s_moistur…   -4.36     2.79       -1.56 1.19e- 1
+## 11 s_moisture7.14  fixed  <NA>  os_weeks      0.197    0.0283      6.95 3.56e-12
 ```
 
 

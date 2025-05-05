@@ -288,7 +288,7 @@ temp_fits %>%
   mutate(tidy=map(fit, tidy)) %>%
   select(name, tidy) %>%
   unnest(tidy) %>%
-  filter(str_detect(term, "temp")) %>%
+  filter(str_detect(effect, "fixed")) %>%
   arrange(p.value)
 ```
 
@@ -352,7 +352,7 @@ moisture_fits %>%
   mutate(tidy=map(fit, tidy)) %>%
   select(name, tidy) %>%
   unnest(tidy) %>%
-  filter(str_detect(term, "moisture"))
+  filter(str_detect(effect, "fixed"))
 ```
 
 ```{r}
