@@ -458,6 +458,7 @@ prior2_WL2 <- c(set_prior("normal(4,3)", nlpar="Hmin"),
 random_fit2_WL2 <- brm(formula=random_f2_WL2, data=all_wl2_size_for_models, prior=prior2_WL2, cores = 4, 
                        iter = 3000, #increase iterations b/c more complex (helps with Rhat and ESS)
                        control = list(max_treedepth = 12)) #default = 10 
+saveRDS(random_fit2_WL2, file = "brm_object_hmax.rds")
 ```
 
 Summary
