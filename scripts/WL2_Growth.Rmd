@@ -493,6 +493,7 @@ random_fit2_WL2.predictions %>% ggplot(aes(x=day)) +
   geom_line(aes(y=prediction, color=parent.pop)) +
   #scale_color_brewer(type="qual", palette = "Set2", guide="none") +
   facet_wrap(~parent.pop)
+ggsave("../output/WL2_Growth_Predictions_Hmax.png", width = 14, height = 8, units = "in")
 
 random_fit2_WL2.predictions %>% filter(parent.pop=="BH") %>% 
   ggplot(aes(x=day)) +
