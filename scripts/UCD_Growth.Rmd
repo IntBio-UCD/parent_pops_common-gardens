@@ -118,7 +118,7 @@ all_ucd_size_all <- all_ucd_size2 %>% unnest(sheets) %>%
 head(all_ucd_size_all)
 unique(all_ucd_size_all$parent.pop) #all 23 pops!
 
-#write_csv(all_ucd_size_all, "../output/UCD_Traits/UCD_Size_Combined.csv")
+#write_csv(all_ucd_size_all, "../output/UCD_Traits/UCD-2023_Size_Combined.csv")
 ```
 
 ## Pop Location Info
