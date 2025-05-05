@@ -378,13 +378,13 @@ loo_compare(base_fit1, base_fit2, temp_fit2, temp_fit3, temp_fit4, temp_fit5, te
 
 ```{r}
 moisture_f2 <- brmsformula(height.cm ~ Hmax - (Hmax - Hmin) * exp(-(k/100 * day)^delta),
-                  Hmin + k + delta ~ 1,
+                  Hmin + delta ~ 1,
                   k ~ s_moisture_1_7, 
                   Hmax ~ (1|parent.pop),
                   nl=TRUE)
 
 moisture_f3 <- brmsformula(height.cm ~ Hmax - (Hmax - Hmin) * exp(-(k/100 * day)^delta),
-                  Hmin + k + delta ~ 1,
+                  Hmin + delta ~ 1,
                   k ~ s_moisture_1_13,
                   Hmax ~ (1|parent.pop),
                   nl=TRUE)
