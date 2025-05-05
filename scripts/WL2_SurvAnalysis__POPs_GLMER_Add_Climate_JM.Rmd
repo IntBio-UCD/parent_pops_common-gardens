@@ -288,8 +288,8 @@ temp_fits %>%
   mutate(tidy=map(fit, tidy)) %>%
   select(name, tidy) %>%
   unnest(tidy) %>%
-  filter(str_detect(effect, "fixed")) %>%
-  arrange(p.value)
+  filter(str_detect(term, "temp") | term=="os_weeks") %>%
+  arrange(name)
 ```
 
 ## Moisture analysis
@@ -352,7 +352,8 @@ moisture_fits %>%
   mutate(tidy=map(fit, tidy)) %>%
   select(name, tidy) %>%
   unnest(tidy) %>%
-  filter(str_detect(effect, "fixed"))
+  filter(str_detect(term, "moisture") | term=="os_weeks") %>% 
+  arrange(name)
 ```
 
 ```{r}

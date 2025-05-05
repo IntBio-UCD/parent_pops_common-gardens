@@ -99,7 +99,7 @@ library(tidymodels)
 ## ✖ recipes::step()       masks stats::step()
 ## ✖ Matrix::unpack()      masks tidyr::unpack()
 ## ✖ recipes::update()     masks Matrix::update(), stats::update()
-## • Learn how to get started at https://www.tidymodels.org/start/
+## • Use tidymodels_prefer() to resolve common conflicts.
 ```
 
 ``` r
@@ -685,7 +685,7 @@ system.time(
 
 ```
 ##    user  system elapsed 
-##   5.272   0.183   5.470
+##   5.264   0.193   5.464
 ```
 
 
@@ -988,25 +988,33 @@ temp_fits %>%
   mutate(tidy=map(fit, tidy)) %>%
   select(name, tidy) %>%
   unnest(tidy) %>%
-  filter(str_detect(effect, "fixed")) %>%
-  arrange(p.value)
+  filter(str_detect(term, "temp") | term=="os_weeks") %>%
+  arrange(name)
 ```
 
 ```
-## # A tibble: 29 × 8
-##    name            effect group term       estimate std.error statistic  p.value
-##    <chr>           <chr>  <chr> <chr>         <dbl>     <dbl>     <dbl>    <dbl>
-##  1 pop.weeks.block fixed  <NA>  (Intercep…   -4.54      0.369    -12.3  8.72e-35
-##  2 max.temp.1.7    fixed  <NA>  (Intercep…   -6.24      0.831     -7.51 5.91e-14
-##  3 max.temp.6.13   fixed  <NA>  (Intercep…   -4.84      0.720     -6.73 1.71e-11
-##  4 max.temp.1.13   fixed  <NA>  (Intercep…   -5.88      0.875     -6.72 1.77e-11
-##  5 min.temp.1.7    fixed  <NA>  (Intercep…   -7.36      1.15      -6.42 1.40e-10
-##  6 min.temp.1.13   fixed  <NA>  (Intercep…  -10.7       1.79      -5.95 2.65e- 9
-##  7 min.temp.6.13   fixed  <NA>  (Intercep…   -7.52      1.28      -5.88 4.01e- 9
-##  8 mean.temp.1.7   fixed  <NA>  (Intercep…   -8.43      1.45      -5.80 6.66e- 9
-##  9 mean.temp.1.13  fixed  <NA>  (Intercep…   -9.76      2.01      -4.86 1.19e- 6
-## 10 min.temp.1.13   fixed  <NA>  os_weeks      0.499     0.112      4.48 7.60e- 6
-## # ℹ 19 more rows
+## # A tibble: 19 × 8
+##    name            effect group term        estimate std.error statistic p.value
+##    <chr>           <chr>  <chr> <chr>          <dbl>     <dbl>     <dbl>   <dbl>
+##  1 max.temp.1.13   fixed  <NA>  max_temp_d…  0.0346     0.0201     1.73  8.45e-2
+##  2 max.temp.1.13   fixed  <NA>  os_weeks     0.168      0.0449     3.75  1.79e-4
+##  3 max.temp.1.7    fixed  <NA>  max_temp_d…  0.0507     0.0215     2.35  1.86e-2
+##  4 max.temp.1.7    fixed  <NA>  os_weeks     0.149      0.0419     3.55  3.85e-4
+##  5 max.temp.6.13   fixed  <NA>  max_temp_d…  0.00677    0.0136     0.499 6.18e-1
+##  6 max.temp.6.13   fixed  <NA>  os_weeks     0.150      0.0479     3.14  1.71e-3
+##  7 mean.temp.1.13  fixed  <NA>  mean_temp_…  0.225      0.0845     2.66  7.77e-3
+##  8 mean.temp.1.13  fixed  <NA>  os_weeks     0.388      0.103      3.78  1.59e-4
+##  9 mean.temp.1.7   fixed  <NA>  mean_temp_…  0.174      0.0628     2.78  5.49e-3
+## 10 mean.temp.1.7   fixed  <NA>  os_weeks     0.323      0.0783     4.13  3.65e-5
+## 11 mean.temp.6.13  fixed  <NA>  mean_temp_…  0.0383     0.0517     0.740 4.59e-1
+## 12 mean.temp.6.13  fixed  <NA>  os_weeks     0.183      0.0729     2.51  1.19e-2
+## 13 min.temp.1.13   fixed  <NA>  min_temp_d…  0.450      0.127      3.54  4.05e-4
+## 14 min.temp.1.13   fixed  <NA>  os_weeks     0.499      0.112      4.48  7.60e-6
+## 15 min.temp.1.7    fixed  <NA>  min_temp_d…  0.199      0.0768     2.59  9.62e-3
+## 16 min.temp.1.7    fixed  <NA>  os_weeks     0.325      0.0823     3.95  7.80e-5
+## 17 min.temp.6.13   fixed  <NA>  min_temp_d…  0.238      0.0962     2.48  1.33e-2
+## 18 min.temp.6.13   fixed  <NA>  os_weeks     0.278      0.0715     3.89  1.00e-4
+## 19 pop.weeks.block fixed  <NA>  os_weeks     0.139      0.0429     3.25  1.16e-3
 ```
 
 ## Moisture analysis
@@ -1068,7 +1076,7 @@ system.time(
 
 ```
 ##    user  system elapsed 
-##   2.259   0.045   2.306
+##   2.253   0.042   2.296
 ```
 
 
@@ -1209,24 +1217,21 @@ moisture_fits %>%
   mutate(tidy=map(fit, tidy)) %>%
   select(name, tidy) %>%
   unnest(tidy) %>%
-  filter(str_detect(effect, "fixed"))
+  filter(str_detect(term, "moisture") | term=="os_weeks") %>% 
+  arrange(name)
 ```
 
 ```
-## # A tibble: 11 × 8
-##    name            effect group term       estimate std.error statistic  p.value
-##    <chr>           <chr>  <chr> <chr>         <dbl>     <dbl>     <dbl>    <dbl>
-##  1 pop.weeks.block fixed  <NA>  (Intercep…   -4.85     0.337     -14.4  7.73e-47
-##  2 pop.weeks.block fixed  <NA>  os_weeks      0.173    0.0239      7.24 4.49e-13
-##  3 s_moisture1.7   fixed  <NA>  (Intercep…   -4.31     0.457      -9.42 4.62e-21
-##  4 s_moisture1.7   fixed  <NA>  s_moistur…   -5.92     3.53       -1.67 9.41e- 2
-##  5 s_moisture1.7   fixed  <NA>  os_weeks      0.177    0.0238      7.44 9.82e-14
-##  6 s_moisture1.14  fixed  <NA>  (Intercep…   -4.45     0.403     -11.0  2.25e-28
-##  7 s_moisture1.14  fixed  <NA>  s_moistur…   -5.49     3.29       -1.67 9.48e- 2
-##  8 s_moisture1.14  fixed  <NA>  os_weeks      0.189    0.0256      7.38 1.63e-13
-##  9 s_moisture7.14  fixed  <NA>  (Intercep…   -4.64     0.355     -13.1  5.34e-39
-## 10 s_moisture7.14  fixed  <NA>  s_moistur…   -4.36     2.79       -1.56 1.19e- 1
-## 11 s_moisture7.14  fixed  <NA>  os_weeks      0.197    0.0283      6.95 3.56e-12
+## # A tibble: 7 × 8
+##   name            effect group term        estimate std.error statistic  p.value
+##   <chr>           <chr>  <chr> <chr>          <dbl>     <dbl>     <dbl>    <dbl>
+## 1 pop.weeks.block fixed  <NA>  os_weeks       0.173    0.0239      7.24 4.49e-13
+## 2 s_moisture1.14  fixed  <NA>  s_moisture…   -5.49     3.29       -1.67 9.48e- 2
+## 3 s_moisture1.14  fixed  <NA>  os_weeks       0.189    0.0256      7.38 1.63e-13
+## 4 s_moisture1.7   fixed  <NA>  s_moisture…   -5.92     3.53       -1.67 9.41e- 2
+## 5 s_moisture1.7   fixed  <NA>  os_weeks       0.177    0.0238      7.44 9.82e-14
+## 6 s_moisture7.14  fixed  <NA>  s_moisture…   -4.36     2.79       -1.56 1.19e- 1
+## 7 s_moisture7.14  fixed  <NA>  os_weeks       0.197    0.0283      6.95 3.56e-12
 ```
 
 
