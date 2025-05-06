@@ -83,6 +83,8 @@ sites_loc
 
 pops_gardens_locs <- bind_rows(pop_elev, sites_loc)
 pops_gardens_locs
+
+pops_gardens_locs_noUCD <- pops_gardens_locs %>% filter(parent.pop!="UCD_Garden")
 ```
 
 ## Map populations
@@ -128,6 +130,32 @@ ggplot() +
   theme_void()
  # theme(text=element_text(size=25))
 ggsave("../output/Pop_Map_Labels2.png", width = 10, height = 10, units = "in")
+
+#remove UCD garden 
+sapply(pops_gardens_locs_noUCD, class) #lat and long are characters, need to be numeric 
+pops_gardens_locs_noUCD <- pops_gardens_locs_noUCD %>% mutate_at(c("Lat", "Long"), as.double)
+
+ggplot() +
+  geom_polygon(data = states, aes(x = long, y = lat, group = group), fill = "gray") +
+  coord_quickmap(xlim = c(-125, -114), ylim = c(35.8, 41))+
+  geom_point(data = pops_gardens_locs_noUCD,
+             aes(x = Long, y = Lat, color=elev_m),
+             size = 3) +
+  geom_label_repel(data = pops_gardens_locs_noUCD,
+         aes(x = Long, y = Lat,
+             label = `parent.pop`),
+         min.segment.length = 0,
+         max.overlaps = 100,
+         #force = 3,
+         box.padding = 0.4,
+         label.padding = 0.15,
+         label.size = 0.1,
+         size = 3) +
+  labs(color="Elevation (m)") +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  theme_void()
+ # theme(text=element_text(size=25))
+ggsave("../output/Pop_Map_Labels2_NoUCD.png", width = 10, height = 10, units = "in")
 ```
 
 ### Map with elevation
