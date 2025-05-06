@@ -569,14 +569,14 @@ pred.df2 <- all_wl2_size_for_models %>% select(day, parent.pop, Genotype)
 
 ```{r}
 random_fit2b_WL2 <- readRDS("brm_object_hmaxrpteadmeas.rds")
+
 random_fit2b_WL2.predictions <- cbind(pred.df2, 
-                                      prediction=predict(random_fit2b_WL2, newdata = pred.df2, 
-                                                 re.form = ~(1|parent.pop))[,"Estimate"]) %>% #this should fix the jagged prediction lines 
+                                      prediction=predict(random_fit2b_WL2, newdata = pred.df2)[,"Estimate"]) %>% 
   full_join(all_wl2_size_for_models, by=c("day", "parent.pop", "Genotype"))
 
 random_fit2b_WL2.predictions %>% ggplot(aes(x=day)) +
   geom_line(aes(group=Genotype, y=height.cm, color=parent.pop), alpha=.2) +
-  geom_line(aes(group=Genotype, y=prediction, color=parent.pop)) +
+  geom_line(aes(group=Genotype, y=prediction, color=parent.pop)) + #added a line for each genotype 
   #scale_color_brewer(type="qual", palette = "Set2", guide="none") +
   facet_wrap(~parent.pop)
 ggsave("../output/WL2_Growth_Predictions_HmaxRptMeas.png", width = 14, height = 8, units = "in")
