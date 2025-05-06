@@ -166,7 +166,7 @@ base_f1 <- brmsformula(height.cm ~ Hmax - (Hmax - Hmin) * exp(-(k/100 * day)^del
                   nl=TRUE)
 
 base_f2 <- brmsformula(height.cm ~ Hmax - (Hmax - Hmin) * exp(-(k/100 * day)^delta),
-                  Hmin + k + delta ~ 1,
+                  k + delta ~ 1,
                   Hmin + Hmax ~ (1|parent.pop),
                   nl=TRUE)
 ```
@@ -176,43 +176,43 @@ base_f2 <- brmsformula(height.cm ~ Hmax - (Hmax - Hmin) * exp(-(k/100 * day)^del
 
 ```{r}
 temp_f2 <- brmsformula(height.cm ~ Hmax - (Hmax - Hmin) * exp(-(k/100 * day)^delta),
-                  Hmin + k + delta ~ 1,
+                  delta ~ 1,
                   k ~ min_temp_d1_7,
-                  Hmax ~ (1|parent.pop),
+                  Hmin + Hmax ~ (1|parent.pop),
                   nl=TRUE)
 
 temp_f3 <- brmsformula(height.cm ~ Hmax - (Hmax - Hmin) * exp(-(k/100 * day)^delta),
-                  Hmin + k + delta ~ 1,
+                  delta ~ 1,
                   k ~ mean_temp_d1_7,
-                  Hmax ~ (1|parent.pop),
+                  Hmin + Hmax ~ (1|parent.pop),
                   nl=TRUE)
 
 temp_f4 <- brmsformula(height.cm ~ Hmax - (Hmax - Hmin) * exp(-(k/100 * day)^delta),
-                  Hmin + k + delta ~ 1,
+                  delta ~ 1,
                   k ~ max_temp_d1_7,
-                  Hmax ~ (1|parent.pop),
+                  Hmin + Hmax ~ (1|parent.pop),
                   nl=TRUE)
 
 temp_f5 <- brmsformula(height.cm ~ Hmax - (Hmax - Hmin) * exp(-(k/100 * day)^delta),
-                  Hmin + k + delta ~ 1,
+                  delta ~ 1,
                   k ~ min_temp_d1_13, 
-                  Hmax ~ (1|parent.pop),
+                  Hmin + Hmax ~ (1|parent.pop),
                   nl=TRUE)
 
 temp_f6 <- brmsformula(height.cm ~ Hmax - (Hmax - Hmin) * exp(-(k/100 * day)^delta),
-                  Hmin + k + delta ~ 1,
+                  delta ~ 1,
                   k ~ mean_temp_d1_13,
-                  Hmax ~ (1|parent.pop),
+                  Hmin + Hmax ~ (1|parent.pop),
                   nl=TRUE)
 
 temp_f7 <- brmsformula(height.cm ~ Hmax - (Hmax - Hmin) * exp(-(k/100 * day)^delta),
-                  Hmin + k + delta ~ 1,
+                  delta ~ 1,
                   k ~ max_temp_d1_13,
-                  Hmax ~ (1|parent.pop),
+                  Hmin + Hmax ~ (1|parent.pop),
                   nl=TRUE)
 ```
 
-## Temp Model Fits
+## Base Model Fits
 
 ### Base model 1 - Hmax vary by pop 
 
@@ -230,7 +230,7 @@ base_fit1.predictions <- cbind(pred.df, prediction=predict(base_fit1, newdata = 
 base_fit1.predictions %>% ggplot(aes(x=day)) +
   geom_line(aes(group=Genotype, y=height.cm, color=parent.pop), alpha=.2) +
   geom_line(aes(y=prediction, color=parent.pop)) +
-  facet_wrap(~parent.pop)
+  facet_wrap(~parent.pop, scales = "free")
 ggsave("../output/WL2_GrowthClim_Predictions_Hmax.png", width = 14, height = 8, units = "in")
 ```
 
@@ -250,9 +250,19 @@ base_fit2.predictions <- cbind(pred.df, prediction=predict(base_fit2, newdata = 
 base_fit2.predictions %>% ggplot(aes(x=day)) +
   geom_line(aes(group=Genotype, y=height.cm, color=parent.pop), alpha=.2) +
   geom_line(aes(y=prediction, color=parent.pop)) +
-  facet_wrap(~parent.pop)
+  facet_wrap(~parent.pop, scales = "free")
 ggsave("../output/WL2_GrowthClim_Predictions_HmaxHmin.png", width = 14, height = 8, units = "in")
 ```
+
+### Model comparison 
+```{r}
+base_fit1 <- add_criterion(base_fit1, "loo")
+base_fit2 <- add_criterion(base_fit2, "loo")
+loo_compare(base_fit1, base_fit2)
+#model with Hmin is better 
+```
+
+## Temp Model Fits
 
 ### Min D1-7 (fit2)
 
@@ -378,15 +388,15 @@ loo_compare(base_fit1, base_fit2, temp_fit2, temp_fit3, temp_fit4, temp_fit5, te
 
 ```{r}
 moisture_f2 <- brmsformula(height.cm ~ Hmax - (Hmax - Hmin) * exp(-(k/100 * day)^delta),
-                  Hmin + k + delta ~ 1,
+                  delta ~ 1,
                   k ~ s_moisture_1_7, 
-                  Hmax ~ (1|parent.pop),
+                  Hmin + Hmax ~ (1|parent.pop),
                   nl=TRUE)
 
 moisture_f3 <- brmsformula(height.cm ~ Hmax - (Hmax - Hmin) * exp(-(k/100 * day)^delta),
-                  Hmin + k + delta ~ 1,
+                  delta ~ 1,
                   k ~ s_moisture_1_13,
-                  Hmax ~ (1|parent.pop),
+                  Hmin + Hmax ~ (1|parent.pop),
                   nl=TRUE)
 ```
 
