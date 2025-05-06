@@ -176,39 +176,39 @@ base_f2 <- brmsformula(height.cm ~ Hmax - (Hmax - Hmin) * exp(-(k/100 * day)^del
 
 ```{r}
 temp_f2 <- brmsformula(height.cm ~ Hmax - (Hmax - Hmin) * exp(-(k/100 * day)^delta),
-                  Hmin + delta ~ 1,
+                  delta ~ 1,
                   k ~ min_temp_d1_7,
-                  Hmax ~ (1|parent.pop),
+                  Hmin + Hmax ~ (1|parent.pop),
                   nl=TRUE)
 
 temp_f3 <- brmsformula(height.cm ~ Hmax - (Hmax - Hmin) * exp(-(k/100 * day)^delta),
-                  Hmin + delta ~ 1,
+                  delta ~ 1,
                   k ~ mean_temp_d1_7,
-                  Hmax ~ (1|parent.pop),
+                  Hmin + Hmax ~ (1|parent.pop),
                   nl=TRUE)
 
 temp_f4 <- brmsformula(height.cm ~ Hmax - (Hmax - Hmin) * exp(-(k/100 * day)^delta),
-                  Hmin + delta ~ 1,
+                  delta ~ 1,
                   k ~ max_temp_d1_7,
-                  Hmax ~ (1|parent.pop),
+                  Hmin + Hmax ~ (1|parent.pop),
                   nl=TRUE)
 
 temp_f5 <- brmsformula(height.cm ~ Hmax - (Hmax - Hmin) * exp(-(k/100 * day)^delta),
-                  Hmin + delta ~ 1,
+                  delta ~ 1,
                   k ~ min_temp_d1_13, 
-                  Hmax ~ (1|parent.pop),
+                  Hmin + Hmax ~ (1|parent.pop),
                   nl=TRUE)
 
 temp_f6 <- brmsformula(height.cm ~ Hmax - (Hmax - Hmin) * exp(-(k/100 * day)^delta),
-                  Hmin + delta ~ 1,
+                  delta ~ 1,
                   k ~ mean_temp_d1_13,
-                  Hmax ~ (1|parent.pop),
+                  Hmin + Hmax ~ (1|parent.pop),
                   nl=TRUE)
 
 temp_f7 <- brmsformula(height.cm ~ Hmax - (Hmax - Hmin) * exp(-(k/100 * day)^delta),
-                  Hmin + delta ~ 1,
+                  delta ~ 1,
                   k ~ max_temp_d1_13,
-                  Hmax ~ (1|parent.pop),
+                  Hmin + Hmax ~ (1|parent.pop),
                   nl=TRUE)
 ```
 
@@ -388,15 +388,15 @@ loo_compare(base_fit1, base_fit2, temp_fit2, temp_fit3, temp_fit4, temp_fit5, te
 
 ```{r}
 moisture_f2 <- brmsformula(height.cm ~ Hmax - (Hmax - Hmin) * exp(-(k/100 * day)^delta),
-                  Hmin + delta ~ 1,
+                  delta ~ 1,
                   k ~ s_moisture_1_7, 
-                  Hmax ~ (1|parent.pop),
+                  Hmin + Hmax ~ (1|parent.pop),
                   nl=TRUE)
 
 moisture_f3 <- brmsformula(height.cm ~ Hmax - (Hmax - Hmin) * exp(-(k/100 * day)^delta),
-                  Hmin + delta ~ 1,
+                  delta ~ 1,
                   k ~ s_moisture_1_13,
-                  Hmax ~ (1|parent.pop),
+                  Hmin + Hmax ~ (1|parent.pop),
                   nl=TRUE)
 ```
 
