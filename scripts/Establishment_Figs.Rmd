@@ -275,6 +275,23 @@ wl2_establishment %>%
 ```
 
 ## Scatterplots
+
+### Just Geo Distance
+```{r}
+wl2_establishment %>% 
+  group_by(pop, elev_m, Geographic_Dist) %>% 
+  summarise(meanEst=mean(Establishment, na.rm = TRUE), semEst=sem(Establishment, na.rm=TRUE)) %>% 
+  ggplot(aes(x=Geographic_Dist, y=meanEst, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.02, linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Establishment", x="Geographic Distance (m)") +
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+ggsave("../output/WL2_Traits/WL2_Establishment_GeoDist.png", width = 8, height = 5, units = "in")
+```
+
+
 ### Davis
 ```{r}
 #scatter plots
