@@ -161,13 +161,63 @@ prior1_wl2 <- c(set_prior("normal(5,3)", nlpar="Hmin"),
 #best base model:
 base_f1 <- brmsformula(height.cm ~ Hmax - (Hmax - Hmin) * exp(-(k/100 * day)^delta),
                   Hmin + k + delta ~ 1,
-                  Hmax ~ (1|parent.pop),
+                  Hmax ~ (1|parent.pop) + (1|Genotype),
                   nl=TRUE)
 
 base_f2 <- brmsformula(height.cm ~ Hmax - (Hmax - Hmin) * exp(-(k/100 * day)^delta),
                   k + delta ~ 1,
-                  Hmin + Hmax ~ (1|parent.pop),
+                  Hmin + Hmax ~ (1|parent.pop) + (1|Genotype),
                   nl=TRUE)
+```
+
+## Base Model Fits
+
+### Base model 1 - Hmax vary by pop 
+
+```{r}
+base_fit1 <- brm(formula=base_f1, data=all_wl2_size_for_models_climate, prior=prior1_wl2, iter = 3800, cores=4)
+saveRDS(base_fit1, file = "brm_object_wl2_base1.rds")
+summary(base_fit1)
+plot(base_fit1, nvariables = 3, ask=FALSE)
+
+pred.df <- expand_grid(day=min(all_wl2_size_for_models_climate$day):max(all_wl2_size_for_models_climate$day),
+                       parent.pop=unique(all_wl2_size_for_models_climate$parent.pop))
+base_fit1.predictions <- cbind(pred.df, prediction=predict(base_fit1, newdata = pred.df)[,"Estimate"]) %>%
+  full_join(all_wl2_size_for_models_climate, by=c("day", "parent.pop"))
+
+base_fit1.predictions %>% ggplot(aes(x=day)) +
+  geom_line(aes(group=Genotype, y=height.cm, color=parent.pop), alpha=.2) +
+  geom_line(aes(group=Genotype, y=prediction, color=parent.pop)) +
+  facet_wrap(~parent.pop, scales = "free")
+ggsave("../output/WL2_GrowthClim_Predictions_Hmax.png", width = 14, height = 8, units = "in")
+```
+
+### Base model 2 - Hmin + Hmax vary by pop
+
+```{r}
+base_fit2 <- brm(formula=base_f2, data=all_wl2_size_for_models_climate, prior=prior1_wl2, iter = 3800, cores=4)
+saveRDS(base_fit2, file = "brm_object_wl2_base2.rds")
+summary(base_fit2)
+plot(base_fit2, nvariables = 3, ask=FALSE)
+
+pred.df <- expand_grid(day=min(all_wl2_size_for_models_climate$day):max(all_wl2_size_for_models_climate$day),
+                       parent.pop=unique(all_wl2_size_for_models_climate$parent.pop))
+base_fit2.predictions <- cbind(pred.df, prediction=predict(base_fit2, newdata = pred.df)[,"Estimate"]) %>%
+  full_join(all_wl2_size_for_models_climate, by=c("day", "parent.pop"))
+
+base_fit2.predictions %>% ggplot(aes(x=day)) +
+  geom_line(aes(group=Genotype, y=height.cm, color=parent.pop), alpha=.2) +
+  geom_line(aes(group=Genotype, y=prediction, color=parent.pop)) +
+  facet_wrap(~parent.pop, scales = "free")
+ggsave("../output/WL2_GrowthClim_Predictions_HmaxHmin.png", width = 14, height = 8, units = "in")
+```
+
+### Model comparison 
+```{r}
+base_fit1 <- add_criterion(base_fit1, "loo")
+base_fit2 <- add_criterion(base_fit2, "loo")
+loo_compare(base_fit1, base_fit2)
+#model with Hmin is better 
 ```
 
 
@@ -209,56 +259,6 @@ temp_f7 <- brmsformula(height.cm ~ Hmax - (Hmax - Hmin) * exp(-(k/100 * day)^del
                   k ~ max_temp_d1_13,
                   Hmin + Hmax ~ (1|parent.pop),
                   nl=TRUE)
-```
-
-## Base Model Fits
-
-### Base model 1 - Hmax vary by pop 
-
-```{r}
-base_fit1 <- brm(formula=base_f1, data=all_wl2_size_for_models_climate, prior=prior1_wl2, iter = 3800, cores=4)
-saveRDS(base_fit1, file = "brm_object_wl2_base1.rds")
-summary(base_fit1)
-plot(base_fit1, nvariables = 3, ask=FALSE)
-
-pred.df <- expand_grid(day=min(all_wl2_size_for_models_climate$day):max(all_wl2_size_for_models_climate$day),
-                       parent.pop=unique(all_wl2_size_for_models_climate$parent.pop))
-base_fit1.predictions <- cbind(pred.df, prediction=predict(base_fit1, newdata = pred.df)[,"Estimate"]) %>%
-  full_join(all_wl2_size_for_models_climate, by=c("day", "parent.pop"))
-
-base_fit1.predictions %>% ggplot(aes(x=day)) +
-  geom_line(aes(group=Genotype, y=height.cm, color=parent.pop), alpha=.2) +
-  geom_line(aes(y=prediction, color=parent.pop)) +
-  facet_wrap(~parent.pop, scales = "free")
-ggsave("../output/WL2_GrowthClim_Predictions_Hmax.png", width = 14, height = 8, units = "in")
-```
-
-### Base model 2 - Hmin + Hmax vary by pop
-
-```{r}
-base_fit2 <- brm(formula=base_f2, data=all_wl2_size_for_models_climate, prior=prior1_wl2, iter = 3800, cores=4)
-saveRDS(base_fit2, file = "brm_object_wl2_base2.rds")
-summary(base_fit2)
-plot(base_fit2, nvariables = 3, ask=FALSE)
-
-pred.df <- expand_grid(day=min(all_wl2_size_for_models_climate$day):max(all_wl2_size_for_models_climate$day),
-                       parent.pop=unique(all_wl2_size_for_models_climate$parent.pop))
-base_fit2.predictions <- cbind(pred.df, prediction=predict(base_fit2, newdata = pred.df)[,"Estimate"]) %>%
-  full_join(all_wl2_size_for_models_climate, by=c("day", "parent.pop"))
-
-base_fit2.predictions %>% ggplot(aes(x=day)) +
-  geom_line(aes(group=Genotype, y=height.cm, color=parent.pop), alpha=.2) +
-  geom_line(aes(y=prediction, color=parent.pop)) +
-  facet_wrap(~parent.pop, scales = "free")
-ggsave("../output/WL2_GrowthClim_Predictions_HmaxHmin.png", width = 14, height = 8, units = "in")
-```
-
-### Model comparison 
-```{r}
-base_fit1 <- add_criterion(base_fit1, "loo")
-base_fit2 <- add_criterion(base_fit2, "loo")
-loo_compare(base_fit1, base_fit2)
-#model with Hmin is better 
 ```
 
 ## Temp Model Fits
