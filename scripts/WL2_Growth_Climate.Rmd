@@ -17,7 +17,6 @@ Add climate to best base model
 
 -   Summary of climate as predictor of Hmax and maybe delta
 
-## Libraries
 
 ```{r}
 library(tidyverse)
@@ -285,13 +284,13 @@ temp_fit3 <- brm(formula=temp_f3, data=all_wl2_size_for_models_temp_fit3, prior=
 summary(temp_fit3)
 plot(temp_fit3, nvariables = 3, ask=FALSE)
 
-temp_fit3.predictions <- cbind(pred.df, prediction=predict(temp_fit3, newdata = pred.df)[,"Estimate"]) %>%
-  full_join(all_wl2_size_for_models, by=c("day", "parent.pop"))
-
-temp_fit3.predictions %>% ggplot(aes(x=day)) +
-  geom_line(aes(group=Genotype, y=height.cm, color=parent.pop), alpha=.2) +
-  geom_line(aes(y=prediction, color=parent.pop)) +
-  facet_wrap(~parent.pop)
+#temp_fit3.predictions <- cbind(pred.df, prediction=predict(temp_fit3, newdata = pred.df)[,"Estimate"]) %>%
+#  full_join(all_wl2_size_for_models, by=c("day", "parent.pop"))
+#
+#temp_fit3.predictions %>% ggplot(aes(x=day)) +
+#  geom_line(aes(group=Genotype, y=height.cm, color=parent.pop), alpha=.2) +
+#  geom_line(aes(y=prediction, color=parent.pop)) +
+#  facet_wrap(~parent.pop)
 ```
 
 ### Max D1-7 (fit4)
@@ -304,13 +303,13 @@ temp_fit4 <- brm(formula=temp_f4, data=all_wl2_size_for_models_temp_fit4, prior=
 summary(temp_fit4)
 plot(temp_fit4, nvariables = 3, ask=FALSE)
 
-temp_fit4.predictions <- cbind(pred.df, prediction=predict(temp_fit4, newdata = pred.df)[,"Estimate"]) %>%
-  full_join(all_wl2_size_for_models, by=c("day", "parent.pop"))
-
-temp_fit4.predictions %>% ggplot(aes(x=day)) +
-  geom_line(aes(group=Genotype, y=height.cm, color=parent.pop), alpha=.2) +
-  geom_line(aes(y=prediction, color=parent.pop)) +
-  facet_wrap(~parent.pop)
+#temp_fit4.predictions <- cbind(pred.df, prediction=predict(temp_fit4, newdata = pred.df)[,"Estimate"]) %>%
+#  full_join(all_wl2_size_for_models, by=c("day", "parent.pop"))
+#
+#temp_fit4.predictions %>% ggplot(aes(x=day)) +
+#  geom_line(aes(group=Genotype, y=height.cm, color=parent.pop), alpha=.2) +
+#  geom_line(aes(y=prediction, color=parent.pop)) +
+#  facet_wrap(~parent.pop)
 ```
 
 ### Min D1-13 (fit5)
@@ -323,32 +322,32 @@ temp_fit5 <- brm(formula=temp_f5, data=all_wl2_size_for_models_temp_fit5, prior=
 summary(temp_fit5)
 plot(temp_fit5, nvariables = 3, ask=FALSE)
 
-temp_fit5.predictions <- cbind(pred.df, prediction=predict(temp_fit5, newdata = pred.df)[,"Estimate"]) %>%
-  full_join(all_wl2_size_for_models, by=c("day", "parent.pop"))
-
-temp_fit5.predictions %>% ggplot(aes(x=day)) +
-  geom_line(aes(group=Genotype, y=height.cm, color=parent.pop), alpha=.2) +
-  geom_line(aes(y=prediction, color=parent.pop)) +
-  facet_wrap(~parent.pop)
+#temp_fit5.predictions <- cbind(pred.df, prediction=predict(temp_fit5, newdata = pred.df)[,"Estimate"]) %>%
+#  full_join(all_wl2_size_for_models, by=c("day", "parent.pop"))
+#
+#temp_fit5.predictions %>% ggplot(aes(x=day)) +
+#  geom_line(aes(group=Genotype, y=height.cm, color=parent.pop), alpha=.2) +
+#  geom_line(aes(y=prediction, color=parent.pop)) +
+#  facet_wrap(~parent.pop)
 ```
 
 ### Mean D1-13 (fit6)
 
 ```{r}
-all_wl2_size_for_models_temp_fit6 <- all_wl2_size_for_models_climate %>% drop_na(meam_temp_d1_13)
+all_wl2_size_for_models_temp_fit6 <- all_wl2_size_for_models_climate %>% drop_na(mean_temp_d1_13)
 
 temp_fit6 <- brm(formula=temp_f6, data=all_wl2_size_for_models_temp_fit6, prior=prior1_wl2, iter = 3800, cores=4)
 
 summary(temp_fit6)
 plot(temp_fit6, nvariables = 3, ask=FALSE)
 
-temp_fit6.predictions <- cbind(pred.df, prediction=predict(temp_fit6, newdata = pred.df)[,"Estimate"]) %>%
-  full_join(all_wl2_size_for_models, by=c("day", "parent.pop"))
-
-temp_fit6.predictions %>% ggplot(aes(x=day)) +
-  geom_line(aes(group=Genotype, y=height.cm, color=parent.pop), alpha=.2) +
-  geom_line(aes(y=prediction, color=parent.pop)) +
-  facet_wrap(~parent.pop)
+#temp_fit6.predictions <- cbind(pred.df, prediction=predict(temp_fit6, newdata = pred.df)[,"Estimate"]) %>%
+#  full_join(all_wl2_size_for_models, by=c("day", "parent.pop"))
+#
+#temp_fit6.predictions %>% ggplot(aes(x=day)) +
+#  geom_line(aes(group=Genotype, y=height.cm, color=parent.pop), alpha=.2) +
+#  geom_line(aes(y=prediction, color=parent.pop)) +
+#  facet_wrap(~parent.pop)
 ```
 
 ### Max D1-13 (fit7)
@@ -361,19 +360,19 @@ temp_fit7 <- brm(formula=temp_f7, data=all_wl2_size_for_models_temp_fit7, prior=
 summary(temp_fit7)
 plot(temp_fit7, nvariables = 3, ask=FALSE)
 
-temp_fit7.predictions <- cbind(pred.df, prediction=predict(temp_fit7, newdata = pred.df)[,"Estimate"]) %>%
-  full_join(all_wl2_size_for_models, by=c("day", "parent.pop"))
-
-temp_fit7.predictions %>% ggplot(aes(x=day)) +
-  geom_line(aes(group=Genotype, y=height.cm, color=parent.pop), alpha=.2) +
-  geom_line(aes(y=prediction, color=parent.pop)) +
-  facet_wrap(~parent.pop)
+#temp_fit7.predictions <- cbind(pred.df, prediction=predict(temp_fit7, newdata = pred.df)[,"Estimate"]) %>%
+#  full_join(all_wl2_size_for_models, by=c("day", "parent.pop"))
+#
+#temp_fit7.predictions %>% ggplot(aes(x=day)) +
+#  geom_line(aes(group=Genotype, y=height.cm, color=parent.pop), alpha=.2) +
+#  geom_line(aes(y=prediction, color=parent.pop)) +
+#  facet_wrap(~parent.pop)
 ```
 
 ## Temp Model Comparison
 
 ```{r}
-base_fit1 <- add_criterion(base_fit1, "loo")
+#base_fit1 <- add_criterion(base_fit1, "loo")
 base_fit2 <- add_criterion(base_fit2, "loo")
 temp_fit2 <- add_criterion(temp_fit2, "loo")
 temp_fit3 <- add_criterion(temp_fit3, "loo")
@@ -381,7 +380,7 @@ temp_fit4 <- add_criterion(temp_fit4, "loo")
 temp_fit5 <- add_criterion(temp_fit5, "loo") 
 temp_fit6 <- add_criterion(temp_fit6, "loo") 
 temp_fit7 <- add_criterion(temp_fit7, "loo") 
-loo_compare(base_fit1, base_fit2, temp_fit2, temp_fit3, temp_fit4, temp_fit5, temp_fit6, temp_fit7)
+loo_compare(base_fit2, temp_fit2, temp_fit3, temp_fit4, temp_fit5, temp_fit6, temp_fit7)
 ```
 
 ## Moisture Models
@@ -412,13 +411,13 @@ moisture_fit2 <- brm(formula=moisture_f2, data=all_wl2_size_for_models_moisture_
 summary(moisture_fit2)
 plot(moisture_fit2, nvariables = 3, ask=FALSE)
 
-moisture_fit2.predictions <- cbind(pred.df, prediction=predict(moisture_fit2, newdata = pred.df)[,"Estimate"]) %>%
-  full_join(all_wl2_size_for_models, by=c("day", "parent.pop"))
-
-moisture_fit2.predictions %>% ggplot(aes(x=day)) +
-  geom_line(aes(group=Genotype, y=height.cm, color=parent.pop), alpha=.2) +
-  geom_line(aes(y=prediction, color=parent.pop)) +
-  facet_wrap(~parent.pop)
+#moisture_fit2.predictions <- cbind(pred.df, prediction=predict(moisture_fit2, newdata = pred.df)[,"Estimate"]) %>%
+#  full_join(all_wl2_size_for_models, by=c("day", "parent.pop"))
+#
+#moisture_fit2.predictions %>% ggplot(aes(x=day)) +
+#  geom_line(aes(group=Genotype, y=height.cm, color=parent.pop), alpha=.2) +
+#  geom_line(aes(y=prediction, color=parent.pop)) +
+#  facet_wrap(~parent.pop)
 ```
 
 ### Mean D1-13 (fit3)
@@ -431,21 +430,21 @@ moisture_fit3 <- brm(formula=moisture_f3, data=all_wl2_size_for_models_moisture_
 summary(moisture_fit3)
 plot(moisture_fit3, nvariables = 3, ask=FALSE)
 
-moisture_fit3.predictions <- cbind(pred.df, prediction=predict(moisture_fit3, newdata = pred.df)[,"Estimate"]) %>%
-  full_join(all_wl2_size_for_models, by=c("day", "parent.pop"))
+#moisture_fit3.predictions <- cbind(pred.df, prediction=predict(moisture_fit3, newdata = pred.df)[,"Estimate"]) %>%
+#  full_join(all_wl2_size_for_models, by=c("day", "parent.pop"))#
 
-moisture_fit3.predictions %>% ggplot(aes(x=day)) +
-  geom_line(aes(group=Genotype, y=height.cm, color=parent.pop), alpha=.2) +
-  geom_line(aes(y=prediction, color=parent.pop)) +
-  facet_wrap(~parent.pop)
+#moisture_fit3.predictions %>% ggplot(aes(x=day)) +
+#  geom_line(aes(group=Genotype, y=height.cm, color=parent.pop), alpha=.2) +
+#  geom_line(aes(y=prediction, color=parent.pop)) +
+#  facet_wrap(~parent.pop)
 ```
 
 ## Moisture Model Comparison
 
 ```{r}
-base_fit1 <- add_criterion(base_fit1, "loo")
+#base_fit1 <- add_criterion(base_fit1, "loo")
 base_fit2 <- add_criterion(base_fit2, "loo")
 moisture_fit2 <- add_criterion(moisture_fit2, "loo")
 moisture_fit3 <- add_criterion(moisture_fit3, "loo")
-loo_compare(base_fit1, base_fit2, moisture_fit2, moisture_fit3)
+loo_compare(base_fit2, moisture_fit2, moisture_fit3)
 ```
