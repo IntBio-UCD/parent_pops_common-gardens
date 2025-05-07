@@ -796,6 +796,22 @@ UCD_y1_surv_sub_FIG_prob_historic <- ggarrange(GSCD_prob_historic, WYCD_prob_his
 ggsave("../output/UCD_Traits/UCD_Y1_Surv_PPTSubDist_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
 ```
 
+### WL2 Growth Season Effects
+```{r}
+wl2_y1_surv_sub_dist %>% 
+  group_by(pop, elev_m, GrwSsn_PPTDist_Recent, GrwSsn_PPTDist_Historic) %>% 
+  summarise(meanEst=mean(Survival, na.rm = TRUE), semEst=sem(Survival, na.rm=TRUE)) %>% 
+  ggplot(aes(x=GrwSsn_PPTDist_Recent, y=meanEst, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=0.3, linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Y1 Survival", x="Recent Growth Season PPT Dist") +
+  theme(text=element_text(size=30))
+ggsave("../output/WL2_Traits/WL2_Y1_Surv_PPTSubDist_GRWSSN_Recent.png", width = 8, height = 6, units = "in")
+```
+
+
 ## Stats
 
 ### Scaling

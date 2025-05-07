@@ -1307,7 +1307,7 @@ UCD_total_fitness_sub_FIG_prob_historic_historic <- ggarrange(GSCD_prob_historic
 ggsave("../output/UCD_Traits/UCD_ProbFitness_PPTSubDist_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
 ```
 
-#### Figure for paper
+#### Figures for paper
 
 ```{r}
 GD_prob <- wl2_total_fitness_sub_dist %>%  
@@ -1365,6 +1365,37 @@ WL2_prob_fitness_for_paper <- ggarrange(GD_prob, WYCD_prob_recent,
                                         ncol=2, nrow=2) 
 ggsave("../output/WL2_Traits/WL2_ProbFitness_SCATTERS_Summary_Recent.png", width = 24, height = 18, units = "in")
 ```
+
+```{r}
+GSCD_prob_recent <- wl2_total_fitness_sub_dist %>% 
+  mutate(ProbFitness=if_else(Total_Fitness==0, 0, 1)) %>% 
+  group_by(pop, elev_m, GrwSsn_PPTDist_Recent, GrwSsn_PPTDist_Historic) %>% 
+  summarise(meanEst=mean(ProbFitness, na.rm = TRUE), semEst=sem(ProbFitness, na.rm=TRUE)) %>% 
+  ggplot(aes(x=GrwSsn_PPTDist_Recent, y=meanEst, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=0.3, linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Probability of Successfully Reproducing", x="Recent Growth Season PPT Dist") +
+  theme(text=element_text(size=30))
+
+GSCD_prob_historic <- wl2_total_fitness_sub_dist %>% 
+  mutate(ProbFitness=if_else(Total_Fitness==0, 0, 1)) %>% 
+  group_by(pop, elev_m, GrwSsn_PPTDist_Recent, GrwSsn_PPTDist_Historic) %>% 
+  summarise(meanEst=mean(ProbFitness, na.rm = TRUE), semEst=sem(ProbFitness, na.rm=TRUE)) %>% 
+  ggplot(aes(x=GrwSsn_PPTDist_Historic, y=meanEst, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.3, linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Probability of Successfully Reproducing", x="Historic Growth Season PPT Dist") +
+  theme(text=element_text(size=30))
+
+WL2_prob_fitness_for_paper2 <- ggarrange(GSCD_prob_recent, GSCD_prob_historic, 
+                                        ncol=2, nrow=1) 
+ggsave("../output/WL2_Traits/WL2_ProbFitness_SCATTERS_PPT_GRWSSN.png", width = 24, height = 9, units = "in")
+```
+
 
 #### Attempt at calculating mean and standard error in logit scale
 
@@ -2385,6 +2416,40 @@ WYCD_repoutput_historic <- wl2_total_fitness_sub_dist %>%
 WL2_total_fitness_sub_dist_FIG_repoutput_historic_historic <- ggarrange(GSCD_repoutput_historic, WYCD_repoutput_historic, GD_repoutput, ED_repoutput, ncol=2, nrow=2) 
 ggsave("../output/WL2_Traits/WL2_Total_RepOutput_PPTSubDist_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
 ```
+
+#### Figure for Paper
+```{r}
+GSCD_temp <- wl2_total_fitness_sub_dist %>% 
+  filter(Total_Fitness > 0) %>% 
+  filter(pop!="SQ1", pop!="WR") %>% 
+  group_by(pop, elev_m, GrwSsn_TempDist_Recent, GrwSsn_TempDist_Historic) %>% 
+  summarise(meanEst=mean(Total_Fitness, na.rm = TRUE), semEst=sem(Total_Fitness, na.rm=TRUE)) %>% 
+  ggplot(aes(x=GrwSsn_TempDist_Historic, y=meanEst, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.02, linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Total Fruit Number", x="Historic Growth Season Temp Dist") +
+  theme(text=element_text(size=30))
+
+GSCD_ppt <- wl2_total_fitness_sub_dist %>% 
+  filter(Total_Fitness > 0) %>% 
+  filter(pop!="SQ1", pop!="WR") %>% 
+  group_by(pop, elev_m, GrwSsn_PPTDist_Recent, GrwSsn_PPTDist_Historic) %>% 
+  summarise(meanEst=mean(Total_Fitness, na.rm = TRUE), semEst=sem(Total_Fitness, na.rm=TRUE)) %>% 
+  ggplot(aes(x=GrwSsn_PPTDist_Historic, y=meanEst, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.02, linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Total Fruit Number", x="Historic Growth Season PPT Dist") +
+  theme(text=element_text(size=30))
+
+WL2_tot_fitness_for_paper <- ggarrange(GSCD_temp, GSCD_ppt, 
+                                        ncol=2, nrow=1) 
+ggsave("../output/WL2_Traits/WL2_Total_RepOutput_SCATTERS_GRWSSN_Historic_tmpppt.png", width = 24, height = 9, units = "in")
+```
+
 
 #### Checking Poisson for Total Fitness
 
