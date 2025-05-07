@@ -454,3 +454,8 @@ moisture_fit2 <- add_criterion(moisture_fit2, "loo")
 moisture_fit3 <- add_criterion(moisture_fit3, "loo")
 loo_compare(base_fit2, moisture_fit2, moisture_fit3)
 ```
+
+```{r}
+save.image("../output/BQC_WL2_Growth_Climate.Rdata")
+```
+
