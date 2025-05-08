@@ -375,19 +375,11 @@ plot(temp_fit7, nvariables = 3, ask=FALSE)
 #  facet_wrap(~parent.pop)
 ```
 
-## Temp Model Comparison
-
 ```{r}
-#base_fit1 <- add_criterion(base_fit1, "loo")
-base_fit2 <- add_criterion(base_fit2, "loo")
-temp_fit2 <- add_criterion(temp_fit2, "loo")
-temp_fit3 <- add_criterion(temp_fit3, "loo")
-temp_fit4 <- add_criterion(temp_fit4, "loo")
-temp_fit5 <- add_criterion(temp_fit5, "loo") 
-temp_fit6 <- add_criterion(temp_fit6, "loo") 
-temp_fit7 <- add_criterion(temp_fit7, "loo") 
-loo_compare(base_fit2, temp_fit2, temp_fit3, temp_fit4, temp_fit5, temp_fit6, temp_fit7)
+save.image("../output/BQC_WL2_Growth_Climate.Rdata")
 ```
+
+
 
 ## Moisture Models
 
@@ -401,7 +393,7 @@ moisture_f2 <- brmsformula(height.cm ~ Hmax - (Hmax - Hmin) * exp(-(k/100 * day)
 moisture_f3 <- brmsformula(height.cm ~ Hmax - (Hmax - Hmin) * exp(-(k/100 * day)^delta),
                   delta ~ 1,
                   k ~ s_moisture_1_13,
-                  Hmin + Hmax ~ (1|parent.pop) + (1|Genotype),
+                  Hmin + Hmax ~ (1|parent.pop) ,
                   nl=TRUE)
 ```
 
@@ -445,14 +437,28 @@ plot(moisture_fit3, nvariables = 3, ask=FALSE)
 #  facet_wrap(~parent.pop)
 ```
 
+## Temp Model Comparison
+
+```{r, eval=FALSE}
+#base_fit1 <- add_criterion(base_fit1, "loo")
+#base_fit2 <- add_criterion(base_fit2, "loo")
+temp_fit2 <- add_criterion(temp_fit2, "loo")
+temp_fit3 <- add_criterion(temp_fit3, "loo")
+temp_fit4 <- add_criterion(temp_fit4, "loo")
+temp_fit5 <- add_criterion(temp_fit5, "loo") 
+temp_fit6 <- add_criterion(temp_fit6, "loo") 
+temp_fit7 <- add_criterion(temp_fit7, "loo") 
+loo_compare(temp_fit2, temp_fit3, temp_fit4, temp_fit5, temp_fit6, temp_fit7)
+```
+
 ## Moisture Model Comparison
 
-```{r}
+```{r, eval=FALSE}
 #base_fit1 <- add_criterion(base_fit1, "loo")
-base_fit2 <- add_criterion(base_fit2, "loo")
+#base_fit2 <- add_criterion(base_fit2, "loo")
 moisture_fit2 <- add_criterion(moisture_fit2, "loo")
 moisture_fit3 <- add_criterion(moisture_fit3, "loo")
-loo_compare(base_fit2, moisture_fit2, moisture_fit3)
+loo_compare(moisture_fit2, moisture_fit3)
 ```
 
 ```{r}
