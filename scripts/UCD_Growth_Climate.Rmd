@@ -110,21 +110,86 @@ all_ucd_size_for_models_climate %>%
   geom_line() + facet_wrap(~parent.pop, scales = "free")
 #without day 0, min is different...
 ```
-
-## Models
+## Priors
 
 ```{r}
-#best base model:
+prior1 <- c(set_prior("normal(5,3)", nlpar="Hmin"),
+            set_prior("normal(60,15)",  nlpar="Hmax"),
+            set_prior("gamma(2,2)", nlpar = "k", lb = 0), #gamma constrains to be > 0 
+            set_prior("gamma(20,3)", nlpar = "delta", lb = 0)
+)
+            #first number = avg, second number = the space around that average to search 
+```
+
+## Base Models
+```{r}
+#best base model from non-climate data:
 base_f1 <- brmsformula(height.cm ~ Hmax - (Hmax - Hmin) * exp(-(k/100 * day)^delta),
                   Hmin ~ 1,
-                  Hmax + k + delta ~ (1|parent.pop), 
+                  Hmax + k + delta ~ (1|parent.pop) + (1|Genotype), 
                   nl=TRUE)
 
 #alternate base model
 base_f2 <- brmsformula(height.cm ~ Hmax - (Hmax - Hmin) * exp(-(k/100 * day)^delta),
-                  Hmin + Hmax + k + delta ~ (1|parent.pop), 
+                  Hmin + Hmax + k + delta ~ (1|parent.pop) + (1|Genotype), 
                   nl=TRUE)
+```
 
+## Base Model Fits
+
+### Base model 1 - Hmax, k, delta vary
+
+```{r}
+base_fit1 <- brm(formula=base_f1, data=all_ucd_size_for_models_climate, prior=prior1, iter = 3800, cores=4)
+
+saveRDS(temp_fit1, file = "brm_object_UCD_base.rds")
+summary(base_fit1)
+plot(base_fit1, nvariables = 3, ask=FALSE)
+
+pred.df <- all_ucd_size_for_models_climate %>% select(day, parent.pop, Genotype)
+base_fit1.predictions <- cbind(pred.df, prediction=predict(base_fit1, newdata = pred.df)[,"Estimate"]) %>%
+  full_join(all_ucd_size_for_models_climate, by=c("day", "parent.pop", "Genotype"))
+
+base_fit1.predictions %>% ggplot(aes(x=day)) +
+  geom_line(aes(group=Genotype, y=height.cm, color=parent.pop), alpha=.2) +
+  geom_line(aes(group=Genotype,y=prediction, color=parent.pop)) +
+  facet_wrap(~parent.pop, scales = "free")
+ggsave("../output/UCD_GrowthClim_Predictions_Base1.png", width = 14, height = 8, units = "in")
+```
+
+### Base model 2 - Hmin varies too 
+
+```{r}
+base_fit2 <- brm(formula=climate_f1, data=all_ucd_size_for_models_climate, prior=prior1, iter = 3800, cores=4)
+saveRDS(temp_fit1, file = "brm_object_UCD_base.rds")
+summary(base_fit2)
+plot(base_fit2, nvariables = 3, ask=FALSE)
+
+pred.df <- all_ucd_size_for_models_climate %>% select(day, parent.pop, Genotype)
+base_fit2.predictions <- cbind(pred.df, prediction=predict(base_fit2, newdata = pred.df)[,"Estimate"]) %>%
+  full_join(all_ucd_size_for_models_climate, by=c("day", "parent.pop", "Genotype"))
+
+base_fit2.predictions %>% ggplot(aes(x=day)) +
+  geom_line(aes(group=Genotype, y=height.cm, color=parent.pop), alpha=.2) +
+  geom_line(aes(group=Genotype, y=prediction, color=parent.pop)) +
+  facet_wrap(~parent.pop, scales = "free")
+ggsave("../output/UCD_GrowthClim_Predictions_Base2.png", width = 14, height = 8, units = "in")
+```
+
+### Model comparison 
+```{r}
+base_fit1 <- add_criterion(base_fit1, "loo")
+base_fit2 <- add_criterion(base_fit2, "loo")
+loo_compare(base_fit1, base_fit2)
+```
+
+```{r}
+save.image("../output/BQC_UCD_Growth_Climate.Rdata")
+```
+
+## Temp Models
+
+```{r, eval=FALSE}
 climate_f2 <- brmsformula(height.cm ~ Hmax - (Hmax - Hmin) * exp(-(k/100 * day)^delta),
                   Hmin ~ 1,
                   k ~ min_temp_d1_7 + (1|parent.pop),
@@ -162,119 +227,36 @@ climate_f7 <- brmsformula(height.cm ~ Hmax - (Hmax - Hmin) * exp(-(k/100 * day)^
                   nl=TRUE)
 ```
 
-## Priors
-
-```{r}
-prior1 <- c(set_prior("normal(5,3)", nlpar="Hmin"),
-            set_prior("normal(60,15)",  nlpar="Hmax"),
-            set_prior("gamma(2,2)", nlpar = "k", lb = 0), #gamma constrains to be > 0 
-            set_prior("gamma(20,3)", nlpar = "delta", lb = 0)
-)
-            #first number = avg, second number = the space around that average to search 
-```
-
-## Model Fits
-
-### Base model 1 - Hmax, k, delta vary
-
-```{r}
-base_fit1 <- brm(formula=base_f1, data=all_ucd_size_for_models_climate, prior=prior1, iter = 3800, cores=4)
-#Warning: There were 2500 divergent transitions after warmup. See https://mc-stan.org/misc/warnings.html#divergent-transitions-after-warmup to find out why this is a problem and how to eliminate them.Warning: Examine the pairs() plot to diagnose sampling problems
-saveRDS(temp_fit1, file = "brm_object_UCD_base.rds")
-summary(base_fit1)
-plot(base_fit1, nvariables = 3, ask=FALSE)
-
-pred.df <- expand_grid(day=min(all_ucd_size_for_models_climate$day):max(all_ucd_size_for_models_climate$day),
-                       parent.pop=unique(all_ucd_size_for_models_climate$parent.pop))
-base_fit1.predictions <- cbind(pred.df, prediction=predict(base_fit1, newdata = pred.df)[,"Estimate"]) %>%
-  full_join(all_ucd_size_for_models_climate, by=c("day", "parent.pop"))
-
-base_fit1.predictions %>% ggplot(aes(x=day)) +
-  geom_line(aes(group=Genotype, y=height.cm, color=parent.pop), alpha=.2) +
-  geom_line(aes(y=prediction, color=parent.pop)) +
-  facet_wrap(~parent.pop)
-ggsave("../output/UCD_GrowthClim_Predictions_Base1.png", width = 14, height = 8, units = "in")
-```
-
-### Base model 2 - Hmin varies too 
-
-```{r}
-base_fit2 <- brm(formula=climate_f1, data=all_ucd_size_for_models_climate, prior=prior1, iter = 3800, cores=4)
-saveRDS(temp_fit1, file = "brm_object_UCD_base.rds")
-summary(base_fit2)
-plot(base_fit2, nvariables = 3, ask=FALSE)
-
-pred.df <- expand_grid(day=min(all_ucd_size_for_models_climate$day):max(all_ucd_size_for_models_climate$day),
-                       parent.pop=unique(all_ucd_size_for_models_climate$parent.pop))
-base_fit2.predictions <- cbind(pred.df, prediction=predict(base_fit2, newdata = pred.df)[,"Estimate"]) %>%
-  full_join(all_ucd_size_for_models_climate, by=c("day", "parent.pop"))
-
-base_fit2.predictions %>% ggplot(aes(x=day)) +
-  geom_line(aes(group=Genotype, y=height.cm, color=parent.pop), alpha=.2) +
-  geom_line(aes(y=prediction, color=parent.pop)) +
-  facet_wrap(~parent.pop)
-ggsave("../output/UCD_GrowthClim_Predictions_Base2.png", width = 14, height = 8, units = "in")
-```
+## Temp Model Fits
 
 ### Min D1-7 (fit2)
 
-```{r}
+```{r, eval=FALSE}
 all_ucd_size_for_models_climate_fit2 <- all_ucd_size_for_models_climate %>% drop_na(min_temp_d1_7)
 
 climate_fit2 <- brm(formula=climate_f2, data=all_ucd_size_for_models_climate_fit2, prior=prior1, iter = 3800, cores=4)
-#See warnings below 
 
-summary(climate_fit2) #pretty bad diagnostics
-plot(climate_fit2, nvariables = 3, ask=FALSE) #pretty bad 
-
-#pred.df <- expand_grid(day=min(all_ucd_size_for_models_climate_fit2$day):max(all_ucd_size_for_models_climate_fit2$day),
-                  #     parent.pop=unique(all_ucd_size_for_models_climate_fit2$parent.pop),
-                   #    min_temp_d1_7=unique(all_ucd_size_for_models_climate_fit2$min_temp_d1_7))
-#climate_fit2.predictions <- cbind(pred.df, prediction=predict(climate_fit2, newdata = pred.df)[,"Estimate"]) %>%
-#  full_join(all_ucd_size_for_models_climate_fit2, by=c("day", "parent.pop"))
-#Error: vector memory limit of 16.0 Gb reached, see mem.maxVSize()
-
-#climate_fit2.predictions %>% ggplot(aes(x=day)) +
-#  geom_line(aes(group=Genotype, y=height.cm, color=parent.pop), alpha=.2) +
-#  geom_line(aes(y=prediction, color=parent.pop)) +
-#  facet_wrap(~parent.pop)
+summary(climate_fit2) 
+plot(climate_fit2, nvariables = 3, ask=FALSE)  
 ```
-
-Warning: There were 6576 divergent transitions after warmup. See https://mc-stan.org/misc/warnings.html#divergent-transitions-after-warmup to find out why this is a problem and how to eliminate them.
-Warning: There were 1 chains where the estimated Bayesian Fraction of Missing Information was low. See https://mc-stan.org/misc/warnings.html#bfmi-low
-Warning: Examine the pairs() plot to diagnose sampling problems
-Warning: The largest R-hat is 3.69, indicating chains have not mixed. Running the chains for more iterations may help. See https://mc-stan.org/misc/warnings.html#r-hat
-Warning: Bulk Effective Samples Size (ESS) is too low, indicating posterior means and medians may be unreliable. Running the chains for more iterations may help. See https://mc-stan.org/misc/warnings.html#bulk-ess
-Warning: Tail Effective Samples Size (ESS) is too low, indicating posterior variances and tail quantiles may be unreliable. Running the chains for more iterations may help. See https://mc-stan.org/misc/warnings.html#tail-ess
 
 ### Mean D1-7 (fit3)
 
-```{r}
+```{r, eval=FALSE}
 all_ucd_size_for_models_climate_fit3 <- all_ucd_size_for_models_climate %>% drop_na(mean_temp_d1_7)
 
 climate_fit3 <- brm(formula=climate_f3, data=all_ucd_size_for_models_climate_fit3, prior=prior1, iter = 3800, cores=4)
-#See warnings below 
 
 summary(climate_fit3)
 plot(climate_fit3, nvariables = 3, ask=FALSE)
-#pretty bad diagnostics 
 ```
-
-Warning: There were 2854 divergent transitions after warmup. See https://mc-stan.org/misc/warnings.html#divergent-transitions-after-warmup
-to find out why this is a problem and how to eliminate them.
-Warning: Examine the pairs() plot to diagnose sampling problems
-Warning: The largest R-hat is 1.51, indicating chains have not mixed. Running the chains for more iterations may help. See https://mc-stan.org/misc/warnings.html#r-hat
-Warning: Bulk Effective Samples Size (ESS) is too low, indicating posterior means and medians may be unreliable. Running the chains for more iterations may help. See https://mc-stan.org/misc/warnings.html#bulk-ess
-Warning: Tail Effective Samples Size (ESS) is too low, indicating posterior variances and tail quantiles may be unreliable.
-Running the chains for more iterations may help. See https://mc-stan.org/misc/warnings.html#tail-ess
 
 ### Max D1-7 (fit4)
 
-```{r}
+```{r, eval=FALSE}
 all_ucd_size_for_models_climate_fit4 <- all_ucd_size_for_models_climate %>% drop_na(max_temp_d1_7)
 
 climate_fit4 <- brm(formula=climate_f4, data=all_ucd_size_for_models_climate_fit4, prior=prior1, iter = 3800, cores=4)
-#Warning: There were 2498 divergent transitions after warmup. See https://mc-stan.org/misc/warnings.html#divergent-transitions-after-warmup to find out why this is a problem and how to eliminate them.Warning: Examine the pairs() plot to diagnose sampling problems
 
 summary(climate_fit4)
 plot(climate_fit4, nvariables = 3, ask=FALSE)
@@ -282,11 +264,10 @@ plot(climate_fit4, nvariables = 3, ask=FALSE)
 
 ### Min D1-13 (fit5)
 
-```{r}
+```{r, eval=FALSE}
 all_ucd_size_for_models_climate_fit5 <- all_ucd_size_for_models_climate %>% drop_na(min_temp_d1_13)
 
 climate_fit5 <- brm(formula=climate_f5, data=all_ucd_size_for_models_climate_fit5, prior=prior1, iter = 3800, cores=4)
-#Warning: There were 2498 divergent transitions after warmup. See https://mc-stan.org/misc/warnings.html#divergent-transitions-after-warmup to find out why this is a problem and how to eliminate them.Warning: Examine the pairs() plot to diagnose sampling problems
 
 summary(climate_fit5)
 plot(climate_fit5, nvariables = 3, ask=FALSE)
@@ -294,11 +275,10 @@ plot(climate_fit5, nvariables = 3, ask=FALSE)
 
 ### Mean D1-13 (fit6)
 
-```{r}
+```{r, eval=FALSE}
 all_ucd_size_for_models_climate_fit6 <- all_ucd_size_for_models_climate %>% drop_na(meam_temp_d1_13)
 
 climate_fit6 <- brm(formula=climate_f6, data=all_ucd_size_for_models_climate_fit6, prior=prior1, iter = 3800, cores=4)
-#Warning: There were 2498 divergent transitions after warmup. See https://mc-stan.org/misc/warnings.html#divergent-transitions-after-warmup to find out why this is a problem and how to eliminate them.Warning: Examine the pairs() plot to diagnose sampling problems
 
 summary(climate_fit6)
 plot(climate_fit6, nvariables = 3, ask=FALSE)
@@ -306,11 +286,10 @@ plot(climate_fit6, nvariables = 3, ask=FALSE)
 
 ### Max D1-13 (fit7)
 
-```{r}
+```{r, eval=FALSE}
 all_ucd_size_for_models_climate_fit7 <- all_ucd_size_for_models_climate %>% drop_na(max_temp_d1_13)
 
 climate_fit7 <- brm(formula=climate_f7, data=all_ucd_size_for_models_climate_fit7, prior=prior1, iter = 3800, cores=4)
-#Warning: There were 2498 divergent transitions after warmup. See https://mc-stan.org/misc/warnings.html#divergent-transitions-after-warmup to find out why this is a problem and how to eliminate them.Warning: Examine the pairs() plot to diagnose sampling problems
 
 summary(climate_fit7)
 plot(climate_fit7, nvariables = 3, ask=FALSE)
@@ -318,7 +297,7 @@ plot(climate_fit7, nvariables = 3, ask=FALSE)
 
 ## Model Comparison
 
-```{r}
+```{r, eval=FALSE}
 base_fit1 <- add_criterion(base_fit1, "loo")
 base_fit2 <- add_criterion(base_fit2, "loo")
 climate_fit2 <- add_criterion(climate_fit2, "loo")
