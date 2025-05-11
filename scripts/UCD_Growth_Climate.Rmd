@@ -68,7 +68,7 @@ Transplants only in beds D, F, H, J, L - Remove Bed A from data set No
 temperatures were taken from 2/23/23 to 3/17/23 and after 8/4
 
 ```{r}
-temp_UCD <- read_csv("../input/UCD_Data/iButton_Data/UCD_iButton_Data_Corrected.csv") %>%
+temp_UCD <- read_csv("../input/UCD_Data/UCD_iButton_Data_Corrected.csv") %>%
   filter(Bed != "A") %>% 
   mutate(Date_Time = mdy_hm(Date_Time))
 head(temp_UCD)
@@ -142,7 +142,7 @@ base_f2 <- brmsformula(height.cm ~ Hmax - (Hmax - Hmin) * exp(-(k/100 * day)^del
 ```{r}
 base_fit1 <- brm(formula=base_f1, data=all_ucd_size_for_models_climate, prior=prior1, iter = 3800, cores=4)
 
-saveRDS(temp_fit1, file = "brm_object_UCD_base.rds")
+saveRDS(base_fit1, file = "brm_object_UCD_base1_rptedmeas.rds")
 summary(base_fit1)
 plot(base_fit1, nvariables = 3, ask=FALSE)
 
@@ -160,8 +160,8 @@ ggsave("../output/UCD_GrowthClim_Predictions_Base1.png", width = 14, height = 8,
 ### Base model 2 - Hmin varies too 
 
 ```{r}
-base_fit2 <- brm(formula=climate_f1, data=all_ucd_size_for_models_climate, prior=prior1, iter = 3800, cores=4)
-saveRDS(temp_fit1, file = "brm_object_UCD_base.rds")
+base_fit2 <- brm(formula=base_f2, data=all_ucd_size_for_models_climate, prior=prior1, iter = 3800, cores=4)
+saveRDS(base_fit2, file = "brm_object_UCD_base2_rptedmeas.rds")
 summary(base_fit2)
 plot(base_fit2, nvariables = 3, ask=FALSE)
 
