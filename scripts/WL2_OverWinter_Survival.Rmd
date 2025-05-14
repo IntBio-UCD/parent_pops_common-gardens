@@ -166,7 +166,24 @@ winter_surv %>%
 #ggsave("../output/WL2_Traits/WL2_WinterSurv_Wtr_Year_GD_Recent.png", width = 12, height = 8, units = "in")
 ```
 
-### Scatterplots
+## Figure for Paper
+```{r}
+WYCD_recent <- winter_surv %>%
+  filter(pop!="WR") %>% 
+  group_by(pop, elev_m, Wtr_Year_GD_Recent) %>% 
+  summarise(meanSurv=mean(WinterSurv, na.rm = TRUE), semSurv=sem(WinterSurv, na.rm=TRUE)) %>% 
+  ggplot(aes(x=Wtr_Year_GD_Recent, y=meanSurv, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanSurv-semSurv,ymax=meanSurv+semSurv),width=.02,linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Winter Survival", x="Recent Water Year CD") +
+  theme(text=element_text(size=25))
+ggsave("../output/WL2_Traits/WL2_WinterSurv_ClimDist.png", width = 8, height = 5, units = "in")
+```
+
+
+## Scatterplots
 ```{r}
 #scatter plots
 WYCD_recent <- winter_surv %>%

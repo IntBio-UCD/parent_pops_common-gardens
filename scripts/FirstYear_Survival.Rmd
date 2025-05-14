@@ -253,7 +253,7 @@ wl2_y1_surv %>%
   labs(y="Y1 Survival", x="Parent Population", fill="Growth Season Gowers") +
   scale_fill_viridis(option="mako", direction = -1) +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-#ggsave("../output/WL2_Traits/WL2_Y1Surv_GrwSsn_GD_Recent.png", width = 12, height = 8, units = "in")
+##ggsave("../output/WL2_Traits/WL2_Y1Surv_GrwSsn_GD_Recent.png", width = 12, height = 8, units = "in")
 
 wl2_y1_surv %>% 
   group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
@@ -267,7 +267,7 @@ wl2_y1_surv %>%
   labs(y="Y1 Survival", x="Parent Population", fill="Water Year Gowers") +
   scale_fill_viridis(option="mako", direction = -1) +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-#ggsave("../output/WL2_Traits/WL2_Y1Surv_Wtr_Year_GD_Recent.png", width = 12, height = 8, units = "in")
+##ggsave("../output/WL2_Traits/WL2_Y1Surv_Wtr_Year_GD_Recent.png", width = 12, height = 8, units = "in")
 ```
 
 Davis
@@ -285,7 +285,7 @@ ucd_y1_surv %>%
   labs(y="Y1 Survival", x="Parent Population", fill="Growth Season Gowers") +
   scale_fill_viridis(option="mako", direction = -1) +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-#ggsave("../output/UCD_Traits/UCD_Y1Surv_GrwSsn_GD_Recent.png", width = 12, height = 8, units = "in")
+##ggsave("../output/UCD_Traits/UCD_Y1Surv_GrwSsn_GD_Recent.png", width = 12, height = 8, units = "in")
 
 ucd_y1_surv %>% 
   group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
@@ -299,7 +299,7 @@ ucd_y1_surv %>%
   labs(y="Y1 Survival", x="Parent Population", fill="Water Year Gowers") +
   scale_fill_viridis(option="mako", direction = -1) +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-#ggsave("../output/UCD_Traits/UCD_Y1Surv_Wtr_Year_GD_Recent.png", width = 12, height = 8, units = "in")
+##ggsave("../output/UCD_Traits/UCD_Y1Surv_Wtr_Year_GD_Recent.png", width = 12, height = 8, units = "in")
 ```
 
 ### Scatterplots
@@ -353,7 +353,7 @@ ED <- wl2_y1_surv %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 
 wl2_y1_surv_FIG <- ggarrange(GSCD_recent, WYCD_recent, GD, ED, ncol=2, nrow=2) 
-ggsave("../output/WL2_Traits/WL2_Y1_Surv_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
+#ggsave("../output/WL2_Traits/WL2_Y1_Surv_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
 ```
 
 ```{r}
@@ -381,7 +381,7 @@ WYCD_historic <- wl2_y1_surv %>%
   theme(text=element_text(size=25))
 
 wl2_y1_surv_FIG <- ggarrange(GSCD_historic, WYCD_historic, GD, ED, ncol=2, nrow=2) 
-ggsave("../output/WL2_Traits/WL2_Y1_Surv_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
+#ggsave("../output/WL2_Traits/WL2_Y1_Surv_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
 ```
 
 Davis
@@ -437,7 +437,7 @@ ED <- ucd_y1_surv %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 
 ucd_y1_surv_FIG <- ggarrange(GSCD_recent, WYCD_recent, GD, ED, ncol=2, nrow=2) 
-ggsave("../output/UCD_Traits/UCD_Y1_Surv_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
+#ggsave("../output/UCD_Traits/UCD_Y1_Surv_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
 ```
 
 ```{r}
@@ -467,7 +467,7 @@ WYCD_historic <- ucd_y1_surv %>%
   theme(text=element_text(size=25))
 
 ucd_y1_surv_FIG <- ggarrange(GSCD_historic, WYCD_historic, GD, ED, ncol=2, nrow=2) 
-ggsave("../output/UCD_Traits/UCD_Y1_Surv_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
+#ggsave("../output/UCD_Traits/UCD_Y1_Surv_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
 ```
 
 #### Directional Distance
@@ -519,7 +519,7 @@ ED_prob <- wl2_y1_surv_sub_dist %>%
   theme(text=element_text(size=30))
 
 WL2_y1_surv_sub_FIG_prob_recent <- ggarrange(GSCD_prob_recent, WYCD_prob_recent, GD_prob, ED_prob, ncol=2, nrow=2) 
-ggsave("../output/WL2_Traits/WL2_Y1_Surv_TmpSubDist_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
+#ggsave("../output/WL2_Traits/WL2_Y1_Surv_TmpSubDist_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
 ```
 
 ```{r}
@@ -547,7 +547,7 @@ WYCD_prob_historic <- wl2_y1_surv_sub_dist %>%
   theme(text=element_text(size=30))
 
 WL2_y1_surv_sub_FIG_prob_historic <- ggarrange(GSCD_prob_historic, WYCD_prob_historic, GD_prob, ED_prob, ncol=2, nrow=2) 
-ggsave("../output/WL2_Traits/WL2_Y1_Surv_TmpSubDist_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
+#ggsave("../output/WL2_Traits/WL2_Y1_Surv_TmpSubDist_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
 ```
 
 ```{r}
@@ -601,7 +601,7 @@ ED_prob <- ucd_y1_surv_sub_dist %>%
   theme(text=element_text(size=30))
 
 UCD_y1_surv_sub_FIG_prob_recent <- ggarrange(GSCD_prob_recent, WYCD_prob_recent, GD_prob, ED_prob, ncol=2, nrow=2) 
-ggsave("../output/UCD_Traits/UCD_Y1_Surv_TmpSubDist_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
+#ggsave("../output/UCD_Traits/UCD_Y1_Surv_TmpSubDist_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
 ```
 
 ```{r}
@@ -631,7 +631,7 @@ WYCD_prob_historic <- ucd_y1_surv_sub_dist %>%
   theme(text=element_text(size=30))
 
 UCD_y1_surv_sub_FIG_prob_historic <- ggarrange(GSCD_prob_historic, WYCD_prob_historic, GD_prob, ED_prob, ncol=2, nrow=2) 
-ggsave("../output/UCD_Traits/UCD_Y1_Surv_TmpSubDist_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
+#ggsave("../output/UCD_Traits/UCD_Y1_Surv_TmpSubDist_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
 ```
 
 ```{r}
@@ -681,7 +681,7 @@ ED_prob <- wl2_y1_surv_sub_dist %>%
   theme(text=element_text(size=30))
 
 WL2_y1_surv_sub_FIG_prob_recent <- ggarrange(GSCD_prob_recent, WYCD_prob_recent, GD_prob, ED_prob, ncol=2, nrow=2) 
-ggsave("../output/WL2_Traits/WL2_Y1_Surv_PPTSubDist_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
+#ggsave("../output/WL2_Traits/WL2_Y1_Surv_PPTSubDist_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
 ```
 
 ```{r}
@@ -709,7 +709,7 @@ WYCD_prob_historic <- wl2_y1_surv_sub_dist %>%
   theme(text=element_text(size=30))
 
 WL2_y1_surv_sub_FIG_prob_historic <- ggarrange(GSCD_prob_historic, WYCD_prob_historic, GD_prob, ED_prob, ncol=2, nrow=2) 
-ggsave("../output/WL2_Traits/WL2_Y1_Surv_PPTSubDist_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
+#ggsave("../output/WL2_Traits/WL2_Y1_Surv_PPTSubDist_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
 ```
 
 ```{r}
@@ -763,7 +763,7 @@ ED_prob <- ucd_y1_surv_sub_dist %>%
   theme(text=element_text(size=30))
 
 UCD_y1_surv_sub_FIG_prob_recent <- ggarrange(GSCD_prob_recent, WYCD_prob_recent, GD_prob, ED_prob, ncol=2, nrow=2) 
-ggsave("../output/UCD_Traits/UCD_Y1_Surv_PPTSubDist_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
+#ggsave("../output/UCD_Traits/UCD_Y1_Surv_PPTSubDist_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
 ```
 
 ```{r}
@@ -793,7 +793,41 @@ WYCD_prob_historic <- ucd_y1_surv_sub_dist %>%
   theme(text=element_text(size=30))
 
 UCD_y1_surv_sub_FIG_prob_historic <- ggarrange(GSCD_prob_historic, WYCD_prob_historic, GD_prob, ED_prob, ncol=2, nrow=2) 
-ggsave("../output/UCD_Traits/UCD_Y1_Surv_PPTSubDist_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
+#ggsave("../output/UCD_Traits/UCD_Y1_Surv_PPTSubDist_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
+```
+
+## Figures for Paper
+
+### Gower's and temp
+```{r}
+WYCD_recent <- wl2_y1_surv %>% 
+  group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
+  summarise(meanSurv=mean(Survival, na.rm = TRUE), semSurv=sem(Survival, na.rm=TRUE)) %>% 
+  ggplot(aes(x=Wtr_Year_GD_Recent, y=meanSurv, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanSurv-semSurv,ymax=meanSurv+semSurv),width=.02,linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Y1 Survival", x="Recent Water Year CD") +
+  theme(text=element_text(size=30))
+
+WYCD_temp_recent <- wl2_y1_surv_sub_dist %>% 
+  group_by(pop, elev_m, Wtr_Year_TempDist_Recent, Wtr_Year_TempDist_Historic) %>% 
+  summarise(meanEst=mean(Survival, na.rm = TRUE), semEst=sem(Survival, na.rm=TRUE)) %>% 
+  ggplot(aes(x=Wtr_Year_TempDist_Recent, y=meanEst, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.3,linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Y1 Survival", x="Recent Water Year Temp Dist") +
+  theme(text=element_text(size=30))
+
+wl2_y1surv_FIG_recent <- ggarrange(WYCD_recent, WYCD_temp_recent,
+                                labels = c("A)", "B)"), 
+                                font.label = list(size=30, 
+                                                  face = "plain"), 
+                                ncol=2, nrow=1) 
+ggsave("../output/WL2_Traits/WL2_Y1_Surv_ClimTempDist_Recent.png", width = 24, height = 9, units = "in")
 ```
 
 ### WL2 Growth Season Effects
@@ -808,7 +842,7 @@ wl2_y1_surv_sub_dist %>%
   scale_y_continuous(expand = c(0.01, 0)) +
   labs(y="Y1 Survival", x="Recent Growth Season PPT Dist") +
   theme(text=element_text(size=30))
-ggsave("../output/WL2_Traits/WL2_Y1_Surv_PPTSubDist_GRWSSN_Recent.png", width = 8, height = 6, units = "in")
+#ggsave("../output/WL2_Traits/WL2_Y1_Surv_PPTSubDist_GRWSSN_Recent.png", width = 8, height = 6, units = "in")
 ```
 
 

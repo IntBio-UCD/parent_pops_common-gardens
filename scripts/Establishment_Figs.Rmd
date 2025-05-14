@@ -274,7 +274,52 @@ wl2_establishment %>%
 #ggsave("../output/WL2_Traits/WL2_Establishment_Wtr_Year_GD_Recent.png", width = 12, height = 8, units = "in")
 ```
 
-## Scatterplots
+## Figures for Paper
+
+### Gower's, Temp, and Ppt
+```{r}
+WYCD_recent <- wl2_establishment %>% 
+  group_by(pop, elev_m, Wtr_Year_GD_Recent, Wtr_Year_GD_Historical) %>% 
+  summarise(meanEst=mean(Establishment, na.rm = TRUE), semEst=sem(Establishment, na.rm=TRUE)) %>%
+  ggplot(aes(x=Wtr_Year_GD_Recent, y=meanEst, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.02, linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Establishment", x="Recent Water Year CD") +
+  theme(text=element_text(size=30))
+
+WYCD_temp_recent <- wl2_establishment_sub_dist %>% 
+  group_by(pop, elev_m, Wtr_Year_TempDist_Recent, Wtr_Year_TempDist_Historic) %>% 
+  summarise(meanEst=mean(Establishment, na.rm = TRUE), semEst=sem(Establishment, na.rm=TRUE)) %>% 
+  ggplot(aes(x=Wtr_Year_TempDist_Recent, y=meanEst, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.3,linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Establishment", x="Recent Water Year Temp Dist") +
+  theme(text=element_text(size=30))
+
+WYCD_ppt_recent <- wl2_establishment_sub_dist %>% 
+  group_by(pop, elev_m, Wtr_Year_PPTDist_Recent, Wtr_Year_PPTDist_Historic) %>% 
+  summarise(meanEst=mean(Establishment, na.rm = TRUE), semEst=sem(Establishment, na.rm=TRUE)) %>% 
+  ggplot(aes(x=Wtr_Year_PPTDist_Recent, y=meanEst, group = pop)) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.3,linewidth = 2) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Establishment", x="Recent Water Year PPT Dist") +
+  theme(text=element_text(size=30))
+
+wl2_est_FIG_recent <- ggarrange(WYCD_recent, "", 
+                                WYCD_temp_recent,
+                                WYCD_ppt_recent,
+                                labels = c("A)", "", "B)", "C)"), 
+                                font.label = list(size=30, 
+                                                  face = "plain"), 
+                                ncol=2, nrow=2) 
+ggsave("../output/WL2_Traits/WL2_Estab_RecentDist.png", width = 24, height = 18, units = "in")
+```
 
 ### Just Geo Distance
 ```{r}
@@ -288,9 +333,10 @@ wl2_establishment %>%
   scale_y_continuous(expand = c(0.01, 0)) +
   labs(y="Establishment", x="Geographic Distance (m)") +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/WL2_Traits/WL2_Establishment_GeoDist.png", width = 8, height = 5, units = "in")
+#ggsave("../output/WL2_Traits/WL2_Establishment_GeoDist.png", width = 8, height = 5, units = "in")
 ```
 
+## Scatterplots
 
 ### Davis
 ```{r}
@@ -345,7 +391,7 @@ ED <- ucd_establishment %>%
   theme(text=element_text(size=25))
 
 ucd_establishment_FIG <- ggarrange(GSCD_recent, WYCD_recent, GD, ED, ncol=2, nrow=2) 
-ggsave("../output/UCD_Traits/UCD_Establishment_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
+#ggsave("../output/UCD_Traits/UCD_Establishment_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
 ```
 
 ```{r}
@@ -375,7 +421,7 @@ WYCD_historic <- ucd_establishment %>%
   theme(text=element_text(size=25))
 
 ucd_establishment_FIG <- ggarrange(GSCD_historic, WYCD_historic, GD, ED, ncol=2, nrow=2) 
-ggsave("../output/UCD_Traits/UCD_Establishment_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
+#ggsave("../output/UCD_Traits/UCD_Establishment_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
 ```
 
 ### WL2
@@ -427,7 +473,7 @@ ED <- wl2_establishment %>%
   theme(text=element_text(size=25))
 
 wl2_establishment_FIG <- ggarrange(GSCD_recent, WYCD_recent, GD, ED, ncol=2, nrow=2) 
-ggsave("../output/WL2_Traits/WL2_Establishment_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
+#ggsave("../output/WL2_Traits/WL2_Establishment_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
 ```
 
 ```{r}
@@ -455,7 +501,7 @@ WYCD_historic <- wl2_establishment %>%
   theme(text=element_text(size=25))
 
 wl2_establishment_FIG <- ggarrange(GSCD_historic, WYCD_historic, GD, ED, ncol=2, nrow=2) 
-ggsave("../output/WL2_Traits/WL2_Establishment_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
+#ggsave("../output/WL2_Traits/WL2_Establishment_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
 ```
 
 ### Directional Distance
@@ -506,7 +552,7 @@ ED_prob <- wl2_establishment_sub_dist %>%
   theme(text=element_text(size=30))
 
 WL2_establishment_sub_FIG_prob_recent <- ggarrange(GSCD_prob_recent, WYCD_prob_recent, GD_prob, ED_prob, ncol=2, nrow=2) 
-ggsave("../output/WL2_Traits/WL2_Establishment_TmpSubDist_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
+#ggsave("../output/WL2_Traits/WL2_Establishment_TmpSubDist_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
 ```
 
 ```{r}
@@ -534,7 +580,7 @@ WYCD_prob_historic <- wl2_establishment_sub_dist %>%
   theme(text=element_text(size=30))
 
 WL2_establishment_sub_FIG_prob_historic <- ggarrange(GSCD_prob_historic, WYCD_prob_historic, GD_prob, ED_prob, ncol=2, nrow=2) 
-ggsave("../output/WL2_Traits/WL2_Establishment_TmpSubDist_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
+#ggsave("../output/WL2_Traits/WL2_Establishment_TmpSubDist_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
 ```
 
 ```{r}
@@ -588,7 +634,7 @@ ED_prob <- ucd_establishment_sub_dist %>%
   theme(text=element_text(size=30))
 
 UCD_establishment_sub_FIG_prob_recent <- ggarrange(GSCD_prob_recent, WYCD_prob_recent, GD_prob, ED_prob, ncol=2, nrow=2) 
-ggsave("../output/UCD_Traits/UCD_Establishment_TmpSubDist_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
+#ggsave("../output/UCD_Traits/UCD_Establishment_TmpSubDist_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
 ```
 
 ```{r}
@@ -618,7 +664,7 @@ WYCD_prob_historic <- ucd_establishment_sub_dist %>%
   theme(text=element_text(size=30))
 
 UCD_establishment_sub_FIG_prob_historic <- ggarrange(GSCD_prob_historic, WYCD_prob_historic, GD_prob, ED_prob, ncol=2, nrow=2) 
-ggsave("../output/UCD_Traits/UCD_Establishment_TmpSubDist_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
+#ggsave("../output/UCD_Traits/UCD_Establishment_TmpSubDist_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
 ```
 
 ```{r}
@@ -668,7 +714,7 @@ ED_prob <- wl2_establishment_sub_dist %>%
   theme(text=element_text(size=30))
 
 WL2_establishment_sub_FIG_prob_recent <- ggarrange(GSCD_prob_recent, WYCD_prob_recent, GD_prob, ED_prob, ncol=2, nrow=2) 
-ggsave("../output/WL2_Traits/WL2_Establishment_PPTSubDist_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
+#ggsave("../output/WL2_Traits/WL2_Establishment_PPTSubDist_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
 ```
 
 ```{r}
@@ -696,7 +742,7 @@ WYCD_prob_historic <- wl2_establishment_sub_dist %>%
   theme(text=element_text(size=30))
 
 WL2_establishment_sub_FIG_prob_historic <- ggarrange(GSCD_prob_historic, WYCD_prob_historic, GD_prob, ED_prob, ncol=2, nrow=2) 
-ggsave("../output/WL2_Traits/WL2_Establishment_PPTSubDist_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
+#ggsave("../output/WL2_Traits/WL2_Establishment_PPTSubDist_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
 ```
 
 ```{r}
@@ -750,7 +796,7 @@ ED_prob <- ucd_establishment_sub_dist %>%
   theme(text=element_text(size=30))
 
 UCD_establishment_sub_FIG_prob_recent <- ggarrange(GSCD_prob_recent, WYCD_prob_recent, GD_prob, ED_prob, ncol=2, nrow=2) 
-ggsave("../output/UCD_Traits/UCD_Establishment_PPTSubDist_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
+#ggsave("../output/UCD_Traits/UCD_Establishment_PPTSubDist_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
 ```
 
 ```{r}
@@ -780,9 +826,8 @@ WYCD_prob_historic <- ucd_establishment_sub_dist %>%
   theme(text=element_text(size=30))
 
 UCD_establishment_sub_FIG_prob_historic <- ggarrange(GSCD_prob_historic, WYCD_prob_historic, GD_prob, ED_prob, ncol=2, nrow=2) 
-ggsave("../output/UCD_Traits/UCD_Establishment_PPTSubDist_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
+#ggsave("../output/UCD_Traits/UCD_Establishment_PPTSubDist_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
 ```
-
 
 ## Stats
 

@@ -184,7 +184,7 @@ ucd_gowers %>%
   scale_fill_viridis(option="mako", direction = -1) +
   scale_y_continuous(expand = c(0, 0)) +
   theme(text=element_text(size=30), axis.text.x = element_text(angle = 45,  hjust = 1)) 
-#ggsave("../output/UCD_GeoDist.png", width = 12, height = 8, units = "in")
+##ggsave("../output/UCD_GeoDist.png", width = 12, height = 8, units = "in")
 
 wl2_gowers_2023 %>% 
   ggplot(aes(x=fct_reorder(pop, Geographic_Dist), y=Geographic_Dist, fill=Wtr_Year_GD_Recent)) +
@@ -194,7 +194,7 @@ wl2_gowers_2023 %>%
   scale_fill_viridis(option="mako", direction = -1) +
   scale_y_continuous(expand = c(0, 0)) +
   theme(text=element_text(size=30), axis.text.x = element_text(angle = 45,  hjust = 1)) 
-#ggsave("../output/WL2_GeoDist.png", width = 12, height = 8, units = "in")
+##ggsave("../output/WL2_GeoDist.png", width = 12, height = 8, units = "in")
 ```
 
 ### Checking elevation distance
@@ -208,7 +208,7 @@ ucd_gowers %>%
   scale_fill_viridis(option="mako", direction = -1) +
   scale_y_continuous(expand = c(0, 0)) +
   theme(text=element_text(size=30), axis.text.x = element_text(angle = 45,  hjust = 1)) 
-#ggsave("../output/UCD_ElevDist.png", width = 12, height = 8, units = "in")
+##ggsave("../output/UCD_ElevDist.png", width = 12, height = 8, units = "in")
 
 wl2_gowers_2023 %>% 
   ggplot(aes(x=fct_reorder(pop, Elev_Dist), y=Elev_Dist, fill=Wtr_Year_GD_Recent)) +
@@ -218,7 +218,7 @@ wl2_gowers_2023 %>%
   scale_fill_viridis(option="mako", direction = -1) +
   scale_y_continuous(expand = c(0, 0)) +
   theme(text=element_text(size=30), axis.text.x = element_text(angle = 45,  hjust = 1)) 
-#ggsave("../output/WL2_ElevDist.png", width = 12, height = 8, units = "in")
+##ggsave("../output/WL2_ElevDist.png", width = 12, height = 8, units = "in")
 
 ## Correlation between geo dist, elev distance and climate distance
 dist_normalized_ucd <- ucd_gowers %>% select(GrwSsn_GD_Recent:Wtr_Year_GD_Historical, Geographic_Dist, Elev_Dist) %>% scale() #normalize the data so they're all on the same scale
@@ -279,7 +279,7 @@ grw_historical_fig <- wl2_gowers_avg %>%
   
 
 plot_grid(grw_historical_fig, grw_recent_fig)
-ggsave("../output/Climate/AVG_growthseason_Gowers_fromWL2.png", width = 24, height = 8, units = "in")
+#ggsave("../output/Climate/AVG_growthseason_Gowers_fromWL2.png", width = 24, height = 8, units = "in")
 ```
 
 ```{r}
@@ -303,7 +303,7 @@ wtr_historical_fig <- wl2_gowers_avg %>%
   
 
 plot_grid(wtr_historical_fig, wtr_recent_fig)
-ggsave("../output/Climate/AVG_wtryr_Gowers_fromWL2.png", width = 24, height = 8, units = "in")
+#ggsave("../output/Climate/AVG_wtryr_Gowers_fromWL2.png", width = 24, height = 8, units = "in")
 ```
 
 #### For Subtraction Distances
@@ -425,7 +425,7 @@ ucd_total_fitness %>%
   labs(y="Total Fitness", x="Parent Population", fill="Growth Season Gowers") +
   scale_fill_viridis(option="mako", direction = -1) +
   theme(text=element_text(size=30), axis.text.x = element_text(angle = 45,  hjust = 1))
-#ggsave("../output/UCD_Traits/UCD_Total_Fitness_GrwSsn_GD_Recent.png", width = 12, height = 8, units = "in")
+##ggsave("../output/UCD_Traits/UCD_Total_Fitness_GrwSsn_GD_Recent.png", width = 12, height = 8, units = "in")
 
 ucd_total_fitness %>% 
   group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
@@ -439,7 +439,7 @@ ucd_total_fitness %>%
   labs(y="Total Fitness", x="Parent Population", fill="Water Year Gowers") +
   scale_fill_viridis(option="mako", direction = -1) +
   theme(text=element_text(size=30), axis.text.x = element_text(angle = 45,  hjust = 1))
-#ggsave("../output/UCD_Traits/UCD_Total_Fitness_Wtr_Year_GD_Recent.png", width = 12, height = 8, units = "in")
+##ggsave("../output/UCD_Traits/UCD_Total_Fitness_Wtr_Year_GD_Recent.png", width = 12, height = 8, units = "in")
 
 ```
 
@@ -499,7 +499,7 @@ ED <- ucd_total_fitness %>%
   theme(text=element_text(size=30))
 
 ucd_total_fitness_FIG <- ggarrange(GSCD, WYCD, GD, ED, ncol=2, nrow=2) 
-ggsave("../output/UCD_Traits/UCD_Total_Fitness_SCATTERS.png", width = 24, height = 18, units = "in")
+#ggsave("../output/UCD_Traits/UCD_Total_Fitness_SCATTERS.png", width = 24, height = 18, units = "in")
 ```
 
 ## WL2
@@ -568,7 +568,7 @@ wl2_total_fitness %>%
   labs(y="Total Fitness", x="Parent Population", fill="Growth Season Gowers") +
   scale_fill_viridis(option="mako", direction = -1) +
   theme(text=element_text(size=30), axis.text.x = element_text(angle = 45,  hjust = 1))
-#ggsave("../output/WL2_Traits/WL2_Total_Fitness_GrwSsn_GD_Recent.png", width = 12, height = 8, units = "in")
+##ggsave("../output/WL2_Traits/WL2_Total_Fitness_GrwSsn_GD_Recent.png", width = 12, height = 8, units = "in")
 
 wl2_total_fitness %>% 
   group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
@@ -582,7 +582,7 @@ wl2_total_fitness %>%
   labs(y="Total Fitness", x="Parent Population", fill="Water Year Gowers") +
   scale_fill_viridis(option="mako", direction = -1) +
   theme(text=element_text(size=30), axis.text.x = element_text(angle = 45,  hjust = 1))
-#ggsave("../output/WL2_Traits/WL2_Total_Fitness_Wtr_Year_GD_Recent.png", width = 12, height = 8, units = "in")
+##ggsave("../output/WL2_Traits/WL2_Total_Fitness_Wtr_Year_GD_Recent.png", width = 12, height = 8, units = "in")
 ```
 
 ### Scatterplots
@@ -640,7 +640,7 @@ ED <- wl2_total_fitness %>%
   theme(text=element_text(size=30))
 
 WL2_total_fitness_FIG <- ggarrange(GSCD, WYCD, GD, ED, ncol=2, nrow=2) 
-ggsave("../output/WL2_Traits/WL2_Total_Fitness_SCATTERS.png", width = 24, height = 18, units = "in")
+#ggsave("../output/WL2_Traits/WL2_Total_Fitness_SCATTERS.png", width = 24, height = 18, units = "in")
 ```
 
 ## Stats
@@ -836,7 +836,7 @@ ED_prob <- wl2_total_fitness %>%
   theme(text=element_text(size=30))
 
 WL2_total_fitness_FIG_prob_recent_recent <- ggarrange(GSCD_prob_recent, WYCD_prob_recent, GD_prob, ED_prob, ncol=2, nrow=2) 
-ggsave("../output/WL2_Traits/WL2_ProbFitness_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
+##ggsave("../output/WL2_Traits/WL2_ProbFitness_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
 ```
 
 ```{r}
@@ -866,7 +866,7 @@ WYCD_prob_historic <- wl2_total_fitness %>%
   theme(text=element_text(size=30))
 
 WL2_total_fitness_FIG_prob_historic_historic <- ggarrange(GSCD_prob_historic, WYCD_prob_historic, GD_prob, ED_prob, ncol=2, nrow=2) 
-ggsave("../output/WL2_Traits/WL2_ProbFitness_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
+##ggsave("../output/WL2_Traits/WL2_ProbFitness_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
 ```
 
 ```{r}
@@ -924,7 +924,7 @@ ED_prob <- ucd_total_fitness %>%
   theme(text=element_text(size=30))
 
 UCD_total_fitness_FIG_prob_recent_recent <- ggarrange(GSCD_prob_recent, WYCD_prob_recent, GD_prob, ED_prob, ncol=2, nrow=2) 
-ggsave("../output/UCD_Traits/UCD_ProbFitness_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
+##ggsave("../output/UCD_Traits/UCD_ProbFitness_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
 ```
 
 ```{r}
@@ -956,7 +956,7 @@ WYCD_prob_historic <- ucd_total_fitness %>%
   theme(text=element_text(size=30))
 
 UCD_total_fitness_FIG_prob_historic_historic <- ggarrange(GSCD_prob_historic, WYCD_prob_historic, GD_prob, ED_prob, ncol=2, nrow=2) 
-ggsave("../output/UCD_Traits/UCD_ProbFitness_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
+##ggsave("../output/UCD_Traits/UCD_ProbFitness_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
 ```
 
 ```{r}
@@ -1010,7 +1010,7 @@ ED_prob <- wl2_total_fitness_sub_dist %>%
   theme(text=element_text(size=30))
 
 WL2_total_fitness_sub_FIG_prob_recent_recent <- ggarrange(GSCD_prob_recent, WYCD_prob_recent, GD_prob, ED_prob, ncol=2, nrow=2) 
-ggsave("../output/WL2_Traits/WL2_ProbFitness_TmpSubDist_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
+##ggsave("../output/WL2_Traits/WL2_ProbFitness_TmpSubDist_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
 ```
 
 ```{r}
@@ -1040,7 +1040,7 @@ WYCD_prob_historic <- wl2_total_fitness_sub_dist %>%
   theme(text=element_text(size=30))
 
 WL2_total_fitness_sub_FIG_prob_historic_historic <- ggarrange(GSCD_prob_historic, WYCD_prob_historic, GD_prob, ED_prob, ncol=2, nrow=2) 
-ggsave("../output/WL2_Traits/WL2_ProbFitness_TmpSubDist_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
+##ggsave("../output/WL2_Traits/WL2_ProbFitness_TmpSubDist_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
 ```
 
 ```{r}
@@ -1098,7 +1098,7 @@ ED_prob <- ucd_total_fitness_sub_dist %>%
   theme(text=element_text(size=30))
 
 UCD_total_fitness_sub_FIG_prob_recent_recent <- ggarrange(GSCD_prob_recent, WYCD_prob_recent, GD_prob, ED_prob, ncol=2, nrow=2) 
-ggsave("../output/UCD_Traits/UCD_ProbFitness_TmpSubDist_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
+#ggsave("../output/UCD_Traits/UCD_ProbFitness_TmpSubDist_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
 ```
 
 ```{r}
@@ -1130,7 +1130,7 @@ WYCD_prob_historic <- ucd_total_fitness_sub_dist %>%
   theme(text=element_text(size=30))
 
 UCD_total_fitness_sub_FIG_prob_historic_historic <- ggarrange(GSCD_prob_historic, WYCD_prob_historic, GD_prob, ED_prob, ncol=2, nrow=2) 
-ggsave("../output/UCD_Traits/UCD_ProbFitness_TmpSubDist_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
+#ggsave("../output/UCD_Traits/UCD_ProbFitness_TmpSubDist_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
 ```
 
 ```{r}
@@ -1184,7 +1184,7 @@ ED_prob <- wl2_total_fitness_sub_dist %>%
   theme(text=element_text(size=30))
 
 WL2_total_fitness_sub_FIG_prob_recent_recent <- ggarrange(GSCD_prob_recent, WYCD_prob_recent, GD_prob, ED_prob, ncol=2, nrow=2) 
-ggsave("../output/WL2_Traits/WL2_ProbFitness_PPTSubDist_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
+#ggsave("../output/WL2_Traits/WL2_ProbFitness_PPTSubDist_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
 ```
 
 ```{r}
@@ -1214,7 +1214,7 @@ WYCD_prob_historic <- wl2_total_fitness_sub_dist %>%
   theme(text=element_text(size=30))
 
 WL2_total_fitness_sub_FIG_prob_historic_historic <- ggarrange(GSCD_prob_historic, WYCD_prob_historic, GD_prob, ED_prob, ncol=2, nrow=2) 
-ggsave("../output/WL2_Traits/WL2_ProbFitness_PPTSubDist_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
+#ggsave("../output/WL2_Traits/WL2_ProbFitness_PPTSubDist_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
 ```
 
 ```{r}
@@ -1272,7 +1272,7 @@ ED_prob <- ucd_total_fitness_sub_dist %>%
   theme(text=element_text(size=30))
 
 UCD_total_fitness_sub_FIG_prob_recent_recent <- ggarrange(GSCD_prob_recent, WYCD_prob_recent, GD_prob, ED_prob, ncol=2, nrow=2) 
-ggsave("../output/UCD_Traits/UCD_ProbFitness_PPTSubDist_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
+#ggsave("../output/UCD_Traits/UCD_ProbFitness_PPTSubDist_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
 ```
 
 ```{r}
@@ -1304,7 +1304,7 @@ WYCD_prob_historic <- ucd_total_fitness_sub_dist %>%
   theme(text=element_text(size=30))
 
 UCD_total_fitness_sub_FIG_prob_historic_historic <- ggarrange(GSCD_prob_historic, WYCD_prob_historic, GD_prob, ED_prob, ncol=2, nrow=2) 
-ggsave("../output/UCD_Traits/UCD_ProbFitness_PPTSubDist_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
+#ggsave("../output/UCD_Traits/UCD_ProbFitness_PPTSubDist_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
 ```
 
 #### Figures for paper
@@ -1363,7 +1363,7 @@ WL2_prob_fitness_for_paper <- ggarrange(GD_prob, WYCD_prob_recent,
                                         labels = c("A)", "B)", "C)", "D)"), 
                                         font.label = list(size=30, face = "plain"), 
                                         ncol=2, nrow=2) 
-ggsave("../output/WL2_Traits/WL2_ProbFitness_SCATTERS_Summary_Recent.png", width = 24, height = 18, units = "in")
+#ggsave("../output/WL2_Traits/WL2_ProbFitness_SCATTERS_Summary_Recent.png", width = 24, height = 18, units = "in")
 ```
 
 ```{r}
@@ -1391,7 +1391,8 @@ GSCD_prob_historic <- wl2_total_fitness_sub_dist %>%
   labs(y="Probability of Successfully Reproducing", x="Historic Growth Season PPT Dist") +
   theme(text=element_text(size=30))
 
-WL2_prob_fitness_for_paper2 <- ggarrange(GSCD_prob_recent, GSCD_prob_historic, 
+WL2_prob_fitness_for_paper2 <- ggarrange(GSCD_prob_historic,
+                                         GSCD_prob_recent,
                                         ncol=2, nrow=1) 
 ggsave("../output/WL2_Traits/WL2_ProbFitness_SCATTERS_PPT_GRWSSN.png", width = 24, height = 9, units = "in")
 ```
@@ -2106,7 +2107,7 @@ ED_repoutput <- wl2_total_fitness %>%
   theme(text=element_text(size=30))
 
 WL2_total_fitness_FIG_repoutput_recent_recent <- ggarrange(GSCD_repoutput_recent, WYCD_repoutput_recent, GD_repoutput, ED_repoutput, ncol=2, nrow=2) 
-ggsave("../output/WL2_Traits/WL2_Total_RepOutput_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
+#ggsave("../output/WL2_Traits/WL2_Total_RepOutput_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
 ```
 
 ```{r}
@@ -2140,7 +2141,7 @@ WYCD_repoutput_historic <- wl2_total_fitness %>%
   theme(text=element_text(size=30))
 
 WL2_total_fitness_FIG_repoutput_historic_historic <- ggarrange(GSCD_repoutput_historic, WYCD_repoutput_historic, GD_repoutput, ED_repoutput, ncol=2, nrow=2) 
-ggsave("../output/WL2_Traits/WL2_Total_RepOutput_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
+#ggsave("../output/WL2_Traits/WL2_Total_RepOutput_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
 ```
 
 ```{r}
@@ -2200,7 +2201,7 @@ ED_repoutput <- ucd_total_fitness %>%
   theme(text=element_text(size=30))
 
 UCD_total_fitness_FIG_repoutput_recent_recent <- ggarrange(GSCD_repoutput_recent, WYCD_repoutput_recent, GD_repoutput, ED_repoutput, ncol=2, nrow=2) 
-#ggsave("../output/UCD_Traits/UCD_Total_RepOutput_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
+##ggsave("../output/UCD_Traits/UCD_Total_RepOutput_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
 ```
 
 ```{r}
@@ -2234,7 +2235,7 @@ WYCD_repoutput_historic <- ucd_total_fitness %>%
   theme(text=element_text(size=30))
 
 UCD_total_fitness_FIG_repoutput_historic_historic <- ggarrange(GSCD_repoutput_historic, WYCD_repoutput_historic, GD_repoutput, ED_repoutput, ncol=2, nrow=2) 
-ggsave("../output/UCD_Traits/UCD_Total_RepOutput_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
+#ggsave("../output/UCD_Traits/UCD_Total_RepOutput_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
 ```
 
 ```{r}
@@ -2292,7 +2293,7 @@ ED_repoutput <- wl2_total_fitness_sub_dist %>%
   theme(text=element_text(size=30))
 
 WL2_total_fitness_sub_dist_FIG_repoutput_recent_recent <- ggarrange(GSCD_repoutput_recent, WYCD_repoutput_recent, GD_repoutput, ED_repoutput, ncol=2, nrow=2) 
-ggsave("../output/WL2_Traits/WL2_Total_RepOutput_TmpSubDist_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
+#ggsave("../output/WL2_Traits/WL2_Total_RepOutput_TmpSubDist_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
 ```
 
 ```{r}
@@ -2324,7 +2325,7 @@ WYCD_repoutput_historic <- wl2_total_fitness_sub_dist %>%
   theme(text=element_text(size=30))
 
 WL2_total_fitness_sub_dist_FIG_repoutput_historic_historic <- ggarrange(GSCD_repoutput_historic, WYCD_repoutput_historic, GD_repoutput, ED_repoutput, ncol=2, nrow=2) 
-ggsave("../output/WL2_Traits/WL2_Total_RepOutput_TmpSubDist_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
+#ggsave("../output/WL2_Traits/WL2_Total_RepOutput_TmpSubDist_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
 ```
 
 ```{r}
@@ -2382,7 +2383,7 @@ ED_repoutput <- wl2_total_fitness_sub_dist %>%
   theme(text=element_text(size=30))
 
 WL2_total_fitness_sub_dist_FIG_repoutput_recent_recent <- ggarrange(GSCD_repoutput_recent, WYCD_repoutput_recent, GD_repoutput, ED_repoutput, ncol=2, nrow=2) 
-ggsave("../output/WL2_Traits/WL2_Total_RepOutput_PPTSubDist_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
+#ggsave("../output/WL2_Traits/WL2_Total_RepOutput_PPTSubDist_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
 ```
 
 ```{r}
@@ -2414,7 +2415,7 @@ WYCD_repoutput_historic <- wl2_total_fitness_sub_dist %>%
   theme(text=element_text(size=30))
 
 WL2_total_fitness_sub_dist_FIG_repoutput_historic_historic <- ggarrange(GSCD_repoutput_historic, WYCD_repoutput_historic, GD_repoutput, ED_repoutput, ncol=2, nrow=2) 
-ggsave("../output/WL2_Traits/WL2_Total_RepOutput_PPTSubDist_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
+#ggsave("../output/WL2_Traits/WL2_Total_RepOutput_PPTSubDist_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
 ```
 
 #### Figure for Paper
@@ -2447,7 +2448,7 @@ GSCD_ppt <- wl2_total_fitness_sub_dist %>%
 
 WL2_tot_fitness_for_paper <- ggarrange(GSCD_temp, GSCD_ppt, 
                                         ncol=2, nrow=1) 
-ggsave("../output/WL2_Traits/WL2_Total_RepOutput_SCATTERS_GRWSSN_Historic_tmpppt.png", width = 24, height = 9, units = "in")
+#ggsave("../output/WL2_Traits/WL2_Total_RepOutput_SCATTERS_GRWSSN_Historic_tmpppt.png", width = 24, height = 9, units = "in")
 ```
 
 
