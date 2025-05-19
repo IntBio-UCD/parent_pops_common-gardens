@@ -112,7 +112,8 @@ temp_summary <- temp %>%
   summarize(
     min_temp_d = min(AvgSoilTemp),
     max_temp_d = max(AvgSoilTemp),
-    mean_temp_d = mean(AvgSoilTemp)
+    mean_temp_d = mean(AvgSoilTemp),
+    diurnal_temp_d = max_temp_d - min_temp_d
   ) %>%
   mutate(
     across(ends_with("temp_d"), \(x) rollmean(x, k = 7, align = "right", fill = NA), .names="{.col}1_7"),
@@ -238,6 +239,9 @@ temp_fits <- tibble(wflow=list(
   max.temp.1.7 ={temp_wflow %>% 
       add_model(glmer.model, formula = dead ~ max_temp_d1_7 + os_weeks + (1|parent.pop) + (1|block))},
   
+  diurnal.temp.1.7 ={temp_wflow %>% 
+      add_model(glmer.model, formula = dead ~ diurnal_temp_d1_7 + os_weeks + (1|parent.pop) + (1|block))},
+  
   min.temp.1.13 ={temp_wflow %>% 
       add_model(glmer.model, formula = dead ~ min_temp_d1_13 + os_weeks + (1|parent.pop) + (1|block))},
   
@@ -247,6 +251,9 @@ temp_fits <- tibble(wflow=list(
   max.temp.1.13 ={temp_wflow %>% 
       add_model(glmer.model, formula = dead ~ max_temp_d1_13 + os_weeks + (1|parent.pop) + (1|block))},
   
+  diurnal.temp.1.13 ={temp_wflow %>% 
+      add_model(glmer.model, formula = dead ~ diurnal_temp_d1_13 + os_weeks + (1|parent.pop) + (1|block))},
+  
   min.temp.6.13 ={temp_wflow %>% 
       add_model(glmer.model, formula = dead ~ min_temp_d6_13 + os_weeks + (1|parent.pop) + (1|block))},
   
@@ -254,7 +261,10 @@ temp_fits <- tibble(wflow=list(
       add_model(glmer.model, formula = dead ~ mean_temp_d6_13 + os_weeks + (1|parent.pop) + (1|block))},
   
   max.temp.6.13 ={temp_wflow %>% 
-      add_model(glmer.model, formula = dead ~ max_temp_d6_13 + os_weeks + (1|parent.pop) + (1|block))}
+      add_model(glmer.model, formula = dead ~ max_temp_d6_13 + os_weeks + (1|parent.pop) + (1|block))},
+  
+  diurnal.temp.6.13 ={temp_wflow %>% 
+      add_model(glmer.model, formula = dead ~ diurnal_temp_d6_13 + os_weeks + (1|parent.pop) + (1|block))}
 ),
 name=names(wflow)
 ) %>% 
@@ -289,7 +299,8 @@ temp_fits %>%
   select(name, tidy) %>%
   unnest(tidy) %>%
   filter(str_detect(term, "temp") | term=="os_weeks") %>%
-  arrange(name)
+  arrange(name) %>% 
+  select(-effect, -group)
 ```
 
 ## Moisture analysis

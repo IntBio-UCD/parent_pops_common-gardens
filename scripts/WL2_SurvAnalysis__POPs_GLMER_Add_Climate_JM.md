@@ -1,7 +1,7 @@
 ---
 title: "WL2_Survival-Analysis--GLMER"
 author: "Julin Maloof"
-date: '2025-05-05'
+date: '2025-05-19'
 output: 
   html_document: 
     keep_md: yes
@@ -99,7 +99,7 @@ library(tidymodels)
 ## ✖ recipes::step()       masks stats::step()
 ## ✖ Matrix::unpack()      masks tidyr::unpack()
 ## ✖ recipes::update()     masks Matrix::update(), stats::update()
-## • Use tidymodels_prefer() to resolve common conflicts.
+## • Dig deeper into tidy modeling with R at https://www.tmwr.org
 ```
 
 ``` r
@@ -372,7 +372,8 @@ temp_summary <- temp %>%
   summarize(
     min_temp_d = min(AvgSoilTemp),
     max_temp_d = max(AvgSoilTemp),
-    mean_temp_d = mean(AvgSoilTemp)
+    mean_temp_d = mean(AvgSoilTemp),
+    diurnal_temp_d = max_temp_d - min_temp_d
   ) %>%
   mutate(
     across(ends_with("temp_d"), \(x) rollmean(x, k = 7, align = "right", fill = NA), .names="{.col}1_7"),
@@ -385,23 +386,24 @@ temp_summary
 ```
 
 ```
-## # A tibble: 84 × 13
-##    Date       min_temp_d max_temp_d mean_temp_d min_temp_d1_7 max_temp_d1_7
-##    <date>          <dbl>      <dbl>       <dbl>         <dbl>         <dbl>
-##  1 2023-07-14        8.5       31          17.0          NA            NA  
-##  2 2023-07-15       11         35          18.7          NA            NA  
-##  3 2023-07-16       11         36          19.1          NA            NA  
-##  4 2023-07-17       14         36          20.5          NA            NA  
-##  5 2023-07-18       13         36          19.8          NA            NA  
-##  6 2023-07-19       12.5       36          19.3          NA            NA  
-##  7 2023-07-20       11.5       45          21.4          11.6          36.4
-##  8 2023-07-21       11         47.5        21.9          12            38.8
-##  9 2023-07-22       11.5       48.5        22.5          12.1          40.7
-## 10 2023-07-23       14         48.5        23.3          12.5          42.5
+## # A tibble: 84 × 17
+##    Date       min_temp_d max_temp_d mean_temp_d diurnal_temp_d min_temp_d1_7
+##    <date>          <dbl>      <dbl>       <dbl>          <dbl>         <dbl>
+##  1 2023-07-14        8.5       31          17.0           22.5          NA  
+##  2 2023-07-15       11         35          18.7           24            NA  
+##  3 2023-07-16       11         36          19.1           25            NA  
+##  4 2023-07-17       14         36          20.5           22            NA  
+##  5 2023-07-18       13         36          19.8           23            NA  
+##  6 2023-07-19       12.5       36          19.3           23.5          NA  
+##  7 2023-07-20       11.5       45          21.4           33.5          11.6
+##  8 2023-07-21       11         47.5        21.9           36.5          12  
+##  9 2023-07-22       11.5       48.5        22.5           37            12.1
+## 10 2023-07-23       14         48.5        23.3           34.5          12.5
 ## # ℹ 74 more rows
-## # ℹ 7 more variables: mean_temp_d1_7 <dbl>, min_temp_d1_13 <dbl>,
-## #   max_temp_d1_13 <dbl>, mean_temp_d1_13 <dbl>, min_temp_d6_13 <dbl>,
-## #   max_temp_d6_13 <dbl>, mean_temp_d6_13 <dbl>
+## # ℹ 11 more variables: max_temp_d1_7 <dbl>, mean_temp_d1_7 <dbl>,
+## #   diurnal_temp_d1_7 <dbl>, min_temp_d1_13 <dbl>, max_temp_d1_13 <dbl>,
+## #   mean_temp_d1_13 <dbl>, diurnal_temp_d1_13 <dbl>, min_temp_d6_13 <dbl>,
+## #   max_temp_d6_13 <dbl>, mean_temp_d6_13 <dbl>, diurnal_temp_d6_13 <dbl>
 ```
 
 ## Read in soil moisture
@@ -628,6 +630,9 @@ temp_fits <- tibble(wflow=list(
   max.temp.1.7 ={temp_wflow %>% 
       add_model(glmer.model, formula = dead ~ max_temp_d1_7 + os_weeks + (1|parent.pop) + (1|block))},
   
+  diurnal.temp.1.7 ={temp_wflow %>% 
+      add_model(glmer.model, formula = dead ~ diurnal_temp_d1_7 + os_weeks + (1|parent.pop) + (1|block))},
+  
   min.temp.1.13 ={temp_wflow %>% 
       add_model(glmer.model, formula = dead ~ min_temp_d1_13 + os_weeks + (1|parent.pop) + (1|block))},
   
@@ -637,6 +642,9 @@ temp_fits <- tibble(wflow=list(
   max.temp.1.13 ={temp_wflow %>% 
       add_model(glmer.model, formula = dead ~ max_temp_d1_13 + os_weeks + (1|parent.pop) + (1|block))},
   
+  diurnal.temp.1.13 ={temp_wflow %>% 
+      add_model(glmer.model, formula = dead ~ diurnal_temp_d1_13 + os_weeks + (1|parent.pop) + (1|block))},
+  
   min.temp.6.13 ={temp_wflow %>% 
       add_model(glmer.model, formula = dead ~ min_temp_d6_13 + os_weeks + (1|parent.pop) + (1|block))},
   
@@ -644,7 +652,10 @@ temp_fits <- tibble(wflow=list(
       add_model(glmer.model, formula = dead ~ mean_temp_d6_13 + os_weeks + (1|parent.pop) + (1|block))},
   
   max.temp.6.13 ={temp_wflow %>% 
-      add_model(glmer.model, formula = dead ~ max_temp_d6_13 + os_weeks + (1|parent.pop) + (1|block))}
+      add_model(glmer.model, formula = dead ~ max_temp_d6_13 + os_weeks + (1|parent.pop) + (1|block))},
+  
+  diurnal.temp.6.13 ={temp_wflow %>% 
+      add_model(glmer.model, formula = dead ~ diurnal_temp_d6_13 + os_weeks + (1|parent.pop) + (1|block))}
 ),
 name=names(wflow)
 ) %>% 
@@ -653,19 +664,22 @@ temp_fits
 ```
 
 ```
-## # A tibble: 10 × 2
-##    name            wflow       
-##    <chr>           <named list>
-##  1 pop.weeks.block <workflow>  
-##  2 min.temp.1.7    <workflow>  
-##  3 mean.temp.1.7   <workflow>  
-##  4 max.temp.1.7    <workflow>  
-##  5 min.temp.1.13   <workflow>  
-##  6 mean.temp.1.13  <workflow>  
-##  7 max.temp.1.13   <workflow>  
-##  8 min.temp.6.13   <workflow>  
-##  9 mean.temp.6.13  <workflow>  
-## 10 max.temp.6.13   <workflow>
+## # A tibble: 13 × 2
+##    name              wflow       
+##    <chr>             <named list>
+##  1 pop.weeks.block   <workflow>  
+##  2 min.temp.1.7      <workflow>  
+##  3 mean.temp.1.7     <workflow>  
+##  4 max.temp.1.7      <workflow>  
+##  5 diurnal.temp.1.7  <workflow>  
+##  6 min.temp.1.13     <workflow>  
+##  7 mean.temp.1.13    <workflow>  
+##  8 max.temp.1.13     <workflow>  
+##  9 diurnal.temp.1.13 <workflow>  
+## 10 min.temp.6.13     <workflow>  
+## 11 mean.temp.6.13    <workflow>  
+## 12 max.temp.6.13     <workflow>  
+## 13 diurnal.temp.6.13 <workflow>
 ```
 
 
@@ -677,15 +691,16 @@ system.time(
 ```
 
 ```
-## ■■■■■■■■■■ 30% | ETA: 3s ■■■■■■■■■■■■■ 40% | ETA: 3s ■■■■■■■■■■■■■■■■ 50% |
-## ETA: 3s ■■■■■■■■■■■■■■■■■■■ 60% | ETA: 2s ■■■■■■■■■■■■■■■■■■■■■■ 70% | ETA: 2s
-## ■■■■■■■■■■■■■■■■■■■■■■■■■ 80% | ETA: 1s ■■■■■■■■■■■■■■■■■■■■■■■■■■■■ 90% | ETA:
-## 1s
+## ■■■■■■■■ 23% | ETA: 5s ■■■■■■■■■■ 31% | ETA: 5s ■■■■■■■■■■■■■ 38% | ETA: 4s
+## ■■■■■■■■■■■■■■■ 46% | ETA: 4s ■■■■■■■■■■■■■■■■■ 54% | ETA: 3s
+## ■■■■■■■■■■■■■■■■■■■ 62% | ETA: 3s ■■■■■■■■■■■■■■■■■■■■■■ 69% | ETA: 2s
+## ■■■■■■■■■■■■■■■■■■■■■■■■ 77% | ETA: 2s ■■■■■■■■■■■■■■■■■■■■■■■■■■ 85% | ETA: 1s
+## ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ 92% | ETA: 1s
 ```
 
 ```
 ##    user  system elapsed 
-##   5.264   0.193   5.464
+##   6.867   0.271   7.162
 ```
 
 
@@ -798,6 +813,33 @@ temp_fits %>% pull(fit)
 ##   (Intercept)  max_temp_d1_7       os_weeks  
 ##      -6.24308        0.05067        0.14881  
 ## 
+## $diurnal.temp.1.7
+## ══ Workflow [trained] ══════════════════════════════════════════════════════════
+## Preprocessor: Variables
+## Model: linear_reg()
+## 
+## ── Preprocessor ────────────────────────────────────────────────────────────────
+## Outcomes: dead
+## Predictors: c(parent.pop, block, os_weeks, contains("temp_d"))
+## 
+## ── Model ───────────────────────────────────────────────────────────────────────
+## Generalized linear mixed model fit by maximum likelihood (Laplace
+##   Approximation) [glmerMod]
+##  Family: binomial  ( logit )
+## Formula: dead ~ diurnal_temp_d1_7 + os_weeks + (1 | parent.pop) + (1 |  
+##     block)
+##    Data: data
+##       AIC       BIC    logLik  deviance  df.resid 
+## 1244.0837 1276.3763 -617.0419 1234.0837      4710 
+## Random effects:
+##  Groups     Name        Std.Dev.
+##  parent.pop (Intercept) 0.6437  
+##  block      (Intercept) 0.2773  
+## Number of obs: 4715, groups:  parent.pop, 22; block, 13
+## Fixed Effects:
+##       (Intercept)  diurnal_temp_d1_7           os_weeks  
+##           -5.2810             0.0385             0.1098  
+## 
 ## $min.temp.1.13
 ## ══ Workflow [trained] ══════════════════════════════════════════════════════════
 ## Preprocessor: Variables
@@ -876,6 +918,33 @@ temp_fits %>% pull(fit)
 ##    (Intercept)  max_temp_d1_13        os_weeks  
 ##        -5.8840          0.0346          0.1681  
 ## 
+## $diurnal.temp.1.13
+## ══ Workflow [trained] ══════════════════════════════════════════════════════════
+## Preprocessor: Variables
+## Model: linear_reg()
+## 
+## ── Preprocessor ────────────────────────────────────────────────────────────────
+## Outcomes: dead
+## Predictors: c(parent.pop, block, os_weeks, contains("temp_d"))
+## 
+## ── Model ───────────────────────────────────────────────────────────────────────
+## Generalized linear mixed model fit by maximum likelihood (Laplace
+##   Approximation) [glmerMod]
+##  Family: binomial  ( logit )
+## Formula: dead ~ diurnal_temp_d1_13 + os_weeks + (1 | parent.pop) + (1 |  
+##     block)
+##    Data: data
+##      AIC      BIC   logLik deviance df.resid 
+## 1245.948 1278.241 -617.974 1235.948     4710 
+## Random effects:
+##  Groups     Name        Std.Dev.
+##  parent.pop (Intercept) 0.6443  
+##  block      (Intercept) 0.2777  
+## Number of obs: 4715, groups:  parent.pop, 22; block, 13
+## Fixed Effects:
+##        (Intercept)  diurnal_temp_d1_13            os_weeks  
+##           -5.11642             0.02294             0.13992  
+## 
 ## $min.temp.6.13
 ## ══ Workflow [trained] ══════════════════════════════════════════════════════════
 ## Preprocessor: Variables
@@ -952,7 +1021,34 @@ temp_fits %>% pull(fit)
 ## Number of obs: 4715, groups:  parent.pop, 22; block, 13
 ## Fixed Effects:
 ##    (Intercept)  max_temp_d6_13        os_weeks  
-##      -4.844747        0.006767        0.150317
+##      -4.844747        0.006767        0.150317  
+## 
+## $diurnal.temp.6.13
+## ══ Workflow [trained] ══════════════════════════════════════════════════════════
+## Preprocessor: Variables
+## Model: linear_reg()
+## 
+## ── Preprocessor ────────────────────────────────────────────────────────────────
+## Outcomes: dead
+## Predictors: c(parent.pop, block, os_weeks, contains("temp_d"))
+## 
+## ── Model ───────────────────────────────────────────────────────────────────────
+## Generalized linear mixed model fit by maximum likelihood (Laplace
+##   Approximation) [glmerMod]
+##  Family: binomial  ( logit )
+## Formula: dead ~ diurnal_temp_d6_13 + os_weeks + (1 | parent.pop) + (1 |  
+##     block)
+##    Data: data
+##       AIC       BIC    logLik  deviance  df.resid 
+## 1247.1695 1279.4620 -618.5847 1237.1695      4710 
+## Random effects:
+##  Groups     Name        Std.Dev.
+##  parent.pop (Intercept) 0.6423  
+##  block      (Intercept) 0.2765  
+## Number of obs: 4715, groups:  parent.pop, 22; block, 13
+## Fixed Effects:
+##        (Intercept)  diurnal_temp_d6_13            os_weeks  
+##          -4.598683            0.001865            0.141241
 ```
 
 
@@ -965,19 +1061,22 @@ temp_fits %>%
 ```
 
 ```
-## # A tibble: 10 × 7
-##    name             nobs logLik   AIC   BIC deviance df.residual
-##    <chr>           <int>  <dbl> <dbl> <dbl>    <dbl>       <int>
-##  1 min.temp.1.13    4715  -613. 1235. 1268.    1173.        4710
-##  2 pop.weeks.block  4715  -619. 1245. 1271.    1184.        4711
-##  3 mean.temp.1.7    4715  -615. 1239. 1272.    1177.        4710
-##  4 mean.temp.1.13   4715  -615. 1240. 1273.    1177.        4710
-##  5 min.temp.1.7     4715  -615. 1241. 1273.    1178.        4710
-##  6 min.temp.6.13    4715  -616. 1241. 1273.    1178.        4710
-##  7 max.temp.1.7     4715  -616. 1242. 1274.    1179.        4710
-##  8 max.temp.1.13    4715  -617. 1244. 1277.    1181.        4710
-##  9 mean.temp.6.13   4715  -618. 1247. 1279.    1184.        4710
-## 10 max.temp.6.13    4715  -618. 1247. 1279.    1184.        4710
+## # A tibble: 13 × 7
+##    name               nobs logLik   AIC   BIC deviance df.residual
+##    <chr>             <int>  <dbl> <dbl> <dbl>    <dbl>       <int>
+##  1 min.temp.1.13      4715  -613. 1235. 1268.    1173.        4710
+##  2 pop.weeks.block    4715  -619. 1245. 1271.    1184.        4711
+##  3 mean.temp.1.7      4715  -615. 1239. 1272.    1177.        4710
+##  4 mean.temp.1.13     4715  -615. 1240. 1273.    1177.        4710
+##  5 min.temp.1.7       4715  -615. 1241. 1273.    1178.        4710
+##  6 min.temp.6.13      4715  -616. 1241. 1273.    1178.        4710
+##  7 max.temp.1.7       4715  -616. 1242. 1274.    1179.        4710
+##  8 diurnal.temp.1.7   4715  -617. 1244. 1276.    1181.        4710
+##  9 max.temp.1.13      4715  -617. 1244. 1277.    1181.        4710
+## 10 diurnal.temp.1.13  4715  -618. 1246. 1278.    1183.        4710
+## 11 mean.temp.6.13     4715  -618. 1247. 1279.    1184.        4710
+## 12 max.temp.6.13      4715  -618. 1247. 1279.    1184.        4710
+## 13 diurnal.temp.6.13  4715  -619. 1247. 1279.    1184.        4710
 ```
 
 get p-values
@@ -989,32 +1088,25 @@ temp_fits %>%
   select(name, tidy) %>%
   unnest(tidy) %>%
   filter(str_detect(term, "temp") | term=="os_weeks") %>%
-  arrange(name)
+  arrange(name) %>% 
+  select(-effect, -group)
 ```
 
 ```
-## # A tibble: 19 × 8
-##    name            effect group term        estimate std.error statistic p.value
-##    <chr>           <chr>  <chr> <chr>          <dbl>     <dbl>     <dbl>   <dbl>
-##  1 max.temp.1.13   fixed  <NA>  max_temp_d…  0.0346     0.0201     1.73  8.45e-2
-##  2 max.temp.1.13   fixed  <NA>  os_weeks     0.168      0.0449     3.75  1.79e-4
-##  3 max.temp.1.7    fixed  <NA>  max_temp_d…  0.0507     0.0215     2.35  1.86e-2
-##  4 max.temp.1.7    fixed  <NA>  os_weeks     0.149      0.0419     3.55  3.85e-4
-##  5 max.temp.6.13   fixed  <NA>  max_temp_d…  0.00677    0.0136     0.499 6.18e-1
-##  6 max.temp.6.13   fixed  <NA>  os_weeks     0.150      0.0479     3.14  1.71e-3
-##  7 mean.temp.1.13  fixed  <NA>  mean_temp_…  0.225      0.0845     2.66  7.77e-3
-##  8 mean.temp.1.13  fixed  <NA>  os_weeks     0.388      0.103      3.78  1.59e-4
-##  9 mean.temp.1.7   fixed  <NA>  mean_temp_…  0.174      0.0628     2.78  5.49e-3
-## 10 mean.temp.1.7   fixed  <NA>  os_weeks     0.323      0.0783     4.13  3.65e-5
-## 11 mean.temp.6.13  fixed  <NA>  mean_temp_…  0.0383     0.0517     0.740 4.59e-1
-## 12 mean.temp.6.13  fixed  <NA>  os_weeks     0.183      0.0729     2.51  1.19e-2
-## 13 min.temp.1.13   fixed  <NA>  min_temp_d…  0.450      0.127      3.54  4.05e-4
-## 14 min.temp.1.13   fixed  <NA>  os_weeks     0.499      0.112      4.48  7.60e-6
-## 15 min.temp.1.7    fixed  <NA>  min_temp_d…  0.199      0.0768     2.59  9.62e-3
-## 16 min.temp.1.7    fixed  <NA>  os_weeks     0.325      0.0823     3.95  7.80e-5
-## 17 min.temp.6.13   fixed  <NA>  min_temp_d…  0.238      0.0962     2.48  1.33e-2
-## 18 min.temp.6.13   fixed  <NA>  os_weeks     0.278      0.0715     3.89  1.00e-4
-## 19 pop.weeks.block fixed  <NA>  os_weeks     0.139      0.0429     3.25  1.16e-3
+## # A tibble: 25 × 6
+##    name              term               estimate std.error statistic  p.value
+##    <chr>             <chr>                 <dbl>     <dbl>     <dbl>    <dbl>
+##  1 diurnal.temp.1.13 diurnal_temp_d1_13  0.0229     0.0199     1.15  0.250   
+##  2 diurnal.temp.1.13 os_weeks            0.140      0.0416     3.37  0.000762
+##  3 diurnal.temp.1.7  diurnal_temp_d1_7   0.0385     0.0217     1.77  0.0767  
+##  4 diurnal.temp.1.7  os_weeks            0.110      0.0440     2.50  0.0126  
+##  5 diurnal.temp.6.13 diurnal_temp_d6_13  0.00186    0.0134     0.140 0.889   
+##  6 diurnal.temp.6.13 os_weeks            0.141      0.0450     3.14  0.00170 
+##  7 max.temp.1.13     max_temp_d1_13      0.0346     0.0201     1.73  0.0845  
+##  8 max.temp.1.13     os_weeks            0.168      0.0449     3.75  0.000179
+##  9 max.temp.1.7      max_temp_d1_7       0.0507     0.0215     2.35  0.0186  
+## 10 max.temp.1.7      os_weeks            0.149      0.0419     3.55  0.000385
+## # ℹ 15 more rows
 ```
 
 ## Moisture analysis
@@ -1076,7 +1168,7 @@ system.time(
 
 ```
 ##    user  system elapsed 
-##   2.253   0.042   2.296
+##   2.252   0.045   2.299
 ```
 
 
