@@ -1,7 +1,7 @@
 ---
 title: "Climate_PCAs_AllYear"
 author: "Brandie QC"
-date: "2025-04-22"
+date: "2025-05-20"
 output: 
   html_document: 
     keep_md: true
@@ -10,6 +10,10 @@ output:
 
 
 To Do:
+
+-   Add WL2 Garden to the PCA
+
+-   Compare historical 60 years to recent 30 years as another climate change test
 
 -   Check the significance of the PCA
 
@@ -539,6 +543,65 @@ bioclim_flint_yrly_avgs_historical <- full_join(flint_all_year_historical_yravgs
 #write_csv(bioclim_flint_yrly_avgs_historical, "../output/Climate/fullyear_wtr_year_avgs_Historical.csv")
 ```
 
+## WL2 Garden 2023
+
+``` r
+bioclim_allyear_prep_WL2Grdn <- flint_all_year_wtr_yr %>% 
+  filter(parent.pop == "WL2_Garden") %>%  #only keep WL2 garden
+  rename(tmin=tmn, tmax=tmx, year_cal=year, year=wtr_yr) %>% #rename columns to match what calc_biovars expects, also make sure it uses water year 
+  filter(year=="2023") %>% #year of the experiment only 
+  arrange(parent.pop, year, month)
+
+bioclim_all_year_WL2Grdn <- bioclim_allyear_prep_WL2Grdn %>% 
+  calc_biovars() %>% 
+  mutate(parent.pop="WL2_Garden", year=="2023") 
+
+bioclim_all_year_final_WL2Grdn <- bioclim_all_year_WL2Grdn %>% 
+  select(parent.pop, year, ann_tmean=bio1, mean_diurnal_range=bio2, 
+         temp_seasonality=bio4, temp_ann_range=bio7, tmean_wettest_quarter=bio8,
+         tmean_driest_quarter=bio9, ann_ppt=bio12, ppt_seasonality=bio15,
+         ppt_warmest_quarter=bio18, ppt_coldest_quarter=bio19) 
+
+WL2Grdn_elev_bioclim_all_year <- left_join(bioclim_all_year_final_WL2Grdn, pop_elev) %>% 
+  select(parent.pop, elevation.group:Long, year:ppt_coldest_quarter)
+```
+
+```
+## Joining with `by = join_by(parent.pop)`
+```
+
+``` r
+WL2Grdn_elev_bioclim_all_year
+```
+
+```
+##   parent.pop elevation.group elev_m      Lat      Long year ann_tmean
+## 1 WL2_Garden            High   2020 38.82599 -120.2509 2023   6.92125
+##   mean_diurnal_range temp_seasonality temp_ann_range tmean_wettest_quarter
+## 1           10.31917         758.8279           32.1                -0.555
+##   tmean_driest_quarter ann_ppt ppt_seasonality ppt_warmest_quarter
+## 1                 9.33 2486.31        119.8368              115.79
+##   ppt_coldest_quarter
+## 1             1480.39
+```
+
+``` r
+WL2Grdn_flint_all_year <- flint_all_year_wtr_yr %>% 
+  filter(parent.pop == "WL2_Garden", wtr_yr=="2023") %>%  #only keep WL2 garden
+  select(parent.pop:month, wtr_yr, cwd, pck, ppt, tmn, tmx)
+
+WL2Grdn_flint_all_year_summary <- WL2Grdn_flint_all_year %>% 
+  group_by(parent.pop, elevation.group, elev_m, Lat, Long) %>% 
+  summarise_at(c("cwd",  "pck", "ppt", "tmn", "tmx"), c(mean), na.rm = TRUE) 
+
+WL2Grdn_flint_bioclim_all_year <- left_join(WL2Grdn_flint_all_year_summary, WL2Grdn_elev_bioclim_all_year) %>% 
+  select(-year)
+```
+
+```
+## Joining with `by = join_by(parent.pop, elevation.group, elev_m, Lat, Long)`
+```
+
 ## For 2024 (Water Year Avgs)
 ### Prep
 
@@ -870,6 +933,65 @@ bioclim_2024_flint_yrly_avgs_historical <- full_join(flint_all_year_historical_y
 #write_csv(bioclim_2024_flint_yrly_avgs_historical, "../output/Climate/fullyear_wtr_year_avgs_Historical_2024.csv")
 ```
 
+## WL2 Garden 2024
+
+``` r
+bioclim_2024_allyear_prep_WL2Grdn <- flint_all_year_wtr_yr %>% 
+  filter(parent.pop == "WL2_Garden") %>%  #only keep WL2 garden
+  rename(tmin=tmn, tmax=tmx, year_cal=year, year=wtr_yr) %>% #rename columns to match what calc_biovars expects, also make sure it uses water year 
+  filter(year=="2024") %>% #year of the experiment only 
+  arrange(parent.pop, year, month)
+
+bioclim_2024_all_year_WL2Grdn <- bioclim_2024_allyear_prep_WL2Grdn %>% 
+  calc_biovars() %>% 
+  mutate(parent.pop="WL2_Garden", year=="2024") 
+
+bioclim_2024_all_year_final_WL2Grdn <- bioclim_2024_all_year_WL2Grdn %>% 
+  select(parent.pop, year, ann_tmean=bio1, mean_diurnal_range=bio2, 
+         temp_seasonality=bio4, temp_ann_range=bio7, tmean_wettest_quarter=bio8,
+         tmean_driest_quarter=bio9, ann_ppt=bio12, ppt_seasonality=bio15,
+         ppt_warmest_quarter=bio18, ppt_coldest_quarter=bio19) 
+
+WL2Grdn_elev_bioclim_2024_all_year <- left_join(bioclim_2024_all_year_final_WL2Grdn, pop_elev) %>% 
+  select(parent.pop, elevation.group:Long, year:ppt_coldest_quarter)
+```
+
+```
+## Joining with `by = join_by(parent.pop)`
+```
+
+``` r
+WL2Grdn_elev_bioclim_2024_all_year
+```
+
+```
+##   parent.pop elevation.group elev_m      Lat      Long year ann_tmean
+## 1 WL2_Garden            High   2020 38.82599 -120.2509 2024  8.952917
+##   mean_diurnal_range temp_seasonality temp_ann_range tmean_wettest_quarter
+## 1           10.32917         758.4948          31.36              1.296667
+##   tmean_driest_quarter ann_ppt ppt_seasonality ppt_warmest_quarter
+## 1               12.885 1193.99        109.3371               78.71
+##   ppt_coldest_quarter
+## 1              621.81
+```
+
+``` r
+WL2Grdn_flint_2024_all_year <- flint_all_year_wtr_yr %>% 
+  filter(parent.pop == "WL2_Garden", wtr_yr=="2024") %>%  #only keep WL2 garden
+  select(parent.pop:month, wtr_yr, cwd, pck, ppt, tmn, tmx)
+
+WL2Grdn_flint_2024_all_year_summary <- WL2Grdn_flint_2024_all_year %>% 
+  group_by(parent.pop, elevation.group, elev_m, Lat, Long) %>% 
+  summarise_at(c("cwd",  "pck", "ppt", "tmn", "tmx"), c(mean), na.rm = TRUE) 
+
+WL2Grdn_flint_bioclim_2024_all_year <- left_join(WL2Grdn_flint_2024_all_year_summary, WL2Grdn_elev_bioclim_2024_all_year) %>% 
+  select(-year)
+```
+
+```
+## Joining with `by = join_by(parent.pop, elevation.group, elev_m, Lat, Long)`
+```
+
 ## All years and months included (Flint)
 
 ### Correlations - Flint Recent
@@ -896,7 +1018,7 @@ cor.norm = cor(climate_normalized_all_flint_recent) #test correlations among the
 corrplot(cor.norm, type = "upper")
 ```
 
-![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-21-1.png)<!-- -->
+![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-23-1.png)<!-- -->
 
 ``` r
 #tmn and tmx highly correlated, consider removing one 
@@ -953,7 +1075,7 @@ tibble(PC=str_c("PC",str_pad(1:5,2,pad="0")),
   ggtitle("Percent Variance Explained")
 ```
 
-![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-23-1.png)<!-- -->
+![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-25-1.png)<!-- -->
 
 Combine PCs with metadata
 
@@ -987,7 +1109,7 @@ autoplot(all_flint_recent.pc, data = flint_all_year_recent,
   theme_classic()
 ```
 
-![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-25-1.png)<!-- -->
+![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-27-1.png)<!-- -->
 
 ``` r
 #for plot customizations see: ?ggbiplot
@@ -1007,7 +1129,7 @@ autoplot(all_flint_recent.pc, data = flint_all_year_recent,
   theme_classic()
 ```
 
-![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-26-1.png)<!-- -->
+![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-28-1.png)<!-- -->
 
 ### Correlations - Flint Historical
 
@@ -1033,7 +1155,7 @@ cor.norm = cor(climate_normalized_all_flint_historical) #test correlations among
 corrplot(cor.norm)
 ```
 
-![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-27-1.png)<!-- -->
+![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-29-1.png)<!-- -->
 
 ``` r
 #tmn and tmx highly correlated, consider removing one 
@@ -1090,7 +1212,7 @@ tibble(PC=str_c("PC",str_pad(1:5,2,pad="0")),
   ggtitle("Percent Variance Explained")
 ```
 
-![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-29-1.png)<!-- -->
+![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-31-1.png)<!-- -->
 
 Combine PCs with metadata
 
@@ -1124,7 +1246,7 @@ autoplot(all_flint_historical.pc, data = flint_all_year_historical,
   theme_classic()
 ```
 
-![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-31-1.png)<!-- -->
+![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-33-1.png)<!-- -->
 
 PCs 3 and 4
 
@@ -1140,7 +1262,7 @@ autoplot(all_flint_historical.pc, data = flint_all_year_historical,
   theme_classic()
 ```
 
-![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-32-1.png)<!-- -->
+![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-34-1.png)<!-- -->
 
 ## All years included (bioclim)
 
@@ -1182,7 +1304,7 @@ cor.norm = cor(climate_normalized_all_bioclim_recent) #test correlations among t
 corrplot(cor.norm)
 ```
 
-![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-33-1.png)<!-- -->
+![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-35-1.png)<!-- -->
 
 ``` r
 #ann_ppt and ppt_coldest quarter highly correlated, consider removing one 
@@ -1239,7 +1361,7 @@ tibble(PC=str_c("PC",str_pad(1:5,2,pad="0")),
   ggtitle("Percent Variance Explained")
 ```
 
-![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-35-1.png)<!-- -->
+![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-37-1.png)<!-- -->
 
 Combine PCs with metadata
 
@@ -1284,7 +1406,7 @@ autoplot(all_bioclim_recent.pc, data = bioclim_all_year_recent,
   theme_classic()
 ```
 
-![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-37-1.png)<!-- -->
+![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-39-1.png)<!-- -->
 
 PCs 3 and 4
 
@@ -1301,7 +1423,7 @@ autoplot(all_bioclim_recent.pc, data = bioclim_all_year_recent,
   theme_classic()
 ```
 
-![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-38-1.png)<!-- -->
+![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-40-1.png)<!-- -->
 
 PCs 4 and 5
 
@@ -1318,7 +1440,7 @@ autoplot(all_bioclim_recent.pc, data = bioclim_all_year_recent,
   theme_classic()
 ```
 
-![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-39-1.png)<!-- -->
+![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-41-1.png)<!-- -->
 
 ### Correlations - bioclim Historical
 
@@ -1358,7 +1480,7 @@ cor.norm = cor(climate_normalized_all_bioclim_historical) #test correlations amo
 corrplot(cor.norm)
 ```
 
-![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-40-1.png)<!-- -->
+![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-42-1.png)<!-- -->
 
 ``` r
 #ann_ppt and ppt_coldest quarter highly correlated, consider removing one 
@@ -1415,7 +1537,7 @@ tibble(PC=str_c("PC",str_pad(1:5,2,pad="0")),
   ggtitle("Percent Variance Explained")
 ```
 
-![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-42-1.png)<!-- -->
+![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-44-1.png)<!-- -->
 
 Combine PCs with metadata
 
@@ -1460,7 +1582,7 @@ autoplot(all_bioclim_historical.pc, data = bioclim_all_year_historical,
   theme_classic()
 ```
 
-![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-44-1.png)<!-- -->
+![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-46-1.png)<!-- -->
 
 PCs 3 and 4
 
@@ -1477,7 +1599,7 @@ autoplot(all_bioclim_historical.pc, data = bioclim_all_year_historical,
   theme_classic()
 ```
 
-![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-45-1.png)<!-- -->
+![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-47-1.png)<!-- -->
 
 PCs 4 and 5
 
@@ -1494,7 +1616,7 @@ autoplot(all_bioclim_historical.pc, data = bioclim_all_year_historical,
   theme_classic()
 ```
 
-![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-46-1.png)<!-- -->
+![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-48-1.png)<!-- -->
 
 ## Monthly Averages - Flint
 
@@ -1617,7 +1739,7 @@ cor.norm = cor(climate_normalized_flint_all_year_mosavgs) #test correlations amo
 corrplot(cor.norm)
 ```
 
-![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-48-1.png)<!-- -->
+![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-50-1.png)<!-- -->
 
 ``` r
 #tmn and tmx highly correlated, consider removing one (98%)
@@ -1676,7 +1798,7 @@ tibble(PC=str_c("PC",str_pad(1:5,2,pad="0")),
   ggtitle("Percent Variance Explained")
 ```
 
-![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-50-1.png)<!-- -->
+![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-52-1.png)<!-- -->
 
 Combine PCs with metadata
 
@@ -1712,7 +1834,7 @@ autoplot(mos_flint.pc, data = flint_all_year_mosavgs,
   theme_classic()
 ```
 
-![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-52-1.png)<!-- -->
+![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-54-1.png)<!-- -->
 
 ``` r
 #high elev seems most similar to low elev in summer months 
@@ -1766,7 +1888,7 @@ mos_flint_locs.pc_avg %>%
   coord_fixed(ratio = 1.5)
 ```
 
-![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-54-1.png)<!-- -->
+![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-56-1.png)<!-- -->
 
 ``` r
 #as I suspected from the raw PC figure, high elev pop cliamte is most similar to low elev climate in the summer months 
@@ -1783,7 +1905,7 @@ mos_flint_locs.pc_avg %>%
   geom_path(aes(group=group),arrow = arrow(length=unit(5, "points")))
 ```
 
-![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-55-1.png)<!-- -->
+![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-57-1.png)<!-- -->
 
 ``` r
 #high elev climate seems to be shifting to be more similar to low elev 
@@ -1915,7 +2037,7 @@ cor.norm = cor(climate_normalized_flint_all_year_avgs) #test correlations among 
 corrplot(cor.norm)
 ```
 
-![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-57-1.png)<!-- -->
+![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-59-1.png)<!-- -->
 
 ``` r
 #tmn and tmx highly correlated, consider removing one (98%)
@@ -1974,7 +2096,7 @@ tibble(PC=str_c("PC",str_pad(1:5,2,pad="0")),
   ggtitle("Percent Variance Explained")
 ```
 
-![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-59-1.png)<!-- -->
+![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-61-1.png)<!-- -->
 
 Combine PCs with metadata
 
@@ -2010,7 +2132,7 @@ autoplot(avgs_flint.pc, data = flint_all_year_avgs,
   theme_classic()
 ```
 
-![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-61-1.png)<!-- -->
+![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-63-1.png)<!-- -->
 
 
 ``` r
@@ -2056,7 +2178,7 @@ avgs_flint_locs.pc_avg %>%
   coord_fixed(ratio = 1.5)
 ```
 
-![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-63-1.png)<!-- -->
+![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-65-1.png)<!-- -->
 
 
 ``` r
@@ -2069,7 +2191,7 @@ avgs_flint_locs.pc_avg %>%
   geom_path(aes(group=group),arrow = arrow(length=unit(5, "points")), linewidth = .8)
 ```
 
-![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-64-1.png)<!-- -->
+![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-66-1.png)<!-- -->
 
 ``` r
 avgs_flint_locs.pc_avg %>% 
@@ -2082,7 +2204,7 @@ avgs_flint_locs.pc_avg %>%
   geom_path(aes(group=group),arrow = arrow(length=unit(5, "points")), linewidth = .8)
 ```
 
-![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-64-2.png)<!-- -->
+![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-66-2.png)<!-- -->
 
 ``` r
 #high elev climate seems to be shifting to be more similar to low elev 
@@ -2298,7 +2420,7 @@ corrplot(cor.norm, type="upper",
          sig.level = 0.05, insig="blank")
 ```
 
-![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-67-1.png)<!-- -->
+![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-69-1.png)<!-- -->
 
 ``` r
 #tmn, tmx, tmean_wettest_quarter, tmean_driest_quarter and ann_tmean all highly correlated (97-99%) - only keep ann_tmean 
@@ -2324,7 +2446,7 @@ corrplot(cor.norm_recent, type="upper",
          sig.level = 0.05, insig="blank")
 ```
 
-![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-68-1.png)<!-- -->
+![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-70-1.png)<!-- -->
 
 ``` r
 #800 x 734
@@ -2347,7 +2469,7 @@ corrplot(cor.norm_historic, type="upper",
          sig.level = 0.05, insig="blank")
 ```
 
-![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-69-1.png)<!-- -->
+![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-71-1.png)<!-- -->
 
 ``` r
 #800 x 734
@@ -2403,7 +2525,7 @@ tibble(PC=str_c("PC",str_pad(1:7,2,pad="0")),
   ggtitle("Percent Variance Explained")
 ```
 
-![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-71-1.png)<!-- -->
+![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-73-1.png)<!-- -->
 
 Combine PCs with metadata
 
@@ -2449,7 +2571,7 @@ autoplot(all_bioclim_flint_avgs.pc, data = bioclim_flint_all_year_avgs,
   theme_classic()
 ```
 
-![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-73-1.png)<!-- -->
+![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-75-1.png)<!-- -->
 
 
 ``` r
@@ -2465,7 +2587,7 @@ autoplot(all_bioclim_flint_avgs.pc, data = bioclim_flint_all_year_avgs,
   theme_classic()
 ```
 
-![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-74-1.png)<!-- -->
+![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-76-1.png)<!-- -->
 
 
 ``` r
@@ -2481,7 +2603,7 @@ autoplot(all_bioclim_flint_avgs.pc, data = bioclim_flint_all_year_avgs,
   theme_classic()
 ```
 
-![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-75-1.png)<!-- -->
+![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-77-1.png)<!-- -->
 
 
 ``` r
@@ -2497,25 +2619,30 @@ all_bioclim_flint_avgs_locs.pc_avg <- all_bioclim_flint_avgs_locs.pc %>%
 ```
 
 ``` r
-all_bioclim_flint_avgs_locs.pc_avg
+all_bioclim_flint_avgs.pc
 ```
 
 ```
-## # A tibble: 46 × 10
-##    parent.pop elev_m TimePd        PC1     PC2      PC3      PC4     PC5     PC6
-##    <chr>       <dbl> <chr>       <dbl>   <dbl>    <dbl>    <dbl>   <dbl>   <dbl>
-##  1 BH           511. Historical -3.16  -1.48   -0.944    0.532    0.0263 -0.0210
-##  2 BH           511. Recent     -3.92  -0.961  -0.662   -0.266    0.532  -0.441 
-##  3 CC           313  Historical -1.69   0.0237  0.00529  0.977    0.114   0.296 
-##  4 CC           313  Recent     -1.99   1.27   -0.0509   0.510    0.600  -0.151 
-##  5 CP2         2244. Historical  1.66  -0.290  -0.866    0.0171  -0.244   0.856 
-##  6 CP2         2244. Recent      0.378 -0.130  -0.281   -1.13     0.0774  0.691 
-##  7 CP3         2266. Historical  2.17  -0.0944  0.0504   0.220   -0.983   0.293 
-##  8 CP3         2266. Recent      0.847 -0.107   0.696   -0.948   -0.685   0.120 
-##  9 DPR         1019. Historical  0.295  0.941   2.37     1.00    -0.411  -0.312 
-## 10 DPR         1019. Recent     -0.453  1.39    2.85     0.00352 -0.157  -0.301 
-## # ℹ 36 more rows
-## # ℹ 1 more variable: PC7 <dbl>
+## Standard deviations (1, .., p=7):
+## [1] 1.8914552 1.0775169 1.0504922 0.7517688 0.6040113 0.4265976 0.2141242
+## 
+## Rotation (n x k) = (7 x 7):
+##                         PC1         PC2         PC3         PC4        PC5
+## cwd              -0.2797103 -0.16422605 -0.72255315 -0.22442677  0.3806515
+## pck               0.4788965 -0.22506720 -0.13823349 -0.21672469  0.3193782
+## ann_tmean        -0.4402340  0.17430773  0.25402702  0.48591759  0.3234923
+## temp_seasonality -0.3110189 -0.34311863  0.47280196 -0.66346611 -0.1341457
+## temp_ann_range   -0.2149613 -0.78689618  0.09946240  0.33856853  0.2132447
+## ann_ppt           0.4247974  0.06027161  0.39685573 -0.04118123  0.6432578
+## ppt_seasonality  -0.4185933  0.38913072  0.05787736 -0.33171571  0.4137701
+##                         PC6         PC7
+## cwd               0.4126631 -0.08458757
+## pck              -0.2782778  0.68882783
+## ann_tmean         0.2911955  0.53453078
+## temp_seasonality  0.2771019  0.16439992
+## temp_ann_range   -0.3420116 -0.21821861
+## ann_ppt           0.3129935 -0.38076052
+## ppt_seasonality  -0.6129873 -0.11407334
 ```
 
 
@@ -2528,11 +2655,11 @@ all_bioclim_flint_avgs_locs.pc_avg %>%
   coord_fixed(ratio = 1.5)
 ```
 
-![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-77-1.png)<!-- -->
+![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-79-1.png)<!-- -->
 
 
 ``` r
-all_bioclim_flint_avgs_locs.pc_avg %>%  
+home_sites_pca <- all_bioclim_flint_avgs_locs.pc_avg %>%  
   mutate(group=str_c(parent.pop,elev_m))  %>%
   ggplot(aes(x=PC1, y=PC4, shape=TimePd, color=elev_m)) +
   scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
@@ -2540,19 +2667,14 @@ all_bioclim_flint_avgs_locs.pc_avg %>%
   labs(x="PC1 (51.11%)", y="PC4 (8.07%)", color="Elevation (m)") +
   geom_vline(xintercept = 0, linetype="dashed") + geom_hline(yintercept = 0, linetype="dashed") +
   geom_path(aes(group=group),arrow = arrow(length=unit(5, "points")), linewidth = .8) +
-  annotate("text", x = -4, y = -2.7, label = "Warm \n No Snow") +
-  annotate("text", x = 4, y = -2.7, label = "Cold \n Snow") +
-  annotate("text", x = -5.4, y = -1.5, label = "High Temp \n Seasonality") +
+  annotate("text", x = -4, y = -5.1, label = "Warm \n No Snow") +
+  annotate("text", x = 4, y = -5.1, label = "Cold \n Snow") +
+  annotate("text", x = -5.4, y = -3.5, label = "High Temp \n Seasonality") +
   annotate("text", x = -5.4, y = 1.5, label = "Low Temp \n Seasonality") +
-  coord_cartesian(ylim = c(-2, 2), xlim = c(-4,4), clip = "off") +
+  coord_cartesian(ylim = c(-4.1, 2), xlim = c(-4,4), clip = "off") +
   theme_classic() +
   theme(text=element_text(size=28))
-```
-
-![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-78-1.png)<!-- -->
-
-``` r
-ggsave("../output/Climate/Wtr_Year_PC1-PC4.png", width = 7.4, height = 6, units = "in")
+#ggsave("../output/Climate/Wtr_Year_PC1-PC4.png", width = 7.4, height = 6, units = "in")
 
 #all_bioclim_flint_avgs_locs.pc_avg %>% 
 #  mutate(group=str_c(parent.pop,elev_m))  %>%
@@ -2563,7 +2685,82 @@ ggsave("../output/Climate/Wtr_Year_PC1-PC4.png", width = 7.4, height = 6, units 
 #  geom_vline(xintercept = 0, linetype="dashed") + geom_hline(yintercept = 0, #linetype="dashed")  +
 #  geom_path(aes(group=group),arrow = arrow(length=unit(5, "points")), linewidth = #.8)
 #high elev climate seems to be shifting to be more similar to low elev 
+
+
+
+## add WL2 garden 2023
+WL2Grdn_pc_prep <- WL2Grdn_flint_bioclim_all_year %>% ungroup() %>% select(cwd:pck, ann_tmean, temp_seasonality, temp_ann_range, ann_ppt, ppt_seasonality)
+#scale(WL2Grdn_pc_prep, all_bioclim_flint_avgs.pc$center, all_bioclim_flint_avgs.pc$scale) %*% all_bioclim_flint_avgs.pc$rotation  #gives same result as below 
+WL2Grdn_predicted <- predict(all_bioclim_flint_avgs.pc, newdata = WL2Grdn_pc_prep)
+WL2Grdn_predicted
 ```
+
+```
+##           PC1       PC2      PC3       PC4      PC5       PC6      PC7
+## [1,] 2.590759 -1.636671 3.792502 -4.014878 2.812706 0.4833738 1.459231
+```
+
+``` r
+#str(home_sites_pca) #can add predicted WL2 point to the existing plot's data 
+home_sites_pca$data <- rbind(home_sites_pca$data, 
+  data.frame(
+    parent.pop = "WL2_Garden",
+    elev_m = 2020,
+    TimePd = "2023",
+    PC1 = WL2Grdn_predicted[, "PC1"],
+    PC2 = WL2Grdn_predicted[, "PC2"],
+    PC3 = WL2Grdn_predicted[, "PC3"],
+    PC4 = WL2Grdn_predicted[, "PC4"],
+    PC5 = WL2Grdn_predicted[, "PC5"],
+    PC6 = WL2Grdn_predicted[, "PC6"],
+    PC7 = WL2Grdn_predicted[, "PC7"],
+    group = "new"
+  )
+)
+
+home_sites_pca + 
+  geom_point(data=filter(home_sites_pca$data, parent.pop == "WL2_Garden"), size=3, shape = 8, show_guide = FALSE)
+```
+
+```
+## Warning: The `show_guide` argument of `layer()` is deprecated as of ggplot2 2.0.0.
+## ℹ Please use the `show.legend` argument instead.
+## This warning is displayed once every 8 hours.
+## Call `lifecycle::last_lifecycle_warnings()` to see where this warning was
+## generated.
+```
+
+![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-80-1.png)<!-- -->
+
+``` r
+#ggsave("../output/Climate/Wtr_Year_PC1-PC4_PlusGarden.png", width = 7.4, height = 6, units = "in")
+
+home_sites_pca$data
+```
+
+```
+## # A tibble: 47 × 11
+##    parent.pop elev_m TimePd        PC1     PC2      PC3      PC4     PC5     PC6
+##  * <chr>       <dbl> <chr>       <dbl>   <dbl>    <dbl>    <dbl>   <dbl>   <dbl>
+##  1 BH           511. Historical -3.16  -1.48   -0.944    0.532    0.0263 -0.0210
+##  2 BH           511. Recent     -3.92  -0.961  -0.662   -0.266    0.532  -0.441 
+##  3 CC           313  Historical -1.69   0.0237  0.00529  0.977    0.114   0.296 
+##  4 CC           313  Recent     -1.99   1.27   -0.0509   0.510    0.600  -0.151 
+##  5 CP2         2244. Historical  1.66  -0.290  -0.866    0.0171  -0.244   0.856 
+##  6 CP2         2244. Recent      0.378 -0.130  -0.281   -1.13     0.0774  0.691 
+##  7 CP3         2266. Historical  2.17  -0.0944  0.0504   0.220   -0.983   0.293 
+##  8 CP3         2266. Recent      0.847 -0.107   0.696   -0.948   -0.685   0.120 
+##  9 DPR         1019. Historical  0.295  0.941   2.37     1.00    -0.411  -0.312 
+## 10 DPR         1019. Recent     -0.453  1.39    2.85     0.00352 -0.157  -0.301 
+## # ℹ 37 more rows
+## # ℹ 2 more variables: PC7 <dbl>, group <chr>
+```
+
+``` r
+home_sites_pca
+```
+
+![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-80-2.png)<!-- -->
 
 ## Permanova
 See Jenny's github: https://github.com/jrgremer/Seedbanks_drought_deluge  
@@ -2639,10 +2836,10 @@ permanova_results_all_year_terms
 ## TimePd             1   28.589 0.09076 10.3137  0.001 ***
 ## elev_m             1  109.439 0.34743 39.4811  0.001 ***
 ## Lat                1   55.665 0.17671 20.0816  0.001 ***
-## TimePd:elev_m      1    3.008 0.00955  1.0853  0.316    
-## TimePd:Lat         1    3.629 0.01152  1.3092  0.228    
-## elev_m:Lat         1    9.033 0.02868  3.2587  0.024 *  
-## TimePd:elev_m:Lat  1    0.303 0.00096  0.1093  0.990    
+## TimePd:elev_m      1    3.008 0.00955  1.0853  0.347    
+## TimePd:Lat         1    3.629 0.01152  1.3092  0.259    
+## elev_m:Lat         1    9.033 0.02868  3.2587  0.022 *  
+## TimePd:elev_m:Lat  1    0.303 0.00096  0.1093  0.989    
 ## Residual          38  105.334 0.33439                   
 ## Total             45  315.000 1.00000                   
 ## ---
@@ -2765,7 +2962,7 @@ autoplot(all_bioclim_flint_avgs.pc, data = bioclim_flint_all_year_avgs,
   theme_classic()
 ```
 
-![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-82-1.png)<!-- -->
+![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-84-1.png)<!-- -->
 
 ``` r
 all_bioclim_flint_avgs_locs.pc_avg %>% 
@@ -2777,7 +2974,7 @@ all_bioclim_flint_avgs_locs.pc_avg %>%
   geom_path(aes(group=group),arrow = arrow(length=unit(5, "points")), linewidth = .8)
 ```
 
-![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-82-2.png)<!-- -->
+![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-84-2.png)<!-- -->
 
 ``` r
 all_bioclim_flint_avgs_locs.pc_avg %>% 
@@ -2790,7 +2987,7 @@ all_bioclim_flint_avgs_locs.pc_avg %>%
   geom_path(aes(group=group),arrow = arrow(length=unit(5, "points")), linewidth = .8)
 ```
 
-![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-82-3.png)<!-- -->
+![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-84-3.png)<!-- -->
 
 ``` r
 #high elev climate seems to be shifting to be more similar to low elev 
@@ -2868,7 +3065,7 @@ autoplot(avgs_flint.pc, data = flint_all_year_avgs,
   theme_classic()
 ```
 
-![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-85-1.png)<!-- -->
+![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-87-1.png)<!-- -->
 
 ``` r
 avgs_flint_locs.pc_avg %>% 
@@ -2880,7 +3077,7 @@ avgs_flint_locs.pc_avg %>%
   geom_path(aes(group=group),arrow = arrow(length=unit(5, "points")), linewidth = .8)
 ```
 
-![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-85-2.png)<!-- -->
+![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-87-2.png)<!-- -->
 
 ``` r
 avgs_flint_locs.pc_avg %>% 
@@ -2893,7 +3090,7 @@ avgs_flint_locs.pc_avg %>%
   geom_path(aes(group=group),arrow = arrow(length=unit(5, "points")), linewidth = .8)
 ```
 
-![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-85-3.png)<!-- -->
+![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-87-3.png)<!-- -->
 
 ``` r
 #high elev climate seems to be shifting to be more similar to low elev 
