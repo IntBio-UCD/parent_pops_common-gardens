@@ -809,7 +809,7 @@ home_sites_pca_extra$data <- rbind(home_sites_pca_extra$data,
 
 home_sites_pca_extra + 
   geom_point(data=filter(home_sites_pca_extra$data, parent.pop == "WL2_Garden"), size=3, shape = 8, show_guide = FALSE)
-ggsave("../output/Climate/Wtr_Year_PC1-PC4_PlusGarden_ExtraHist.png", width = 7.4, height = 6, units = "in")
+#ggsave("../output/Climate/Wtr_Year_PC1-PC4_PlusGarden_ExtraHist.png", width = 7.4, height = 6, units = "in")
 ```
 
 ## For 2024 (Water Year Avgs)
@@ -1131,7 +1131,6 @@ all_bioclim_flint_avgs_locs.pc_2024_avg <- all_bioclim_flint_avgs_locs.pc_2024 %
   group_by(parent.pop, elev_m, TimePd) %>%
   summarise(across(.cols=starts_with("PC", ignore.case = FALSE), .fns = mean)) %>%
   ungroup()
-all_bioclim_flint_avgs.pc
 ```
 
 ```{r}
@@ -1270,6 +1269,338 @@ home_sites_pca_2024$data <- rbind(home_sites_pca_2024$data,
 home_sites_pca_2024 + 
   geom_point(data=filter(home_sites_pca_2024$data, parent.pop == "WL2_Garden"), size=3, shape = 8, show_guide = FALSE)
 ggsave("../output/Climate/Wtr_Year_PC1-PC4_PlusGarden_2024.png", width = 7.4, height = 6, units = "in")
+```
+
+## Extra historical PCA (60 years) - 2024
+
+### Extra Historical Averages
+
+```{r}
+flint_all_year_historical_avgs_2024_extra <- flint_all_year_historical_extra_2024 %>% 
+  group_by(parent.pop, elevation.group, elev_m, Lat, Long) %>% 
+  summarise_at(c("cwd", "pck", "ppt", "tmn", "tmx"), c(mean), na.rm = TRUE) %>% 
+  mutate(TimePd = "Historical")
+
+flint_all_year_avgs_2024_extra <- bind_rows(flint_all_year_recent_avgs_2024, flint_all_year_historical_avgs_2024_extra) #combine into 1 dataframe 
+
+bioclim_all_year_historical_avgs_2024_extra <- bioclim_all_year_historical_extra_2024 %>% 
+  group_by(parent.pop, elevation.group, elev_m, Lat, Long) %>% 
+  summarise_at(c("ann_tmean", "mean_diurnal_range", "temp_seasonality", "temp_ann_range",
+                 "tmean_wettest_quarter", "tmean_driest_quarter", "ann_ppt",
+                 "ppt_seasonality","ppt_warmest_quarter", "ppt_coldest_quarter"),
+               c(mean), na.rm = TRUE) %>% 
+  mutate(TimePd = "Historical") 
+
+bioclim_all_year_avgs_2024_extra <- bind_rows(bioclim_all_year_recent_avgs_2024, bioclim_all_year_historical_avgs_2024_extra) #combine into 1 dataframe 
+
+bioclim_flint_all_year_avgs_2024_extra <- full_join(flint_all_year_avgs_2024_extra, bioclim_all_year_avgs_2024_extra) %>% 
+  select(TimePd, parent.pop:ppt_coldest_quarter)
+```
+
+### Correlations - Recent + Extra Historical
+
+```{r}
+#normalize the data
+climate_normalized_bioclim_flint_all_year_avgs_2024_extra <- bioclim_flint_all_year_avgs_2024_extra %>% ungroup() %>% 
+  select(cwd:ppt_coldest_quarter) %>% scale() #normalize the data so they're all on the same scale
+head(climate_normalized_bioclim_flint_all_year_avgs_2024_extra)
+dim(climate_normalized_bioclim_flint_all_year_avgs_2024_extra)
+cor.norm_2024_extra = cor(climate_normalized_bioclim_flint_all_year_avgs_2024_extra) #test correlations among the traits
+cor.sig_2024_extra <- cor.mtest(climate_normalized_bioclim_flint_all_year_avgs_2024_extra, method = "pearson")
+
+corrplot(cor.norm_2024_extra, type="upper",
+         tl.srt = 45, p.mat = cor.sig_2024_extra$p, 
+         sig.level = 0.05, insig="blank")
+
+#tmn, tmx, tmean_wettest_quarter, tmean_driest_quarter and ann_tmean all highly correlated (97-99%) - only keep ann_tmean 
+#temp_ann_range and mean_diurnal range 92% correlated - keep temp_ann_range 
+#ann_ppt and ppt 100% correlated (ppt = avg across monts, ann_ppt = avg of the total ppt in a year) - only keep ann_ppt 
+#ppt_warmest and coldest quarter highly correlated with ann_ppt and ppt - take both out 
+```
+
+Historical
+```{r}
+climate_normalized_bioclim_flint_all_year_avgs_historic_2024_extra <- bioclim_flint_all_year_avgs_2024_extra %>% 
+  ungroup() %>% 
+  filter(TimePd=="Historical") %>% 
+  select(tmn:tmean_driest_quarter, cwd, pck, ppt, ann_ppt:ppt_coldest_quarter) %>% 
+  scale() #normalize the data so they're all on the same scale
+
+cor.norm_historic_2024_extra = cor(climate_normalized_bioclim_flint_all_year_avgs_historic_2024_extra) #test correlations among the traits
+cor.sig_historic_2024_extra <- cor.mtest(climate_normalized_bioclim_flint_all_year_avgs_historic_2024_extra, method = "pearson")
+
+corrplot(cor.norm_historic_2024_extra, type="upper",
+         tl.srt = 45, p.mat = cor.sig_historic_2024_extra$p, 
+         sig.level = 0.05, insig="blank")
+#800 x 734
+```
+
+### PCA - Recent + Extra Historical
+
+```{r}
+all_bioclim_flint_avgs.pc_2024_extra = prcomp(bioclim_flint_all_year_avgs_2024_extra[c(7:8, 12, 14:15, 18:19)], scale = TRUE, center = TRUE)
+str(all_bioclim_flint_avgs.pc_2024_extra)
+```
+
+plot % Variance Explained
+
+```{r}
+summary(all_bioclim_flint_avgs.pc_2024_extra)
+
+tibble(PC=str_c("PC",str_pad(1:7,2,pad="0")),
+       percent_var=all_bioclim_flint_avgs.pc_2024_extra$sdev[1:7]^2/sum(all_bioclim_flint_avgs.pc_2024_extra$sdev^2)*100) %>%
+  ggplot(aes(x=PC, y=percent_var)) +
+  geom_col() +
+  ggtitle("Percent Variance Explained")
+```
+
+Combine PCs with metadata
+
+```{r}
+all_bioclim_flint_avgs.pc.dat_2024_extra = data.frame(all_bioclim_flint_avgs.pc_2024_extra$x)
+
+all_bioclim_flint_avgs_locs.pc_2024_extra = cbind(bioclim_flint_all_year_avgs_2024_extra, all_bioclim_flint_avgs.pc.dat_2024_extra)
+
+all_bioclim_flint_avgs_loadings_2024_extra = data.frame(varnames=rownames(all_bioclim_flint_avgs.pc_2024_extra$rotation), all_bioclim_flint_avgs.pc_2024_extra$rotation)
+all_bioclim_flint_avgs_loadings_2024_extra #very similar to 2023 
+```
+
+```{r}
+autoplot(all_bioclim_flint_avgs.pc_2024_extra, data = bioclim_flint_all_year_avgs_2024_extra,
+         colour='elev_m', alpha=0.5,
+         label=TRUE, label.label="parent.pop",
+         loadings=TRUE, loadings.colour='black', loadings.linewidth = 0.7,
+         loadings.label = TRUE, loadings.label.size=6, loadings.label.colour="black", 
+         loadings.label.vjust = -0.2, loadings.label.repel=TRUE) +
+   scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_vline(xintercept = 0, linetype="dashed") + geom_hline(yintercept = 0, linetype="dashed") +
+  theme_classic()
+```
+
+```{r}
+autoplot(all_bioclim_flint_avgs.pc_2024_extra, data = bioclim_flint_all_year_avgs_2024_extra,
+         x=1, y=4,
+         colour='elev_m', alpha=0.5,
+         label=TRUE, label.label="parent.pop",
+         loadings=TRUE, loadings.colour='black', loadings.linewidth = 0.7,
+         loadings.label = TRUE, loadings.label.size=6, loadings.label.colour="black", 
+         loadings.label.vjust = -0.2, loadings.label.repel=TRUE) +
+   scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_vline(xintercept = 0, linetype="dashed") + geom_hline(yintercept = 0, linetype="dashed") +
+  theme_classic()
+```
+
+```{r}
+all_bioclim_flint_avgs_locs.pc_2024_extra_avg <- all_bioclim_flint_avgs_locs.pc_2024_extra %>%
+  group_by(parent.pop, elev_m, TimePd) %>%
+  summarise(across(.cols=starts_with("PC", ignore.case = FALSE), .fns = mean)) %>%
+  ungroup()
+```
+
+```{r}
+all_bioclim_flint_avgs_locs.pc_2024_extra_avg %>% 
+  ggplot(aes(x=PC1, y=PC2, shape=TimePd, color=elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_point() +
+  facet_wrap(~TimePd) +
+  coord_fixed(ratio = 1.5)
+```
+
+## Permanova - Extra Historical 2024_extra
+See Jenny's github: https://github.com/jrgremer/Seedbanks_drought_deluge  
+```{r}
+all_bioclim_flint_avgs_locs.pc_dist_2024_extra <- all_bioclim_flint_avgs_locs.pc_2024_extra %>% ungroup() %>% select(PC1:PC7)
+dist_matrix_all_year_2024_extra <- dist(all_bioclim_flint_avgs_locs.pc_dist_2024_extra, method = "euclidian") #use a distance function to calculate euclidian distance in PCA space
+permanova_results_all_year_2024_extra <- adonis2(dist_matrix_all_year_2024_extra ~ TimePd*elev_m*Lat, data = all_bioclim_flint_avgs_locs.pc_2024_extra) #use adonis2 to run the permanova
+#rows in data must be in same order as rows in distance matrix 
+
+#look at output 
+summary(permanova_results_all_year_2024_extra)
+permanova_results_all_year_2024_extra
+permanova_results_all_year_2024_extra$`Pr(>F)`
+
+permanova_results_all_year_terms_2024_extra <- adonis2(dist_matrix_all_year_2024_extra ~ TimePd*elev_m*Lat, data = all_bioclim_flint_avgs_locs.pc_2024_extra, by = "terms")
+permanova_results_all_year_terms_2024_extra #very similar to 2023
+```
+
+## LM on PCs (follow up on permanova) - Extra Historical 2024
+
+For each PC fit a model with timepd and parent.pop/elev to test for climate change
+
+```{r}
+lmer_results_all_year_2024_extra <- all_bioclim_flint_avgs_locs.pc_2024_extra %>%
+  ungroup() %>% 
+  select(TimePd, parent.pop, elev_m, Lat, Long, PC1:PC7) %>% 
+  pivot_longer(starts_with("PC", ignore.case = FALSE), 
+               names_to = "PC", values_to = "value") %>% 
+  group_by(PC) %>% 
+  nest(data=c(TimePd, parent.pop, elev_m, Lat, Long, value)) %>% 
+  mutate(glm=map(data, ~ glm(value ~ TimePd*elev_m*Lat,
+                               data=.x)),
+         anova = map(glm, ~ broom.mixed::tidy(anova(.x))))
+
+#lmer_results_all_year_2024_extra
+```
+
+```{r}
+PC_anova_2024_extra <- lmer_results_all_year_2024_extra %>% select(-data, -glm) %>% unnest(anova) %>%
+  select(PC, term, p.value) %>%
+  filter(p.value < 0.05) %>%
+  arrange(term, p.value)
+
+PC_anova_2024_extra
+
+lmer_results_all_year_2024_extra %>% select(-data, -glm) %>% unnest(anova) %>% 
+  filter(PC=="PC1"| PC=="PC4" | PC =="PC2") #the three PCs with most sig p-values for timepd
+#NOTE NOW TOP PCS = 2 and 4, but PC1 not too far behind 
+
+#mod_test <- glm(PC4 ~ TimePd*elev_m*Lat, data=all_bioclim_flint_avgs_locs.pc_2024_extra)
+#summary(mod_test)
+#anova(mod_test)
+```
+
+```{r}
+autoplot(all_bioclim_flint_avgs.pc_2024_extra, data = bioclim_flint_all_year_avgs_2024_extra,
+         x=1, y=4,
+         colour='elev_m', alpha=0.5,
+         label=TRUE, label.label="parent.pop",
+         loadings=TRUE, loadings.colour='black', loadings.linewidth = 0.7,
+         loadings.label = TRUE, loadings.label.size=6, loadings.label.colour="black", 
+         loadings.label.vjust = -0.2, loadings.label.repel=TRUE) +
+   scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_vline(xintercept = 0, linetype="dashed") + geom_hline(yintercept = 0, linetype="dashed") +
+  theme_classic()
+
+all_bioclim_flint_avgs_locs.pc_2024_extra_avg %>% 
+  mutate(group=str_c(parent.pop,elev_m))  %>%
+  ggplot(aes(x=PC1, y=PC4, shape=TimePd, color=elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_point(size=2, alpha=0.7) +
+  geom_vline(xintercept = 0, linetype="dashed") + geom_hline(yintercept = 0, linetype="dashed") +
+  geom_path(aes(group=group),arrow = arrow(length=unit(5, "points")), linewidth = .8)
+
+all_bioclim_flint_avgs_locs.pc_2024_extra_avg %>% 
+  mutate(group=str_c(parent.pop,elev_m))  %>%
+  ggplot(aes(x=PC1, y=PC4, shape=TimePd, color=elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_point(size=2, alpha=0.7) +
+  geom_text_repel(aes(label = parent.pop)) +
+  geom_vline(xintercept = 0, linetype="dashed") + geom_hline(yintercept = 0, linetype="dashed")  +
+  geom_path(aes(group=group),arrow = arrow(length=unit(5, "points")), linewidth = .8)
+#high elev climate seems to be shifting to be more similar to low elev 
+```
+
+```{r}
+home_sites_pca_2024_extra <- all_bioclim_flint_avgs_locs.pc_2024_extra_avg %>%  
+  mutate(group=str_c(parent.pop,elev_m))  %>%
+  ggplot(aes(x=PC1, y=PC4, shape=TimePd, color=elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  #geom_point(size=2, alpha=0.7) +
+  labs(x="PC1 (50%)", y="PC4 (8.85%)", color="Elevation (m)") +
+  geom_vline(xintercept = 0, linetype="dashed") + geom_hline(yintercept = 0, linetype="dashed") +
+  geom_path(aes(group=group),arrow = arrow(length=unit(5, "points")), linewidth = .8) +
+  annotate("text", x = -4, y = -5.1, label = "Warm \n No Snow") +
+  annotate("text", x = 4, y = -5.1, label = "Cold \n Snow") +
+  annotate("text", x = -5.4, y = -3.5, label = "High Temp \n Seasonality") +
+  annotate("text", x = -5.4, y = 1.5, label = "Low Temp \n Seasonality") +
+  coord_cartesian(ylim = c(-4.1, 2), xlim = c(-4,4), clip = "off") +
+  theme_classic() +
+  theme(text=element_text(size=28))
+#ggsave("../output/Climate/Wtr_Year_PC1-PC4_2024_ExtraHist.png", width = 7.4, height = 6, units = "in")
+
+## add WL2 garden 2024
+#str(home_sites_pca_2024_extra) #can add predicted WL2 point to the existing plot's data 
+home_sites_pca_2024_extra$data <- rbind(home_sites_pca_2024_extra$data, 
+  data.frame(
+    parent.pop = "WL2_Garden",
+    elev_m = 2020,
+    TimePd = "2024",
+    PC1 = WL2Grdn_predicted_2024[, "PC1"],
+    PC2 = WL2Grdn_predicted_2024[, "PC2"],
+    PC3 = WL2Grdn_predicted_2024[, "PC3"],
+    PC4 = WL2Grdn_predicted_2024[, "PC4"],
+    PC5 = WL2Grdn_predicted_2024[, "PC5"],
+    PC6 = WL2Grdn_predicted_2024[, "PC6"],
+    PC7 = WL2Grdn_predicted_2024[, "PC7"],
+    group = "new"
+  )
+)
+
+home_sites_pca_2024_extra + 
+  geom_point(data=filter(home_sites_pca_2024_extra$data, parent.pop == "WL2_Garden"), size=3, shape = 8, show_guide = FALSE)
+#ggsave("../output/Climate/Wtr_Year_PC1-PC4_PlusGarden_2024_ExtraHist.png", width = 7.4, height = 6, units = "in")
+```
+
+```{r}
+autoplot(all_bioclim_flint_avgs.pc_2024_extra, data = bioclim_flint_all_year_avgs_2024_extra,
+         x=2, y=4,
+         colour='elev_m', alpha=0.5,
+         label=TRUE, label.label="parent.pop",
+         loadings=TRUE, loadings.colour='black', loadings.linewidth = 0.7,
+         loadings.label = TRUE, loadings.label.size=6, loadings.label.colour="black", 
+         loadings.label.vjust = -0.2, loadings.label.repel=TRUE) +
+   scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_vline(xintercept = 0, linetype="dashed") + geom_hline(yintercept = 0, linetype="dashed") +
+  theme_classic()
+
+all_bioclim_flint_avgs_locs.pc_2024_extra_avg %>% 
+  mutate(group=str_c(parent.pop,elev_m))  %>%
+  ggplot(aes(x=PC2, y=PC4, shape=TimePd, color=elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_point(size=2, alpha=0.7) +
+  geom_vline(xintercept = 0, linetype="dashed") + geom_hline(yintercept = 0, linetype="dashed") +
+  geom_path(aes(group=group),arrow = arrow(length=unit(5, "points")), linewidth = .8)
+
+all_bioclim_flint_avgs_locs.pc_2024_extra_avg %>% 
+  mutate(group=str_c(parent.pop,elev_m))  %>%
+  ggplot(aes(x=PC2, y=PC4, shape=TimePd, color=elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_point(size=2, alpha=0.7) +
+  geom_text_repel(aes(label = parent.pop)) +
+  geom_vline(xintercept = 0, linetype="dashed") + geom_hline(yintercept = 0, linetype="dashed")  +
+  geom_path(aes(group=group),arrow = arrow(length=unit(5, "points")), linewidth = .8)
+#high elev climate seems to be shifting to be more similar to low elev 
+```
+
+```{r}
+home_sites_pca_2024_extra_2 <- all_bioclim_flint_avgs_locs.pc_2024_extra_avg %>%  
+  mutate(group=str_c(parent.pop,elev_m))  %>%
+  ggplot(aes(x=PC2, y=PC4, shape=TimePd, color=elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  #geom_point(size=2, alpha=0.7) +
+  labs(x="PC2 (17.51%)", y="PC4 (8.85%)", color="Elevation (m)") +
+  geom_vline(xintercept = 0, linetype="dashed") + geom_hline(yintercept = 0, linetype="dashed") +
+  geom_path(aes(group=group),arrow = arrow(length=unit(5, "points")), linewidth = .8) +
+  annotate("text", x = -4, y = -3.9, label = "High Ann \n Temp Range") +
+  annotate("text", x = 3, y = -3.9, label = "Low Ann \n Temp Range") +
+  annotate("text", x = -5.2, y = -2.5, label = "High Temp \n Seasonality") +
+  annotate("text", x = -5.2, y = 1.5, label = "Low Temp \n Seasonality") +
+  coord_cartesian(ylim = c(-3.1, 2), xlim = c(-4,3), clip = "off") +
+  theme_classic() +
+  theme(text=element_text(size=28))
+#ggsave("../output/Climate/Wtr_Year_PC2-PC4_2024_ExtraHist.png", width = 7.4, height = 6, units = "in")
+
+## add WL2 garden 2024
+#str(home_sites_pca_2024_extra) #can add predicted WL2 point to the existing plot's data 
+home_sites_pca_2024_extra_2$data <- rbind(home_sites_pca_2024_extra_2$data, 
+  data.frame(
+    parent.pop = "WL2_Garden",
+    elev_m = 2020,
+    TimePd = "2024",
+    PC1 = WL2Grdn_predicted_2024[, "PC1"],
+    PC2 = WL2Grdn_predicted_2024[, "PC2"],
+    PC3 = WL2Grdn_predicted_2024[, "PC3"],
+    PC4 = WL2Grdn_predicted_2024[, "PC4"],
+    PC5 = WL2Grdn_predicted_2024[, "PC5"],
+    PC6 = WL2Grdn_predicted_2024[, "PC6"],
+    PC7 = WL2Grdn_predicted_2024[, "PC7"],
+    group = "new"
+  )
+)
+
+home_sites_pca_2024_extra_2 + 
+  geom_point(data=filter(home_sites_pca_2024_extra_2$data, parent.pop == "WL2_Garden"), size=3, shape = 8, show_guide = FALSE)
+#ggsave("../output/Climate/Wtr_Year_PC2-PC4_PlusGarden_2024_ExtraHist.png", width = 7.4, height = 6, units = "in")
 ```
 
 ---
