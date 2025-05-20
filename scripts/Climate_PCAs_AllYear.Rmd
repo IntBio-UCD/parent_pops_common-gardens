@@ -13,8 +13,6 @@ knitr::opts_chunk$set(echo = TRUE)
 
 To Do:
 
--   Compare historical 60 years to recent 30 years as another climate change test
-
 -   Check the significance of the PCA
 
     -   Remember this paper: Björklund, M. 2019. Be careful with your principal components. Evolution 73: 2151--2158.
