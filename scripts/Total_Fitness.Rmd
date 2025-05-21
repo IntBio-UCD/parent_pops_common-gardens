@@ -1310,52 +1310,74 @@ UCD_total_fitness_sub_FIG_prob_historic_historic <- ggarrange(GSCD_prob_historic
 #### Figures for paper
 
 ```{r}
-GD_prob <- wl2_total_fitness_sub_dist %>%  
+prob_fitness_summary <- wl2_total_fitness %>%  
   mutate(ProbFitness=if_else(Total_Fitness==0, 0, 1)) %>% 
-  group_by(pop, elev_m, Geographic_Dist) %>% 
-  summarise(meanEst=mean(ProbFitness, na.rm = TRUE), semEst=sem(ProbFitness, na.rm=TRUE)) %>% 
-  ggplot(aes(x=Geographic_Dist, y=meanEst, group = pop)) +
-  geom_point(size=6) + 
+  group_by(pop, elev_m, Geographic_Dist, Wtr_Year_GD_Recent) %>% 
+  summarise(meanEst=mean(ProbFitness, na.rm = TRUE), semEst=sem(ProbFitness, na.rm=TRUE)) %>%
+  mutate(RepYear=if_else(meanEst==0, "None",
+                         if_else(pop=="TM2", "Both Years", "Year 2 Only")))
+prob_fitness_summary$RepYear <- factor(prob_fitness_summary$RepYear,
+                                               levels = c('None','Year 2 Only', 'Both Years'))
+
+prob_fitness_summary_sub <- wl2_total_fitness_sub_dist %>%  
+  mutate(ProbFitness=if_else(Total_Fitness==0, 0, 1)) %>% 
+  group_by(pop, elev_m, Wtr_Year_TempDist_Recent, Wtr_Year_PPTDist_Recent) %>% 
+  summarise(meanEst=mean(ProbFitness, na.rm = TRUE), semEst=sem(ProbFitness, na.rm=TRUE)) %>%
+  mutate(RepYear=if_else(meanEst==0, "None",
+                         if_else(pop=="TM2", "Both Years", "Year 2 Only")))
+prob_fitness_summary_sub$RepYear <- factor(prob_fitness_summary_sub$RepYear,
+                                               levels = c('None','Year 2 Only', 'Both Years'))
+
+GD_prob <- prob_fitness_summary %>% 
+  ggplot(aes(x=Geographic_Dist, y=meanEst, group = pop, color=elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_point(aes(shape=RepYear), size=6) + 
   geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.2, linewidth = 2) +
+  annotate("text", x = 136.2622, y= 0.095, label = "WL2", 
+           colour = "purple", fontface="bold", size = 22 / .pt) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
-  labs(y="Probability of \n Successfully Reproducing", x="Geographic Distance (m)") +
+  labs(y="Probability of \n Successfully Reproducing", x="Geographic Distance (m)", 
+       color="Elevaton (m)", shape="Rep Year(s)") +
   theme(text=element_text(size=30), axis.text.x = element_text(angle = 45,  hjust = 1))
 
-WYCD_prob_recent <- wl2_total_fitness %>% 
-  mutate(ProbFitness=if_else(Total_Fitness==0, 0, 1)) %>% 
-  group_by(pop, elev_m, Wtr_Year_GD_Recent, Wtr_Year_GD_Historical) %>% 
-  summarise(meanEst=mean(ProbFitness, na.rm = TRUE), semEst=sem(ProbFitness, na.rm=TRUE)) %>% 
-  ggplot(aes(x=Wtr_Year_GD_Recent, y=meanEst, group = pop)) +
-  geom_point(size=6) + 
+WYCD_prob_recent <- prob_fitness_summary %>% 
+  ggplot(aes(x=Wtr_Year_GD_Recent, y=meanEst, group = pop, color=elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_point(aes(shape=RepYear), size=6) + 
   geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.02,linewidth = 2) +
+  annotate("text", x = 0.3959884, y= 0.095, label = "WL2", 
+           colour = "purple", fontface="bold", size = 22 / .pt) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
-  labs(y="Probability of \n Successfully Reproducing", x="Recent Water Year Climate Dist") +
+  labs(y="Probability of \n Successfully Reproducing", x="Recent Water Year Climate Dist", 
+       color="Elevaton (m)", shape="Rep Year(s)") +
   theme(text=element_text(size=30))
 
-WYtemp_prob_recent <- wl2_total_fitness_sub_dist %>% 
-  mutate(ProbFitness=if_else(Total_Fitness==0, 0, 1)) %>% 
-  group_by(pop, elev_m, Wtr_Year_TempDist_Recent, Wtr_Year_TempDist_Historic) %>% 
-  summarise(meanEst=mean(ProbFitness, na.rm = TRUE), semEst=sem(ProbFitness, na.rm=TRUE)) %>% 
-  ggplot(aes(x=Wtr_Year_TempDist_Recent, y=meanEst, group = pop)) +
-  geom_point(size=6) + 
+WYtemp_prob_recent <- prob_fitness_summary_sub %>% 
+  ggplot(aes(x=Wtr_Year_TempDist_Recent, y=meanEst, group = pop, color=elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_point(aes(shape=RepYear), size=6) + 
   geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.3,linewidth = 2) +
+  annotate("text", x = 0.6300972	, y= 0.095, label = "WL2", 
+           colour = "purple", fontface="bold", size = 22 / .pt) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
-  labs(y="Probability of \n Successfully Reproducing", x="Recent Water Year Temp Dist (°C)") +
+  labs(y="Probability of \n Successfully Reproducing", x="Recent Water Year Temp Dist (°C)", 
+       color="Elevaton (m)", shape="Rep Year(s)") +
   theme(text=element_text(size=30))
 
-WYppt_prob_recent <- wl2_total_fitness_sub_dist %>% 
-  mutate(ProbFitness=if_else(Total_Fitness==0, 0, 1)) %>% 
-  group_by(pop, elev_m, Wtr_Year_PPTDist_Recent, Wtr_Year_PPTDist_Historic) %>% 
-  summarise(meanEst=mean(ProbFitness, na.rm = TRUE), semEst=sem(ProbFitness, na.rm=TRUE)) %>% 
-  ggplot(aes(x=Wtr_Year_PPTDist_Recent, y=meanEst, group = pop)) +
-  geom_point(size=6) + 
+WYppt_prob_recent <- prob_fitness_summary_sub %>% 
+  ggplot(aes(x=Wtr_Year_PPTDist_Recent, y=meanEst, group = pop, color=elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_point(aes(shape=RepYear), size=6) + 
   geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.3,linewidth = 2) +
+  annotate("text", x = -546.96536, y= 0.095, label = "WL2", 
+           colour = "purple", fontface="bold", size = 22 / .pt) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
-  labs(y="Probability of \n Successfully Reproducing", x="Recent Water Year PPT Dist (mm)") +
+  labs(y="Probability of \n Successfully Reproducing", x="Recent Water Year PPT Dist (mm)", 
+       color="Elevaton (m)", shape="Rep Year(s)") +
   theme(text=element_text(size=30))
 
 WL2_prob_fitness_for_paper <- ggarrange(GD_prob, WYCD_prob_recent, 
@@ -1363,7 +1385,7 @@ WL2_prob_fitness_for_paper <- ggarrange(GD_prob, WYCD_prob_recent,
                                         labels = c("A)", "B)", "C)", "D)"), 
                                         font.label = list(size=30, face = "plain"), 
                                         ncol=2, nrow=2) 
-#ggsave("../output/WL2_Traits/WL2_ProbFitness_SCATTERS_Summary_Recent.png", width = 24, height = 18, units = "in")
+ggsave("../output/WL2_Traits/WL2_ProbFitness_SCATTERS_Summary_Recent.png", width = 24, height = 18, units = "in")
 ```
 
 ```{r}
