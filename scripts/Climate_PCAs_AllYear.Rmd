@@ -510,6 +510,7 @@ home_sites_pca <- all_bioclim_flint_avgs_locs.pc_avg %>%
   #geom_point(size=2, alpha=0.7) +
   labs(x="PC1 (51.11%)", y="PC4 (8.07%)", color="Elevation (m)") +
   geom_vline(xintercept = 0, linetype="dashed") + geom_hline(yintercept = 0, linetype="dashed") +
+  annotate("text", x = 1.3, y= 0.52, label = "WL2", colour = "red") +
   geom_path(aes(group=group),arrow = arrow(length=unit(5, "points")), linewidth = .8) +
   annotate("text", x = -4, y = -5.1, label = "Warm \n No Snow") +
   annotate("text", x = 4, y = -5.1, label = "Cold \n Snow") +
@@ -545,7 +546,7 @@ home_sites_pca$data <- rbind(home_sites_pca$data,
 
 home_sites_pca + 
   geom_point(data=filter(home_sites_pca$data, parent.pop == "WL2_Garden"), size=3, shape = 8, show_guide = FALSE)
-#ggsave("../output/Climate/Wtr_Year_PC1-PC4_PlusGarden.png", width = 7.4, height = 6, units = "in")
+ggsave("../output/Climate/Wtr_Year_PC1-PC4_PlusGarden.png", width = 7.4, height = 6, units = "in")
 ```
 
 ## Extra historical PCA (60 years) - 2023
