@@ -163,6 +163,12 @@ WL2_bioclim_final <- bind_cols(bioclim_WL2_calc, all_periods_WL2) %>%
 summary(WL2_bioclim_final)
 ```
 
+### Export 
+```{r}
+wl2_flint_bioclim_grwssn <- cbind(WL2_climate_flint, WL2_bioclim_final)
+write_csv(wl2_flint_bioclim_grwssn, "../output/Climate/WL2_Garden_GrwSsnClim_2023.csv")
+```
+
 ## For 2024 (June-Nov 2024)
 
 ### From Flint
@@ -280,6 +286,12 @@ Merge all bioclims
 WL2_bioclim_final_2024 <- bind_cols(bioclim_WL2_calc_2024, all_periods_WL2_2024) %>% 
   rename_with(~paste0(., "_WL2"), 1:10)
 summary(WL2_bioclim_final_2024)
+```
+
+### Export 
+```{r}
+wl2_flint_bioclim_grwssn_2024 <- cbind(WL2_climate_2024_flint, WL2_bioclim_final_2024)
+write_csv(wl2_flint_bioclim_grwssn_2024, "../output/Climate/WL2_Garden_GrwSsnClim_2024.csv")
 ```
 
 ## Gower's Climate Distance
