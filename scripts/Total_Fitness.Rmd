@@ -1338,7 +1338,7 @@ GD_prob <- prob_fitness_summary %>%
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
   labs(y="Probability of \n Successfully Reproducing", x="Geographic Distance (m)", 
-       color="Elevaton (m)", shape="Rep Year(s)") +
+       color="Elevation (m)", shape="Rep Year(s)") +
   theme(text=element_text(size=30), axis.text.x = element_text(angle = 45,  hjust = 1))
 
 WYCD_prob_recent <- prob_fitness_summary %>% 
@@ -1351,7 +1351,7 @@ WYCD_prob_recent <- prob_fitness_summary %>%
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
   labs(y="Probability of \n Successfully Reproducing", x="Recent Water Year Climate Dist", 
-       color="Elevaton (m)", shape="Rep Year(s)") +
+       color="Elevation (m)", shape="Rep Year(s)") +
   theme(text=element_text(size=30))
 
 WYtemp_prob_recent <- prob_fitness_summary_sub %>% 
@@ -1364,7 +1364,7 @@ WYtemp_prob_recent <- prob_fitness_summary_sub %>%
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
   labs(y="Probability of \n Successfully Reproducing", x="Recent Water Year Temp Dist (°C)", 
-       color="Elevaton (m)", shape="Rep Year(s)") +
+       color="Elevation (m)", shape="Rep Year(s)") +
   theme(text=element_text(size=30))
 
 WYppt_prob_recent <- prob_fitness_summary_sub %>% 
@@ -1377,7 +1377,7 @@ WYppt_prob_recent <- prob_fitness_summary_sub %>%
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
   labs(y="Probability of \n Successfully Reproducing", x="Recent Water Year PPT Dist (mm)", 
-       color="Elevaton (m)", shape="Rep Year(s)") +
+       color="Elevation (m)", shape="Rep Year(s)") +
   theme(text=element_text(size=30))
 
 WL2_prob_fitness_for_paper <- ggarrange(GD_prob, WYCD_prob_recent, 
