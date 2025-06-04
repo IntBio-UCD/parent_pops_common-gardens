@@ -232,6 +232,39 @@ WL2Grdn_flint_all_year_summary <- WL2Grdn_flint_all_year %>%
 WL2Grdn_flint_bioclim_all_year <- left_join(WL2Grdn_flint_all_year_summary, WL2Grdn_elev_bioclim_all_year) %>% 
   select(-year)
 ```
+## WL2 Garden 2024
+```{r}
+bioclim_2024_allyear_prep_WL2Grdn <- flint_all_year_wtr_yr %>% 
+  filter(parent.pop == "WL2_Garden") %>%  #only keep WL2 garden
+  rename(tmin=tmn, tmax=tmx, year_cal=year, year=wtr_yr) %>% #rename columns to match what calc_biovars expects, also make sure it uses water year 
+  filter(year=="2024") %>% #year of the experiment only 
+  arrange(parent.pop, year, month)
+
+bioclim_2024_all_year_WL2Grdn <- bioclim_2024_allyear_prep_WL2Grdn %>% 
+  calc_biovars() %>% 
+  mutate(parent.pop="WL2_Garden", year=="2024") 
+
+bioclim_2024_all_year_final_WL2Grdn <- bioclim_2024_all_year_WL2Grdn %>% 
+  select(parent.pop, year, ann_tmean=bio1, mean_diurnal_range=bio2, 
+         temp_seasonality=bio4, temp_ann_range=bio7, tmean_wettest_quarter=bio8,
+         tmean_driest_quarter=bio9, ann_ppt=bio12, ppt_seasonality=bio15,
+         ppt_warmest_quarter=bio18, ppt_coldest_quarter=bio19) 
+
+WL2Grdn_elev_bioclim_2024_all_year <- left_join(bioclim_2024_all_year_final_WL2Grdn, pop_elev) %>% 
+  select(parent.pop, elevation.group:Long, year:ppt_coldest_quarter)
+WL2Grdn_elev_bioclim_2024_all_year
+
+WL2Grdn_flint_2024_all_year <- flint_all_year_wtr_yr %>% 
+  filter(parent.pop == "WL2_Garden", wtr_yr=="2024") %>%  #only keep WL2 garden
+  select(parent.pop:month, wtr_yr, cwd, pck, ppt, tmn, tmx)
+
+WL2Grdn_flint_2024_all_year_summary <- WL2Grdn_flint_2024_all_year %>% 
+  group_by(parent.pop, elevation.group, elev_m, Lat, Long) %>% 
+  summarise_at(c("cwd",  "pck", "ppt", "tmn", "tmx"), c(mean), na.rm = TRUE) 
+
+WL2Grdn_flint_bioclim_2024_all_year <- left_join(WL2Grdn_flint_2024_all_year_summary, WL2Grdn_elev_bioclim_2024_all_year) %>% 
+  select(-year)
+```
 
 ## Avg across years and months (Flint + bioclim) - 2023
 
@@ -510,7 +543,7 @@ home_sites_pca <- all_bioclim_flint_avgs_locs.pc_avg %>%
   #geom_point(size=2, alpha=0.7) +
   labs(x="PC1 (51.11%)", y="PC4 (8.07%)", color="Elevation (m)") +
   geom_vline(xintercept = 0, linetype="dashed") + geom_hline(yintercept = 0, linetype="dashed") +
-  annotate("text", x = 1.3, y= 0.52, label = "WL2", colour = "red") +
+  annotate("text", x = 1.3, y= 0.52, label = "WL2", colour = "purple") +
   geom_path(aes(group=group),arrow = arrow(length=unit(5, "points")), linewidth = .8) +
   annotate("text", x = -4, y = -5.1, label = "Warm \n No Snow") +
   annotate("text", x = 4, y = -5.1, label = "Cold \n Snow") +
@@ -521,31 +554,36 @@ home_sites_pca <- all_bioclim_flint_avgs_locs.pc_avg %>%
   theme(text=element_text(size=28))
 #ggsave("../output/Climate/Wtr_Year_PC1-PC4.png", width = 7.4, height = 6, units = "in")
 
-## add WL2 garden 2023
+## add WL2 garden 2023 and 2024
 WL2Grdn_pc_prep <- WL2Grdn_flint_bioclim_all_year %>% ungroup() %>% select(cwd:pck, ann_tmean, temp_seasonality, temp_ann_range, ann_ppt, ppt_seasonality)
 #scale(WL2Grdn_pc_prep, all_bioclim_flint_avgs.pc$center, all_bioclim_flint_avgs.pc$scale) %*% all_bioclim_flint_avgs.pc$rotation  #gives same result as below 
 WL2Grdn_predicted <- predict(all_bioclim_flint_avgs.pc, newdata = WL2Grdn_pc_prep)
-WL2Grdn_predicted
+#WL2Grdn_predicted
+
+WL2Grdn_pc_prep_2024 <- WL2Grdn_flint_bioclim_2024_all_year %>% ungroup() %>% select(cwd:pck, ann_tmean, temp_seasonality, temp_ann_range, ann_ppt, ppt_seasonality)
+WL2Grdn_2024_predicted <- predict(all_bioclim_flint_avgs.pc, newdata = WL2Grdn_pc_prep_2024)
 
 #str(home_sites_pca) #can add predicted WL2 point to the existing plot's data 
 home_sites_pca$data <- rbind(home_sites_pca$data, 
   data.frame(
     parent.pop = "WL2_Garden",
     elev_m = 2020,
-    TimePd = "2023",
-    PC1 = WL2Grdn_predicted[, "PC1"],
-    PC2 = WL2Grdn_predicted[, "PC2"],
-    PC3 = WL2Grdn_predicted[, "PC3"],
-    PC4 = WL2Grdn_predicted[, "PC4"],
-    PC5 = WL2Grdn_predicted[, "PC5"],
-    PC6 = WL2Grdn_predicted[, "PC6"],
-    PC7 = WL2Grdn_predicted[, "PC7"],
-    group = "new"
+    TimePd = c("2023", "2024"),
+    PC1 = c(WL2Grdn_predicted[, "PC1"], WL2Grdn_2024_predicted[, "PC1"]),
+    PC2 = c(WL2Grdn_predicted[, "PC2"], WL2Grdn_2024_predicted[, "PC2"]),
+    PC3 = c(WL2Grdn_predicted[, "PC3"], WL2Grdn_2024_predicted[, "PC3"]),
+    PC4 = c(WL2Grdn_predicted[, "PC4"], WL2Grdn_2024_predicted[, "PC4"]),
+    PC5 = c(WL2Grdn_predicted[, "PC5"], WL2Grdn_2024_predicted[, "PC5"]),
+    PC6 = c(WL2Grdn_predicted[, "PC6"], WL2Grdn_2024_predicted[, "PC6"]),
+    PC7 = c(WL2Grdn_predicted[, "PC7"], WL2Grdn_2024_predicted[, "PC7"]),
+    group = c("new", "new2")
   )
 )
 
 home_sites_pca + 
-  geom_point(data=filter(home_sites_pca$data, parent.pop == "WL2_Garden"), size=3, shape = 8, show_guide = FALSE)
+  geom_point(data=filter(home_sites_pca$data, parent.pop == "WL2_Garden"), size=3, shape = 8, show_guide = FALSE) +
+  annotate("text", x = 2.55, y= -3.6, label = "WL2 Garden \n 2023", colour = "purple") +
+  annotate("text", x = -0.8, y= -3.2, label = "WL2 Garden \n 2024", colour = "purple") 
 ggsave("../output/Climate/Wtr_Year_PC1-PC4_PlusGarden.png", width = 7.4, height = 6, units = "in")
 ```
 
@@ -921,40 +959,6 @@ tail(flint_all_year_historical_extra_2024, 13)
 bioclim_all_year_historical_extra_2024 <- pop_elev_bioclim_2024_all_year %>% filter(year<=1994 & year>1934)
 #head(bioclim_all_year_historical_extra_2024, 13)
 #tail(bioclim_all_year_historical_extra_2024, 13)
-```
-
-## WL2 Garden 2024
-```{r}
-bioclim_2024_allyear_prep_WL2Grdn <- flint_all_year_wtr_yr %>% 
-  filter(parent.pop == "WL2_Garden") %>%  #only keep WL2 garden
-  rename(tmin=tmn, tmax=tmx, year_cal=year, year=wtr_yr) %>% #rename columns to match what calc_biovars expects, also make sure it uses water year 
-  filter(year=="2024") %>% #year of the experiment only 
-  arrange(parent.pop, year, month)
-
-bioclim_2024_all_year_WL2Grdn <- bioclim_2024_allyear_prep_WL2Grdn %>% 
-  calc_biovars() %>% 
-  mutate(parent.pop="WL2_Garden", year=="2024") 
-
-bioclim_2024_all_year_final_WL2Grdn <- bioclim_2024_all_year_WL2Grdn %>% 
-  select(parent.pop, year, ann_tmean=bio1, mean_diurnal_range=bio2, 
-         temp_seasonality=bio4, temp_ann_range=bio7, tmean_wettest_quarter=bio8,
-         tmean_driest_quarter=bio9, ann_ppt=bio12, ppt_seasonality=bio15,
-         ppt_warmest_quarter=bio18, ppt_coldest_quarter=bio19) 
-
-WL2Grdn_elev_bioclim_2024_all_year <- left_join(bioclim_2024_all_year_final_WL2Grdn, pop_elev) %>% 
-  select(parent.pop, elevation.group:Long, year:ppt_coldest_quarter)
-WL2Grdn_elev_bioclim_2024_all_year
-
-WL2Grdn_flint_2024_all_year <- flint_all_year_wtr_yr %>% 
-  filter(parent.pop == "WL2_Garden", wtr_yr=="2024") %>%  #only keep WL2 garden
-  select(parent.pop:month, wtr_yr, cwd, pck, ppt, tmn, tmx)
-
-WL2Grdn_flint_2024_all_year_summary <- WL2Grdn_flint_2024_all_year %>% 
-  group_by(parent.pop, elevation.group, elev_m, Lat, Long) %>% 
-  summarise_at(c("cwd",  "pck", "ppt", "tmn", "tmx"), c(mean), na.rm = TRUE) 
-
-WL2Grdn_flint_bioclim_2024_all_year <- left_join(WL2Grdn_flint_2024_all_year_summary, WL2Grdn_elev_bioclim_2024_all_year) %>% 
-  select(-year)
 ```
 
 ## Avg across years and months (Flint + bioclim) - 2024
