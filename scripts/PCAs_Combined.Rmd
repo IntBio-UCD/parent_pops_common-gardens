@@ -1,0 +1,156 @@
+---
+title: "PCAs_Combined"
+author: "Brandie QC"
+date: "`r Sys.Date()`"
+output: 
+  html_document: 
+    keep_md: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Additional PCAs for paper 
+
+## Libraries 
+```{r}
+library(tidyverse)
+library(ggalt) #for geom_encircle
+library(corrplot) #plotting correlations 
+library(ggfortify) #easier PCA figures
+```
+
+## Combine Water Year and Growing Season PCAs
+
+### Water Year Averages
+```{r}
+flint_all_year_avgs <- read_csv("../output/Climate/fullyear_FlintAvgs_wtr_year.csv")
+bioclim_all_year_avgs <- read_csv("../output/Climate/fullyear_BioClimAvgs_wtr_year.csv")
+
+#Merge
+bioclim_flint_all_year_avgs <- full_join(flint_all_year_avgs, bioclim_all_year_avgs) %>% 
+  select(TimePd, parent.pop:ppt_coldest_quarter) %>% 
+  mutate(Season="Water Year")
+names(bioclim_flint_all_year_avgs)
+```
+
+### Growth Season Averages
+```{r}
+flint_grwseason_avgs <- read_csv("../output/Climate/growthseason_FlintAvgs.csv")
+bioclim_grwseason_avgs <- read_csv("../output/Climate/growthseason_BioClimAvgs.csv")
+
+#Merge
+bioclim_flint_grwseason_avgs <- full_join(flint_grwseason_avgs, bioclim_grwseason_avgs) %>% 
+  select(TimePd, parent.pop:ppt_coldest_month) %>% 
+  rename(tmean_wettest_quarter=tmean_wettest_month, 
+         tmean_driest_quarter=tmean_driest_month,
+         ppt_warmest_quarter=ppt_warmest_month,
+         ppt_coldest_quarter=ppt_coldest_month) %>% 
+  mutate(Season="Growth Season")
+names(bioclim_flint_grwseason_avgs) #change month to quarter
+```
+
+### Dataframe with a column for seasonal summary 
+```{r}
+wtryr_grwssn_avgs <- bind_rows(bioclim_flint_all_year_avgs, bioclim_flint_grwseason_avgs)
+```
+
+### Correlations - Recent + Historical
+
+```{r}
+#normalize the data
+climate_normalized_wtryr_grwssn_avgs <- wtryr_grwssn_avgs %>% ungroup() %>% 
+  select(cwd:ppt_coldest_quarter) %>% scale() #normalize the data so they're all on the same scale
+
+cor.norm = cor(climate_normalized_wtryr_grwssn_avgs) #test correlations among the traits
+cor.sig <- cor.mtest(climate_normalized_wtryr_grwssn_avgs, method = "pearson")
+
+corrplot(cor.norm, type="upper",
+         tl.srt = 45, p.mat = cor.sig$p, 
+         sig.level = 0.05, insig="blank")
+
+#tmn, tmx, tmean_wettest_quarter, tmean_driest_quarter and ann_tmean all highly correlated (92-99%) - only keep ann_tmean 
+#ann_ppt and ppt_coldest_quarter highly correlated (96%) - only keep ann_ppt 
+#ppt_coldest_quarter and ppt_warmest_quarter (92%) - only keek ppt_warmest_quarter
+```
+
+### PCA - Recent + Historical
+```{r}
+wtryr_grwssn_avgs.pc = prcomp(wtryr_grwssn_avgs[c(7:9, 12:15, 18:20)], scale = TRUE, center = TRUE)
+str(wtryr_grwssn_avgs.pc)
+```
+
+plot % Variance Explained
+
+```{r}
+summary(wtryr_grwssn_avgs.pc)
+
+tibble(PC=str_c("PC",str_pad(1:10,2,pad="0")),
+       percent_var=wtryr_grwssn_avgs.pc$sdev[1:10]^2/sum(wtryr_grwssn_avgs.pc$sdev^2)*100) %>%
+  ggplot(aes(x=PC, y=percent_var)) +
+  geom_col() +
+  ggtitle("Percent Variance Explained")
+```
+
+Combine PCs with metadata
+
+```{r}
+wtryr_grwssn_avgs.pc.dat = data.frame(wtryr_grwssn_avgs.pc$x)
+
+wtryr_grwssn_avgs_locs.pc = cbind(wtryr_grwssn_avgs, wtryr_grwssn_avgs.pc.dat)
+
+wtryr_grwssn_avgs_loadings = data.frame(varnames=rownames(wtryr_grwssn_avgs.pc$rotation), wtryr_grwssn_avgs.pc$rotation)
+wtryr_grwssn_avgs_loadings
+```
+
+```{r}
+autoplot(wtryr_grwssn_avgs.pc, data = wtryr_grwssn_avgs,
+         colour='elev_m', alpha=0.5,
+         #label=TRUE, label.label="parent.pop",
+         loadings=TRUE, loadings.colour='black', loadings.linewidth = 0.7,
+         loadings.label = TRUE, loadings.label.size=6, loadings.label.colour="black", 
+         loadings.label.vjust = -0.2, loadings.label.repel=TRUE) +
+   scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_vline(xintercept = 0, linetype="dashed") + geom_hline(yintercept = 0, linetype="dashed") +
+  theme_classic()
+```
+
+```{r}
+autoplot(wtryr_grwssn_avgs.pc, data = wtryr_grwssn_avgs,
+         colour='Season', alpha=0.5,
+         #label=TRUE, label.label="parent.pop",
+         loadings=TRUE, loadings.colour='black', loadings.linewidth = 0.7,
+         loadings.label = TRUE, loadings.label.size=6, loadings.label.colour="black", 
+         loadings.label.vjust = -0.2, loadings.label.repel=TRUE) +
+  geom_vline(xintercept = 0, linetype="dashed") + geom_hline(yintercept = 0, linetype="dashed") +
+  theme_classic() +
+  geom_encircle(aes(group=Season, colour = Season))
+```
+
+```{r}
+autoplot(wtryr_grwssn_avgs.pc, data = wtryr_grwssn_avgs,
+          x=1, y=3,
+         colour='Season', alpha=0.5,
+         #label=TRUE, label.label="parent.pop",
+         loadings=TRUE, loadings.colour='black', loadings.linewidth = 0.7,
+         loadings.label = TRUE, loadings.label.size=6, loadings.label.colour="black", 
+         loadings.label.vjust = -0.2, loadings.label.repel=TRUE) +
+  geom_vline(xintercept = 0, linetype="dashed") + geom_hline(yintercept = 0, linetype="dashed") +
+  theme_classic() +
+  geom_encircle(aes(group=Season, colour = Season))
+```
+
+
+## WL2-only PCA to show climate variation across years - NEED TO DO THIS 
+Need to save the dataframes with all years included used to make the previous PCAs 
+
+### Water Year
+```{r}
+
+```
+
+### Growth Season 
+```{r}
+
+```
