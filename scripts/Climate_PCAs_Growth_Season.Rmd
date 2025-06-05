@@ -252,7 +252,7 @@ corrplot(cor.norm_historic, type="upper",
 ### PCA - Recent + Historical
 
 ```{r}
-all_bioclim_flint_avgs.pc = prcomp(bioclim_flint_grwseason_avgs[c(7:8, 11:15, 17:20)], scale = TRUE, center = TRUE) 
+all_bioclim_flint_avgs.pc = prcomp(bioclim_flint_grwseason_avgs[c(7, 9, 12:16, 18:21)], scale = TRUE, center = TRUE) 
 str(all_bioclim_flint_avgs.pc)
 ```
 
