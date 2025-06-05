@@ -150,13 +150,13 @@ WL2Grdn_flint_bioclim_2024_grwseason <- read_csv("../output/Climate/WL2_Garden_G
 ```{r}
 flint_recent_grwseason_avgs <- flint_recent_grwseason %>% 
   group_by(parent.pop, elevation.group, elev_m, Lat, Long) %>% 
-  summarise_at(c("cwd", "ppt", "tmn", "tmx"), c(mean), na.rm = TRUE) %>% 
+  summarise_at(c("cwd", "pck", "ppt", "tmn", "tmx"), c(mean), na.rm = TRUE) %>% 
   mutate(TimePd = "Recent") 
 flint_recent_grwseason_avgs
 
 flint_historical_grwseason_avgs <- flint_historical_grwseason %>% 
   group_by(parent.pop, elevation.group, elev_m, Lat, Long) %>% 
-  summarise_at(c("cwd", "ppt", "tmn", "tmx"), c(mean), na.rm = TRUE) %>% 
+  summarise_at(c("cwd", "pck", "ppt", "tmn", "tmx"), c(mean), na.rm = TRUE) %>% 
   mutate(TimePd = "Historical")
 flint_historical_grwseason_avgs
 
