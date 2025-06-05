@@ -144,6 +144,7 @@ flint_all_year_recent <- flint_all_year_wtr_yr %>%
   select(parent.pop:month, wtr_yr, cwd, pck, ppt, tmn, tmx)
 head(flint_all_year_recent)
 tail(flint_all_year_recent)
+#write_csv(flint_all_year_recent, "../output/Climate/Flint_Water_Year_Recent_AllMonths.csv")
 
 flint_all_year_historical <- flint_all_year_wtr_yr %>% 
   filter(parent.pop != "UCD_Garden", parent.pop != "WL2_Garden") %>%  #remove garden sites 
@@ -151,14 +152,17 @@ flint_all_year_historical <- flint_all_year_wtr_yr %>%
   select(parent.pop:month, wtr_yr, cwd, pck, ppt, tmn, tmx)
 head(flint_all_year_historical, 13)
 tail(flint_all_year_historical, 13)
+#write_csv(flint_all_year_recent, "../output/Climate/Flint_Water_Year_Hist_AllMonths.csv")
 
 bioclim_all_year_recent <- pop_elev_bioclim_all_year %>% filter(year>1993 & year<=2023) #year here means water year (see above code where bioclim vars were calculated)
 #head(bioclim_all_year_recent)
 #tail(bioclim_all_year_recent)
+#write_csv(flint_all_year_recent, "../output/Climate/Bioclim_Water_Year_Recent_AllMonths.csv")
 
 bioclim_all_year_historical <- pop_elev_bioclim_all_year %>% filter(year<=1993 & year>1963)
 #head(bioclim_all_year_historical, 13)
 #tail(bioclim_all_year_historical, 13)
+#write_csv(flint_all_year_recent, "../output/Climate/Bioclim_Water_Year_Hist_AllMonths.csv")
 ```
 
 ### Yearly averages for Flint (for climate distance calc)
