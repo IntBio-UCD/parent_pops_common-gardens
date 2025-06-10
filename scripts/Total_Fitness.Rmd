@@ -116,7 +116,8 @@ wl2_gowers_2023 <- read_csv("../output/Climate/Gowers_WL2.csv") %>%
   #mutate(Lat_Dist=WL2_Lat-Lat, Long_Dist=WL2_Long-Long) %>% #Garden-Home - lat and long per Gerst et al 2011 which kept them separate for some directionality
   rename(pop=parent.pop)
 
-wl2_gowers_2024 <- read_csv("../output/Climate/Gowers_WL2_2024.csv") %>% 
+wl2_gowers_2324 <- read_csv("../output/Climate/Gowers_WL2_2324.csv") %>% 
+  select(parent.pop:GrwSsn_GD, Wtr_Year_GD) %>% 
   pivot_wider(names_from = TimePd, values_from = c(GrwSsn_GD, Wtr_Year_GD)) %>% 
   mutate(WL2_Lat=38.82599, WL2_Long=-120.2509, WL2_Elev=2020) %>% 
   mutate(Geographic_Dist=distHaversine(cbind(WL2_Long, WL2_Lat), cbind(Long, Lat)),
@@ -157,20 +158,21 @@ wl2_sub_dist_2023 <- wl2_wtr_year_sub_recent %>%
   rename(pop=parent.pop) %>% 
   left_join(wl2_gowers_2023)
 
-wl2_wtr_year_sub_recent_2024 <- read_csv("../output/Climate/full_year_Subtraction_Dist_from_Home_WL2_2024_Recent.csv") %>% 
+wl2_wtr_year_sub_recent_2324 <- read_csv("../output/Climate/full_year_Subtraction_Dist_from_Home_WL2_2324_Recent.csv") %>% 
   select(parent.pop, Wtr_Year_TempDist_Recent=ann_tmean_dist, Wtr_Year_PPTDist_Recent=ann_ppt_dist)
-wl2_wtr_year_sub_historic_2024 <- read_csv("../output/Climate/full_year_Subtraction_Dist_from_Home_WL2_2024_Historical.csv") %>% 
+wl2_wtr_year_sub_historic_2324 <- read_csv("../output/Climate/full_year_Subtraction_Dist_from_Home_WL2_2324_Historical.csv") %>% 
   select(parent.pop, Wtr_Year_TempDist_Historic=ann_tmean_dist, Wtr_Year_PPTDist_Historic=ann_ppt_dist)
-wl2_grwssn_sub_recent_2024 <- read_csv("../output/Climate/grwssn_Subtraction_Dist_from_Home_WL2_2024_Recent.csv") %>% 
+wl2_grwssn_sub_recent_2324 <- read_csv("../output/Climate/grwssn_Subtraction_Dist_from_Home_WL2_2324_Recent.csv") %>% 
   select(parent.pop, GrwSsn_TempDist_Recent=ann_tmean_dist, GrwSsn_PPTDist_Recent=ann_ppt_dist)
-wl2_grwssn_sub_historic_2024 <- read_csv("../output/Climate/grwssn_Subtraction_Dist_from_Home_WL2_2024_Historical.csv") %>% 
+wl2_grwssn_sub_historic_2324 <- read_csv("../output/Climate/grwssn_Subtraction_Dist_from_Home_WL2_2324_Historical.csv") %>% 
   select(parent.pop, GrwSsn_TempDist_Historic=ann_tmean_dist, GrwSsn_PPTDist_Historic=ann_ppt_dist)
-wl2_sub_dist_2024 <- wl2_wtr_year_sub_recent_2024 %>% 
-  left_join(wl2_wtr_year_sub_historic_2024) %>% 
-  left_join(wl2_grwssn_sub_recent_2024) %>% 
-  left_join(wl2_grwssn_sub_historic_2024) %>% 
+
+wl2_sub_dist_2324 <- wl2_wtr_year_sub_recent_2324 %>% 
+  left_join(wl2_wtr_year_sub_historic_2324) %>% 
+  left_join(wl2_grwssn_sub_recent_2324) %>% 
+  left_join(wl2_grwssn_sub_historic_2324) %>% 
   rename(pop=parent.pop) %>% 
-  left_join(wl2_gowers_2024)
+  left_join(wl2_gowers_2324)
 ```
 
 ### Check Geographic distance
@@ -250,9 +252,9 @@ cor.sig_wl2$p
 
 ```{r}
 wl2_gowers_2023_prep <- wl2_gowers_2023 %>% rename_with(~paste0(., "_2023"), 6:9)
-wl2_gowers_2024_prep <- wl2_gowers_2024 %>% rename_with(~paste0(., "_2024"), 6:9)
+wl2_gowers_2324_prep <- wl2_gowers_2324 %>% rename_with(~paste0(., "_2024"), 6:9)
 
-wl2_gowers_avg <- bind_rows(wl2_gowers_2023, wl2_gowers_2024) %>% 
+wl2_gowers_avg <- bind_rows(wl2_gowers_2023, wl2_gowers_2324) %>% 
   group_by(pop, elevation.group, elev_m, Geographic_Dist, Elev_Dist) %>% 
   summarise_at(c("GrwSsn_GD_Recent",  "GrwSsn_GD_Historical", "Wtr_Year_GD_Recent", "Wtr_Year_GD_Historical"), c(mean), na.rm = TRUE)
 wl2_gowers_avg
@@ -279,7 +281,7 @@ grw_historical_fig <- wl2_gowers_avg %>%
   
 
 plot_grid(grw_historical_fig, grw_recent_fig)
-#ggsave("../output/Climate/AVG_growthseason_Gowers_fromWL2.png", width = 24, height = 8, units = "in")
+#ggsave("../output/Climate/AVG_growthseason_Gowers_fromWL2_2324.png", width = 24, height = 8, units = "in")
 ```
 
 ```{r}
@@ -303,7 +305,7 @@ wtr_historical_fig <- wl2_gowers_avg %>%
   
 
 plot_grid(wtr_historical_fig, wtr_recent_fig)
-#ggsave("../output/Climate/AVG_wtryr_Gowers_fromWL2.png", width = 24, height = 8, units = "in")
+#ggsave("../output/Climate/AVG_wtryr_Gowers_fromWL2_2324.png", width = 24, height = 8, units = "in")
 ```
 
 #### For Subtraction Distances
@@ -311,10 +313,10 @@ plot_grid(wtr_historical_fig, wtr_recent_fig)
 ```{r}
 wl2_sub_dist_2023_prep <- wl2_sub_dist_2023 %>% 
   select(pop:GrwSsn_PPTDist_Historic)
-wl2_sub_dist_2024_prep <- wl2_sub_dist_2024 %>% 
+wl2_sub_dist_2324_prep <- wl2_sub_dist_2324 %>% 
   select(pop:GrwSsn_PPTDist_Historic) 
 
-wl2_sub_dist_avg <- bind_rows(wl2_sub_dist_2023_prep, wl2_sub_dist_2024_prep) %>% 
+wl2_sub_dist_avg <- bind_rows(wl2_sub_dist_2023_prep, wl2_sub_dist_2324_prep) %>% 
   group_by(pop) %>% 
   summarise_at(c("Wtr_Year_TempDist_Recent",  "Wtr_Year_PPTDist_Recent", 
                  "Wtr_Year_TempDist_Historic", "Wtr_Year_PPTDist_Historic",
@@ -370,9 +372,9 @@ ucd_surv %>% filter(is.na(death.date)) #filter the alive plants on 10/16/23
 wl2_establishment <- read_csv("../output/WL2_Traits/WL2_Establishment.csv")
 wl2_surv_to_rep_y1 <- read_csv("../output/WL2_Traits/WL2_SurvtoRep_y1.csv")
 wl2_fruits_y1 <- read_csv("../output/WL2_Traits/WL2_Fruits_Y1.csv")
-winter_surv <- read_csv("../output/WL2_Traits/WL2_WinterSurv.csv")
-wl2_surv_to_rep_y2 <- read_csv("../output/WL2_Traits/WL2_Surv_to_Rep_Y2.csv")
-wl2_fruits_y2 <- read_csv("../output/WL2_Traits/WL2_Fruits_Y2.csv")
+winter_surv <- read_csv("../output/WL2_Traits/WL2_WinterSurv_2324.csv")
+wl2_surv_to_rep_y2 <- read_csv("../output/WL2_Traits/WL2_Surv_to_Rep_Y2_2324.csv")
+wl2_fruits_y2 <- read_csv("../output/WL2_Traits/WL2_Fruits_Y2_2324.csv")
 ```
 
 ## Davis - No Year 2
@@ -1385,38 +1387,49 @@ WL2_prob_fitness_for_paper <- ggarrange(GD_prob, WYCD_prob_recent,
                                         labels = c("A)", "B)", "C)", "D)"), 
                                         font.label = list(size=30, face = "plain"), 
                                         ncol=2, nrow=2) 
-ggsave("../output/WL2_Traits/WL2_ProbFitness_SCATTERS_Summary_Recent.png", width = 24, height = 18, units = "in")
+ggsave("../output/WL2_Traits/WL2_ProbFitness_SCATTERS_Summary_Recent_2324.png", width = 26, height = 18, units = "in")
 ```
 
 ```{r}
-GSCD_prob_recent <- wl2_total_fitness_sub_dist %>% 
+prob_fitness_summary_sub_grw <- wl2_total_fitness_sub_dist %>%  
   mutate(ProbFitness=if_else(Total_Fitness==0, 0, 1)) %>% 
   group_by(pop, elev_m, GrwSsn_PPTDist_Recent, GrwSsn_PPTDist_Historic) %>% 
-  summarise(meanEst=mean(ProbFitness, na.rm = TRUE), semEst=sem(ProbFitness, na.rm=TRUE)) %>% 
-  ggplot(aes(x=GrwSsn_PPTDist_Recent, y=meanEst, group = pop)) +
-  geom_point(size=6) + 
+  summarise(meanEst=mean(ProbFitness, na.rm = TRUE), semEst=sem(ProbFitness, na.rm=TRUE)) %>%
+  mutate(RepYear=if_else(meanEst==0, "None",
+                         if_else(pop=="TM2", "Both Years", "Year 2 Only")))
+prob_fitness_summary_sub_grw$RepYear <- factor(prob_fitness_summary_sub_grw$RepYear,
+                                               levels = c('None','Year 2 Only', 'Both Years'))
+
+GSCD_prob_recent <- prob_fitness_summary_sub_grw %>% 
+  ggplot(aes(x=GrwSsn_PPTDist_Recent, y=meanEst, group = pop, color=elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_point(aes(shape=RepYear), size=6) + 
   geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=0.3, linewidth = 2) +
+  annotate("text", x = 197.24399, y= 0.095, label = "WL2", 
+           colour = "purple", fontface="bold", size = 22 / .pt) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
-  labs(y="Probability of Successfully Reproducing", x="Recent Growth Season PPT Dist") +
+  labs(y="Probability of Successfully Reproducing", x="Recent Growth Season PPT Dist",
+       color="Elevation (m)", shape="Rep Year(s)") +
   theme(text=element_text(size=30))
 
-GSCD_prob_historic <- wl2_total_fitness_sub_dist %>% 
-  mutate(ProbFitness=if_else(Total_Fitness==0, 0, 1)) %>% 
-  group_by(pop, elev_m, GrwSsn_PPTDist_Recent, GrwSsn_PPTDist_Historic) %>% 
-  summarise(meanEst=mean(ProbFitness, na.rm = TRUE), semEst=sem(ProbFitness, na.rm=TRUE)) %>% 
-  ggplot(aes(x=GrwSsn_PPTDist_Historic, y=meanEst, group = pop)) +
-  geom_point(size=6) + 
+GSCD_prob_historic <- prob_fitness_summary_sub_grw %>% 
+  ggplot(aes(x=GrwSsn_PPTDist_Historic, y=meanEst, group = pop, color=elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_point(aes(shape=RepYear), size=6) + 
   geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.3, linewidth = 2) +
+  annotate("text", x = 250.881330, y= 0.095, label = "WL2", 
+           colour = "purple", fontface="bold", size = 22 / .pt) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
-  labs(y="Probability of Successfully Reproducing", x="Historic Growth Season PPT Dist") +
+  labs(y="Probability of Successfully Reproducing", x="Historic Growth Season PPT Dist",
+       color="Elevation (m)", shape="Rep Year(s)") +
   theme(text=element_text(size=30))
 
 WL2_prob_fitness_for_paper2 <- ggarrange(GSCD_prob_historic,
                                          GSCD_prob_recent,
                                         ncol=2, nrow=1) 
-ggsave("../output/WL2_Traits/WL2_ProbFitness_SCATTERS_PPT_GRWSSN.png", width = 24, height = 9, units = "in")
+ggsave("../output/WL2_Traits/WL2_ProbFitness_SCATTERS_PPT_GRWSSN_2324.png", width = 26, height = 9, units = "in")
 ```
 
 
@@ -2447,9 +2460,13 @@ GSCD_temp <- wl2_total_fitness_sub_dist %>%
   filter(pop!="SQ1", pop!="WR") %>% 
   group_by(pop, elev_m, GrwSsn_TempDist_Recent, GrwSsn_TempDist_Historic) %>% 
   summarise(meanEst=mean(Total_Fitness, na.rm = TRUE), semEst=sem(Total_Fitness, na.rm=TRUE)) %>% 
-  ggplot(aes(x=GrwSsn_TempDist_Historic, y=meanEst, group = pop)) +
+  ggplot(aes(x=GrwSsn_TempDist_Historic, y=meanEst, group = pop, color=elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
   geom_point(size=6) + 
   geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.02, linewidth = 2) +
+  annotate("text", x = -2.1, y= 22.40000, label = "WL2", 
+           colour = "purple", fontface="bold", size = 22 / .pt) +
+  theme_classic() + 
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
   labs(y="Total Fruit Number", x="Historic Growth Season Temp Dist") +
@@ -2460,9 +2477,13 @@ GSCD_ppt <- wl2_total_fitness_sub_dist %>%
   filter(pop!="SQ1", pop!="WR") %>% 
   group_by(pop, elev_m, GrwSsn_PPTDist_Recent, GrwSsn_PPTDist_Historic) %>% 
   summarise(meanEst=mean(Total_Fitness, na.rm = TRUE), semEst=sem(Total_Fitness, na.rm=TRUE)) %>% 
-  ggplot(aes(x=GrwSsn_PPTDist_Historic, y=meanEst, group = pop)) +
+  ggplot(aes(x=GrwSsn_PPTDist_Historic, y=meanEst, group = pop, color=elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
   geom_point(size=6) + 
   geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.02, linewidth = 2) +
+  annotate("text", x = 305	, y= 22.40000, label = "WL2", 
+           colour = "purple", fontface="bold", size = 22 / .pt) +
+  theme_classic() + 
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
   labs(y="Total Fruit Number", x="Historic Growth Season PPT Dist") +
@@ -2470,7 +2491,7 @@ GSCD_ppt <- wl2_total_fitness_sub_dist %>%
 
 WL2_tot_fitness_for_paper <- ggarrange(GSCD_temp, GSCD_ppt, 
                                         ncol=2, nrow=1) 
-#ggsave("../output/WL2_Traits/WL2_Total_RepOutput_SCATTERS_GRWSSN_Historic_tmpppt.png", width = 24, height = 9, units = "in")
+ggsave("../output/WL2_Traits/WL2_Total_RepOutput_SCATTERS_GRWSSN_Historic_tmpppt_2324.png", width = 26, height = 9, units = "in")
 ```
 
 

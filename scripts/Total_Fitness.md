@@ -1,7 +1,7 @@
 ---
 title: "Total Fitness"
 author: "Brandie QC"
-date: "2025-06-02"
+date: "2025-06-10"
 output: 
   html_document: 
     keep_md: true
@@ -335,7 +335,8 @@ wl2_gowers_2023 <- read_csv("../output/Climate/Gowers_WL2.csv") %>%
 ```
 
 ``` r
-wl2_gowers_2024 <- read_csv("../output/Climate/Gowers_WL2_2024.csv") %>% 
+wl2_gowers_2324 <- read_csv("../output/Climate/Gowers_WL2_2324.csv") %>% 
+  select(parent.pop:GrwSsn_GD, Wtr_Year_GD) %>% 
   pivot_wider(names_from = TimePd, values_from = c(GrwSsn_GD, Wtr_Year_GD)) %>% 
   mutate(WL2_Lat=38.82599, WL2_Long=-120.2509, WL2_Elev=2020) %>% 
   mutate(Geographic_Dist=distHaversine(cbind(WL2_Long, WL2_Lat), cbind(Long, Lat)),
@@ -518,7 +519,7 @@ wl2_sub_dist_2023 <- wl2_wtr_year_sub_recent %>%
 ```
 
 ``` r
-wl2_wtr_year_sub_recent_2024 <- read_csv("../output/Climate/full_year_Subtraction_Dist_from_Home_WL2_2024_Recent.csv") %>% 
+wl2_wtr_year_sub_recent_2324 <- read_csv("../output/Climate/full_year_Subtraction_Dist_from_Home_WL2_2324_Recent.csv") %>% 
   select(parent.pop, Wtr_Year_TempDist_Recent=ann_tmean_dist, Wtr_Year_PPTDist_Recent=ann_ppt_dist)
 ```
 
@@ -534,7 +535,7 @@ wl2_wtr_year_sub_recent_2024 <- read_csv("../output/Climate/full_year_Subtractio
 ```
 
 ``` r
-wl2_wtr_year_sub_historic_2024 <- read_csv("../output/Climate/full_year_Subtraction_Dist_from_Home_WL2_2024_Historical.csv") %>% 
+wl2_wtr_year_sub_historic_2324 <- read_csv("../output/Climate/full_year_Subtraction_Dist_from_Home_WL2_2324_Historical.csv") %>% 
   select(parent.pop, Wtr_Year_TempDist_Historic=ann_tmean_dist, Wtr_Year_PPTDist_Historic=ann_ppt_dist)
 ```
 
@@ -550,7 +551,7 @@ wl2_wtr_year_sub_historic_2024 <- read_csv("../output/Climate/full_year_Subtract
 ```
 
 ``` r
-wl2_grwssn_sub_recent_2024 <- read_csv("../output/Climate/grwssn_Subtraction_Dist_from_Home_WL2_2024_Recent.csv") %>% 
+wl2_grwssn_sub_recent_2324 <- read_csv("../output/Climate/grwssn_Subtraction_Dist_from_Home_WL2_2324_Recent.csv") %>% 
   select(parent.pop, GrwSsn_TempDist_Recent=ann_tmean_dist, GrwSsn_PPTDist_Recent=ann_ppt_dist)
 ```
 
@@ -566,7 +567,7 @@ wl2_grwssn_sub_recent_2024 <- read_csv("../output/Climate/grwssn_Subtraction_Dis
 ```
 
 ``` r
-wl2_grwssn_sub_historic_2024 <- read_csv("../output/Climate/grwssn_Subtraction_Dist_from_Home_WL2_2024_Historical.csv") %>% 
+wl2_grwssn_sub_historic_2324 <- read_csv("../output/Climate/grwssn_Subtraction_Dist_from_Home_WL2_2324_Historical.csv") %>% 
   select(parent.pop, GrwSsn_TempDist_Historic=ann_tmean_dist, GrwSsn_PPTDist_Historic=ann_ppt_dist)
 ```
 
@@ -582,12 +583,12 @@ wl2_grwssn_sub_historic_2024 <- read_csv("../output/Climate/grwssn_Subtraction_D
 ```
 
 ``` r
-wl2_sub_dist_2024 <- wl2_wtr_year_sub_recent_2024 %>% 
-  left_join(wl2_wtr_year_sub_historic_2024) %>% 
-  left_join(wl2_grwssn_sub_recent_2024) %>% 
-  left_join(wl2_grwssn_sub_historic_2024) %>% 
+wl2_sub_dist_2324 <- wl2_wtr_year_sub_recent_2324 %>% 
+  left_join(wl2_wtr_year_sub_historic_2324) %>% 
+  left_join(wl2_grwssn_sub_recent_2324) %>% 
+  left_join(wl2_grwssn_sub_historic_2324) %>% 
   rename(pop=parent.pop) %>% 
-  left_join(wl2_gowers_2024)
+  left_join(wl2_gowers_2324)
 ```
 
 ```
@@ -783,9 +784,9 @@ cor.sig_wl2$p
 
 ``` r
 wl2_gowers_2023_prep <- wl2_gowers_2023 %>% rename_with(~paste0(., "_2023"), 6:9)
-wl2_gowers_2024_prep <- wl2_gowers_2024 %>% rename_with(~paste0(., "_2024"), 6:9)
+wl2_gowers_2324_prep <- wl2_gowers_2324 %>% rename_with(~paste0(., "_2024"), 6:9)
 
-wl2_gowers_avg <- bind_rows(wl2_gowers_2023, wl2_gowers_2024) %>% 
+wl2_gowers_avg <- bind_rows(wl2_gowers_2023, wl2_gowers_2324) %>% 
   group_by(pop, elevation.group, elev_m, Geographic_Dist, Elev_Dist) %>% 
   summarise_at(c("GrwSsn_GD_Recent",  "GrwSsn_GD_Historical", "Wtr_Year_GD_Recent", "Wtr_Year_GD_Historical"), c(mean), na.rm = TRUE)
 wl2_gowers_avg
@@ -797,15 +798,15 @@ wl2_gowers_avg
 ##    pop   elevation.group elev_m Geographic_Dist Elev_Dist GrwSsn_GD_Recent
 ##    <chr> <chr>            <dbl>           <dbl>     <dbl>            <dbl>
 ##  1 BH    Low               511.         159626.    -1509.            0.312
-##  2 CC    Low               313          132498.    -1707             0.417
-##  3 CP2   High             2244.          21060.      224.            0.301
-##  4 CP3   High             2266.          19415.      246.            0.324
-##  5 DPR   Mid              1019.          66246.    -1001.            0.439
-##  6 FR    Mid               787          154694.    -1233             0.386
-##  7 IH    Low               454.          65203.    -1566.            0.440
-##  8 LV1   High             2593.         212682.      573.            0.379
-##  9 LV3   High             2354.         213902.      334.            0.380
-## 10 LVTR1 High             2741.         213038.      721.            0.404
+##  2 CC    Low               313          132498.    -1707             0.418
+##  3 CP2   High             2244.          21060.      224.            0.305
+##  4 CP3   High             2266.          19415.      246.            0.327
+##  5 DPR   Mid              1019.          66246.    -1001.            0.440
+##  6 FR    Mid               787          154694.    -1233             0.388
+##  7 IH    Low               454.          65203.    -1566.            0.442
+##  8 LV1   High             2593.         212682.      573.            0.377
+##  9 LV3   High             2354.         213902.      334.            0.378
+## 10 LVTR1 High             2741.         213038.      721.            0.402
 ## # ℹ 13 more rows
 ## # ℹ 3 more variables: GrwSsn_GD_Historical <dbl>, Wtr_Year_GD_Recent <dbl>,
 ## #   Wtr_Year_GD_Historical <dbl>
@@ -838,7 +839,7 @@ plot_grid(grw_historical_fig, grw_recent_fig)
 ![](Total_Fitness_files/figure-html/unnamed-chunk-7-1.png)<!-- -->
 
 ``` r
-#ggsave("../output/Climate/AVG_growthseason_Gowers_fromWL2.png", width = 24, height = 8, units = "in")
+#ggsave("../output/Climate/AVG_growthseason_Gowers_fromWL2_2324.png", width = 24, height = 8, units = "in")
 ```
 
 
@@ -868,7 +869,7 @@ plot_grid(wtr_historical_fig, wtr_recent_fig)
 ![](Total_Fitness_files/figure-html/unnamed-chunk-8-1.png)<!-- -->
 
 ``` r
-#ggsave("../output/Climate/AVG_wtryr_Gowers_fromWL2.png", width = 24, height = 8, units = "in")
+#ggsave("../output/Climate/AVG_wtryr_Gowers_fromWL2_2324.png", width = 24, height = 8, units = "in")
 ```
 
 #### For Subtraction Distances
@@ -877,10 +878,10 @@ plot_grid(wtr_historical_fig, wtr_recent_fig)
 ``` r
 wl2_sub_dist_2023_prep <- wl2_sub_dist_2023 %>% 
   select(pop:GrwSsn_PPTDist_Historic)
-wl2_sub_dist_2024_prep <- wl2_sub_dist_2024 %>% 
+wl2_sub_dist_2324_prep <- wl2_sub_dist_2324 %>% 
   select(pop:GrwSsn_PPTDist_Historic) 
 
-wl2_sub_dist_avg <- bind_rows(wl2_sub_dist_2023_prep, wl2_sub_dist_2024_prep) %>% 
+wl2_sub_dist_avg <- bind_rows(wl2_sub_dist_2023_prep, wl2_sub_dist_2324_prep) %>% 
   group_by(pop) %>% 
   summarise_at(c("Wtr_Year_TempDist_Recent",  "Wtr_Year_PPTDist_Recent", 
                  "Wtr_Year_TempDist_Historic", "Wtr_Year_PPTDist_Historic",
@@ -901,16 +902,16 @@ wl2_sub_dist_avg
 ## # A tibble: 23 × 17
 ##    pop   Wtr_Year_TempDist_Recent Wtr_Year_PPTDist_Recent Wtr_Year_TempDist_Hi…¹
 ##    <chr>                    <dbl>                   <dbl>                  <dbl>
-##  1 BH                       8.33                  -1255.                    7.42
-##  2 CC                       8.74                   -822.                    7.98
-##  3 CP2                     -0.643                  -546.                   -1.81
-##  4 CP3                     -1.35                   -601.                   -2.46
-##  5 DPR                      6.14                   -378.                    5.04
-##  6 FR                       4.97                   -815.                    4.41
-##  7 IH                       7.51                   -763.                    6.83
-##  8 LV1                     -3.00                    -73.5                  -4.52
-##  9 LV3                     -2.99                   -105.                   -4.51
-## 10 LVTR1                   -3.15                    -14.8                  -4.66
+##  1 BH                       8.30                  -1257.                    7.39
+##  2 CC                       8.71                   -826.                    7.98
+##  3 CP2                     -0.653                  -552.                   -1.83
+##  4 CP3                     -1.36                   -607.                   -2.48
+##  5 DPR                      6.12                   -384.                    5.02
+##  6 FR                       4.97                   -821.                    4.39
+##  7 IH                       7.49                   -767.                    6.82
+##  8 LV1                     -3.02                    -83.2                  -4.53
+##  9 LV3                     -3.01                   -115.                   -4.53
+## 10 LVTR1                   -3.17                    -24.7                  -4.67
 ## # ℹ 13 more rows
 ## # ℹ abbreviated name: ¹​Wtr_Year_TempDist_Historic
 ## # ℹ 13 more variables: Wtr_Year_PPTDist_Historic <dbl>,
@@ -1092,7 +1093,7 @@ wl2_fruits_y1 <- read_csv("../output/WL2_Traits/WL2_Fruits_Y1.csv")
 ```
 
 ``` r
-winter_surv <- read_csv("../output/WL2_Traits/WL2_WinterSurv.csv")
+winter_surv <- read_csv("../output/WL2_Traits/WL2_WinterSurv_2324.csv")
 ```
 
 ```
@@ -1107,7 +1108,7 @@ winter_surv <- read_csv("../output/WL2_Traits/WL2_WinterSurv.csv")
 ```
 
 ``` r
-wl2_surv_to_rep_y2 <- read_csv("../output/WL2_Traits/WL2_Surv_to_Rep_Y2.csv")
+wl2_surv_to_rep_y2 <- read_csv("../output/WL2_Traits/WL2_Surv_to_Rep_Y2_2324.csv")
 ```
 
 ```
@@ -1122,7 +1123,7 @@ wl2_surv_to_rep_y2 <- read_csv("../output/WL2_Traits/WL2_Surv_to_Rep_Y2.csv")
 ```
 
 ``` r
-wl2_fruits_y2 <- read_csv("../output/WL2_Traits/WL2_Fruits_Y2.csv")
+wl2_fruits_y2 <- read_csv("../output/WL2_Traits/WL2_Fruits_Y2_2324.csv")
 ```
 
 ```
@@ -2823,53 +2824,58 @@ WL2_prob_fitness_for_paper <- ggarrange(GD_prob, WYCD_prob_recent,
                                         labels = c("A)", "B)", "C)", "D)"), 
                                         font.label = list(size=30, face = "plain"), 
                                         ncol=2, nrow=2) 
-ggsave("../output/WL2_Traits/WL2_ProbFitness_SCATTERS_Summary_Recent.png", width = 24, height = 18, units = "in")
+ggsave("../output/WL2_Traits/WL2_ProbFitness_SCATTERS_Summary_Recent_2324.png", width = 26, height = 18, units = "in")
 ```
 
 
 ``` r
-GSCD_prob_recent <- wl2_total_fitness_sub_dist %>% 
+prob_fitness_summary_sub_grw <- wl2_total_fitness_sub_dist %>%  
   mutate(ProbFitness=if_else(Total_Fitness==0, 0, 1)) %>% 
   group_by(pop, elev_m, GrwSsn_PPTDist_Recent, GrwSsn_PPTDist_Historic) %>% 
-  summarise(meanEst=mean(ProbFitness, na.rm = TRUE), semEst=sem(ProbFitness, na.rm=TRUE)) %>% 
-  ggplot(aes(x=GrwSsn_PPTDist_Recent, y=meanEst, group = pop)) +
-  geom_point(size=6) + 
+  summarise(meanEst=mean(ProbFitness, na.rm = TRUE), semEst=sem(ProbFitness, na.rm=TRUE)) %>%
+  mutate(RepYear=if_else(meanEst==0, "None",
+                         if_else(pop=="TM2", "Both Years", "Year 2 Only")))
+```
+
+```
+## `summarise()` has grouped output by 'pop', 'elev_m', 'GrwSsn_PPTDist_Recent'.
+## You can override using the `.groups` argument.
+```
+
+``` r
+prob_fitness_summary_sub_grw$RepYear <- factor(prob_fitness_summary_sub_grw$RepYear,
+                                               levels = c('None','Year 2 Only', 'Both Years'))
+
+GSCD_prob_recent <- prob_fitness_summary_sub_grw %>% 
+  ggplot(aes(x=GrwSsn_PPTDist_Recent, y=meanEst, group = pop, color=elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_point(aes(shape=RepYear), size=6) + 
   geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=0.3, linewidth = 2) +
+  annotate("text", x = 197.24399, y= 0.095, label = "WL2", 
+           colour = "purple", fontface="bold", size = 22 / .pt) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
-  labs(y="Probability of Successfully Reproducing", x="Recent Growth Season PPT Dist") +
+  labs(y="Probability of Successfully Reproducing", x="Recent Growth Season PPT Dist",
+       color="Elevation (m)", shape="Rep Year(s)") +
   theme(text=element_text(size=30))
-```
 
-```
-## `summarise()` has grouped output by 'pop', 'elev_m', 'GrwSsn_PPTDist_Recent'.
-## You can override using the `.groups` argument.
-```
-
-``` r
-GSCD_prob_historic <- wl2_total_fitness_sub_dist %>% 
-  mutate(ProbFitness=if_else(Total_Fitness==0, 0, 1)) %>% 
-  group_by(pop, elev_m, GrwSsn_PPTDist_Recent, GrwSsn_PPTDist_Historic) %>% 
-  summarise(meanEst=mean(ProbFitness, na.rm = TRUE), semEst=sem(ProbFitness, na.rm=TRUE)) %>% 
-  ggplot(aes(x=GrwSsn_PPTDist_Historic, y=meanEst, group = pop)) +
-  geom_point(size=6) + 
+GSCD_prob_historic <- prob_fitness_summary_sub_grw %>% 
+  ggplot(aes(x=GrwSsn_PPTDist_Historic, y=meanEst, group = pop, color=elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_point(aes(shape=RepYear), size=6) + 
   geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.3, linewidth = 2) +
+  annotate("text", x = 250.881330, y= 0.095, label = "WL2", 
+           colour = "purple", fontface="bold", size = 22 / .pt) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
-  labs(y="Probability of Successfully Reproducing", x="Historic Growth Season PPT Dist") +
+  labs(y="Probability of Successfully Reproducing", x="Historic Growth Season PPT Dist",
+       color="Elevation (m)", shape="Rep Year(s)") +
   theme(text=element_text(size=30))
-```
 
-```
-## `summarise()` has grouped output by 'pop', 'elev_m', 'GrwSsn_PPTDist_Recent'.
-## You can override using the `.groups` argument.
-```
-
-``` r
 WL2_prob_fitness_for_paper2 <- ggarrange(GSCD_prob_historic,
                                          GSCD_prob_recent,
                                         ncol=2, nrow=1) 
-ggsave("../output/WL2_Traits/WL2_ProbFitness_SCATTERS_PPT_GRWSSN.png", width = 24, height = 9, units = "in")
+ggsave("../output/WL2_Traits/WL2_ProbFitness_SCATTERS_PPT_GRWSSN_2324.png", width = 26, height = 9, units = "in")
 ```
 
 
@@ -3612,18 +3618,18 @@ prob_fitness_SUB_fits_wl2 %>% mutate(tidy=map(fit, tidy)) %>% unnest(tidy) %>%
 ## # A tibble: 12 × 6
 ##    name          term                       estimate std.error statistic p.value
 ##    <chr>         <chr>                         <dbl>     <dbl>     <dbl>   <dbl>
-##  1 GS_Recent     GrwSsn_TempDist_Recent     -0.242       0.928  -0.261    0.794 
-##  2 GS_Recent     GrwSsn_PPTDist_Recent       1.96        0.971   2.02     0.0438
-##  3 GS_Recent     Geographic_Dist             0.102       0.639   0.160    0.873 
-##  4 GS_Historical GrwSsn_TempDist_Historic   -0.00800     0.915  -0.00875  0.993 
-##  5 GS_Historical GrwSsn_PPTDist_Historic     1.79        0.912   1.96     0.0497
-##  6 GS_Historical Geographic_Dist            -0.0156      0.626  -0.0249   0.980 
-##  7 WY_Recent     Wtr_Year_TempDist_Recent    1.78        0.741   2.40     0.0164
-##  8 WY_Recent     Wtr_Year_PPTDist_Recent    -0.588       0.760  -0.774    0.439 
-##  9 WY_Recent     Geographic_Dist            -0.311       0.585  -0.531    0.595 
-## 10 WY_Historical Wtr_Year_TempDist_Historic  1.75        0.763   2.29     0.0220
-## 11 WY_Historical Wtr_Year_PPTDist_Historic  -0.588       0.782  -0.751    0.452 
-## 12 WY_Historical Geographic_Dist            -0.238       0.565  -0.421    0.674
+##  1 GS_Recent     GrwSsn_TempDist_Recent      -0.242      0.933   -0.260   0.795 
+##  2 GS_Recent     GrwSsn_PPTDist_Recent        1.96       0.978    2.01    0.0448
+##  3 GS_Recent     Geographic_Dist              0.113      0.642    0.176   0.860 
+##  4 GS_Historical GrwSsn_TempDist_Historic     0.418      0.843    0.497   0.619 
+##  5 GS_Historical GrwSsn_PPTDist_Historic      1.55       0.807    1.92    0.0554
+##  6 GS_Historical Geographic_Dist             -0.0568     0.631   -0.0900  0.928 
+##  7 WY_Recent     Wtr_Year_TempDist_Recent     1.78       0.741    2.40    0.0164
+##  8 WY_Recent     Wtr_Year_PPTDist_Recent     -0.588      0.758   -0.775   0.438 
+##  9 WY_Recent     Geographic_Dist             -0.309      0.584   -0.528   0.597 
+## 10 WY_Historical Wtr_Year_TempDist_Historic   1.75       0.763    2.29    0.0222
+## 11 WY_Historical Wtr_Year_PPTDist_Historic   -0.589      0.783   -0.753   0.452 
+## 12 WY_Historical Geographic_Dist             -0.239      0.566   -0.423   0.672
 ```
 
 ``` r
@@ -3646,28 +3652,28 @@ summary(mod_test)
 ## 
 ## Scaled residuals: 
 ##     Min      1Q  Median      3Q     Max 
-## -1.4229 -0.2611 -0.0440 -0.0292  4.9335 
+## -1.4228 -0.2611 -0.0441 -0.0288  4.9333 
 ## 
 ## Random effects:
 ##  Groups Name        Variance Std.Dev.
-##  pop    (Intercept) 5.6639   2.3799  
+##  pop    (Intercept) 5.6844   2.3842  
 ##  block  (Intercept) 0.7012   0.8374  
 ## Number of obs: 1573, groups:  pop, 23; block, 13
 ## 
 ## Fixed effects:
 ##                        Estimate Std. Error z value Pr(>|z|)    
-## (Intercept)             -5.3145     0.9414  -5.646 1.65e-08 ***
-## GrwSsn_TempDist_Recent  -0.2424     0.9284  -0.261   0.7940    
-## GrwSsn_PPTDist_Recent    1.9572     0.9706   2.016   0.0438 *  
-## Geographic_Dist          0.1024     0.6391   0.160   0.8727    
+## (Intercept)             -5.3208     0.9429  -5.643 1.67e-08 ***
+## GrwSsn_TempDist_Recent  -0.2424     0.9331  -0.260   0.7951    
+## GrwSsn_PPTDist_Recent    1.9625     0.9778   2.007   0.0448 *  
+## Geographic_Dist          0.1129     0.6417   0.176   0.8603    
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
 ## Correlation of Fixed Effects:
 ##             (Intr) GS_TD_ GS_PPT
-## GrwSsn_TD_R -0.176              
-## GrwS_PPTD_R -0.192 -0.656       
-## Gegrphc_Dst -0.088 -0.132  0.327
+## GrwSsn_TD_R -0.173              
+## GrwS_PPTD_R -0.193 -0.658       
+## Gegrphc_Dst -0.090 -0.138  0.335
 ```
 
 Model comparison
@@ -3687,9 +3693,9 @@ anova(m1, m2, m3)
 ## m3: ProbFitness ~ GrwSsn_PPTDist_Recent + Geographic_Dist + (1 | pop) + (1 | block)
 ## m1: ProbFitness ~ Wtr_Year_TempDist_Recent + GrwSsn_PPTDist_Recent + Geographic_Dist + (1 | pop) + (1 | block)
 ##    npar    AIC    BIC  logLik deviance  Chisq Df Pr(>Chisq)  
-## m2    5 560.09 586.90 -275.05   550.09                       
-## m3    5 563.49 590.29 -276.74   553.49 0.0000  0             
-## m1    6 562.05 594.22 -275.03   550.05 3.4359  1    0.06379 .
+## m2    5 560.10 586.90 -275.05   550.10                       
+## m3    5 563.50 590.30 -276.75   553.50 0.0000  0             
+## m1    6 562.05 594.22 -275.03   550.05 3.4449  1    0.06345 .
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
@@ -5070,9 +5076,13 @@ GSCD_temp <- wl2_total_fitness_sub_dist %>%
   filter(pop!="SQ1", pop!="WR") %>% 
   group_by(pop, elev_m, GrwSsn_TempDist_Recent, GrwSsn_TempDist_Historic) %>% 
   summarise(meanEst=mean(Total_Fitness, na.rm = TRUE), semEst=sem(Total_Fitness, na.rm=TRUE)) %>% 
-  ggplot(aes(x=GrwSsn_TempDist_Historic, y=meanEst, group = pop)) +
+  ggplot(aes(x=GrwSsn_TempDist_Historic, y=meanEst, group = pop, color=elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
   geom_point(size=6) + 
   geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.02, linewidth = 2) +
+  annotate("text", x = -2.1, y= 22.40000, label = "WL2", 
+           colour = "purple", fontface="bold", size = 22 / .pt) +
+  theme_classic() + 
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
   labs(y="Total Fruit Number", x="Historic Growth Season Temp Dist") +
@@ -5090,9 +5100,13 @@ GSCD_ppt <- wl2_total_fitness_sub_dist %>%
   filter(pop!="SQ1", pop!="WR") %>% 
   group_by(pop, elev_m, GrwSsn_PPTDist_Recent, GrwSsn_PPTDist_Historic) %>% 
   summarise(meanEst=mean(Total_Fitness, na.rm = TRUE), semEst=sem(Total_Fitness, na.rm=TRUE)) %>% 
-  ggplot(aes(x=GrwSsn_PPTDist_Historic, y=meanEst, group = pop)) +
+  ggplot(aes(x=GrwSsn_PPTDist_Historic, y=meanEst, group = pop, color=elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
   geom_point(size=6) + 
   geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.02, linewidth = 2) +
+  annotate("text", x = 305	, y= 22.40000, label = "WL2", 
+           colour = "purple", fontface="bold", size = 22 / .pt) +
+  theme_classic() + 
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
   labs(y="Total Fruit Number", x="Historic Growth Season PPT Dist") +
@@ -5107,7 +5121,7 @@ GSCD_ppt <- wl2_total_fitness_sub_dist %>%
 ``` r
 WL2_tot_fitness_for_paper <- ggarrange(GSCD_temp, GSCD_ppt, 
                                         ncol=2, nrow=1) 
-#ggsave("../output/WL2_Traits/WL2_Total_RepOutput_SCATTERS_GRWSSN_Historic_tmpppt.png", width = 24, height = 9, units = "in")
+ggsave("../output/WL2_Traits/WL2_Total_RepOutput_SCATTERS_GRWSSN_Historic_tmpppt_2324.png", width = 26, height = 9, units = "in")
 ```
 
 
@@ -5383,13 +5397,13 @@ rep_output_SUB_models_log_CD_GD %>% select(-f, -lmer) %>% unnest(glance) %>% arr
 ##   name             predict  nobs sigma logLik   AIC   BIC REMLcrit df.residual
 ##   <chr>            <list>  <int> <dbl>  <dbl> <dbl> <dbl>    <dbl>       <int>
 ## 1 1_pop.block      <dbl>      96 0.871  -135.  278.  288.     270.          92
-## 2 3d_GS_Historical <dbl>      96 0.871  -134.  280.  296.     268.          90
-## 3 3a_GS_Historical <dbl>      96 0.870  -133.  279.  297.     265.          89
-## 4 3c_GS_Historical <dbl>      96 0.872  -135.  283.  298.     271.          90
+## 2 3d_GS_Historical <dbl>      96 0.871  -134.  281.  296.     269.          90
+## 3 3a_GS_Historical <dbl>      96 0.872  -133.  279.  297.     265.          89
+## 4 3c_GS_Historical <dbl>      96 0.872  -135.  282.  297.     270.          90
 ## 5 2_GS_Recent      <dbl>      96 0.875  -133.  281.  299.     267.          89
 ## 6 5_WY_Historical  <dbl>      96 0.875  -134.  282.  300.     268.          89
 ## 7 4_WY_Recent      <dbl>      96 0.876  -134.  282.  300.     268.          89
-## 8 3b_GS_Historical <dbl>      96 0.870  -133.  282.  303.     266.          88
+## 8 3b_GS_Historical <dbl>      96 0.877  -133.  283.  303.     267.          88
 ```
 
 ``` r
@@ -5401,13 +5415,13 @@ rep_output_SUB_models_log_CD_GD %>% select(-f, -lmer) %>% unnest(glance) %>% arr
 ##   name             predict  nobs sigma logLik   AIC   BIC REMLcrit df.residual
 ##   <chr>            <list>  <int> <dbl>  <dbl> <dbl> <dbl>    <dbl>       <int>
 ## 1 1_pop.block      <dbl>      96 0.871  -135.  278.  288.     270.          92
-## 2 3a_GS_Historical <dbl>      96 0.870  -133.  279.  297.     265.          89
-## 3 3d_GS_Historical <dbl>      96 0.871  -134.  280.  296.     268.          90
+## 2 3a_GS_Historical <dbl>      96 0.872  -133.  279.  297.     265.          89
+## 3 3d_GS_Historical <dbl>      96 0.871  -134.  281.  296.     269.          90
 ## 4 2_GS_Recent      <dbl>      96 0.875  -133.  281.  299.     267.          89
 ## 5 5_WY_Historical  <dbl>      96 0.875  -134.  282.  300.     268.          89
 ## 6 4_WY_Recent      <dbl>      96 0.876  -134.  282.  300.     268.          89
-## 7 3b_GS_Historical <dbl>      96 0.870  -133.  282.  303.     266.          88
-## 8 3c_GS_Historical <dbl>      96 0.872  -135.  283.  298.     271.          90
+## 7 3c_GS_Historical <dbl>      96 0.872  -135.  282.  297.     270.          90
+## 8 3b_GS_Historical <dbl>      96 0.877  -133.  283.  303.     267.          88
 ```
 
 ``` r
@@ -5424,26 +5438,26 @@ rep_output_SUB_models_log_CD_GD %>% mutate(tidy=map(lmer, tidy)) %>% unnest(tidy
 ## # A tibble: 20 × 7
 ##    name             term              estimate std.error statistic    df p.value
 ##    <chr>            <chr>                <dbl>     <dbl>     <dbl> <dbl>   <dbl>
-##  1 2_GS_Recent      GrwSsn_TempDist_…   0.309      0.180    1.72    2.27 2.13e-1
-##  2 2_GS_Recent      GrwSsn_PPTDist_R…  -0.552      0.131   -4.22    1.36 9.64e-2
-##  3 2_GS_Recent      Geographic_Dist     0.126      0.174    0.729   4.15 5.05e-1
-##  4 3a_GS_Historical GrwSsn_TempDist_…   0.535      0.239    2.24   88.9  2.76e-2
-##  5 3a_GS_Historical GrwSsn_PPTDist_H…  -0.600      0.134   -4.49   87.1  2.18e-5
-##  6 3a_GS_Historical Geographic_Dist     0.119      0.169    0.701  85.6  4.85e-1
-##  7 3b_GS_Historical GrwSsn_TempDist_…   0.539      0.239    2.25   87.6  2.67e-2
-##  8 3b_GS_Historical GrwSsn_PPTDist_H…  -0.681      0.162   -4.22   85.9  6.13e-5
-##  9 3b_GS_Historical Geographic_Dist     0.157      0.174    0.900  84.6  3.71e-1
-## 10 3b_GS_Historical GrwSsn_TempDist_…   0.156      0.173    0.902  86.9  3.70e-1
-## 11 3c_GS_Historical GrwSsn_TempDist_…  -0.248      0.296   -0.839   4.89 4.40e-1
-## 12 3c_GS_Historical Geographic_Dist     0.0788     0.303    0.260   6.09 8.03e-1
-## 13 3d_GS_Historical GrwSsn_PPTDist_H…  -0.332      0.115   -2.88    3.67 5.00e-2
-## 14 3d_GS_Historical Geographic_Dist     0.0880     0.210    0.420   6.54 6.88e-1
-## 15 4_WY_Recent      Wtr_Year_TempDis…  -0.450      0.157   -2.86    2.17 9.41e-2
-## 16 4_WY_Recent      Wtr_Year_PPTDist…  -0.587      0.197   -2.98    1.94 1.00e-1
-## 17 4_WY_Recent      Geographic_Dist    -0.0172     0.210   -0.0822  3.57 9.39e-1
-## 18 5_WY_Historical  Wtr_Year_TempDis…  -0.497      0.173   -2.87    2.32 8.71e-2
-## 19 5_WY_Historical  Wtr_Year_PPTDist…  -0.614      0.218   -2.82    2.16 9.71e-2
-## 20 5_WY_Historical  Geographic_Dist     0.0127     0.213    0.0598  3.90 9.55e-1
+##  1 2_GS_Recent      GrwSsn_TempDist_…   0.302      0.182    1.66    2.32 2.21e-1
+##  2 2_GS_Recent      GrwSsn_PPTDist_R…  -0.549      0.133   -4.12    1.42 9.35e-2
+##  3 2_GS_Recent      Geographic_Dist     0.125      0.175    0.711   4.19 5.15e-1
+##  4 3a_GS_Historical GrwSsn_TempDist_…   0.779      0.334    2.34   87.0  2.17e-2
+##  5 3a_GS_Historical GrwSsn_PPTDist_H…  -0.618      0.142   -4.34   86.9  3.84e-5
+##  6 3a_GS_Historical Geographic_Dist     0.0967     0.169    0.571  85.5  5.69e-1
+##  7 3b_GS_Historical GrwSsn_TempDist_…   0.796      0.342    2.33   86.9  2.22e-2
+##  8 3b_GS_Historical GrwSsn_PPTDist_H…  -0.603      0.157   -3.84   86.5  2.35e-4
+##  9 3b_GS_Historical Geographic_Dist     0.0871     0.175    0.497  84.9  6.20e-1
+## 10 3b_GS_Historical GrwSsn_TempDist_…  -0.0436     0.189   -0.231  88.2  8.18e-1
+## 11 3c_GS_Historical GrwSsn_TempDist_…  -0.341      0.365   -0.933   5.00 3.94e-1
+## 12 3c_GS_Historical Geographic_Dist     0.0823     0.299    0.275   6.16 7.92e-1
+## 13 3d_GS_Historical GrwSsn_PPTDist_H…  -0.306      0.118   -2.60    3.88 6.20e-2
+## 14 3d_GS_Historical Geographic_Dist     0.0679     0.219    0.309   6.61 7.67e-1
+## 15 4_WY_Recent      Wtr_Year_TempDis…  -0.449      0.157   -2.86    2.18 9.40e-2
+## 16 4_WY_Recent      Wtr_Year_PPTDist…  -0.585      0.196   -2.99    1.94 9.99e-2
+## 17 4_WY_Recent      Geographic_Dist    -0.0170     0.210   -0.0809  3.58 9.40e-1
+## 18 5_WY_Historical  Wtr_Year_TempDis…  -0.498      0.174   -2.87    2.32 8.70e-2
+## 19 5_WY_Historical  Wtr_Year_PPTDist…  -0.615      0.219   -2.81    2.17 9.72e-2
+## 20 5_WY_Historical  Geographic_Dist     0.0106     0.213    0.0499  3.90 9.63e-1
 ```
 
 ``` r
@@ -5473,31 +5487,31 @@ summary(mod_test)
 ##     (1 | pop) + (1 | block)
 ##    Data: wl2_rep_output_sub
 ## 
-## REML criterion at convergence: 270.6
+## REML criterion at convergence: 270
 ## 
 ## Scaled residuals: 
 ##      Min       1Q   Median       3Q      Max 
-## -2.73480 -0.51559  0.01782  0.56428  2.55589 
+## -2.73919 -0.49817  0.02599  0.55998  2.55089 
 ## 
 ## Random effects:
 ##  Groups   Name        Variance Std.Dev.
-##  block    (Intercept) 0.3234   0.5687  
-##  pop      (Intercept) 0.1903   0.4363  
-##  Residual             0.7608   0.8723  
+##  block    (Intercept) 0.3245   0.5697  
+##  pop      (Intercept) 0.1825   0.4272  
+##  Residual             0.7604   0.8720  
 ## Number of obs: 96, groups:  block, 12; pop, 7
 ## 
 ## Fixed effects:
 ##                          Estimate Std. Error       df t value Pr(>|t|)    
-## (Intercept)               2.36595    0.29153  8.85560   8.116 2.17e-05 ***
-## GrwSsn_TempDist_Historic -0.24821    0.29569  4.89325  -0.839    0.440    
-## Geographic_Dist           0.07883    0.30311  6.09160   0.260    0.803    
+## (Intercept)               2.40896    0.30576  8.63705   7.879 3.17e-05 ***
+## GrwSsn_TempDist_Historic -0.34105    0.36543  4.99948  -0.933    0.394    
+## Geographic_Dist           0.08225    0.29883  6.16211   0.275    0.792    
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
 ## Correlation of Fixed Effects:
 ##             (Intr) GS_TD_
-## GrwSsn_TD_H -0.430       
-## Gegrphc_Dst  0.190  0.026
+## GrwSsn_TD_H -0.522       
+## Gegrphc_Dst  0.181  0.011
 ```
 
 ``` r
@@ -5521,13 +5535,13 @@ wl2_rep_output_sub %>% group_by(pop, GrwSsn_TempDist_Historic) %>% summarise(mea
 ## # Groups:   pop [7]
 ##   pop   GrwSsn_TempDist_Historic[,1] meanFruits
 ##   <chr>                        <dbl>      <dbl>
-## 1 YO7                       -0.841         2.57
-## 2 WL2                       -0.00213       2.45
-## 3 SC                         0.464         2.57
-## 4 BH                         0.512         3.03
-## 5 TM2                        0.579         1.54
-## 6 CC                         1.04          2.28
-## 7 IH                         1.29          2.26
+## 1 YO7                        -0.479        2.57
+## 2 WL2                        -0.0718       2.45
+## 3 BH                          0.484        3.03
+## 4 SC                          0.517        2.57
+## 5 TM2                         0.583        1.54
+## 6 CC                          0.745        2.28
+## 7 IH                          1.25         2.26
 ```
 
 ``` r
@@ -5543,32 +5557,32 @@ summary(mod_test)
 ##     Geographic_Dist + (1 | block)
 ##    Data: wl2_rep_output_sub
 ## 
-## REML criterion at convergence: 265.2
+## REML criterion at convergence: 265.1
 ## 
 ## Scaled residuals: 
 ##      Min       1Q   Median       3Q      Max 
-## -2.64842 -0.55573  0.08092  0.55407  2.62888 
+## -2.65182 -0.51275  0.01721  0.58893  2.63395 
 ## 
 ## Random effects:
 ##  Groups   Name        Variance Std.Dev.
-##  block    (Intercept) 0.2928   0.5412  
-##  Residual             0.7575   0.8703  
+##  block    (Intercept) 0.3007   0.5483  
+##  Residual             0.7601   0.8718  
 ## Number of obs: 96, groups:  block, 12
 ## 
 ## Fixed effects:
-##                          Estimate Std. Error      df t value Pr(>|t|)    
-## (Intercept)                2.4550     0.1969 16.5927  12.468 7.55e-10 ***
-## GrwSsn_TempDist_Historic   0.5351     0.2388 88.8694   2.240   0.0276 *  
-## GrwSsn_PPTDist_Historic   -0.6004     0.1337 87.0820  -4.489 2.18e-05 ***
-## Geographic_Dist            0.1185     0.1691 85.6158   0.701   0.4853    
+##                          Estimate Std. Error       df t value Pr(>|t|)    
+## (Intercept)               2.33465    0.20309 17.82605  11.496 1.12e-09 ***
+## GrwSsn_TempDist_Historic  0.77947    0.33354 87.04425   2.337   0.0217 *  
+## GrwSsn_PPTDist_Historic  -0.61772    0.14234 86.85801  -4.340 3.84e-05 ***
+## Geographic_Dist           0.09675    0.16928 85.48894   0.571   0.5692    
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
 ## Correlation of Fixed Effects:
 ##             (Intr) GS_TD_ GS_PPT
-## GrwSsn_TD_H -0.046              
-## GrwS_PPTD_H -0.170 -0.789       
-## Gegrphc_Dst  0.024  0.190 -0.161
+## GrwSsn_TD_H -0.241              
+## GrwS_PPTD_H  0.031 -0.831       
+## Gegrphc_Dst -0.023  0.186 -0.147
 ```
 
 ``` r
@@ -5581,8 +5595,8 @@ ranova(mod_test)
 ## Model:
 ## logTotalFitness ~ GrwSsn_TempDist_Historic + GrwSsn_PPTDist_Historic + Geographic_Dist + (1 | block)
 ##             npar  logLik    AIC    LRT Df Pr(>Chisq)    
-## <none>         6 -132.59 277.18                         
-## (1 | block)    5 -143.50 297.00 21.819  1  2.997e-06 ***
+## <none>         6 -132.54 277.08                         
+## (1 | block)    5 -143.48 296.95 21.869  1  2.919e-06 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
@@ -5593,10 +5607,10 @@ anova(mod_test)
 
 ```
 ## Type III Analysis of Variance Table with Satterthwaite's method
-##                           Sum Sq Mean Sq NumDF  DenDF F value    Pr(>F)    
-## GrwSsn_TempDist_Historic  3.8017  3.8017     1 88.869  5.0187   0.02757 *  
-## GrwSsn_PPTDist_Historic  15.2647 15.2647     1 87.082 20.1512 2.181e-05 ***
-## Geographic_Dist           0.3720  0.3720     1 85.616  0.4911   0.48534    
+##                           Sum Sq Mean Sq NumDF  DenDF F value   Pr(>F)    
+## GrwSsn_TempDist_Historic  4.1510  4.1510     1 87.044  5.4612  0.02174 *  
+## GrwSsn_PPTDist_Historic  14.3143 14.3143     1 86.858 18.8325 3.84e-05 ***
+## Geographic_Dist           0.2482  0.2482     1 85.489  0.3266  0.56916    
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
@@ -5648,28 +5662,28 @@ summary(mod_test2)
 ##     (1 | block)
 ##    Data: wl2_rep_output_sub
 ## 
-## REML criterion at convergence: 281.4
+## REML criterion at convergence: 280.3
 ## 
 ## Scaled residuals: 
 ##      Min       1Q   Median       3Q      Max 
-## -3.04616 -0.52744 -0.04693  0.65689  2.01462 
+## -3.05197 -0.53174 -0.04506  0.62903  1.95260 
 ## 
 ## Random effects:
 ##  Groups   Name        Variance Std.Dev.
-##  block    (Intercept) 0.3771   0.6141  
-##  Residual             0.9078   0.9528  
+##  block    (Intercept) 0.3791   0.6157  
+##  Residual             0.9010   0.9492  
 ## Number of obs: 96, groups:  block, 12
 ## 
 ## Fixed effects:
-##                           Estimate Std. Error        df t value Pr(>|t|)    
-## (Intercept)               2.304470   0.217582 15.436072  10.591 1.76e-08 ***
-## GrwSsn_TempDist_Historic -0.312346   0.160816 89.975074  -1.942   0.0552 .  
-## Geographic_Dist          -0.002848   0.182791 86.395308  -0.016   0.9876    
+##                          Estimate Std. Error      df t value Pr(>|t|)    
+## (Intercept)                2.3615     0.2253 17.6300  10.481 5.34e-09 ***
+## GrwSsn_TempDist_Historic  -0.4247     0.2022 88.8704  -2.100   0.0386 *  
+## Geographic_Dist           -0.0104     0.1824 86.3516  -0.057   0.9547    
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
 ## Correlation of Fixed Effects:
 ##             (Intr) GS_TD_
-## GrwSsn_TD_H -0.290       
-## Gegrphc_Dst -0.004  0.103
+## GrwSsn_TD_H -0.380       
+## Gegrphc_Dst -0.019  0.116
 ```
