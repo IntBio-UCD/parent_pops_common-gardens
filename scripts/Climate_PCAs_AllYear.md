@@ -1,7 +1,7 @@
 ---
 title: "Climate_PCAs_AllYear"
 author: "Brandie QC"
-date: "2025-05-20"
+date: "2025-06-10"
 output: 
   html_document: 
     keep_md: true
@@ -10,8 +10,6 @@ output:
 
 
 To Do:
-
--   Compare historical 60 years to recent 30 years as another climate change test
 
 -   Check the significance of the PCA
 
@@ -215,6 +213,7 @@ tail(flint_all_year_mosnums, 12)
 
 ``` r
 flint_all_year_wtr_yr <- flint_all_year_mosnums %>% mutate(wtr_yr = year + month_nums %in% c(11:12))
+write_csv(flint_all_year_wtr_yr, "../output/Climate/flint_all_year_wtr_yr.csv")
 ```
 
 ## Generate bioclim for all year - 2023
@@ -397,6 +396,8 @@ tail(flint_all_year_recent)
 ```
 
 ``` r
+#write_csv(flint_all_year_recent, "../output/Climate/Flint_Water_Year_Recent_AllMonths.csv")
+
 flint_all_year_historical <- flint_all_year_wtr_yr %>% 
   filter(parent.pop != "UCD_Garden", parent.pop != "WL2_Garden") %>%  #remove garden sites 
   filter(wtr_yr<=1993 & wtr_yr>1963) %>% 
@@ -449,13 +450,17 @@ tail(flint_all_year_historical, 13)
 ```
 
 ``` r
+#write_csv(flint_all_year_recent, "../output/Climate/Flint_Water_Year_Hist_AllMonths.csv")
+
 bioclim_all_year_recent <- pop_elev_bioclim_all_year %>% filter(year>1993 & year<=2023) #year here means water year (see above code where bioclim vars were calculated)
 #head(bioclim_all_year_recent)
 #tail(bioclim_all_year_recent)
+#write_csv(flint_all_year_recent, "../output/Climate/Bioclim_Water_Year_Recent_AllMonths.csv")
 
 bioclim_all_year_historical <- pop_elev_bioclim_all_year %>% filter(year<=1993 & year>1963)
 #head(bioclim_all_year_historical, 13)
 #tail(bioclim_all_year_historical, 13)
+#write_csv(flint_all_year_recent, "../output/Climate/Bioclim_Water_Year_Hist_AllMonths.csv")
 ```
 
 ### Yearly averages for Flint (for climate distance calc)
@@ -652,6 +657,64 @@ WL2Grdn_flint_all_year_summary <- WL2Grdn_flint_all_year %>%
   summarise_at(c("cwd",  "pck", "ppt", "tmn", "tmx"), c(mean), na.rm = TRUE) 
 
 WL2Grdn_flint_bioclim_all_year <- left_join(WL2Grdn_flint_all_year_summary, WL2Grdn_elev_bioclim_all_year) %>% 
+  select(-year)
+```
+
+```
+## Joining with `by = join_by(parent.pop, elevation.group, elev_m, Lat, Long)`
+```
+## WL2 Garden 2024
+
+``` r
+bioclim_2024_allyear_prep_WL2Grdn <- flint_all_year_wtr_yr %>% 
+  filter(parent.pop == "WL2_Garden") %>%  #only keep WL2 garden
+  rename(tmin=tmn, tmax=tmx, year_cal=year, year=wtr_yr) %>% #rename columns to match what calc_biovars expects, also make sure it uses water year 
+  filter(year=="2024") %>% #year of the experiment only 
+  arrange(parent.pop, year, month)
+
+bioclim_2024_all_year_WL2Grdn <- bioclim_2024_allyear_prep_WL2Grdn %>% 
+  calc_biovars() %>% 
+  mutate(parent.pop="WL2_Garden", year=="2024") 
+
+bioclim_2024_all_year_final_WL2Grdn <- bioclim_2024_all_year_WL2Grdn %>% 
+  select(parent.pop, year, ann_tmean=bio1, mean_diurnal_range=bio2, 
+         temp_seasonality=bio4, temp_ann_range=bio7, tmean_wettest_quarter=bio8,
+         tmean_driest_quarter=bio9, ann_ppt=bio12, ppt_seasonality=bio15,
+         ppt_warmest_quarter=bio18, ppt_coldest_quarter=bio19) 
+
+WL2Grdn_elev_bioclim_2024_all_year <- left_join(bioclim_2024_all_year_final_WL2Grdn, pop_elev) %>% 
+  select(parent.pop, elevation.group:Long, year:ppt_coldest_quarter)
+```
+
+```
+## Joining with `by = join_by(parent.pop)`
+```
+
+``` r
+WL2Grdn_elev_bioclim_2024_all_year
+```
+
+```
+##   parent.pop elevation.group elev_m      Lat      Long year ann_tmean
+## 1 WL2_Garden            High   2020 38.82599 -120.2509 2024  8.952917
+##   mean_diurnal_range temp_seasonality temp_ann_range tmean_wettest_quarter
+## 1           10.32917         758.4948          31.36              1.296667
+##   tmean_driest_quarter ann_ppt ppt_seasonality ppt_warmest_quarter
+## 1               12.885 1193.99        109.3371               78.71
+##   ppt_coldest_quarter
+## 1              621.81
+```
+
+``` r
+WL2Grdn_flint_2024_all_year <- flint_all_year_wtr_yr %>% 
+  filter(parent.pop == "WL2_Garden", wtr_yr=="2024") %>%  #only keep WL2 garden
+  select(parent.pop:month, wtr_yr, cwd, pck, ppt, tmn, tmx)
+
+WL2Grdn_flint_2024_all_year_summary <- WL2Grdn_flint_2024_all_year %>% 
+  group_by(parent.pop, elevation.group, elev_m, Lat, Long) %>% 
+  summarise_at(c("cwd",  "pck", "ppt", "tmn", "tmx"), c(mean), na.rm = TRUE) 
+
+WL2Grdn_flint_bioclim_2024_all_year <- left_join(WL2Grdn_flint_2024_all_year_summary, WL2Grdn_elev_bioclim_2024_all_year) %>% 
   select(-year)
 ```
 
@@ -877,7 +940,7 @@ corrplot(cor.norm, type="upper",
          sig.level = 0.05, insig="blank")
 ```
 
-![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-17-1.png)<!-- -->
+![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-18-1.png)<!-- -->
 
 ``` r
 #tmn, tmx, tmean_wettest_quarter, tmean_driest_quarter and ann_tmean all highly correlated (97-99%) - only keep ann_tmean 
@@ -903,7 +966,7 @@ corrplot(cor.norm_recent, type="upper",
          sig.level = 0.05, insig="blank")
 ```
 
-![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-18-1.png)<!-- -->
+![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-19-1.png)<!-- -->
 
 ``` r
 #800 x 734
@@ -926,7 +989,7 @@ corrplot(cor.norm_historic, type="upper",
          sig.level = 0.05, insig="blank")
 ```
 
-![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-19-1.png)<!-- -->
+![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-20-1.png)<!-- -->
 
 ``` r
 #800 x 734
@@ -982,7 +1045,7 @@ tibble(PC=str_c("PC",str_pad(1:7,2,pad="0")),
   ggtitle("Percent Variance Explained")
 ```
 
-![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-21-1.png)<!-- -->
+![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-22-1.png)<!-- -->
 
 Combine PCs with metadata
 
@@ -1028,7 +1091,7 @@ autoplot(all_bioclim_flint_avgs.pc, data = bioclim_flint_all_year_avgs,
   theme_classic()
 ```
 
-![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-23-1.png)<!-- -->
+![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-24-1.png)<!-- -->
 
 
 ``` r
@@ -1044,7 +1107,7 @@ autoplot(all_bioclim_flint_avgs.pc, data = bioclim_flint_all_year_avgs,
   theme_classic()
 ```
 
-![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-24-1.png)<!-- -->
+![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-25-1.png)<!-- -->
 
 
 ``` r
@@ -1096,7 +1159,7 @@ all_bioclim_flint_avgs_locs.pc_avg %>%
   coord_fixed(ratio = 1.5)
 ```
 
-![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-26-1.png)<!-- -->
+![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-27-1.png)<!-- -->
 
 ## Permanova - 2023
 See Jenny's github: https://github.com/jrgremer/Seedbanks_drought_deluge  
@@ -1172,10 +1235,10 @@ permanova_results_all_year_terms
 ## TimePd             1   28.589 0.09076 10.3137  0.001 ***
 ## elev_m             1  109.439 0.34743 39.4811  0.001 ***
 ## Lat                1   55.665 0.17671 20.0816  0.001 ***
-## TimePd:elev_m      1    3.008 0.00955  1.0853  0.328    
-## TimePd:Lat         1    3.629 0.01152  1.3092  0.237    
-## elev_m:Lat         1    9.033 0.02868  3.2587  0.029 *  
-## TimePd:elev_m:Lat  1    0.303 0.00096  0.1093  0.989    
+## TimePd:elev_m      1    3.008 0.00955  1.0853  0.319    
+## TimePd:Lat         1    3.629 0.01152  1.3092  0.243    
+## elev_m:Lat         1    9.033 0.02868  3.2587  0.020 *  
+## TimePd:elev_m:Lat  1    0.303 0.00096  0.1093  0.991    
 ## Residual          38  105.334 0.33439                   
 ## Total             45  315.000 1.00000                   
 ## ---
@@ -1283,7 +1346,7 @@ autoplot(all_bioclim_flint_avgs.pc, data = bioclim_flint_all_year_avgs,
   theme_classic()
 ```
 
-![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-30-1.png)<!-- -->
+![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-31-1.png)<!-- -->
 
 ``` r
 all_bioclim_flint_avgs_locs.pc_avg %>% 
@@ -1295,7 +1358,7 @@ all_bioclim_flint_avgs_locs.pc_avg %>%
   geom_path(aes(group=group),arrow = arrow(length=unit(5, "points")), linewidth = .8)
 ```
 
-![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-30-2.png)<!-- -->
+![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-31-2.png)<!-- -->
 
 ``` r
 all_bioclim_flint_avgs_locs.pc_avg %>% 
@@ -1308,7 +1371,7 @@ all_bioclim_flint_avgs_locs.pc_avg %>%
   geom_path(aes(group=group),arrow = arrow(length=unit(5, "points")), linewidth = .8)
 ```
 
-![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-30-3.png)<!-- -->
+![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-31-3.png)<!-- -->
 
 ``` r
 #high elev climate seems to be shifting to be more similar to low elev 
@@ -1323,6 +1386,7 @@ home_sites_pca <- all_bioclim_flint_avgs_locs.pc_avg %>%
   #geom_point(size=2, alpha=0.7) +
   labs(x="PC1 (51.11%)", y="PC4 (8.07%)", color="Elevation (m)") +
   geom_vline(xintercept = 0, linetype="dashed") + geom_hline(yintercept = 0, linetype="dashed") +
+  annotate("text", x = 1.3, y= 0.52, label = "WL2", colour = "purple") +
   geom_path(aes(group=group),arrow = arrow(length=unit(5, "points")), linewidth = .8) +
   annotate("text", x = -4, y = -5.1, label = "Warm \n No Snow") +
   annotate("text", x = 4, y = -5.1, label = "Cold \n Snow") +
@@ -1333,38 +1397,36 @@ home_sites_pca <- all_bioclim_flint_avgs_locs.pc_avg %>%
   theme(text=element_text(size=28))
 #ggsave("../output/Climate/Wtr_Year_PC1-PC4.png", width = 7.4, height = 6, units = "in")
 
-## add WL2 garden 2023
+## add WL2 garden 2023 and 2024
 WL2Grdn_pc_prep <- WL2Grdn_flint_bioclim_all_year %>% ungroup() %>% select(cwd:pck, ann_tmean, temp_seasonality, temp_ann_range, ann_ppt, ppt_seasonality)
 #scale(WL2Grdn_pc_prep, all_bioclim_flint_avgs.pc$center, all_bioclim_flint_avgs.pc$scale) %*% all_bioclim_flint_avgs.pc$rotation  #gives same result as below 
 WL2Grdn_predicted <- predict(all_bioclim_flint_avgs.pc, newdata = WL2Grdn_pc_prep)
-WL2Grdn_predicted
-```
+#WL2Grdn_predicted
 
-```
-##           PC1       PC2      PC3       PC4      PC5       PC6      PC7
-## [1,] 2.590759 -1.636671 3.792502 -4.014878 2.812706 0.4833738 1.459231
-```
+WL2Grdn_pc_prep_2024 <- WL2Grdn_flint_bioclim_2024_all_year %>% ungroup() %>% select(cwd:pck, ann_tmean, temp_seasonality, temp_ann_range, ann_ppt, ppt_seasonality)
+WL2Grdn_2024_predicted <- predict(all_bioclim_flint_avgs.pc, newdata = WL2Grdn_pc_prep_2024)
 
-``` r
 #str(home_sites_pca) #can add predicted WL2 point to the existing plot's data 
 home_sites_pca$data <- rbind(home_sites_pca$data, 
   data.frame(
     parent.pop = "WL2_Garden",
     elev_m = 2020,
-    TimePd = "2023",
-    PC1 = WL2Grdn_predicted[, "PC1"],
-    PC2 = WL2Grdn_predicted[, "PC2"],
-    PC3 = WL2Grdn_predicted[, "PC3"],
-    PC4 = WL2Grdn_predicted[, "PC4"],
-    PC5 = WL2Grdn_predicted[, "PC5"],
-    PC6 = WL2Grdn_predicted[, "PC6"],
-    PC7 = WL2Grdn_predicted[, "PC7"],
-    group = "new"
+    TimePd = c("2023", "2024"),
+    PC1 = c(WL2Grdn_predicted[, "PC1"], WL2Grdn_2024_predicted[, "PC1"]),
+    PC2 = c(WL2Grdn_predicted[, "PC2"], WL2Grdn_2024_predicted[, "PC2"]),
+    PC3 = c(WL2Grdn_predicted[, "PC3"], WL2Grdn_2024_predicted[, "PC3"]),
+    PC4 = c(WL2Grdn_predicted[, "PC4"], WL2Grdn_2024_predicted[, "PC4"]),
+    PC5 = c(WL2Grdn_predicted[, "PC5"], WL2Grdn_2024_predicted[, "PC5"]),
+    PC6 = c(WL2Grdn_predicted[, "PC6"], WL2Grdn_2024_predicted[, "PC6"]),
+    PC7 = c(WL2Grdn_predicted[, "PC7"], WL2Grdn_2024_predicted[, "PC7"]),
+    group = c("new", "new2")
   )
 )
 
 home_sites_pca + 
-  geom_point(data=filter(home_sites_pca$data, parent.pop == "WL2_Garden"), size=3, shape = 8, show_guide = FALSE)
+  geom_point(data=filter(home_sites_pca$data, parent.pop == "WL2_Garden"), size=3, shape = 8, show_guide = FALSE) +
+  annotate("text", x = 2.55, y= -3.6, label = "WL2 Garden \n 2023", colour = "purple") +
+  annotate("text", x = -0.8, y= -3.2, label = "WL2 Garden \n 2024", colour = "purple") 
 ```
 
 ```
@@ -1375,7 +1437,7 @@ home_sites_pca +
 ## generated.
 ```
 
-![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-31-1.png)<!-- -->
+![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-32-1.png)<!-- -->
 
 ``` r
 #ggsave("../output/Climate/Wtr_Year_PC1-PC4_PlusGarden.png", width = 7.4, height = 6, units = "in")
@@ -1494,7 +1556,7 @@ corrplot(cor.norm_extra, type="upper",
          sig.level = 0.05, insig="blank")
 ```
 
-![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-33-1.png)<!-- -->
+![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-34-1.png)<!-- -->
 
 ``` r
 #tmn, tmx, tmean_wettest_quarter, tmean_driest_quarter and ann_tmean all highly correlated - only keep ann_tmean 
@@ -1520,7 +1582,7 @@ corrplot(cor.norm_historic_extra, type="upper",
          sig.level = 0.05, insig="blank")
 ```
 
-![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-34-1.png)<!-- -->
+![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-35-1.png)<!-- -->
 
 ``` r
 #800 x 734
@@ -1576,7 +1638,7 @@ tibble(PC=str_c("PC",str_pad(1:7,2,pad="0")),
   ggtitle("Percent Variance Explained")
 ```
 
-![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-36-1.png)<!-- -->
+![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-37-1.png)<!-- -->
 
 Combine PCs with metadata
 
@@ -1622,7 +1684,7 @@ autoplot(all_bioclim_flint_avgs.pc_extra, data = bioclim_flint_all_year_avgs_ext
   theme_classic()
 ```
 
-![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-38-1.png)<!-- -->
+![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-39-1.png)<!-- -->
 
 
 ``` r
@@ -1638,7 +1700,7 @@ autoplot(all_bioclim_flint_avgs.pc_extra, data = bioclim_flint_all_year_avgs_ext
   theme_classic()
 ```
 
-![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-39-1.png)<!-- -->
+![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-40-1.png)<!-- -->
 
 
 ``` r
@@ -1663,7 +1725,7 @@ all_bioclim_flint_avgs_locs.pc_avg_extra %>%
   coord_fixed(ratio = 1.5)
 ```
 
-![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-41-1.png)<!-- -->
+![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-42-1.png)<!-- -->
 
 ## Permanova - Extra Historical 2023
 See Jenny's github: https://github.com/jrgremer/Seedbanks_drought_deluge  
@@ -1739,10 +1801,10 @@ permanova_results_all_year_terms_extra
 ## TimePd             1   29.653 0.09414 10.9633  0.001 ***
 ## elev_m             1  107.941 0.34267 39.9083  0.001 ***
 ## Lat                1   59.420 0.18863 21.9690  0.001 ***
-## TimePd:elev_m      1    3.492 0.01109  1.2912  0.279    
-## TimePd:Lat         1    2.382 0.00756  0.8808  0.465    
-## elev_m:Lat         1    9.193 0.02918  3.3987  0.021 *  
-## TimePd:elev_m:Lat  1    0.140 0.00044  0.0517  0.999    
+## TimePd:elev_m      1    3.492 0.01109  1.2912  0.258    
+## TimePd:Lat         1    2.382 0.00756  0.8808  0.425    
+## elev_m:Lat         1    9.193 0.02918  3.3987  0.022 *  
+## TimePd:elev_m:Lat  1    0.140 0.00044  0.0517  0.998    
 ## Residual          38  102.779 0.32628                   
 ## Total             45  315.000 1.00000                   
 ## ---
@@ -1848,7 +1910,7 @@ autoplot(all_bioclim_flint_avgs.pc_extra, data = bioclim_flint_all_year_avgs_ext
   theme_classic()
 ```
 
-![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-45-1.png)<!-- -->
+![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-46-1.png)<!-- -->
 
 ``` r
 all_bioclim_flint_avgs_locs.pc_avg_extra %>% 
@@ -1860,7 +1922,7 @@ all_bioclim_flint_avgs_locs.pc_avg_extra %>%
   geom_path(aes(group=group),arrow = arrow(length=unit(5, "points")), linewidth = .8)
 ```
 
-![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-45-2.png)<!-- -->
+![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-46-2.png)<!-- -->
 
 ``` r
 all_bioclim_flint_avgs_locs.pc_avg_extra %>% 
@@ -1873,7 +1935,7 @@ all_bioclim_flint_avgs_locs.pc_avg_extra %>%
   geom_path(aes(group=group),arrow = arrow(length=unit(5, "points")), linewidth = .8)
 ```
 
-![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-45-3.png)<!-- -->
+![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-46-3.png)<!-- -->
 
 ``` r
 #high elev climate seems to be shifting to be more similar to low elev 
@@ -1919,7 +1981,7 @@ home_sites_pca_extra +
   geom_point(data=filter(home_sites_pca_extra$data, parent.pop == "WL2_Garden"), size=3, shape = 8, show_guide = FALSE)
 ```
 
-![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-46-1.png)<!-- -->
+![](Climate_PCAs_AllYear_files/figure-html/unnamed-chunk-47-1.png)<!-- -->
 
 ``` r
 #ggsave("../output/Climate/Wtr_Year_PC1-PC4_PlusGarden_ExtraHist.png", width = 7.4, height = 6, units = "in")
@@ -2227,65 +2289,6 @@ tail(flint_all_year_historical_extra_2024, 13)
 bioclim_all_year_historical_extra_2024 <- pop_elev_bioclim_2024_all_year %>% filter(year<=1994 & year>1934)
 #head(bioclim_all_year_historical_extra_2024, 13)
 #tail(bioclim_all_year_historical_extra_2024, 13)
-```
-
-## WL2 Garden 2024
-
-``` r
-bioclim_2024_allyear_prep_WL2Grdn <- flint_all_year_wtr_yr %>% 
-  filter(parent.pop == "WL2_Garden") %>%  #only keep WL2 garden
-  rename(tmin=tmn, tmax=tmx, year_cal=year, year=wtr_yr) %>% #rename columns to match what calc_biovars expects, also make sure it uses water year 
-  filter(year=="2024") %>% #year of the experiment only 
-  arrange(parent.pop, year, month)
-
-bioclim_2024_all_year_WL2Grdn <- bioclim_2024_allyear_prep_WL2Grdn %>% 
-  calc_biovars() %>% 
-  mutate(parent.pop="WL2_Garden", year=="2024") 
-
-bioclim_2024_all_year_final_WL2Grdn <- bioclim_2024_all_year_WL2Grdn %>% 
-  select(parent.pop, year, ann_tmean=bio1, mean_diurnal_range=bio2, 
-         temp_seasonality=bio4, temp_ann_range=bio7, tmean_wettest_quarter=bio8,
-         tmean_driest_quarter=bio9, ann_ppt=bio12, ppt_seasonality=bio15,
-         ppt_warmest_quarter=bio18, ppt_coldest_quarter=bio19) 
-
-WL2Grdn_elev_bioclim_2024_all_year <- left_join(bioclim_2024_all_year_final_WL2Grdn, pop_elev) %>% 
-  select(parent.pop, elevation.group:Long, year:ppt_coldest_quarter)
-```
-
-```
-## Joining with `by = join_by(parent.pop)`
-```
-
-``` r
-WL2Grdn_elev_bioclim_2024_all_year
-```
-
-```
-##   parent.pop elevation.group elev_m      Lat      Long year ann_tmean
-## 1 WL2_Garden            High   2020 38.82599 -120.2509 2024  8.952917
-##   mean_diurnal_range temp_seasonality temp_ann_range tmean_wettest_quarter
-## 1           10.32917         758.4948          31.36              1.296667
-##   tmean_driest_quarter ann_ppt ppt_seasonality ppt_warmest_quarter
-## 1               12.885 1193.99        109.3371               78.71
-##   ppt_coldest_quarter
-## 1              621.81
-```
-
-``` r
-WL2Grdn_flint_2024_all_year <- flint_all_year_wtr_yr %>% 
-  filter(parent.pop == "WL2_Garden", wtr_yr=="2024") %>%  #only keep WL2 garden
-  select(parent.pop:month, wtr_yr, cwd, pck, ppt, tmn, tmx)
-
-WL2Grdn_flint_2024_all_year_summary <- WL2Grdn_flint_2024_all_year %>% 
-  group_by(parent.pop, elevation.group, elev_m, Lat, Long) %>% 
-  summarise_at(c("cwd",  "pck", "ppt", "tmn", "tmx"), c(mean), na.rm = TRUE) 
-
-WL2Grdn_flint_bioclim_2024_all_year <- left_join(WL2Grdn_flint_2024_all_year_summary, WL2Grdn_elev_bioclim_2024_all_year) %>% 
-  select(-year)
-```
-
-```
-## Joining with `by = join_by(parent.pop, elevation.group, elev_m, Lat, Long)`
 ```
 
 ## Avg across years and months (Flint + bioclim) - 2024
@@ -2773,10 +2776,10 @@ permanova_results_all_year_terms_2024 #very similar to 2023
 ## TimePd             1   32.192 0.10220 11.6872  0.001 ***
 ## elev_m             1  106.820 0.33911 38.7801  0.001 ***
 ## Lat                1   56.073 0.17801 20.3568  0.001 ***
-## TimePd:elev_m      1    2.214 0.00703  0.8037  0.517    
-## TimePd:Lat         1    3.659 0.01162  1.3283  0.234    
-## elev_m:Lat         1    9.182 0.02915  3.3335  0.022 *  
-## TimePd:elev_m:Lat  1    0.189 0.00060  0.0685  0.998    
+## TimePd:elev_m      1    2.214 0.00703  0.8037  0.506    
+## TimePd:Lat         1    3.659 0.01162  1.3283  0.246    
+## elev_m:Lat         1    9.182 0.02915  3.3335  0.026 *  
+## TimePd:elev_m:Lat  1    0.189 0.00060  0.0685  0.999    
 ## Residual          38  104.671 0.33229                   
 ## Total             45  315.000 1.00000                   
 ## ---
@@ -3306,10 +3309,10 @@ permanova_results_all_year_terms_2024_extra #very similar to 2023
 ## TimePd             1   32.914 0.10449 12.2303  0.001 ***
 ## elev_m             1  106.406 0.33780 39.5387  0.001 ***
 ## Lat                1   58.909 0.18701 21.8898  0.001 ***
-## TimePd:elev_m      1    2.889 0.00917  1.0734  0.339    
-## TimePd:Lat         1    2.163 0.00687  0.8038  0.490    
-## elev_m:Lat         1    9.380 0.02978  3.4856  0.027 *  
-## TimePd:elev_m:Lat  1    0.074 0.00024  0.0275  0.999    
+## TimePd:elev_m      1    2.889 0.00917  1.0734  0.363    
+## TimePd:Lat         1    2.163 0.00687  0.8038  0.499    
+## elev_m:Lat         1    9.380 0.02978  3.4856  0.020 *  
+## TimePd:elev_m:Lat  1    0.074 0.00024  0.0275  1.000    
 ## Residual          38  102.265 0.32465                   
 ## Total             45  315.000 1.00000                   
 ## ---

@@ -69,6 +69,7 @@ tail(flint_all_year_mosnums, 12)
 
 ```{r}
 flint_all_year_wtr_yr <- flint_all_year_mosnums %>% mutate(wtr_yr = year + month_nums %in% c(11:12))
+write_csv(flint_all_year_wtr_yr, "../output/Climate/flint_all_year_wtr_yr.csv")
 ```
 
 ## Generate bioclim for all year - 2023
@@ -588,7 +589,7 @@ home_sites_pca +
   geom_point(data=filter(home_sites_pca$data, parent.pop == "WL2_Garden"), size=3, shape = 8, show_guide = FALSE) +
   annotate("text", x = 2.55, y= -3.6, label = "WL2 Garden \n 2023", colour = "purple") +
   annotate("text", x = -0.8, y= -3.2, label = "WL2 Garden \n 2024", colour = "purple") 
-ggsave("../output/Climate/Wtr_Year_PC1-PC4_PlusGarden.png", width = 7.4, height = 6, units = "in")
+#ggsave("../output/Climate/Wtr_Year_PC1-PC4_PlusGarden.png", width = 7.4, height = 6, units = "in")
 ```
 
 ## Extra historical PCA (60 years) - 2023
