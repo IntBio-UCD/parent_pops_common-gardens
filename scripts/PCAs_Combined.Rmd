@@ -19,6 +19,8 @@ library(tidyverse)
 library(ggalt) #for geom_encircle
 library(corrplot) #plotting correlations 
 library(ggfortify) #easier PCA figures
+library(QBMS) #for function calc_biovars to calculate bioclim variables
+library(viridis) #for color scale 
 ```
 
 ## Combine Water Year and Growing Season PCAs
@@ -162,8 +164,11 @@ yrly_avgs_hist_grwseason <- read_csv("../output/Climate/growthseason_yrly_avgs_H
   filter(parent.pop=="WL2")
 ```
 
-#### WL2 Garden 2023 - Water Year (need to add flint_all_year_wtr_yr to this script)
+#### WL2 Garden 2023 - Water Year 
 ```{r}
+flint_all_year_wtr_yr <- read_csv("../output/Climate/flint_all_year_wtr_yr.csv")
+pop_elev <- flint_all_year_wtr_yr %>% select(parent.pop:Long) %>% distinct()
+
 bioclim_allyear_prep_WL2Grdn <- flint_all_year_wtr_yr %>% 
   filter(parent.pop == "WL2_Garden") %>%  #only keep WL2 garden
   rename(tmin=tmn, tmax=tmx, year_cal=year, year=wtr_yr) %>% #rename columns to match what calc_biovars expects, also make sure it uses water year 
@@ -374,7 +379,7 @@ home_sites_pca +
   geom_point(data=filter(home_sites_pca$data, parent.pop == "WL2_Garden"), size=3, shape = 8, show_guide = FALSE) +
   annotate("text", x = 7, y= -0.7, label = "WL2 Garden \n 2023", colour = "purple") +
   annotate("text", x = -.14, y= -0.4, label = "WL2 Garden \n 2024", colour = "purple") 
-ggsave("../output/Climate/Wtr_Year_WL2ONLYRecent_PC1-PC2.png", width = 7.4, height = 6, units = "in")
+#ggsave("../output/Climate/Wtr_Year_WL2ONLYRecent_PC1-PC2.png", width = 7.4, height = 6, units = "in")
 ```
 
 #### Growth Season 
@@ -471,7 +476,7 @@ home_sites_pca +
   geom_point(data=filter(home_sites_pca$data, parent.pop == "WL2_Garden"), size=3, shape = 8, show_guide = FALSE) +
   annotate("text", x = 2, y= 2, label = "WL2 Garden \n 2023", colour = "purple") +
   annotate("text", x = -1.3, y= -3.8, label = "WL2 Garden \n 2024", colour = "purple") 
-ggsave("../output/Climate/GRWSSN_WL2ONLYRecent_PC1-PC2.png", width = 7.4, height = 6, units = "in")
+#ggsave("../output/Climate/GRWSSN_WL2ONLYRecent_PC1-PC2.png", width = 7.4, height = 6, units = "in")
 ```
 
 ### Corrleations - Historical 
@@ -605,7 +610,7 @@ home_sites_pca +
   geom_point(data=filter(home_sites_pca$data, parent.pop == "WL2_Garden"), size=3, shape = 8, show_guide = FALSE) +
   annotate("text", x = -6, y= -3.2, label = "WL2 Garden \n 2023", colour = "purple") +
   annotate("text", x = 1.4, y= -0.4, label = "WL2 Garden \n 2024", colour = "purple") 
-ggsave("../output/Climate/Wtr_Year_WL2ONLYHist_PC1-PC2.png", width = 7.4, height = 6, units = "in")
+#ggsave("../output/Climate/Wtr_Year_WL2ONLYHist_PC1-PC2.png", width = 7.4, height = 6, units = "in")
 ```
 
 #### Growth Season 
@@ -699,5 +704,5 @@ home_sites_pca +
   geom_point(data=filter(home_sites_pca$data, parent.pop == "WL2_Garden"), size=3, shape = 8, show_guide = FALSE) +
   annotate("text", x = -0.4, y= -1.5, label = "WL2 Garden \n 2023", colour = "purple") +
   annotate("text", x = 1.1, y= 5, label = "WL2 Garden \n 2024", colour = "purple") 
-ggsave("../output/Climate/GRWSSN_WL2ONLYHist_PC1-PC2.png", width = 7.4, height = 6, units = "in")
+#ggsave("../output/Climate/GRWSSN_WL2ONLYHist_PC1-PC2.png", width = 7.4, height = 6, units = "in")
 ```
