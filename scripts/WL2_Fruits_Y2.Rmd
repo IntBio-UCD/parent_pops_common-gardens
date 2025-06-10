@@ -92,6 +92,14 @@ garden_climate
 #UCD LAT/LONG = 38.53250, -121.7830
 #WL2 Lat/Long = 38.82599, -120.2509
 
+wl2_gowers_2324 <- read_csv("../output/Climate/Gowers_WL2_2324.csv") %>% 
+  select(parent.pop:GrwSsn_GD, Wtr_Year_GD) %>% 
+  pivot_wider(names_from = TimePd, values_from = c(GrwSsn_GD, Wtr_Year_GD)) %>% 
+  mutate(WL2_Lat=38.82599, WL2_Long=-120.2509, WL2_Elev=2020) %>% 
+  mutate(Geographic_Dist=distHaversine(cbind(WL2_Long, WL2_Lat), cbind(Long, Lat)),
+         Elev_Dist=elev_m-WL2_Elev) %>% # Calculate the distance using the haversine formula
+  rename(pop=parent.pop)
+
 wl2_gowers_2024 <- read_csv("../output/Climate/Gowers_WL2_2024.csv") %>% 
   pivot_wider(names_from = TimePd, values_from = c(GrwSsn_GD, Wtr_Year_GD)) %>% 
   mutate(WL2_Lat=38.82599, WL2_Long=-120.2509, WL2_Elev=2020) %>% 
@@ -101,6 +109,23 @@ wl2_gowers_2024 <- read_csv("../output/Climate/Gowers_WL2_2024.csv") %>%
 ```
 
 ## Climate Subtraction Distance
+```{r}
+wl2_wtr_year_sub_recent_2324 <- read_csv("../output/Climate/full_year_Subtraction_Dist_from_Home_WL2_2324_Recent.csv") %>% 
+  select(parent.pop, Wtr_Year_TempDist_Recent=ann_tmean_dist, Wtr_Year_PPTDist_Recent=ann_ppt_dist)
+wl2_wtr_year_sub_historic_2324 <- read_csv("../output/Climate/full_year_Subtraction_Dist_from_Home_WL2_2324_Historical.csv") %>% 
+  select(parent.pop, Wtr_Year_TempDist_Historic=ann_tmean_dist, Wtr_Year_PPTDist_Historic=ann_ppt_dist)
+wl2_grwssn_sub_recent_2324 <- read_csv("../output/Climate/grwssn_Subtraction_Dist_from_Home_WL2_2324_Recent.csv") %>% 
+  select(parent.pop, GrwSsn_TempDist_Recent=ann_tmean_dist, GrwSsn_PPTDist_Recent=ann_ppt_dist)
+wl2_grwssn_sub_historic_2324 <- read_csv("../output/Climate/grwssn_Subtraction_Dist_from_Home_WL2_2324_Historical.csv") %>% 
+  select(parent.pop, GrwSsn_TempDist_Historic=ann_tmean_dist, GrwSsn_PPTDist_Historic=ann_ppt_dist)
+
+wl2_sub_dist_2324 <- wl2_wtr_year_sub_recent_2324 %>% 
+  left_join(wl2_wtr_year_sub_historic_2324) %>% 
+  left_join(wl2_grwssn_sub_recent_2324) %>% 
+  left_join(wl2_grwssn_sub_historic_2324) %>% 
+  rename(pop=parent.pop) %>% 
+  left_join(wl2_gowers_2324)
+```
 
 ```{r}
 wl2_wtr_year_sub_recent_2024 <- read_csv("../output/Climate/full_year_Subtraction_Dist_from_Home_WL2_2024_Recent.csv") %>% 
@@ -164,6 +189,51 @@ wl2_prob_fruits <- wl2_surv_to_rep_y2 %>%
 #write_csv(wl2_prob_fruits, "../output/WL2_Traits/WL2_ProbFruits_Y2.csv")
 ```
 
+### Wtih 2023 Gowers
+```{r}
+wl2_fruits_y2_2324 <- wl2_ann_cens_2024_pops %>% select(Pop.Type:block, flowers=num.flw, fruits=num.fruit) %>%
+  mutate(FrFlN=fruits+flowers) %>% 
+  left_join(wl2_gowers_2324)
+
+wl2_fruits_y2_2324_nozeros <- wl2_fruits_y2_2324 %>% 
+  filter(fruits>0)
+summary(wl2_fruits_y2_2324_nozeros)
+
+wl2_FRFLs_y2_2324_nozeros <- wl2_fruits_y2_2324 %>% 
+  filter(FrFlN>0)
+summary(wl2_FRFLs_y2_2324_nozeros)
+
+write_csv(wl2_fruits_y2_2324_nozeros, "../output/WL2_Traits/WL2_Fruits_Y2_2324.csv")
+```
+
+```{r}
+wl2_fruits_y2_2324_sub_dist <- wl2_fruits_y2_2324 %>% 
+  select(loc:block, fruits, FrFlN) %>% 
+  left_join(wl2_sub_dist_2324)
+
+wl2_fruits_y2_2324_nozeros_sub_dist <- wl2_fruits_y2_2324_sub_dist %>% 
+  filter(fruits>0)
+
+wl2_FRFLs_y2_2324_nozero_sub_dists <- wl2_fruits_y2_2324_sub_dist %>% 
+  filter(FrFlN>0)
+```
+
+Probability of Fruits given Surv to Budding 
+```{r}
+wl2_surv_to_rep_y2_2324 <- read_csv("../output/WL2_Traits/WL2_Surv_to_Rep_Y2_2324.csv")
+
+wl2_prob_fruits_2324 <- wl2_surv_to_rep_y2_2324 %>% 
+  filter(SurvtoRep_y2==1) %>% 
+  select(loc:block, death.date, SurvtoRep_y2) %>% 
+  left_join(wl2_fruits_y2) %>% 
+  mutate(ProbFruits=if_else(is.na(fruits), 0, 
+                            if_else(fruits==0, 0, 1))) %>% 
+  select(loc:col, block, pop:Genotype, elevation.group:Elev_Dist, ProbFruits)
+
+
+write_csv(wl2_prob_fruits_2324, "../output/WL2_Traits/WL2_ProbFruits_Y2_2324.csv")
+```
+
 
 ### BAR PLOTS 
 ```{r}
@@ -180,7 +250,7 @@ wl2_fruits_y2_nozeros %>%
   labs(y="Fruit Number", x="Parent Population", fill="Growth Season Gowers") +
   scale_fill_viridis(option="mako", direction = -1) +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/WL2_Traits/WL2_FruitsY2_GrwSsn_GD_Recent.png", width = 12, height = 8, units = "in")
+#ggsave("../output/WL2_Traits/WL2_FruitsY2_GrwSsn_GD_Recent.png", width = 12, height = 8, units = "in")
 
 wl2_fruits_y2_nozeros %>% 
   group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
@@ -195,7 +265,7 @@ wl2_fruits_y2_nozeros %>%
   labs(y="Fruit Number", x="Parent Population", fill="Water Year Gowers") +
   scale_fill_viridis(option="mako", direction = -1) +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/WL2_Traits/WL2_FruitsY2_Wtr_Year_GD_Recent.png", width = 12, height = 8, units = "in")
+#ggsave("../output/WL2_Traits/WL2_FruitsY2_Wtr_Year_GD_Recent.png", width = 12, height = 8, units = "in")
 
 wl2_fruits_y2_nozeros %>% filter(pop=="TM2") #only 3 of the 6 made fruits and those 3 had wide variation (2, 19, 125)
 ```
@@ -252,7 +322,7 @@ ED <- wl2_fruits_y2_nozeros %>%
   theme(text=element_text(size=30))
 
 wl2_fruitsy2_nozeros_FIG <- ggarrange(GSCD_recent, WYCD_recent, GD, ED, ncol=2, nrow=2) 
-ggsave("../output/WL2_Traits/WL2_fruits_y2_nozeros_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
+#ggsave("../output/WL2_Traits/WL2_fruits_y2_nozeros_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
 ```
 
 ```{r}
@@ -282,7 +352,7 @@ WYCD_historic <- wl2_fruits_y2_nozeros %>%
   theme(text=element_text(size=25))
 
 wl2_fruitsy2_nozeros_FIG_historic <- ggarrange(GSCD_historic, WYCD_historic, GD, ED, ncol=2, nrow=2) 
-ggsave("../output/WL2_Traits/WL2_fruits_y2_nozeros_SCATTERS_Historical.png", width = 24, height = 18, units = "in")
+#ggsave("../output/WL2_Traits/WL2_fruits_y2_nozeros_SCATTERS_Historical.png", width = 24, height = 18, units = "in")
 ```
 
 ```{r}
@@ -336,7 +406,7 @@ ED <- wl2_FRFLs_y2_nozeros %>%
   theme(text=element_text(size=30))
 
 wl2_FrFlNy2_nozeros_FIG <- ggarrange(GSCD_recent, WYCD_recent, GD, ED, ncol=2, nrow=2) 
-ggsave("../output/WL2_Traits/WL2_FrFlN_y2_nozeros_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
+#ggsave("../output/WL2_Traits/WL2_FrFlN_y2_nozeros_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
 ```
 
 ```{r}
@@ -366,7 +436,7 @@ WYCD_historic <- wl2_FRFLs_y2_nozeros %>%
   theme(text=element_text(size=25))
 
 wl2_FrFlNy2_nozeros_FIG_historic <- ggarrange(GSCD_historic, WYCD_historic, GD, ED, ncol=2, nrow=2) 
-ggsave("../output/WL2_Traits/WL2_FrFlN_y2_nozeros_SCATTERS_Historical.png", width = 24, height = 18, units = "in")
+#ggsave("../output/WL2_Traits/WL2_FrFlN_y2_nozeros_SCATTERS_Historical.png", width = 24, height = 18, units = "in")
 ```
 
 #### Directional Distance
@@ -421,7 +491,7 @@ ED_prob <- wl2_fruits_y2_nozeros_sub_dist %>%
   theme(text=element_text(size=30))
 
 WL2_fruits_y2_nozeros_sub_FIG_prob_recent <- ggarrange(GSCD_prob_recent, WYCD_prob_recent, GD_prob, ED_prob, ncol=2, nrow=2) 
-ggsave("../output/WL2_Traits/WL2_fruits_y2_nozeros_TmpSubDist_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
+##ggsave("../output/WL2_Traits/WL2_fruits_y2_nozeros_TmpSubDist_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
 ```
 
 ```{r}
@@ -451,7 +521,7 @@ WYCD_prob_historic <- wl2_fruits_y2_nozeros_sub_dist %>%
   theme(text=element_text(size=30))
 
 WL2_fruits_y2_nozeros_sub_FIG_prob_historic <- ggarrange(GSCD_prob_historic, WYCD_prob_historic, GD_prob, ED_prob, ncol=2, nrow=2) 
-ggsave("../output/WL2_Traits/WL2_fruits_y2_nozeros_TmpSubDist_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
+##ggsave("../output/WL2_Traits/WL2_fruits_y2_nozeros_TmpSubDist_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
 ```
 
 ```{r}
@@ -505,7 +575,7 @@ ED_prob <- wl2_fruits_y2_nozeros_sub_dist %>%
   theme(text=element_text(size=30))
 
 WL2_fruits_y2_nozeros_sub_FIG_prob_recent <- ggarrange(GSCD_prob_recent, WYCD_prob_recent, GD_prob, ED_prob, ncol=2, nrow=2) 
-ggsave("../output/WL2_Traits/WL2_fruits_y2_nozeros_PPTSubDist_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
+#ggsave("../output/WL2_Traits/WL2_fruits_y2_nozeros_PPTSubDist_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
 ```
 
 ```{r}
@@ -535,7 +605,7 @@ WYCD_prob_historic <- wl2_fruits_y2_nozeros_sub_dist %>%
   theme(text=element_text(size=30))
 
 WL2_fruits_y2_nozeros_sub_FIG_prob_historic <- ggarrange(GSCD_prob_historic, WYCD_prob_historic, GD_prob, ED_prob, ncol=2, nrow=2) 
-ggsave("../output/WL2_Traits/WL2_fruits_y2_nozeros_PPTSubDist_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
+#ggsave("../output/WL2_Traits/WL2_fruits_y2_nozeros_PPTSubDist_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
 ```
 
 ## Stats
@@ -671,6 +741,62 @@ wl2_FrFlN_y2_nozeros_scaled_sub %>%
   geom_histogram()
 ```
 
+```{r}
+wl2_fruits_y2_2324_nozeros_scaled <- wl2_fruits_y2_2324_nozeros %>% mutate_at(c("GrwSsn_GD_Recent","Wtr_Year_GD_Recent",                                                           "GrwSsn_GD_Historical","Wtr_Year_GD_Historical","Geographic_Dist"),
+                                                            scale) %>% 
+  filter(pop!="SQ1", pop!="WR") %>% 
+  drop_na(fruits) %>% 
+  mutate(logFruits=log(fruits),
+         log10Fruits=log10(fruits)) #log transformation
+
+wl2_fruits_y2_2324_nozeros_scaled %>%  #looks better
+  ggplot(aes(x=logFruits)) +
+  geom_histogram()
+
+
+wl2_FrFlN_y2_2324_nozeros_scaled <- wl2_FRFLs_y2_2324_nozeros %>% 
+  mutate_at(c("GrwSsn_GD_Recent","Wtr_Year_GD_Recent",                                                           "GrwSsn_GD_Historical","Wtr_Year_GD_Historical","Geographic_Dist"),
+                                                            scale) %>% 
+  filter(pop!="SQ1", pop!="WR") %>% 
+  drop_na(FrFlN) %>% 
+  mutate(logFrFlN=log(FrFlN),
+         log10FrFlN=log10(FrFlN)) #log transformation
+
+wl2_FrFlN_y2_2324_nozeros_scaled %>%  #looks better
+  ggplot(aes(x=logFrFlN)) +
+  geom_histogram()
+```
+
+```{r}
+wl2_fruits_y2_2324_nozeros_scaled_sub <- wl2_fruits_y2_2324_nozeros_sub_dist %>% 
+  filter(pop != "LV1", pop != "SQ1", pop != "WR") %>% 
+  mutate_at(c("Wtr_Year_TempDist_Recent",  "Wtr_Year_PPTDist_Recent", 
+                 "Wtr_Year_TempDist_Historic", "Wtr_Year_PPTDist_Historic",
+                 "GrwSsn_TempDist_Recent", "GrwSsn_PPTDist_Recent",
+                 "GrwSsn_TempDist_Historic", "GrwSsn_PPTDist_Historic",
+              "Geographic_Dist"), scale) %>% 
+  drop_na(fruits) %>% 
+  mutate(logFruits=log(fruits),
+         log10Fruits=log10(fruits)) #log transformation
+
+unique(wl2_fruits_y2_2324_nozeros_scaled_sub$pop)
+unique(wl2_fruits_y2_2324_nozeros_scaled_sub$mf)
+unique(wl2_fruits_y2_2324_nozeros_scaled_sub$block)
+
+
+wl2_FrFlN_y2_2324_nozeros_scaled_sub <- wl2_FRFLs_y2_2324_nozero_sub_dists %>% 
+  mutate_at(c("GrwSsn_GD_Recent","Wtr_Year_GD_Recent",                                                           "GrwSsn_GD_Historical","Wtr_Year_GD_Historical","Geographic_Dist"),
+                                                            scale) %>% 
+  filter(pop!="SQ1", pop!="WR") %>% 
+  drop_na(FrFlN) %>% 
+  mutate(logFrFlN=log(FrFlN),
+         log10FrFlN=log10(FrFlN)) #log transformation
+
+wl2_FrFlN_y2_2324_nozeros_scaled_sub %>%  #looks better
+  ggplot(aes(x=logFrFlN)) +
+  geom_histogram()
+```
+
 ## Base Models
 ```{r}
 fruits_modelslog <- tribble(
@@ -684,7 +810,7 @@ fruits_modelslog <- tribble(
 #run the models 
 fruits_modelslog <- fruits_modelslog %>%
   mutate(lmer = map(f, ~ lmer(as.formula(.), 
-                            data = wl2_fruits_y2_nozeros_scaled)), #run the models 
+                            data = wl2_fruits_y2_2324_nozeros_scaled)), #run the models 
          predict = map(lmer, predict), # predicting from original data...
          glance = map(lmer, glance)) #glance at the model results
 
@@ -692,7 +818,7 @@ fruits_modelslog %>% select(-f, -lmer) %>% unnest(glance) %>% arrange(BIC) #look
 fruits_modelslog %>% select(-f, -lmer) %>% unnest(glance) %>% arrange(AIC) #look at the model fitting info 
 #model with pop.block best by AIC and BIC 
 
-mod_test <- lmer(logFruits ~  (1|pop/mf) + (1|block), data=wl2_fruits_y2_nozeros_scaled)
+mod_test <- lmer(logFruits ~  (1|pop/mf) + (1|block), data=wl2_fruits_y2_2324_nozeros_scaled)
 plot(mod_test, which = 1) 
 qqnorm(resid(mod_test))
 qqline(resid(mod_test)) 
@@ -712,7 +838,7 @@ FrFlN_modelslog <- tribble(
 #run the models 
 FrFlN_modelslog <- FrFlN_modelslog %>%
   mutate(lmer = map(f, ~ lmer(as.formula(.), 
-                            data = wl2_FrFlN_y2_nozeros_scaled)), #run the models 
+                            data = wl2_FrFlN_y2_2324_nozeros_scaled)), #run the models 
          predict = map(lmer, predict), # predicting from original data...
          glance = map(lmer, glance)) #glance at the model results
 
@@ -720,7 +846,7 @@ FrFlN_modelslog %>% select(-f, -lmer) %>% unnest(glance) %>% arrange(BIC) #look 
 FrFlN_modelslog %>% select(-f, -lmer) %>% unnest(glance) %>% arrange(AIC) #look at the model fitting info 
 #model with pop.block best by AIC and BIC 
 
-mod_test <- lmer(logFrFlN ~  (1|pop/mf) + (1|block), data=wl2_FrFlN_y2_nozeros_scaled)
+mod_test <- lmer(logFrFlN ~  (1|pop/mf) + (1|block), data=wl2_FrFlN_y2_2324_nozeros_scaled)
 plot(mod_test, which = 1) 
 qqnorm(resid(mod_test))
 qqline(resid(mod_test)) 
@@ -731,7 +857,7 @@ summary(mod_test)
 
 ### Predicted vs. Observed Rep Output
 ```{r}
-wl2_fruits_y2_nozeros_scaled %>% 
+wl2_fruits_y2_2324_nozeros_scaled %>% 
   cbind(predicted={fruits_modelslog %>% filter(name=="4_pop.mf.block") %>% pull(predict) %>% unlist()}) %>%
   ggplot(aes(x=logFruits, y = predicted)) +
   geom_point(alpha=.2) +
@@ -755,16 +881,16 @@ fruits_models_log_CD_GD <- tribble(
 #run the models 
 fruits_models_log_CD_GD <- fruits_models_log_CD_GD %>%
   mutate(lmer = map(f, ~ lmer(as.formula(.), 
-                            data = wl2_fruits_y2_nozeros_scaled)), #run the models 
+                            data = wl2_fruits_y2_2324_nozeros_scaled)), #run the models 
          predict = map(lmer, predict), # predicting from original data...
          glance = map(lmer, glance)) #glance at the model results
-mod_test <- lmer(logFruits ~  GrwSsn_GD_Recent + Geographic_Dist + (1|pop/mf) + (1|block), data=wl2_fruits_y2_nozeros_scaled)
+mod_test <- lmer(logFruits ~  GrwSsn_GD_Recent + Geographic_Dist + (1|pop/mf) + (1|block), data=wl2_fruits_y2_2324_nozeros_scaled)
 #boundary (singular) fit: see help('isSingular') warning for all models with climate distance 
 summary(mod_test) #pop starts explaining 0 variation ...
 
 fruits_models_log_CD_GD %>% select(-f, -lmer) %>% unnest(glance) %>% arrange(BIC) #look at the model fitting info 
 fruits_models_log_CD_GD %>% select(-f, -lmer) %>% unnest(glance) %>% arrange(AIC) #look at the model fitting info 
-#pop.block preferred by AIC & BIC, WY models are close after
+#pop.block preferred by AIC & BIC, GS models are close after
 
 fruits_models_log_CD_GD %>% mutate(tidy=map(lmer, tidy)) %>% unnest(tidy) %>%
   select(name, term:p.value) %>% 
@@ -788,7 +914,7 @@ fruits_models_log_CD_GD_sub <- tribble(
 #run the models 
 fruits_models_log_CD_GD_sub <- fruits_models_log_CD_GD_sub %>%
   mutate(lmer = map(f, ~ lmer(as.formula(.), 
-                            data = wl2_fruits_y2_nozeros_scaled_sub)), #run the models 
+                            data = wl2_fruits_y2_2324_nozeros_scaled_sub)), #run the models 
          predict = map(lmer, predict), # predicting from original data...
          glance = map(lmer, glance)) #glance at the model results
 #boundary (singular) fit: see help('isSingular') warning for all models with climate distance 
@@ -818,10 +944,10 @@ FrFlN_models_log_CD_GD <- tribble(
 #run the models 
 FrFlN_models_log_CD_GD <- FrFlN_models_log_CD_GD %>%
   mutate(lmer = map(f, ~ lmer(as.formula(.), 
-                            data = wl2_FrFlN_y2_nozeros_scaled)), #run the models 
+                            data = wl2_FrFlN_y2_2324_nozeros_scaled)), #run the models 
          predict = map(lmer, predict), # predicting from original data...
          glance = map(lmer, glance)) #glance at the model results
-mod_test <- lmer(logFrFlN ~  GrwSsn_GD_Recent + Geographic_Dist + (1|pop/mf) + (1|block), data=wl2_FrFlN_y2_nozeros_scaled)
+mod_test <- lmer(logFrFlN ~  GrwSsn_GD_Recent + Geographic_Dist + (1|pop/mf) + (1|block), data=wl2_FrFlN_y2_2324_nozeros_scaled)
 #boundary (singular) fit: see help('isSingular') warning for all models with climate distance 
 summary(mod_test) #pop starts explaining 0 variation ...
 
@@ -851,7 +977,7 @@ FrFlN_models_log_CD_GD_sub <- tribble(
 #run the models 
 FrFlN_models_log_CD_GD_sub <- FrFlN_models_log_CD_GD_sub %>%
   mutate(lmer = map(f, ~ lmer(as.formula(.), 
-                            data = wl2_FrFlN_y2_nozeros_scaled_sub)), #run the models 
+                            data = wl2_FrFlN_y2_2324_nozeros_scaled_sub)), #run the models 
          predict = map(lmer, predict), # predicting from original data...
          glance = map(lmer, glance)) #glance at the model results
 #boundary (singular) fit: see help('isSingular') warning for all models with climate distance 
