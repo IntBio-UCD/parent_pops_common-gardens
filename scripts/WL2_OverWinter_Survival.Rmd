@@ -13,7 +13,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # Over-winter survival at WL2 garden 
 
-Note: Need to make a climate distance of 2024 garden climate - recent and historical home climates (up to 2023)
+Note: Made this climate distance of 2024 garden climate - recent and historical home climates (up to 2023)
 
 ## Libraries
 ```{r}
@@ -83,7 +83,7 @@ garden_climate
 #UCD LAT/LONG = 38.53250, -121.7830
 #WL2 Lat/Long = 38.82599, -120.2509
 
-wl2_gowers_2023 <- read_csv("../output/Climate/Gowers_WL2.csv") %>% 
+wl2_gowers_2324 <- read_csv("../output/Climate/Gowers_WL2_2324.csv") %>% 
   select(parent.pop:GrwSsn_GD, Wtr_Year_GD) %>% 
   pivot_wider(names_from = TimePd, values_from = c(GrwSsn_GD, Wtr_Year_GD)) %>% 
   mutate(WL2_Lat=38.82599, WL2_Long=-120.2509, WL2_Elev=2020) %>% 
@@ -103,15 +103,15 @@ wl2_gowers_2024 <- read_csv("../output/Climate/Gowers_WL2_2024.csv") %>%
 ## Climate Subtraction Distance
 
 ```{r}
-wl2_wtr_year_sub_recent_2023 <- read_csv("../output/Climate/full_year_Subtraction_Dist_from_Home_WL2_Recent.csv") %>% 
+wl2_wtr_year_sub_recent_2324 <- read_csv("../output/Climate/full_year_Subtraction_Dist_from_Home_WL2_2324_Recent.csv") %>% 
   select(parent.pop, Wtr_Year_TempDist_Recent=ann_tmean_dist, Wtr_Year_PPTDist_Recent=ann_ppt_dist)
-wl2_wtr_year_sub_historic_2023 <- read_csv("../output/Climate/full_year_Subtraction_Dist_from_Home_WL2_Historical.csv") %>% 
+wl2_wtr_year_sub_historic_2324 <- read_csv("../output/Climate/full_year_Subtraction_Dist_from_Home_WL2_2324_Historical.csv") %>% 
   select(parent.pop, Wtr_Year_TempDist_Historic=ann_tmean_dist, Wtr_Year_PPTDist_Historic=ann_ppt_dist)
 
-wl2_sub_dist_2023 <- wl2_wtr_year_sub_recent_2023 %>% 
-  left_join(wl2_wtr_year_sub_historic_2023) %>% 
+wl2_sub_dist_2324 <- wl2_wtr_year_sub_recent_2324 %>% 
+  left_join(wl2_wtr_year_sub_historic_2324) %>% 
   rename(pop=parent.pop) %>% 
-  left_join(wl2_gowers_2023) %>% 
+  left_join(wl2_gowers_2324) %>% 
   mutate(Wtr_Year_TempPpt_Recent=scale(Wtr_Year_TempDist_Recent,center=FALSE) +
            scale(Wtr_Year_PPTDist_Recent,center=FALSE),
          Wtr_Year_TempPpt_Historic=scale(Wtr_Year_TempDist_Historic,center=FALSE) +
@@ -169,17 +169,17 @@ winter_surv_sub_dist <- winter_surv %>%
 
 ### Wtih 2023 Gowers
 ```{r}
-winter_surv_23 <- post_winter_clean %>% 
-  left_join(wl2_gowers_2023) %>% 
+winter_surv_2324 <- post_winter_clean %>% 
+  left_join(wl2_gowers_2324) %>% 
   filter(death.date == "A" | death.date == "B" | death.date == "C" | death.date == "D") %>% 
   mutate(WinterSurv=if_else(death.date=="D", 0, 1)) %>% 
   select(block:rep, elevation.group:Wtr_Year_GD_Historical, Geographic_Dist, Elev_Dist, death.date, WinterSurv) 
 ```
 
 ```{r}
-winter_surv_sub_dist_23 <- winter_surv %>% 
+winter_surv_sub_dist_2324 <- winter_surv %>% 
   select(block:rep, WinterSurv) %>% 
-  left_join(wl2_sub_dist_2023)
+  left_join(wl2_sub_dist_2324)
 ```
 
 ### Descriptive tables 
@@ -225,7 +225,7 @@ WYCD_recent <- winter_surv %>%
 ```
 
 ```{r}
-winter_surv_23 %>%
+winter_surv_2324 %>%
   filter(pop!="WR") %>% 
   group_by(pop, elev_m, Wtr_Year_GD_Recent) %>% 
   summarise(meanSurv=mean(WinterSurv, na.rm = TRUE), semSurv=sem(WinterSurv, na.rm=TRUE)) %>% 
@@ -247,7 +247,7 @@ winter_surv_23 %>%
 ```
 
 ```{r}
-WYCD_recent <- winter_surv_23 %>%
+WYCD_recent <- winter_surv_2324 %>%
   filter(pop!="WR") %>% 
   group_by(pop, elev_m, Wtr_Year_GD_Recent) %>% 
   summarise(meanSurv=mean(WinterSurv, na.rm = TRUE), semSurv=sem(WinterSurv, na.rm=TRUE)) %>% 
@@ -255,13 +255,13 @@ WYCD_recent <- winter_surv_23 %>%
   scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
   geom_point(size=6) + 
   geom_errorbar(aes(ymin=meanSurv-semSurv,ymax=meanSurv+semSurv),width=.02,linewidth = 2) +
-  annotate("text", x = 0.4, y= 0.24, label = "WL2", 
+  annotate("text", x = 0.227, y= 0.24, label = "WL2", 
            colour = "purple", fontface="bold", size = 22 / .pt) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
   labs(y="Winter Survival", x="Recent Water Year CD", colour="Elevation (m)") +
   theme(text=element_text(size=25))
-ggsave("../output/WL2_Traits/WL2_WinterSurv_2023ClimDist.png", width = 10, height = 5, units = "in")
+ggsave("../output/WL2_Traits/WL2_WinterSurv_2324ClimDist.png", width = 10, height = 5, units = "in")
 ```
 
 ## Scatterplots
@@ -517,7 +517,7 @@ wl2_winter_surv_scaled <- winter_surv %>%
   mutate_at(c("Wtr_Year_GD_Recent","Wtr_Year_GD_Historical", 
               "Geographic_Dist"), scale) 
 
-wl2_winter_surv_scaled_23 <- winter_surv_23 %>% 
+wl2_winter_surv_scaled_2324 <- winter_surv_2324 %>% 
   filter(pop!="WR") %>% 
   mutate_at(c("Wtr_Year_GD_Recent","Wtr_Year_GD_Historical", 
               "Geographic_Dist"), scale) 
@@ -535,7 +535,7 @@ winter_surv_sub_dist_scaled <- winter_surv_sub_dist %>%
                  "Wtr_Year_TempDist_Historic", "Wtr_Year_PPTDist_Historic",
               "Geographic_Dist"), scale) 
 
-winter_surv_sub_dist_scaled_23 <- winter_surv_sub_dist_23 %>% 
+winter_surv_sub_dist_scaled_2324 <- winter_surv_sub_dist_2324 %>% 
   filter(pop!="WR") %>% 
   mutate_at(c("Wtr_Year_TempDist_Recent",  "Wtr_Year_PPTDist_Recent", 
                  "Wtr_Year_TempDist_Historic", "Wtr_Year_PPTDist_Historic",
@@ -548,7 +548,7 @@ winter_surv_tp_sub_dist_scaled <- winter_surv_sub_dist %>%
   mutate_at(c("Wtr_Year_TempPpt_Recent", "Wtr_Year_TempPpt_Historic",
               "Geographic_Dist"), scale) 
 
-winter_surv_tp_sub_dist_scaled_23 <- winter_surv_sub_dist_23 %>% 
+winter_surv_tp_sub_dist_scaled_2324 <- winter_surv_sub_dist_2324 %>% 
   filter(pop!="WR") %>% 
   mutate_at(c("Wtr_Year_TempPpt_Recent", "Wtr_Year_TempPpt_Historic",
               "Geographic_Dist"), scale) 
@@ -588,11 +588,11 @@ surv_fits_wl2 <- surv_fits %>%
 surv_fits_wl2 %>% mutate(glance=map(fit, glance)) %>% unnest(glance) %>% arrange(AIC) %>% select(-wflow:-sigma)
 #model with just pop best by AIC and BIC, but nothing wrong with the full model, so use that 
 
-surv_fits_wl2_23 <- surv_fits %>%
-  mutate(fit = map(wflow, fit, data = wl2_winter_surv_scaled_23))
-#mod_test <- glmer(WinterSurv ~ (1|pop/mf) + (1|block), data=wl2_winter_surv_scaled_23, family=binomial)
+surv_fits_wl2_2324 <- surv_fits %>%
+  mutate(fit = map(wflow, fit, data = wl2_winter_surv_scaled_2324))
+#mod_test <- glmer(WinterSurv ~ (1|pop/mf) + (1|block), data=wl2_winter_surv_scaled_2324, family=binomial)
 #summary(mod_test)
-surv_fits_wl2_23 %>% mutate(glance=map(fit, glance)) %>% unnest(glance) %>% arrange(AIC) %>% select(-wflow:-sigma)
+surv_fits_wl2_2324 %>% mutate(glance=map(fit, glance)) %>% unnest(glance) %>% arrange(AIC) %>% select(-wflow:-sigma)
 #model with just pop best by AIC and BIC, but nothing wrong with the full model, so use that 
 ```
 
@@ -615,7 +615,7 @@ surv_GD_fits_wl2 <- tibble(wflow=list(
 name=names(wflow)
 ) %>% 
   select(name,wflow) %>%
-  mutate(fit = map(wflow, fit, data = wl2_winter_surv_scaled_23))
+  mutate(fit = map(wflow, fit, data = wl2_winter_surv_scaled_2324))
 
 surv_GD_fits_wl2 %>% mutate(glance=map(fit, glance)) %>% unnest(glance) %>% arrange(AIC) %>% select(-wflow:-sigma)
 #WY recent model the best 
@@ -648,7 +648,7 @@ surv_GD_fits_wl2_sub <- tibble(wflow=list(
 name=names(wflow)
 ) %>% 
   select(name,wflow) %>%
-  mutate(fit = map(wflow, fit, data = winter_surv_sub_dist_scaled))
+  mutate(fit = map(wflow, fit, data = winter_surv_sub_dist_scaled_2324))
 
 surv_GD_fits_wl2_sub %>% mutate(glance=map(fit, glance)) %>% unnest(glance) %>% arrange(AIC) %>% select(-wflow:-sigma)
 
@@ -678,7 +678,7 @@ surv_GD_fits_wl2_sub_tp <- tibble(wflow=list(
 name=names(wflow)
 ) %>% 
   select(name,wflow) %>%
-  mutate(fit = map(wflow, fit, data = winter_surv_tp_sub_dist_scaled))
+  mutate(fit = map(wflow, fit, data = winter_surv_tp_sub_dist_scaled_2324))
 
 surv_GD_fits_wl2_sub_tp %>% mutate(glance=map(fit, glance)) %>% unnest(glance) %>% arrange(AIC) %>% select(-wflow:-sigma)
 
