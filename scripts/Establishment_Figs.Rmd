@@ -285,39 +285,42 @@ WYCD_recent <- wl2_establishment %>%
   scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
   geom_point(size=6) + 
   geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.02, linewidth = 2) +
-  geom_text_repel(aes(x = Wtr_Year_GD_Recent, y = meanEst,
-          label = `pop`),
-      min.segment.length = 1,
-      max.overlaps = 100,
-      #label.padding = 1,
-      #point.padding = 1,
-      nudge_x = 0.05,
-      size = 4) +
+  annotate("text", x = 0.3959884, y= 0.65, label = "WL2", 
+           colour = "purple", fontface="bold", size = 22 / .pt) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
-  labs(y="Establishment", x="Recent Water Year CD") +
+  labs(y="Establishment", x="Recent Water Year CD", 
+       color="Elevation (m)") +
   theme(text=element_text(size=30))
 
 WYCD_temp_recent <- wl2_establishment_sub_dist %>% 
   group_by(pop, elev_m, Wtr_Year_TempDist_Recent, Wtr_Year_TempDist_Historic) %>% 
   summarise(meanEst=mean(Establishment, na.rm = TRUE), semEst=sem(Establishment, na.rm=TRUE)) %>% 
-  ggplot(aes(x=Wtr_Year_TempDist_Recent, y=meanEst, group = pop)) +
+  ggplot(aes(x=Wtr_Year_TempDist_Recent, y=meanEst, group = pop, color=elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
   geom_point(size=6) + 
   geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.3,linewidth = 2) +
+  annotate("text", x = 1.6352917, y= 0.65, label = "WL2", 
+           colour = "purple", fontface="bold", size = 22 / .pt) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
-  labs(y="Establishment", x="Recent Water Year Temp Dist") +
+  labs(y="Establishment", x="Recent Water Year Temp Dist", 
+       color="Elevation (m)") +
   theme(text=element_text(size=30))
 
 WYCD_ppt_recent <- wl2_establishment_sub_dist %>% 
   group_by(pop, elev_m, Wtr_Year_PPTDist_Recent, Wtr_Year_PPTDist_Historic) %>% 
   summarise(meanEst=mean(Establishment, na.rm = TRUE), semEst=sem(Establishment, na.rm=TRUE)) %>% 
-  ggplot(aes(x=Wtr_Year_PPTDist_Recent, y=meanEst, group = pop)) +
+  ggplot(aes(x=Wtr_Year_PPTDist_Recent, y=meanEst, group = pop, color=elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
   geom_point(size=6) + 
   geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.3,linewidth = 2) +
+  annotate("text", x = -1120, y= 0.5714286, label = "WL2", 
+           colour = "purple", fontface="bold", size = 22 / .pt) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
-  labs(y="Establishment", x="Recent Water Year PPT Dist") +
+  labs(y="Establishment", x="Recent Water Year PPT Dist", 
+       color="Elevation (m)") +
   theme(text=element_text(size=30))
 
 wl2_est_FIG_recent <- ggarrange(WYCD_recent, "", 
@@ -327,7 +330,7 @@ wl2_est_FIG_recent <- ggarrange(WYCD_recent, "",
                                 font.label = list(size=30, 
                                                   face = "plain"), 
                                 ncol=2, nrow=2) 
-ggsave("../output/WL2_Traits/WL2_Estab_RecentDist.png", width = 24, height = 18, units = "in")
+ggsave("../output/WL2_Traits/WL2_Estab_RecentDist.png", width = 26, height = 18, units = "in")
 ```
 
 ### Just Geo Distance
@@ -335,14 +338,18 @@ ggsave("../output/WL2_Traits/WL2_Estab_RecentDist.png", width = 24, height = 18,
 wl2_establishment %>% 
   group_by(pop, elev_m, Geographic_Dist) %>% 
   summarise(meanEst=mean(Establishment, na.rm = TRUE), semEst=sem(Establishment, na.rm=TRUE)) %>% 
-  ggplot(aes(x=Geographic_Dist, y=meanEst, group = pop)) +
+  ggplot(aes(x=Geographic_Dist, y=meanEst, group = pop, color=elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
   geom_point(size=6) + 
   geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.02, linewidth = 2) +
+  annotate("text", x = 136.2622, y=0.50, label = "WL2", 
+           colour = "purple", fontface="bold", size = 22 / .pt) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
-  labs(y="Establishment", x="Geographic Distance (m)") +
+  labs(y="Establishment", x="Geographic Distance (m)", 
+       color="Elevation (m)") +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-#ggsave("../output/WL2_Traits/WL2_Establishment_GeoDist.png", width = 8, height = 5, units = "in")
+ggsave("../output/WL2_Traits/WL2_Establishment_GeoDist.png", width = 10, height = 5, units = "in")
 ```
 
 ## Scatterplots
