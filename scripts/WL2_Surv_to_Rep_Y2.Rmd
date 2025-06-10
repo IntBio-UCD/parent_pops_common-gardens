@@ -27,9 +27,6 @@ Looked at relationship between size and survival
 
 <!-- -->
 
-To Do:
-
--   Standard error correction on scatter plots
 
 ## Libraries
 
@@ -115,6 +112,14 @@ garden_climate
 #UCD LAT/LONG = 38.53250, -121.7830
 #WL2 Lat/Long = 38.82599, -120.2509
 
+wl2_gowers_2324 <- read_csv("../output/Climate/Gowers_WL2_2324.csv") %>% 
+  select(parent.pop:GrwSsn_GD, Wtr_Year_GD) %>% 
+  pivot_wider(names_from = TimePd, values_from = c(GrwSsn_GD, Wtr_Year_GD)) %>% 
+  mutate(WL2_Lat=38.82599, WL2_Long=-120.2509, WL2_Elev=2020) %>% 
+  mutate(Geographic_Dist=distHaversine(cbind(WL2_Long, WL2_Lat), cbind(Long, Lat)),
+         Elev_Dist=elev_m-WL2_Elev) %>% # Calculate the distance using the haversine formula
+  rename(pop=parent.pop)
+
 wl2_gowers_2024 <- read_csv("../output/Climate/Gowers_WL2_2024.csv") %>% 
   pivot_wider(names_from = TimePd, values_from = c(GrwSsn_GD, Wtr_Year_GD)) %>% 
   mutate(WL2_Lat=38.82599, WL2_Long=-120.2509, WL2_Elev=2020) %>% 
@@ -124,6 +129,24 @@ wl2_gowers_2024 <- read_csv("../output/Climate/Gowers_WL2_2024.csv") %>%
 ```
 
 ## Climate Subtraction Distance
+
+```{r}
+wl2_wtr_year_sub_recent_2324 <- read_csv("../output/Climate/full_year_Subtraction_Dist_from_Home_WL2_2324_Recent.csv") %>% 
+  select(parent.pop, Wtr_Year_TempDist_Recent=ann_tmean_dist, Wtr_Year_PPTDist_Recent=ann_ppt_dist)
+wl2_wtr_year_sub_historic_2324 <- read_csv("../output/Climate/full_year_Subtraction_Dist_from_Home_WL2_2324_Historical.csv") %>% 
+  select(parent.pop, Wtr_Year_TempDist_Historic=ann_tmean_dist, Wtr_Year_PPTDist_Historic=ann_ppt_dist)
+wl2_grwssn_sub_recent_2324 <- read_csv("../output/Climate/grwssn_Subtraction_Dist_from_Home_WL2_2324_Recent.csv") %>% 
+  select(parent.pop, GrwSsn_TempDist_Recent=ann_tmean_dist, GrwSsn_PPTDist_Recent=ann_ppt_dist)
+wl2_grwssn_sub_historic_2324 <- read_csv("../output/Climate/grwssn_Subtraction_Dist_from_Home_WL2_2324_Historical.csv") %>% 
+  select(parent.pop, GrwSsn_TempDist_Historic=ann_tmean_dist, GrwSsn_PPTDist_Historic=ann_ppt_dist)
+
+wl2_sub_dist_2324 <- wl2_wtr_year_sub_recent_2324 %>% 
+  left_join(wl2_wtr_year_sub_historic_2324) %>% 
+  left_join(wl2_grwssn_sub_recent_2324) %>% 
+  left_join(wl2_grwssn_sub_historic_2324) %>% 
+  rename(pop=parent.pop) %>% 
+  left_join(wl2_gowers_2324)
+```
 
 ```{r}
 wl2_wtr_year_sub_recent_2024 <- read_csv("../output/Climate/full_year_Subtraction_Dist_from_Home_WL2_2024_Recent.csv") %>% 
@@ -145,13 +168,13 @@ wl2_sub_dist_2024 <- wl2_wtr_year_sub_recent_2024 %>%
 ## Calculate Survival to Bolting
 
 ```{r}
-wl2_surv_y2 %>% filter(!is.na(bud.date), is.na(fruit.date)) #some plants initiated reproduction but did not make fruits
-#1 plant with a last flower date, but no fruit date, this plant did not make any fruits per the notes 
-wl2_surv_y2 %>% filter(!is.na(bud.date), !is.na(death.date))  #bud date and death date for a lot of plants
-wl2_surv_y2 %>% filter(is.na(bud.date), !is.na(flower.date)) #3 plants without a bud date, but with a flower date
-wl2_surv_y2 %>% filter(is.na(bud.date), !is.na(fruit.date)) #4 plants without a bud date, but with a fruit date  
-wl2_surv_y2 %>% filter(is.na(bud.date), !is.na(last.FL.date)) #same plants as above
-wl2_surv_y2 %>% filter(is.na(bud.date), !is.na(last.FR.date)) #same plants as above 
+#wl2_surv_y2 %>% filter(!is.na(bud.date), is.na(fruit.date)) #some plants initiated reproduction but did not make fruits
+##1 plant with a last flower date, but no fruit date, this plant did not make any fruits per the notes 
+#wl2_surv_y2 %>% filter(!is.na(bud.date), !is.na(death.date))  #bud date and death date for a lot of plants
+#wl2_surv_y2 %>% filter(is.na(bud.date), !is.na(flower.date)) #3 plants without a bud date, but with a flower date
+#wl2_surv_y2 %>% filter(is.na(bud.date), !is.na(fruit.date)) #4 plants without a bud date, but with a fruit date  
+#wl2_surv_y2 %>% filter(is.na(bud.date), !is.na(last.FL.date)) #same plants as above
+#wl2_surv_y2 %>% filter(is.na(bud.date), !is.na(last.FR.date)) #same plants as above 
 
 wl2_surv_to_rep_y2 <- wl2_surv_y2 %>% 
   left_join(wl2_gowers_2024) %>% 
@@ -161,7 +184,7 @@ wl2_surv_to_rep_y2 <- wl2_surv_y2 %>%
   mutate(SurvtoRep_y2=if_else(is.na(bud.date), 0, 1)) %>% 
   select(Pop.Type:block, elevation.group:Wtr_Year_GD_Historical, Geographic_Dist, Elev_Dist, bud.date, death.date, SurvtoRep_y2) 
 
-wl2_surv_to_rep_y2 %>% group_by(pop) %>% summarise(n=n()) %>% arrange(n)
+#wl2_surv_to_rep_y2 %>% group_by(pop) %>% summarise(n=n()) %>% arrange(n)
 #LV1, SQ1, and WR only have 1 indiv alive in 2024
 
 #write_csv(wl2_surv_to_rep_y2, "../output/WL2_Traits/WL2_Surv_to_Rep_Y2.csv")
@@ -175,6 +198,25 @@ wl2_surv_to_rep_y2_sub_dist <- wl2_surv_to_rep_y2 %>%
 unique(wl2_surv_to_rep_y2_sub_dist$block)
 unique(wl2_surv_to_rep_y2_sub_dist$pop)
 unique(wl2_surv_to_rep_y2_sub_dist$mf)
+```
+
+### Wtih 2023 Gowers
+
+```{r}
+wl2_surv_to_rep_y2_2324 <- wl2_surv_y2 %>% 
+  left_join(wl2_gowers_2324) %>% 
+  mutate(bud.date=if_else(Genotype=="SC_6_15" | Genotype=="SC_5_6" | 
+                            Genotype=="CC_9_6" | Genotype=="WL2_8_4",
+                          "Missed", bud.date)) %>% #add in bud date for plants with a later rep date 
+  mutate(SurvtoRep_y2=if_else(is.na(bud.date), 0, 1)) %>% 
+  select(Pop.Type:block, elevation.group:Wtr_Year_GD_Historical, Geographic_Dist, Elev_Dist, bud.date, death.date, SurvtoRep_y2) 
+write_csv(wl2_surv_to_rep_y2_2324, "../output/WL2_Traits/WL2_Surv_to_Rep_Y2_2324.csv")
+```
+
+```{r}
+wl2_surv_to_rep_y2_sub_dist_2324 <- wl2_surv_to_rep_y2 %>% 
+  select(loc:block, SurvtoRep_y2) %>% 
+  left_join(wl2_sub_dist_2324)
 ```
 
 ### Bar Plots
@@ -264,7 +306,7 @@ ED <- wl2_surv_to_rep_y2 %>%
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 
 wl2_surv_to_rep_y2_FIG <- ggarrange(GSCD_recent, WYCD_recent, GD, ED, ncol=2, nrow=2) 
-ggsave("../output/WL2_Traits/WL2_SurvtoRep_y2_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
+#ggsave("../output/WL2_Traits/WL2_SurvtoRep_y2_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
 ```
 
 ```{r}
@@ -294,7 +336,7 @@ WYCD_historic <- wl2_surv_to_rep_y2 %>%
   theme(text=element_text(size=25))
 
 wl2_surv_to_rep_y2_FIG <- ggarrange(GSCD_historic, WYCD_historic, GD, ED, ncol=2, nrow=2) 
-ggsave("../output/WL2_Traits/WL2_SurvtoRep_y2_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
+#ggsave("../output/WL2_Traits/WL2_SurvtoRep_y2_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
 ```
 
 #### Directional Distance
@@ -350,7 +392,7 @@ ED_prob <- wl2_surv_to_rep_y2_sub_dist %>%
   theme(text=element_text(size=30))
 
 WL2_surv_to_rep_y2_sub_FIG_prob_recent <- ggarrange(GSCD_prob_recent, WYCD_prob_recent, GD_prob, ED_prob, ncol=2, nrow=2) 
-ggsave("../output/WL2_Traits/WL2_SurvtoRep_y2_TmpSubDist_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
+#ggsave("../output/WL2_Traits/WL2_SurvtoRep_y2_TmpSubDist_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
 ```
 
 ```{r}
@@ -380,7 +422,7 @@ WYCD_prob_historic <- wl2_surv_to_rep_y2_sub_dist %>%
   theme(text=element_text(size=30))
 
 WL2_surv_to_rep_y2_sub_FIG_prob_historic <- ggarrange(GSCD_prob_historic, WYCD_prob_historic, GD_prob, ED_prob, ncol=2, nrow=2) 
-ggsave("../output/WL2_Traits/WL2_SurvtoRep_y2_TmpSubDist_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
+#ggsave("../output/WL2_Traits/WL2_SurvtoRep_y2_TmpSubDist_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
 ```
 
 ```{r}
@@ -434,7 +476,7 @@ ED_prob <- wl2_surv_to_rep_y2_sub_dist %>%
   theme(text=element_text(size=30))
 
 WL2_surv_to_rep_y2_sub_FIG_prob_recent <- ggarrange(GSCD_prob_recent, WYCD_prob_recent, GD_prob, ED_prob, ncol=2, nrow=2) 
-ggsave("../output/WL2_Traits/WL2_SurvtoRep_y2_PPTSubDist_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
+#ggsave("../output/WL2_Traits/WL2_SurvtoRep_y2_PPTSubDist_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
 ```
 
 ```{r}
@@ -464,7 +506,7 @@ WYCD_prob_historic <- wl2_surv_to_rep_y2_sub_dist %>%
   theme(text=element_text(size=30))
 
 WL2_surv_to_rep_y2_sub_FIG_prob_historic <- ggarrange(GSCD_prob_historic, WYCD_prob_historic, GD_prob, ED_prob, ncol=2, nrow=2) 
-ggsave("../output/WL2_Traits/WL2_SurvtoRep_y2_PPTSubDist_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
+#ggsave("../output/WL2_Traits/WL2_SurvtoRep_y2_PPTSubDist_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
 ```
 
 #### Figure for paper
@@ -523,7 +565,76 @@ WL2_surv_to_rep_y2_for_paper <- ggarrange(GD_prob, WYCD_recent,
                                         labels = c("A)", "B)", "C)", "D)"), 
                                         font.label = list(size=30, face = "plain"), 
                                         ncol=2, nrow=2) 
-ggsave("../output/WL2_Traits/WL2_SurvtoRep_y2_SCATTERS_Summary_Recent.png", width = 24, height = 18, units = "in")
+#ggsave("../output/WL2_Traits/WL2_SurvtoRep_y2_SCATTERS_Summary_Recent.png", width = 24, height = 18, units = "in")
+```
+
+```{r}
+GD_prob <- wl2_surv_to_rep_y2_sub_dist_2324 %>% 
+  filter(pop != "LV1", pop != "SQ1", pop != "WR") %>% 
+  group_by(pop, elev_m, GrwSsn_PPTDist_Recent, Wtr_Year_PPTDist_Recent, Geographic_Dist) %>% 
+  summarise(meanEst=mean(SurvtoRep_y2, na.rm = TRUE), semEst=sem(SurvtoRep_y2, na.rm=TRUE)) %>% 
+  ggplot(aes(x=Geographic_Dist, y=meanEst, group = pop, colour = elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.2, linewidth = 2) +
+  annotate("text", x = 9500, y= 0.8333333, label = "WL2", 
+           colour = "purple", fontface="bold", size = 22 / .pt) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0), limits = c(0.4,1.05)) +
+  labs(y="Survival to Budding Y2", x="Geographic Distance (m)", colour = "Elevation (m)") +
+  theme(text=element_text(size=30), axis.text.x = element_text(angle = 45,  hjust = 1))
+
+WYCD_recent <- wl2_surv_to_rep_y2_2324 %>% 
+  filter(pop != "LV1", pop != "SQ1", pop != "WR") %>% 
+  group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
+  summarise(meanSurv=mean(SurvtoRep_y2, na.rm = TRUE), semSurv=sem(SurvtoRep_y2, na.rm=TRUE)) %>% 
+  ggplot(aes(x=Wtr_Year_GD_Recent, y=meanSurv, group = pop, colour = elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanSurv-semSurv,ymax=meanSurv+semSurv),width=.02,linewidth = 2) +
+  annotate("text", x = 0.25, y= 0.8333333, label = "WL2", 
+           colour = "purple", fontface="bold", size = 22 / .pt) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0), limits = c(0.4,1.05)) +
+  labs(y="Survival to Budding Y2", x="Recent Water Year CD", colour = "Elevation (m)") +
+  theme(text=element_text(size=25))
+
+WYtemp_prob_recent <- wl2_surv_to_rep_y2_sub_dist_2324 %>% 
+  filter(pop != "LV1", pop != "SQ1", pop != "WR") %>% 
+  group_by(pop, elev_m, Wtr_Year_TempDist_Recent, Wtr_Year_TempDist_Historic) %>% 
+  summarise(meanEst=mean(SurvtoRep_y2, na.rm = TRUE), semEst=sem(SurvtoRep_y2, na.rm=TRUE)) %>% 
+  ggplot(aes(x=Wtr_Year_TempDist_Recent, y=meanEst, group = pop, colour = elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.3,linewidth = 2) +
+  annotate("text", x = 0.4, y= 0.8333333, label = "WL2", 
+           colour = "purple", fontface="bold", size = 22 / .pt) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0), limits = c(0.4,1.05)) +
+  labs(y="Survival to Budding Y2", x="Recent Water Year Temp Dist (°C)", colour = "Elevation (m)") +
+  theme(text=element_text(size=30))
+
+WYppt_prob_recent <- wl2_surv_to_rep_y2_sub_dist_2324 %>% 
+  filter(pop != "LV1", pop != "SQ1", pop != "WR") %>% 
+  group_by(pop, elev_m, Wtr_Year_PPTDist_Recent, Wtr_Year_PPTDist_Historic) %>% 
+  summarise(meanEst=mean(SurvtoRep_y2, na.rm = TRUE), semEst=sem(SurvtoRep_y2, na.rm=TRUE)) %>% 
+  ggplot(aes(x=Wtr_Year_PPTDist_Recent, y=meanEst, group = pop, colour = elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.3,linewidth = 2) +
+  annotate("text", x = 143, y= 0.8333333, label = "WL2", 
+           colour = "purple", fontface="bold", size = 22 / .pt) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0), limits = c(0.4,1.05)) +
+  labs(y="Survival to Budding Y2", x="Recent Water Year PPT Dist (mm)", colour = "Elevation (m)") +
+  theme(text=element_text(size=30))
+
+WL2_surv_to_rep_y2_for_paper <- ggarrange(GD_prob, WYCD_recent, 
+                                        WYtemp_prob_recent, WYppt_prob_recent, 
+                                        labels = c("A)", "B)", "C)", "D)"), 
+                                        font.label = list(size=30, face = "plain"), 
+                                        ncol=2, nrow=2) 
+ggsave("../output/WL2_Traits/WL2_SurvtoRep_y2_SCATTERS_Summary_Recent_2324.png", width = 26, height = 18, units = "in")
 ```
 
 ## Stats
@@ -540,6 +651,11 @@ wl2_surv_to_rep_y2_scaled <- wl2_surv_to_rep_y2 %>%
   filter(pop != "LV1", pop != "SQ1", pop != "WR") %>% 
   mutate_at(c("GrwSsn_GD_Recent","Wtr_Year_GD_Recent",                                                           "GrwSsn_GD_Historical","Wtr_Year_GD_Historical","Geographic_Dist"),
                                                             scale) 
+
+wl2_surv_to_rep_y2_scaled_2324 <- wl2_surv_to_rep_y2_2324 %>% 
+  filter(pop != "LV1", pop != "SQ1", pop != "WR") %>% 
+  mutate_at(c("GrwSsn_GD_Recent","Wtr_Year_GD_Recent",                                                           "GrwSsn_GD_Historical","Wtr_Year_GD_Historical","Geographic_Dist"),
+                                                            scale) 
 ```
 
 ```{r}
@@ -549,6 +665,14 @@ wl2_surv_to_rep_y2_sub_dist %>%
   arrange(n) #LV1, SQ1, WR only 1 indiv, remove 
 
 wl2_surv_to_rep_y2_scaled_sub <- wl2_surv_to_rep_y2_sub_dist %>% 
+  filter(pop != "LV1", pop != "SQ1", pop != "WR") %>% 
+  mutate_at(c("Wtr_Year_TempDist_Recent",  "Wtr_Year_PPTDist_Recent", 
+                 "Wtr_Year_TempDist_Historic", "Wtr_Year_PPTDist_Historic",
+                 "GrwSsn_TempDist_Recent", "GrwSsn_PPTDist_Recent",
+                 "GrwSsn_TempDist_Historic", "GrwSsn_PPTDist_Historic",
+              "Geographic_Dist"), scale)
+
+wl2_surv_to_rep_y2_scaled_sub_2324 <- wl2_surv_to_rep_y2_sub_dist_2324 %>% 
   filter(pop != "LV1", pop != "SQ1", pop != "WR") %>% 
   mutate_at(c("Wtr_Year_TempDist_Recent",  "Wtr_Year_PPTDist_Recent", 
                  "Wtr_Year_TempDist_Historic", "Wtr_Year_PPTDist_Historic",
@@ -593,8 +717,15 @@ surv_fits_wl2 <- surv_fits %>%
 #mod_test <- glmer(SurvtoRep_y2 ~ (1|pop/mf) + (1|block), data=wl2_surv_to_rep_y2_scaled, family=binomial)
 #summary(mod_test)
 #Warning: Model failed to converge with max|grad| = 0.0354704 (tol = 0.002, component 1)
-
 surv_fits_wl2 %>% mutate(glance=map(fit, glance)) %>% unnest(glance) %>% arrange(AIC) %>% select(-wflow:-sigma)
+#model with pop and block (but excluding mf) is best by AIC and BIC, convergence issues with mf included 
+
+surv_fits_wl2_2324 <- surv_fits %>%
+  mutate(fit = map(wflow, fit, data = wl2_surv_to_rep_y2_scaled_2324))
+#mod_test <- glmer(SurvtoRep_y2 ~ (1|pop/mf) + (1|block), data=wl2_surv_to_rep_y2_scaled_2324, family=binomial)
+#summary(mod_test)
+#Warning: Model failed to converge with max|grad| = 0.0354704 (tol = 0.002, component 1)
+surv_fits_wl2_2324 %>% mutate(glance=map(fit, glance)) %>% unnest(glance) %>% arrange(AIC) %>% select(-wflow:-sigma)
 #model with pop and block (but excluding mf) is best by AIC and BIC, convergence issues with mf included 
 ```
 
@@ -624,7 +755,7 @@ surv_GD_fits_wl2 <- tibble(wflow=list(
 name=names(wflow)
 ) %>% 
   select(name,wflow) %>%
-  mutate(fit = map(wflow, fit, data = wl2_surv_to_rep_y2_scaled))
+  mutate(fit = map(wflow, fit, data = wl2_surv_to_rep_y2_scaled_2324))
 
 surv_GD_fits_wl2 %>% mutate(glance=map(fit, glance)) %>% unnest(glance) %>% arrange(AIC) %>% select(-wflow:-sigma)
 #water year models preferred by AIC 
@@ -665,7 +796,7 @@ surv_GD_fits_wl2_sub <- tibble(wflow=list(
 name=names(wflow)
 ) %>% 
   select(name,wflow) %>%
-  mutate(fit = map(wflow, fit, data = wl2_surv_to_rep_y2_scaled_sub))
+  mutate(fit = map(wflow, fit, data = wl2_surv_to_rep_y2_scaled_sub_2324))
 
 surv_GD_fits_wl2_sub %>% mutate(glance=map(fit, glance)) %>% unnest(glance) %>% arrange(AIC) %>% select(-wflow:-sigma)
 #water year models preferred by AIC 

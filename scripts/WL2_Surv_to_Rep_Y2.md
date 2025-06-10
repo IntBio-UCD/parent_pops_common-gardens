@@ -1,7 +1,7 @@
 ---
 title: "WL2_Surv_to_Rep_Y2"
 author: "Brandie QC"
-date: "2025-04-09"
+date: "2025-06-10"
 output: 
   html_document: 
     keep_md: true
@@ -25,9 +25,6 @@ Looked at relationship between size and survival
 
 <!-- -->
 
-To Do:
-
--   Standard error correction on scatter plots
 
 ## Libraries
 
@@ -166,7 +163,7 @@ library(tidymodels)
 ## ✖ infer::t_test()       masks rstatix::t_test()
 ## ✖ Matrix::unpack()      masks tidyr::unpack()
 ## ✖ recipes::update()     masks Matrix::update(), stats::update()
-## • Use tidymodels_prefer() to resolve common conflicts.
+## • Dig deeper into tidy modeling with R at https://www.tmwr.org
 ```
 
 ``` r
@@ -347,6 +344,27 @@ garden_climate
 #UCD LAT/LONG = 38.53250, -121.7830
 #WL2 Lat/Long = 38.82599, -120.2509
 
+wl2_gowers_2324 <- read_csv("../output/Climate/Gowers_WL2_2324.csv") %>% 
+  select(parent.pop:GrwSsn_GD, Wtr_Year_GD) %>% 
+  pivot_wider(names_from = TimePd, values_from = c(GrwSsn_GD, Wtr_Year_GD)) %>% 
+  mutate(WL2_Lat=38.82599, WL2_Long=-120.2509, WL2_Elev=2020) %>% 
+  mutate(Geographic_Dist=distHaversine(cbind(WL2_Long, WL2_Lat), cbind(Long, Lat)),
+         Elev_Dist=elev_m-WL2_Elev) %>% # Calculate the distance using the haversine formula
+  rename(pop=parent.pop)
+```
+
+```
+## Rows: 46 Columns: 8
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: ","
+## chr (3): parent.pop, elevation.group, TimePd
+## dbl (5): elev_m, Lat, Long, GrwSsn_GD, Wtr_Year_GD
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+```
+
+``` r
 wl2_gowers_2024 <- read_csv("../output/Climate/Gowers_WL2_2024.csv") %>% 
   pivot_wider(names_from = TimePd, values_from = c(GrwSsn_GD, Wtr_Year_GD)) %>% 
   mutate(WL2_Lat=38.82599, WL2_Long=-120.2509, WL2_Elev=2020) %>% 
@@ -367,6 +385,87 @@ wl2_gowers_2024 <- read_csv("../output/Climate/Gowers_WL2_2024.csv") %>%
 ```
 
 ## Climate Subtraction Distance
+
+
+``` r
+wl2_wtr_year_sub_recent_2324 <- read_csv("../output/Climate/full_year_Subtraction_Dist_from_Home_WL2_2324_Recent.csv") %>% 
+  select(parent.pop, Wtr_Year_TempDist_Recent=ann_tmean_dist, Wtr_Year_PPTDist_Recent=ann_ppt_dist)
+```
+
+```
+## Rows: 23 Columns: 18
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: ","
+## chr  (2): parent.pop, elevation.group
+## dbl (16): elev_m, ppt_dist, cwd_dist, pck_dist, tmn_dist, tmx_dist, ann_tmea...
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+```
+
+``` r
+wl2_wtr_year_sub_historic_2324 <- read_csv("../output/Climate/full_year_Subtraction_Dist_from_Home_WL2_2324_Historical.csv") %>% 
+  select(parent.pop, Wtr_Year_TempDist_Historic=ann_tmean_dist, Wtr_Year_PPTDist_Historic=ann_ppt_dist)
+```
+
+```
+## Rows: 23 Columns: 18
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: ","
+## chr  (2): parent.pop, elevation.group
+## dbl (16): elev_m, ppt_dist, cwd_dist, pck_dist, tmn_dist, tmx_dist, ann_tmea...
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+```
+
+``` r
+wl2_grwssn_sub_recent_2324 <- read_csv("../output/Climate/grwssn_Subtraction_Dist_from_Home_WL2_2324_Recent.csv") %>% 
+  select(parent.pop, GrwSsn_TempDist_Recent=ann_tmean_dist, GrwSsn_PPTDist_Recent=ann_ppt_dist)
+```
+
+```
+## Rows: 23 Columns: 18
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: ","
+## chr  (2): parent.pop, elevation.group
+## dbl (16): elev_m, ppt_dist, cwd_dist, pck_dist, tmn_dist, tmx_dist, ann_tmea...
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+```
+
+``` r
+wl2_grwssn_sub_historic_2324 <- read_csv("../output/Climate/grwssn_Subtraction_Dist_from_Home_WL2_2324_Historical.csv") %>% 
+  select(parent.pop, GrwSsn_TempDist_Historic=ann_tmean_dist, GrwSsn_PPTDist_Historic=ann_ppt_dist)
+```
+
+```
+## Rows: 23 Columns: 18
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: ","
+## chr  (2): parent.pop, elevation.group
+## dbl (16): elev_m, ppt_dist, cwd_dist, pck_dist, tmn_dist, tmx_dist, ann_tmea...
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+```
+
+``` r
+wl2_sub_dist_2324 <- wl2_wtr_year_sub_recent_2324 %>% 
+  left_join(wl2_wtr_year_sub_historic_2324) %>% 
+  left_join(wl2_grwssn_sub_recent_2324) %>% 
+  left_join(wl2_grwssn_sub_historic_2324) %>% 
+  rename(pop=parent.pop) %>% 
+  left_join(wl2_gowers_2324)
+```
+
+```
+## Joining with `by = join_by(parent.pop)`
+## Joining with `by = join_by(parent.pop)`
+## Joining with `by = join_by(parent.pop)`
+## Joining with `by = join_by(pop)`
+```
 
 
 ``` r
@@ -453,120 +552,14 @@ wl2_sub_dist_2024 <- wl2_wtr_year_sub_recent_2024 %>%
 
 
 ``` r
-wl2_surv_y2 %>% filter(!is.na(bud.date), is.na(fruit.date)) #some plants initiated reproduction but did not make fruits
-```
+#wl2_surv_y2 %>% filter(!is.na(bud.date), is.na(fruit.date)) #some plants initiated reproduction but did not make fruits
+##1 plant with a last flower date, but no fruit date, this plant did not make any fruits per the notes 
+#wl2_surv_y2 %>% filter(!is.na(bud.date), !is.na(death.date))  #bud date and death date for a lot of plants
+#wl2_surv_y2 %>% filter(is.na(bud.date), !is.na(flower.date)) #3 plants without a bud date, but with a flower date
+#wl2_surv_y2 %>% filter(is.na(bud.date), !is.na(fruit.date)) #4 plants without a bud date, but with a fruit date  
+#wl2_surv_y2 %>% filter(is.na(bud.date), !is.na(last.FL.date)) #same plants as above
+#wl2_surv_y2 %>% filter(is.na(bud.date), !is.na(last.FR.date)) #same plants as above 
 
-```
-## # A tibble: 10 × 18
-##    Pop.Type    loc   bed     row col   pop      mf   rep Genotype block bud.date
-##    <chr>       <chr> <chr> <dbl> <chr> <chr> <dbl> <dbl> <chr>    <chr> <chr>   
-##  1 2023-survi… A_14… A        14 D     CC        8     3 CC_8_3   A     6/18/24 
-##  2 2023-survi… C_6_A C         6 A     CC        1     6 CC_1_6   D     6/18/24 
-##  3 2023-survi… D_3_B D         3 B     IH        5     9 IH_5_9   G     7/2/24  
-##  4 2023-survi… D_21… D        21 A     SC        5     9 SC_5_9   G     6/25/24 
-##  5 2023-survi… D_25… D        25 C     CC        2     9 CC_2_9   G     7/9/24  
-##  6 2023-survi… E_22… E        22 A     IH        2    10 IH_2_10  H     7/16/24 
-##  7 2023-survi… E_23… E        23 D     IH        5    10 IH_5_10  H     6/25/24 
-##  8 2023-survi… F_7_B F         7 B     IH        1    12 IH_1_12  J     6/25/24 
-##  9 2023-survi… F_43… F        43 B     CC        8    11 CC_8_11  I     6/25/24 
-## 10 2023-survi… H_11… H        11 B     IH        2     1 IH_2_1   L     7/23/24 
-## # ℹ 7 more variables: flower.date <chr>, fruit.date <chr>, last.FL.date <chr>,
-## #   last.FR.date <chr>, death.date <chr>, missing.date <chr>,
-## #   survey.notes <chr>
-```
-
-``` r
-#1 plant with a last flower date, but no fruit date, this plant did not make any fruits per the notes 
-wl2_surv_y2 %>% filter(!is.na(bud.date), !is.na(death.date))  #bud date and death date for a lot of plants
-```
-
-```
-## # A tibble: 74 × 18
-##    Pop.Type    loc   bed     row col   pop      mf   rep Genotype block bud.date
-##    <chr>       <chr> <chr> <dbl> <chr> <chr> <dbl> <dbl> <chr>    <chr> <chr>   
-##  1 2023-survi… A_17… A        17 A     BH        7     3 BH_7_3   A     6/18/24 
-##  2 2023-survi… A_18… A        18 A     BH        4     3 BH_4_3   A     6/18/24 
-##  3 2023-survi… A_24… A        24 A     WL2       7     9 WL2_7_9  A     6/18/24 
-##  4 2023-survi… A_32… A        32 B     IH        7     4 IH_7_4   B     6/18/24 
-##  5 2023-survi… A_35… A        35 A     SC        8     4 SC_8_4   B     6/18/24 
-##  6 2023-survi… A_36… A        36 A     BH        3     4 BH_3_4   B     6/18/24 
-##  7 2023-survi… A_39… A        39 B     WL2       7    10 WL2_7_10 B     6/18/24 
-##  8 2023-survi… A_45… A        45 B     IH        2     4 IH_2_4   B     7/2/24  
-##  9 2023-survi… A_49… A        49 A     YO7       7    23 YO7_7_23 B     6/18/24 
-## 10 2023-survi… A_53… A        53 A     CC        4     4 CC_4_4   B     6/18/24 
-## # ℹ 64 more rows
-## # ℹ 7 more variables: flower.date <chr>, fruit.date <chr>, last.FL.date <chr>,
-## #   last.FR.date <chr>, death.date <chr>, missing.date <chr>,
-## #   survey.notes <chr>
-```
-
-``` r
-wl2_surv_y2 %>% filter(is.na(bud.date), !is.na(flower.date)) #3 plants without a bud date, but with a flower date
-```
-
-```
-## # A tibble: 3 × 18
-##   Pop.Type     loc   bed     row col   pop      mf   rep Genotype block bud.date
-##   <chr>        <chr> <chr> <dbl> <chr> <chr> <dbl> <dbl> <chr>    <chr> <chr>   
-## 1 2023-surviv… B_56… B        56 A     SC        6    15 SC_6_15  B     <NA>    
-## 2 2023-surviv… C_2_C C         2 C     SC        5     6 SC_5_6   D     <NA>    
-## 3 2023-surviv… F_26… F        26 A     WL2       8     4 WL2_8_4  I     <NA>    
-## # ℹ 7 more variables: flower.date <chr>, fruit.date <chr>, last.FL.date <chr>,
-## #   last.FR.date <chr>, death.date <chr>, missing.date <chr>,
-## #   survey.notes <chr>
-```
-
-``` r
-wl2_surv_y2 %>% filter(is.na(bud.date), !is.na(fruit.date)) #4 plants without a bud date, but with a fruit date  
-```
-
-```
-## # A tibble: 4 × 18
-##   Pop.Type     loc   bed     row col   pop      mf   rep Genotype block bud.date
-##   <chr>        <chr> <chr> <dbl> <chr> <chr> <dbl> <dbl> <chr>    <chr> <chr>   
-## 1 2023-surviv… B_56… B        56 A     SC        6    15 SC_6_15  B     <NA>    
-## 2 2023-surviv… C_2_C C         2 C     SC        5     6 SC_5_6   D     <NA>    
-## 3 2023-surviv… C_2_D C         2 D     CC        9     6 CC_9_6   D     <NA>    
-## 4 2023-surviv… F_26… F        26 A     WL2       8     4 WL2_8_4  I     <NA>    
-## # ℹ 7 more variables: flower.date <chr>, fruit.date <chr>, last.FL.date <chr>,
-## #   last.FR.date <chr>, death.date <chr>, missing.date <chr>,
-## #   survey.notes <chr>
-```
-
-``` r
-wl2_surv_y2 %>% filter(is.na(bud.date), !is.na(last.FL.date)) #same plants as above
-```
-
-```
-## # A tibble: 4 × 18
-##   Pop.Type     loc   bed     row col   pop      mf   rep Genotype block bud.date
-##   <chr>        <chr> <chr> <dbl> <chr> <chr> <dbl> <dbl> <chr>    <chr> <chr>   
-## 1 2023-surviv… B_56… B        56 A     SC        6    15 SC_6_15  B     <NA>    
-## 2 2023-surviv… C_2_C C         2 C     SC        5     6 SC_5_6   D     <NA>    
-## 3 2023-surviv… C_2_D C         2 D     CC        9     6 CC_9_6   D     <NA>    
-## 4 2023-surviv… F_26… F        26 A     WL2       8     4 WL2_8_4  I     <NA>    
-## # ℹ 7 more variables: flower.date <chr>, fruit.date <chr>, last.FL.date <chr>,
-## #   last.FR.date <chr>, death.date <chr>, missing.date <chr>,
-## #   survey.notes <chr>
-```
-
-``` r
-wl2_surv_y2 %>% filter(is.na(bud.date), !is.na(last.FR.date)) #same plants as above 
-```
-
-```
-## # A tibble: 3 × 18
-##   Pop.Type     loc   bed     row col   pop      mf   rep Genotype block bud.date
-##   <chr>        <chr> <chr> <dbl> <chr> <chr> <dbl> <dbl> <chr>    <chr> <chr>   
-## 1 2023-surviv… B_56… B        56 A     SC        6    15 SC_6_15  B     <NA>    
-## 2 2023-surviv… C_2_C C         2 C     SC        5     6 SC_5_6   D     <NA>    
-## 3 2023-surviv… C_2_D C         2 D     CC        9     6 CC_9_6   D     <NA>    
-## # ℹ 7 more variables: flower.date <chr>, fruit.date <chr>, last.FL.date <chr>,
-## #   last.FR.date <chr>, death.date <chr>, missing.date <chr>,
-## #   survey.notes <chr>
-```
-
-``` r
 wl2_surv_to_rep_y2 <- wl2_surv_y2 %>% 
   left_join(wl2_gowers_2024) %>% 
   mutate(bud.date=if_else(Genotype=="SC_6_15" | Genotype=="SC_5_6" | 
@@ -581,26 +574,7 @@ wl2_surv_to_rep_y2 <- wl2_surv_y2 %>%
 ```
 
 ``` r
-wl2_surv_to_rep_y2 %>% group_by(pop) %>% summarise(n=n()) %>% arrange(n)
-```
-
-```
-## # A tibble: 10 × 2
-##    pop       n
-##    <chr> <int>
-##  1 LV1       1
-##  2 SQ1       1
-##  3 WR        1
-##  4 TM2       6
-##  5 WL2       6
-##  6 CC       17
-##  7 YO7      18
-##  8 SC       22
-##  9 BH       29
-## 10 IH       34
-```
-
-``` r
+#wl2_surv_to_rep_y2 %>% group_by(pop) %>% summarise(n=n()) %>% arrange(n)
 #LV1, SQ1, and WR only have 1 indiv alive in 2024
 
 #write_csv(wl2_surv_to_rep_y2, "../output/WL2_Traits/WL2_Surv_to_Rep_Y2.csv")
@@ -641,6 +615,38 @@ unique(wl2_surv_to_rep_y2_sub_dist$mf)
 ## [1] 3 7 4 8 2 1 5 6 9
 ```
 
+### Wtih 2023 Gowers
+
+
+``` r
+wl2_surv_to_rep_y2_2324 <- wl2_surv_y2 %>% 
+  left_join(wl2_gowers_2324) %>% 
+  mutate(bud.date=if_else(Genotype=="SC_6_15" | Genotype=="SC_5_6" | 
+                            Genotype=="CC_9_6" | Genotype=="WL2_8_4",
+                          "Missed", bud.date)) %>% #add in bud date for plants with a later rep date 
+  mutate(SurvtoRep_y2=if_else(is.na(bud.date), 0, 1)) %>% 
+  select(Pop.Type:block, elevation.group:Wtr_Year_GD_Historical, Geographic_Dist, Elev_Dist, bud.date, death.date, SurvtoRep_y2) 
+```
+
+```
+## Joining with `by = join_by(pop)`
+```
+
+``` r
+write_csv(wl2_surv_to_rep_y2_2324, "../output/WL2_Traits/WL2_Surv_to_Rep_Y2_2324.csv")
+```
+
+
+``` r
+wl2_surv_to_rep_y2_sub_dist_2324 <- wl2_surv_to_rep_y2 %>% 
+  select(loc:block, SurvtoRep_y2) %>% 
+  left_join(wl2_sub_dist_2324)
+```
+
+```
+## Joining with `by = join_by(pop)`
+```
+
 ### Bar Plots
 
 
@@ -665,7 +671,7 @@ wl2_surv_to_rep_y2 %>%
 ## can override using the `.groups` argument.
 ```
 
-![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-8-1.png)<!-- -->
+![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-11-1.png)<!-- -->
 
 ``` r
 #ggsave("../output/WL2_Traits/WL2_SurvtoRepY2_GrwSsn_GD_Recent.png", width = 12, height = 8, units = "in")
@@ -690,7 +696,7 @@ wl2_surv_to_rep_y2 %>%
 ## can override using the `.groups` argument.
 ```
 
-![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-8-2.png)<!-- -->
+![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-11-2.png)<!-- -->
 
 ``` r
 #ggsave("../output/WL2_Traits/WL2_SurvtoRepY2_Wtr_Year_GD_Recent.png", width = 12, height = 8, units = "in")
@@ -778,7 +784,7 @@ ED <- wl2_surv_to_rep_y2 %>%
 
 ``` r
 wl2_surv_to_rep_y2_FIG <- ggarrange(GSCD_recent, WYCD_recent, GD, ED, ncol=2, nrow=2) 
-ggsave("../output/WL2_Traits/WL2_SurvtoRep_y2_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
+#ggsave("../output/WL2_Traits/WL2_SurvtoRep_y2_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
 ```
 
 
@@ -823,7 +829,7 @@ WYCD_historic <- wl2_surv_to_rep_y2 %>%
 
 ``` r
 wl2_surv_to_rep_y2_FIG <- ggarrange(GSCD_historic, WYCD_historic, GD, ED, ncol=2, nrow=2) 
-ggsave("../output/WL2_Traits/WL2_SurvtoRep_y2_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
+#ggsave("../output/WL2_Traits/WL2_SurvtoRep_y2_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
 ```
 
 #### Directional Distance
@@ -908,7 +914,7 @@ ED_prob <- wl2_surv_to_rep_y2_sub_dist %>%
 
 ``` r
 WL2_surv_to_rep_y2_sub_FIG_prob_recent <- ggarrange(GSCD_prob_recent, WYCD_prob_recent, GD_prob, ED_prob, ncol=2, nrow=2) 
-ggsave("../output/WL2_Traits/WL2_SurvtoRep_y2_TmpSubDist_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
+#ggsave("../output/WL2_Traits/WL2_SurvtoRep_y2_TmpSubDist_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
 ```
 
 
@@ -953,7 +959,7 @@ WYCD_prob_historic <- wl2_surv_to_rep_y2_sub_dist %>%
 
 ``` r
 WL2_surv_to_rep_y2_sub_FIG_prob_historic <- ggarrange(GSCD_prob_historic, WYCD_prob_historic, GD_prob, ED_prob, ncol=2, nrow=2) 
-ggsave("../output/WL2_Traits/WL2_SurvtoRep_y2_TmpSubDist_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
+#ggsave("../output/WL2_Traits/WL2_SurvtoRep_y2_TmpSubDist_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
 ```
 
 
@@ -1036,7 +1042,7 @@ ED_prob <- wl2_surv_to_rep_y2_sub_dist %>%
 
 ``` r
 WL2_surv_to_rep_y2_sub_FIG_prob_recent <- ggarrange(GSCD_prob_recent, WYCD_prob_recent, GD_prob, ED_prob, ncol=2, nrow=2) 
-ggsave("../output/WL2_Traits/WL2_SurvtoRep_y2_PPTSubDist_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
+#ggsave("../output/WL2_Traits/WL2_SurvtoRep_y2_PPTSubDist_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
 ```
 
 
@@ -1081,7 +1087,7 @@ WYCD_prob_historic <- wl2_surv_to_rep_y2_sub_dist %>%
 
 ``` r
 WL2_surv_to_rep_y2_sub_FIG_prob_historic <- ggarrange(GSCD_prob_historic, WYCD_prob_historic, GD_prob, ED_prob, ncol=2, nrow=2) 
-ggsave("../output/WL2_Traits/WL2_SurvtoRep_y2_PPTSubDist_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
+#ggsave("../output/WL2_Traits/WL2_SurvtoRep_y2_PPTSubDist_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
 ```
 
 #### Figure for paper
@@ -1169,7 +1175,105 @@ WL2_surv_to_rep_y2_for_paper <- ggarrange(GD_prob, WYCD_recent,
                                         labels = c("A)", "B)", "C)", "D)"), 
                                         font.label = list(size=30, face = "plain"), 
                                         ncol=2, nrow=2) 
-ggsave("../output/WL2_Traits/WL2_SurvtoRep_y2_SCATTERS_Summary_Recent.png", width = 24, height = 18, units = "in")
+#ggsave("../output/WL2_Traits/WL2_SurvtoRep_y2_SCATTERS_Summary_Recent.png", width = 24, height = 18, units = "in")
+```
+
+
+``` r
+GD_prob <- wl2_surv_to_rep_y2_sub_dist_2324 %>% 
+  filter(pop != "LV1", pop != "SQ1", pop != "WR") %>% 
+  group_by(pop, elev_m, GrwSsn_PPTDist_Recent, Wtr_Year_PPTDist_Recent, Geographic_Dist) %>% 
+  summarise(meanEst=mean(SurvtoRep_y2, na.rm = TRUE), semEst=sem(SurvtoRep_y2, na.rm=TRUE)) %>% 
+  ggplot(aes(x=Geographic_Dist, y=meanEst, group = pop, colour = elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.2, linewidth = 2) +
+  annotate("text", x = 9500, y= 0.8333333, label = "WL2", 
+           colour = "purple", fontface="bold", size = 22 / .pt) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0), limits = c(0.4,1.05)) +
+  labs(y="Survival to Budding Y2", x="Geographic Distance (m)", colour = "Elevation (m)") +
+  theme(text=element_text(size=30), axis.text.x = element_text(angle = 45,  hjust = 1))
+```
+
+```
+## `summarise()` has grouped output by 'pop', 'elev_m', 'GrwSsn_PPTDist_Recent',
+## 'Wtr_Year_PPTDist_Recent'. You can override using the `.groups` argument.
+```
+
+``` r
+WYCD_recent <- wl2_surv_to_rep_y2_2324 %>% 
+  filter(pop != "LV1", pop != "SQ1", pop != "WR") %>% 
+  group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
+  summarise(meanSurv=mean(SurvtoRep_y2, na.rm = TRUE), semSurv=sem(SurvtoRep_y2, na.rm=TRUE)) %>% 
+  ggplot(aes(x=Wtr_Year_GD_Recent, y=meanSurv, group = pop, colour = elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanSurv-semSurv,ymax=meanSurv+semSurv),width=.02,linewidth = 2) +
+  annotate("text", x = 0.25, y= 0.8333333, label = "WL2", 
+           colour = "purple", fontface="bold", size = 22 / .pt) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0), limits = c(0.4,1.05)) +
+  labs(y="Survival to Budding Y2", x="Recent Water Year CD", colour = "Elevation (m)") +
+  theme(text=element_text(size=25))
+```
+
+```
+## `summarise()` has grouped output by 'pop', 'elev_m', 'GrwSsn_GD_Recent'. You
+## can override using the `.groups` argument.
+```
+
+``` r
+WYtemp_prob_recent <- wl2_surv_to_rep_y2_sub_dist_2324 %>% 
+  filter(pop != "LV1", pop != "SQ1", pop != "WR") %>% 
+  group_by(pop, elev_m, Wtr_Year_TempDist_Recent, Wtr_Year_TempDist_Historic) %>% 
+  summarise(meanEst=mean(SurvtoRep_y2, na.rm = TRUE), semEst=sem(SurvtoRep_y2, na.rm=TRUE)) %>% 
+  ggplot(aes(x=Wtr_Year_TempDist_Recent, y=meanEst, group = pop, colour = elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.3,linewidth = 2) +
+  annotate("text", x = 0.4, y= 0.8333333, label = "WL2", 
+           colour = "purple", fontface="bold", size = 22 / .pt) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0), limits = c(0.4,1.05)) +
+  labs(y="Survival to Budding Y2", x="Recent Water Year Temp Dist (°C)", colour = "Elevation (m)") +
+  theme(text=element_text(size=30))
+```
+
+```
+## `summarise()` has grouped output by 'pop', 'elev_m',
+## 'Wtr_Year_TempDist_Recent'. You can override using the `.groups` argument.
+```
+
+``` r
+WYppt_prob_recent <- wl2_surv_to_rep_y2_sub_dist_2324 %>% 
+  filter(pop != "LV1", pop != "SQ1", pop != "WR") %>% 
+  group_by(pop, elev_m, Wtr_Year_PPTDist_Recent, Wtr_Year_PPTDist_Historic) %>% 
+  summarise(meanEst=mean(SurvtoRep_y2, na.rm = TRUE), semEst=sem(SurvtoRep_y2, na.rm=TRUE)) %>% 
+  ggplot(aes(x=Wtr_Year_PPTDist_Recent, y=meanEst, group = pop, colour = elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.3,linewidth = 2) +
+  annotate("text", x = 143, y= 0.8333333, label = "WL2", 
+           colour = "purple", fontface="bold", size = 22 / .pt) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0), limits = c(0.4,1.05)) +
+  labs(y="Survival to Budding Y2", x="Recent Water Year PPT Dist (mm)", colour = "Elevation (m)") +
+  theme(text=element_text(size=30))
+```
+
+```
+## `summarise()` has grouped output by 'pop', 'elev_m', 'Wtr_Year_PPTDist_Recent'.
+## You can override using the `.groups` argument.
+```
+
+``` r
+WL2_surv_to_rep_y2_for_paper <- ggarrange(GD_prob, WYCD_recent, 
+                                        WYtemp_prob_recent, WYppt_prob_recent, 
+                                        labels = c("A)", "B)", "C)", "D)"), 
+                                        font.label = list(size=30, face = "plain"), 
+                                        ncol=2, nrow=2) 
+ggsave("../output/WL2_Traits/WL2_SurvtoRep_y2_SCATTERS_Summary_Recent_2324.png", width = 26, height = 18, units = "in")
 ```
 
 ## Stats
@@ -1205,6 +1309,11 @@ wl2_surv_to_rep_y2_scaled <- wl2_surv_to_rep_y2 %>%
   filter(pop != "LV1", pop != "SQ1", pop != "WR") %>% 
   mutate_at(c("GrwSsn_GD_Recent","Wtr_Year_GD_Recent",                                                           "GrwSsn_GD_Historical","Wtr_Year_GD_Historical","Geographic_Dist"),
                                                             scale) 
+
+wl2_surv_to_rep_y2_scaled_2324 <- wl2_surv_to_rep_y2_2324 %>% 
+  filter(pop != "LV1", pop != "SQ1", pop != "WR") %>% 
+  mutate_at(c("GrwSsn_GD_Recent","Wtr_Year_GD_Recent",                                                           "GrwSsn_GD_Historical","Wtr_Year_GD_Historical","Geographic_Dist"),
+                                                            scale) 
 ```
 
 
@@ -1233,6 +1342,14 @@ wl2_surv_to_rep_y2_sub_dist %>%
 
 ``` r
 wl2_surv_to_rep_y2_scaled_sub <- wl2_surv_to_rep_y2_sub_dist %>% 
+  filter(pop != "LV1", pop != "SQ1", pop != "WR") %>% 
+  mutate_at(c("Wtr_Year_TempDist_Recent",  "Wtr_Year_PPTDist_Recent", 
+                 "Wtr_Year_TempDist_Historic", "Wtr_Year_PPTDist_Historic",
+                 "GrwSsn_TempDist_Recent", "GrwSsn_PPTDist_Recent",
+                 "GrwSsn_TempDist_Historic", "GrwSsn_PPTDist_Historic",
+              "Geographic_Dist"), scale)
+
+wl2_surv_to_rep_y2_scaled_sub_2324 <- wl2_surv_to_rep_y2_sub_dist_2324 %>% 
   filter(pop != "LV1", pop != "SQ1", pop != "WR") %>% 
   mutate_at(c("Wtr_Year_TempDist_Recent",  "Wtr_Year_PPTDist_Recent", 
                  "Wtr_Year_TempDist_Historic", "Wtr_Year_PPTDist_Historic",
@@ -1306,8 +1423,38 @@ surv_fits_wl2 <- surv_fits %>%
 #mod_test <- glmer(SurvtoRep_y2 ~ (1|pop/mf) + (1|block), data=wl2_surv_to_rep_y2_scaled, family=binomial)
 #summary(mod_test)
 #Warning: Model failed to converge with max|grad| = 0.0354704 (tol = 0.002, component 1)
-
 surv_fits_wl2 %>% mutate(glance=map(fit, glance)) %>% unnest(glance) %>% arrange(AIC) %>% select(-wflow:-sigma)
+```
+
+```
+## # A tibble: 4 × 6
+##   name         logLik   AIC   BIC deviance df.residual
+##   <chr>         <dbl> <dbl> <dbl>    <dbl>       <int>
+## 1 pop.block     -74.7  155.  164.     124.         129
+## 2 pop.mf.block  -74.4  157.  168.     111.         128
+## 3 pop           -80.1  164.  170.     158.         130
+## 4 pop.mf        -79.8  166.  174.     148.         129
+```
+
+``` r
+#model with pop and block (but excluding mf) is best by AIC and BIC, convergence issues with mf included 
+
+surv_fits_wl2_2324 <- surv_fits %>%
+  mutate(fit = map(wflow, fit, data = wl2_surv_to_rep_y2_scaled_2324))
+```
+
+```
+## Warning: There was 1 warning in `mutate()`.
+## ℹ In argument: `fit = map(wflow, fit, data = wl2_surv_to_rep_y2_scaled_2324)`.
+## Caused by warning in `checkConv()`:
+## ! Model failed to converge with max|grad| = 0.0344541 (tol = 0.002, component 1)
+```
+
+``` r
+#mod_test <- glmer(SurvtoRep_y2 ~ (1|pop/mf) + (1|block), data=wl2_surv_to_rep_y2_scaled_2324, family=binomial)
+#summary(mod_test)
+#Warning: Model failed to converge with max|grad| = 0.0354704 (tol = 0.002, component 1)
+surv_fits_wl2_2324 %>% mutate(glance=map(fit, glance)) %>% unnest(glance) %>% arrange(AIC) %>% select(-wflow:-sigma)
 ```
 
 ```
@@ -1351,11 +1498,10 @@ surv_GD_fits_wl2 <- tibble(wflow=list(
 name=names(wflow)
 ) %>% 
   select(name,wflow) %>%
-  mutate(fit = map(wflow, fit, data = wl2_surv_to_rep_y2_scaled))
+  mutate(fit = map(wflow, fit, data = wl2_surv_to_rep_y2_scaled_2324))
 ```
 
 ```
-## boundary (singular) fit: see help('isSingular')
 ## boundary (singular) fit: see help('isSingular')
 ```
 
@@ -1370,8 +1516,8 @@ surv_GD_fits_wl2 %>% mutate(glance=map(fit, glance)) %>% unnest(glance) %>% arra
 ## 1 WY_Recent      -72.0  154.  168.     124.         127
 ## 2 WY_Historical  -72.4  155.  169.     125.         127
 ## 3 pop.block      -74.7  155.  164.     124.         129
-## 4 GS_Recent      -73.3  157.  171.     126.         127
-## 5 GS_Historical  -73.4  157.  171.     125.         127
+## 4 GS_Recent      -73.4  157.  171.     126.         127
+## 5 GS_Historical  -73.5  157.  171.     125.         127
 ```
 
 ``` r
@@ -1387,14 +1533,14 @@ surv_GD_fits_wl2 %>% mutate(tidy=map(fit, tidy)) %>% unnest(tidy) %>%
 ## # A tibble: 8 × 6
 ##   name          term                   estimate std.error statistic p.value
 ##   <chr>         <chr>                     <dbl>     <dbl>     <dbl>   <dbl>
-## 1 GS_Recent     GrwSsn_GD_Recent         -0.372     0.242    -1.53   0.125 
-## 2 GS_Recent     Geographic_Dist           0.196     0.241     0.813  0.416 
-## 3 GS_Historical GrwSsn_GD_Historical     -0.356     0.249    -1.43   0.152 
-## 4 GS_Historical Geographic_Dist           0.229     0.242     0.948  0.343 
-## 5 WY_Recent     Wtr_Year_GD_Recent       -0.577     0.262    -2.20   0.0278
-## 6 WY_Recent     Geographic_Dist           0.506     0.253     2.00   0.0459
-## 7 WY_Historical Wtr_Year_GD_Historical   -0.520     0.251    -2.07   0.0382
-## 8 WY_Historical Geographic_Dist           0.465     0.246     1.89   0.0590
+## 1 GS_Recent     GrwSsn_GD_Recent         -0.359     0.244    -1.47   0.141 
+## 2 GS_Recent     Geographic_Dist           0.196     0.243     0.806  0.421 
+## 3 GS_Historical GrwSsn_GD_Historical     -0.346     0.250    -1.38   0.167 
+## 4 GS_Historical Geographic_Dist           0.224     0.244     0.920  0.358 
+## 5 WY_Recent     Wtr_Year_GD_Recent       -0.584     0.264    -2.21   0.0268
+## 6 WY_Recent     Geographic_Dist           0.510     0.254     2.01   0.0447
+## 7 WY_Historical Wtr_Year_GD_Historical   -0.517     0.250    -2.06   0.0391
+## 8 WY_Historical Geographic_Dist           0.463     0.246     1.88   0.0595
 ```
 
 ``` r
@@ -1478,7 +1624,7 @@ surv_GD_fits_wl2_sub <- tibble(wflow=list(
 name=names(wflow)
 ) %>% 
   select(name,wflow) %>%
-  mutate(fit = map(wflow, fit, data = wl2_surv_to_rep_y2_scaled_sub))
+  mutate(fit = map(wflow, fit, data = wl2_surv_to_rep_y2_scaled_sub_2324))
 ```
 
 ```
@@ -1498,9 +1644,9 @@ surv_GD_fits_wl2_sub %>% mutate(glance=map(fit, glance)) %>% unnest(glance) %>% 
 ##   <chr>          <dbl> <dbl> <dbl>    <dbl>       <int>
 ## 1 WY_Recent      -70.9  154.  171.     121.         126
 ## 2 WY_Historical  -71.0  154.  171.     121.         126
-## 3 pop.block      -74.7  155.  164.     124.         129
-## 4 GS_Recent      -71.9  156.  173.     122.         126
-## 5 GS_Historical  -71.9  156.  173.     122.         126
+## 3 GS_Historical  -71.3  155.  172.     122.         126
+## 4 pop.block      -74.7  155.  164.     124.         129
+## 5 GS_Recent      -71.8  156.  173.     122.         126
 ```
 
 ``` r
@@ -1516,18 +1662,18 @@ surv_GD_fits_wl2_sub %>% mutate(tidy=map(fit, tidy)) %>% unnest(tidy) %>%
 ## # A tibble: 12 × 6
 ##    name          term                       estimate std.error statistic p.value
 ##    <chr>         <chr>                         <dbl>     <dbl>     <dbl>   <dbl>
-##  1 GS_Recent     GrwSsn_TempDist_Recent      -0.721      0.432   -1.67    0.0950
-##  2 GS_Recent     GrwSsn_PPTDist_Recent        0.202      0.410    0.492   0.623 
-##  3 GS_Recent     Geographic_Dist              0.169      0.235    0.719   0.472 
-##  4 GS_Historical GrwSsn_TempDist_Historic    -0.721      0.432   -1.67    0.0950
-##  5 GS_Historical GrwSsn_PPTDist_Historic      0.202      0.410    0.492   0.623 
-##  6 GS_Historical Geographic_Dist              0.169      0.235    0.719   0.472 
-##  7 WY_Recent     Wtr_Year_TempDist_Recent    -0.665      0.337   -1.97    0.0486
-##  8 WY_Recent     Wtr_Year_PPTDist_Recent      0.0413     0.312    0.132   0.895 
-##  9 WY_Recent     Geographic_Dist              0.316      0.262    1.21    0.228 
-## 10 WY_Historical Wtr_Year_TempDist_Historic  -0.667      0.345   -1.93    0.0534
-## 11 WY_Historical Wtr_Year_PPTDist_Historic    0.0191     0.315    0.0609  0.951 
-## 12 WY_Historical Geographic_Dist              0.284      0.255    1.11    0.266
+##  1 GS_Recent     GrwSsn_TempDist_Recent      -0.730      0.426   -1.71    0.0869
+##  2 GS_Recent     GrwSsn_PPTDist_Recent        0.209      0.403    0.518   0.604 
+##  3 GS_Recent     Geographic_Dist              0.171      0.236    0.725   0.469 
+##  4 GS_Historical GrwSsn_TempDist_Historic    -0.866      0.571   -1.52    0.129 
+##  5 GS_Historical GrwSsn_PPTDist_Historic      0.300      0.589    0.509   0.611 
+##  6 GS_Historical Geographic_Dist              0.0735     0.252    0.292   0.770 
+##  7 WY_Recent     Wtr_Year_TempDist_Recent    -0.665      0.336   -1.98    0.0479
+##  8 WY_Recent     Wtr_Year_PPTDist_Recent      0.0412     0.311    0.132   0.895 
+##  9 WY_Recent     Geographic_Dist              0.315      0.262    1.20    0.230 
+## 10 WY_Historical Wtr_Year_TempDist_Historic  -0.666      0.346   -1.93    0.0540
+## 11 WY_Historical Wtr_Year_PPTDist_Historic    0.0199     0.316    0.0630  0.950 
+## 12 WY_Historical Geographic_Dist              0.283      0.256    1.11    0.268
 ```
 
 ``` r
@@ -1706,7 +1852,7 @@ wl2_surv_to_rep_y2_size %>%
 ## (`geom_point()`).
 ```
 
-![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-25-1.png)<!-- -->
+![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-29-1.png)<!-- -->
 
 ``` r
 wl2_surv_to_rep_y2_size %>% 
@@ -1719,7 +1865,7 @@ wl2_surv_to_rep_y2_size %>%
 ## (`geom_point()`).
 ```
 
-![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-25-2.png)<!-- -->
+![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-29-2.png)<!-- -->
 
 ``` r
 wl2_surv_to_rep_y2_size %>% #prob not enough var in surv
@@ -1732,7 +1878,7 @@ wl2_surv_to_rep_y2_size %>% #prob not enough var in surv
 ## (`geom_point()`).
 ```
 
-![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-25-3.png)<!-- -->
+![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-29-3.png)<!-- -->
 
 ``` r
 wl2_surv_to_rep_y2_size %>% #not enough variation in surv
@@ -1745,7 +1891,7 @@ wl2_surv_to_rep_y2_size %>% #not enough variation in surv
 ## (`geom_point()`).
 ```
 
-![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-25-4.png)<!-- -->
+![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-29-4.png)<!-- -->
 
 ``` r
 wl2_surv_to_rep_y2_size %>% #prob not enough var in surv
@@ -1758,7 +1904,7 @@ wl2_surv_to_rep_y2_size %>% #prob not enough var in surv
 ## (`geom_point()`).
 ```
 
-![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-25-5.png)<!-- -->
+![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-29-5.png)<!-- -->
 
 ``` r
 wl2_surv_to_rep_y2_size %>% #prob not enough var in surv
@@ -1771,7 +1917,7 @@ wl2_surv_to_rep_y2_size %>% #prob not enough var in surv
 ## (`geom_point()`).
 ```
 
-![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-25-6.png)<!-- -->
+![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-29-6.png)<!-- -->
 
 ``` r
 wl2_surv_to_rep_y2_size %>% filter(SurvtoRep_y2==0, !is.na(overhd.diam)) #only 6 dead indivs with size info (died the day of the census, likely )
@@ -1808,7 +1954,7 @@ wl2_surv_to_rep_y2_canopy %>%
 ## (`geom_point()`).
 ```
 
-![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-25-7.png)<!-- -->
+![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-29-7.png)<!-- -->
 
 ``` r
 wl2_surv_to_rep_y2_canopy %>% 
@@ -1821,7 +1967,7 @@ wl2_surv_to_rep_y2_canopy %>%
 ## (`geom_point()`).
 ```
 
-![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-25-8.png)<!-- -->
+![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-29-8.png)<!-- -->
 
 ``` r
 wl2_surv_to_rep_y2_canopy %>% 
@@ -1834,7 +1980,7 @@ wl2_surv_to_rep_y2_canopy %>%
 ## (`geom_point()`).
 ```
 
-![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-25-9.png)<!-- -->
+![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-29-9.png)<!-- -->
 
 ``` r
 wl2_surv_to_rep_y2_canopy %>% filter(SurvtoRep_y2==0, !is.na(canopy_area)) #only 7 dead indivs with size info --> not enough to analyze 
@@ -1933,7 +2079,7 @@ wl2_surv_to_rep_y2_size %>%
 ## argument.
 ```
 
-![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-27-1.png)<!-- -->
+![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-31-1.png)<!-- -->
 
 ``` r
 wl2_surv_to_rep_y2_size %>% 
@@ -1958,7 +2104,7 @@ wl2_surv_to_rep_y2_size %>%
 ## argument.
 ```
 
-![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-27-2.png)<!-- -->
+![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-31-2.png)<!-- -->
 
 ``` r
 wl2_surv_to_rep_y2_size %>% 
@@ -1983,7 +2129,7 @@ wl2_surv_to_rep_y2_size %>%
 ## argument.
 ```
 
-![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-27-3.png)<!-- -->
+![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-31-3.png)<!-- -->
 
 ``` r
 wl2_surv_to_rep_y2_size %>% 
@@ -2008,7 +2154,7 @@ wl2_surv_to_rep_y2_size %>%
 ## argument.
 ```
 
-![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-27-4.png)<!-- -->
+![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-31-4.png)<!-- -->
 
 ``` r
 wl2_surv_to_rep_y2_size %>% 
@@ -2033,7 +2179,7 @@ wl2_surv_to_rep_y2_size %>%
 ## argument.
 ```
 
-![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-27-5.png)<!-- -->
+![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-31-5.png)<!-- -->
 
 ``` r
 wl2_surv_to_rep_y2_size %>% 
@@ -2058,7 +2204,7 @@ wl2_surv_to_rep_y2_size %>%
 ## argument.
 ```
 
-![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-27-6.png)<!-- -->
+![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-31-6.png)<!-- -->
 
 ### Stats
 
@@ -2079,7 +2225,7 @@ corrplot(cor.norm_wl2, type = "upper",
          sig.level = 0.05, insig="blank")  
 ```
 
-![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-28-1.png)<!-- -->
+![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-32-1.png)<!-- -->
 
 ``` r
 cor.norm_wl2
