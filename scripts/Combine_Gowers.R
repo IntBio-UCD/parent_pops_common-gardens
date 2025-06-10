@@ -85,3 +85,15 @@ gowers_WL2_2024 <- full_join(WL2_grwssn_all_vars_2024, WL2_wtr_year_all_vars_202
   select(parent.pop:Long, TimePd, GrwSsn_GD, Wtr_Year_GD)
 names(gowers_WL2_2024)
 write_csv(gowers_WL2_2024, "output/Climate/Gowers_WL2_2024.csv")
+
+#WL2 - Garden 2024 - Home Climates up to 2023
+WL2_grwssn_all_vars_2324 <- read_csv("output/Climate/growthseason_GowersEnvtalDist_WL2_2324.csv") %>% 
+  select(parent.pop:Long, GrwSsn_GD=Gowers_Dist, TimePd)
+
+WL2_wtr_year_all_vars_2324 <- read_csv("output/Climate/full_year_GowersEnvtalDist_WL2_wtr_year_2324.csv") %>% 
+  select(parent.pop:Long, Wtr_Year_GD=Gowers_Dist, TimePd)
+
+gowers_WL2_2324 <- full_join(WL2_grwssn_all_vars_2324, WL2_wtr_year_all_vars_2324) %>% 
+  select(parent.pop:Long, TimePd, GrwSsn_GD, Wtr_Year_GD)
+names(gowers_WL2_2324)
+write_csv(gowers_WL2_2324, "output/Climate/Gowers_WL2_2324.csv")
