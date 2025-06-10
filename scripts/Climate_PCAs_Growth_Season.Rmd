@@ -454,7 +454,7 @@ home_sites_pca +
   geom_point(data=filter(home_sites_pca$data, parent.pop == "WL2_Garden"), size=3, shape = 8, show.legend = FALSE) +
   annotate("text", x = -.6, y= -2.7, label = "WL2 Garden \n 2023", colour = "purple") +
   annotate("text", x = 2.7, y= -2.9, label = "WL2 Garden \n 2024", colour = "purple") 
-ggsave("../output/Climate/GRWSSN_PC2-PC4_PlusGarden.png", width = 7.4, height = 6, units = "in")
+#ggsave("../output/Climate/GRWSSN_PC2-PC4_PlusGarden.png", width = 7.4, height = 6, units = "in")
 ```
 
 ## Add the Garden to the PCA with PC1 & PC2
@@ -504,7 +504,7 @@ home_sites_pca2 +
   geom_point(data=filter(home_sites_pca2$data, parent.pop == "WL2_Garden"), size=3, shape = 8, show.legend = FALSE) +
   annotate("text", y = -1.1, x= 0.5, label = "WL2 Garden \n 2023", colour = "purple") +
   annotate("text", y = 2.2, x= 2.8, label = "WL2 Garden \n 2024", colour = "purple") 
-ggsave("../output/Climate/GRWSSN_PC1-PC2_PlusGarden.png", width = 7.4, height = 6, units = "in")
+#ggsave("../output/Climate/GRWSSN_PC1-PC2_PlusGarden.png", width = 7.4, height = 6, units = "in")
 ```
 
 
