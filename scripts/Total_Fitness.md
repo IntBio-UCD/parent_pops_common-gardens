@@ -5085,7 +5085,7 @@ GSCD_temp <- wl2_total_fitness_sub_dist %>%
   theme_classic() + 
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
-  labs(y="Total Fruit Number", x="Historic Growth Season Temp Dist") +
+  labs(y="Total Fruit Number", x="Historic Growth Season Temp Dist", colour="Elevation (m)") +
   theme(text=element_text(size=30))
 ```
 
@@ -5109,7 +5109,7 @@ GSCD_ppt <- wl2_total_fitness_sub_dist %>%
   theme_classic() + 
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
-  labs(y="Total Fruit Number", x="Historic Growth Season PPT Dist") +
+  labs(y="Total Fruit Number", x="Historic Growth Season PPT Dist", colour="Elevation (m)") +
   theme(text=element_text(size=30))
 ```
 
