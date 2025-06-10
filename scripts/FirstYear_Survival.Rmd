@@ -807,16 +807,11 @@ WYCD_recent <- wl2_y1_surv %>%
   scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
   geom_point(size=6) + 
   geom_errorbar(aes(ymin=meanSurv-semSurv,ymax=meanSurv+semSurv),width=.02,linewidth = 2) +
-  geom_text_repel(aes(x = Wtr_Year_GD_Recent, y = meanSurv,
-          label = `pop`),
-      min.segment.length = 1,
-      max.overlaps = 100,
-      #label.padding = 1,
-      #point.padding = 5,
-      size = 4) +
+  annotate("text", x = 0.42, y= 0.7884615, label = "WL2", 
+           colour = "purple", fontface="bold", size = 22 / .pt) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
-  labs(y="Y1 Survival", x="Recent Water Year CD") +
+  labs(y="Y1 Survival", x="Recent Water Year CD", colour="Elevation (m)") +
   theme(text=element_text(size=30))
 
 WYCD_temp_recent <- wl2_y1_surv_sub_dist %>% 
@@ -826,17 +821,11 @@ WYCD_temp_recent <- wl2_y1_surv_sub_dist %>%
   scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
   geom_point(size=6) + 
   geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.3,linewidth = 2) +
-  geom_text_repel(aes(x = Wtr_Year_TempDist_Recent, y = meanEst,
-          label = `pop`),
-      min.segment.length = 1,
-      max.overlaps = 100,
-      #label.padding = 1,
-      #point.padding = 1,
-      nudge_x = 0.05,
-      size = 4) +
+  annotate("text", x = 1.6352917, y= 0.88, label = "WL2", 
+           colour = "purple", fontface="bold", size = 22 / .pt) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
-  labs(y="Y1 Survival", x="Recent Water Year Temp Dist") +
+  labs(y="Y1 Survival", x="Recent Water Year Temp Dist", colour="Elevation (m)") +
   theme(text=element_text(size=30))
 
 wl2_y1surv_FIG_recent <- ggarrange(WYCD_recent, WYCD_temp_recent,
@@ -844,7 +833,7 @@ wl2_y1surv_FIG_recent <- ggarrange(WYCD_recent, WYCD_temp_recent,
                                 font.label = list(size=30, 
                                                   face = "plain"), 
                                 ncol=2, nrow=1) 
-ggsave("../output/WL2_Traits/WL2_Y1_Surv_ClimTempDist_Recent_Text.png", width = 24, height = 9, units = "in")
+ggsave("../output/WL2_Traits/WL2_Y1_Surv_ClimTempDist_Recent.png", width = 26, height = 9, units = "in")
 ```
 
 ### WL2 Growth Season Effects
@@ -852,14 +841,17 @@ ggsave("../output/WL2_Traits/WL2_Y1_Surv_ClimTempDist_Recent_Text.png", width = 
 wl2_y1_surv_sub_dist %>% 
   group_by(pop, elev_m, GrwSsn_PPTDist_Recent, GrwSsn_PPTDist_Historic) %>% 
   summarise(meanEst=mean(Survival, na.rm = TRUE), semEst=sem(Survival, na.rm=TRUE)) %>% 
-  ggplot(aes(x=GrwSsn_PPTDist_Recent, y=meanEst, group = pop)) +
+  ggplot(aes(x=GrwSsn_PPTDist_Recent, y=meanEst, group = pop, color=elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
   geom_point(size=6) + 
   geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=0.3, linewidth = 2) +
+  annotate("text", x = 112.2539933	, y= 0.88, label = "WL2", 
+           colour = "purple", fontface="bold", size = 22 / .pt) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
-  labs(y="Y1 Survival", x="Recent Growth Season PPT Dist") +
+  labs(y="Y1 Survival", x="Recent Growth Season PPT Dist", colour="Elevation (m)") +
   theme(text=element_text(size=30))
-#ggsave("../output/WL2_Traits/WL2_Y1_Surv_PPTSubDist_GRWSSN_Recent.png", width = 8, height = 6, units = "in")
+ggsave("../output/WL2_Traits/WL2_Y1_Surv_PPTSubDist_GRWSSN_Recent.png", width = 10, height = 5, units = "in")
 ```
 
 

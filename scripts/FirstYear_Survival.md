@@ -1,7 +1,7 @@
 ---
 title: "FirstYear_Survival"
 author: "Brandie Quarles"
-date: "2025-04-01"
+date: "2025-06-10"
 output: 
   html_document: 
     keep_md: true
@@ -152,7 +152,7 @@ library(tidymodels)
 ## ✖ infer::t_test()       masks rstatix::t_test()
 ## ✖ Matrix::unpack()      masks tidyr::unpack()
 ## ✖ recipes::update()     masks Matrix::update(), stats::update()
-## • Learn how to get started at https://www.tidymodels.org/start/
+## • Dig deeper into tidy modeling with R at https://www.tmwr.org
 ```
 
 ``` r
@@ -860,7 +860,7 @@ wl2_y1_surv %>%
 ![](FirstYear_Survival_files/figure-html/unnamed-chunk-10-1.png)<!-- -->
 
 ``` r
-#ggsave("../output/WL2_Traits/WL2_Y1Surv_GrwSsn_GD_Recent.png", width = 12, height = 8, units = "in")
+##ggsave("../output/WL2_Traits/WL2_Y1Surv_GrwSsn_GD_Recent.png", width = 12, height = 8, units = "in")
 
 wl2_y1_surv %>% 
   group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
@@ -884,7 +884,7 @@ wl2_y1_surv %>%
 ![](FirstYear_Survival_files/figure-html/unnamed-chunk-10-2.png)<!-- -->
 
 ``` r
-#ggsave("../output/WL2_Traits/WL2_Y1Surv_Wtr_Year_GD_Recent.png", width = 12, height = 8, units = "in")
+##ggsave("../output/WL2_Traits/WL2_Y1Surv_Wtr_Year_GD_Recent.png", width = 12, height = 8, units = "in")
 ```
 
 Davis
@@ -913,7 +913,7 @@ ucd_y1_surv %>%
 ![](FirstYear_Survival_files/figure-html/unnamed-chunk-11-1.png)<!-- -->
 
 ``` r
-#ggsave("../output/UCD_Traits/UCD_Y1Surv_GrwSsn_GD_Recent.png", width = 12, height = 8, units = "in")
+##ggsave("../output/UCD_Traits/UCD_Y1Surv_GrwSsn_GD_Recent.png", width = 12, height = 8, units = "in")
 
 ucd_y1_surv %>% 
   group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
@@ -937,7 +937,7 @@ ucd_y1_surv %>%
 ![](FirstYear_Survival_files/figure-html/unnamed-chunk-11-2.png)<!-- -->
 
 ``` r
-#ggsave("../output/UCD_Traits/UCD_Y1Surv_Wtr_Year_GD_Recent.png", width = 12, height = 8, units = "in")
+##ggsave("../output/UCD_Traits/UCD_Y1Surv_Wtr_Year_GD_Recent.png", width = 12, height = 8, units = "in")
 ```
 
 ### Scatterplots
@@ -1020,7 +1020,7 @@ ED <- wl2_y1_surv %>%
 
 ``` r
 wl2_y1_surv_FIG <- ggarrange(GSCD_recent, WYCD_recent, GD, ED, ncol=2, nrow=2) 
-ggsave("../output/WL2_Traits/WL2_Y1_Surv_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
+#ggsave("../output/WL2_Traits/WL2_Y1_Surv_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
 ```
 
 
@@ -1063,7 +1063,7 @@ WYCD_historic <- wl2_y1_surv %>%
 
 ``` r
 wl2_y1_surv_FIG <- ggarrange(GSCD_historic, WYCD_historic, GD, ED, ncol=2, nrow=2) 
-ggsave("../output/WL2_Traits/WL2_Y1_Surv_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
+#ggsave("../output/WL2_Traits/WL2_Y1_Surv_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
 ```
 
 Davis
@@ -1148,7 +1148,7 @@ ED <- ucd_y1_surv %>%
 
 ``` r
 ucd_y1_surv_FIG <- ggarrange(GSCD_recent, WYCD_recent, GD, ED, ncol=2, nrow=2) 
-ggsave("../output/UCD_Traits/UCD_Y1_Surv_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
+#ggsave("../output/UCD_Traits/UCD_Y1_Surv_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
 ```
 
 
@@ -1193,7 +1193,7 @@ WYCD_historic <- ucd_y1_surv %>%
 
 ``` r
 ucd_y1_surv_FIG <- ggarrange(GSCD_historic, WYCD_historic, GD, ED, ncol=2, nrow=2) 
-ggsave("../output/UCD_Traits/UCD_Y1_Surv_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
+#ggsave("../output/UCD_Traits/UCD_Y1_Surv_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
 ```
 
 #### Directional Distance
@@ -1274,7 +1274,7 @@ ED_prob <- wl2_y1_surv_sub_dist %>%
 
 ``` r
 WL2_y1_surv_sub_FIG_prob_recent <- ggarrange(GSCD_prob_recent, WYCD_prob_recent, GD_prob, ED_prob, ncol=2, nrow=2) 
-ggsave("../output/WL2_Traits/WL2_Y1_Surv_TmpSubDist_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
+#ggsave("../output/WL2_Traits/WL2_Y1_Surv_TmpSubDist_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
 ```
 
 
@@ -1317,7 +1317,7 @@ WYCD_prob_historic <- wl2_y1_surv_sub_dist %>%
 
 ``` r
 WL2_y1_surv_sub_FIG_prob_historic <- ggarrange(GSCD_prob_historic, WYCD_prob_historic, GD_prob, ED_prob, ncol=2, nrow=2) 
-ggsave("../output/WL2_Traits/WL2_Y1_Surv_TmpSubDist_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
+#ggsave("../output/WL2_Traits/WL2_Y1_Surv_TmpSubDist_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
 ```
 
 
@@ -1400,7 +1400,7 @@ ED_prob <- ucd_y1_surv_sub_dist %>%
 
 ``` r
 UCD_y1_surv_sub_FIG_prob_recent <- ggarrange(GSCD_prob_recent, WYCD_prob_recent, GD_prob, ED_prob, ncol=2, nrow=2) 
-ggsave("../output/UCD_Traits/UCD_Y1_Surv_TmpSubDist_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
+#ggsave("../output/UCD_Traits/UCD_Y1_Surv_TmpSubDist_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
 ```
 
 
@@ -1445,7 +1445,7 @@ WYCD_prob_historic <- ucd_y1_surv_sub_dist %>%
 
 ``` r
 UCD_y1_surv_sub_FIG_prob_historic <- ggarrange(GSCD_prob_historic, WYCD_prob_historic, GD_prob, ED_prob, ncol=2, nrow=2) 
-ggsave("../output/UCD_Traits/UCD_Y1_Surv_TmpSubDist_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
+#ggsave("../output/UCD_Traits/UCD_Y1_Surv_TmpSubDist_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
 ```
 
 
@@ -1524,7 +1524,7 @@ ED_prob <- wl2_y1_surv_sub_dist %>%
 
 ``` r
 WL2_y1_surv_sub_FIG_prob_recent <- ggarrange(GSCD_prob_recent, WYCD_prob_recent, GD_prob, ED_prob, ncol=2, nrow=2) 
-ggsave("../output/WL2_Traits/WL2_Y1_Surv_PPTSubDist_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
+#ggsave("../output/WL2_Traits/WL2_Y1_Surv_PPTSubDist_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
 ```
 
 
@@ -1567,7 +1567,7 @@ WYCD_prob_historic <- wl2_y1_surv_sub_dist %>%
 
 ``` r
 WL2_y1_surv_sub_FIG_prob_historic <- ggarrange(GSCD_prob_historic, WYCD_prob_historic, GD_prob, ED_prob, ncol=2, nrow=2) 
-ggsave("../output/WL2_Traits/WL2_Y1_Surv_PPTSubDist_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
+#ggsave("../output/WL2_Traits/WL2_Y1_Surv_PPTSubDist_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
 ```
 
 
@@ -1650,7 +1650,7 @@ ED_prob <- ucd_y1_surv_sub_dist %>%
 
 ``` r
 UCD_y1_surv_sub_FIG_prob_recent <- ggarrange(GSCD_prob_recent, WYCD_prob_recent, GD_prob, ED_prob, ncol=2, nrow=2) 
-ggsave("../output/UCD_Traits/UCD_Y1_Surv_PPTSubDist_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
+#ggsave("../output/UCD_Traits/UCD_Y1_Surv_PPTSubDist_SCATTERS_Recent.png", width = 24, height = 18, units = "in")
 ```
 
 
@@ -1695,8 +1695,93 @@ WYCD_prob_historic <- ucd_y1_surv_sub_dist %>%
 
 ``` r
 UCD_y1_surv_sub_FIG_prob_historic <- ggarrange(GSCD_prob_historic, WYCD_prob_historic, GD_prob, ED_prob, ncol=2, nrow=2) 
-ggsave("../output/UCD_Traits/UCD_Y1_Surv_PPTSubDist_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
+#ggsave("../output/UCD_Traits/UCD_Y1_Surv_PPTSubDist_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
 ```
+
+## Figures for Paper
+
+### Gower's and temp
+
+``` r
+WYCD_recent <- wl2_y1_surv %>% 
+  group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
+  summarise(meanSurv=mean(Survival, na.rm = TRUE), semSurv=sem(Survival, na.rm=TRUE)) %>% 
+  ggplot(aes(x=Wtr_Year_GD_Recent, y=meanSurv, group = pop, colour = elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanSurv-semSurv,ymax=meanSurv+semSurv),width=.02,linewidth = 2) +
+  annotate("text", x = 0.42, y= 0.7884615, label = "WL2", 
+           colour = "purple", fontface="bold", size = 22 / .pt) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Y1 Survival", x="Recent Water Year CD", colour="Elevation (m)") +
+  theme(text=element_text(size=30))
+```
+
+```
+## `summarise()` has grouped output by 'pop', 'elev_m', 'GrwSsn_GD_Recent'. You
+## can override using the `.groups` argument.
+```
+
+``` r
+WYCD_temp_recent <- wl2_y1_surv_sub_dist %>% 
+  group_by(pop, elev_m, Wtr_Year_TempDist_Recent, Wtr_Year_TempDist_Historic) %>% 
+  summarise(meanEst=mean(Survival, na.rm = TRUE), semEst=sem(Survival, na.rm=TRUE)) %>% 
+  ggplot(aes(x=Wtr_Year_TempDist_Recent, y=meanEst, group = pop, colour = elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.3,linewidth = 2) +
+  annotate("text", x = 1.6352917, y= 0.88, label = "WL2", 
+           colour = "purple", fontface="bold", size = 22 / .pt) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Y1 Survival", x="Recent Water Year Temp Dist", colour="Elevation (m)") +
+  theme(text=element_text(size=30))
+```
+
+```
+## `summarise()` has grouped output by 'pop', 'elev_m',
+## 'Wtr_Year_TempDist_Recent'. You can override using the `.groups` argument.
+```
+
+``` r
+wl2_y1surv_FIG_recent <- ggarrange(WYCD_recent, WYCD_temp_recent,
+                                labels = c("A)", "B)"), 
+                                font.label = list(size=30, 
+                                                  face = "plain"), 
+                                ncol=2, nrow=1) 
+ggsave("../output/WL2_Traits/WL2_Y1_Surv_ClimTempDist_Recent.png", width = 26, height = 9, units = "in")
+```
+
+### WL2 Growth Season Effects
+
+``` r
+wl2_y1_surv_sub_dist %>% 
+  group_by(pop, elev_m, GrwSsn_PPTDist_Recent, GrwSsn_PPTDist_Historic) %>% 
+  summarise(meanEst=mean(Survival, na.rm = TRUE), semEst=sem(Survival, na.rm=TRUE)) %>% 
+  ggplot(aes(x=GrwSsn_PPTDist_Recent, y=meanEst, group = pop, color=elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=0.3, linewidth = 2) +
+  annotate("text", x = 112.2539933	, y= 0.88, label = "WL2", 
+           colour = "purple", fontface="bold", size = 22 / .pt) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Y1 Survival", x="Recent Growth Season PPT Dist", colour="Elevation (m)") +
+  theme(text=element_text(size=30))
+```
+
+```
+## `summarise()` has grouped output by 'pop', 'elev_m', 'GrwSsn_PPTDist_Recent'.
+## You can override using the `.groups` argument.
+```
+
+![](FirstYear_Survival_files/figure-html/unnamed-chunk-25-1.png)<!-- -->
+
+``` r
+ggsave("../output/WL2_Traits/WL2_Y1_Surv_PPTSubDist_GRWSSN_Recent.png", width = 10, height = 5, units = "in")
+```
+
 
 ## Stats
 
@@ -2479,7 +2564,7 @@ ucd_y1_surv_size %>%
 ## (`geom_point()`).
 ```
 
-![](FirstYear_Survival_files/figure-html/unnamed-chunk-32-1.png)<!-- -->
+![](FirstYear_Survival_files/figure-html/unnamed-chunk-34-1.png)<!-- -->
 
 ``` r
 ucd_y1_surv_size %>% 
@@ -2492,7 +2577,7 @@ ucd_y1_surv_size %>%
 ## (`geom_point()`).
 ```
 
-![](FirstYear_Survival_files/figure-html/unnamed-chunk-32-2.png)<!-- -->
+![](FirstYear_Survival_files/figure-html/unnamed-chunk-34-2.png)<!-- -->
 
 ``` r
 ucd_y1_surv_size %>% 
@@ -2505,7 +2590,7 @@ ucd_y1_surv_size %>%
 ## (`geom_point()`).
 ```
 
-![](FirstYear_Survival_files/figure-html/unnamed-chunk-32-3.png)<!-- -->
+![](FirstYear_Survival_files/figure-html/unnamed-chunk-34-3.png)<!-- -->
 
 ``` r
 ucd_y1_surv_size %>% #not enough variation in surv
@@ -2518,7 +2603,7 @@ ucd_y1_surv_size %>% #not enough variation in surv
 ## (`geom_point()`).
 ```
 
-![](FirstYear_Survival_files/figure-html/unnamed-chunk-32-4.png)<!-- -->
+![](FirstYear_Survival_files/figure-html/unnamed-chunk-34-4.png)<!-- -->
 
 
 ``` r
@@ -2532,7 +2617,7 @@ wl2_y1_surv_size %>%
 ## (`geom_point()`).
 ```
 
-![](FirstYear_Survival_files/figure-html/unnamed-chunk-33-1.png)<!-- -->
+![](FirstYear_Survival_files/figure-html/unnamed-chunk-35-1.png)<!-- -->
 
 ``` r
 wl2_y1_surv_size %>% 
@@ -2545,7 +2630,7 @@ wl2_y1_surv_size %>%
 ## (`geom_point()`).
 ```
 
-![](FirstYear_Survival_files/figure-html/unnamed-chunk-33-2.png)<!-- -->
+![](FirstYear_Survival_files/figure-html/unnamed-chunk-35-2.png)<!-- -->
 
 ``` r
 wl2_y1_surv_size %>% #prob not enough var in surv
@@ -2558,7 +2643,7 @@ wl2_y1_surv_size %>% #prob not enough var in surv
 ## (`geom_point()`).
 ```
 
-![](FirstYear_Survival_files/figure-html/unnamed-chunk-33-3.png)<!-- -->
+![](FirstYear_Survival_files/figure-html/unnamed-chunk-35-3.png)<!-- -->
 
 ``` r
 wl2_y1_surv_size %>% #not enough variation in surv
@@ -2571,7 +2656,43 @@ wl2_y1_surv_size %>% #not enough variation in surv
 ## (`geom_point()`).
 ```
 
-![](FirstYear_Survival_files/figure-html/unnamed-chunk-33-4.png)<!-- -->
+![](FirstYear_Survival_files/figure-html/unnamed-chunk-35-4.png)<!-- -->
+
+``` r
+wl2_y1_surv_size %>% filter(Survival==0) %>% filter(!is.na(diam.mm)) #ones that died the day of the census
+```
+
+```
+## # A tibble: 3 × 24
+##   block Genotype pop      mf   rep elevation.group elev_m   Lat  Long
+##   <chr> <chr>    <chr> <dbl> <dbl> <chr>            <dbl> <dbl> <dbl>
+## 1 D     DPR_4_11 DPR       4    11 Mid              1019.  39.2 -121.
+## 2 E     YO7_1_3  YO7       1     3 High             2470.  37.8 -120.
+## 3 I     CC_9_11  CC        9    11 Low               313   39.6 -121.
+## # ℹ 15 more variables: GrwSsn_GD_Recent <dbl>, GrwSsn_GD_Historical <dbl>,
+## #   Wtr_Year_GD_Recent <dbl>, Wtr_Year_GD_Historical <dbl>,
+## #   Geographic_Dist <dbl>, Elev_Dist <dbl>, pheno <chr>, Survival <dbl>,
+## #   BedLoc <chr>, pop.mf <chr>, height.cm <dbl>, long.leaf.cm <dbl>,
+## #   Site <chr>, diam.mm <dbl>, total.branch <dbl>
+```
+
+``` r
+wl2_y1_surv_size %>% filter(Survival==0) %>% filter(!is.na(total.branch))
+```
+
+```
+## # A tibble: 3 × 24
+##   block Genotype pop      mf   rep elevation.group elev_m   Lat  Long
+##   <chr> <chr>    <chr> <dbl> <dbl> <chr>            <dbl> <dbl> <dbl>
+## 1 D     DPR_4_11 DPR       4    11 Mid              1019.  39.2 -121.
+## 2 E     YO7_1_3  YO7       1     3 High             2470.  37.8 -120.
+## 3 I     CC_9_11  CC        9    11 Low               313   39.6 -121.
+## # ℹ 15 more variables: GrwSsn_GD_Recent <dbl>, GrwSsn_GD_Historical <dbl>,
+## #   Wtr_Year_GD_Recent <dbl>, Wtr_Year_GD_Historical <dbl>,
+## #   Geographic_Dist <dbl>, Elev_Dist <dbl>, pheno <chr>, Survival <dbl>,
+## #   BedLoc <chr>, pop.mf <chr>, height.cm <dbl>, long.leaf.cm <dbl>,
+## #   Site <chr>, diam.mm <dbl>, total.branch <dbl>
+```
 
 
 ``` r
@@ -2690,7 +2811,7 @@ ucd_y1_surv_size %>%
 ## argument.
 ```
 
-![](FirstYear_Survival_files/figure-html/unnamed-chunk-36-1.png)<!-- -->
+![](FirstYear_Survival_files/figure-html/unnamed-chunk-38-1.png)<!-- -->
 
 ``` r
 ucd_y1_surv_size %>% 
@@ -2715,7 +2836,7 @@ ucd_y1_surv_size %>%
 ## argument.
 ```
 
-![](FirstYear_Survival_files/figure-html/unnamed-chunk-36-2.png)<!-- -->
+![](FirstYear_Survival_files/figure-html/unnamed-chunk-38-2.png)<!-- -->
 
 ``` r
 ucd_y1_surv_size %>% 
@@ -2740,7 +2861,7 @@ ucd_y1_surv_size %>%
 ## argument.
 ```
 
-![](FirstYear_Survival_files/figure-html/unnamed-chunk-36-3.png)<!-- -->
+![](FirstYear_Survival_files/figure-html/unnamed-chunk-38-3.png)<!-- -->
 
 ``` r
 ucd_y1_surv_size %>% 
@@ -2765,7 +2886,7 @@ ucd_y1_surv_size %>%
 ## argument.
 ```
 
-![](FirstYear_Survival_files/figure-html/unnamed-chunk-36-4.png)<!-- -->
+![](FirstYear_Survival_files/figure-html/unnamed-chunk-38-4.png)<!-- -->
 
 
 ``` r
@@ -2790,7 +2911,7 @@ wl2_y1_surv_size %>%
 ## argument.
 ```
 
-![](FirstYear_Survival_files/figure-html/unnamed-chunk-37-1.png)<!-- -->
+![](FirstYear_Survival_files/figure-html/unnamed-chunk-39-1.png)<!-- -->
 
 ``` r
 wl2_y1_surv_size %>% 
@@ -2815,7 +2936,7 @@ wl2_y1_surv_size %>%
 ## argument.
 ```
 
-![](FirstYear_Survival_files/figure-html/unnamed-chunk-37-2.png)<!-- -->
+![](FirstYear_Survival_files/figure-html/unnamed-chunk-39-2.png)<!-- -->
 
 ``` r
 wl2_y1_surv_size %>% 
@@ -2840,7 +2961,7 @@ wl2_y1_surv_size %>%
 ## argument.
 ```
 
-![](FirstYear_Survival_files/figure-html/unnamed-chunk-37-3.png)<!-- -->
+![](FirstYear_Survival_files/figure-html/unnamed-chunk-39-3.png)<!-- -->
 
 ``` r
 wl2_y1_surv_size %>% 
@@ -2865,7 +2986,7 @@ wl2_y1_surv_size %>%
 ## argument.
 ```
 
-![](FirstYear_Survival_files/figure-html/unnamed-chunk-37-4.png)<!-- -->
+![](FirstYear_Survival_files/figure-html/unnamed-chunk-39-4.png)<!-- -->
 
 ### Stats
 
@@ -2886,7 +3007,7 @@ corrplot(cor.norm_ucd, type = "upper",
          sig.level = 0.05, insig="blank") 
 ```
 
-![](FirstYear_Survival_files/figure-html/unnamed-chunk-38-1.png)<!-- -->
+![](FirstYear_Survival_files/figure-html/unnamed-chunk-40-1.png)<!-- -->
 
 ``` r
 #no strong correlations
@@ -2925,7 +3046,7 @@ corrplot(cor.norm_wl2, type = "upper",
          sig.level = 0.05, insig="blank")  
 ```
 
-![](FirstYear_Survival_files/figure-html/unnamed-chunk-38-2.png)<!-- -->
+![](FirstYear_Survival_files/figure-html/unnamed-chunk-40-2.png)<!-- -->
 
 ``` r
 #longest leaf and diam are 65% correlated, no other strong corrs
