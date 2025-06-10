@@ -572,7 +572,7 @@ gowers_calc_2324 <- function(data, indices, P) { #function with all of the code 
 #### Perform the bootstrap sampling 
 Recent
 ```{r}
-gowers.boot_recent_2324 <- boot(data=recent_clim_boot_nest, statistic=gowerscalc_2324, R=1000, P=14) #will sample each row (year) with replacement 
+gowers.boot_recent_2324 <- boot(data=recent_clim_boot_nest, statistic=gowers_calc_2324, R=1000, P=14) #will sample each row (year) with replacement 
 gowers.boot_recent_2324$t0 #looks correct 
 #str(gowers.boot_recent)
 
@@ -588,7 +588,7 @@ boot_recent_results_2324 <- tidy(gowers.boot_recent_2324,conf.int=TRUE,conf.meth
 
 Historical
 ```{r}
-gowers.boot_historical_2324 <- boot(data=historical_clim_boot_nest, statistic=gowerscalc_2324, R=1000, P=14) #will sample each row (year) with replacement 
+gowers.boot_historical_2324 <- boot(data=historical_clim_boot_nest, statistic=gowers_calc_2324, R=1000, P=14) #will sample each row (year) with replacement 
 gowers.boot_historical_2324$t0 #looks correct 
 #str(gowers.boot_historical)
 
@@ -1040,6 +1040,31 @@ tmx_dist_fig_historical <- historic_flint_dist %>%
 #ggsave("../output/Climate/grwssn_MeanTMX_DistfromHome_WL2_HistoricalClim.png", width = 12, height = 6, units = "in")
 ```
 
+#### For 2024 (from 2023 home avgs)
+```{r}
+recent_flint_dist_prep_2324 <- bind_cols(WL2_climate_2024_flint, pops_flint_recent_avgs)
+names(recent_flint_dist_prep_2324)
+
+recent_flint_dist_2324 <- recent_flint_dist_prep_2324 %>% 
+  mutate(ppt_dist=ppt - ppt_WL2,
+         cwd_dist=cwd - cwd_WL2,
+         pck_dist=pck_WL2 - pck,
+         tmn_dist=tmn - tmn_WL2,
+         tmx_dist=tmx - tmx_WL2) %>% 
+ dplyr::select(parent.pop, elevation.group, elev_m, ends_with("_dist"))
+
+historic_flint_dist_prep_2324 <- bind_cols(WL2_climate_2024_flint, pops_flint_historic_avgs)
+names(historic_flint_dist_prep_2324)
+
+historic_flint_dist_2324 <- historic_flint_dist_prep_2324 %>% 
+  mutate(ppt_dist=ppt - ppt_WL2,
+         cwd_dist=cwd - cwd_WL2,
+         pck_dist=pck_WL2 - pck,
+         tmn_dist=tmn - tmn_WL2,
+         tmx_dist=tmx - tmx_WL2) %>% 
+ dplyr::select(parent.pop, elevation.group, elev_m, ends_with("_dist"))
+```
+
 #### For 2024
 ```{r}
 pops_flint_avgs_2024 <- read_csv("../output/Climate/grwssn_FlintAvgs_2024.csv") #change to growth season
@@ -1459,6 +1484,41 @@ ppt_cold_dist_fig_historical <- historical_bioclim_dist %>%
 #ggsave("../output/Climate/grwssn_PPT_Cold_DistfromHome_WL2_HistoricalClim.png", width = 12, height = 6, units = "in")
 ```
 
+#### For 2024 (from 2023 home avgs)
+```{r}
+#Recent
+recent_bioclim_dist_prep_2324 <- bind_cols(WL2_bioclim_final_2024, pops_bioclim_recent_avgs)
+recent_bioclim_dist_2324 <- recent_bioclim_dist_prep_2324 %>% 
+  mutate(ann_tmean_dist=ann_tmean - ann_tmean_WL2,
+         mean_diurnal_range_dist=mean_diurnal_range - mean_diurnal_range_WL2,
+         temp_seasonality_dist=temp_seasonality - temp_seasonality_WL2,
+         temp_ann_range_dist=temp_ann_range - temp_ann_range_WL2,
+         tmean_wettest_month_dist=tmean_wettest_month - tmean_wettest_month_WL2,
+         tmean_driest_month_dist=tmean_driest_month - tmean_driest_month_WL2,
+         ann_ppt_dist=ann_ppt - ann_ppt_WL2,
+         ppt_seasonality_dist=ppt_seasonality - ppt_seasonality_WL2, 
+         ppt_warmest_month_dist=ppt_warmest_month - ppt_warmest_month_WL2,
+         ppt_coldest_month_dist=ppt_coldest_month - ppt_coldest_month_WL2) %>% 
+ dplyr::select(parent.pop, elevation.group, elev_m, ends_with("_dist"))
+#recent_bioclim_dist_2324
+
+#Historical
+historical_bioclim_dist_prep_2324 <- bind_cols(WL2_bioclim_final_2024, pops_bioclim_historical_avgs)
+historical_bioclim_dist_2324 <- historical_bioclim_dist_prep_2324 %>% 
+  mutate(ann_tmean_dist=ann_tmean - ann_tmean_WL2,
+         mean_diurnal_range_dist=mean_diurnal_range - mean_diurnal_range_WL2,
+         temp_seasonality_dist=temp_seasonality - temp_seasonality_WL2,
+         temp_ann_range_dist=temp_ann_range - temp_ann_range_WL2,
+         tmean_wettest_month_dist=tmean_wettest_month - tmean_wettest_month_WL2,
+         tmean_driest_month_dist=tmean_driest_month - tmean_driest_month_WL2,
+         ann_ppt_dist=ann_ppt - ann_ppt_WL2,
+         ppt_seasonality_dist=ppt_seasonality - ppt_seasonality_WL2, 
+         ppt_warmest_month_dist=ppt_warmest_month - ppt_warmest_month_WL2,
+         ppt_coldest_month_dist=ppt_coldest_month - ppt_coldest_month_WL2) %>% 
+  dplyr::select(parent.pop, elevation.group, elev_m, ends_with("_dist"))
+#historical_bioclim_dist_2324
+```
+
 #### For 2024
 ```{r}
 pops_bioclim_avgs_2024 <-  read_csv("../output/Climate/grwssn_BioClimAvgs_2024.csv") #change to growth season 
@@ -1523,6 +1583,15 @@ recent_sub_dist_from_wl2 <- full_join(recent_flint_dist, recent_bioclim_dist)
 
 historic_sub_dist_from_wl2 <- full_join(historic_flint_dist, historical_bioclim_dist)
 #write_csv(historic_sub_dist_from_wl2, "../output/Climate/grwssn_Subtraction_Dist_from_Home_WL2_Historical.csv")
+```
+
+#### For 2024 (from 2023 home avgs)
+```{r}
+recent_sub_dist_2324_from_wl2 <- full_join(recent_flint_dist_2324, recent_bioclim_dist_2324)
+write_csv(recent_sub_dist_2324_from_wl2, "../output/Climate/grwssn_Subtraction_Dist_from_Home_WL2_2324_Recent.csv")
+
+historic_sub_dist_2324_from_wl2 <- full_join(historic_flint_dist_2324, historical_bioclim_dist_2324)
+write_csv(historic_sub_dist_2324_from_wl2, "../output/Climate/grwssn_Subtraction_Dist_from_Home_WL2_2324_Historical.csv")
 ```
 
 ### For 2024

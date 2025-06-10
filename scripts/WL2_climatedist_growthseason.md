@@ -1,7 +1,7 @@
 ---
 title: "WL2_climate_distance"
 author: "Brandie Quarles"
-date: "2025-03-20"
+date: "2025-06-10"
 output: 
   html_document: 
     keep_md: yes
@@ -362,6 +362,13 @@ summary(WL2_bioclim_final)
 ##  Max.   :19.59          Max.   :0.01          Max.   :156.2
 ```
 
+### Export 
+
+``` r
+wl2_flint_bioclim_grwssn <- cbind(WL2_climate_flint, WL2_bioclim_final)
+#write_csv(wl2_flint_bioclim_grwssn, "../output/Climate/WL2_Garden_GrwSsnClim_2023.csv")
+```
+
 ## For 2024 (June-Nov 2024)
 
 ### From Flint
@@ -478,7 +485,7 @@ WL2_climate_2024 %>%
   geom_point()
 ```
 
-![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-9-1.png)<!-- -->
+![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-10-1.png)<!-- -->
 
 ``` r
 WL2_climate_2024 %>% 
@@ -487,7 +494,7 @@ WL2_climate_2024 %>%
   facet_wrap(~year)
 ```
 
-![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-9-2.png)<!-- -->
+![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-10-2.png)<!-- -->
 
 ``` r
 WL2_climate_2024 %>% 
@@ -495,7 +502,7 @@ WL2_climate_2024 %>%
   geom_point()
 ```
 
-![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-9-3.png)<!-- -->
+![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-10-3.png)<!-- -->
 
 ``` r
 WL2_climate_2024 %>% 
@@ -503,7 +510,7 @@ WL2_climate_2024 %>%
   geom_point()
 ```
 
-![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-9-4.png)<!-- -->
+![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-10-4.png)<!-- -->
 
 ``` r
 WL2_climate_2024 %>% 
@@ -511,7 +518,7 @@ WL2_climate_2024 %>%
   geom_point()
 ```
 
-![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-9-5.png)<!-- -->
+![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-10-5.png)<!-- -->
 
 ``` r
 WL2_climate_2024 %>% 
@@ -636,6 +643,13 @@ summary(WL2_bioclim_final_2024)
 ##  Mean   :16.45          Mean   :5.62          Mean   :144.6        
 ##  3rd Qu.:16.45          3rd Qu.:5.62          3rd Qu.:144.6        
 ##  Max.   :16.45          Max.   :5.62          Max.   :144.6
+```
+
+### Export 
+
+``` r
+wl2_flint_bioclim_grwssn_2024 <- cbind(WL2_climate_2024_flint, WL2_bioclim_final_2024)
+#write_csv(wl2_flint_bioclim_grwssn_2024, "../output/Climate/WL2_Garden_GrwSsnClim_2024.csv")
 ```
 
 ## Gower's Climate Distance
@@ -841,7 +855,7 @@ for(i in 1:23) {
 }
 ```
 
-![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-17-1.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-17-2.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-17-3.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-17-4.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-17-5.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-17-6.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-17-7.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-17-8.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-17-9.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-17-10.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-17-11.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-17-12.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-17-13.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-17-14.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-17-15.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-17-16.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-17-17.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-17-18.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-17-19.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-17-20.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-17-21.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-17-22.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-17-23.png)<!-- -->
+![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-19-1.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-19-2.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-19-3.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-19-4.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-19-5.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-19-6.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-19-7.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-19-8.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-19-9.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-19-10.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-19-11.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-19-12.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-19-13.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-19-14.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-19-15.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-19-16.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-19-17.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-19-18.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-19-19.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-19-20.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-19-21.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-19-22.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-19-23.png)<!-- -->
 
 ``` r
 #boot.ci(gowers.boot_recent, type="norm", index = 1) # for the first pop
@@ -872,7 +886,7 @@ for(i in 1:23) {
 }
 ```
 
-![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-18-1.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-18-2.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-18-3.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-18-4.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-18-5.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-18-6.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-18-7.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-18-8.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-18-9.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-18-10.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-18-11.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-18-12.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-18-13.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-18-14.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-18-15.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-18-16.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-18-17.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-18-18.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-18-19.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-18-20.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-18-21.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-18-22.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-18-23.png)<!-- -->
+![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-20-1.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-20-2.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-20-3.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-20-4.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-20-5.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-20-6.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-20-7.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-20-8.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-20-9.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-20-10.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-20-11.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-20-12.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-20-13.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-20-14.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-20-15.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-20-16.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-20-17.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-20-18.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-20-19.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-20-20.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-20-21.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-20-22.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-20-23.png)<!-- -->
 
 ``` r
 #boot.ci(gowers.boot_historical, type="norm", index = 1) # for the first pop
@@ -919,13 +933,13 @@ historical_fig <- boot_gowers_results_all %>%
 plot_grid(historical_fig, recent_fig)
 ```
 
-![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-19-1.png)<!-- -->
+![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-21-1.png)<!-- -->
 
 ``` r
 #ggsave("../output/Climate/growthseason_Gowers_fromWL2.png", width = 24, height = 8, units = "in")
 ```
 
-### For 2024
+## Gower's Distance for 2024
 
 ``` r
 WL2_climate_2024_all <- bind_cols(WL2_climate_2024_flint, WL2_bioclim_final_2024)
@@ -934,6 +948,196 @@ WL2_range_prep_2024 <- WL2_climate_2024_all %>%
   mutate(parent.pop="WL2") %>% 
   rename_with(~str_remove(., "_WL2"), everything())
 ```
+
+### Bootstrapping with home climates with avgs up to 2023
+
+#### Create the gower_calc function 
+
+``` r
+#data <- recent_clim_boot_nest
+#P=14
+
+gowers_calc_2324 <- function(data, indices, P) { #function with all of the code necessary for calculating gowers distance 
+  #data = _clim_boot (recent or historical) - needs to be nested by year; P = # climate variables 
+
+  #need to make WL2_range_prep_2024 before running this function 
+  
+  data <-data[indices,] # subset per bootstrap indices
+  
+  data <- data %>% unnest(data) #unnest so the function can access the climate data
+  
+  data_means <- data %>% 
+    group_by(parent.pop, elevation.group, elev_m, Lat, Long) %>% 
+    summarise_at(c("cwd",  "pck", "ppt", "tmn", "tmx", "ann_tmean", "mean_diurnal_range", 
+                   "temp_seasonality", "temp_ann_range",
+                 "tmean_wettest_month", "tmean_driest_month", "ann_ppt",
+                 "ppt_seasonality","ppt_warmest_month", "ppt_coldest_month"),
+               c(mean), na.rm = TRUE) #get 30 year averages for each climate variable 
+  
+  range_merge <- bind_rows(data_means, WL2_range_prep_2024)
+  
+  WL2_home_climate_ranges <- range_merge %>% #calculate ranges
+    ungroup() %>% 
+  summarise(cwd_range=max(cwd)-min(cwd),
+            ppt_range=max(ppt)-min(ppt), 
+            tmn_range=max(tmn)-min(tmn), 
+            tmx_range=max(tmx)-min(tmx), 
+            ann_tmean_range=max(ann_tmean)-min(ann_tmean),
+            mean_diurnal_range_range=max(mean_diurnal_range)-min(mean_diurnal_range),
+            temp_seasonality_range=max(temp_seasonality)-min(temp_seasonality),
+            temp_ann_range_range=max(temp_ann_range)-min(temp_ann_range),
+            tmean_wettest_month_range=max(tmean_wettest_month)-min(tmean_wettest_month),
+            tmean_driest_month_range=max(tmean_driest_month)-min(tmean_driest_month),
+            ann_ppt_range=max(ann_ppt)-min(ann_ppt), 
+            ppt_seasonality_range=max(ppt_seasonality)-min(ppt_seasonality),
+            ppt_warmest_month_range=max(ppt_warmest_month)-min(ppt_warmest_month), 
+            ppt_coldest_month_range=max(ppt_coldest_month)-min(ppt_coldest_month))
+  
+  WL2_home_climate <- bind_cols(WL2_climate_2024_all, data_means) #add WL2 climate data to home climate data 
+  
+  WL2_home_climate_with_ranges <- bind_cols(WL2_home_climate, WL2_home_climate_ranges) #add in ranges 
+  
+  gowers_calc_each_var <- WL2_home_climate_with_ranges %>% #variable by variable calc
+  mutate(cwd_gowers=abs(cwd_WL2-cwd) / cwd_range,
+         ppt_gowers=abs(ppt_WL2 - ppt) / ppt_range,
+         tmn_gowers=abs(tmn_WL2 - tmn) / tmn_range,
+         tmx_gowers=abs(tmx_WL2 - tmx) / tmx_range,
+         ann_tmean_gowers=abs(ann_tmean_WL2 - ann_tmean) / ann_tmean_range,
+         mean_diurnal_range_gowers=abs(mean_diurnal_range_WL2 - mean_diurnal_range) / mean_diurnal_range_range,
+         temp_seasonality_gowers=abs(temp_seasonality_WL2 - temp_seasonality) / temp_seasonality_range,
+         temp_ann_range_gowers=abs(temp_ann_range_WL2 - temp_ann_range) / temp_ann_range_range,
+         tmean_wettest_month_gowers=abs(tmean_wettest_month_WL2 - tmean_wettest_month) / tmean_wettest_month_range,
+         tmean_driest_month_gowers=abs(tmean_driest_month_WL2 - tmean_driest_month) / tmean_driest_month_range,
+         ann_ppt_gowers=abs(ann_ppt_WL2 - ann_ppt) / ann_ppt_range,
+         ppt_seasonality_gowers=abs(ppt_seasonality_WL2 - ppt_seasonality) / ppt_seasonality_range,
+         ppt_warmest_month_gowers=abs(ppt_warmest_month_WL2 - ppt_warmest_month) / ppt_warmest_month_range,
+         ppt_coldest_month_gowers=abs(ppt_coldest_month_WL2 - ppt_coldest_month) / ppt_coldest_month_range) %>% 
+  dplyr::select(parent.pop, elevation.group, elev_m, ends_with("_gowers"))
+
+ gowers_calc_per_pop <- gowers_calc_each_var %>% #final gowers calc 
+  mutate(Gowers_Dist=(1/P)*(cwd_gowers + ppt_gowers + tmn_gowers + tmx_gowers +
+                                ann_tmean_gowers + mean_diurnal_range_gowers +
+                                temp_seasonality_gowers +temp_ann_range_gowers +
+                                tmean_wettest_month_gowers +
+                                tmean_driest_month_gowers +ann_ppt_gowers +
+                                ppt_seasonality_gowers + ppt_warmest_month_gowers +
+                                ppt_coldest_month_gowers)) %>% 
+  dplyr::select(parent.pop, elevation.group, elev_m, Gowers_Dist)
+  
+ gowers_calc_per_pop %>% pull(Gowers_Dist) #make the result a vector 
+   }
+
+#gowers_calc(recent_clim_boot_nest, P=14) #the function works
+```
+
+#### Perform the bootstrap sampling 
+Recent
+
+``` r
+gowers.boot_recent_2324 <- boot(data=recent_clim_boot_nest, statistic=gowers_calc_2324, R=1000, P=14) #will sample each row (year) with replacement 
+gowers.boot_recent_2324$t0 #looks correct 
+```
+
+```
+##  [1] 0.3604293 0.4368284 0.2954925 0.3403122 0.4332053 0.3550931 0.4558030
+##  [8] 0.4088586 0.4229161 0.4233162 0.4491223 0.1626642 0.1535530 0.2172890
+## [15] 0.5660414 0.2709563 0.2442796 0.3678940 0.3506691 0.4152702 0.2145416
+## [22] 0.3596217 0.3669463
+```
+
+``` r
+#str(gowers.boot_recent)
+
+for(i in 1:23) {
+  plot(gowers.boot_recent_2324, index=i) #distributions look normal for the most part 
+}
+```
+
+![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-24-1.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-24-2.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-24-3.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-24-4.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-24-5.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-24-6.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-24-7.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-24-8.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-24-9.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-24-10.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-24-11.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-24-12.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-24-13.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-24-14.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-24-15.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-24-16.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-24-17.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-24-18.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-24-19.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-24-20.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-24-21.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-24-22.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-24-23.png)<!-- -->
+
+``` r
+#boot.ci(gowers.boot_recent, type="norm", index = 1) # for the first pop
+boot_recent_results_2324 <- tidy(gowers.boot_recent_2324,conf.int=TRUE,conf.method="norm") %>%  #all pops
+  rename(Gowers_Dist = statistic) %>% 
+  mutate(TimePd="Recent")
+```
+
+Historical
+
+``` r
+gowers.boot_historical_2324 <- boot(data=historical_clim_boot_nest, statistic=gowers_calc_2324, R=1000, P=14) #will sample each row (year) with replacement 
+gowers.boot_historical_2324$t0 #looks correct 
+```
+
+```
+##  [1] 0.3830705 0.5129300 0.3422471 0.3770376 0.4225424 0.3514953 0.4568829
+##  [8] 0.6178324 0.6290415 0.6335605 0.4518851 0.2215212 0.2502301 0.3101070
+## [15] 0.5699775 0.2790886 0.3093381 0.3786899 0.3447462 0.4276254 0.2706282
+## [22] 0.3478306 0.3506780
+```
+
+``` r
+#str(gowers.boot_historical)
+
+for(i in 1:23) {
+  plot(gowers.boot_historical_2324, index=i) #distributions look normal for the most part 
+}
+```
+
+![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-25-1.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-25-2.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-25-3.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-25-4.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-25-5.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-25-6.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-25-7.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-25-8.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-25-9.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-25-10.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-25-11.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-25-12.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-25-13.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-25-14.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-25-15.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-25-16.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-25-17.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-25-18.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-25-19.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-25-20.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-25-21.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-25-22.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-25-23.png)<!-- -->
+
+``` r
+#boot.ci(gowers.boot_historical, type="norm", index = 1) # for the first pop
+boot_historical_results_2324 <- tidy(gowers.boot_historical_2324,conf.int=TRUE,conf.method="norm") %>%  #all pops
+  rename(Gowers_Dist = statistic) %>% 
+  mutate(TimePd="Historical")
+```
+
+#### Plot the results 
+
+``` r
+pops <- recent_clim_boot %>% select(parent.pop, elevation.group, elev_m, Lat, Long) %>% unique()
+
+boot_gowers_recent_pops <- bind_cols(pops, boot_recent_results_2324) %>% arrange(Gowers_Dist)
+boot_gowers_historical_pops <- bind_cols(pops, boot_historical_results_2324) %>% arrange(Gowers_Dist)
+boot_gowers_results_2324_all <- bind_rows(boot_gowers_recent_pops, boot_gowers_historical_pops)
+write_csv(boot_gowers_results_2324_all, "../output/Climate/growthseason_GowersEnvtalDist_WL2_2324.csv")
+
+recent_fig <- boot_gowers_results_2324_all %>% 
+  filter(TimePd=="Recent") %>% 
+  ggplot(aes(x=fct_reorder(parent.pop, Gowers_Dist), y=Gowers_Dist, group=parent.pop, fill=elev_m)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) +
+  geom_errorbar(aes(ymin=conf.low, ymax=conf.high),
+                width=.1, position = position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  labs(y="Gowers Envtal Distance \n from WL2", fill="Elevation (m)", x="Population", title = "Recent Climate") +
+  theme_classic() +
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
+
+historical_fig <- boot_gowers_results_2324_all %>% 
+  filter(TimePd=="Historical") %>% 
+  ggplot(aes(x=fct_reorder(parent.pop, Gowers_Dist), y=Gowers_Dist, group=parent.pop, fill=elev_m)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) +
+  geom_errorbar(aes(ymin=conf.low, ymax=conf.high),
+                width=.1, position = position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  labs(y="Gowers Envtal Distance \n from WL2", fill="Elevation (m)", x="Population", title="Historic Climate") +
+  theme_classic() +
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1)) 
+  
+
+plot_grid(historical_fig, recent_fig)
+```
+
+![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-26-1.png)<!-- -->
+
+``` r
+ggsave("../output/Climate/growthseason_Gowers_fromWL2_2324.png", width = 24, height = 8, units = "in")
+```
+
+### Bootstrapping with home climates with avgs up to 2024
 
 #### Load data with all 30 years
 
@@ -1113,7 +1317,7 @@ for(i in 1:23) {
 }
 ```
 
-![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-23-1.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-23-2.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-23-3.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-23-4.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-23-5.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-23-6.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-23-7.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-23-8.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-23-9.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-23-10.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-23-11.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-23-12.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-23-13.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-23-14.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-23-15.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-23-16.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-23-17.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-23-18.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-23-19.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-23-20.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-23-21.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-23-22.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-23-23.png)<!-- -->
+![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-29-1.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-29-2.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-29-3.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-29-4.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-29-5.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-29-6.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-29-7.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-29-8.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-29-9.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-29-10.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-29-11.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-29-12.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-29-13.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-29-14.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-29-15.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-29-16.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-29-17.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-29-18.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-29-19.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-29-20.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-29-21.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-29-22.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-29-23.png)<!-- -->
 
 ``` r
 #boot.ci(gowers.boot_2024_recent, type="norm", index = 1) # for the first pop
@@ -1144,7 +1348,7 @@ for(i in 1:23) {
 }
 ```
 
-![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-24-1.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-24-2.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-24-3.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-24-4.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-24-5.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-24-6.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-24-7.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-24-8.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-24-9.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-24-10.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-24-11.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-24-12.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-24-13.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-24-14.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-24-15.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-24-16.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-24-17.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-24-18.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-24-19.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-24-20.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-24-21.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-24-22.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-24-23.png)<!-- -->
+![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-30-1.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-30-2.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-30-3.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-30-4.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-30-5.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-30-6.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-30-7.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-30-8.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-30-9.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-30-10.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-30-11.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-30-12.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-30-13.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-30-14.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-30-15.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-30-16.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-30-17.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-30-18.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-30-19.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-30-20.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-30-21.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-30-22.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-30-23.png)<!-- -->
 
 ``` r
 #boot.ci(gowers.boot_2024_historical, type="norm", index = 1) # for the first pop
@@ -1191,7 +1395,7 @@ historical_fig <- boot_2024_gowers_results_all %>%
 plot_grid(historical_fig, recent_fig)
 ```
 
-![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-25-1.png)<!-- -->
+![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-31-1.png)<!-- -->
 
 ``` r
 #ggsave("../output/Climate/growthseason_Gowers_fromWL2_2024.png", width = 24, height = 8, units = "in")
@@ -1268,7 +1472,7 @@ for(i in 1:23) {
 }
 ```
 
-![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-27-1.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-27-2.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-27-3.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-27-4.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-27-5.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-27-6.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-27-7.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-27-8.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-27-9.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-27-10.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-27-11.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-27-12.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-27-13.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-27-14.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-27-15.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-27-16.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-27-17.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-27-18.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-27-19.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-27-20.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-27-21.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-27-22.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-27-23.png)<!-- -->
+![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-33-1.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-33-2.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-33-3.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-33-4.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-33-5.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-33-6.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-33-7.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-33-8.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-33-9.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-33-10.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-33-11.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-33-12.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-33-13.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-33-14.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-33-15.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-33-16.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-33-17.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-33-18.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-33-19.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-33-20.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-33-21.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-33-22.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-33-23.png)<!-- -->
 
 ``` r
 #boot.ci(gowers.boot_flint_recent, type="norm", index = 1) # for the first pop
@@ -1302,7 +1506,7 @@ for(i in 1:23) {
 }
 ```
 
-![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-28-1.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-28-2.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-28-3.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-28-4.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-28-5.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-28-6.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-28-7.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-28-8.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-28-9.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-28-10.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-28-11.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-28-12.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-28-13.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-28-14.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-28-15.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-28-16.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-28-17.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-28-18.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-28-19.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-28-20.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-28-21.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-28-22.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-28-23.png)<!-- -->
+![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-34-1.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-34-2.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-34-3.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-34-4.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-34-5.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-34-6.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-34-7.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-34-8.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-34-9.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-34-10.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-34-11.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-34-12.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-34-13.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-34-14.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-34-15.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-34-16.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-34-17.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-34-18.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-34-19.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-34-20.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-34-21.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-34-22.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-34-23.png)<!-- -->
 
 ``` r
 #boot.ci(gowers.boot_flint_historical, type="norm", index = 1) # for the first pop
@@ -1348,7 +1552,7 @@ historical_fig <- boot_flint_gowers_results_all %>%
 plot_grid(historical_fig, recent_fig)
 ```
 
-![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-29-1.png)<!-- -->
+![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-35-1.png)<!-- -->
 
 ``` r
 #ggsave("../output/Climate/growthseason_Gowers_Flint_fromWL2.png", width = 24, height = 8, units = "in")
@@ -1362,11 +1566,11 @@ pops_flint_avgs <- read_csv("../output/Climate/growthseason_FlintAvgs.csv")
 ```
 
 ```
-## Rows: 46 Columns: 10
+## Rows: 46 Columns: 11
 ## ── Column specification ────────────────────────────────────────────────────────
 ## Delimiter: ","
 ## chr (3): parent.pop, elevation.group, TimePd
-## dbl (7): elev_m, Lat, Long, cwd, ppt, tmn, tmx
+## dbl (8): elev_m, Lat, Long, cwd, pck, ppt, tmn, tmx
 ## 
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
@@ -1381,8 +1585,8 @@ names(recent_flint_dist_prep)
 ```
 ##  [1] "cwd_WL2"         "ppt_WL2"         "pck_WL2"         "tmn_WL2"        
 ##  [5] "tmx_WL2"         "parent.pop"      "elevation.group" "elev_m"         
-##  [9] "Lat"             "Long"            "cwd"             "ppt"            
-## [13] "tmn"             "tmx"             "TimePd"
+##  [9] "Lat"             "Long"            "cwd"             "pck"            
+## [13] "ppt"             "tmn"             "tmx"             "TimePd"
 ```
 
 ``` r
@@ -1401,8 +1605,8 @@ names(historic_flint_dist_prep)
 ```
 ##  [1] "cwd_WL2"         "ppt_WL2"         "pck_WL2"         "tmn_WL2"        
 ##  [5] "tmx_WL2"         "parent.pop"      "elevation.group" "elev_m"         
-##  [9] "Lat"             "Long"            "cwd"             "ppt"            
-## [13] "tmn"             "tmx"             "TimePd"
+##  [9] "Lat"             "Long"            "cwd"             "pck"            
+## [13] "ppt"             "tmn"             "tmx"             "TimePd"
 ```
 
 ``` r
@@ -1426,7 +1630,7 @@ cwd_dist_fig_recent <- recent_flint_dist %>%
   labs(fill="Elevation (m)",x="Population") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/Climate/grwssn_MeanCWD_DistfromHome_WL2_RecentClim.png", width = 12, height = 6, units = "in")
+#ggsave("../output/Climate/grwssn_MeanCWD_DistfromHome_WL2_RecentClim.png", width = 12, height = 6, units = "in")
 
 ppt_dist_fig_recent <- recent_flint_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, ppt_dist), y=ppt_dist, group=parent.pop, fill=elev_m)) +
@@ -1436,7 +1640,7 @@ ppt_dist_fig_recent <- recent_flint_dist %>%
   labs(fill="Elevation (m)",x="Population") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/Climate/grwssn_MeanPPT_DistfromHome_WL2_RecentClim.png", width = 12, height = 6, units = "in")
+#ggsave("../output/Climate/grwssn_MeanPPT_DistfromHome_WL2_RecentClim.png", width = 12, height = 6, units = "in")
 
 tmn_dist_fig_recent <- recent_flint_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, tmn_dist), y=tmn_dist, group=parent.pop, fill=elev_m)) +
@@ -1446,7 +1650,7 @@ tmn_dist_fig_recent <- recent_flint_dist %>%
   labs(fill="Elevation (m)",x="Population") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/Climate/grwssn_MeanTMN_DistfromHome_WL2_RecentClim.png", width = 12, height = 6, units = "in")
+#ggsave("../output/Climate/grwssn_MeanTMN_DistfromHome_WL2_RecentClim.png", width = 12, height = 6, units = "in")
 
 tmx_dist_fig_recent <- recent_flint_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, tmx_dist), y=tmx_dist, group=parent.pop, fill=elev_m)) +
@@ -1456,7 +1660,7 @@ tmx_dist_fig_recent <- recent_flint_dist %>%
   labs(fill="Elevation (m)",x="Population") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/Climate/grwssn_MeanTMX_DistfromHome_WL2_RecentClim.png", width = 12, height = 6, units = "in")
+#ggsave("../output/Climate/grwssn_MeanTMX_DistfromHome_WL2_RecentClim.png", width = 12, height = 6, units = "in")
 ```
 
 Figures Historical (subtraction distance)
@@ -1471,7 +1675,7 @@ cwd_dist_fig_historical <- historic_flint_dist %>%
   labs(fill="Elevation (m)",x="Population") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/Climate/grwssn_MeanCWD_DistfromHome_WL2_HistoricalClim.png", width = 12, height = 6, units = "in")
+#ggsave("../output/Climate/grwssn_MeanCWD_DistfromHome_WL2_HistoricalClim.png", width = 12, height = 6, units = "in")
 
 ppt_dist_fig_historical <- historic_flint_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, ppt_dist), y=ppt_dist, group=parent.pop, fill=elev_m)) +
@@ -1481,7 +1685,7 @@ ppt_dist_fig_historical <- historic_flint_dist %>%
   labs(fill="Elevation (m)",x="Population") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/Climate/grwssn_MeanPPT_DistfromHome_WL2_HistoricalClim.png", width = 12, height = 6, units = "in")
+#ggsave("../output/Climate/grwssn_MeanPPT_DistfromHome_WL2_HistoricalClim.png", width = 12, height = 6, units = "in")
 
 tmn_dist_fig_historical <- historic_flint_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, tmn_dist), y=tmn_dist, group=parent.pop, fill=elev_m)) +
@@ -1491,7 +1695,7 @@ tmn_dist_fig_historical <- historic_flint_dist %>%
   labs(fill="Elevation (m)",x="Population") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/Climate/grwssn_MeanTMN_DistfromHome_WL2_HistoricalClim.png", width = 12, height = 6, units = "in")
+#ggsave("../output/Climate/grwssn_MeanTMN_DistfromHome_WL2_HistoricalClim.png", width = 12, height = 6, units = "in")
 
 tmx_dist_fig_historical <- historic_flint_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, tmx_dist), y=tmx_dist, group=parent.pop, fill=elev_m)) +
@@ -1501,7 +1705,51 @@ tmx_dist_fig_historical <- historic_flint_dist %>%
   labs(fill="Elevation (m)",x="Population") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/Climate/grwssn_MeanTMX_DistfromHome_WL2_HistoricalClim.png", width = 12, height = 6, units = "in")
+#ggsave("../output/Climate/grwssn_MeanTMX_DistfromHome_WL2_HistoricalClim.png", width = 12, height = 6, units = "in")
+```
+
+#### For 2024 (from 2023 home avgs)
+
+``` r
+recent_flint_dist_prep_2324 <- bind_cols(WL2_climate_2024_flint, pops_flint_recent_avgs)
+names(recent_flint_dist_prep_2324)
+```
+
+```
+##  [1] "cwd_WL2"         "ppt_WL2"         "pck_WL2"         "tmn_WL2"        
+##  [5] "tmx_WL2"         "parent.pop"      "elevation.group" "elev_m"         
+##  [9] "Lat"             "Long"            "cwd"             "pck"            
+## [13] "ppt"             "tmn"             "tmx"             "TimePd"
+```
+
+``` r
+recent_flint_dist_2324 <- recent_flint_dist_prep_2324 %>% 
+  mutate(ppt_dist=ppt - ppt_WL2,
+         cwd_dist=cwd - cwd_WL2,
+         pck_dist=pck_WL2 - pck,
+         tmn_dist=tmn - tmn_WL2,
+         tmx_dist=tmx - tmx_WL2) %>% 
+ dplyr::select(parent.pop, elevation.group, elev_m, ends_with("_dist"))
+
+historic_flint_dist_prep_2324 <- bind_cols(WL2_climate_2024_flint, pops_flint_historic_avgs)
+names(historic_flint_dist_prep_2324)
+```
+
+```
+##  [1] "cwd_WL2"         "ppt_WL2"         "pck_WL2"         "tmn_WL2"        
+##  [5] "tmx_WL2"         "parent.pop"      "elevation.group" "elev_m"         
+##  [9] "Lat"             "Long"            "cwd"             "pck"            
+## [13] "ppt"             "tmn"             "tmx"             "TimePd"
+```
+
+``` r
+historic_flint_dist_2324 <- historic_flint_dist_prep_2324 %>% 
+  mutate(ppt_dist=ppt - ppt_WL2,
+         cwd_dist=cwd - cwd_WL2,
+         pck_dist=pck_WL2 - pck,
+         tmn_dist=tmn - tmn_WL2,
+         tmx_dist=tmx - tmx_WL2) %>% 
+ dplyr::select(parent.pop, elevation.group, elev_m, ends_with("_dist"))
 ```
 
 #### For 2024
@@ -1658,7 +1906,7 @@ for(i in 1:23) {
 }
 ```
 
-![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-35-1.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-35-2.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-35-3.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-35-4.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-35-5.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-35-6.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-35-7.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-35-8.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-35-9.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-35-10.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-35-11.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-35-12.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-35-13.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-35-14.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-35-15.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-35-16.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-35-17.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-35-18.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-35-19.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-35-20.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-35-21.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-35-22.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-35-23.png)<!-- -->
+![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-42-1.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-42-2.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-42-3.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-42-4.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-42-5.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-42-6.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-42-7.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-42-8.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-42-9.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-42-10.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-42-11.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-42-12.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-42-13.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-42-14.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-42-15.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-42-16.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-42-17.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-42-18.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-42-19.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-42-20.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-42-21.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-42-22.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-42-23.png)<!-- -->
 
 ``` r
 #boot.ci(gowers.boot_bioclim_recent, type="norm", index = 1) # for the first pop
@@ -1692,7 +1940,7 @@ for(i in 1:23) {
 }
 ```
 
-![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-36-1.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-36-2.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-36-3.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-36-4.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-36-5.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-36-6.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-36-7.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-36-8.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-36-9.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-36-10.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-36-11.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-36-12.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-36-13.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-36-14.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-36-15.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-36-16.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-36-17.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-36-18.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-36-19.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-36-20.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-36-21.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-36-22.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-36-23.png)<!-- -->
+![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-43-1.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-43-2.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-43-3.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-43-4.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-43-5.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-43-6.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-43-7.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-43-8.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-43-9.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-43-10.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-43-11.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-43-12.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-43-13.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-43-14.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-43-15.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-43-16.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-43-17.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-43-18.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-43-19.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-43-20.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-43-21.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-43-22.png)<!-- -->![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-43-23.png)<!-- -->
 
 ``` r
 #boot.ci(gowers.boot_bioclim_historical, type="norm", index = 1) # for the first pop
@@ -1738,10 +1986,10 @@ historical_fig <- boot_bioclim_gowers_results_all %>%
 plot_grid(historical_fig, recent_fig)
 ```
 
-![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-37-1.png)<!-- -->
+![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-44-1.png)<!-- -->
 
 ``` r
-#ggsave("../output/Climate/growthseason_Gowers_BioClim_fromWL2.png", width = 24, height = 8, units = "in")
+##ggsave("../output/Climate/growthseason_Gowers_BioClim_fromWL2.png", width = 24, height = 8, units = "in")
 ```
 
 ### Subtraction
@@ -1854,7 +2102,7 @@ ann_tmean_dist_fig_recent <- recent_bioclim_dist %>%
   labs(fill="Elevation (m)",x="Population") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/Climate/grwssn_Ann_Tmean_DistfromHome_WL2_RecentClim.png", width = 12, height = 6, units = "in")
+#ggsave("../output/Climate/grwssn_Ann_Tmean_DistfromHome_WL2_RecentClim.png", width = 12, height = 6, units = "in")
 
 diurnal_range_dist_fig_recent <- recent_bioclim_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, mean_diurnal_range_dist), y=mean_diurnal_range_dist, group=parent.pop, fill=elev_m)) +
@@ -1864,7 +2112,7 @@ diurnal_range_dist_fig_recent <- recent_bioclim_dist %>%
   labs(fill="Elevation (m)",x="Population") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/Climate/grwssn_Diurnal_Range_DistfromHome_WL2_RecentClim.png", width = 12, height = 6, units = "in")
+#ggsave("../output/Climate/grwssn_Diurnal_Range_DistfromHome_WL2_RecentClim.png", width = 12, height = 6, units = "in")
 
 tmp_seasonality_dist_fig_recent <- recent_bioclim_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, temp_seasonality_dist), y=temp_seasonality_dist, group=parent.pop, fill=elev_m)) +
@@ -1874,7 +2122,7 @@ tmp_seasonality_dist_fig_recent <- recent_bioclim_dist %>%
   labs(fill="Elevation (m)",x="Population") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/Climate/grwssn_Temp_Seasonality_DistfromHome_WL2_RecentClim.png", width = 12, height = 6, units = "in")
+#ggsave("../output/Climate/grwssn_Temp_Seasonality_DistfromHome_WL2_RecentClim.png", width = 12, height = 6, units = "in")
 
 tmp_ann_range_dist_fig_recent <- recent_bioclim_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, temp_ann_range_dist), y=temp_ann_range_dist, group=parent.pop, fill=elev_m)) +
@@ -1884,7 +2132,7 @@ tmp_ann_range_dist_fig_recent <- recent_bioclim_dist %>%
   labs(fill="Elevation (m)",x="Population") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/Climate/grwssn_Temp_Ann_Range_DistfromHome_WL2_RecentClim.png", width = 12, height = 6, units = "in")
+#ggsave("../output/Climate/grwssn_Temp_Ann_Range_DistfromHome_WL2_RecentClim.png", width = 12, height = 6, units = "in")
 
 tmean_wet_dist_fig_recent <- recent_bioclim_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, tmean_wettest_month_dist), y=tmean_wettest_month_dist, group=parent.pop, fill=elev_m)) +
@@ -1894,7 +2142,7 @@ tmean_wet_dist_fig_recent <- recent_bioclim_dist %>%
   labs(fill="Elevation (m)",x="Population") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/Climate/grwssn_Temp_Wet_DistfromHome_WL2_RecentClim.png", width = 12, height = 6, units = "in")
+#ggsave("../output/Climate/grwssn_Temp_Wet_DistfromHome_WL2_RecentClim.png", width = 12, height = 6, units = "in")
 
 tmean_dry_dist_fig_recent <- recent_bioclim_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, tmean_driest_month_dist), y=tmean_driest_month_dist, group=parent.pop, fill=elev_m)) +
@@ -1904,7 +2152,7 @@ tmean_dry_dist_fig_recent <- recent_bioclim_dist %>%
   labs(fill="Elevation (m)",x="Population") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/Climate/grwssn_Temp_Dry_DistfromHome_WL2_RecentClim.png", width = 12, height = 6, units = "in")
+#ggsave("../output/Climate/grwssn_Temp_Dry_DistfromHome_WL2_RecentClim.png", width = 12, height = 6, units = "in")
 
 ann_ppt_dist_fig_recent <- recent_bioclim_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, ann_ppt_dist), y=ann_ppt_dist, group=parent.pop, fill=elev_m)) +
@@ -1914,7 +2162,7 @@ ann_ppt_dist_fig_recent <- recent_bioclim_dist %>%
   labs(fill="Elevation (m)",x="Population") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/Climate/grwssn_Ann_PPT_DistfromHome_WL2_RecentClim.png", width = 12, height = 6, units = "in")
+#ggsave("../output/Climate/grwssn_Ann_PPT_DistfromHome_WL2_RecentClim.png", width = 12, height = 6, units = "in")
 
 ppt_seasonality_dist_fig_recent <- recent_bioclim_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, ppt_seasonality_dist), y=ppt_seasonality_dist, group=parent.pop, fill=elev_m)) +
@@ -1924,7 +2172,7 @@ ppt_seasonality_dist_fig_recent <- recent_bioclim_dist %>%
   labs(fill="Elevation (m)",x="Population") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/Climate/grwssn_PPT_Seasonality_DistfromHome_WL2_RecentClim.png", width = 12, height = 6, units = "in")
+#ggsave("../output/Climate/grwssn_PPT_Seasonality_DistfromHome_WL2_RecentClim.png", width = 12, height = 6, units = "in")
 
 ppt_warm_dist_fig_recent <- recent_bioclim_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, ppt_warmest_month_dist), y=ppt_warmest_month_dist, group=parent.pop, fill=elev_m)) +
@@ -1934,7 +2182,7 @@ ppt_warm_dist_fig_recent <- recent_bioclim_dist %>%
   labs(fill="Elevation (m)",x="Population") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/Climate/grwssn_PPT_Warm_DistfromHome_WL2_RecentClim.png", width = 12, height = 6, units = "in")
+#ggsave("../output/Climate/grwssn_PPT_Warm_DistfromHome_WL2_RecentClim.png", width = 12, height = 6, units = "in")
 
 ppt_cold_dist_fig_recent <- recent_bioclim_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, ppt_coldest_month_dist), y=ppt_coldest_month_dist, group=parent.pop, fill=elev_m)) +
@@ -1944,7 +2192,7 @@ ppt_cold_dist_fig_recent <- recent_bioclim_dist %>%
   labs(fill="Elevation (m)",x="Population") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/Climate/grwssn_PPT_Cold_DistfromHome_WL2_RecentClim.png", width = 12, height = 6, units = "in")
+#ggsave("../output/Climate/grwssn_PPT_Cold_DistfromHome_WL2_RecentClim.png", width = 12, height = 6, units = "in")
 ```
 
 Historical (subtraction distance)
@@ -1959,7 +2207,7 @@ ann_tmean_dist_fig_historical <- historical_bioclim_dist %>%
   labs(fill="Elevation (m)",x="Population") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/Climate/grwssn_Ann_Tmean_DistfromHome_WL2_HistoricalClim.png", width = 12, height = 6, units = "in")
+#ggsave("../output/Climate/grwssn_Ann_Tmean_DistfromHome_WL2_HistoricalClim.png", width = 12, height = 6, units = "in")
 
 diurnal_range_dist_fig_historical <- historical_bioclim_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, mean_diurnal_range_dist), y=mean_diurnal_range_dist, group=parent.pop, fill=elev_m)) +
@@ -1969,7 +2217,7 @@ diurnal_range_dist_fig_historical <- historical_bioclim_dist %>%
   labs(fill="Elevation (m)",x="Population") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/Climate/grwssn_Diurnal_Range_DistfromHome_WL2_HistoricalClim.png", width = 12, height = 6, units = "in")
+#ggsave("../output/Climate/grwssn_Diurnal_Range_DistfromHome_WL2_HistoricalClim.png", width = 12, height = 6, units = "in")
 
 tmp_seasonality_dist_fig_historical <- historical_bioclim_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, temp_seasonality_dist), y=temp_seasonality_dist, group=parent.pop, fill=elev_m)) +
@@ -1979,7 +2227,7 @@ tmp_seasonality_dist_fig_historical <- historical_bioclim_dist %>%
   labs(fill="Elevation (m)",x="Population") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/Climate/grwssn_Temp_Seasonality_DistfromHome_WL2_HistoricalClim.png", width = 12, height = 6, units = "in")
+#ggsave("../output/Climate/grwssn_Temp_Seasonality_DistfromHome_WL2_HistoricalClim.png", width = 12, height = 6, units = "in")
 
 tmp_ann_range_dist_fig_historical <- historical_bioclim_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, temp_ann_range_dist), y=temp_ann_range_dist, group=parent.pop, fill=elev_m)) +
@@ -1989,7 +2237,7 @@ tmp_ann_range_dist_fig_historical <- historical_bioclim_dist %>%
   labs(fill="Elevation (m)",x="Population") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/Climate/grwssn_Temp_Ann_Range_DistfromHome_WL2_HistoricalClim.png", width = 12, height = 6, units = "in")
+#ggsave("../output/Climate/grwssn_Temp_Ann_Range_DistfromHome_WL2_HistoricalClim.png", width = 12, height = 6, units = "in")
 
 tmean_wet_dist_fig_historical <- historical_bioclim_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, tmean_wettest_month_dist), y=tmean_wettest_month_dist, group=parent.pop, fill=elev_m)) +
@@ -1999,7 +2247,7 @@ tmean_wet_dist_fig_historical <- historical_bioclim_dist %>%
   labs(fill="Elevation (m)",x="Population") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/Climate/grwssn_Temp_Wet_DistfromHome_WL2_HistoricalClim.png", width = 12, height = 6, units = "in")
+#ggsave("../output/Climate/grwssn_Temp_Wet_DistfromHome_WL2_HistoricalClim.png", width = 12, height = 6, units = "in")
 
 tmean_dry_dist_fig_historical <- historical_bioclim_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, tmean_driest_month_dist), y=tmean_driest_month_dist, group=parent.pop, fill=elev_m)) +
@@ -2009,7 +2257,7 @@ tmean_dry_dist_fig_historical <- historical_bioclim_dist %>%
   labs(fill="Elevation (m)",x="Population") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/Climate/grwssn_Temp_Dry_DistfromHome_WL2_HistoricalClim.png", width = 12, height = 6, units = "in")
+#ggsave("../output/Climate/grwssn_Temp_Dry_DistfromHome_WL2_HistoricalClim.png", width = 12, height = 6, units = "in")
 
 ann_ppt_dist_fig_historical <- historical_bioclim_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, ann_ppt_dist), y=ann_ppt_dist, group=parent.pop, fill=elev_m)) +
@@ -2019,7 +2267,7 @@ ann_ppt_dist_fig_historical <- historical_bioclim_dist %>%
   labs(fill="Elevation (m)",x="Population") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/Climate/grwssn_Ann_PPT_DistfromHome_WL2_HistoricalClim.png", width = 12, height = 6, units = "in")
+#ggsave("../output/Climate/grwssn_Ann_PPT_DistfromHome_WL2_HistoricalClim.png", width = 12, height = 6, units = "in")
 
 ppt_seasonality_dist_fig_historical <- historical_bioclim_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, ppt_seasonality_dist), y=ppt_seasonality_dist, group=parent.pop, fill=elev_m)) +
@@ -2029,7 +2277,7 @@ ppt_seasonality_dist_fig_historical <- historical_bioclim_dist %>%
   labs(fill="Elevation (m)",x="Population") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/Climate/grwssn_PPT_Seasonality_DistfromHome_WL2_HistoricalClim.png", width = 12, height = 6, units = "in")
+#ggsave("../output/Climate/grwssn_PPT_Seasonality_DistfromHome_WL2_HistoricalClim.png", width = 12, height = 6, units = "in")
 
 ppt_warm_dist_fig_historical <- historical_bioclim_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, ppt_warmest_month_dist), y=ppt_warmest_month_dist, group=parent.pop, fill=elev_m)) +
@@ -2039,7 +2287,7 @@ ppt_warm_dist_fig_historical <- historical_bioclim_dist %>%
   labs(fill="Elevation (m)",x="Population") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/Climate/grwssn_PPT_Warm_DistfromHome_WL2_HistoricalClim.png", width = 12, height = 6, units = "in")
+#ggsave("../output/Climate/grwssn_PPT_Warm_DistfromHome_WL2_HistoricalClim.png", width = 12, height = 6, units = "in")
 
 ppt_cold_dist_fig_historical <- historical_bioclim_dist %>% 
   ggplot(aes(x=fct_reorder(parent.pop, ppt_coldest_month_dist), y=ppt_coldest_month_dist, group=parent.pop, fill=elev_m)) +
@@ -2049,7 +2297,43 @@ ppt_cold_dist_fig_historical <- historical_bioclim_dist %>%
   labs(fill="Elevation (m)",x="Population") +
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
-ggsave("../output/Climate/grwssn_PPT_Cold_DistfromHome_WL2_HistoricalClim.png", width = 12, height = 6, units = "in")
+#ggsave("../output/Climate/grwssn_PPT_Cold_DistfromHome_WL2_HistoricalClim.png", width = 12, height = 6, units = "in")
+```
+
+#### For 2024 (from 2023 home avgs)
+
+``` r
+#Recent
+recent_bioclim_dist_prep_2324 <- bind_cols(WL2_bioclim_final_2024, pops_bioclim_recent_avgs)
+recent_bioclim_dist_2324 <- recent_bioclim_dist_prep_2324 %>% 
+  mutate(ann_tmean_dist=ann_tmean - ann_tmean_WL2,
+         mean_diurnal_range_dist=mean_diurnal_range - mean_diurnal_range_WL2,
+         temp_seasonality_dist=temp_seasonality - temp_seasonality_WL2,
+         temp_ann_range_dist=temp_ann_range - temp_ann_range_WL2,
+         tmean_wettest_month_dist=tmean_wettest_month - tmean_wettest_month_WL2,
+         tmean_driest_month_dist=tmean_driest_month - tmean_driest_month_WL2,
+         ann_ppt_dist=ann_ppt - ann_ppt_WL2,
+         ppt_seasonality_dist=ppt_seasonality - ppt_seasonality_WL2, 
+         ppt_warmest_month_dist=ppt_warmest_month - ppt_warmest_month_WL2,
+         ppt_coldest_month_dist=ppt_coldest_month - ppt_coldest_month_WL2) %>% 
+ dplyr::select(parent.pop, elevation.group, elev_m, ends_with("_dist"))
+#recent_bioclim_dist_2324
+
+#Historical
+historical_bioclim_dist_prep_2324 <- bind_cols(WL2_bioclim_final_2024, pops_bioclim_historical_avgs)
+historical_bioclim_dist_2324 <- historical_bioclim_dist_prep_2324 %>% 
+  mutate(ann_tmean_dist=ann_tmean - ann_tmean_WL2,
+         mean_diurnal_range_dist=mean_diurnal_range - mean_diurnal_range_WL2,
+         temp_seasonality_dist=temp_seasonality - temp_seasonality_WL2,
+         temp_ann_range_dist=temp_ann_range - temp_ann_range_WL2,
+         tmean_wettest_month_dist=tmean_wettest_month - tmean_wettest_month_WL2,
+         tmean_driest_month_dist=tmean_driest_month - tmean_driest_month_WL2,
+         ann_ppt_dist=ann_ppt - ann_ppt_WL2,
+         ppt_seasonality_dist=ppt_seasonality - ppt_seasonality_WL2, 
+         ppt_warmest_month_dist=ppt_warmest_month - ppt_warmest_month_WL2,
+         ppt_coldest_month_dist=ppt_coldest_month - ppt_coldest_month_WL2) %>% 
+  dplyr::select(parent.pop, elevation.group, elev_m, ends_with("_dist"))
+#historical_bioclim_dist_2324
 ```
 
 #### For 2024
@@ -2115,10 +2399,10 @@ ggarrange(cwd_dist_fig_recent, ppt_dist_fig_recent, tmn_dist_fig_recent, tmx_dis
           ppt_cold_dist_fig_recent, ncol=3,nrow=5)
 ```
 
-![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-42-1.png)<!-- -->
+![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-50-1.png)<!-- -->
 
 ``` r
-ggsave("../output/Climate/grwssn_Sub_dist_from_Home_WL2_Recent.png", width = 24, height = 24, units = "in")
+#ggsave("../output/Climate/grwssn_Sub_dist_from_Home_WL2_Recent.png", width = 24, height = 24, units = "in")
 
 ggarrange(cwd_dist_fig_historical, ppt_dist_fig_historical, 
           tmn_dist_fig_historical, tmx_dist_fig_historical,
@@ -2128,10 +2412,10 @@ ggarrange(cwd_dist_fig_historical, ppt_dist_fig_historical,
           ppt_cold_dist_fig_historical, ncol=3,nrow=5)
 ```
 
-![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-42-2.png)<!-- -->
+![](WL2_climatedist_growthseason_files/figure-html/unnamed-chunk-50-2.png)<!-- -->
 
 ``` r
-ggsave("../output/Climate/grwssn_Sub_dist_from_Home_WL2_Historical.png", width = 24, height = 24, units = "in")
+#ggsave("../output/Climate/grwssn_Sub_dist_from_Home_WL2_Historical.png", width = 24, height = 24, units = "in")
 ```
 
 ## Combine all Subtraction data
@@ -2145,7 +2429,7 @@ recent_sub_dist_from_wl2 <- full_join(recent_flint_dist, recent_bioclim_dist)
 ```
 
 ``` r
-write_csv(recent_sub_dist_from_wl2, "../output/Climate/grwssn_Subtraction_Dist_from_Home_WL2_Recent.csv")
+#write_csv(recent_sub_dist_from_wl2, "../output/Climate/grwssn_Subtraction_Dist_from_Home_WL2_Recent.csv")
 
 historic_sub_dist_from_wl2 <- full_join(historic_flint_dist, historical_bioclim_dist)
 ```
@@ -2155,7 +2439,31 @@ historic_sub_dist_from_wl2 <- full_join(historic_flint_dist, historical_bioclim_
 ```
 
 ``` r
-write_csv(historic_sub_dist_from_wl2, "../output/Climate/grwssn_Subtraction_Dist_from_Home_WL2_Historical.csv")
+#write_csv(historic_sub_dist_from_wl2, "../output/Climate/grwssn_Subtraction_Dist_from_Home_WL2_Historical.csv")
+```
+
+#### For 2024 (from 2023 home avgs)
+
+``` r
+recent_sub_dist_2324_from_wl2 <- full_join(recent_flint_dist_2324, recent_bioclim_dist_2324)
+```
+
+```
+## Joining with `by = join_by(parent.pop, elevation.group, elev_m)`
+```
+
+``` r
+write_csv(recent_sub_dist_2324_from_wl2, "../output/Climate/grwssn_Subtraction_Dist_from_Home_WL2_2324_Recent.csv")
+
+historic_sub_dist_2324_from_wl2 <- full_join(historic_flint_dist_2324, historical_bioclim_dist_2324)
+```
+
+```
+## Joining with `by = join_by(parent.pop, elevation.group, elev_m)`
+```
+
+``` r
+write_csv(historic_sub_dist_2324_from_wl2, "../output/Climate/grwssn_Subtraction_Dist_from_Home_WL2_2324_Historical.csv")
 ```
 
 ### For 2024
@@ -2169,7 +2477,7 @@ recent_sub_dist_2024_from_wl2 <- full_join(recent_flint_dist_2024, recent_biocli
 ```
 
 ``` r
-write_csv(recent_sub_dist_2024_from_wl2, "../output/Climate/grwssn_Subtraction_Dist_from_Home_WL2_2024_Recent.csv")
+#write_csv(recent_sub_dist_2024_from_wl2, "../output/Climate/grwssn_Subtraction_Dist_from_Home_WL2_2024_Recent.csv")
 
 historic_sub_dist_2024_from_wl2 <- full_join(historic_flint_dist_2024, historical_bioclim_dist_2024)
 ```
@@ -2179,6 +2487,6 @@ historic_sub_dist_2024_from_wl2 <- full_join(historic_flint_dist_2024, historica
 ```
 
 ``` r
-write_csv(historic_sub_dist_2024_from_wl2, "../output/Climate/grwssn_Subtraction_Dist_from_Home_WL2_2024_Historical.csv")
+#write_csv(historic_sub_dist_2024_from_wl2, "../output/Climate/grwssn_Subtraction_Dist_from_Home_WL2_2024_Historical.csv")
 ```
 
