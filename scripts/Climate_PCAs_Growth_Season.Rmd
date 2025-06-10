@@ -273,7 +273,7 @@ Combine PCs with metadata
 ```{r}
 all_bioclim_flint_avgs.pc.dat = data.frame(all_bioclim_flint_avgs.pc$x)
 
-all_bioclim_flint_avgs_locs.pc = cbind(bioclim_flint_grwseason_avgs, all_bioclim_flint_avgs.pc.dat)
+all_bioclim_flint_avgs_locs.pc = cbind(bioclim_flint_grwseason_avgs, all_bioclim_flint_avgs.pc.dat) 
 
 all_bioclim_flint_avgs_loadings = data.frame(varnames=rownames(all_bioclim_flint_avgs.pc$rotation), all_bioclim_flint_avgs.pc$rotation)
 all_bioclim_flint_avgs_loadings
@@ -308,7 +308,8 @@ autoplot(all_bioclim_flint_avgs.pc, data = bioclim_flint_grwseason_avgs,
 all_bioclim_flint_avgs_locs.pc_avg <- all_bioclim_flint_avgs_locs.pc %>%
   group_by(parent.pop, elev_m, TimePd) %>%
   summarise(across(.cols=starts_with("PC"), .fns = mean)) %>%
-  ungroup()
+  ungroup() %>% 
+  select(-pck)
 
 #all_bioclim_flint_avgs_locs.pc_avg
 ```
@@ -408,8 +409,8 @@ home_sites_pca <- all_bioclim_flint_avgs_locs.pc_avg %>%
   geom_path(aes(group=group),arrow = arrow(length=unit(5, "points")), linewidth = .8) +
   annotate("text", x = -4.2, y = -4.5, label = "Low Temp \n Seasonality") +
   annotate("text", x = 3.6, y = -4.5, label = "High Temp \n Seasonality") +
-  annotate("text", x = -5.24, y = -3.3, label = "Low Diurnal \n Range") +
-  annotate("text", x = -5.24, y = 2.5, label = "High Diurnal \n Range") +
+  annotate("text", x = -5.23, y = -3.3, label = "Low Diurnal \n Range") +
+  annotate("text", x = -5.22, y = 2.5, label = "High Diurnal \n Range") +
   coord_cartesian(ylim = c(-3.5, 3), xlim = c(-4, 3.5), clip = "off") +
   theme_classic() +
   theme(text=element_text(size=28))
