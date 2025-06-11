@@ -210,7 +210,7 @@ wl2_surv_to_rep_y2_2324 <- wl2_surv_y2 %>%
                           "Missed", bud.date)) %>% #add in bud date for plants with a later rep date 
   mutate(SurvtoRep_y2=if_else(is.na(bud.date), 0, 1)) %>% 
   select(Pop.Type:block, elevation.group:Wtr_Year_GD_Historical, Geographic_Dist, Elev_Dist, bud.date, death.date, SurvtoRep_y2) 
-write_csv(wl2_surv_to_rep_y2_2324, "../output/WL2_Traits/WL2_Surv_to_Rep_Y2_2324.csv")
+#write_csv(wl2_surv_to_rep_y2_2324, "../output/WL2_Traits/WL2_Surv_to_Rep_Y2_2324.csv")
 ```
 
 ```{r}
@@ -521,7 +521,7 @@ GD_prob <- wl2_surv_to_rep_y2_sub_dist %>%
   geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.2, linewidth = 2) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
-  labs(y="Survival to Budding Y2", x="Geographic Distance (m)") +
+  labs(y="Survival to Budding Y2", x="Geographic Dist (m)") +
   theme(text=element_text(size=30), axis.text.x = element_text(angle = 45,  hjust = 1))
 
 WYCD_recent <- wl2_surv_to_rep_y2 %>% 
@@ -533,8 +533,8 @@ WYCD_recent <- wl2_surv_to_rep_y2 %>%
   geom_errorbar(aes(ymin=meanSurv-semSurv,ymax=meanSurv+semSurv),width=.02,linewidth = 2) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
-  labs(y="Survival to Budding Y2", x="Recent Water Year CD") +
-  theme(text=element_text(size=25))
+  labs(y="Survival to Budding Y2", x="Recent Water Year Climate Dist") +
+  theme(text=element_text(size=30))
 
 WYtemp_prob_recent <- wl2_surv_to_rep_y2_sub_dist %>% 
   filter(pop != "LV1", pop != "SQ1", pop != "WR") %>% 
@@ -596,8 +596,8 @@ WYCD_recent <- wl2_surv_to_rep_y2_2324 %>%
            colour = "purple", fontface="bold", size = 22 / .pt) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0), limits = c(0.4,1.05)) +
-  labs(y="Survival to Budding Y2", x="Recent Water Year CD", colour = "Elevation (m)") +
-  theme(text=element_text(size=25))
+  labs(y="Survival to Budding Y2", x="Recent Water Year Climate Dist", colour = "Elevation (m)") +
+  theme(text=element_text(size=30))
 
 WYtemp_prob_recent <- wl2_surv_to_rep_y2_sub_dist_2324 %>% 
   filter(pop != "LV1", pop != "SQ1", pop != "WR") %>% 

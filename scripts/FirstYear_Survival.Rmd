@@ -811,7 +811,7 @@ WYCD_recent <- wl2_y1_surv %>%
            colour = "purple", fontface="bold", size = 22 / .pt) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
-  labs(y="Y1 Survival", x="Recent Water Year CD", colour="Elevation (m)") +
+  labs(y="Y1 Survival", x="Recent Water Year Climate Dist", colour="Elevation (m)") +
   theme(text=element_text(size=30))
 
 WYCD_temp_recent <- wl2_y1_surv_sub_dist %>% 

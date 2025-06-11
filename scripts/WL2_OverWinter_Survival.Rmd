@@ -174,7 +174,7 @@ winter_surv_2324 <- post_winter_clean %>%
   filter(death.date == "A" | death.date == "B" | death.date == "C" | death.date == "D") %>% 
   mutate(WinterSurv=if_else(death.date=="D", 0, 1)) %>% 
   select(block:rep, elevation.group:Wtr_Year_GD_Historical, Geographic_Dist, Elev_Dist, death.date, WinterSurv) 
-write_csv(winter_surv, "../output/WL2_Traits/WL2_WinterSurv_2324.csv")
+#write_csv(winter_surv, "../output/WL2_Traits/WL2_WinterSurv_2324.csv")
 ```
 
 ```{r}
@@ -260,7 +260,7 @@ WYCD_recent <- winter_surv_2324 %>%
            colour = "purple", fontface="bold", size = 22 / .pt) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
-  labs(y="Winter Survival", x="Recent Water Year CD", colour="Elevation (m)") +
+  labs(y="Winter Survival", x="Recent Water Year Climate Dist", colour="Elevation (m)") +
   theme(text=element_text(size=25))
 ggsave("../output/WL2_Traits/WL2_WinterSurv_2324ClimDist.png", width = 10, height = 5, units = "in")
 ```
