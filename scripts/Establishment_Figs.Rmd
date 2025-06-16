@@ -140,13 +140,21 @@ ucd_sub_dist <- ucd_wtr_year_sub_recent %>%
   left_join(ucd_gowers)
 
 wl2_wtr_year_sub_recent <- read_csv("../output/Climate/full_year_Subtraction_Dist_from_Home_WL2_Recent.csv") %>% 
-  select(parent.pop, Wtr_Year_TempDist_Recent=ann_tmean_dist, Wtr_Year_PPTDist_Recent=ann_ppt_dist)
+  select(parent.pop, Wtr_Year_TempDist_Recent=ann_tmean_dist, 
+         Wtr_Year_PPTDist_Recent=ann_ppt_dist, 
+         Wtr_Year_CWDDist_Recent=cwd_dist)
 wl2_wtr_year_sub_historic <- read_csv("../output/Climate/full_year_Subtraction_Dist_from_Home_WL2_Historical.csv") %>% 
-  select(parent.pop, Wtr_Year_TempDist_Historic=ann_tmean_dist, Wtr_Year_PPTDist_Historic=ann_ppt_dist)
+  select(parent.pop, Wtr_Year_TempDist_Historic=ann_tmean_dist, 
+         Wtr_Year_PPTDist_Historic=ann_ppt_dist,
+         Wtr_Year_CWDDist_Historic=cwd_dist)
 wl2_grwssn_sub_recent <- read_csv("../output/Climate/grwssn_Subtraction_Dist_from_Home_WL2_Recent.csv") %>% 
-  select(parent.pop, GrwSsn_TempDist_Recent=ann_tmean_dist, GrwSsn_PPTDist_Recent=ann_ppt_dist)
+  select(parent.pop, GrwSsn_TempDist_Recent=ann_tmean_dist, 
+         GrwSsn_PPTDist_Recent=ann_ppt_dist,
+         GrwSsn_CWDDist_Recent=cwd_dist)
 wl2_grwssn_sub_historic <- read_csv("../output/Climate/grwssn_Subtraction_Dist_from_Home_WL2_Historical.csv") %>% 
-  select(parent.pop, GrwSsn_TempDist_Historic=ann_tmean_dist, GrwSsn_PPTDist_Historic=ann_ppt_dist)
+  select(parent.pop, GrwSsn_TempDist_Historic=ann_tmean_dist, 
+         GrwSsn_PPTDist_Historic=ann_ppt_dist,
+         GrwSsn_CWDDist_Historic=cwd_dist)
 wl2_sub_dist_2023 <- wl2_wtr_year_sub_recent %>% 
   left_join(wl2_wtr_year_sub_historic) %>% 
   left_join(wl2_grwssn_sub_recent) %>% 
@@ -350,6 +358,84 @@ wl2_establishment %>%
        color="Elevation (m)") +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1))
 ggsave("../output/WL2_Traits/WL2_Establishment_GeoDist.png", width = 10, height = 5, units = "in")
+```
+### Check CWD Dist
+```{r}
+wl2_establishment_sub_dist %>% 
+  group_by(pop, elev_m, Wtr_Year_CWDDist_Recent, Wtr_Year_CWDDist_Historic) %>% 
+  summarise(meanEst=mean(Establishment, na.rm = TRUE), semEst=sem(Establishment, na.rm=TRUE)) %>% 
+  ggplot(aes(x=Wtr_Year_CWDDist_Recent, y=meanEst, group = pop, color=elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.3,linewidth = 2) +
+  annotate("text", x = 12.1639444	, y= 0.65, label = "WL2", 
+          colour = "purple", fontface="bold", size = 22 / .pt) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Establishment", x="Recent Water Year CWD Dist", 
+       color="Elevation (m)") +
+  theme(text=element_text(size=30))
+
+wl2_establishment_sub_dist %>% 
+  group_by(pop, elev_m, Wtr_Year_CWDDist_Recent, Wtr_Year_CWDDist_Historic) %>% 
+  summarise(meanEst=mean(Establishment, na.rm = TRUE), semEst=sem(Establishment, na.rm=TRUE)) %>% 
+  ggplot(aes(x=Wtr_Year_CWDDist_Historic, y=meanEst, group = pop, color=elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.3,linewidth = 2) +
+  annotate("text", x = 8.9845278		, y= 0.65, label = "WL2", 
+          colour = "purple", fontface="bold", size = 22 / .pt) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Establishment", x="Historic Water Year CWD Dist", 
+       color="Elevation (m)") +
+  theme(text=element_text(size=30))
+```
+
+```{r}
+wl2_establishment_sub_dist %>% 
+  group_by(pop, elev_m, GrwSsn_CWDDist_Recent, GrwSsn_CWDDist_Historic) %>% 
+  summarise(meanEst=mean(Establishment, na.rm = TRUE), semEst=sem(Establishment, na.rm=TRUE)) %>% 
+  ggplot(aes(x=GrwSsn_CWDDist_Recent, y=meanEst, group = pop, color=elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.3,linewidth = 2) +
+ # annotate("text", x = 12.1639444	, y= 0.65, label = "WL2", 
+  #        colour = "purple", fontface="bold", size = 22 / .pt) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Establishment", x="Recent Growth Season CWD Dist", 
+       color="Elevation (m)") +
+  theme(text=element_text(size=30))
+
+wl2_establishment_sub_dist %>% 
+  group_by(pop, elev_m, GrwSsn_CWDDist_Recent, GrwSsn_CWDDist_Historic) %>% 
+  summarise(meanEst=mean(Establishment, na.rm = TRUE), semEst=sem(Establishment, na.rm=TRUE)) %>% 
+  ggplot(aes(x=GrwSsn_CWDDist_Historic, y=meanEst, group = pop, color=elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.3,linewidth = 2) +
+ # annotate("text", x = 8.9845278		, y= 0.65, label = "WL2", 
+  #        colour = "purple", fontface="bold", size = 22 / .pt) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Establishment", x="Historic Growth Season CWD Dist", 
+       color="Elevation (m)") +
+  theme(text=element_text(size=30))
+```
+
+### Check for adaptational lag of WL2 pop
+T-test compare WL2 to the pop that performed the best?
+```{r}
+wl2_establishment_sub_dist %>% 
+  group_by(pop, elev_m) %>% 
+  summarise(meanEst=mean(Establishment, na.rm = TRUE), semEst=sem(Establishment, na.rm=TRUE)) %>% 
+  arrange(meanEst)
+
+wl2_establishmen_adapt <- wl2_establishment %>% filter(pop=="WL2" | pop=="IH")
+
+adaptlagm1 <- glmer(Establishment ~ pop + (1|block), data=wl2_establishmen_adapt, family = binomial)
+summary(adaptlagm1) #pop not significant...
 ```
 
 ## Scatterplots
