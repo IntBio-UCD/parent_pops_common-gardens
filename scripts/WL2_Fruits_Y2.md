@@ -1,7 +1,7 @@
 ---
 title: "WL2_Fruits_Y2"
 author: "Brandie QC"
-date: "2025-06-10"
+date: "2025-06-16"
 output: 
   html_document: 
     keep_md: true
@@ -148,7 +148,7 @@ library(tidymodels)
 ## ✖ infer::t_test()       masks rstatix::t_test()
 ## ✖ Matrix::unpack()      masks tidyr::unpack()
 ## ✖ recipes::update()     masks Matrix::update(), stats::update()
-## • Search for functions across packages at https://www.tidymodels.org/find/
+## • Use tidymodels_prefer() to resolve common conflicts.
 ```
 
 ``` r
@@ -365,7 +365,9 @@ wl2_gowers_2024 <- read_csv("../output/Climate/Gowers_WL2_2024.csv") %>%
 
 ``` r
 wl2_wtr_year_sub_recent_2324 <- read_csv("../output/Climate/full_year_Subtraction_Dist_from_Home_WL2_2324_Recent.csv") %>% 
-  select(parent.pop, Wtr_Year_TempDist_Recent=ann_tmean_dist, Wtr_Year_PPTDist_Recent=ann_ppt_dist)
+  select(parent.pop, Wtr_Year_TempDist_Recent=ann_tmean_dist, 
+         Wtr_Year_PPTDist_Recent=ann_ppt_dist,
+         Wtr_Year_CWDDist_Recent=cwd_dist)
 ```
 
 ```
@@ -381,7 +383,9 @@ wl2_wtr_year_sub_recent_2324 <- read_csv("../output/Climate/full_year_Subtractio
 
 ``` r
 wl2_wtr_year_sub_historic_2324 <- read_csv("../output/Climate/full_year_Subtraction_Dist_from_Home_WL2_2324_Historical.csv") %>% 
-  select(parent.pop, Wtr_Year_TempDist_Historic=ann_tmean_dist, Wtr_Year_PPTDist_Historic=ann_ppt_dist)
+  select(parent.pop, Wtr_Year_TempDist_Historic=ann_tmean_dist, 
+         Wtr_Year_PPTDist_Historic=ann_ppt_dist,
+         Wtr_Year_CWDDist_Historic=cwd_dist)
 ```
 
 ```
@@ -397,7 +401,9 @@ wl2_wtr_year_sub_historic_2324 <- read_csv("../output/Climate/full_year_Subtract
 
 ``` r
 wl2_grwssn_sub_recent_2324 <- read_csv("../output/Climate/grwssn_Subtraction_Dist_from_Home_WL2_2324_Recent.csv") %>% 
-  select(parent.pop, GrwSsn_TempDist_Recent=ann_tmean_dist, GrwSsn_PPTDist_Recent=ann_ppt_dist)
+  select(parent.pop, GrwSsn_TempDist_Recent=ann_tmean_dist, 
+         GrwSsn_PPTDist_Recent=ann_ppt_dist,
+         GrwSsn_CWDDist_Recent=cwd_dist)
 ```
 
 ```
@@ -413,7 +419,9 @@ wl2_grwssn_sub_recent_2324 <- read_csv("../output/Climate/grwssn_Subtraction_Dis
 
 ``` r
 wl2_grwssn_sub_historic_2324 <- read_csv("../output/Climate/grwssn_Subtraction_Dist_from_Home_WL2_2324_Historical.csv") %>% 
-  select(parent.pop, GrwSsn_TempDist_Historic=ann_tmean_dist, GrwSsn_PPTDist_Historic=ann_ppt_dist)
+  select(parent.pop, GrwSsn_TempDist_Historic=ann_tmean_dist, 
+         GrwSsn_PPTDist_Historic=ann_ppt_dist,
+         GrwSsn_CWDDist_Historic=cwd_dist)
 ```
 
 ```
@@ -853,7 +861,7 @@ summary(wl2_FRFLs_y2_2324_nozeros)
 ```
 
 ``` r
-write_csv(wl2_fruits_y2_2324_nozeros, "../output/WL2_Traits/WL2_Fruits_Y2_2324.csv")
+#write_csv(wl2_fruits_y2_2324_nozeros, "../output/WL2_Traits/WL2_Fruits_Y2_2324.csv")
 ```
 
 
@@ -907,7 +915,7 @@ wl2_prob_fruits_2324 <- wl2_surv_to_rep_y2_2324 %>%
 ```
 
 ``` r
-write_csv(wl2_prob_fruits_2324, "../output/WL2_Traits/WL2_ProbFruits_Y2_2324.csv")
+#write_csv(wl2_prob_fruits_2324, "../output/WL2_Traits/WL2_ProbFruits_Y2_2324.csv")
 ```
 
 
@@ -1495,6 +1503,109 @@ WL2_fruits_y2_nozeros_sub_FIG_prob_historic <- ggarrange(GSCD_prob_historic, WYC
 #ggsave("../output/WL2_Traits/WL2_fruits_y2_nozeros_PPTSubDist_SCATTERS_Historic.png", width = 24, height = 18, units = "in")
 ```
 
+### Check CWD Dist
+
+``` r
+wl2_fruits_y2_2324_nozeros_sub_dist %>% 
+  filter(pop != "LV1", pop != "SQ1", pop != "WR") %>% 
+  group_by(pop, elev_m, Wtr_Year_CWDDist_Recent, Wtr_Year_CWDDist_Historic) %>% 
+  summarise(meanEst=mean(fruits, na.rm = TRUE), semEst=sem(fruits, na.rm=TRUE)) %>% 
+  ggplot(aes(x=Wtr_Year_CWDDist_Recent, y=meanEst, group = pop, color=elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.3,linewidth = 2) +
+  #annotate("text", x = 12.1639444	, y= 0.65, label = "WL2", 
+   #       colour = "purple", fontface="bold", size = 22 / .pt) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Y2 Fruit Number", x="Recent Water Year CWD Dist", 
+       color="Elevation (m)") +
+  theme(text=element_text(size=30))
+```
+
+```
+## `summarise()` has grouped output by 'pop', 'elev_m', 'Wtr_Year_CWDDist_Recent'.
+## You can override using the `.groups` argument.
+```
+
+![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-22-1.png)<!-- -->
+
+``` r
+wl2_fruits_y2_2324_nozeros_sub_dist %>% 
+  filter(pop != "LV1", pop != "SQ1", pop != "WR") %>% 
+  group_by(pop, elev_m, Wtr_Year_CWDDist_Recent, Wtr_Year_CWDDist_Historic) %>% 
+  summarise(meanEst=mean(fruits, na.rm = TRUE), semEst=sem(fruits, na.rm=TRUE)) %>% 
+  ggplot(aes(x=Wtr_Year_CWDDist_Historic, y=meanEst, group = pop, color=elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.3,linewidth = 2) +
+  #annotate("text", x = 8.9845278		, y= 0.65, label = "WL2", 
+   #       colour = "purple", fontface="bold", size = 22 / .pt) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Y2 Fruit Number", x="Historic Water Year CWD Dist", 
+       color="Elevation (m)") +
+  theme(text=element_text(size=30))
+```
+
+```
+## `summarise()` has grouped output by 'pop', 'elev_m', 'Wtr_Year_CWDDist_Recent'.
+## You can override using the `.groups` argument.
+```
+
+![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-22-2.png)<!-- -->
+
+
+``` r
+wl2_fruits_y2_2324_nozeros_sub_dist %>% 
+  filter(pop != "LV1", pop != "SQ1", pop != "WR") %>% 
+  group_by(pop, elev_m, GrwSsn_CWDDist_Recent, GrwSsn_CWDDist_Historic) %>% 
+  summarise(meanEst=mean(fruits, na.rm = TRUE), semEst=sem(fruits, na.rm=TRUE)) %>% 
+  ggplot(aes(x=GrwSsn_CWDDist_Recent, y=meanEst, group = pop, color=elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.3,linewidth = 2) +
+  #annotate("text", x = 12.1639444	, y= 0.65, label = "WL2", 
+   #       colour = "purple", fontface="bold", size = 22 / .pt) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Y2 Fruit Number", x="Recent Growth Season CWD Dist", 
+       color="Elevation (m)") +
+  theme(text=element_text(size=30))
+```
+
+```
+## `summarise()` has grouped output by 'pop', 'elev_m', 'GrwSsn_CWDDist_Recent'.
+## You can override using the `.groups` argument.
+```
+
+![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-23-1.png)<!-- -->
+
+``` r
+wl2_fruits_y2_2324_nozeros_sub_dist %>% 
+  filter(pop != "LV1", pop != "SQ1", pop != "WR") %>% 
+  group_by(pop, elev_m, GrwSsn_CWDDist_Recent, GrwSsn_CWDDist_Historic) %>% 
+  summarise(meanEst=mean(fruits, na.rm = TRUE), semEst=sem(fruits, na.rm=TRUE)) %>% 
+  ggplot(aes(x=GrwSsn_CWDDist_Historic, y=meanEst, group = pop, color=elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.3,linewidth = 2) +
+  #annotate("text", x = 8.9845278		, y= 0.65, label = "WL2", 
+   #       colour = "purple", fontface="bold", size = 22 / .pt) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Y2 Fruit Number", x="Historic Growth Season CWD Dist", 
+       color="Elevation (m)") +
+  theme(text=element_text(size=30))
+```
+
+```
+## `summarise()` has grouped output by 'pop', 'elev_m', 'GrwSsn_CWDDist_Recent'.
+## You can override using the `.groups` argument.
+```
+
+![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-23-2.png)<!-- -->
+
 ## Stats
 
 ### Check Distributions
@@ -1514,7 +1625,7 @@ wl2_fruits_y2 %>%
 ## (`stat_bin()`).
 ```
 
-![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-22-1.png)<!-- -->
+![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-24-1.png)<!-- -->
 
 ``` r
 wl2_fruits_y2 %>% 
@@ -1531,7 +1642,7 @@ wl2_fruits_y2 %>%
 ## (`stat_bin()`).
 ```
 
-![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-22-2.png)<!-- -->
+![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-24-2.png)<!-- -->
 
 ``` r
 wl2_fruits_y2_nozeros %>% 
@@ -1543,7 +1654,7 @@ wl2_fruits_y2_nozeros %>%
 ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 ```
 
-![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-22-3.png)<!-- -->
+![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-24-3.png)<!-- -->
 
 ### Check Sample Sizes
 
@@ -1657,7 +1768,7 @@ wl2_fruits_y2_scaled %>%  #looks better
 ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 ```
 
-![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-24-1.png)<!-- -->
+![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-26-1.png)<!-- -->
 
 ``` r
 wl2_fruits_y2_scaled %>% 
@@ -1669,7 +1780,7 @@ wl2_fruits_y2_scaled %>%
 ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 ```
 
-![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-24-2.png)<!-- -->
+![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-26-2.png)<!-- -->
 
 ``` r
 wl2_fruits_y2_scaled %>%  #looks better
@@ -1681,7 +1792,7 @@ wl2_fruits_y2_scaled %>%  #looks better
 ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 ```
 
-![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-24-3.png)<!-- -->
+![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-26-3.png)<!-- -->
 
 ``` r
 wl2_fruits_y2_scaled %>% 
@@ -1693,7 +1804,7 @@ wl2_fruits_y2_scaled %>%
 ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 ```
 
-![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-24-4.png)<!-- -->
+![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-26-4.png)<!-- -->
 
 
 ``` r
@@ -1713,7 +1824,7 @@ wl2_fruits_y2_nozeros_scaled %>%  #looks better
 ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 ```
 
-![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-25-1.png)<!-- -->
+![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-27-1.png)<!-- -->
 
 ``` r
 wl2_fruits_y2_nozeros_scaled %>% 
@@ -1725,7 +1836,7 @@ wl2_fruits_y2_nozeros_scaled %>%
 ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 ```
 
-![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-25-2.png)<!-- -->
+![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-27-2.png)<!-- -->
 
 ``` r
 wl2_FrFlN_y2_nozeros_scaled <- wl2_FRFLs_y2_nozeros %>% 
@@ -1745,7 +1856,7 @@ wl2_FrFlN_y2_nozeros_scaled %>%  #looks better
 ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 ```
 
-![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-25-3.png)<!-- -->
+![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-27-3.png)<!-- -->
 
 ``` r
 wl2_FrFlN_y2_nozeros_scaled %>% 
@@ -1757,7 +1868,7 @@ wl2_FrFlN_y2_nozeros_scaled %>%
 ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 ```
 
-![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-25-4.png)<!-- -->
+![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-27-4.png)<!-- -->
 
 
 ``` r
@@ -1813,7 +1924,7 @@ wl2_FrFlN_y2_nozeros_scaled_sub %>%  #looks better
 ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 ```
 
-![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-26-1.png)<!-- -->
+![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-28-1.png)<!-- -->
 
 ``` r
 wl2_FrFlN_y2_nozeros_scaled_sub %>% 
@@ -1825,7 +1936,7 @@ wl2_FrFlN_y2_nozeros_scaled_sub %>%
 ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 ```
 
-![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-26-2.png)<!-- -->
+![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-28-2.png)<!-- -->
 
 
 ``` r
@@ -1845,7 +1956,7 @@ wl2_fruits_y2_2324_nozeros_scaled %>%  #looks better
 ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 ```
 
-![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-27-1.png)<!-- -->
+![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-29-1.png)<!-- -->
 
 ``` r
 wl2_FrFlN_y2_2324_nozeros_scaled <- wl2_FRFLs_y2_2324_nozeros %>% 
@@ -1865,7 +1976,7 @@ wl2_FrFlN_y2_2324_nozeros_scaled %>%  #looks better
 ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 ```
 
-![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-27-2.png)<!-- -->
+![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-29-2.png)<!-- -->
 
 
 ``` r
@@ -1921,7 +2032,7 @@ wl2_FrFlN_y2_2324_nozeros_scaled_sub %>%  #looks better
 ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 ```
 
-![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-28-1.png)<!-- -->
+![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-30-1.png)<!-- -->
 
 ## Base Models
 
@@ -1981,14 +2092,14 @@ mod_test <- lmer(logFruits ~  (1|pop/mf) + (1|block), data=wl2_fruits_y2_2324_no
 plot(mod_test, which = 1) 
 ```
 
-![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-29-1.png)<!-- -->
+![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-31-1.png)<!-- -->
 
 ``` r
 qqnorm(resid(mod_test))
 qqline(resid(mod_test)) 
 ```
 
-![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-29-2.png)<!-- -->
+![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-31-2.png)<!-- -->
 
 ``` r
 summary(mod_test)
@@ -2082,14 +2193,14 @@ mod_test <- lmer(logFrFlN ~  (1|pop/mf) + (1|block), data=wl2_FrFlN_y2_2324_noze
 plot(mod_test, which = 1) 
 ```
 
-![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-30-1.png)<!-- -->
+![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-32-1.png)<!-- -->
 
 ``` r
 qqnorm(resid(mod_test))
 qqline(resid(mod_test)) 
 ```
 
-![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-30-2.png)<!-- -->
+![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-32-2.png)<!-- -->
 
 ``` r
 summary(mod_test)
@@ -2138,7 +2249,7 @@ wl2_fruits_y2_2324_nozeros_scaled %>%
   facet_wrap(~pop, scales="free")
 ```
 
-![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-31-1.png)<!-- -->
+![](WL2_Fruits_Y2_files/figure-html/unnamed-chunk-33-1.png)<!-- -->
 
 
 #### Test climate and geographic distance 
