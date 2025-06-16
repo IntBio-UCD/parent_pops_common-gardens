@@ -1,7 +1,7 @@
 ---
 title: "WL2_Surv_to_Rep_Y2"
 author: "Brandie QC"
-date: "2025-06-10"
+date: "2025-06-16"
 output: 
   html_document: 
     keep_md: true
@@ -163,7 +163,7 @@ library(tidymodels)
 ## ✖ infer::t_test()       masks rstatix::t_test()
 ## ✖ Matrix::unpack()      masks tidyr::unpack()
 ## ✖ recipes::update()     masks Matrix::update(), stats::update()
-## • Dig deeper into tidy modeling with R at https://www.tmwr.org
+## • Use suppressPackageStartupMessages() to eliminate package startup messages
 ```
 
 ``` r
@@ -389,7 +389,9 @@ wl2_gowers_2024 <- read_csv("../output/Climate/Gowers_WL2_2024.csv") %>%
 
 ``` r
 wl2_wtr_year_sub_recent_2324 <- read_csv("../output/Climate/full_year_Subtraction_Dist_from_Home_WL2_2324_Recent.csv") %>% 
-  select(parent.pop, Wtr_Year_TempDist_Recent=ann_tmean_dist, Wtr_Year_PPTDist_Recent=ann_ppt_dist)
+  select(parent.pop, Wtr_Year_TempDist_Recent=ann_tmean_dist, 
+         Wtr_Year_PPTDist_Recent=ann_ppt_dist,
+         Wtr_Year_CWDDist_Recent=cwd_dist)
 ```
 
 ```
@@ -405,7 +407,9 @@ wl2_wtr_year_sub_recent_2324 <- read_csv("../output/Climate/full_year_Subtractio
 
 ``` r
 wl2_wtr_year_sub_historic_2324 <- read_csv("../output/Climate/full_year_Subtraction_Dist_from_Home_WL2_2324_Historical.csv") %>% 
-  select(parent.pop, Wtr_Year_TempDist_Historic=ann_tmean_dist, Wtr_Year_PPTDist_Historic=ann_ppt_dist)
+  select(parent.pop, Wtr_Year_TempDist_Historic=ann_tmean_dist, 
+         Wtr_Year_PPTDist_Historic=ann_ppt_dist,
+         Wtr_Year_CWDDist_Historic=cwd_dist)
 ```
 
 ```
@@ -421,7 +425,9 @@ wl2_wtr_year_sub_historic_2324 <- read_csv("../output/Climate/full_year_Subtract
 
 ``` r
 wl2_grwssn_sub_recent_2324 <- read_csv("../output/Climate/grwssn_Subtraction_Dist_from_Home_WL2_2324_Recent.csv") %>% 
-  select(parent.pop, GrwSsn_TempDist_Recent=ann_tmean_dist, GrwSsn_PPTDist_Recent=ann_ppt_dist)
+  select(parent.pop, GrwSsn_TempDist_Recent=ann_tmean_dist, 
+         GrwSsn_PPTDist_Recent=ann_ppt_dist,
+         GrwSsn_CWDDist_Recent=cwd_dist)
 ```
 
 ```
@@ -437,7 +443,9 @@ wl2_grwssn_sub_recent_2324 <- read_csv("../output/Climate/grwssn_Subtraction_Dis
 
 ``` r
 wl2_grwssn_sub_historic_2324 <- read_csv("../output/Climate/grwssn_Subtraction_Dist_from_Home_WL2_2324_Historical.csv") %>% 
-  select(parent.pop, GrwSsn_TempDist_Historic=ann_tmean_dist, GrwSsn_PPTDist_Historic=ann_ppt_dist)
+  select(parent.pop, GrwSsn_TempDist_Historic=ann_tmean_dist, 
+         GrwSsn_PPTDist_Historic=ann_ppt_dist,
+         GrwSsn_CWDDist_Historic=cwd_dist)
 ```
 
 ```
@@ -633,12 +641,12 @@ wl2_surv_to_rep_y2_2324 <- wl2_surv_y2 %>%
 ```
 
 ``` r
-write_csv(wl2_surv_to_rep_y2_2324, "../output/WL2_Traits/WL2_Surv_to_Rep_Y2_2324.csv")
+#write_csv(wl2_surv_to_rep_y2_2324, "../output/WL2_Traits/WL2_Surv_to_Rep_Y2_2324.csv")
 ```
 
 
 ``` r
-wl2_surv_to_rep_y2_sub_dist_2324 <- wl2_surv_to_rep_y2 %>% 
+wl2_surv_to_rep_y2_sub_dist_2324 <- wl2_surv_to_rep_y2_2324 %>% 
   select(loc:block, SurvtoRep_y2) %>% 
   left_join(wl2_sub_dist_2324)
 ```
@@ -1103,7 +1111,7 @@ GD_prob <- wl2_surv_to_rep_y2_sub_dist %>%
   geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.2, linewidth = 2) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
-  labs(y="Survival to Budding Y2", x="Geographic Distance (m)") +
+  labs(y="Survival to Budding Y2", x="Geographic Dist (m)") +
   theme(text=element_text(size=30), axis.text.x = element_text(angle = 45,  hjust = 1))
 ```
 
@@ -1122,8 +1130,8 @@ WYCD_recent <- wl2_surv_to_rep_y2 %>%
   geom_errorbar(aes(ymin=meanSurv-semSurv,ymax=meanSurv+semSurv),width=.02,linewidth = 2) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
-  labs(y="Survival to Budding Y2", x="Recent Water Year CD") +
-  theme(text=element_text(size=25))
+  labs(y="Survival to Budding Y2", x="Recent Water Year Climate Dist") +
+  theme(text=element_text(size=30))
 ```
 
 ```
@@ -1214,8 +1222,8 @@ WYCD_recent <- wl2_surv_to_rep_y2_2324 %>%
            colour = "purple", fontface="bold", size = 22 / .pt) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0), limits = c(0.4,1.05)) +
-  labs(y="Survival to Budding Y2", x="Recent Water Year CD", colour = "Elevation (m)") +
-  theme(text=element_text(size=25))
+  labs(y="Survival to Budding Y2", x="Recent Water Year Climate Dist", colour = "Elevation (m)") +
+  theme(text=element_text(size=30))
 ```
 
 ```
@@ -1273,7 +1281,175 @@ WL2_surv_to_rep_y2_for_paper <- ggarrange(GD_prob, WYCD_recent,
                                         labels = c("A)", "B)", "C)", "D)"), 
                                         font.label = list(size=30, face = "plain"), 
                                         ncol=2, nrow=2) 
-ggsave("../output/WL2_Traits/WL2_SurvtoRep_y2_SCATTERS_Summary_Recent_2324.png", width = 26, height = 18, units = "in")
+#ggsave("../output/WL2_Traits/WL2_SurvtoRep_y2_SCATTERS_Summary_Recent_2324.png", width = 26, height = 18, units = "in")
+```
+
+### Check CWD Dist
+
+``` r
+wl2_surv_to_rep_y2_sub_dist_2324 %>% 
+  group_by(pop, elev_m, Wtr_Year_CWDDist_Recent, Wtr_Year_CWDDist_Historic) %>% 
+  summarise(meanSurv=mean(SurvtoRep_y2, na.rm = TRUE), semSurv=sem(SurvtoRep_y2, na.rm=TRUE)) %>% 
+  ggplot(aes(x=Wtr_Year_CWDDist_Recent, y=meanSurv, group = pop, color=elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanSurv-semSurv,ymax=meanSurv+semSurv),width=.3,linewidth = 2) +
+  #annotate("text", x = 12.1639444	, y= 0.65, label = "WL2", 
+   #       colour = "purple", fontface="bold", size = 22 / .pt) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Survival to Budding Y2", x="Recent Water Year CWD Dist", 
+       color="Elevation (m)") +
+  theme(text=element_text(size=30))
+```
+
+```
+## `summarise()` has grouped output by 'pop', 'elev_m', 'Wtr_Year_CWDDist_Recent'.
+## You can override using the `.groups` argument.
+```
+
+![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-20-1.png)<!-- -->
+
+``` r
+wl2_surv_to_rep_y2_sub_dist_2324 %>% 
+  group_by(pop, elev_m, Wtr_Year_CWDDist_Recent, Wtr_Year_CWDDist_Historic) %>% 
+  summarise(meanSurv=mean(SurvtoRep_y2, na.rm = TRUE), semSurv=sem(SurvtoRep_y2, na.rm=TRUE)) %>% 
+  ggplot(aes(x=Wtr_Year_CWDDist_Historic, y=meanSurv, group = pop, color=elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanSurv-semSurv,ymax=meanSurv+semSurv),width=.3,linewidth = 2) +
+  #annotate("text", x = 8.9845278		, y= 0.65, label = "WL2", 
+   #       colour = "purple", fontface="bold", size = 22 / .pt) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Survival to Budding Y2", x="Historic Water Year CWD Dist", 
+       color="Elevation (m)") +
+  theme(text=element_text(size=30))
+```
+
+```
+## `summarise()` has grouped output by 'pop', 'elev_m', 'Wtr_Year_CWDDist_Recent'.
+## You can override using the `.groups` argument.
+```
+
+![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-20-2.png)<!-- -->
+
+
+``` r
+wl2_surv_to_rep_y2_sub_dist_2324 %>% 
+  group_by(pop, elev_m, GrwSsn_CWDDist_Recent, GrwSsn_CWDDist_Historic) %>% 
+  summarise(meanSurv=mean(SurvtoRep_y2, na.rm = TRUE), semSurv=sem(SurvtoRep_y2, na.rm=TRUE)) %>% 
+  ggplot(aes(x=GrwSsn_CWDDist_Recent, y=meanSurv, group = pop, color=elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanSurv-semSurv,ymax=meanSurv+semSurv),width=.3,linewidth = 2) +
+  #annotate("text", x = 12.1639444	, y= 0.65, label = "WL2", 
+   #       colour = "purple", fontface="bold", size = 22 / .pt) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Survival to Budding Y2", x="Recent Growth Season CWD Dist", 
+       color="Elevation (m)") +
+  theme(text=element_text(size=30))
+```
+
+```
+## `summarise()` has grouped output by 'pop', 'elev_m', 'GrwSsn_CWDDist_Recent'.
+## You can override using the `.groups` argument.
+```
+
+![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-21-1.png)<!-- -->
+
+``` r
+wl2_surv_to_rep_y2_sub_dist_2324 %>% 
+  group_by(pop, elev_m, GrwSsn_CWDDist_Recent, GrwSsn_CWDDist_Historic) %>% 
+  summarise(meanSurv=mean(SurvtoRep_y2, na.rm = TRUE), semSurv=sem(SurvtoRep_y2, na.rm=TRUE)) %>% 
+  ggplot(aes(x=GrwSsn_CWDDist_Historic, y=meanSurv, group = pop, color=elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanSurv-semSurv,ymax=meanSurv+semSurv),width=.3,linewidth = 2) +
+  #annotate("text", x = 8.9845278		, y= 0.65, label = "WL2", 
+   #       colour = "purple", fontface="bold", size = 22 / .pt) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Survival to Budding Y2", x="Historic Growth Season CWD Dist", 
+       color="Elevation (m)") +
+  theme(text=element_text(size=30))
+```
+
+```
+## `summarise()` has grouped output by 'pop', 'elev_m', 'GrwSsn_CWDDist_Recent'.
+## You can override using the `.groups` argument.
+```
+
+![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-21-2.png)<!-- -->
+
+### Check for adaptational lag of WL2 pop
+T-test compare WL2 to the pop that performed the best?
+
+``` r
+wl2_surv_to_rep_y2_sub_dist_2324 %>% 
+  group_by(pop, elev_m, Wtr_Year_CWDDist_Recent, Wtr_Year_CWDDist_Historic) %>% 
+  summarise(meanSurv=mean(SurvtoRep_y2, na.rm = TRUE), semSurv=sem(SurvtoRep_y2, na.rm=TRUE)) %>% 
+  arrange(meanSurv)
+```
+
+```
+## `summarise()` has grouped output by 'pop', 'elev_m', 'Wtr_Year_CWDDist_Recent'.
+## You can override using the `.groups` argument.
+```
+
+```
+## # A tibble: 10 × 6
+## # Groups:   pop, elev_m, Wtr_Year_CWDDist_Recent [10]
+##    pop   elev_m Wtr_Year_CWDDist_Recent Wtr_Year_CWDDist_Hist…¹ meanSurv semSurv
+##    <chr>  <dbl>                   <dbl>                   <dbl>    <dbl>   <dbl>
+##  1 LV1    2593.                  -6.60                    -9.81    0     NA     
+##  2 IH      454.                  -7.11                    -6.19    0.588  0.0857
+##  3 SC      422.                  15.0                     16.3     0.636  0.105 
+##  4 TM2     379.                  -0.658                   -3.74    0.667  0.211 
+##  5 BH      511.                  19.4                     18.1     0.690  0.0874
+##  6 CC      313                    3.49                     3.23    0.824  0.0953
+##  7 WL2    2020.                  -2.67                    -5.85    0.833  0.167 
+##  8 YO7    2470.                  -3.23                    -6.16    0.889  0.0762
+##  9 SQ1    1921.                  17.2                     12.2     1     NA     
+## 10 WR     1158                  -11.1                    -14.3     1     NA     
+## # ℹ abbreviated name: ¹​Wtr_Year_CWDDist_Historic
+```
+
+``` r
+wl2_surv_to_rep_adapt <- wl2_surv_to_rep_y2_2324 %>% filter(pop=="WL2" | pop=="IH")
+
+adaptlagm1 <- glmer(SurvtoRep_y2 ~ pop + (1|block), data=wl2_surv_to_rep_adapt, family = binomial)
+summary(adaptlagm1) #WL2 sig > than IH
+```
+
+```
+## Generalized linear mixed model fit by maximum likelihood (Laplace
+##   Approximation) [glmerMod]
+##  Family: binomial  ( logit )
+## Formula: SurvtoRep_y2 ~ pop + (1 | block)
+##    Data: wl2_surv_to_rep_adapt
+## 
+##      AIC      BIC   logLik deviance df.resid 
+##     57.5     62.5    -25.7     51.5       37 
+## 
+## Scaled residuals: 
+##     Min      1Q  Median      3Q     Max 
+## -2.2348 -1.1944  0.6414  0.8363  0.8378 
+## 
+## Random effects:
+##  Groups Name        Variance Std.Dev.
+##  block  (Intercept) 0.001986 0.04457 
+## Number of obs: 40, groups:  block, 12
+## 
+## Fixed effects:
+##             Estimate Std. Error z value Pr(>|z|)
+## (Intercept)   0.3567     0.3490   1.022    0.307
+## popWL2        1.2532     1.1549   1.085    0.278
+## 
+## Correlation of Fixed Effects:
+##        (Intr)
+## popWL2 -0.299
 ```
 
 ## Stats
@@ -1852,7 +2028,7 @@ wl2_surv_to_rep_y2_size %>%
 ## (`geom_point()`).
 ```
 
-![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-29-1.png)<!-- -->
+![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-32-1.png)<!-- -->
 
 ``` r
 wl2_surv_to_rep_y2_size %>% 
@@ -1865,7 +2041,7 @@ wl2_surv_to_rep_y2_size %>%
 ## (`geom_point()`).
 ```
 
-![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-29-2.png)<!-- -->
+![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-32-2.png)<!-- -->
 
 ``` r
 wl2_surv_to_rep_y2_size %>% #prob not enough var in surv
@@ -1878,7 +2054,7 @@ wl2_surv_to_rep_y2_size %>% #prob not enough var in surv
 ## (`geom_point()`).
 ```
 
-![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-29-3.png)<!-- -->
+![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-32-3.png)<!-- -->
 
 ``` r
 wl2_surv_to_rep_y2_size %>% #not enough variation in surv
@@ -1891,7 +2067,7 @@ wl2_surv_to_rep_y2_size %>% #not enough variation in surv
 ## (`geom_point()`).
 ```
 
-![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-29-4.png)<!-- -->
+![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-32-4.png)<!-- -->
 
 ``` r
 wl2_surv_to_rep_y2_size %>% #prob not enough var in surv
@@ -1904,7 +2080,7 @@ wl2_surv_to_rep_y2_size %>% #prob not enough var in surv
 ## (`geom_point()`).
 ```
 
-![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-29-5.png)<!-- -->
+![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-32-5.png)<!-- -->
 
 ``` r
 wl2_surv_to_rep_y2_size %>% #prob not enough var in surv
@@ -1917,7 +2093,7 @@ wl2_surv_to_rep_y2_size %>% #prob not enough var in surv
 ## (`geom_point()`).
 ```
 
-![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-29-6.png)<!-- -->
+![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-32-6.png)<!-- -->
 
 ``` r
 wl2_surv_to_rep_y2_size %>% filter(SurvtoRep_y2==0, !is.na(overhd.diam)) #only 6 dead indivs with size info (died the day of the census, likely )
@@ -1954,7 +2130,7 @@ wl2_surv_to_rep_y2_canopy %>%
 ## (`geom_point()`).
 ```
 
-![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-29-7.png)<!-- -->
+![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-32-7.png)<!-- -->
 
 ``` r
 wl2_surv_to_rep_y2_canopy %>% 
@@ -1967,7 +2143,7 @@ wl2_surv_to_rep_y2_canopy %>%
 ## (`geom_point()`).
 ```
 
-![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-29-8.png)<!-- -->
+![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-32-8.png)<!-- -->
 
 ``` r
 wl2_surv_to_rep_y2_canopy %>% 
@@ -1980,7 +2156,7 @@ wl2_surv_to_rep_y2_canopy %>%
 ## (`geom_point()`).
 ```
 
-![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-29-9.png)<!-- -->
+![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-32-9.png)<!-- -->
 
 ``` r
 wl2_surv_to_rep_y2_canopy %>% filter(SurvtoRep_y2==0, !is.na(canopy_area)) #only 7 dead indivs with size info --> not enough to analyze 
@@ -2079,7 +2255,7 @@ wl2_surv_to_rep_y2_size %>%
 ## argument.
 ```
 
-![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-31-1.png)<!-- -->
+![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-34-1.png)<!-- -->
 
 ``` r
 wl2_surv_to_rep_y2_size %>% 
@@ -2104,7 +2280,7 @@ wl2_surv_to_rep_y2_size %>%
 ## argument.
 ```
 
-![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-31-2.png)<!-- -->
+![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-34-2.png)<!-- -->
 
 ``` r
 wl2_surv_to_rep_y2_size %>% 
@@ -2129,7 +2305,7 @@ wl2_surv_to_rep_y2_size %>%
 ## argument.
 ```
 
-![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-31-3.png)<!-- -->
+![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-34-3.png)<!-- -->
 
 ``` r
 wl2_surv_to_rep_y2_size %>% 
@@ -2154,7 +2330,7 @@ wl2_surv_to_rep_y2_size %>%
 ## argument.
 ```
 
-![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-31-4.png)<!-- -->
+![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-34-4.png)<!-- -->
 
 ``` r
 wl2_surv_to_rep_y2_size %>% 
@@ -2179,7 +2355,7 @@ wl2_surv_to_rep_y2_size %>%
 ## argument.
 ```
 
-![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-31-5.png)<!-- -->
+![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-34-5.png)<!-- -->
 
 ``` r
 wl2_surv_to_rep_y2_size %>% 
@@ -2204,7 +2380,7 @@ wl2_surv_to_rep_y2_size %>%
 ## argument.
 ```
 
-![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-31-6.png)<!-- -->
+![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-34-6.png)<!-- -->
 
 ### Stats
 
@@ -2225,7 +2401,7 @@ corrplot(cor.norm_wl2, type = "upper",
          sig.level = 0.05, insig="blank")  
 ```
 
-![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-32-1.png)<!-- -->
+![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-35-1.png)<!-- -->
 
 ``` r
 cor.norm_wl2
