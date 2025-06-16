@@ -163,7 +163,7 @@ library(tidymodels)
 ## ✖ infer::t_test()       masks rstatix::t_test()
 ## ✖ Matrix::unpack()      masks tidyr::unpack()
 ## ✖ recipes::update()     masks Matrix::update(), stats::update()
-## • Use suppressPackageStartupMessages() to eliminate package startup messages
+## • Search for functions across packages at https://www.tidymodels.org/find/
 ```
 
 ``` r
@@ -1383,7 +1383,7 @@ wl2_surv_to_rep_y2_sub_dist_2324 %>%
 
 ![](WL2_Surv_to_Rep_Y2_files/figure-html/unnamed-chunk-21-2.png)<!-- -->
 
-### Check for adaptational lag of WL2 pop
+### Check for local adaptation of WL2 pop
 T-test compare WL2 to the pop that performed the best?
 
 ``` r

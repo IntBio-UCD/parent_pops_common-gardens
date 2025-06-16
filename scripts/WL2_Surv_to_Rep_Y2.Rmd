@@ -710,7 +710,7 @@ wl2_surv_to_rep_y2_sub_dist_2324 %>%
   theme(text=element_text(size=30))
 ```
 
-### Check for adaptational lag of WL2 pop
+### Check for local adaptation of WL2 pop
 T-test compare WL2 to the pop that performed the best?
 ```{r}
 wl2_surv_to_rep_y2_sub_dist_2324 %>% 
