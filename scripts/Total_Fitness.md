@@ -1,7 +1,7 @@
 ---
 title: "Total Fitness"
 author: "Brandie QC"
-date: "2025-06-10"
+date: "2025-06-16"
 output: 
   html_document: 
     keep_md: true
@@ -198,7 +198,7 @@ library(tidymodels)
 ## ✖ infer::t_test()       masks rstatix::t_test()
 ## ✖ Matrix::unpack()      masks tidyr::unpack()
 ## ✖ recipes::update()     masks Matrix::update(), stats::update()
-## • Search for functions across packages at https://www.tidymodels.org/find/
+## • Dig deeper into tidy modeling with R at https://www.tmwr.org
 ```
 
 ``` r
@@ -440,7 +440,9 @@ ucd_sub_dist <- ucd_wtr_year_sub_recent %>%
 
 ``` r
 wl2_wtr_year_sub_recent <- read_csv("../output/Climate/full_year_Subtraction_Dist_from_Home_WL2_Recent.csv") %>% 
-  select(parent.pop, Wtr_Year_TempDist_Recent=ann_tmean_dist, Wtr_Year_PPTDist_Recent=ann_ppt_dist)
+  select(parent.pop, Wtr_Year_TempDist_Recent=ann_tmean_dist, 
+         Wtr_Year_PPTDist_Recent=ann_ppt_dist,
+         Wtr_Year_CWDDist_Recent=cwd_dist)
 ```
 
 ```
@@ -456,7 +458,9 @@ wl2_wtr_year_sub_recent <- read_csv("../output/Climate/full_year_Subtraction_Dis
 
 ``` r
 wl2_wtr_year_sub_historic <- read_csv("../output/Climate/full_year_Subtraction_Dist_from_Home_WL2_Historical.csv") %>% 
-  select(parent.pop, Wtr_Year_TempDist_Historic=ann_tmean_dist, Wtr_Year_PPTDist_Historic=ann_ppt_dist)
+  select(parent.pop, Wtr_Year_TempDist_Historic=ann_tmean_dist, 
+         Wtr_Year_PPTDist_Historic=ann_ppt_dist,
+         Wtr_Year_CWDDist_Historic=cwd_dist)
 ```
 
 ```
@@ -472,7 +476,9 @@ wl2_wtr_year_sub_historic <- read_csv("../output/Climate/full_year_Subtraction_D
 
 ``` r
 wl2_grwssn_sub_recent <- read_csv("../output/Climate/grwssn_Subtraction_Dist_from_Home_WL2_Recent.csv") %>% 
-  select(parent.pop, GrwSsn_TempDist_Recent=ann_tmean_dist, GrwSsn_PPTDist_Recent=ann_ppt_dist)
+  select(parent.pop, GrwSsn_TempDist_Recent=ann_tmean_dist, 
+         GrwSsn_PPTDist_Recent=ann_ppt_dist,
+         GrwSsn_CWDDist_Recent=cwd_dist)
 ```
 
 ```
@@ -488,7 +494,9 @@ wl2_grwssn_sub_recent <- read_csv("../output/Climate/grwssn_Subtraction_Dist_fro
 
 ``` r
 wl2_grwssn_sub_historic <- read_csv("../output/Climate/grwssn_Subtraction_Dist_from_Home_WL2_Historical.csv") %>% 
-  select(parent.pop, GrwSsn_TempDist_Historic=ann_tmean_dist, GrwSsn_PPTDist_Historic=ann_ppt_dist)
+  select(parent.pop, GrwSsn_TempDist_Historic=ann_tmean_dist, 
+         GrwSsn_PPTDist_Historic=ann_ppt_dist,
+         GrwSsn_CWDDist_Historic=cwd_dist)
 ```
 
 ```
@@ -520,7 +528,9 @@ wl2_sub_dist_2023 <- wl2_wtr_year_sub_recent %>%
 
 ``` r
 wl2_wtr_year_sub_recent_2324 <- read_csv("../output/Climate/full_year_Subtraction_Dist_from_Home_WL2_2324_Recent.csv") %>% 
-  select(parent.pop, Wtr_Year_TempDist_Recent=ann_tmean_dist, Wtr_Year_PPTDist_Recent=ann_ppt_dist)
+  select(parent.pop, Wtr_Year_TempDist_Recent=ann_tmean_dist, 
+         Wtr_Year_PPTDist_Recent=ann_ppt_dist,
+         Wtr_Year_CWDDist_Recent=cwd_dist)
 ```
 
 ```
@@ -536,7 +546,9 @@ wl2_wtr_year_sub_recent_2324 <- read_csv("../output/Climate/full_year_Subtractio
 
 ``` r
 wl2_wtr_year_sub_historic_2324 <- read_csv("../output/Climate/full_year_Subtraction_Dist_from_Home_WL2_2324_Historical.csv") %>% 
-  select(parent.pop, Wtr_Year_TempDist_Historic=ann_tmean_dist, Wtr_Year_PPTDist_Historic=ann_ppt_dist)
+  select(parent.pop, Wtr_Year_TempDist_Historic=ann_tmean_dist, 
+         Wtr_Year_PPTDist_Historic=ann_ppt_dist,
+         Wtr_Year_CWDDist_Historic=cwd_dist)
 ```
 
 ```
@@ -552,7 +564,9 @@ wl2_wtr_year_sub_historic_2324 <- read_csv("../output/Climate/full_year_Subtract
 
 ``` r
 wl2_grwssn_sub_recent_2324 <- read_csv("../output/Climate/grwssn_Subtraction_Dist_from_Home_WL2_2324_Recent.csv") %>% 
-  select(parent.pop, GrwSsn_TempDist_Recent=ann_tmean_dist, GrwSsn_PPTDist_Recent=ann_ppt_dist)
+  select(parent.pop, GrwSsn_TempDist_Recent=ann_tmean_dist, 
+         GrwSsn_PPTDist_Recent=ann_ppt_dist,
+         GrwSsn_CWDDist_Recent=cwd_dist)
 ```
 
 ```
@@ -568,7 +582,9 @@ wl2_grwssn_sub_recent_2324 <- read_csv("../output/Climate/grwssn_Subtraction_Dis
 
 ``` r
 wl2_grwssn_sub_historic_2324 <- read_csv("../output/Climate/grwssn_Subtraction_Dist_from_Home_WL2_2324_Historical.csv") %>% 
-  select(parent.pop, GrwSsn_TempDist_Historic=ann_tmean_dist, GrwSsn_PPTDist_Historic=ann_ppt_dist)
+  select(parent.pop, GrwSsn_TempDist_Historic=ann_tmean_dist, 
+         GrwSsn_PPTDist_Historic=ann_ppt_dist,
+         GrwSsn_CWDDist_Historic=cwd_dist)
 ```
 
 ```
@@ -877,16 +893,16 @@ plot_grid(wtr_historical_fig, wtr_recent_fig)
 
 ``` r
 wl2_sub_dist_2023_prep <- wl2_sub_dist_2023 %>% 
-  select(pop:GrwSsn_PPTDist_Historic)
+  select(pop:GrwSsn_CWDDist_Historic)
 wl2_sub_dist_2324_prep <- wl2_sub_dist_2324 %>% 
-  select(pop:GrwSsn_PPTDist_Historic) 
+  select(pop:GrwSsn_CWDDist_Historic) 
 
 wl2_sub_dist_avg <- bind_rows(wl2_sub_dist_2023_prep, wl2_sub_dist_2324_prep) %>% 
   group_by(pop) %>% 
-  summarise_at(c("Wtr_Year_TempDist_Recent",  "Wtr_Year_PPTDist_Recent", 
-                 "Wtr_Year_TempDist_Historic", "Wtr_Year_PPTDist_Historic",
-                 "GrwSsn_TempDist_Recent", "GrwSsn_PPTDist_Recent",
-                 "GrwSsn_TempDist_Historic", "GrwSsn_PPTDist_Historic"), c(mean), na.rm = TRUE) %>% 
+  summarise_at(c("Wtr_Year_TempDist_Recent", "Wtr_Year_PPTDist_Recent", "Wtr_Year_CWDDist_Recent", 
+                 "Wtr_Year_TempDist_Historic", "Wtr_Year_PPTDist_Historic", "Wtr_Year_CWDDist_Historic",
+                 "GrwSsn_TempDist_Recent", "GrwSsn_PPTDist_Recent", "GrwSsn_CWDDist_Recent",
+                 "GrwSsn_TempDist_Historic", "GrwSsn_PPTDist_Historic", "GrwSsn_CWDDist_Historic"), c(mean), na.rm = TRUE) %>% 
   left_join(wl2_gowers_avg)
 ```
 
@@ -899,26 +915,26 @@ wl2_sub_dist_avg
 ```
 
 ```
-## # A tibble: 23 × 17
-##    pop   Wtr_Year_TempDist_Recent Wtr_Year_PPTDist_Recent Wtr_Year_TempDist_Hi…¹
+## # A tibble: 23 × 21
+##    pop   Wtr_Year_TempDist_Recent Wtr_Year_PPTDist_Recent Wtr_Year_CWDDist_Rec…¹
 ##    <chr>                    <dbl>                   <dbl>                  <dbl>
-##  1 BH                       8.30                  -1257.                    7.39
-##  2 CC                       8.71                   -826.                    7.98
-##  3 CP2                     -0.653                  -552.                   -1.83
-##  4 CP3                     -1.36                   -607.                   -2.48
-##  5 DPR                      6.12                   -384.                    5.02
-##  6 FR                       4.97                   -821.                    4.39
-##  7 IH                       7.49                   -767.                    6.82
-##  8 LV1                     -3.02                    -83.2                  -4.53
-##  9 LV3                     -3.01                   -115.                   -4.53
-## 10 LVTR1                   -3.17                    -24.7                  -4.67
+##  1 BH                       8.30                  -1257.                  26.9  
+##  2 CC                       8.71                   -826.                  10.9  
+##  3 CP2                     -0.653                  -552.                  13.9  
+##  4 CP3                     -1.36                   -607.                  -2.78 
+##  5 DPR                      6.12                   -384.                 -21.5  
+##  6 FR                       4.97                   -821.                  26.5  
+##  7 IH                       7.49                   -767.                   0.306
+##  8 LV1                     -3.02                    -83.2                  0.822
+##  9 LV3                     -3.01                   -115.                  -8.12 
+## 10 LVTR1                   -3.17                    -24.7                  3.13 
 ## # ℹ 13 more rows
-## # ℹ abbreviated name: ¹​Wtr_Year_TempDist_Historic
-## # ℹ 13 more variables: Wtr_Year_PPTDist_Historic <dbl>,
+## # ℹ abbreviated name: ¹​Wtr_Year_CWDDist_Recent
+## # ℹ 17 more variables: Wtr_Year_TempDist_Historic <dbl>,
+## #   Wtr_Year_PPTDist_Historic <dbl>, Wtr_Year_CWDDist_Historic <dbl>,
 ## #   GrwSsn_TempDist_Recent <dbl>, GrwSsn_PPTDist_Recent <dbl>,
-## #   GrwSsn_TempDist_Historic <dbl>, GrwSsn_PPTDist_Historic <dbl>,
-## #   elevation.group <chr>, elev_m <dbl>, Geographic_Dist <dbl>,
-## #   Elev_Dist <dbl>, GrwSsn_GD_Recent <dbl>, GrwSsn_GD_Historical <dbl>, …
+## #   GrwSsn_CWDDist_Recent <dbl>, GrwSsn_TempDist_Historic <dbl>,
+## #   GrwSsn_PPTDist_Historic <dbl>, GrwSsn_CWDDist_Historic <dbl>, …
 ```
 
 Correlations
@@ -2824,7 +2840,7 @@ WL2_prob_fitness_for_paper <- ggarrange(GD_prob, WYCD_prob_recent,
                                         labels = c("A)", "B)", "C)", "D)"), 
                                         font.label = list(size=30, face = "plain"), 
                                         ncol=2, nrow=2) 
-ggsave("../output/WL2_Traits/WL2_ProbFitness_SCATTERS_Summary_Recent_2324.png", width = 26, height = 18, units = "in")
+#ggsave("../output/WL2_Traits/WL2_ProbFitness_SCATTERS_Summary_Recent_2324.png", width = 26, height = 18, units = "in")
 ```
 
 
@@ -2875,9 +2891,184 @@ GSCD_prob_historic <- prob_fitness_summary_sub_grw %>%
 WL2_prob_fitness_for_paper2 <- ggarrange(GSCD_prob_historic,
                                          GSCD_prob_recent,
                                         ncol=2, nrow=1) 
-ggsave("../output/WL2_Traits/WL2_ProbFitness_SCATTERS_PPT_GRWSSN_2324.png", width = 26, height = 9, units = "in")
+#ggsave("../output/WL2_Traits/WL2_ProbFitness_SCATTERS_PPT_GRWSSN_2324.png", width = 26, height = 9, units = "in")
 ```
 
+
+### Check CWD Dist
+
+``` r
+wl2_total_fitness_sub_dist %>% 
+  mutate(ProbFitness=if_else(Total_Fitness==0, 0, 1)) %>% 
+  group_by(pop, elev_m, Wtr_Year_CWDDist_Recent, Wtr_Year_CWDDist_Historic) %>% 
+  summarise(meanEst=mean(ProbFitness, na.rm = TRUE), semEst=sem(ProbFitness, na.rm=TRUE)) %>%
+  ggplot(aes(x=Wtr_Year_CWDDist_Recent, y=meanEst, group = pop, color=elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.3,linewidth = 2) +
+  #annotate("text", x = 12.1639444	, y= 0.65, label = "WL2", 
+   #       colour = "purple", fontface="bold", size = 22 / .pt) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Probability of  \n Successfully Reproducing", x="Recent Water Year CWD Dist", 
+       color="Elevation (m)") +
+  theme(text=element_text(size=30))
+```
+
+```
+## `summarise()` has grouped output by 'pop', 'elev_m', 'Wtr_Year_CWDDist_Recent'.
+## You can override using the `.groups` argument.
+```
+
+![](Total_Fitness_files/figure-html/unnamed-chunk-45-1.png)<!-- -->
+
+``` r
+wl2_total_fitness_sub_dist %>% 
+  mutate(ProbFitness=if_else(Total_Fitness==0, 0, 1)) %>% 
+  group_by(pop, elev_m, Wtr_Year_CWDDist_Recent, Wtr_Year_CWDDist_Historic) %>% 
+  summarise(meanEst=mean(ProbFitness, na.rm = TRUE), semEst=sem(ProbFitness, na.rm=TRUE)) %>%
+  ggplot(aes(x=Wtr_Year_CWDDist_Historic, y=meanEst, group = pop, color=elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.3,linewidth = 2) +
+  #annotate("text", x = 8.9845278		, y= 0.65, label = "WL2", 
+   #       colour = "purple", fontface="bold", size = 22 / .pt) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Probability of  \n Successfully Reproducing", x="Historic Water Year CWD Dist", 
+       color="Elevation (m)") +
+  theme(text=element_text(size=30))
+```
+
+```
+## `summarise()` has grouped output by 'pop', 'elev_m', 'Wtr_Year_CWDDist_Recent'.
+## You can override using the `.groups` argument.
+```
+
+![](Total_Fitness_files/figure-html/unnamed-chunk-45-2.png)<!-- -->
+
+
+``` r
+wl2_total_fitness_sub_dist %>% 
+  mutate(ProbFitness=if_else(Total_Fitness==0, 0, 1)) %>% 
+  group_by(pop, elev_m, GrwSsn_CWDDist_Recent, GrwSsn_CWDDist_Historic) %>% 
+  summarise(meanEst=mean(ProbFitness, na.rm = TRUE), semEst=sem(ProbFitness, na.rm=TRUE)) %>%
+  ggplot(aes(x=GrwSsn_CWDDist_Recent, y=meanEst, group = pop, color=elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.3,linewidth = 2) +
+  #annotate("text", x = 12.1639444	, y= 0.65, label = "WL2", 
+   #       colour = "purple", fontface="bold", size = 22 / .pt) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Probability of  \n Successfully Reproducing", x="Recent Growth Season CWD Dist", 
+       color="Elevation (m)") +
+  theme(text=element_text(size=30))
+```
+
+```
+## `summarise()` has grouped output by 'pop', 'elev_m', 'GrwSsn_CWDDist_Recent'.
+## You can override using the `.groups` argument.
+```
+
+![](Total_Fitness_files/figure-html/unnamed-chunk-46-1.png)<!-- -->
+
+``` r
+wl2_total_fitness_sub_dist %>% 
+  mutate(ProbFitness=if_else(Total_Fitness==0, 0, 1)) %>% 
+  group_by(pop, elev_m, GrwSsn_CWDDist_Recent, GrwSsn_CWDDist_Historic) %>% 
+  summarise(meanEst=mean(ProbFitness, na.rm = TRUE), semEst=sem(ProbFitness, na.rm=TRUE)) %>%
+  ggplot(aes(x=GrwSsn_CWDDist_Historic, y=meanEst, group = pop, color=elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.3,linewidth = 2) +
+  #annotate("text", x = 8.9845278		, y= 0.65, label = "WL2", 
+   #       colour = "purple", fontface="bold", size = 22 / .pt) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Probability of  \n Successfully Reproducing", x="Historic Growth Season CWD Dist", 
+       color="Elevation (m)") +
+  theme(text=element_text(size=30))
+```
+
+```
+## `summarise()` has grouped output by 'pop', 'elev_m', 'GrwSsn_CWDDist_Recent'.
+## You can override using the `.groups` argument.
+```
+
+![](Total_Fitness_files/figure-html/unnamed-chunk-46-2.png)<!-- -->
+
+### Check for adaptational lag of WL2 pop
+T-test compare WL2 to the pop that performed the best?
+
+``` r
+wl2_total_fitness_sub_dist %>% 
+  mutate(ProbFitness=if_else(Total_Fitness==0, 0, 1)) %>% 
+  group_by(pop, elev_m, Wtr_Year_CWDDist_Recent, Wtr_Year_CWDDist_Historic) %>% 
+  summarise(meanEst=mean(ProbFitness, na.rm = TRUE), semEst=sem(ProbFitness, na.rm=TRUE)) %>%
+  arrange(meanEst)
+```
+
+```
+## `summarise()` has grouped output by 'pop', 'elev_m', 'Wtr_Year_CWDDist_Recent'.
+## You can override using the `.groups` argument.
+```
+
+```
+## # A tibble: 23 × 6
+## # Groups:   pop, elev_m, Wtr_Year_CWDDist_Recent [23]
+##    pop   elev_m Wtr_Year_CWDDist_Recent Wtr_Year_CWDDist_Historic meanEst semEst
+##    <chr>  <dbl>                   <dbl>                     <dbl>   <dbl>  <dbl>
+##  1 CP2    2244.                  13.9                      11.4         0      0
+##  2 CP3    2266.                  -2.78                     -5.20        0      0
+##  3 DPR    1019.                 -21.5                     -22.5         0      0
+##  4 FR      787                   26.5                      25.0         0      0
+##  5 LV1    2593.                   0.822                    -2.39        0      0
+##  6 LV3    2354.                  -8.12                    -11.0         0      0
+##  7 LVTR1  2741.                   3.13                      0.254       0      0
+##  8 SQ2    1934.                   7.03                      2.97        0      0
+##  9 SQ3    2373.                  11.6                       6.99        0      0
+## 10 WL1    1614.                   8.22                      6.73        0      0
+## # ℹ 13 more rows
+```
+
+``` r
+wl2_prob_fitness_adapt <- wl2_prob_fitness_to_save %>% filter(pop=="WL2" | pop=="TM2")
+
+adaptlagm1 <- glmer(ProbFitness ~ pop + (1|block), data=wl2_prob_fitness_adapt, family = binomial)
+summary(adaptlagm1) #WL2 sig < than TM2
+```
+
+```
+## Generalized linear mixed model fit by maximum likelihood (Laplace
+##   Approximation) [glmerMod]
+##  Family: binomial  ( logit )
+## Formula: ProbFitness ~ pop + (1 | block)
+##    Data: wl2_prob_fitness_adapt
+## 
+##      AIC      BIC   logLik deviance df.resid 
+##    146.5    156.0    -70.2    140.5      172 
+## 
+## Scaled residuals: 
+##     Min      1Q  Median      3Q     Max 
+## -1.1382 -0.4025 -0.2346 -0.1210  4.5833 
+## 
+## Random effects:
+##  Groups Name        Variance Std.Dev.
+##  block  (Intercept) 1.017    1.009   
+## Number of obs: 175, groups:  block, 13
+## 
+## Fixed effects:
+##             Estimate Std. Error z value Pr(>|z|)    
+## (Intercept)  -0.8663     0.4005  -2.163   0.0305 *  
+## popWL2       -2.4038     0.5534  -4.344  1.4e-05 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Correlation of Fixed Effects:
+##        (Intr)
+## popWL2 -0.208
+```
 
 #### Attempt at calculating mean and standard error in logit scale
 
@@ -3090,7 +3281,7 @@ wl2_logit_compare %>%
   ggtitle("Back-Transformed from Logit Scale")
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-47-1.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-50-1.png)<!-- -->
 
 ``` r
 wl2_logit_compare %>% 
@@ -3102,7 +3293,7 @@ wl2_logit_compare %>%
   ggtitle("Raw Means")
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-47-2.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-50-2.png)<!-- -->
 
 Make comparison figures - With 0s removed 
 
@@ -3141,7 +3332,7 @@ wl2_logit_compare2 %>%
   ggtitle("Back-Transformed from Logit Scale - No 0s and 1s")
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-48-1.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-51-1.png)<!-- -->
 
 ``` r
 wl2_logit_compare2 %>% 
@@ -3153,7 +3344,7 @@ wl2_logit_compare2 %>%
   ggtitle("Raw Means - No 0s and 1s")
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-48-2.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-51-2.png)<!-- -->
 
 Try boot::logit and boot::inv.logit 
 
@@ -3236,7 +3427,7 @@ wl2_prob_fit_block_summary %>%
 ## argument.
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-50-1.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-53-1.png)<!-- -->
 
 ``` r
 ##back transformed from logit 
@@ -3262,7 +3453,7 @@ wl2_prob_fit_block_summary %>%
 ## argument.
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-50-2.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-53-2.png)<!-- -->
 
 ``` r
 ##non-logit scale 
@@ -3288,7 +3479,7 @@ wl2_total_fitness_sub_dist %>%
 ## argument.
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-50-3.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-53-3.png)<!-- -->
 
 #### Basic Model Workflow
 
@@ -3939,7 +4130,7 @@ wl2_prob_fit_plas %>%
 ## (`stat_bin()`).
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-59-1.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-62-1.png)<!-- -->
 
 ``` r
 wl2_prob_fit_plas %>% 
@@ -3951,7 +4142,7 @@ wl2_prob_fit_plas %>%
 ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-59-2.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-62-2.png)<!-- -->
 
 ``` r
 ucd_prob_fit_plas <- ucd_prob_fitness %>% 
@@ -3994,7 +4185,7 @@ ucd_prob_fit_plas %>%
 ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-59-3.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-62-3.png)<!-- -->
 
 ``` r
 ucd_prob_fit_plas %>% 
@@ -4006,7 +4197,7 @@ ucd_prob_fit_plas %>%
 ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-59-4.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-62-4.png)<!-- -->
 
 
 ``` r
@@ -4330,7 +4521,7 @@ wl2_rep_output %>% #still skewed
 ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-62-1.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-65-1.png)<!-- -->
 
 ``` r
 wl2_rep_output %>% #good enough!
@@ -4342,7 +4533,7 @@ wl2_rep_output %>% #good enough!
 ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-62-2.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-65-2.png)<!-- -->
 
 ``` r
 wl2_rep_output %>% #helped some
@@ -4354,7 +4545,7 @@ wl2_rep_output %>% #helped some
 ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-62-3.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-65-3.png)<!-- -->
 
 ``` r
 wl2_rep_output %>% #helped some
@@ -4366,7 +4557,7 @@ wl2_rep_output %>% #helped some
 ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-62-4.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-65-4.png)<!-- -->
 
 ``` r
 wl2_fitness_means <- wl2_rep_output %>% # summary for plotting
@@ -4397,7 +4588,7 @@ wl2_rep_output_sub %>% #still skewed
 ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-63-1.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-66-1.png)<!-- -->
 
 ``` r
 wl2_rep_output_sub %>% #good enough!
@@ -4409,7 +4600,7 @@ wl2_rep_output_sub %>% #good enough!
 ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-63-2.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-66-2.png)<!-- -->
 
 
 ``` r
@@ -4450,7 +4641,7 @@ ucd_rep_output %>%
 ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-64-1.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-67-1.png)<!-- -->
 
 ``` r
 ucd_rep_output %>%  #looks fine 
@@ -4462,7 +4653,7 @@ ucd_rep_output %>%  #looks fine
 ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-64-2.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-67-2.png)<!-- -->
 
 ``` r
 ucd_rep_output %>% 
@@ -4474,7 +4665,7 @@ ucd_rep_output %>%
 ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-64-3.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-67-3.png)<!-- -->
 
 ``` r
 ucd_fitness_means <- ucd_rep_output %>% 
@@ -4508,7 +4699,7 @@ ucd_rep_output_sub %>% #still skewed
 ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-65-1.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-68-1.png)<!-- -->
 
 ``` r
 ucd_rep_output_sub %>% #okayish
@@ -4520,7 +4711,7 @@ ucd_rep_output_sub %>% #okayish
 ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-65-2.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-68-2.png)<!-- -->
 
 #### Plots
 
@@ -5121,9 +5312,184 @@ GSCD_ppt <- wl2_total_fitness_sub_dist %>%
 ``` r
 WL2_tot_fitness_for_paper <- ggarrange(GSCD_temp, GSCD_ppt, 
                                         ncol=2, nrow=1) 
-ggsave("../output/WL2_Traits/WL2_Total_RepOutput_SCATTERS_GRWSSN_Historic_tmpppt_2324.png", width = 26, height = 9, units = "in")
+#ggsave("../output/WL2_Traits/WL2_Total_RepOutput_SCATTERS_GRWSSN_Historic_tmpppt_2324.png", width = 26, height = 9, units = "in")
 ```
 
+### Check CWD Dist
+
+``` r
+wl2_total_fitness_sub_dist %>% 
+  filter(Total_Fitness > 0) %>% 
+  filter(pop!="SQ1", pop!="WR") %>% 
+  group_by(pop, elev_m, Wtr_Year_CWDDist_Recent, Wtr_Year_CWDDist_Historic) %>% 
+  summarise(meanSurv=mean(Total_Fitness, na.rm = TRUE), semSurv=sem(Total_Fitness, na.rm=TRUE)) %>% 
+  ggplot(aes(x=Wtr_Year_CWDDist_Recent, y=meanSurv, group = pop, color=elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanSurv-semSurv,ymax=meanSurv+semSurv),width=.3,linewidth = 2) +
+  #annotate("text", x = 12.1639444	, y= 0.65, label = "WL2", 
+   #       colour = "purple", fontface="bold", size = 22 / .pt) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Total Fruit Number", x="Recent Water Year CWD Dist", 
+       color="Elevation (m)") +
+  theme(text=element_text(size=30))
+```
+
+```
+## `summarise()` has grouped output by 'pop', 'elev_m', 'Wtr_Year_CWDDist_Recent'.
+## You can override using the `.groups` argument.
+```
+
+![](Total_Fitness_files/figure-html/unnamed-chunk-78-1.png)<!-- -->
+
+``` r
+wl2_total_fitness_sub_dist %>% 
+  filter(Total_Fitness > 0) %>% 
+  filter(pop!="SQ1", pop!="WR") %>% 
+  group_by(pop, elev_m, Wtr_Year_CWDDist_Recent, Wtr_Year_CWDDist_Historic) %>% 
+  summarise(meanSurv=mean(Total_Fitness, na.rm = TRUE), semSurv=sem(Total_Fitness, na.rm=TRUE)) %>% 
+  ggplot(aes(x=Wtr_Year_CWDDist_Historic, y=meanSurv, group = pop, color=elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanSurv-semSurv,ymax=meanSurv+semSurv),width=.3,linewidth = 2) +
+  #annotate("text", x = 8.9845278		, y= 0.65, label = "WL2", 
+   #       colour = "purple", fontface="bold", size = 22 / .pt) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Total Fruit Number", x="Historic Water Year CWD Dist", 
+       color="Elevation (m)") +
+  theme(text=element_text(size=30))
+```
+
+```
+## `summarise()` has grouped output by 'pop', 'elev_m', 'Wtr_Year_CWDDist_Recent'.
+## You can override using the `.groups` argument.
+```
+
+![](Total_Fitness_files/figure-html/unnamed-chunk-78-2.png)<!-- -->
+
+
+``` r
+wl2_total_fitness_sub_dist %>% 
+  filter(Total_Fitness > 0) %>% 
+  filter(pop!="SQ1", pop!="WR") %>% 
+  group_by(pop, elev_m, GrwSsn_CWDDist_Recent, GrwSsn_CWDDist_Historic) %>% 
+  summarise(meanSurv=mean(Total_Fitness, na.rm = TRUE), semSurv=sem(Total_Fitness, na.rm=TRUE)) %>% 
+  ggplot(aes(x=GrwSsn_CWDDist_Recent, y=meanSurv, group = pop, color=elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanSurv-semSurv,ymax=meanSurv+semSurv),width=.3,linewidth = 2) +
+  #annotate("text", x = 12.1639444	, y= 0.65, label = "WL2", 
+   #       colour = "purple", fontface="bold", size = 22 / .pt) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Total Fruit Number", x="Recent Growth Season CWD Dist", 
+       color="Elevation (m)") +
+  theme(text=element_text(size=30))
+```
+
+```
+## `summarise()` has grouped output by 'pop', 'elev_m', 'GrwSsn_CWDDist_Recent'.
+## You can override using the `.groups` argument.
+```
+
+![](Total_Fitness_files/figure-html/unnamed-chunk-79-1.png)<!-- -->
+
+``` r
+wl2_total_fitness_sub_dist %>% 
+  filter(Total_Fitness > 0) %>% 
+  filter(pop!="SQ1", pop!="WR") %>% 
+  group_by(pop, elev_m, GrwSsn_CWDDist_Recent, GrwSsn_CWDDist_Historic) %>% 
+  summarise(meanSurv=mean(Total_Fitness, na.rm = TRUE), semSurv=sem(Total_Fitness, na.rm=TRUE)) %>% 
+  ggplot(aes(x=GrwSsn_CWDDist_Historic, y=meanSurv, group = pop, color=elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanSurv-semSurv,ymax=meanSurv+semSurv),width=.3,linewidth = 2) +
+  #annotate("text", x = 8.9845278		, y= 0.65, label = "WL2", 
+   #       colour = "purple", fontface="bold", size = 22 / .pt) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Total Fruit Number", x="Historic Growth Season CWD Dist", 
+       color="Elevation (m)") +
+  theme(text=element_text(size=30))
+```
+
+```
+## `summarise()` has grouped output by 'pop', 'elev_m', 'GrwSsn_CWDDist_Recent'.
+## You can override using the `.groups` argument.
+```
+
+![](Total_Fitness_files/figure-html/unnamed-chunk-79-2.png)<!-- -->
+
+### Check for local adaptation of WL2 pop
+T-test compare WL2 to the pop that performed the best?
+
+``` r
+wl2_total_fitness_sub_dist %>% 
+  filter(Total_Fitness > 0) %>% 
+  filter(pop!="SQ1", pop!="WR") %>% 
+  group_by(pop, elev_m, Wtr_Year_CWDDist_Recent, Wtr_Year_CWDDist_Historic) %>% 
+  summarise(meanSurv=mean(Total_Fitness, na.rm = TRUE), semSurv=sem(Total_Fitness, na.rm=TRUE)) %>% 
+  arrange(meanSurv)
+```
+
+```
+## `summarise()` has grouped output by 'pop', 'elev_m', 'Wtr_Year_CWDDist_Recent'.
+## You can override using the `.groups` argument.
+```
+
+```
+## # A tibble: 7 × 6
+## # Groups:   pop, elev_m, Wtr_Year_CWDDist_Recent [7]
+##   pop   elev_m Wtr_Year_CWDDist_Recent Wtr_Year_CWDDist_Histo…¹ meanSurv semSurv
+##   <chr>  <dbl>                   <dbl>                    <dbl>    <dbl>   <dbl>
+## 1 TM2     379.                   6.76                      3.68     10.3    4.39
+## 2 IH      454.                   0.306                     1.23     14.5    3.69
+## 3 CC      313                   10.9                      10.7      17      5.19
+## 4 SC      422.                  22.4                      23.7      20.6    5.70
+## 5 YO7    2470.                   4.18                      1.26     21.9    6.64
+## 6 WL2    2020.                   4.75                      1.57     22.4   11.3 
+## 7 BH      511.                  26.9                      25.5      28.4    4.91
+## # ℹ abbreviated name: ¹​Wtr_Year_CWDDist_Historic
+```
+
+``` r
+wl2_rep_output_adapt <- wl2_rep_output_to_save %>% filter(pop=="WL2" | pop=="TM2")
+
+adaptlagm1 <- lmer(logTotalFitness ~ pop + (1|block), data=wl2_rep_output_adapt)
+summary(adaptlagm1) #WL2 not sig > TM2
+```
+
+```
+## Linear mixed model fit by REML. t-tests use Satterthwaite's method [
+## lmerModLmerTest]
+## Formula: logTotalFitness ~ pop + (1 | block)
+##    Data: wl2_rep_output_adapt
+## 
+## REML criterion at convergence: 93.4
+## 
+## Scaled residuals: 
+##     Min      1Q  Median      3Q     Max 
+## -2.0310 -0.6002 -0.0859  0.5884  2.5287 
+## 
+## Random effects:
+##  Groups   Name        Variance Std.Dev.
+##  block    (Intercept) 0.3468   0.5889  
+##  Residual             0.8017   0.8954  
+## Number of obs: 33, groups:  block, 9
+## 
+## Fixed effects:
+##             Estimate Std. Error      df t value Pr(>|t|)    
+## (Intercept)   1.5350     0.2620 10.6642   5.858 0.000124 ***
+## popWL2        0.8398     0.4511 26.6936   1.862 0.073713 .  
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Correlation of Fixed Effects:
+##        (Intr)
+## popWL2 -0.253
+```
 
 #### Checking Poisson for Total Fitness
 
@@ -5163,7 +5529,7 @@ wl2_rep_output %>%
   facet_wrap(~pop, scales="free_y")
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-76-1.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-82-1.png)<!-- -->
 
 #### Basic Model Workflow
 
@@ -5225,14 +5591,14 @@ mod_test <- lmer(logTotalFitness ~  (1|pop) + (1|block), data=wl2_rep_output)
 plot(mod_test, which = 1) 
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-77-1.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-83-1.png)<!-- -->
 
 ``` r
 qqnorm(resid(mod_test))
 qqline(resid(mod_test)) 
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-77-2.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-83-2.png)<!-- -->
 
 ``` r
 summary(mod_test)
@@ -5280,7 +5646,7 @@ wl2_rep_output %>%
   facet_wrap(~pop, scales="free")
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-78-1.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-84-1.png)<!-- -->
 
 #### Test climate and geographic distance
 
@@ -5467,14 +5833,14 @@ mod_test <- lmer(logTotalFitness ~  GrwSsn_TempDist_Historic + Geographic_Dist +
 plot(mod_test, which = 1) 
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-80-1.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-86-1.png)<!-- -->
 
 ``` r
 qqnorm(resid(mod_test))
 qqline(resid(mod_test)) 
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-80-2.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-86-2.png)<!-- -->
 
 ``` r
 summary(mod_test)
@@ -5623,7 +5989,7 @@ wl2_rep_output_sub %>%
   geom_abline(color="skyblue2") 
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-81-1.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-87-1.png)<!-- -->
 
 ``` r
 #overall, the predictions seem to match the observed data...
@@ -5636,7 +6002,7 @@ wl2_rep_output_sub %>%
   facet_wrap(~block, scales="free")
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-81-2.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-87-2.png)<!-- -->
 
 ``` r
 #some blocks with fewer data points --> weaker predictions 
@@ -5648,7 +6014,7 @@ wl2_rep_output_sub %>%
   geom_point() 
 ```
 
-![](Total_Fitness_files/figure-html/unnamed-chunk-81-3.png)<!-- -->
+![](Total_Fitness_files/figure-html/unnamed-chunk-87-3.png)<!-- -->
 
 ``` r
 mod_test2 <- lmer(logTotalFitness ~  GrwSsn_TempDist_Historic + Geographic_Dist + (1|block), data=wl2_rep_output_sub)

@@ -144,13 +144,21 @@ ucd_sub_dist <- ucd_wtr_year_sub_recent %>%
   left_join(ucd_gowers)
 
 wl2_wtr_year_sub_recent <- read_csv("../output/Climate/full_year_Subtraction_Dist_from_Home_WL2_Recent.csv") %>% 
-  select(parent.pop, Wtr_Year_TempDist_Recent=ann_tmean_dist, Wtr_Year_PPTDist_Recent=ann_ppt_dist)
+  select(parent.pop, Wtr_Year_TempDist_Recent=ann_tmean_dist, 
+         Wtr_Year_PPTDist_Recent=ann_ppt_dist,
+         Wtr_Year_CWDDist_Recent=cwd_dist)
 wl2_wtr_year_sub_historic <- read_csv("../output/Climate/full_year_Subtraction_Dist_from_Home_WL2_Historical.csv") %>% 
-  select(parent.pop, Wtr_Year_TempDist_Historic=ann_tmean_dist, Wtr_Year_PPTDist_Historic=ann_ppt_dist)
+  select(parent.pop, Wtr_Year_TempDist_Historic=ann_tmean_dist, 
+         Wtr_Year_PPTDist_Historic=ann_ppt_dist,
+         Wtr_Year_CWDDist_Historic=cwd_dist)
 wl2_grwssn_sub_recent <- read_csv("../output/Climate/grwssn_Subtraction_Dist_from_Home_WL2_Recent.csv") %>% 
-  select(parent.pop, GrwSsn_TempDist_Recent=ann_tmean_dist, GrwSsn_PPTDist_Recent=ann_ppt_dist)
+  select(parent.pop, GrwSsn_TempDist_Recent=ann_tmean_dist, 
+         GrwSsn_PPTDist_Recent=ann_ppt_dist,
+         GrwSsn_CWDDist_Recent=cwd_dist)
 wl2_grwssn_sub_historic <- read_csv("../output/Climate/grwssn_Subtraction_Dist_from_Home_WL2_Historical.csv") %>% 
-  select(parent.pop, GrwSsn_TempDist_Historic=ann_tmean_dist, GrwSsn_PPTDist_Historic=ann_ppt_dist)
+  select(parent.pop, GrwSsn_TempDist_Historic=ann_tmean_dist, 
+         GrwSsn_PPTDist_Historic=ann_ppt_dist,
+         GrwSsn_CWDDist_Historic=cwd_dist)
 wl2_sub_dist_2023 <- wl2_wtr_year_sub_recent %>% 
   left_join(wl2_wtr_year_sub_historic) %>% 
   left_join(wl2_grwssn_sub_recent) %>% 
@@ -159,13 +167,21 @@ wl2_sub_dist_2023 <- wl2_wtr_year_sub_recent %>%
   left_join(wl2_gowers_2023)
 
 wl2_wtr_year_sub_recent_2324 <- read_csv("../output/Climate/full_year_Subtraction_Dist_from_Home_WL2_2324_Recent.csv") %>% 
-  select(parent.pop, Wtr_Year_TempDist_Recent=ann_tmean_dist, Wtr_Year_PPTDist_Recent=ann_ppt_dist)
+  select(parent.pop, Wtr_Year_TempDist_Recent=ann_tmean_dist, 
+         Wtr_Year_PPTDist_Recent=ann_ppt_dist,
+         Wtr_Year_CWDDist_Recent=cwd_dist)
 wl2_wtr_year_sub_historic_2324 <- read_csv("../output/Climate/full_year_Subtraction_Dist_from_Home_WL2_2324_Historical.csv") %>% 
-  select(parent.pop, Wtr_Year_TempDist_Historic=ann_tmean_dist, Wtr_Year_PPTDist_Historic=ann_ppt_dist)
+  select(parent.pop, Wtr_Year_TempDist_Historic=ann_tmean_dist, 
+         Wtr_Year_PPTDist_Historic=ann_ppt_dist,
+         Wtr_Year_CWDDist_Historic=cwd_dist)
 wl2_grwssn_sub_recent_2324 <- read_csv("../output/Climate/grwssn_Subtraction_Dist_from_Home_WL2_2324_Recent.csv") %>% 
-  select(parent.pop, GrwSsn_TempDist_Recent=ann_tmean_dist, GrwSsn_PPTDist_Recent=ann_ppt_dist)
+  select(parent.pop, GrwSsn_TempDist_Recent=ann_tmean_dist, 
+         GrwSsn_PPTDist_Recent=ann_ppt_dist,
+         GrwSsn_CWDDist_Recent=cwd_dist)
 wl2_grwssn_sub_historic_2324 <- read_csv("../output/Climate/grwssn_Subtraction_Dist_from_Home_WL2_2324_Historical.csv") %>% 
-  select(parent.pop, GrwSsn_TempDist_Historic=ann_tmean_dist, GrwSsn_PPTDist_Historic=ann_ppt_dist)
+  select(parent.pop, GrwSsn_TempDist_Historic=ann_tmean_dist, 
+         GrwSsn_PPTDist_Historic=ann_ppt_dist,
+         GrwSsn_CWDDist_Historic=cwd_dist)
 
 wl2_sub_dist_2324 <- wl2_wtr_year_sub_recent_2324 %>% 
   left_join(wl2_wtr_year_sub_historic_2324) %>% 
@@ -312,16 +328,16 @@ plot_grid(wtr_historical_fig, wtr_recent_fig)
 
 ```{r}
 wl2_sub_dist_2023_prep <- wl2_sub_dist_2023 %>% 
-  select(pop:GrwSsn_PPTDist_Historic)
+  select(pop:GrwSsn_CWDDist_Historic)
 wl2_sub_dist_2324_prep <- wl2_sub_dist_2324 %>% 
-  select(pop:GrwSsn_PPTDist_Historic) 
+  select(pop:GrwSsn_CWDDist_Historic) 
 
 wl2_sub_dist_avg <- bind_rows(wl2_sub_dist_2023_prep, wl2_sub_dist_2324_prep) %>% 
   group_by(pop) %>% 
-  summarise_at(c("Wtr_Year_TempDist_Recent",  "Wtr_Year_PPTDist_Recent", 
-                 "Wtr_Year_TempDist_Historic", "Wtr_Year_PPTDist_Historic",
-                 "GrwSsn_TempDist_Recent", "GrwSsn_PPTDist_Recent",
-                 "GrwSsn_TempDist_Historic", "GrwSsn_PPTDist_Historic"), c(mean), na.rm = TRUE) %>% 
+  summarise_at(c("Wtr_Year_TempDist_Recent", "Wtr_Year_PPTDist_Recent", "Wtr_Year_CWDDist_Recent", 
+                 "Wtr_Year_TempDist_Historic", "Wtr_Year_PPTDist_Historic", "Wtr_Year_CWDDist_Historic",
+                 "GrwSsn_TempDist_Recent", "GrwSsn_PPTDist_Recent", "GrwSsn_CWDDist_Recent",
+                 "GrwSsn_TempDist_Historic", "GrwSsn_PPTDist_Historic", "GrwSsn_CWDDist_Historic"), c(mean), na.rm = TRUE) %>% 
   left_join(wl2_gowers_avg)
 wl2_sub_dist_avg
 ```
@@ -1387,7 +1403,7 @@ WL2_prob_fitness_for_paper <- ggarrange(GD_prob, WYCD_prob_recent,
                                         labels = c("A)", "B)", "C)", "D)"), 
                                         font.label = list(size=30, face = "plain"), 
                                         ncol=2, nrow=2) 
-ggsave("../output/WL2_Traits/WL2_ProbFitness_SCATTERS_Summary_Recent_2324.png", width = 26, height = 18, units = "in")
+#ggsave("../output/WL2_Traits/WL2_ProbFitness_SCATTERS_Summary_Recent_2324.png", width = 26, height = 18, units = "in")
 ```
 
 ```{r}
@@ -1429,9 +1445,93 @@ GSCD_prob_historic <- prob_fitness_summary_sub_grw %>%
 WL2_prob_fitness_for_paper2 <- ggarrange(GSCD_prob_historic,
                                          GSCD_prob_recent,
                                         ncol=2, nrow=1) 
-ggsave("../output/WL2_Traits/WL2_ProbFitness_SCATTERS_PPT_GRWSSN_2324.png", width = 26, height = 9, units = "in")
+#ggsave("../output/WL2_Traits/WL2_ProbFitness_SCATTERS_PPT_GRWSSN_2324.png", width = 26, height = 9, units = "in")
 ```
 
+
+### Check CWD Dist
+```{r}
+wl2_total_fitness_sub_dist %>% 
+  mutate(ProbFitness=if_else(Total_Fitness==0, 0, 1)) %>% 
+  group_by(pop, elev_m, Wtr_Year_CWDDist_Recent, Wtr_Year_CWDDist_Historic) %>% 
+  summarise(meanEst=mean(ProbFitness, na.rm = TRUE), semEst=sem(ProbFitness, na.rm=TRUE)) %>%
+  ggplot(aes(x=Wtr_Year_CWDDist_Recent, y=meanEst, group = pop, color=elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.3,linewidth = 2) +
+  #annotate("text", x = 12.1639444	, y= 0.65, label = "WL2", 
+   #       colour = "purple", fontface="bold", size = 22 / .pt) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Probability of  \n Successfully Reproducing", x="Recent Water Year CWD Dist", 
+       color="Elevation (m)") +
+  theme(text=element_text(size=30))
+
+wl2_total_fitness_sub_dist %>% 
+  mutate(ProbFitness=if_else(Total_Fitness==0, 0, 1)) %>% 
+  group_by(pop, elev_m, Wtr_Year_CWDDist_Recent, Wtr_Year_CWDDist_Historic) %>% 
+  summarise(meanEst=mean(ProbFitness, na.rm = TRUE), semEst=sem(ProbFitness, na.rm=TRUE)) %>%
+  ggplot(aes(x=Wtr_Year_CWDDist_Historic, y=meanEst, group = pop, color=elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.3,linewidth = 2) +
+  #annotate("text", x = 8.9845278		, y= 0.65, label = "WL2", 
+   #       colour = "purple", fontface="bold", size = 22 / .pt) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Probability of  \n Successfully Reproducing", x="Historic Water Year CWD Dist", 
+       color="Elevation (m)") +
+  theme(text=element_text(size=30))
+```
+
+```{r}
+wl2_total_fitness_sub_dist %>% 
+  mutate(ProbFitness=if_else(Total_Fitness==0, 0, 1)) %>% 
+  group_by(pop, elev_m, GrwSsn_CWDDist_Recent, GrwSsn_CWDDist_Historic) %>% 
+  summarise(meanEst=mean(ProbFitness, na.rm = TRUE), semEst=sem(ProbFitness, na.rm=TRUE)) %>%
+  ggplot(aes(x=GrwSsn_CWDDist_Recent, y=meanEst, group = pop, color=elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.3,linewidth = 2) +
+  #annotate("text", x = 12.1639444	, y= 0.65, label = "WL2", 
+   #       colour = "purple", fontface="bold", size = 22 / .pt) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Probability of  \n Successfully Reproducing", x="Recent Growth Season CWD Dist", 
+       color="Elevation (m)") +
+  theme(text=element_text(size=30))
+
+wl2_total_fitness_sub_dist %>% 
+  mutate(ProbFitness=if_else(Total_Fitness==0, 0, 1)) %>% 
+  group_by(pop, elev_m, GrwSsn_CWDDist_Recent, GrwSsn_CWDDist_Historic) %>% 
+  summarise(meanEst=mean(ProbFitness, na.rm = TRUE), semEst=sem(ProbFitness, na.rm=TRUE)) %>%
+  ggplot(aes(x=GrwSsn_CWDDist_Historic, y=meanEst, group = pop, color=elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.3,linewidth = 2) +
+  #annotate("text", x = 8.9845278		, y= 0.65, label = "WL2", 
+   #       colour = "purple", fontface="bold", size = 22 / .pt) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Probability of  \n Successfully Reproducing", x="Historic Growth Season CWD Dist", 
+       color="Elevation (m)") +
+  theme(text=element_text(size=30))
+```
+
+### Check for adaptational lag of WL2 pop
+T-test compare WL2 to the pop that performed the best?
+```{r}
+wl2_total_fitness_sub_dist %>% 
+  mutate(ProbFitness=if_else(Total_Fitness==0, 0, 1)) %>% 
+  group_by(pop, elev_m, Wtr_Year_CWDDist_Recent, Wtr_Year_CWDDist_Historic) %>% 
+  summarise(meanEst=mean(ProbFitness, na.rm = TRUE), semEst=sem(ProbFitness, na.rm=TRUE)) %>%
+  arrange(meanEst)
+
+wl2_prob_fitness_adapt <- wl2_prob_fitness_to_save %>% filter(pop=="WL2" | pop=="TM2")
+
+adaptlagm1 <- glmer(ProbFitness ~ pop + (1|block), data=wl2_prob_fitness_adapt, family = binomial)
+summary(adaptlagm1) #WL2 sig < than TM2
+```
 
 #### Attempt at calculating mean and standard error in logit scale
 
@@ -2491,9 +2591,97 @@ GSCD_ppt <- wl2_total_fitness_sub_dist %>%
 
 WL2_tot_fitness_for_paper <- ggarrange(GSCD_temp, GSCD_ppt, 
                                         ncol=2, nrow=1) 
-ggsave("../output/WL2_Traits/WL2_Total_RepOutput_SCATTERS_GRWSSN_Historic_tmpppt_2324.png", width = 26, height = 9, units = "in")
+#ggsave("../output/WL2_Traits/WL2_Total_RepOutput_SCATTERS_GRWSSN_Historic_tmpppt_2324.png", width = 26, height = 9, units = "in")
 ```
 
+### Check CWD Dist
+```{r}
+wl2_total_fitness_sub_dist %>% 
+  filter(Total_Fitness > 0) %>% 
+  filter(pop!="SQ1", pop!="WR") %>% 
+  group_by(pop, elev_m, Wtr_Year_CWDDist_Recent, Wtr_Year_CWDDist_Historic) %>% 
+  summarise(meanSurv=mean(Total_Fitness, na.rm = TRUE), semSurv=sem(Total_Fitness, na.rm=TRUE)) %>% 
+  ggplot(aes(x=Wtr_Year_CWDDist_Recent, y=meanSurv, group = pop, color=elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanSurv-semSurv,ymax=meanSurv+semSurv),width=.3,linewidth = 2) +
+  #annotate("text", x = 12.1639444	, y= 0.65, label = "WL2", 
+   #       colour = "purple", fontface="bold", size = 22 / .pt) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Total Fruit Number", x="Recent Water Year CWD Dist", 
+       color="Elevation (m)") +
+  theme(text=element_text(size=30))
+
+wl2_total_fitness_sub_dist %>% 
+  filter(Total_Fitness > 0) %>% 
+  filter(pop!="SQ1", pop!="WR") %>% 
+  group_by(pop, elev_m, Wtr_Year_CWDDist_Recent, Wtr_Year_CWDDist_Historic) %>% 
+  summarise(meanSurv=mean(Total_Fitness, na.rm = TRUE), semSurv=sem(Total_Fitness, na.rm=TRUE)) %>% 
+  ggplot(aes(x=Wtr_Year_CWDDist_Historic, y=meanSurv, group = pop, color=elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanSurv-semSurv,ymax=meanSurv+semSurv),width=.3,linewidth = 2) +
+  #annotate("text", x = 8.9845278		, y= 0.65, label = "WL2", 
+   #       colour = "purple", fontface="bold", size = 22 / .pt) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Total Fruit Number", x="Historic Water Year CWD Dist", 
+       color="Elevation (m)") +
+  theme(text=element_text(size=30))
+```
+
+```{r}
+wl2_total_fitness_sub_dist %>% 
+  filter(Total_Fitness > 0) %>% 
+  filter(pop!="SQ1", pop!="WR") %>% 
+  group_by(pop, elev_m, GrwSsn_CWDDist_Recent, GrwSsn_CWDDist_Historic) %>% 
+  summarise(meanSurv=mean(Total_Fitness, na.rm = TRUE), semSurv=sem(Total_Fitness, na.rm=TRUE)) %>% 
+  ggplot(aes(x=GrwSsn_CWDDist_Recent, y=meanSurv, group = pop, color=elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanSurv-semSurv,ymax=meanSurv+semSurv),width=.3,linewidth = 2) +
+  #annotate("text", x = 12.1639444	, y= 0.65, label = "WL2", 
+   #       colour = "purple", fontface="bold", size = 22 / .pt) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Total Fruit Number", x="Recent Growth Season CWD Dist", 
+       color="Elevation (m)") +
+  theme(text=element_text(size=30))
+
+wl2_total_fitness_sub_dist %>% 
+  filter(Total_Fitness > 0) %>% 
+  filter(pop!="SQ1", pop!="WR") %>% 
+  group_by(pop, elev_m, GrwSsn_CWDDist_Recent, GrwSsn_CWDDist_Historic) %>% 
+  summarise(meanSurv=mean(Total_Fitness, na.rm = TRUE), semSurv=sem(Total_Fitness, na.rm=TRUE)) %>% 
+  ggplot(aes(x=GrwSsn_CWDDist_Historic, y=meanSurv, group = pop, color=elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanSurv-semSurv,ymax=meanSurv+semSurv),width=.3,linewidth = 2) +
+  #annotate("text", x = 8.9845278		, y= 0.65, label = "WL2", 
+   #       colour = "purple", fontface="bold", size = 22 / .pt) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Total Fruit Number", x="Historic Growth Season CWD Dist", 
+       color="Elevation (m)") +
+  theme(text=element_text(size=30))
+```
+
+### Check for local adaptation of WL2 pop
+T-test compare WL2 to the pop that performed the best?
+```{r}
+wl2_total_fitness_sub_dist %>% 
+  filter(Total_Fitness > 0) %>% 
+  filter(pop!="SQ1", pop!="WR") %>% 
+  group_by(pop, elev_m, Wtr_Year_CWDDist_Recent, Wtr_Year_CWDDist_Historic) %>% 
+  summarise(meanSurv=mean(Total_Fitness, na.rm = TRUE), semSurv=sem(Total_Fitness, na.rm=TRUE)) %>% 
+  arrange(meanSurv)
+
+wl2_rep_output_adapt <- wl2_rep_output_to_save %>% filter(pop=="WL2" | pop=="TM2")
+
+adaptlagm1 <- lmer(logTotalFitness ~ pop + (1|block), data=wl2_rep_output_adapt)
+summary(adaptlagm1) #WL2 not sig > TM2
+```
 
 #### Checking Poisson for Total Fitness
 
