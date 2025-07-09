@@ -14,6 +14,10 @@ knitr::opts_chunk$set(echo = TRUE)
 ## Libraries
 ```{r}
 library(tidyverse)
+
+sem <- function(x, na.rm=FALSE) {           #for caclulating standard error
+  sd(x,na.rm=na.rm)/sqrt(length(na.omit(x)))
+} 
 ```
 
 ## Load Data
@@ -22,18 +26,323 @@ wl2_establishment <- read_csv("../output/WL2_Traits/WL2_Establishment.csv")
 wl2_y1surv <- read_csv("../output/WL2_Traits/WL2_Y1Surv.csv")
 winter_surv <- read_csv("../output/WL2_Traits/WL2_WinterSurv_2324.csv")
 wl2_surv_to_bud_y2 <- read_csv("../output/WL2_Traits/WL2_Surv_to_Rep_Y2_2324.csv")
-wl2_prob_rep
+wl2_prob_rep <- read_csv("../output/WL2_Traits/WL2_ProbFitness.csv")
+```
+
+### Subtraction Climate Distance
+```{r}
+wl2_wtr_year_sub_recent <- read_csv("../output/Climate/full_year_Subtraction_Dist_from_Home_WL2_Recent.csv") %>% 
+  select(parent.pop, Wtr_Year_TempDist_Recent=ann_tmean_dist, 
+         Wtr_Year_PPTDist_Recent=ann_ppt_dist,
+         Wtr_Year_CWDDist_Recent=cwd_dist)
+wl2_wtr_year_sub_historic <- read_csv("../output/Climate/full_year_Subtraction_Dist_from_Home_WL2_Historical.csv") %>% 
+  select(parent.pop, Wtr_Year_TempDist_Historic=ann_tmean_dist, 
+         Wtr_Year_PPTDist_Historic=ann_ppt_dist,
+         Wtr_Year_CWDDist_Historic=cwd_dist)
+wl2_sub_dist_2023 <- wl2_wtr_year_sub_recent %>% 
+  left_join(wl2_wtr_year_sub_historic) %>% 
+  rename(pop=parent.pop)
+
+wl2_wtr_year_sub_recent_2324 <- read_csv("../output/Climate/full_year_Subtraction_Dist_from_Home_WL2_2324_Recent.csv") %>% 
+  select(parent.pop, Wtr_Year_TempDist_Recent=ann_tmean_dist, 
+         Wtr_Year_PPTDist_Recent=ann_ppt_dist,
+         Wtr_Year_CWDDist_Recent=cwd_dist)
+wl2_wtr_year_sub_historic_2324 <- read_csv("../output/Climate/full_year_Subtraction_Dist_from_Home_WL2_2324_Historical.csv") %>% 
+  select(parent.pop, Wtr_Year_TempDist_Historic=ann_tmean_dist, 
+         Wtr_Year_PPTDist_Historic=ann_ppt_dist,
+         Wtr_Year_CWDDist_Historic=cwd_dist)
+
+wl2_sub_dist_2324 <- wl2_wtr_year_sub_recent_2324 %>% 
+  left_join(wl2_wtr_year_sub_historic_2324) %>% 
+  rename(pop=parent.pop)
+
+wl2_sub_dist_2023_prep <- wl2_sub_dist_2023 %>% 
+  select(pop:Wtr_Year_CWDDist_Historic)
+wl2_sub_dist_2324_prep <- wl2_sub_dist_2324 %>% 
+  select(pop:Wtr_Year_CWDDist_Historic) 
+
+wl2_sub_dist_avg <- bind_rows(wl2_sub_dist_2023_prep, wl2_sub_dist_2324_prep) %>% 
+  group_by(pop) %>% 
+  summarise_at(c("Wtr_Year_TempDist_Recent", "Wtr_Year_PPTDist_Recent", "Wtr_Year_CWDDist_Recent", 
+                 "Wtr_Year_TempDist_Historic", "Wtr_Year_PPTDist_Historic", "Wtr_Year_CWDDist_Historic"),
+               c(mean), na.rm = TRUE) 
+```
+
+## Data Summaries
+
+### Year 2 survival to budding
+```{r}
+wl2_surv_to_bud_y2_summary <- wl2_surv_to_bud_y2 %>% 
+  filter(pop != "LV1", pop != "SQ1", pop != "WR") %>% 
+  group_by(pop, elev_m, Geographic_Dist, Wtr_Year_GD_Recent) %>% 
+  summarise(meanEst=mean(SurvtoRep_y2, na.rm = TRUE), semEst=sem(SurvtoRep_y2, na.rm=TRUE)) 
+
+wl2_surv_to_bud_y2_summary_sub <- wl2_surv_to_bud_y2 %>% 
+  left_join(wl2_sub_dist_2324) %>% 
+  filter(pop != "LV1", pop != "SQ1", pop != "WR") %>% 
+  group_by(pop, elev_m, Wtr_Year_TempDist_Recent, Wtr_Year_PPTDist_Recent) %>% 
+  summarise(meanEst=mean(SurvtoRep_y2, na.rm = TRUE), semEst=sem(SurvtoRep_y2, na.rm=TRUE))
+```
+
+### Prob Fitness
+```{r}
+prob_fitness_summary <- wl2_prob_rep %>%  
+  group_by(pop, elev_m, Geographic_Dist, Wtr_Year_GD_Recent) %>% 
+  summarise(meanEst=mean(ProbFitness, na.rm = TRUE), semEst=sem(ProbFitness, na.rm=TRUE)) %>%
+  mutate(RepYear=if_else(meanEst==0, "None",
+                         if_else(pop=="TM2", "Both Years", "Year 2 Only")))
+prob_fitness_summary$RepYear <- factor(prob_fitness_summary$RepYear,
+                                               levels = c('None','Year 2 Only', 'Both Years'))
+
+
+prob_fitness_summary_sub <- wl2_prob_rep %>% 
+  left_join(wl2_sub_dist_avg) %>% 
+  group_by(pop, elev_m, Wtr_Year_TempDist_Recent, Wtr_Year_PPTDist_Recent) %>% 
+  summarise(meanEst=mean(ProbFitness, na.rm = TRUE), semEst=sem(ProbFitness, na.rm=TRUE)) %>%
+  mutate(RepYear=if_else(meanEst==0, "None",
+                         if_else(pop=="TM2", "Both Years", "Year 2 Only")))
+prob_fitness_summary_sub$RepYear <- factor(prob_fitness_summary_sub$RepYear,
+                                               levels = c('None','Year 2 Only', 'Both Years'))
 ```
 
 ## Figure 2: Geo distance
+```{r}
+probfit_geo <- prob_fitness_summary %>% 
+  ggplot(aes(x=Geographic_Dist, y=meanEst, group = pop, color=elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_point(aes(shape=RepYear), size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.2, linewidth = 2) +
+  annotate("text", x = 136.2622, y= 0.095, label = "WL2", 
+           colour = "purple", fontface="bold", size = 22 / .pt) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Probability of \n Successfully Reproducing", x="Geographic Distance (m)", 
+       color="Elevation (m)", shape="Rep Year(s)") +
+  theme(text=element_text(size=30), axis.text.x = element_text(angle = 45,  hjust = 1))
+
+repsurvy2_geo <- wl2_surv_to_bud_y2_summary %>% 
+  ggplot(aes(x=Geographic_Dist, y=meanEst, group = pop, colour = elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.2, linewidth = 2) +
+  annotate("text", x = 9500, y= 0.8333333, label = "WL2", 
+           colour = "purple", fontface="bold", size = 22 / .pt) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0), limits = c(0.4,1.05)) +
+  labs(y="Survival to Budding Y2", x="Geographic Distance (m)", colour = "Elevation (m)") +
+  theme(text=element_text(size=30), axis.text.x = element_text(angle = 45,  hjust = 1))
+
+fig2_geo <- ggarrange(probfit_geo, repsurvy2_geo, 
+                        labels = c("A)", "B)"), 
+                        font.label = list(size=30, face = "plain"), 
+                        ncol=2, nrow=1) 
+ggsave("../output/WL2_Traits/Figure2_Geo.png", width = 26, height = 9, units = "in")
+```
 
 ## Figure 3: Gower's recent water year climate distance
+```{r}
+probfit_gower <- prob_fitness_summary %>% 
+  ggplot(aes(x=Wtr_Year_GD_Recent, y=meanEst, group = pop, color=elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_point(aes(shape=RepYear), size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.02,linewidth = 2) +
+  annotate("text", x = 0.3959884, y= 0.095, label = "WL2", 
+           colour = "purple", fontface="bold", size = 22 / .pt) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Probability of \n Successfully Reproducing", x="Recent Water Year Climate Dist", 
+       color="Elevation (m)", shape="Rep Year(s)") +
+  theme(text=element_text(size=30))
+
+repsurvy2_gower <- wl2_surv_to_bud_y2_summary %>% 
+  ggplot(aes(x=Wtr_Year_GD_Recent, y=meanEst, group = pop, colour = elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.02,linewidth = 2) +
+  annotate("text", x = 0.25, y= 0.8333333, label = "WL2", 
+           colour = "purple", fontface="bold", size = 22 / .pt) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0), limits = c(0.4,1.05)) +
+  labs(y="Survival to Budding Y2", x="Recent Water Year Climate Dist", colour = "Elevation (m)") +
+  theme(text=element_text(size=30))
+
+fig3_gower <- ggarrange(probfit_gower, repsurvy2_gower, 
+                        labels = c("A)", "B)"), 
+                        font.label = list(size=30, face = "plain"), 
+                        ncol=2, nrow=1) 
+ggsave("../output/WL2_Traits/Figure3_WtrYrGowers.png", width = 26, height = 9, units = "in")
+```
 
 ## Figure 4: Temp and PPT recent water climate distance
+```{r}
+WYtemp_probfit <- prob_fitness_summary_sub %>% 
+  ggplot(aes(x=Wtr_Year_TempDist_Recent, y=meanEst, group = pop, color=elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_point(aes(shape=RepYear), size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.3,linewidth = 2) +
+  annotate("text", x = 0.6300972	, y= 0.095, label = "WL2", 
+           colour = "purple", fontface="bold", size = 22 / .pt) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Probability of \n Successfully Reproducing", x="Recent Water Year Temp Dist (°C)", 
+       color="Elevation (m)", shape="Rep Year(s)") +
+  theme(text=element_text(size=30))
+
+WYppt_probfit <- prob_fitness_summary_sub %>% 
+  ggplot(aes(x=Wtr_Year_PPTDist_Recent, y=meanEst, group = pop, color=elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_point(aes(shape=RepYear), size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.3,linewidth = 2) +
+  annotate("text", x = -546.96536, y= 0.095, label = "WL2", 
+           colour = "purple", fontface="bold", size = 22 / .pt) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Probability of \n Successfully Reproducing", x="Recent Water Year PPT Dist (mm)", 
+       color="Elevation (m)", shape="Rep Year(s)") +
+  theme(text=element_text(size=30))
+
+WYtemp_repsurvy2 <- wl2_surv_to_bud_y2_summary_sub %>% 
+  ggplot(aes(x=Wtr_Year_TempDist_Recent, y=meanEst, group = pop, colour = elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.3,linewidth = 2) +
+  annotate("text", x = 0.4, y= 0.8333333, label = "WL2", 
+           colour = "purple", fontface="bold", size = 22 / .pt) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0), limits = c(0.4,1.05)) +
+  labs(y="Survival to Budding Y2", x="Recent Water Year Temp Dist (°C)", colour = "Elevation (m)") +
+  theme(text=element_text(size=30))
+
+WYppt_repsurvy2 <- wl2_surv_to_bud_y2_summary_sub %>% 
+  ggplot(aes(x=Wtr_Year_PPTDist_Recent, y=meanEst, group = pop, colour = elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.3,linewidth = 2) +
+  annotate("text", x = 143, y= 0.8333333, label = "WL2", 
+           colour = "purple", fontface="bold", size = 22 / .pt) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0), limits = c(0.4,1.05)) +
+  labs(y="Survival to Budding Y2", x="Recent Water Year PPT Dist (mm)", colour = "Elevation (m)") +
+  theme(text=element_text(size=30))
+
+fig4_sub <- ggarrange(WYtemp_probfit, WYtemp_repsurvy2, 
+                        WYppt_probfit, WYppt_repsurvy2, 
+                        labels = c("A)", "B)", "C)", "D)"), 
+                        font.label = list(size=30, face = "plain"), 
+                        ncol=2, nrow=2) 
+ggsave("../output/WL2_Traits/Figure4_TmpPPT.png", width = 26, height = 18, units = "in")
+```
 
 ## Figure S5: Additional Gower's recent water year climate distance 
+```{r}
+est_gower <- wl2_establishment %>% 
+  group_by(pop, elev_m, Wtr_Year_GD_Recent, Wtr_Year_GD_Historical) %>% 
+  summarise(meanEst=mean(Establishment, na.rm = TRUE), semEst=sem(Establishment, na.rm=TRUE)) %>%
+  ggplot(aes(x=Wtr_Year_GD_Recent, y=meanEst, group = pop, colour = elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.02, linewidth = 2) +
+  annotate("text", x = 0.3959884, y= 0.65, label = "WL2", 
+           colour = "purple", fontface="bold", size = 22 / .pt) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Establishment", x="Recent Water Year Climate Dist", 
+       color="Elevation (m)") +
+  theme(text=element_text(size=30))
+
+y1surv_gower <- wl2_y1surv %>% 
+  group_by(pop, elev_m, GrwSsn_GD_Recent, Wtr_Year_GD_Recent) %>% 
+  summarise(meanSurv=mean(Survival, na.rm = TRUE), semSurv=sem(Survival, na.rm=TRUE)) %>% 
+  ggplot(aes(x=Wtr_Year_GD_Recent, y=meanSurv, group = pop, colour = elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanSurv-semSurv,ymax=meanSurv+semSurv),width=.02,linewidth = 2) +
+  annotate("text", x = 0.42, y= 0.7884615, label = "WL2", 
+           colour = "purple", fontface="bold", size = 22 / .pt) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Y1 Survival", x="Recent Water Year Climate Dist", colour="Elevation (m)") +
+  theme(text=element_text(size=30))
+
+wintersurv_gower <- winter_surv %>% 
+  filter(pop!="WR") %>% 
+  group_by(pop, elev_m, Wtr_Year_GD_Recent) %>% 
+  summarise(meanSurv=mean(WinterSurv, na.rm = TRUE), semSurv=sem(WinterSurv, na.rm=TRUE)) %>% 
+  ggplot(aes(x=Wtr_Year_GD_Recent, y=meanSurv, group = pop, colour = elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanSurv-semSurv,ymax=meanSurv+semSurv),width=.02,linewidth = 2) +
+  annotate("text", x = 0.227, y= 0.24, label = "WL2", 
+           colour = "purple", fontface="bold", size = 22 / .pt) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Winter Survival", x="Recent Water Year Climate Dist", colour="Elevation (m)") +
+  theme(text=element_text(size=30))
+
+figs5_sub <- ggarrange(est_gower, y1surv_gower, 
+                        wintersurv_gower, 
+                        labels = c("A)", "B)", "C)"), 
+                        font.label = list(size=30, face = "plain"), 
+                        ncol=2, nrow=2) 
+ggsave("../output/WL2_Traits/FigureS5_WTRYRGowers.png", width = 26, height = 18, units = "in")
+```
 
 ## Figure S6: Additonal Temp and PPT recent water yar climate distance
+```{r}
+WYtemp_est <- wl2_establishment %>% 
+  left_join(wl2_sub_dist_2023) %>% 
+  group_by(pop, elev_m, Wtr_Year_TempDist_Recent, Wtr_Year_TempDist_Historic) %>% 
+  summarise(meanEst=mean(Establishment, na.rm = TRUE), semEst=sem(Establishment, na.rm=TRUE)) %>% 
+  ggplot(aes(x=Wtr_Year_TempDist_Recent, y=meanEst, group = pop, color=elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.3,linewidth = 2) +
+  annotate("text", x = 1.6352917, y= 0.65, label = "WL2", 
+           colour = "purple", fontface="bold", size = 22 / .pt) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Establishment", x="Recent Water Year Temp Dist", 
+       color="Elevation (m)") +
+  theme(text=element_text(size=30))
+
+WYppt_est <- wl2_establishment %>% 
+  left_join(wl2_sub_dist_2023) %>% 
+  group_by(pop, elev_m, Wtr_Year_PPTDist_Recent, Wtr_Year_PPTDist_Historic) %>% 
+  summarise(meanEst=mean(Establishment, na.rm = TRUE), semEst=sem(Establishment, na.rm=TRUE)) %>% 
+  ggplot(aes(x=Wtr_Year_PPTDist_Recent, y=meanEst, group = pop, color=elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.3,linewidth = 2) +
+  annotate("text", x = -1120, y= 0.5714286, label = "WL2", 
+           colour = "purple", fontface="bold", size = 22 / .pt) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Establishment", x="Recent Water Year PPT Dist", 
+       color="Elevation (m)") +
+  theme(text=element_text(size=30))
+
+WYtemp_y1surv <- wl2_y1surv %>% 
+  left_join(wl2_sub_dist_2023) %>% 
+  group_by(pop, elev_m, Wtr_Year_TempDist_Recent, Wtr_Year_TempDist_Historic) %>% 
+  summarise(meanEst=mean(Survival, na.rm = TRUE), semEst=sem(Survival, na.rm=TRUE)) %>% 
+  ggplot(aes(x=Wtr_Year_TempDist_Recent, y=meanEst, group = pop, colour = elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.02,linewidth = 2) +
+  annotate("text", x = 1.6352917, y= 0.88, label = "WL2", 
+           colour = "purple", fontface="bold", size = 22 / .pt) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Y1 Survival", x="Recent Water Year Temp Dist", colour="Elevation (m)") +
+  theme(text=element_text(size=30))
+
+figs6_gower <- ggarrange(WYtemp_est, WYtemp_y1surv, 
+                        WYppt_est, 
+                        labels = c("A)", "B)", "C)"), 
+                        font.label = list(size=30, face = "plain"), 
+                        ncol=2, nrow=2) 
+ggsave("../output/WL2_Traits/FigureS6_TmpPPT.png", width = 26, height = 18, units = "in")
+```
 
 ## Additional figures (come back to these)
 
