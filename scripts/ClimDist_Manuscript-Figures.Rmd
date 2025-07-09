@@ -1,0 +1,50 @@
+---
+title: "Manuscript-Figures"
+author: "Brandie QC"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Figures for WL2 Climate Distance Manuscript
+
+## Libraries
+```{r}
+library(tidyverse)
+```
+
+## Load Data
+```{r}
+wl2_establishment <- read_csv("../output/WL2_Traits/WL2_Establishment.csv")
+wl2_y1surv <- read_csv("../output/WL2_Traits/WL2_Y1Surv.csv")
+winter_surv <- read_csv("../output/WL2_Traits/WL2_WinterSurv_2324.csv")
+wl2_surv_to_bud_y2 <- read_csv("../output/WL2_Traits/WL2_Surv_to_Rep_Y2_2324.csv")
+wl2_prob_rep
+```
+
+## Figure 2: Geo distance
+
+## Figure 3: Gower's recent water year climate distance
+
+## Figure 4: Temp and PPT recent water climate distance
+
+## Figure S5: Additional Gower's recent water year climate distance 
+
+## Figure S6: Additonal Temp and PPT recent water yar climate distance
+
+## Additional figures (come back to these)
+
+-   Figure 1: Population map and PCAs
+
+-   Figure S1: Pearson's correlations
+
+-   Figure S2: PCAs with PC1 and PC2
+
+-   Figure S3: Gower's climate distance across pops
+
+-   Figure S4: Establishment relat with geo distance
+
+-   Figure S7: Growth season climate distance effects
