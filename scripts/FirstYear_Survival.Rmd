@@ -212,6 +212,7 @@ wl2_y1_surv <- WL2_firstyear_mort_prep %>%
   filter(Establishment==1) %>% 
   mutate(Survival=if_else(pheno=="X" | is.na(pheno), 0, 1)) %>% 
   select(block:Genotype, pop:rep, elevation.group:Wtr_Year_GD_Historical, Geographic_Dist, Elev_Dist, pheno, Survival)
+#write_csv(wl2_y1_surv, "../output/WL2_Traits/WL2_Y1Surv.csv")
 #wl2_y1_surv %>% group_by(pop) %>% summarise(n=n()) %>% arrange(n) #min sample size = 4 
 
 ucd_y1_surv <- UCD_firstyear_mort_prep %>% 
