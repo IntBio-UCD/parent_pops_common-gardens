@@ -371,7 +371,7 @@ PC_anova
 lmer_results_grwssn %>% select(-data, -glm) %>% unnest(anova) %>%
   filter(PC=="PC2"| PC=="PC4") #the two PCs with most sig p-values for timepd
 
-#mod_test <- glm(PC4 ~ TimePd*elev_m*Lat, data=all_bioclim_flint_avgs_locs.pc)
+#mod_test <- glm(PC1 ~ TimePd*elev_m*Lat, data=all_bioclim_flint_avgs_locs.pc)
 #summary(mod_test)
 #anova(mod_test)
 ```
@@ -390,7 +390,7 @@ autoplot(all_bioclim_flint_avgs.pc, data = bioclim_flint_grwseason_avgs,
 
 all_bioclim_flint_avgs_locs.pc_avg %>% 
   mutate(group=str_c(parent.pop,elev_m))  %>%
-  ggplot(aes(x=PC2, y=PC4, shape=TimePd, color=elev_m)) +
+  ggplot(aes(x=PC1, y=PC2, shape=TimePd, color=elev_m)) +
   scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
   geom_point(size=2, alpha=0.7) +
   geom_text_repel(aes(label = parent.pop)) +
@@ -398,6 +398,11 @@ all_bioclim_flint_avgs_locs.pc_avg %>%
   geom_path(aes(group=group),arrow = arrow(length=unit(5, "points")), linewidth = .8)
 #high elev climate seems to be shifting to be more similar to low elev 
 
+#all_bioclim_flint_avgs_locs.pc_avg %>% filter(parent.pop=="WL2")
+```
+
+## 2023 Add the Garden to the Final PCA 
+```{r}
 home_sites_pca <- all_bioclim_flint_avgs_locs.pc_avg %>% 
   mutate(group=str_c(parent.pop,elev_m))  %>%
   ggplot(aes(x=PC2, y=PC4, shape=TimePd, color=elev_m)) +
@@ -405,23 +410,18 @@ home_sites_pca <- all_bioclim_flint_avgs_locs.pc_avg %>%
   #geom_point(size=2, alpha=0.7) +
   labs(x="PC2 (30.76%)", y="PC4 (10.65%)", color="Elevation (m)") +
   geom_vline(xintercept = 0, linetype="dashed") + geom_hline(yintercept = 0, linetype="dashed") +
-  annotate("text", x = -0.06, y= -0.13, label = "WL2", colour = "purple") +
+  annotate("text", x = -0.06, y= -0.09, label = "WL2", colour = "purple", size=7) +
   geom_path(aes(group=group),arrow = arrow(length=unit(5, "points")), linewidth = .8) +
-  annotate("text", x = -4.2, y = -4.5, label = "Low Temp \n Seasonality") +
-  annotate("text", x = 3.6, y = -4.5, label = "High Temp \n Seasonality") +
-  annotate("text", x = -5.23, y = -3.3, label = "Low Diurnal \n Range") +
-  annotate("text", x = -5.22, y = 2.5, label = "High Diurnal \n Range") +
+  annotate("text", x = -4.2, y = -4.6, label = "Low Temp \n Seasonality", size=6) +
+  annotate("text", x = 3.6, y = -4.6, label = "High Temp \n Seasonality", size=6) +
+  annotate("text", x = -4.7, y = -3, label = "Low Diurnal \n Range", size=6) +
+  annotate("text", x = -4.7, y = 2.8, label = "High Diurnal \n Range", size=6) +
   coord_cartesian(ylim = c(-3.5, 3), xlim = c(-4, 3.5), clip = "off") +
   theme_classic() +
   theme(text=element_text(size=28))
 home_sites_pca
 #ggsave("../output/Climate/GRWSSN_PC2-PC4.png", width = 7, height = 5.5, units = "in")
 
-#all_bioclim_flint_avgs_locs.pc_avg %>% filter(parent.pop=="WL2")
-```
-
-## 2023 Add the Garden to the Final PCA 
-```{r}
 WL2Grdn_pc_prep <- WL2Grdn_flint_bioclim_grwseason %>% select(cwd, ppt, ann_tmean, mean_diurnal_range, temp_seasonality, temp_ann_range, tmean_wettest_month, ann_ppt, ppt_seasonality, ppt_warmest_month, ppt_coldest_month)
 #scale(WL2Grdn_pc_prep, all_bioclim_flint_avgs.pc$center, all_bioclim_flint_avgs.pc$scale) %*% all_bioclim_flint_avgs.pc$rotation  #gives same result as below 
 WL2Grdn_predicted <- predict(all_bioclim_flint_avgs.pc, newdata = WL2Grdn_pc_prep)
@@ -451,10 +451,10 @@ home_sites_pca$data <- rbind(home_sites_pca$data,
 )
 
 home_sites_pca + 
-  geom_point(data=filter(home_sites_pca$data, parent.pop == "WL2_Garden"), size=3, shape = 8, show.legend = FALSE) +
-  annotate("text", x = -.6, y= -2.7, label = "WL2 Garden \n 2023", colour = "purple") +
-  annotate("text", x = 2.7, y= -2.9, label = "WL2 Garden \n 2024", colour = "purple") 
-#ggsave("../output/Climate/GRWSSN_PC2-PC4_PlusGarden.png", width = 7.4, height = 6, units = "in")
+  geom_point(data=filter(home_sites_pca$data, parent.pop == "WL2_Garden"), size=6, shape = 18, show.legend = FALSE) +
+  annotate("text", x = -.6, y= -2.6, label = "WL2 Garden \n 2023", colour = "purple", size=6) +
+  annotate("text", x = 2.7, y= -3, label = "WL2 Garden \n 2024", colour = "purple", size=6) 
+ggsave("../output/Climate/GRWSSN_PC2-PC4_PlusGarden.png", width = 7.4, height = 6, units = "in")
 ```
 
 ## Add the Garden to the PCA with PC1 & PC2
