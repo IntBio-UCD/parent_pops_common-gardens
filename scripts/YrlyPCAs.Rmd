@@ -11,7 +11,14 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # PCAs with yearly variation for each population
 
-## Libraries 
+Notes:
+
+-   You can see how Brandie made Figure S2 (WL2 yearly variation) in "PCAs_Combined.Rmd"
+
+-   You can see how Brandie made the PCAs in Figure 1 (climate change at all sites) in "Climate_PCAs_AllYear.Rmd" (starting at line 388) and "Climate_PCAs_Growth_Season.Rmd" (starting at line 252)
+
+## Libraries
+
 ```{r}
 library(tidyverse)
 library(ggalt) #for geom_encircle
@@ -24,18 +31,21 @@ library(viridis) #for color scale
 ## Load Data
 
 ### Home Sites Water Year
+
 ```{r}
 yrly_avgs_recent_wtryr <- read_csv("../output/Climate/fullyear_wtr_year_avgs_Recent.csv") 
 yrly_avgs_hist_wtryr <- read_csv("../output/Climate/fullyear_wtr_year_avgs_Historical.csv") 
 ```
 
-### Home Sites Growth Season 
+### Home Sites Growth Season
+
 ```{r}
 yrly_avgs_recent_grwseason <- read_csv("../output/Climate/growthseason_yrly_avgs_Recent.csv")
 yrly_avgs_hist_grwseason <- read_csv("../output/Climate/growthseason_yrly_avgs_Historical.csv") 
 ```
 
-### WL2 Garden 2023 - Water Year 
+### WL2 Garden 2023 - Water Year
+
 ```{r}
 flint_all_year_wtr_yr <- read_csv("../output/Climate/flint_all_year_wtr_yr.csv")
 pop_elev <- flint_all_year_wtr_yr %>% select(parent.pop:Long) %>% distinct()
@@ -73,6 +83,7 @@ WL2Grdn_flint_bioclim_all_year <- left_join(WL2Grdn_flint_all_year_summary, WL2G
 ```
 
 ### WL2 Garden 2024 - Water Year
+
 ```{r}
 bioclim_2024_allyear_prep_WL2Grdn <- flint_all_year_wtr_yr %>% 
   filter(parent.pop == "WL2_Garden") %>%  #only keep WL2 garden
@@ -107,12 +118,14 @@ WL2Grdn_flint_bioclim_2024_all_year <- left_join(WL2Grdn_flint_2024_all_year_sum
 ```
 
 ### WL2 Garden 2023 - Growth Season
+
 ```{r}
 WL2Grdn_flint_bioclim_grwseason <- read_csv("../output/Climate/WL2_Garden_GrwSsnClim_2023.csv") %>% 
   rename_with(~str_remove(., "_WL2"), everything())
 ```
 
-### WL2 Garden 2024 - Growth Season 
+### WL2 Garden 2024 - Growth Season
+
 ```{r}
 WL2Grdn_flint_bioclim_2024_grwseason <- read_csv("../output/Climate/WL2_Garden_GrwSsnClim_2024.csv") %>% 
   rename_with(~str_remove(., "_WL2"), everything())
