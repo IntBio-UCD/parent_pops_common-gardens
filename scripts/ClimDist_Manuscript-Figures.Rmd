@@ -11,9 +11,6 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-To Do:
-Quick stats on tradeoffs
-
 # Figures for WL2 Climate Distance Manuscript
 
 ## Libraries
