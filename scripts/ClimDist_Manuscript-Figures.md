@@ -1,13 +1,16 @@
 ---
 title: "Manuscript-Figures"
 author: "Brandie QC"
-date: "2025-07-17"
+date: "2025-07-21"
 output: 
   html_document: 
     keep_md: true
 ---
 
 
+
+To Do:
+Quick stats on tradeoffs
 
 # Figures for WL2 Climate Distance Manuscript
 
@@ -462,43 +465,7 @@ y1_surv_to_bud_summary <- wl2_surv_to_bud_y1 %>%
 ## `.groups` argument.
 ```
 
-
-## Figure 2: Geo distance
-
-``` r
-probfit_geo <- prob_fitness_summary %>% 
-  ggplot(aes(x=Geographic_Dist, y=meanProbFit, group = pop, color=elev_m)) +
-  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
-  geom_point(aes(shape=RepYear), size=6) + 
-  geom_errorbar(aes(ymin=meanProbFit-semEst,ymax=meanProbFit+semEst),width=.2, linewidth = 2) +
-  annotate("text", x = 136.2622, y= 0.095, label = "WL2", 
-           colour = "purple", fontface="bold", size = 22 / .pt) +
-  theme_classic() + 
-  scale_y_continuous(expand = c(0.01, 0)) +
-  labs(y="Probability of \n Successfully Reproducing", x="Geographic Distance (m)", 
-       color="Elevation (m)", shape="Rep Year(s)") +
-  theme(text=element_text(size=30), axis.text.x = element_text(angle = 45,  hjust = 1))
-
-repsurvy2_geo <- wl2_surv_to_bud_y2_summary %>% 
-  ggplot(aes(x=Geographic_Dist, y=meanSurvtoBudY2, group = pop, colour = elev_m)) +
-  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
-  geom_point(size=6) + 
-  geom_errorbar(aes(ymin=meanSurvtoBudY2-semEst,ymax=meanSurvtoBudY2+semEst),width=.2, linewidth = 2) +
-  annotate("text", x = 9500, y= 0.8333333, label = "WL2", 
-           colour = "purple", fontface="bold", size = 22 / .pt) +
-  theme_classic() + 
-  scale_y_continuous(expand = c(0.01, 0), limits = c(0.4,1.05)) +
-  labs(y="Survival to Budding Y2", x="Geographic Distance (m)", colour = "Elevation (m)") +
-  theme(text=element_text(size=30), axis.text.x = element_text(angle = 45,  hjust = 1))
-
-fig2_geo <- ggarrange(probfit_geo, repsurvy2_geo, 
-                        labels = c("A)", "B)"), 
-                        font.label = list(size=30, face = "plain"), 
-                        ncol=2, nrow=1) 
-#ggsave("../output/WL2_Traits/Figure2_Geo.png", width = 26, height = 9, units = "in")
-```
-
-## Figure 3: Gower's recent water year climate distance
+## Figure 2: Gower's recent water year climate distance
 
 ``` r
 probfit_gower <- prob_fitness_summary %>% 
@@ -530,10 +497,10 @@ fig3_gower <- ggarrange(probfit_gower, repsurvy2_gower,
                         labels = c("A)", "B)"), 
                         font.label = list(size=30, face = "plain"), 
                         ncol=2, nrow=1) 
-#ggsave("../output/WL2_Traits/Figure3_WtrYrGowers.png", width = 26, height = 9, units = "in")
+ggsave("../output/WL2_Traits/Figure2_WtrYrGowers.png", width = 26, height = 9, units = "in")
 ```
 
-## Figure 4: Temp and PPT recent water climate distance
+## Figure 3: Temp and PPT recent water climate distance
 
 ``` r
 WYtemp_probfit <- prob_fitness_summary_sub %>% 
@@ -591,7 +558,64 @@ fig4_sub <- ggarrange(WYtemp_probfit, WYtemp_repsurvy2,
                         labels = c("A)", "B)", "C)", "D)"), 
                         font.label = list(size=30, face = "plain"), 
                         ncol=2, nrow=2) 
-#ggsave("../output/WL2_Traits/Figure4_TmpPPT.png", width = 26, height = 18, units = "in")
+ggsave("../output/WL2_Traits/Figure3_TmpPPT.png", width = 26, height = 18, units = "in")
+```
+
+## Figure S4: Geographic Distance
+
+``` r
+est_geo <- wl2_establishment %>% 
+  group_by(pop, elev_m, Geographic_Dist) %>% 
+  summarise(meanEst=mean(Establishment, na.rm = TRUE), semEst=sem(Establishment, na.rm=TRUE)) %>% 
+  ggplot(aes(x=Geographic_Dist, y=meanEst, group = pop, color=elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.02, linewidth = 2) +
+  annotate("text", x = 136.2622, y=0.50, label = "WL2", 
+           colour = "purple", fontface="bold", size = 22 / .pt) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Establishment", x="Geographic Distance (m)", 
+       color="Elevation (m)") +
+  theme(text=element_text(size=30), axis.text.x = element_text(angle = 45,  hjust = 1))
+```
+
+```
+## `summarise()` has grouped output by 'pop', 'elev_m'. You can override using the
+## `.groups` argument.
+```
+
+``` r
+probfit_geo <- prob_fitness_summary %>% 
+  ggplot(aes(x=Geographic_Dist, y=meanProbFit, group = pop, color=elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_point(aes(shape=RepYear), size=6) + 
+  geom_errorbar(aes(ymin=meanProbFit-semEst,ymax=meanProbFit+semEst),width=.2, linewidth = 2) +
+  annotate("text", x = 136.2622, y= 0.095, label = "WL2", 
+           colour = "purple", fontface="bold", size = 22 / .pt) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Probability of \n Successfully Reproducing", x="Geographic Distance (m)", 
+       color="Elevation (m)", shape="Rep Year(s)") +
+  theme(text=element_text(size=30), axis.text.x = element_text(angle = 45,  hjust = 1))
+
+repsurvy2_geo <- wl2_surv_to_bud_y2_summary %>% 
+  ggplot(aes(x=Geographic_Dist, y=meanSurvtoBudY2, group = pop, colour = elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanSurvtoBudY2-semEst,ymax=meanSurvtoBudY2+semEst),width=.2, linewidth = 2) +
+  annotate("text", x = 9500, y= 0.8333333, label = "WL2", 
+           colour = "purple", fontface="bold", size = 22 / .pt) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0), limits = c(0.4,1.05)) +
+  labs(y="Survival to Budding Y2", x="Geographic Distance (m)", colour = "Elevation (m)") +
+  theme(text=element_text(size=30), axis.text.x = element_text(angle = 45,  hjust = 1))
+
+fig2_geo <- ggarrange(probfit_geo, est_geo, repsurvy2_geo, 
+                        labels = c("A)", "B)", "C)"), 
+                        font.label = list(size=30, face = "plain"), 
+                        ncol=2, nrow=2) 
+ggsave("../output/WL2_Traits/FigureS4_Geo.png", width = 26, height = 18, units = "in")
 ```
 
 ## Figure S5: Additional Gower's recent water year climate distance 
@@ -751,6 +775,7 @@ figs6_gower <- ggarrange(WYtemp_est, WYtemp_y1surv,
                         ncol=2, nrow=2) 
 #ggsave("../output/WL2_Traits/FigureS6_TmpPPT.png", width = 26, height = 18, units = "in")
 ```
+
 ## Tradeoffs between fitness metrics
 
 
@@ -968,6 +993,9 @@ all_fitness %>%
 
 ![](ClimDist_Manuscript-Figures_files/figure-html/unnamed-chunk-14-11.png)<!-- -->
 
+### Quick Stats
+
+
 
 ## Additional figures (come back to these)
 
@@ -978,7 +1006,5 @@ all_fitness %>%
 -   Figure S2: PCAs with PC1 and PC2
 
 -   Figure S3: Gower's climate distance across pops
-
--   Figure S4: Establishment relat with geo distance
 
 -   Figure S7: Growth season climate distance effects
