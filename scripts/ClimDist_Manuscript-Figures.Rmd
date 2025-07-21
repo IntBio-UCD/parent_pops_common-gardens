@@ -24,6 +24,10 @@ library(ggpubr) #ggarrange
 sem <- function(x, na.rm=FALSE) {           #for caclulating standard error
   sd(x,na.rm=na.rm)/sqrt(length(na.omit(x)))
 } 
+
+arcsin_transform <- function(x) { #for arcsine transforming probabilities 
+  asin(sqrt(x))
+}
 ```
 
 ## Load Data
@@ -191,7 +195,7 @@ fig3_gower <- ggarrange(probfit_gower, repsurvy2_gower,
                         labels = c("A)", "B)"), 
                         font.label = list(size=30, face = "plain"), 
                         ncol=2, nrow=1) 
-ggsave("../output/WL2_Traits/Figure2_WtrYrGowers.png", width = 26, height = 9, units = "in")
+#ggsave("../output/WL2_Traits/Figure2_WtrYrGowers.png", width = 26, height = 9, units = "in")
 ```
 
 ## Figure 3: Temp and PPT recent water climate distance
@@ -251,7 +255,7 @@ fig4_sub <- ggarrange(WYtemp_probfit, WYtemp_repsurvy2,
                         labels = c("A)", "B)", "C)", "D)"), 
                         font.label = list(size=30, face = "plain"), 
                         ncol=2, nrow=2) 
-ggsave("../output/WL2_Traits/Figure3_TmpPPT.png", width = 26, height = 18, units = "in")
+#ggsave("../output/WL2_Traits/Figure3_TmpPPT.png", width = 26, height = 18, units = "in")
 ```
 
 ## Figure S4: Geographic Distance
@@ -300,7 +304,7 @@ fig2_geo <- ggarrange(probfit_geo, est_geo, repsurvy2_geo,
                         labels = c("A)", "B)", "C)"), 
                         font.label = list(size=30, face = "plain"), 
                         ncol=2, nrow=2) 
-ggsave("../output/WL2_Traits/FigureS4_Geo.png", width = 26, height = 18, units = "in")
+#ggsave("../output/WL2_Traits/FigureS4_Geo.png", width = 26, height = 18, units = "in")
 ```
 
 ## Figure S5: Additional Gower's recent water year climate distance 
@@ -503,10 +507,57 @@ all_fitness %>%
 ```
 
 ### Quick Stats
+Arcsin transformed proportions
+which is: asin(sqrt(p))
 ```{r}
-
+allfitness_asin <- all_fitness %>% 
+  #change NAs to neg so that they will come out as NAs (no built in na.rm to sart function):
+  mutate(meanY1Surv = if_else(is.na(meanY1Surv), -1, meanY1Surv), 
+         meanSurvtoBudY1 = if_else(is.na(meanSurvtoBudY1), -1, meanSurvtoBudY1),
+         meanFruitsY1 = if_else(is.na(meanFruitsY1), -1, meanFruitsY1),
+         meanWintSurv = if_else(is.na(meanWintSurv), -1, meanWintSurv),
+         meanSurvtoBudY2 = if_else(is.na(meanSurvtoBudY2), -1, meanSurvtoBudY2),
+         meanFruitsY2 = if_else(is.na(meanFruitsY2), -1, meanFruitsY2)) %>% 
+  #arcsin transform mean proportions 
+  mutate(across(starts_with("mean"), arcsin_transform, .names = "arctr_{.col}"))
+head(allfitness_asin)
+names(allfitness_asin)
 ```
 
+```{r}
+est_y1surv <- lm(arctr_meanY1Surv ~ arctr_meanEst, data=allfitness_asin)
+summary(est_y1surv) #sig pos relat
+
+est_wintsurv <- lm(arctr_meanWintSurv ~ arctr_meanEst, data=allfitness_asin)
+summary(est_wintsurv) #sig pos relat
+
+est_y2surv <- lm(arctr_meanSurvtoBudY2 ~ arctr_meanEst, data=allfitness_asin)
+summary(est_y2surv) #not sig neg relat
+
+est_y2fruits <- lm(meanFruitsY2 ~ arctr_meanEst, data=allfitness_asin)
+summary(est_y2fruits) #sig pos relat - weird given figure..
+
+
+y1surv_wintsurv <- lm(arctr_meanWintSurv ~ arctr_meanY1Surv, data=allfitness_asin)
+summary(y1surv_wintsurv) #sig pos relat
+
+y1surv_y2surv <- lm(arctr_meanSurvtoBudY2 ~ arctr_meanY1Surv, data=allfitness_asin)
+summary(y1surv_y2surv) #not sig neg relat
+
+y1surv_y2fruits <- lm(meanFruitsY2 ~ arctr_meanY1Surv, data=allfitness_asin)
+summary(y1surv_y2fruits) #sig pos relat - weird given figure..
+
+
+wintsurv_y2surv <- lm(arctr_meanSurvtoBudY2 ~ arctr_meanWintSurv, data=allfitness_asin)
+summary(wintsurv_y2surv) #not sig neg relat
+
+wintsurv_y2fruits <- lm(meanFruitsY2 ~ arctr_meanWintSurv, data=allfitness_asin)
+summary(wintsurv_y2fruits) #sig pos relat - weird given figure..
+
+
+y2surv_y2fruits <- lm(meanFruitsY2 ~ arctr_meanSurvtoBudY2, data=allfitness_asin)
+summary(y2surv_y2fruits) #not sig neg relat 
+```
 
 ## Additional figures (come back to these)
 

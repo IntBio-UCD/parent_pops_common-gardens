@@ -39,6 +39,10 @@ library(ggpubr) #ggarrange
 sem <- function(x, na.rm=FALSE) {           #for caclulating standard error
   sd(x,na.rm=na.rm)/sqrt(length(na.omit(x)))
 } 
+
+arcsin_transform <- function(x) { #for arcsine transforming probabilities 
+  asin(sqrt(x))
+}
 ```
 
 ## Load Data
@@ -497,7 +501,7 @@ fig3_gower <- ggarrange(probfit_gower, repsurvy2_gower,
                         labels = c("A)", "B)"), 
                         font.label = list(size=30, face = "plain"), 
                         ncol=2, nrow=1) 
-ggsave("../output/WL2_Traits/Figure2_WtrYrGowers.png", width = 26, height = 9, units = "in")
+#ggsave("../output/WL2_Traits/Figure2_WtrYrGowers.png", width = 26, height = 9, units = "in")
 ```
 
 ## Figure 3: Temp and PPT recent water climate distance
@@ -558,7 +562,7 @@ fig4_sub <- ggarrange(WYtemp_probfit, WYtemp_repsurvy2,
                         labels = c("A)", "B)", "C)", "D)"), 
                         font.label = list(size=30, face = "plain"), 
                         ncol=2, nrow=2) 
-ggsave("../output/WL2_Traits/Figure3_TmpPPT.png", width = 26, height = 18, units = "in")
+#ggsave("../output/WL2_Traits/Figure3_TmpPPT.png", width = 26, height = 18, units = "in")
 ```
 
 ## Figure S4: Geographic Distance
@@ -615,7 +619,7 @@ fig2_geo <- ggarrange(probfit_geo, est_geo, repsurvy2_geo,
                         labels = c("A)", "B)", "C)"), 
                         font.label = list(size=30, face = "plain"), 
                         ncol=2, nrow=2) 
-ggsave("../output/WL2_Traits/FigureS4_Geo.png", width = 26, height = 18, units = "in")
+#ggsave("../output/WL2_Traits/FigureS4_Geo.png", width = 26, height = 18, units = "in")
 ```
 
 ## Figure S5: Additional Gower's recent water year climate distance 
@@ -994,8 +998,332 @@ all_fitness %>%
 ![](ClimDist_Manuscript-Figures_files/figure-html/unnamed-chunk-14-11.png)<!-- -->
 
 ### Quick Stats
+Arcsin transformed proportions
+which is: asin(sqrt(p))
+
+``` r
+allfitness_asin <- all_fitness %>% 
+  #change NAs to neg so that they will come out as NAs (no built in na.rm to sart function):
+  mutate(meanY1Surv = if_else(is.na(meanY1Surv), -1, meanY1Surv), 
+         meanSurvtoBudY1 = if_else(is.na(meanSurvtoBudY1), -1, meanSurvtoBudY1),
+         meanFruitsY1 = if_else(is.na(meanFruitsY1), -1, meanFruitsY1),
+         meanWintSurv = if_else(is.na(meanWintSurv), -1, meanWintSurv),
+         meanSurvtoBudY2 = if_else(is.na(meanSurvtoBudY2), -1, meanSurvtoBudY2),
+         meanFruitsY2 = if_else(is.na(meanFruitsY2), -1, meanFruitsY2)) %>% 
+  #arcsin transform mean proportions 
+  mutate(across(starts_with("mean"), arcsin_transform, .names = "arctr_{.col}"))
+```
+
+```
+## Warning: There were 8 warnings in `mutate()`.
+## The first warning was:
+## ℹ In argument: `across(starts_with("mean"), arcsin_transform, .names =
+##   "arctr_{.col}")`.
+## Caused by warning in `sqrt()`:
+## ! NaNs produced
+## ℹ Run `dplyr::last_dplyr_warnings()` to see the 7 remaining warnings.
+```
+
+``` r
+head(allfitness_asin)
+```
+
+```
+## # A tibble: 6 × 16
+##   pop   elev_m meanEst meanY1Surv meanSurvtoBudY1 meanFruitsY1 meanWintSurv
+##   <chr>  <dbl>   <dbl>      <dbl>           <dbl>        <dbl>        <dbl>
+## 1 BH      511.   0.615      0.946           0               -1        0.547
+## 2 CC      313    0.648      0.864           0               -1        0.327
+## 3 CP2    2244.   0.511      0.340           0               -1        0    
+## 4 CP3    2266.   0.385      0.429           0               -1        0    
+## 5 DPR    1019.   0.473      0.744           0               -1        0    
+## 6 FR      787    0.354      0.294           0.118           -1        0    
+## # ℹ 9 more variables: meanSurvtoBudY2 <dbl>, meanFruitsY2 <dbl>,
+## #   arctr_meanEst <dbl>, arctr_meanY1Surv <dbl>, arctr_meanSurvtoBudY1 <dbl>,
+## #   arctr_meanFruitsY1 <dbl>, arctr_meanWintSurv <dbl>,
+## #   arctr_meanSurvtoBudY2 <dbl>, arctr_meanFruitsY2 <dbl>
+```
+
+``` r
+names(allfitness_asin)
+```
+
+```
+##  [1] "pop"                   "elev_m"                "meanEst"              
+##  [4] "meanY1Surv"            "meanSurvtoBudY1"       "meanFruitsY1"         
+##  [7] "meanWintSurv"          "meanSurvtoBudY2"       "meanFruitsY2"         
+## [10] "arctr_meanEst"         "arctr_meanY1Surv"      "arctr_meanSurvtoBudY1"
+## [13] "arctr_meanFruitsY1"    "arctr_meanWintSurv"    "arctr_meanSurvtoBudY2"
+## [16] "arctr_meanFruitsY2"
+```
 
 
+``` r
+est_y1surv <- lm(arctr_meanY1Surv ~ arctr_meanEst, data=allfitness_asin)
+summary(est_y1surv) #sig pos relat
+```
+
+```
+## 
+## Call:
+## lm(formula = arctr_meanY1Surv ~ arctr_meanEst, data = allfitness_asin)
+## 
+## Residuals:
+##      Min       1Q   Median       3Q      Max 
+## -0.52631 -0.03985 -0.01692  0.13432  0.34438 
+## 
+## Coefficients:
+##               Estimate Std. Error t value Pr(>|t|)    
+## (Intercept)    -0.4223     0.2649  -1.594    0.127    
+## arctr_meanEst   1.7357     0.3553   4.885 8.96e-05 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 0.2138 on 20 degrees of freedom
+##   (1 observation deleted due to missingness)
+## Multiple R-squared:  0.544,	Adjusted R-squared:  0.5212 
+## F-statistic: 23.86 on 1 and 20 DF,  p-value: 8.961e-05
+```
+
+``` r
+est_wintsurv <- lm(arctr_meanWintSurv ~ arctr_meanEst, data=allfitness_asin)
+summary(est_wintsurv) #sig pos relat
+```
+
+```
+## 
+## Call:
+## lm(formula = arctr_meanWintSurv ~ arctr_meanEst, data = allfitness_asin)
+## 
+## Residuals:
+##      Min       1Q   Median       3Q      Max 
+## -0.53624 -0.15367 -0.05367  0.09636  0.49755 
+## 
+## Coefficients:
+##               Estimate Std. Error t value Pr(>|t|)   
+## (Intercept)    -0.8142     0.3761  -2.165  0.04335 * 
+## arctr_meanEst   1.4468     0.4995   2.897  0.00925 **
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 0.2876 on 19 degrees of freedom
+##   (2 observations deleted due to missingness)
+## Multiple R-squared:  0.3063,	Adjusted R-squared:  0.2698 
+## F-statistic: 8.391 on 1 and 19 DF,  p-value: 0.009246
+```
+
+``` r
+est_y2surv <- lm(arctr_meanSurvtoBudY2 ~ arctr_meanEst, data=allfitness_asin)
+summary(est_y2surv) #not sig neg relat
+```
+
+```
+## 
+## Call:
+## lm(formula = arctr_meanSurvtoBudY2 ~ arctr_meanEst, data = allfitness_asin)
+## 
+## Residuals:
+##        1        2        7       11       15       17       22 
+## -0.02640  0.15557 -0.09645 -0.13103 -0.12634  0.11168  0.11297 
+## 
+## Coefficients:
+##               Estimate Std. Error t value Pr(>|t|)  
+## (Intercept)     1.6563     0.6443   2.570    0.050 .
+## arctr_meanEst  -0.7207     0.7462  -0.966    0.378  
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 0.1361 on 5 degrees of freedom
+##   (16 observations deleted due to missingness)
+## Multiple R-squared:  0.1572,	Adjusted R-squared:  -0.01131 
+## F-statistic: 0.9329 on 1 and 5 DF,  p-value: 0.3785
+```
+
+``` r
+est_y2fruits <- lm(meanFruitsY2 ~ arctr_meanEst, data=allfitness_asin)
+summary(est_y2fruits) #sig pos relat - weird given figure..
+```
+
+```
+## 
+## Call:
+## lm(formula = meanFruitsY2 ~ arctr_meanEst, data = allfitness_asin)
+## 
+## Residuals:
+##     Min      1Q  Median      3Q     Max 
+## -14.734  -6.996  -4.794   6.494  38.988 
+## 
+## Coefficients:
+##               Estimate Std. Error t value Pr(>|t|)  
+## (Intercept)    -14.081      9.669  -1.456   0.1601  
+## arctr_meanEst   29.800     13.261   2.247   0.0355 *
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 12.42 on 21 degrees of freedom
+## Multiple R-squared:  0.1938,	Adjusted R-squared:  0.1555 
+## F-statistic:  5.05 on 1 and 21 DF,  p-value: 0.03551
+```
+
+``` r
+y1surv_wintsurv <- lm(arctr_meanWintSurv ~ arctr_meanY1Surv, data=allfitness_asin)
+summary(y1surv_wintsurv) #sig pos relat
+```
+
+```
+## 
+## Call:
+## lm(formula = arctr_meanWintSurv ~ arctr_meanY1Surv, data = allfitness_asin)
+## 
+## Residuals:
+##      Min       1Q   Median       3Q      Max 
+## -0.41201 -0.12406 -0.03749  0.08719  0.55084 
+## 
+## Coefficients:
+##                  Estimate Std. Error t value Pr(>|t|)    
+## (Intercept)       -0.5048     0.1368  -3.691  0.00155 ** 
+## arctr_meanY1Surv   0.8812     0.1489   5.917 1.07e-05 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 0.2048 on 19 degrees of freedom
+##   (2 observations deleted due to missingness)
+## Multiple R-squared:  0.6482,	Adjusted R-squared:  0.6297 
+## F-statistic: 35.01 on 1 and 19 DF,  p-value: 1.072e-05
+```
+
+``` r
+y1surv_y2surv <- lm(arctr_meanSurvtoBudY2 ~ arctr_meanY1Surv, data=allfitness_asin)
+summary(y1surv_y2surv) #not sig neg relat
+```
+
+```
+## 
+## Call:
+## lm(formula = arctr_meanSurvtoBudY2 ~ arctr_meanY1Surv, data = allfitness_asin)
+## 
+## Residuals:
+##        1        2        7       11       15       17       22 
+##  0.04738  0.06054 -0.14426 -0.02299 -0.09214 -0.02772  0.17919 
+## 
+## Coefficients:
+##                  Estimate Std. Error t value Pr(>|t|)  
+## (Intercept)        2.2758     0.7167   3.175   0.0247 *
+## arctr_meanY1Surv  -1.0045     0.5796  -1.733   0.1436  
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 0.1171 on 5 degrees of freedom
+##   (16 observations deleted due to missingness)
+## Multiple R-squared:  0.3753,	Adjusted R-squared:  0.2504 
+## F-statistic: 3.004 on 1 and 5 DF,  p-value: 0.1436
+```
+
+``` r
+y1surv_y2fruits <- lm(meanFruitsY2 ~ arctr_meanY1Surv, data=allfitness_asin)
+summary(y1surv_y2fruits) #sig pos relat - weird given figure..
+```
+
+```
+## 
+## Call:
+## lm(formula = meanFruitsY2 ~ arctr_meanY1Surv, data = allfitness_asin)
+## 
+## Residuals:
+##     Min      1Q  Median      3Q     Max 
+## -15.713  -3.979  -0.157   3.796  28.666 
+## 
+## Coefficients:
+##                  Estimate Std. Error t value Pr(>|t|)    
+## (Intercept)       -22.227      5.652  -3.933 0.000823 ***
+## arctr_meanY1Surv   34.534      6.251   5.525 2.08e-05 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 8.849 on 20 degrees of freedom
+##   (1 observation deleted due to missingness)
+## Multiple R-squared:  0.6041,	Adjusted R-squared:  0.5844 
+## F-statistic: 30.52 on 1 and 20 DF,  p-value: 2.082e-05
+```
+
+``` r
+wintsurv_y2surv <- lm(arctr_meanSurvtoBudY2 ~ arctr_meanWintSurv, data=allfitness_asin)
+summary(wintsurv_y2surv) #not sig neg relat
+```
+
+```
+## 
+## Call:
+## lm(formula = arctr_meanSurvtoBudY2 ~ arctr_meanWintSurv, data = allfitness_asin)
+## 
+## Residuals:
+##        1        2        7       11       15       17       22 
+## -0.01788  0.08766 -0.10703 -0.09024 -0.14054  0.05188  0.21615 
+## 
+## Coefficients:
+##                    Estimate Std. Error t value Pr(>|t|)   
+## (Intercept)          1.1904     0.1951   6.100  0.00171 **
+## arctr_meanWintSurv  -0.2313     0.2814  -0.822  0.44855   
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 0.1391 on 5 degrees of freedom
+##   (16 observations deleted due to missingness)
+## Multiple R-squared:  0.119,	Adjusted R-squared:  -0.05718 
+## F-statistic: 0.6755 on 1 and 5 DF,  p-value: 0.4485
+```
+
+``` r
+wintsurv_y2fruits <- lm(meanFruitsY2 ~ arctr_meanWintSurv, data=allfitness_asin)
+summary(wintsurv_y2fruits) #sig pos relat - weird given figure..
+```
+
+```
+## 
+## Call:
+## lm(formula = meanFruitsY2 ~ arctr_meanWintSurv, data = allfitness_asin)
+## 
+## Residuals:
+##     Min      1Q  Median      3Q     Max 
+## -14.538  -1.015  -1.015  -1.015  36.733 
+## 
+## Coefficients:
+##                    Estimate Std. Error t value Pr(>|t|)    
+## (Intercept)         0.01474    2.82603   0.005 0.995892    
+## arctr_meanWintSurv 29.16716    6.74609   4.324 0.000366 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 10.15 on 19 degrees of freedom
+##   (2 observations deleted due to missingness)
+## Multiple R-squared:  0.4959,	Adjusted R-squared:  0.4694 
+## F-statistic: 18.69 on 1 and 19 DF,  p-value: 0.0003662
+```
+
+``` r
+y2surv_y2fruits <- lm(meanFruitsY2 ~ arctr_meanSurvtoBudY2, data=allfitness_asin)
+summary(y2surv_y2fruits) #not sig neg relat 
+```
+
+```
+## 
+## Call:
+## lm(formula = meanFruitsY2 ~ arctr_meanSurvtoBudY2, data = allfitness_asin)
+## 
+## Residuals:
+##         1         2         7        11        15        17        22 
+##   2.81592  -6.30287 -12.64271  -5.85294  22.68245  -0.71123   0.01138 
+## 
+## Coefficients:
+##                       Estimate Std. Error t value Pr(>|t|)
+## (Intercept)              40.06      38.73   1.034    0.348
+## arctr_meanSurvtoBudY2   -14.74      37.12  -0.397    0.708
+## 
+## Residual standard error: 12.3 on 5 degrees of freedom
+##   (16 observations deleted due to missingness)
+## Multiple R-squared:  0.03056,	Adjusted R-squared:  -0.1633 
+## F-statistic: 0.1576 on 1 and 5 DF,  p-value: 0.7077
+```
 
 ## Additional figures (come back to these)
 
