@@ -370,6 +370,8 @@ PC_anova
 
 lmer_results_grwssn %>% select(-data, -glm) %>% unnest(anova) %>%
   filter(PC=="PC2"| PC=="PC4") #the two PCs with most sig p-values for timepd
+lmer_results_grwssn %>% select(-data, -glm) %>% unnest(anova) %>%
+  filter(PC=="PC1"| PC=="PC3") #the two other PCs for the manuscript 
 
 #mod_test <- glm(PC1 ~ TimePd*elev_m*Lat, data=all_bioclim_flint_avgs_locs.pc)
 #summary(mod_test)
