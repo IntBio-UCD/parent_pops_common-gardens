@@ -49,30 +49,123 @@ summary(flint_all_year_wtr_yr)
 ## bioclim water year calculations 
 #from Brandie's Climate_PCAs_AllYear.Rmd
 ```{r}
-bioclim_allyear_prep <- flint_all_year_wtr_yr %>% 
+bioclim_allyears_prep <- flint_all_year_wtr_yr %>% 
   rename(tmin=tmn, tmax=tmx, year_cal=year, year=wtr_yr) %>% #rename columns to match what calc_biovars expects, also make sure it uses water year
    arrange(parent.pop, year, months_wtryr) 
+###IMPORTANT ### these annyual calcs are in order of the water year months, NOT the calendar year.  These can be recalculated to be the 
+#calendar year, but this seems to match that framework better
 
-bioclim_all_year <- tibble(parent.pop = NA, year = NA, bio1=NA, bio2=NA, bio4=NA, bio7=NA, bio8=NA, bio9=NA, bio12=NA, bio15=NA, bio18=NA, bio19=NA) #blank tibble to bind calculations to
-bioclim_all_year
+bioclim_all_years <- tibble(parent.pop = NA, year = NA, bio1=NA, bio2=NA, bio4=NA, bio7=NA, bio8=NA, bio9=NA, bio12=NA, bio15=NA, bio18=NA, bio19=NA) #blank tibble to bind calculations to
+bioclim_all_years
 
-popids <- unique(bioclim_allyear_prep$parent.pop) #list of pop ids for for loop 
-years <- unique(bioclim_allyear_prep$year)
+popids <- unique(bioclim_allyears_prep$parent.pop) #list of pop ids for for loop 
+years <- unique(bioclim_allyears_prep$year)
 
 for(i in 1:length(popids)){
     for(j in 1:length(years)) {
-      usedat <- bioclim_allyear_prep %>% filter(parent.pop == popids[i] & year == years[j]) %>% arrange(months_wtryr)
+      usedat <- bioclim_allyears_prep %>% filter(parent.pop == popids[i] & year == years[j]) %>% arrange(months_wtryr)
       A <- cbind.data.frame(parent.pop = popids[i], calc_biovars(usedat))
-      bioclim_all_year <- bind_rows(bioclim_all_year, A)
+      bioclim_all_years <- bind_rows(bioclim_all_years, A)
     }
 }
 
-bioclim_all_year = drop_na(bioclim_all_year)
-summary(bioclim_all_year)
+bioclim_all_years = drop_na(bioclim_all_years)
+summary(bioclim_all_years)
 
 ```
 
+
+```{r}
+bioclim_all_years_final <- bioclim_all_years %>% 
+  select(parent.pop, year, ann_tmean=bio1, mean_diurnal_range=bio2, 
+         temp_seasonality=bio4, temp_ann_range=bio7, tmean_wettest_quarter=bio8,
+         tmean_driest_quarter=bio9, ann_ppt=bio12, ppt_seasonality=bio15,
+         ppt_warmest_quarter=bio18, ppt_coldest_quarter=bio19) 
+head(bioclim_all_years_final)
+summary(bioclim_all_years_final)
+```
+
 ##growing season calculations
+Can't caluclate with the function in QBMS for calculating it because I only want it for the growth season, which for most populations is less than 12 months. 
+https://search.r-project.org/CRAN/refmans/QBMS/html/calc_biovars.html  adapted from Brandie's BioClim_Growth_Season.Rmd
+
+#### Prep
+
+###JENNY START HERE: NEED TO NARROW TO GROWING SEASON MONTHS ####
+Check Flint_Growth_Season.Rmd
+
+Calculating average temp and diurnal range for each month 
+```{r}
+flint_all_year_wtr_yr <- flint_all_year_wtr_yr %>% 
+  mutate(tavg = (tmn + tmx)/2, t_diurnal = (tmx-tmn))
+```
+
+Calculating wettest, driest, warmest, and coldest months 
+
+```{r}
+recent_wettest_month <- flint_all_year_wtr_yr %>%  #there's one wettest month per pop/year
+  group_by(parent.pop, elevation.group, elev_m, year) %>% 
+  slice_max(ppt)
+
+recent_driest_month <- flint_all_year_wtr_yr %>%  #there's more than one driest month for some pops and years 
+  group_by(parent.pop, elevation.group, elev_m, year) %>% 
+  slice_min(ppt)
+
+recent_warmest_month <- flint_all_year_wtr_yr %>% #there's more than one warmest month for 1 pop/year
+  group_by(parent.pop, elevation.group, elev_m, year) %>% 
+  slice_max(tavg)
+
+recent_coldest_month <- flint_all_year_wtr_yr %>% #there's one coldest month per pop/year
+  group_by(parent.pop, elevation.group, elev_m, year) %>% 
+  slice_min(tavg)
+```
+
+Bio 1, 2, 4, 7, 12, 15
+```{r}
+bioclim_growingseason_calc <- flint_all_year_wtr_yr %>% 
+  group_by(parent.pop, elevation.group, elev_m, year) %>% 
+  summarise(ann_tmean=mean(tavg),  #Bio1 - Annual Mean Temperature
+            mean_diurnal_range=mean(t_diurnal), #Bio2 - Mean Diurnal Range
+            temp_seasonality=sd(tavg), #Bio4 - Temperature Seasonality
+            temp_ann_range=(max(tmx))-(min(tmn)), #bio7 - temp annual range
+            ann_ppt=sum(ppt), #bio12 - annual precip
+            ppt_seasonality=cv(ppt+1)) #bio15 - Precipitation Seasonality (+1 to avoid strange CVs for areas where mean rainfaill is < 1)
+bioclim_growingseason_calc
+```
+
+Bio 8(Q), 9(Q), 18(Q), 19(Q)
+```{r}
+#bio8 = tmean_wettest_month
+bio8_recent <- recent_wettest_month %>% 
+  dplyr::select(parent.pop, elevation.group, elev_m, year, tmean_wettest_month=tavg)
+
+#bio9 = tmean_driest_month
+bio9_recent <- recent_driest_month %>% 
+  group_by(parent.pop, elevation.group, elev_m, year) %>% 
+  summarise(tmean_driest_month=mean(tavg)) #taking the average b/c some years where there are multiple driest months 
+
+bio8_9_recent <- full_join(bio8_recent, bio9_recent)
+
+#bio18 = ppt_warmest_month
+bio18_recent <- recent_warmest_month %>% 
+  group_by(parent.pop, elevation.group, elev_m, year) %>% 
+  summarise(ppt_warmest_month=mean(ppt)) #taking the avg b/c more than one warmest month for one pop/year
+
+#bio19 = ppt_coldest_month
+bio19_recent <- recent_wettest_month %>% 
+  dplyr::select(parent.pop, elevation.group, elev_m, year, ppt_coldest_month=ppt)
+
+bio18_19_recent <- full_join(bio18_recent, bio19_recent)
+
+all_periods_recent <- full_join(bio8_9_recent, bio18_19_recent)
+```
+
+Merge all bioclims
+```{r}
+bioclim_recent <- full_join(bioclim_recent_calc, all_periods_recent)
+summary(bioclim_recent)
+write_csv(bioclim_recent, "../output/Climate/BioClim_growthseason_Recent.csv")
+```
 
 
 ## merge water year and growing season calcs 
