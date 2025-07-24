@@ -1,0 +1,143 @@
+---
+title: "YrlyPCAs_jrg"
+author: "Jenny Gremer"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# PCAs with yearly variation for each population
+
+Notes:
+
+-   You can see how Brandie made Figure S2 (WL2 yearly variation) in "PCAs_Combined.Rmd"
+
+-   You can see how Brandie made the PCAs in Figure 1 (climate change at all sites) in "Climate_PCAs_AllYear.Rmd" (starting at line 388) and "Climate_PCAs_Growth_Season.Rmd" (starting at line 252)
+
+## Libraries
+
+```{r}
+library(tidyverse)
+library(ggalt) #for geom_encircle
+library(corrplot) #plotting correlations 
+library(ggfortify) #easier PCA figures
+library(QBMS) #for function calc_biovars to calculate bioclim variables
+library(viridis) #for color scale 
+```
+
+## Load Data
+
+### Home Sites Water Year
+
+```{r}
+yrly_avgs_recent_wtryr <- read_csv("../output/Climate/fullyear_wtr_year_avgs_Recent.csv") %>%
+                          mutate(interval = "wtryr", climint = "recent")
+yrly_avgs_hist_wtryr <- read_csv("../output/Climate/fullyear_wtr_year_avgs_Historical.csv") %>%
+                          mutate(interval = "wtryr", climint = "historic")
+```
+
+### Home Sites Growth Season
+
+```{r}
+yrly_avgs_recent_grwseason <- read_csv("../output/Climate/growthseason_yrly_avgs_Recent.csv")%>%
+                          mutate(interval = "grwseason", climint = "recent")
+yrly_avgs_hist_grwseason <- read_csv("../output/Climate/growthseason_yrly_avgs_Historical.csv") %>%
+                          mutate(interval = "grwseason", climint = "historic")
+```
+
+### WL2 Garden - Water Year
+
+```{r}
+flint_all_year_wtr_yr <- read_csv("../output/Climate/flint_all_year_wtr_yr.csv")
+pop_elev <- flint_all_year_wtr_yr %>% select(parent.pop:Long) %>% distinct()
+
+bioclim_allyear_prep_WL2Grdn <- flint_all_year_wtr_yr %>% 
+  filter(parent.pop == "WL2_Garden") %>%  #only keep WL2 garden
+  rename(tmin=tmn, tmax=tmx, year_cal=year, year=wtr_yr) %>% #rename columns to match what calc_biovars expects, also make sure it uses water year 
+ # filter(year=="2023") %>% #year of the experiment only #jenny commented out to get all years
+  arrange(parent.pop, year, month)
+
+bioclim_all_year_WL2Grdn <- bioclim_allyear_prep_WL2Grdn %>% 
+  calc_biovars() %>% 
+  mutate(parent.pop="WL2_Garden") 
+
+bioclim_all_year_final_WL2Grdn <- bioclim_all_year_WL2Grdn %>% 
+  select(parent.pop, year, ann_tmean=bio1, mean_diurnal_range=bio2, 
+         temp_seasonality=bio4, temp_ann_range=bio7, tmean_wettest_quarter=bio8,
+         tmean_driest_quarter=bio9, ann_ppt=bio12, ppt_seasonality=bio15,
+         ppt_warmest_quarter=bio18, ppt_coldest_quarter=bio19) 
+
+WL2Grdn_elev_bioclim_all_year <- left_join(bioclim_all_year_final_WL2Grdn, pop_elev) %>% 
+  select(parent.pop, elevation.group:Long, year:ppt_coldest_quarter)
+WL2Grdn_elev_bioclim_all_year
+
+WL2Grdn_flint_all_year <- flint_all_year_wtr_yr %>% 
+  filter(parent.pop == "WL2_Garden", wtr_yr=="2023") %>%  #only keep WL2 garden
+  select(parent.pop:month, wtr_yr, cwd, pck, ppt, tmn, tmx)
+
+WL2Grdn_flint_all_year_summary <- WL2Grdn_flint_all_year %>% 
+  group_by(parent.pop, elevation.group, elev_m, Lat, Long) %>% 
+  summarise_at(c("cwd",  "pck", "ppt", "tmn", "tmx"), c(mean), na.rm = TRUE) 
+
+WL2Grdn_flint_bioclim_all_year <- left_join(WL2Grdn_flint_all_year_summary, WL2Grdn_elev_bioclim_all_year) %>% 
+  select(-year)
+```
+
+### WL2 Garden 2024 - Water Year
+
+```{r}
+bioclim_2024_allyear_prep_WL2Grdn <- flint_all_year_wtr_yr %>% 
+  filter(parent.pop == "WL2_Garden") %>%  #only keep WL2 garden
+  rename(tmin=tmn, tmax=tmx, year_cal=year, year=wtr_yr) %>% #rename columns to match what calc_biovars expects, also make sure it uses water year 
+  filter(year=="2024") %>% #year of the experiment only 
+  arrange(parent.pop, year, month)
+
+bioclim_2024_all_year_WL2Grdn <- bioclim_2024_allyear_prep_WL2Grdn %>% 
+  calc_biovars() %>% 
+  mutate(parent.pop="WL2_Garden", year=="2024") 
+
+bioclim_2024_all_year_final_WL2Grdn <- bioclim_2024_all_year_WL2Grdn %>% 
+  select(parent.pop, year, ann_tmean=bio1, mean_diurnal_range=bio2, 
+         temp_seasonality=bio4, temp_ann_range=bio7, tmean_wettest_quarter=bio8,
+         tmean_driest_quarter=bio9, ann_ppt=bio12, ppt_seasonality=bio15,
+         ppt_warmest_quarter=bio18, ppt_coldest_quarter=bio19) 
+
+WL2Grdn_elev_bioclim_2024_all_year <- left_join(bioclim_2024_all_year_final_WL2Grdn, pop_elev) %>% 
+  select(parent.pop, elevation.group:Long, year:ppt_coldest_quarter)
+WL2Grdn_elev_bioclim_2024_all_year
+
+WL2Grdn_flint_2024_all_year <- flint_all_year_wtr_yr %>% 
+  filter(parent.pop == "WL2_Garden", wtr_yr=="2024") %>%  #only keep WL2 garden
+  select(parent.pop:month, wtr_yr, cwd, pck, ppt, tmn, tmx)
+
+WL2Grdn_flint_2024_all_year_summary <- WL2Grdn_flint_2024_all_year %>% 
+  group_by(parent.pop, elevation.group, elev_m, Lat, Long) %>% 
+  summarise_at(c("cwd",  "pck", "ppt", "tmn", "tmx"), c(mean), na.rm = TRUE) 
+
+WL2Grdn_flint_bioclim_2024_all_year <- left_join(WL2Grdn_flint_2024_all_year_summary, WL2Grdn_elev_bioclim_2024_all_year) %>% 
+  select(-year)
+```
+
+### WL2 Garden 2023 - Growth Season
+
+```{r}
+WL2Grdn_flint_bioclim_grwseason <- read_csv("../output/Climate/WL2_Garden_GrwSsnClim_2023.csv") %>% 
+  rename_with(~str_remove(., "_WL2"), everything())
+```
+
+### WL2 Garden 2024 - Growth Season
+
+```{r}
+WL2Grdn_flint_bioclim_2024_grwseason <- read_csv("../output/Climate/WL2_Garden_GrwSsnClim_2024.csv") %>% 
+  rename_with(~str_remove(., "_WL2"), everything())
+```
+#### combine dataframes ####
+```{r}
+yrly_avgs_recent_wtryr
+yrly_avgs_hist_wtryr
+yrly_avgs_recent_grwseason
+yrly_avgs_hist_grwseason
+```

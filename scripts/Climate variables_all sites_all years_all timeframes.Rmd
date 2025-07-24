@@ -1,0 +1,78 @@
+---
+title: "Climatevars_all sites_all years_all timeframes"
+author: "JR Gremer"
+date: "2025-07-23"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+#clear console if needed
+#rm(list = ls())
+```
+
+# This code compiles and calculates all flint and bioclim variables for each site, year, and timeframe
+
+
+## load libraries ##
+```{r}
+library(tidyverse)
+library(QBMS) #for function calc_biovars to calculate bioclim variables
+```
+ 
+## load data and identify time frames ##
+```{r}
+flint_all_year_wtr_yr <- read_csv("../output/Climate/flint_all_year_wtr_yr.csv") %>%
+                         mutate(timeframe = case_when(
+                                year < 1964 ~ "beforehistoric",
+                                year >= 1964 & year < 1994 ~ "historic",
+                                year >= 1994 & year <2024 ~ "recent")) %>%
+                         mutate(timeframe = as.factor(timeframe), month = as.factor(month)) %>%
+                         filter(wtr_yr != 1895, wtr_yr < 2024) %>%#remove years with less than 12 months of data 
+                         mutate(months_wtryr = case_when(
+                           month == "nov" ~ 1,
+                           month == "dec" ~ 2,
+                           month == "jan" ~ 3,
+                           month == "feb" ~ 4,
+                           month == "mar" ~ 5,
+                           month == "apr" ~ 6,
+                           month == "may" ~ 7, 
+                           month == "jun" ~ 8,
+                           month == "jul" ~ 9, 
+                           month == "aug" ~ 10,
+                           month == "sep" ~ 11,
+                           month == "oct" ~ 12 ))
+summary(flint_all_year_wtr_yr)
+#water year is calculated Nov - October.  Could have issues with this, but move forward for now.  Can be changed later.  
+```
+
+## bioclim water year calculations 
+#from Brandie's Climate_PCAs_AllYear.Rmd
+```{r}
+bioclim_allyear_prep <- flint_all_year_wtr_yr %>% 
+  rename(tmin=tmn, tmax=tmx, year_cal=year, year=wtr_yr) %>% #rename columns to match what calc_biovars expects, also make sure it uses water year
+   arrange(parent.pop, year, months_wtryr) 
+
+bioclim_all_year <- tibble(parent.pop = NA, year = NA, bio1=NA, bio2=NA, bio4=NA, bio7=NA, bio8=NA, bio9=NA, bio12=NA, bio15=NA, bio18=NA, bio19=NA) #blank tibble to bind calculations to
+bioclim_all_year
+
+popids <- unique(bioclim_allyear_prep$parent.pop) #list of pop ids for for loop 
+years <- unique(bioclim_allyear_prep$year)
+
+for(i in 1:length(popids)){
+    for(j in 1:length(years)) {
+      usedat <- bioclim_allyear_prep %>% filter(parent.pop == popids[i] & year == years[j]) %>% arrange(months_wtryr)
+      A <- cbind.data.frame(parent.pop = popids[i], calc_biovars(usedat))
+      bioclim_all_year <- bind_rows(bioclim_all_year, A)
+    }
+}
+
+bioclim_all_year = drop_na(bioclim_all_year)
+summary(bioclim_all_year)
+
+```
+
+##growing season calculations
+
+
+## merge water year and growing season calcs 
