@@ -14,11 +14,117 @@ knitr::opts_chunk$set(echo = TRUE)
 # This code compiles and calculates all flint and bioclim variables for each site, year, and timeframe
 
 
-## load libraries ##
+## Load libraries 
 ```{r}
 library(tidyverse)
 library(QBMS) #for function calc_biovars to calculate bioclim variables
 ```
+
+## Load the pop and location data
+
+```{r}
+#pop info
+pops_common_garden <- read_csv("../input/WL2_Data/Pops_for_2023_WL2.csv") #pops included in common garden 
+pops_common_garden_nonotes <- pops_common_garden %>% select(parent.pop:phylogroup, elevation.group)
+yose1 <- tibble(parent.pop="YO1", phylogroup=NA) #Need to add YO1 for JGI
+pops_common_garden_jgi <- bind_rows(pops_common_garden_nonotes, yose1)
+
+#extra location info 
+pop_loc <- read_csv("../input/Strep_tort_locs.csv")
+
+#need to change YOSE to YO
+pop_loc_yo <- pop_loc %>% mutate(parent.pop = str_replace(`Site code`, "YOSE(\\d+)", "YO\\1")) %>% select(Lat, Long, elev_m=`Elevation (m)`, parent.pop)
+
+#merge in location info
+pop_elev <- left_join(pops_common_garden_jgi, pop_loc_yo)
+
+#add in common garden sites
+sites_loc <- tibble(parent.pop=c("UCD_Garden", "WL2_Garden"), phylogroup=NA, Lat=c("38.53250", "38.82599"), Long=c("-121.78299", "-120.25090"), elev_m=c(16,2020))
+pops_gardens_locs <- bind_rows(pop_elev, sites_loc)
+
+#add row names
+pops_gardens_locs_rowids <- pops_gardens_locs %>% rowid_to_column() %>% mutate(rowid = as.character(rowid))
+```
+
+## Load raw flint data 
+```{r}
+flint_data1 <- read_csv("../input/Updated_Flint_Climate_Oct2024.csv") #This only goes through Aug 2024
+flint_data2 <- read_csv("../input/Updated_Flint_Sept-Dec2024.csv") #Sept-Dec 2024
+
+#merge:
+flint_data <- bind_rows(flint_data1, flint_data2)
+```
+
+## Convert raw flint into a workable format (original code in "Climate_Shapefile.Rmd")
+```{r}
+cwd <- flint_data %>% filter(str_detect(DataFileName, "cwd"))
+cwd_long <- cwd %>% 
+  pivot_longer(!DataFileName, names_to = "rowid", values_to = "cwd") %>% 
+  extract(DataFileName, c("year", "month"), "(\\d+)(.*)", convert = TRUE) %>% 
+  separate(month, into = c("month", "file_type")) %>% select(rowid, year, month, cwd)
+
+pet <- flint_data %>% filter(str_detect(DataFileName, "pet"))
+pet_long <- pet %>% 
+  pivot_longer(!DataFileName, names_to = "rowid", values_to = "pet") %>% 
+  extract(DataFileName, c("year", "month"), "(\\d+)(.*)", convert = TRUE) %>% 
+  separate(month, into = c("month", "file_type")) %>% select(rowid, year, month, pet)
+
+aet <- flint_data %>% 
+  filter(str_detect(DataFileName, "aet"))
+aet_long <- aet %>% 
+  pivot_longer(!DataFileName, names_to = "rowid", values_to = "aet") %>% 
+  extract(DataFileName, c("year", "month"), "(\\d+)(.*)", convert = TRUE) %>% 
+  separate(month, into = c("month", "file_type")) %>% select(rowid, year, month, aet)
+
+pck <- flint_data %>% filter(str_detect(DataFileName, "pck"))
+pck_long <- pck %>% 
+  pivot_longer(!DataFileName, names_to = "rowid", values_to = "pck") %>% 
+  extract(DataFileName, c("year", "month"), "(\\d+)(.*)", convert = TRUE) %>% 
+  separate(month, into = c("month", "file_type")) %>% select(rowid, year, month, pck)
+
+ppt <- flint_data %>% filter(str_detect(DataFileName, "ppt"))
+ppt_long <- ppt %>% 
+  pivot_longer(!DataFileName, names_to = "rowid", values_to = "ppt") %>% 
+  extract(DataFileName, c("year", "month"), "(\\d+)(.*)", convert = TRUE) %>% 
+  separate(month, into = c("month", "file_type")) %>% select(rowid, year, month, ppt)
+
+tmn <- flint_data %>% filter(str_detect(DataFileName, "tmn"))
+tmn_long <- tmn %>% 
+  pivot_longer(!DataFileName, names_to = "rowid", values_to = "tmn") %>% 
+  extract(DataFileName, c("year", "month"), "(\\d+)(.*)", convert = TRUE) %>% 
+  separate(month, into = c("month", "file_type")) %>% select(rowid, year, month, tmn)
+
+tmx <- flint_data %>% filter(str_detect(DataFileName, "tmx"))
+tmx_long <- tmx %>% 
+  pivot_longer(!DataFileName, names_to = "rowid", values_to = "tmx") %>% 
+  extract(DataFileName, c("year", "month"), "(\\d+)(.*)", convert = TRUE) %>% 
+  separate(month, into = c("month", "file_type")) %>% select(rowid, year, month, tmx)
+
+#merge:
+flint_long <- full_join(aet_long, cwd_long)
+flint_long <- full_join(flint_long, pck_long)
+flint_long <- full_join(flint_long, pet_long)
+flint_long <- full_join(flint_long, ppt_long)
+flint_long <- full_join(flint_long, tmn_long)
+flint_long <- full_join(flint_long, tmx_long)
+
+flint_pops <- full_join(pops_gardens_locs_rowids, flint_long) 
+#write_csv(flint_pops, "../output/Climate/Flint_AllSites_Dec2024.csv") 
+```
+
+### Subset to only the 23 pops plus the garden sites
+```{r}
+pop_elev_climate <- flint_pops %>% 
+  select(parent.pop, elevation.group, elev_m, Lat:Long, year:tmx) %>% 
+  mutate(year=as.character(year),
+         elevation.group=if_else(parent.pop=="UCD_Garden", "Low", 
+                                 if_else(parent.pop=="WL2_Garden", "High", elevation.group))) %>% 
+  filter(parent.pop!="YO1") #remove YO1 from the dataset 
+#write_csv(pop_elev_climate, "../output/Climate/flint_climate_UCDpops.csv") #this is the file used in "Flint_Growth_Season.Rmd"
+```
+
+## Flint Water Year 
+
  
 ## load data and identify time frames ##
 ```{r}
