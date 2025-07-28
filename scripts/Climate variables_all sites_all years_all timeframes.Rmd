@@ -25,8 +25,10 @@ library(QBMS) #for function calc_biovars to calculate bioclim variables
 ```{r}
 #pop info
 pops_common_garden <- read_csv("../input/WL2_Data/Pops_for_2023_WL2.csv") #pops included in common garden 
-pops_common_garden_nonotes <- pops_common_garden %>% select(parent.pop:phylogroup, elevation.group)
-yose1 <- tibble(parent.pop="YO1", phylogroup=NA) #Need to add YO1 for JGI
+pops_common_garden_nonotes <- pops_common_garden %>% select(parent.pop:phylogroup, elevation.group) #subset columns
+
+#Need to add YO1 for JGI:
+yose1 <- tibble(parent.pop="YO1", phylogroup=NA) 
 pops_common_garden_jgi <- bind_rows(pops_common_garden_nonotes, yose1)
 
 #extra location info 
@@ -115,26 +117,30 @@ flint_pops <- full_join(pops_gardens_locs_rowids, flint_long)
 ### Subset to only the 23 pops plus the garden sites
 ```{r}
 pop_elev_climate <- flint_pops %>% 
-  select(parent.pop, elevation.group, elev_m, Lat:Long, year:tmx) %>% 
-  mutate(year=as.character(year),
-         elevation.group=if_else(parent.pop=="UCD_Garden", "Low", 
+  select(parent.pop, elevation.group, elev_m, Lat:Long, year:tmx) %>% #organize the columns 
+  mutate(elevation.group=if_else(parent.pop=="UCD_Garden", "Low",  #add elevation group for gardens
                                  if_else(parent.pop=="WL2_Garden", "High", elevation.group))) %>% 
   filter(parent.pop!="YO1") #remove YO1 from the dataset 
-#write_csv(pop_elev_climate, "../output/Climate/flint_climate_UCDpops.csv") #this is the file used in "Flint_Growth_Season.Rmd"
+#write_csv(pop_elev_climate, "../output/Climate/flint_climate_UCDpops.csv") #this is the file used in "Flint_Growth_Season.Rmd" and "Climate_PCAs_AllYear.Rmd"
 ```
 
 ## Flint Water Year 
-
- 
-## load data and identify time frames ##
 ```{r}
-flint_all_year_wtr_yr <- read_csv("../output/Climate/flint_all_year_wtr_yr.csv") %>%
-                         mutate(timeframe = case_when(
-                                year < 1964 ~ "beforehistoric",
-                                year >= 1964 & year < 1994 ~ "historic",
-                                year >= 1994 & year <2024 ~ "recent")) %>%
+month_nums <- tibble(month=c("jan","feb","mar","apr","may","jun","jul","aug","sep","oct","nov","dec"),
+                     month_nums=c(1:12)) #give calendar months a number 
+
+#merge:
+flint_all_year_mosnums <- left_join(pop_elev_climate, month_nums) %>% arrange(parent.pop, year, month_nums) 
+
+#define the water year as November-October:
+flint_all_year_wtr_yr <- flint_all_year_mosnums %>% 
+  mutate(wtr_yr = year + month_nums %in% c(11:12)) %>% 
+  mutate(timeframe = case_when(
+                                wtr_yr < 1964 ~ "beforehistoric",
+                                wtr_yr >= 1964 & wtr_yr < 1994 ~ "historic",
+                                wtr_yr >= 1994 & wtr_yr < 2024 ~ "recent")) %>%
                          mutate(timeframe = as.factor(timeframe), month = as.factor(month)) %>%
-                         filter(wtr_yr != 1895, wtr_yr < 2024) %>%#remove years with less than 12 months of data 
+                         filter(wtr_yr != 1895, wtr_yr < 2024) %>% #remove years with less than 12 months of data 
                          mutate(months_wtryr = case_when(
                            month == "nov" ~ 1,
                            month == "dec" ~ 2,
@@ -147,12 +153,15 @@ flint_all_year_wtr_yr <- read_csv("../output/Climate/flint_all_year_wtr_yr.csv")
                            month == "jul" ~ 9, 
                            month == "aug" ~ 10,
                            month == "sep" ~ 11,
-                           month == "oct" ~ 12 ))
+                           month == "oct" ~ 12 )) %>% 
+  select(parent.pop:month, wtr_yr, months_wtryr, timeframe, aet:tmx)  #organize the columns 
 summary(flint_all_year_wtr_yr)
-#water year is calculated Nov - October.  Could have issues with this, but move forward for now.  Can be changed later.  
+#write_csv(flint_all_year_wtr_yr, "../output/Climate/flint_all_year_wtr_yr.csv")
+
+#water year is calculated Nov - October.  Could have issues with this, but move forward for now. Can be changed later. 
 ```
 
-## bioclim water year calculations 
+## Bioclim water year calculations 
 #from Brandie's Climate_PCAs_AllYear.Rmd
 ```{r}
 bioclim_allyears_prep <- flint_all_year_wtr_yr %>% 
