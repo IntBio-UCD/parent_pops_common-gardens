@@ -13,11 +13,12 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # This code compiles and calculates all flint and bioclim variables for each site, year, and timeframe
 
-
 ## Load libraries 
 ```{r}
 library(tidyverse)
-library(QBMS) #for function calc_biovars to calculate bioclim variables
+library(raster) #for the CV function 
+library(conflicted)
+conflicts_prefer(dplyr::select())
 ```
 
 ## Load the pop and location data
@@ -154,53 +155,72 @@ flint_all_year_wtr_yr <- flint_all_year_mosnums %>%
                            month == "aug" ~ 10,
                            month == "sep" ~ 11,
                            month == "oct" ~ 12 )) %>% 
-  select(parent.pop:month, wtr_yr, months_wtryr, timeframe, aet:tmx)  #organize the columns 
+  select(parent.pop:month, timeframe, wtr_yr, months_wtryr, aet:tmx)  #organize the columns 
 summary(flint_all_year_wtr_yr)
 #write_csv(flint_all_year_wtr_yr, "../output/Climate/flint_all_year_wtr_yr.csv")
 
 #water year is calculated Nov - October.  Could have issues with this, but move forward for now. Can be changed later. 
+
+unique(flint_all_year_wtr_yr$parent.pop)
 ```
 
 ## Bioclim water year calculations 
-#from Brandie's Climate_PCAs_AllYear.Rmd
+
+Note: Changed this from using the calc_biovars function in the QBMS package to calculating by hand to match the growing season calculations. Referenced this r code: https://github.com/rspatial/dismo/blob/master/R/biovars.R 
+
 ```{r}
-bioclim_allyears_prep <- flint_all_year_wtr_yr %>% 
-  rename(tmin=tmn, tmax=tmx, year_cal=year, year=wtr_yr) %>% #rename columns to match what calc_biovars expects, also make sure it uses water year
-   arrange(parent.pop, year, months_wtryr) 
-###IMPORTANT ### these annyual calcs are in order of the water year months, NOT the calendar year.  These can be recalculated to be the 
-#calendar year, but this seems to match that framework better
+# Calculating average temp and diurnal range for each month
+bioclim_wtr_yr_prep <- flint_all_year_wtr_yr %>% 
+  mutate(tavg = (tmn + tmx)/2, t_diurnal = (tmx-tmn))
 
-bioclim_all_years <- tibble(parent.pop = NA, year = NA, bio1=NA, bio2=NA, bio4=NA, bio7=NA, bio8=NA, bio9=NA, bio12=NA, bio15=NA, bio18=NA, bio19=NA) #blank tibble to bind calculations to
-bioclim_all_years
+#Bio 1, 2, 4, 7, 12, 15
+bioclim_wtr_yr_calc <- bioclim_wtr_yr_prep %>% 
+  group_by(parent.pop, elevation.group, elev_m, timeframe, wtr_yr) %>% 
+  summarise(ann_tmean=mean(tavg),  #Bio1 - Annual Mean Temperature
+            mean_diurnal_range=mean(t_diurnal), #Bio2 - Mean Diurnal Range
+            temp_seasonality=sd(tavg), #Bio4 - Temperature Seasonality
+            temp_ann_range=(max(tmx))-(min(tmn)), #bio7 - temp annual range
+            ann_ppt=sum(ppt), #bio12 - annual precip
+            ppt_seasonality=cv(ppt+1)) #bio15 - Precipitation Seasonality (+1 to avoid strange CVs for areas where mean rainfaill is < 1)
 
-popids <- unique(bioclim_allyears_prep$parent.pop) #list of pop ids for for loop 
-years <- unique(bioclim_allyears_prep$year)
+# Calculating wettest, driest, warmest, and coldest months 
+wettest_month <- bioclim_wtr_yr_prep %>%  #there's one wettest month per pop/year
+  group_by(parent.pop, elevation.group, elev_m, timeframe, wtr_yr) %>% 
+  slice_max(ppt)
+driest_month <- bioclim_wtr_yr_prep %>%  #there's more than one driest month for some pops and years 
+  group_by(parent.pop, elevation.group, elev_m, timeframe, wtr_yr) %>% 
+  slice_min(ppt)
+warmest_month <- bioclim_wtr_yr_prep %>% #there's more than one warmest month for 1 pop/year
+  group_by(parent.pop, elevation.group, elev_m, timeframe, wtr_yr) %>% 
+  slice_max(tavg)
+coldest_month <- bioclim_wtr_yr_prep %>% #there's more than one driest month for some pops and years 
+  group_by(parent.pop, elevation.group, elev_m, timeframe, wtr_yr) %>% 
+  slice_min(tavg)
 
-for(i in 1:length(popids)){
-    for(j in 1:length(years)) {
-      usedat <- bioclim_allyears_prep %>% filter(parent.pop == popids[i] & year == years[j]) %>% arrange(months_wtryr)
-      A <- cbind.data.frame(parent.pop = popids[i], calc_biovars(usedat))
-      bioclim_all_years <- bind_rows(bioclim_all_years, A)
-    }
-}
+# Bio 8, 9, 18, 19
+bio8_wtryr <- wettest_month %>% #bio8 = tmean_wettest_month
+  dplyr::select(parent.pop, elevation.group, elev_m, timeframe, wtr_yr, tmean_wettest_month=tavg)
+bio9_wtryr <- driest_month %>% #bio9 = tmean_driest_month
+  group_by(parent.pop, elevation.group, elev_m, timeframe, wtr_yr) %>% 
+  summarise(tmean_driest_month=mean(tavg)) #taking the average b/c some years where there are multiple driest months 
+bio18_wtryr <- warmest_month %>% #bio18 = ppt_warmest_month
+  group_by(parent.pop, elevation.group, elev_m, timeframe, wtr_yr) %>% 
+  summarise(ppt_warmest_month=mean(ppt)) #taking the avg b/c more than one warmest month for one pop/year
+bio19_wtryr <- coldest_month %>% #bio19 = ppt_coldest_month
+  group_by(parent.pop, elevation.group, elev_m, timeframe, wtr_yr) %>% 
+  summarise(ppt_coldest_month=mean(ppt)) #taking the avg b/c more than one coldest month for one pop/year
+#merge:
+bio8_9_wtryr <- full_join(bio8_wtryr, bio9_wtryr) #merge
+bio18_19_wtryr <- full_join(bio18_wtryr, bio19_wtryr) 
+all_periods_wtryr <- full_join(bio8_9_wtryr, bio18_19_wtryr)
 
-bioclim_all_years = drop_na(bioclim_all_years)
-summary(bioclim_all_years)
-
+#Merge all bioclims
+bioclim_wtryr <- full_join(bioclim_wtr_yr_calc, all_periods_wtryr)
+summary(bioclim_wtryr)
 ```
 
 
-```{r}
-bioclim_all_years_final <- bioclim_all_years %>% 
-  select(parent.pop, year, ann_tmean=bio1, mean_diurnal_range=bio2, 
-         temp_seasonality=bio4, temp_ann_range=bio7, tmean_wettest_quarter=bio8,
-         tmean_driest_quarter=bio9, ann_ppt=bio12, ppt_seasonality=bio15,
-         ppt_warmest_quarter=bio18, ppt_coldest_quarter=bio19) 
-head(bioclim_all_years_final)
-summary(bioclim_all_years_final)
-```
-
-##growing season calculations
+## growing season calculations
 Can't caluclate with the function in QBMS for calculating it because I only want it for the growth season, which for most populations is less than 12 months. 
 https://search.r-project.org/CRAN/refmans/QBMS/html/calc_biovars.html  adapted from Brandie's BioClim_Growth_Season.Rmd
 
