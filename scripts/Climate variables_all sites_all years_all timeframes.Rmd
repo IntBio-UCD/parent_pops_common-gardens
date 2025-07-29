@@ -28,10 +28,24 @@ Note: Due to changes to how bioclim is calculated for water year and how the gro
 ## Load libraries
 
 ```{r}
-library(tidyverse)
 library(raster) #for the CV function 
+library(tidyverse)
 library(conflicted)
 conflicts_prefer(dplyr::select())
+conflicts_prefer(dplyr::filter)
+
+sem <- function(x, na.rm=FALSE) { #standard error function 
+  sd(x,na.rm=na.rm)/sqrt(length(na.omit(x)))
+} 
+
+true_round <- function(number, digits) { #rounding function that bypasses R's round to even default
+  posneg <- sign(number)
+  number <- abs(number) * 10^digits
+  number <- number + 0.5 + sqrt(.Machine$double.eps)
+  number <- trunc(number)
+  number <- number / 10 ^ digits
+  number * posneg
+} 
 ```
 
 ## Load the pop and location data
@@ -179,8 +193,6 @@ summary(flint_all_year_wtr_yr)
 #write_csv(flint_all_year_wtr_yr, "../output/Climate/flint_all_year_wtr_yr.csv")
 
 #water year is calculated Nov - October.  Could have issues with this, but move forward for now. Can be changed later. 
-
-unique(flint_all_year_wtr_yr$parent.pop)
 ```
 
 ## Bioclim water year calculations
@@ -229,7 +241,7 @@ bio19_wtryr <- coldest_month %>% #bio19 = ppt_coldest_month
   group_by(parent.pop, elevation.group, elev_m, timeframe, wtr_yr) %>% 
   summarise(ppt_coldest_month=mean(ppt)) #taking the avg b/c more than one coldest month for one pop/year
 #merge:
-bio8_9_wtryr <- full_join(bio8_wtryr, bio9_wtryr) #merge
+bio8_9_wtryr <- full_join(bio8_wtryr, bio9_wtryr) 
 bio18_19_wtryr <- full_join(bio18_wtryr, bio19_wtryr) 
 all_periods_wtryr <- full_join(bio8_9_wtryr, bio18_19_wtryr)
 
@@ -246,20 +258,317 @@ Note: Originally calculated this separately for recent and historical time perio
 
 Adapted from Brandie's Flint_Growth_Season.Rmd
 
+### Prelim Calcs
 ```{r}
+pop_elev_climate_60 <- pop_elev_climate %>% 
+  filter(parent.pop != "UCD_Garden", parent.pop != "WL2_Garden") %>% #remove garden sites
+  filter(year >= 1964, year < 2024) %>%  #use the most recent 60 years
+  select(parent.pop:month, cwd, pck, ppt, tmn, tmx) %>% 
+  mutate(month = recode(month, #convert months to numbers 
+  jan = 1,
+  feb = 2,
+  mar = 3,
+  apr = 4,
+  may = 5,
+  jun = 6,
+  jul = 7,
+  aug = 8,
+  sep = 9,
+  oct = 10,
+  nov = 11,
+  dec = 12
+))
 
+pop_elev_climate_60_avgs <- pop_elev_climate_60 %>% 
+  group_by(parent.pop, elevation.group, elev_m, month) %>% 
+  summarise_at(c("cwd", "pck", "ppt", "tmn", "tmx"), c(mean, sem), na.rm = TRUE) #60 year averages per month for each pop
+names(pop_elev_climate_60_avgs) <- gsub("fn2", "sem", colnames(pop_elev_climate_60_avgs))
+names(pop_elev_climate_60_avgs) <-gsub("fn1", "mean", colnames(pop_elev_climate_60_avgs))
+pop_elev_climate_60_avgs <- pop_elev_climate_60_avgs %>% mutate(PckSum=sum(pck_mean)) #estimate of average total snowpack in a year 
+```
+
+
+### Populations that get less than 70 mm (b/c that's the avg height in Oct at WL2 garden) of snow pack in a year (on average)
+
+-   First month = ppt \>= 25
+
+    -   Remember this month is not included in the final "growth season"
+
+    -   Jenny has used 25 mm as germinating inducing rain (esp b/c it's
+        a sum of ppt for the whole month), 10 mm would probably be fine
+        for sustaining growth
+
+-   Last month = cwd \> 3rd quartile of CWD for those groups of pops
+
+    -   Remember this month is included in the final "growth season"
+
+```{r}
+nosnow_pops_60 <- pop_elev_climate_60_avgs %>% filter(PckSum < 70)
+unique(nosnow_pops_60$parent.pop) #BH, CC, TM2, SC, IH 
+summary(nosnow_pops_60) #3rd quartile of CWD = 85
+
+nosnow_pops_60_tojoin <- nosnow_pops_60 %>% select(parent.pop:elev_m, PckSum) %>% distinct() #pull out PckSum
+nosnow_pops_60_years <- left_join(nosnow_pops_60_tojoin, pop_elev_climate_60) #add PckSum to full 60 year data frame 
+growyear_months <- tibble(month=c(1:12), growmonth=c(5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4)) #start in Sept though due to after-ripening requirements 
+nosnow_60_growyear_months <- full_join(growyear_months, nosnow_pops_60_years) #add grow months to the dataframe 
+
+#first month
+nosnow_60_first_month <- nosnow_60_growyear_months %>%
+  group_by(parent.pop, elevation.group, elev_m, year) %>% 
+  filter(ppt>=25) %>% 
+  arrange(growmonth) %>% 
+  filter(row_number()==1) #get first month for each pop and year with germinating inducing rain 
+nosnow_60_first_month_tomerge <- nosnow_60_first_month %>% 
+  select(parent.pop:elev_m, year, firstmonth=growmonth) #first month is in grow month not calendar month format
+#merge:
+nosnow_60_first_month_col <- full_join(nosnow_60_growyear_months, nosnow_60_first_month_tomerge)
+
+#last month
+nosnow_60_last_month <- nosnow_60_growyear_months %>%
+  group_by(parent.pop, elevation.group, elev_m, year) %>% 
+  filter(cwd>85) %>% #last month is when cwd gets too high 
+  arrange(month) %>% 
+  filter(row_number()==1)
+nosnow_60_last_month_tomerge <- nosnow_60_last_month %>% 
+  select(parent.pop:elev_m, year, lastmonth=growmonth) #last month is in grow month not calendar month format
+nosnow_60_last_month_col <- full_join(nosnow_60_first_month_col, nosnow_60_last_month_tomerge) %>% 
+  select(firstmonth, lastmonth, month:tmx)
+```
+
+#### Checking for weird cases 
+```{r}
+nosnow_60_last_month_col %>% filter(is.na(lastmonth)) %>% arrange(year) #2 years (2005, 2019) when IH doesn't have a last month based on these criteria (cwd never goes above 89 in those years)
+#****CAN EXCLUDE THESE CASES
+nosnow_60_last_month_col %>% filter(is.na(firstmonth)) %>% arrange(year) #1 year (2013) when BH doesn't have a first month based on these criteria (ppt never above 25)
+#****CAN EXCLUDE THIS CASE 
+nosnow_60_last_month_col %>% filter(lastmonth<4) %>% arrange(parent.pop, year) #some cases where last month is less than 4 (earlier than December)
+nosnow_60_last_month_col %>% filter(lastmonth<firstmonth, lastmonth<4) %>% arrange(parent.pop, year) #most of the above are when the last month is before the first month (in growyear, not calendar year)
+#****NEED TO CONVERT LAST MONTH TO CALENDAR YEAR FORMAT FOR AVG CALCS 
+nosnow_60_last_month_col %>% filter(lastmonth>firstmonth & lastmonth<4) %>% arrange(parent.pop, year) #0 cases where last month is after the first month nosnow_60_last_month_col %>% filter(lastmonth==firstmonth) %>% arrange(parent.pop, year) #2 cases (IH, 1989, 1998) where first month and last month are the same 
+#****CAN EXCLUDE THESE CASES
+
+nosnow_60_last_month_col %>% filter(lastmonth==1) %>% arrange(parent.pop, year) #13 cases where Sept is last month 
+nosnow_60_last_month_col %>% filter(lastmonth==2) #0 cases where Oct-Dec is the last month
+nosnow_60_last_month_col %>% filter(firstmonth>4) #0 cases where first month is after December
+nosnow_60_last_month_col %>% filter(growmonth==firstmonth+1, cwd>89) %>% arrange(parent.pop, year) #0 cases where cwd is high in the second growth month
+```
+
+#### Average first and last month
+```{r}
+nosnow_60first_last_month_for_calc <- nosnow_60_last_month_col %>% 
+  filter(!(parent.pop=="IH" & year==1989)) %>% #remove IH: 1989, 1998, 2005, 2019
+  filter(!(parent.pop=="IH" & year==1998)) %>% 
+  filter(!(parent.pop=="IH" & year==2005)) %>% 
+  filter(!(parent.pop=="IH" & year==2019)) %>% 
+  filter(!(parent.pop=="BH" & year==2013)) %>% #remove BH: 2013
+  mutate(lastmonth_cal=if_else(lastmonth<=4, lastmonth+8, lastmonth-4)) %>% #convert last month to cal year for avg calc 
+  select(firstmonth:lastmonth, lastmonth_cal, parent.pop, elevation.group, elev_m, year) %>% 
+  distinct()
+
+nosnow_60_avg_first_last_month <- nosnow_60first_last_month_for_calc %>% 
+  group_by(parent.pop, elevation.group, elev_m) %>% 
+  summarise(AvgFirstMonth=mean(firstmonth), First_sem=sem(firstmonth),
+            AvgLastMonth=mean(lastmonth), Last_sem=sem(lastmonth),
+            AvgLastMonth_cal=mean(lastmonth_cal), Last_cal_sem=sem(lastmonth_cal))
+nosnow_60_avg_first_last_month
+#Start: 2 in growmonth = October 
+#Last: 9 in growmonth = May - w/o converting last month to calendar year format, the cases where growmonth=1 is pulling the last month much earlier and with a much greater standard error --> wrong!
+#Last: 8 in lastmonth_cal = August 
+
+#Used Standard Rounding
+nosnow_avg_first_last_month_60 <- nosnow_60_avg_first_last_month %>% 
+  mutate(AvgFirstMonth=true_round(AvgFirstMonth, 0), 
+          AvgLastMonth=true_round(AvgLastMonth_cal, 0) + 4) %>% #avg in calendar year first to account for cases with last month of Sept, then convert back to grow month format
+  select(parent.pop:elev_m, AvgFirstMonth, AvgLastMonth)
+
+nosnow_60_avg_first_last_month_allmonths <- left_join(nosnow_60_growyear_months, nosnow_avg_first_last_month_60)
+```
+    
+#### Fill in all the months b/t the first and last for the full growth season 
+```{r}
+nosnow_grwseason_60 <- nosnow_60_avg_first_last_month_allmonths %>% 
+  group_by(parent.pop, elevation.group, elev_m, year) %>% 
+  filter(growmonth>AvgFirstMonth) %>% #first and last month are in grow month format not calendar year 
+  filter(growmonth<=AvgLastMonth) %>% 
+  arrange(year,parent.pop, growmonth)
+
+xtabs(~parent.pop+month, data=nosnow_grwseason_60)
+nosnow_grwseason_60 %>% ggplot(aes(x=month)) + geom_histogram() +
+  scale_x_continuous(breaks=c(1, 2, 3, 4, 5,6,7,8,9,10, 11, 12)) +
+  facet_wrap(~parent.pop)
+```
+
+### Populations that get more than 70 mm of snow pack in a year (on average)
+
+-   First month = snowpack = 0 and min temp > 0
+
+    -   Remember this month is not included in the final "growth season"
+
+-   Last month = snowpack. \> 70 mm OR pck > 0 and min temp < 0 OR min temp < -5 (moderate freeze)
+
+Note: “The month name of the snowpack file (that is, pckmar.asc) relates to the first day of the next month (that is, station observations on April 1st correlate with the snowpack file for March)." But this makes sense, a survey on April 1 gives a sense for the total snowpack in March. 
+
+```{r}
+snow_pops_60 <- pop_elev_climate_60_avgs %>% filter(PckSum >= 70)
+unique(snow_pops_60$parent.pop) #18 pops get some significant snowpack per year 
+
+snow_pops_60_tojoin <- snow_pops_60 %>% select(parent.pop:elev_m, PckSum) %>% distinct()
+snow_pops_60_years <- left_join(snow_pops_60_tojoin, pop_elev_climate_60) 
+
+#first month
+snow_60_first_month <- snow_pops_60_years %>%
+  group_by(parent.pop, elevation.group, elev_m, year) %>% 
+  filter(pck==0) %>% 
+  filter(tmn > 0) %>% 
+  arrange(month) %>% 
+  filter(row_number()==1) #get first month for each pop and year with no snowpack for germ
+snow_60_first_month_tomerge <- snow_60_first_month %>% 
+  select(parent.pop:elev_m, year, firstmonth=month)
+snow_60_first_month_col <- full_join(snow_pops_60_years, snow_60_first_month_tomerge)
+
+#last month 
+snow_60_last_month <- snow_60_first_month_col %>%
+  group_by(parent.pop, elevation.group, elev_m, year) %>% 
+  filter(month>firstmonth) %>% 
+  filter(if_else(pck>70, pck>70, 
+                 if_else(pck>0, tmn < 0, tmn <= -5))) %>%  #-5 is moderate freeze (Pardee et al. 2017)
+  arrange(month) %>% 
+  filter(row_number()==1) #get first month after growstart for each pop and year with pck >70 OR pck>0 & tmn <0 OR tmn <-5
+snow_60_last_month_tomerge <- snow_60_last_month %>% 
+  select(parent.pop:elev_m, year, firstmonth,lastmonth=month)
+snow_60_last_month_col <- full_join(snow_60_first_month_col, snow_60_last_month_tomerge) %>% 
+  select(firstmonth, lastmonth, year:tmx)
+```
+
+#### Checking for weird cases
+```{r}
+snow_60_last_month_col %>% filter(is.na(firstmonth)) #no cases where there isn't a firstmonth
+snow_60_last_month_col %>% filter(is.na(lastmonth)) #216 cases where there isn't a lastmonth 
+#***WHAT TO DO FOR THESE CASES? Make the last month 12 (Dec)
+#*no snow_pack, or min temp > -5 
+
+snow_60_last_month_col %>% filter(lastmonth==firstmonth) %>% arrange(parent.pop, year) #no cases where last month is first month 
+
+snow_60_last_month_col %>% filter(lastmonth==firstmonth+1) %>% arrange(parent.pop, year) 
+#***I added a temperature requirement for temp >0 for the first month and still get 16 cases where there is heavy snow in the month after the first month 
+snow_60_last_month_col %>% filter(lastmonth==firstmonth+2) #8 case where there was sig snowpack in the second month after the first month of 0 snowpack 
+
+heavysnow_60 <- snow_60_last_month_col %>% filter(lastmonth==firstmonth+1) %>% filter(month==firstmonth)
+summary(heavysnow_60)
+unique(heavysnow_60$parent.pop)
+heavysnow_60 %>% filter(elev_m>1800)
+#"DPR" "FR" "WL1" "WL2" "WR", "YO4" 
+#*Temps range from just above freezing (0.080) to 3.3 (which seems like an acceptable temp given we vernalize at 4C)
+#*OR START THE CHECK IN FEB FOR POPS > 6000 FT (ONLY 2 ABOVE 6000 FEET, both in 2014)
+#*OR just take these cases out
+```
+
+#### Average first and last month
+```{r}
+snow_60first_last_month_for_calc <- snow_60_last_month_col %>% 
+  mutate(lastmonth=if_else(is.na(lastmonth), 12, lastmonth)) %>% #for cases with no last month - make last month 12
+  filter(lastmonth > firstmonth+2) %>% #remove cases where last month is first month +1 or 2 
+  select(firstmonth:lastmonth, parent.pop, elevation.group, elev_m, year) %>% 
+  distinct()
+#snow_60first_last_month_for_calc %>% filter(parent.pop=="CP2", year=="2011") #converting last month to 12 worked for the cases where it was NA before 
+
+snow_60_avg_first_last_month <- snow_60first_last_month_for_calc %>% 
+  group_by(parent.pop, elevation.group, elev_m) %>% 
+  summarise(AvgFirstMonth=mean(firstmonth), First_sem=sem(firstmonth),
+            AvgLastMonth=mean(lastmonth), Last_sem=sem(lastmonth)) %>% 
+  arrange(elevation.group, elev_m)
+snow_60_avg_first_last_month
+#Start = May-July for "high" elev, Feb-May for "mid" elevation 
+#End = Nov-Dec
+
+#Used Standard Rounding
+snow_avg_first_last_month_60 <- snow_60_avg_first_last_month %>% 
+  mutate(AvgFirstMonth=true_round(AvgFirstMonth, 0), AvgLastMonth=true_round(AvgLastMonth, 0)) %>% 
+  select(parent.pop:elev_m, AvgFirstMonth, AvgLastMonth)
+
+snow_60_avg_first_last_month_allmonths <- left_join(snow_pops_60_years, snow_avg_first_last_month_60)
+```
+
+#### Fill in all the months b/t the first and last 
+```{r}
+snow_grwseason_60 <- snow_60_avg_first_last_month_allmonths %>% 
+  group_by(parent.pop, elevation.group, elev_m, year) %>% 
+  filter(month>AvgFirstMonth) %>% 
+  filter(month<=AvgLastMonth)
+
+xtabs(~parent.pop+month, data=snow_grwseason_60)
+snow_grwseason_60 %>% ggplot(aes(x=month)) + geom_histogram() +
+  scale_x_continuous(breaks=c(1, 2, 3, 4, 5,6,7,8,9,10, 11, 12)) +
+  facet_wrap(~parent.pop)
 ```
 
 ## Flint for growing season months only
+Bind snow and no_snow pops together
+
+```{r}
+flint_60_grwseason <- rbind(nosnow_grwseason_60, snow_grwseason_60) %>% 
+  mutate(timeframe = case_when(
+                                year >= 1964 & year < 1994 ~ "historic",
+                                year >= 1994 & year < 2024 ~ "recent")) %>% 
+  select(parent.pop:elev_m, Lat:Long, timeframe, year, month, PckSum, cwd:tmx) #organize the columns 
+unique(flint_60_grwseason$parent.pop)
+
+#write_csv(flint_60_grwseason, "../output/Climate/flint_climate_growthseason_60.csv")
+```
 
 ## Bioclim growing season calculations
 
-Can't caluclate with the function in QBMS for calculating it because I only want it for the growth season, which for most populations is less than 12 months. <https://search.r-project.org/CRAN/refmans/QBMS/html/calc_biovars.html>
+Can't calculate with the function in QBMS for calculating it because I only want it for the growth season, which for most populations is less than 12 months. <https://search.r-project.org/CRAN/refmans/QBMS/html/calc_biovars.html>
 
 Adapted from Brandie's BioClim_Growth_Season.Rmd
 
 ```{r}
+# Calculating average temp and diurnal range for each month
+bioclim_60_meantemp_prep <- flint_60_grwseason %>% 
+  mutate(tavg = (tmn + tmx)/2, t_diurnal = (tmx-tmn))
 
+# Bio 1, 2, 4, 7, 12, 15
+bioclim_60_calc <- bioclim_60_meantemp_prep %>% 
+  group_by(parent.pop, elevation.group, elev_m, year) %>% 
+  summarise(ann_tmean=mean(tavg),  #Bio1 - Annual Mean Temperature
+            mean_diurnal_range=mean(t_diurnal), #Bio2 - Mean Diurnal Range
+            temp_seasonality=sd(tavg), #Bio4 - Temperature Seasonality
+            temp_ann_range=(max(tmx))-(min(tmn)), #bio7 - temp annual range
+            ann_ppt=sum(ppt), #bio12 - annual precip
+            ppt_seasonality=cv(ppt+1)) #bio15 - Precipitation Seasonality (+1 to avoid strange CVs for areas where mean rainfaill is < 1)
+
+# Calculating wettest, driest, warmest, and coldest months 
+wettest_month <- bioclim_60_meantemp_prep %>%  #there's one wettest month per pop/year
+  group_by(parent.pop, elevation.group, elev_m, timeframe, year) %>% 
+  slice_max(ppt)
+driest_month <- bioclim_60_meantemp_prep %>%  #there's more than one driest month for some pops and years 
+  group_by(parent.pop, elevation.group, elev_m, timeframe, year) %>% 
+  slice_min(ppt)
+warmest_month <- bioclim_60_meantemp_prep %>% #there's one warmest month per pop/year
+  group_by(parent.pop, elevation.group, elev_m, timeframe, year) %>% 
+  slice_max(tavg)
+coldest_month <- bioclim_60_meantemp_prep %>% #there's one coldest month per pop/year
+  group_by(parent.pop, elevation.group, elev_m, timeframe, year) %>% 
+  slice_min(tavg)
+
+# Bio 8, 9, 18, 19
+bio8_60 <- wettest_month %>% #bio8 = tmean_wettest_month
+  dplyr::select(parent.pop, elevation.group, elev_m, year, tmean_wettest_month=tavg)
+bio9_60 <- driest_month %>% #bio9 = tmean_driest_month
+  group_by(parent.pop, elevation.group, elev_m, year) %>% 
+  summarise(tmean_driest_month=mean(tavg)) #taking the average b/c some years where there are multiple driest months 
+bio18_60 <- warmest_month %>% #bio18 = ppt_warmest_month
+  dplyr::select(parent.pop, elevation.group, elev_m, year, tmean_wettest_month=ppt)
+bio19_60 <- coldest_month %>% #bio19 = ppt_coldest_month
+  dplyr::select(parent.pop, elevation.group, elev_m, year, ppt_coldest_month=ppt)
+# Merge:
+bio8_9_60 <- full_join(bio8_60, bio9_60)
+bio18_19_60 <- full_join(bio18_60, bio19_60)
+all_periods_60 <- full_join(bio8_9_60, bio18_19_60)
+
+# Merge all bioclims:
+bioclim_60 <- full_join(bioclim_60_calc, all_periods_60)
+#write_csv(bioclim_60, "../output/Climate/BioClim_growthseason_60.csv")
 ```
 
 ## Merge water year and growing season
