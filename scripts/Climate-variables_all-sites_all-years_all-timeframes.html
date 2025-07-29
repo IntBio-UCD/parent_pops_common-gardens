@@ -390,11 +390,7 @@ S4-S7; Table 1-2)</p></li>
 ## ✖ dplyr::lag()     masks stats::lag()
 ## ✖ dplyr::select()  masks raster::select()
 ## ℹ Use the conflicted package (&lt;http://conflicted.r-lib.org/&gt;) to force all conflicts to become errors</code></pre>
-<pre class="r"><code>#library(conflicted)
-#conflicts_prefer(dplyr::select())
-#conflicts_prefer(dplyr::filter)
-
-sem &lt;- function(x, na.rm=FALSE) { #standard error function 
+<pre class="r"><code>sem &lt;- function(x, na.rm=FALSE) { #standard error function 
   sd(x,na.rm=na.rm)/sqrt(length(na.omit(x)))
 } 
 
@@ -1325,7 +1321,7 @@ bio8_60 &lt;- wettest_month %&gt;% #bio8 = tmean_wettest_month
 <pre><code>## `summarise()` has grouped output by &#39;parent.pop&#39;, &#39;elevation.group&#39;, &#39;elev_m&#39;.
 ## You can override using the `.groups` argument.</code></pre>
 <pre class="r"><code>bio18_60 &lt;- warmest_month %&gt;% #bio18 = ppt_warmest_month
-  dplyr::select(parent.pop, elevation.group, elev_m, year, tmean_wettest_month=ppt)</code></pre>
+  dplyr::select(parent.pop, elevation.group, elev_m, year, ppt_warmest_month=ppt)</code></pre>
 <pre><code>## Adding missing grouping variables: `timeframe`</code></pre>
 <pre class="r"><code>bio19_60 &lt;- coldest_month %&gt;% #bio19 = ppt_coldest_month
   dplyr::select(parent.pop, elevation.group, elev_m, year, ppt_coldest_month=ppt)</code></pre>
@@ -1338,7 +1334,7 @@ bio8_9_60 &lt;- full_join(bio8_60, bio9_60)</code></pre>
 ## year)`</code></pre>
 <pre class="r"><code>all_periods_60 &lt;- full_join(bio8_9_60, bio18_19_60)</code></pre>
 <pre><code>## Joining with `by = join_by(timeframe, parent.pop, elevation.group, elev_m,
-## year, tmean_wettest_month)`</code></pre>
+## year)`</code></pre>
 <pre class="r"><code># Merge all bioclims:
 bioclim_60_grwseason &lt;- full_join(bioclim_60_calc, all_periods_60)</code></pre>
 <pre><code>## Joining with `by = join_by(parent.pop, elevation.group, elev_m, year)`</code></pre>
@@ -1349,7 +1345,33 @@ bioclim_60_grwseason &lt;- full_join(bioclim_60_calc, all_periods_60)</code></pr
 <pre class="r"><code>#flint_all_year_wtr_yr  #flint water year climate data frame with all years and months + both garden sites
 #bioclim_wtryr          #bioclim water year climate data frame with all years + both garden sites
 #flint_60_grwseason     #flint growth season climate data frame with most recent 60 years and grow months + WL2 garden 
-#bioclim_60_grwseason   #bioclim water year climate data frame with most recent 60 years + WL2 garden </code></pre>
+#bioclim_60_grwseason   #bioclim water year climate data frame with most recent 60 years + WL2 garden 
+
+#summarize flint by year to merge it with the bioclim data
+flint_yrly_avgs_wtr_yr &lt;- flint_all_year_wtr_yr %&gt;% 
+  filter(timeframe!=&quot;beforehistoric&quot;, parent.pop!=&quot;UCD_Garden&quot;) %&gt;% 
+  rename(year=wtr_yr, year_cal=year) %&gt;% 
+  group_by(parent.pop, elevation.group, elev_m, Lat, Long, timeframe, year) %&gt;% 
+  summarise_at(c(&quot;cwd&quot;, &quot;pck&quot;, &quot;ppt&quot;, &quot;tmn&quot;, &quot;tmx&quot;), c(mean), na.rm = TRUE)
+
+flint_yrly_avgs_grwssn &lt;- flint_60_grwseason %&gt;% 
+  group_by(parent.pop, elevation.group, elev_m, Lat, Long, timeframe, year) %&gt;% 
+  summarise_at(c(&quot;cwd&quot;, &quot;pck&quot;, &quot;ppt&quot;, &quot;tmn&quot;, &quot;tmx&quot;), c(mean), na.rm = TRUE)
+
+#subset bioclim water year
+bioclim_wtryr_to_merge &lt;- bioclim_wtryr %&gt;% 
+  filter(timeframe!=&quot;beforehistoric&quot;, parent.pop!=&quot;UCD_Garden&quot;) %&gt;% 
+  rename(year=wtr_yr) 
+
+#merge
+wtr_yr_clim &lt;- left_join(flint_yrly_avgs_wtr_yr, bioclim_wtryr_to_merge) %&gt;% mutate(Season=&quot;Water Year&quot;)</code></pre>
+<pre><code>## Joining with `by = join_by(parent.pop, elevation.group, elev_m, timeframe,
+## year)`</code></pre>
+<pre class="r"><code>grwssn_clim &lt;- left_join(flint_yrly_avgs_grwssn, bioclim_60_grwseason) %&gt;% mutate(Season=&quot;Growth Season&quot;)</code></pre>
+<pre><code>## Joining with `by = join_by(parent.pop, elevation.group, elev_m, timeframe,
+## year)`</code></pre>
+<pre class="r"><code>all_clim &lt;- bind_rows(wtr_yr_clim, grwssn_clim)
+#write_csv(all_clim, &quot;../output/Climate/All_Clim.csv&quot;)</code></pre>
 </div>
 </div>
 

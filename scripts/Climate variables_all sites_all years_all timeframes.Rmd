@@ -556,7 +556,7 @@ bio9_60 <- driest_month %>% #bio9 = tmean_driest_month
   group_by(parent.pop, elevation.group, elev_m, year) %>% 
   summarise(tmean_driest_month=mean(tavg)) #taking the average b/c some years where there are multiple driest months 
 bio18_60 <- warmest_month %>% #bio18 = ppt_warmest_month
-  dplyr::select(parent.pop, elevation.group, elev_m, year, tmean_wettest_month=ppt)
+  dplyr::select(parent.pop, elevation.group, elev_m, year, ppt_warmest_month=ppt)
 bio19_60 <- coldest_month %>% #bio19 = ppt_coldest_month
   dplyr::select(parent.pop, elevation.group, elev_m, year, ppt_coldest_month=ppt)
 # Merge:
@@ -576,4 +576,26 @@ bioclim_60_grwseason <- full_join(bioclim_60_calc, all_periods_60)
 #bioclim_wtryr          #bioclim water year climate data frame with all years + both garden sites
 #flint_60_grwseason     #flint growth season climate data frame with most recent 60 years and grow months + WL2 garden 
 #bioclim_60_grwseason   #bioclim water year climate data frame with most recent 60 years + WL2 garden 
+
+#summarize flint by year to merge it with the bioclim data
+flint_yrly_avgs_wtr_yr <- flint_all_year_wtr_yr %>% 
+  filter(timeframe!="beforehistoric", parent.pop!="UCD_Garden") %>% 
+  rename(year=wtr_yr, year_cal=year) %>% 
+  group_by(parent.pop, elevation.group, elev_m, Lat, Long, timeframe, year) %>% 
+  summarise_at(c("cwd", "pck", "ppt", "tmn", "tmx"), c(mean), na.rm = TRUE)
+
+flint_yrly_avgs_grwssn <- flint_60_grwseason %>% 
+  group_by(parent.pop, elevation.group, elev_m, Lat, Long, timeframe, year) %>% 
+  summarise_at(c("cwd", "pck", "ppt", "tmn", "tmx"), c(mean), na.rm = TRUE)
+
+#subset bioclim water year
+bioclim_wtryr_to_merge <- bioclim_wtryr %>% 
+  filter(timeframe!="beforehistoric", parent.pop!="UCD_Garden") %>% 
+  rename(year=wtr_yr) 
+
+#merge
+wtr_yr_clim <- left_join(flint_yrly_avgs_wtr_yr, bioclim_wtryr_to_merge) %>% mutate(Season="Water Year")
+grwssn_clim <- left_join(flint_yrly_avgs_grwssn, bioclim_60_grwseason) %>% mutate(Season="Growth Season")
+all_clim <- bind_rows(wtr_yr_clim, grwssn_clim)
+#write_csv(all_clim, "../output/Climate/All_Clim.csv")
 ```
