@@ -30,9 +30,6 @@ Note: Due to changes to how bioclim is calculated for water year and how the gro
 ```{r}
 library(raster) #for the CV function 
 library(tidyverse)
-library(conflicted)
-conflicts_prefer(dplyr::select())
-conflicts_prefer(dplyr::filter)
 
 sem <- function(x, na.rm=FALSE) { #standard error function 
   sd(x,na.rm=na.rm)/sqrt(length(na.omit(x)))
@@ -248,6 +245,7 @@ all_periods_wtryr <- full_join(bio8_9_wtryr, bio18_19_wtryr)
 #Merge all bioclims
 bioclim_wtryr <- full_join(bioclim_wtr_yr_calc, all_periods_wtryr)
 summary(bioclim_wtryr)
+#write_csv(bioclim_wtryr, "../output/Climate/bioclim_wtr_yr.csv")
 ```
 
 Note: bioclim_wtryr includes the 2 common garden sites
@@ -261,7 +259,7 @@ Adapted from Brandie's Flint_Growth_Season.Rmd
 ### Prelim Calcs
 ```{r}
 pop_elev_climate_60 <- pop_elev_climate %>% 
-  filter(parent.pop != "UCD_Garden", parent.pop != "WL2_Garden") %>% #remove garden sites
+  filter(parent.pop != "UCD_Garden") %>% #remove Davis garden 
   filter(year >= 1964, year < 2024) %>%  #use the most recent 60 years
   select(parent.pop:month, cwd, pck, ppt, tmn, tmx) %>% 
   mutate(month = recode(month, #convert months to numbers 
@@ -410,7 +408,7 @@ Note: “The month name of the snowpack file (that is, pckmar.asc) relates to th
 
 ```{r}
 snow_pops_60 <- pop_elev_climate_60_avgs %>% filter(PckSum >= 70)
-unique(snow_pops_60$parent.pop) #18 pops get some significant snowpack per year 
+unique(snow_pops_60$parent.pop) #18 pops + garden site get some significant snowpack per year 
 
 snow_pops_60_tojoin <- snow_pops_60 %>% select(parent.pop:elev_m, PckSum) %>% distinct()
 snow_pops_60_years <- left_join(snow_pops_60_tojoin, pop_elev_climate_60) 
@@ -443,7 +441,7 @@ snow_60_last_month_col <- full_join(snow_60_first_month_col, snow_60_last_month_
 #### Checking for weird cases
 ```{r}
 snow_60_last_month_col %>% filter(is.na(firstmonth)) #no cases where there isn't a firstmonth
-snow_60_last_month_col %>% filter(is.na(lastmonth)) #216 cases where there isn't a lastmonth 
+snow_60_last_month_col %>% filter(is.na(lastmonth)) #226 cases where there isn't a lastmonth 
 #***WHAT TO DO FOR THESE CASES? Make the last month 12 (Dec)
 #*no snow_pack, or min temp > -5 
 
@@ -567,12 +565,15 @@ bio18_19_60 <- full_join(bio18_60, bio19_60)
 all_periods_60 <- full_join(bio8_9_60, bio18_19_60)
 
 # Merge all bioclims:
-bioclim_60 <- full_join(bioclim_60_calc, all_periods_60)
-#write_csv(bioclim_60, "../output/Climate/BioClim_growthseason_60.csv")
+bioclim_60_grwseason <- full_join(bioclim_60_calc, all_periods_60)
+#write_csv(bioclim_60_grwseason, "../output/Climate/BioClim_growthseason_60.csv")
 ```
 
 ## Merge water year and growing season
 
 ```{r}
-
+#flint_all_year_wtr_yr  #flint water year climate data frame with all years and months + both garden sites
+#bioclim_wtryr          #bioclim water year climate data frame with all years + both garden sites
+#flint_60_grwseason     #flint growth season climate data frame with most recent 60 years and grow months + WL2 garden 
+#bioclim_60_grwseason   #bioclim water year climate data frame with most recent 60 years + WL2 garden 
 ```
