@@ -605,15 +605,29 @@ snow_grwseason_60 %>% ggplot(aes(x=month)) + geom_histogram() +
 
 Bind snow and no_snow pops together
 
-```{r, eval=FALSE}
-flint_60_grwseason <- rbind(nosnow_grwseason_60, snow_grwseason_60) %>% 
+```{r}
+nosnow_grwseason_60_prep <- nosnow_grwseason_60 %>% 
+  select(parent.pop:elev_m, year=grow_yr, #grow season months in grow year format for no snow pops
+         month, firstmonth:tmx)
+snow_grwseason_60_prep <- snow_grwseason_60 %>% 
+  select(parent.pop:elev_m, year=year_cal, #grow season months in calendar year format for snow pops
+         firstmonth:lastmonth, month:tmx)
+
+flint_60_grwseason <- rbind(nosnow_grwseason_60_prep, snow_grwseason_60_prep) %>% 
   mutate(timeframe = case_when(
                                 year >= 1964 & year < 1994 ~ "historic",
                                 year >= 1994 & year < 2024 ~ "recent")) %>% 
-  select(parent.pop:elev_m, Lat:Long, timeframe, year, month, PckSum, cwd:tmx) #organize the columns 
+  mutate(grwssn_length = lastmonth-firstmonth) %>% 
+  select(parent.pop:elev_m, timeframe, year, month,grwssn_length, cwd:tmx) #organize the columns 
+summary(flint_60_grwseason)
 unique(flint_60_grwseason$parent.pop)
+flint_60_grwseason %>% 
+  ggplot(aes(x=fct_reorder(parent.pop, elev_m), y=grwssn_length, fill = elev_m)) +
+  geom_boxplot() +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  theme(axis.text.x = element_text(angle = 45,  hjust = 1))
 
-#write_csv(flint_60_grwseason, "../output/Climate/flint_climate_growthseason_60.csv")
+write_csv(flint_60_grwseason, "../output/Climate/flint_climate_growthseason_60.csv")
 ```
 
 ## Bioclim growing season calculations
@@ -622,7 +636,7 @@ Can't calculate with the function in QBMS for calculating it because I only want
 
 Adapted from Brandie's BioClim_Growth_Season.Rmd
 
-```{r, eval=FALSE}
+```{r}
 # Calculating average temp and diurnal range for each month
 bioclim_60_meantemp_prep <- flint_60_grwseason %>% 
   mutate(tavg = (tmn + tmx)/2, t_diurnal = (tmx-tmn))
@@ -673,7 +687,7 @@ bioclim_60_grwseason <- full_join(bioclim_60_calc, all_periods_60)
 
 ## Merge water year and growing season
 
-```{r, eval=FALSE}
+```{r}
 #flint_all_year_wtr_yr  #flint water year climate data frame with all years and months + both garden sites
 #bioclim_wtryr          #bioclim water year climate data frame with all years + both garden sites
 #flint_60_grwseason     #flint growth season climate data frame with most recent 60 years and grow months + WL2 garden 
@@ -699,5 +713,5 @@ bioclim_wtryr_to_merge <- bioclim_wtryr %>%
 wtr_yr_clim <- left_join(flint_yrly_avgs_wtr_yr, bioclim_wtryr_to_merge) %>% mutate(Season="Water Year")
 grwssn_clim <- left_join(flint_yrly_avgs_grwssn, bioclim_60_grwseason) %>% mutate(Season="Growth Season")
 all_clim <- bind_rows(wtr_yr_clim, grwssn_clim)
-#write_csv(all_clim, "../output/Climate/All_Clim.csv")
+write_csv(all_clim, "../output/Climate/All_Clim.csv")
 ```
