@@ -701,7 +701,7 @@ flint_yrly_avgs_wtr_yr <- flint_all_year_wtr_yr %>%
   summarise_at(c("cwd", "pck", "ppt", "tmn", "tmx"), c(mean), na.rm = TRUE)
 
 flint_yrly_avgs_grwssn <- flint_60_grwseason %>% 
-  group_by(parent.pop, elevation.group, elev_m, Lat, Long, timeframe, year) %>% 
+  group_by(parent.pop, elevation.group, elev_m, timeframe, year) %>% 
   summarise_at(c("cwd", "pck", "ppt", "tmn", "tmx"), c(mean), na.rm = TRUE)
 
 #subset bioclim water year
