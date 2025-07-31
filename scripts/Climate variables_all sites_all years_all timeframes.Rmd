@@ -409,9 +409,11 @@ nosnow_grwseason_60 <- nosnow_60first_last_month %>%
   arrange(parent.pop, grow_yr, growmonth) 
 
 xtabs(~parent.pop+month, data=nosnow_grwseason_60)
-nosnow_grwseason_60 %>% ggplot(aes(x=month)) + geom_histogram() +
-  scale_x_continuous(breaks=c(1, 2, 3, 4, 5,6,7,8,9,10, 11, 12)) +
+nosnow_grwseason_60 %>% ggplot(aes(x=growmonth)) + geom_histogram() +
+  scale_x_continuous(breaks=c(1, 2, 3, 4, 5,6,7,8,9,10, 11, 12, 13)) +
   facet_wrap(~parent.pop)
+
+nosnow_grwseason_60 %>% filter(parent.pop=="IH", grow_yr==1965)
 ```
 
 ### Populations that get more than 70 mm of snow pack in a year (on average)
@@ -473,6 +475,7 @@ snow_60_first_month_col <- full_join(snow_pops_60_years, snow_60_first_month_tom
 snow_60_last_month <- snow_60_first_month_col %>%
   group_by(parent.pop, elevation.group, elev_m, year_cal) %>% 
   filter(month>firstmonth) %>% 
+  filter(month>4) %>% #before adding this, the min last month was 10 (except for cases with Jan germ and Feb snow)
   filter(if_else(pck>70, pck>70, 
                  if_else(pck>0, tmn < 0, tmn <= -5))) %>%  #-5 is moderate freeze (Pardee et al. 2017)
   arrange(month) %>% 
@@ -489,38 +492,43 @@ snow_60_last_month_col <- full_join(snow_60_first_month_col, snow_60_last_month_
 snow_60_last_month_col %>% filter(is.na(firstmonth)) #no cases where there isn't a firstmonth
 snow_60_last_month_col %>% filter(lastmonth==firstmonth) %>% arrange(parent.pop, year_cal) #no cases where last month is first month 
 
-snow_60_last_month_col %>% filter(is.na(lastmonth)) #226 cases where there isn't a lastmonth #*no snow_pack, or min temp > -5 
-#***WHAT TO DO FOR THESE CASES? Make the last month 12 (Dec) OR check the next calendar year to see when pck > 70
+snow_60_last_month_col %>% filter(is.na(lastmonth)) #238 cases where there isn't a lastmonth #*no snow_pack, or min temp > -5 
+#***WHAT TO DO FOR THESE CASES? check the next calendar year to see when pck > 70 and make the last month 12 (Dec) for the ones without that 
 
-snow_60_last_month_col %>% filter(lastmonth==firstmonth+1) %>% arrange(parent.pop, year_cal) 
-#***I added a temperature requirement for temp >0 for the first month and still get 16 cases where there is heavy snow in the month after the first month 
-snow_60_last_month_col %>% filter(lastmonth==firstmonth+2) #8 cases where there was sig snowpack in the second month after the first month of 0 snowpack 
+snow_60_last_month_col %>% filter(lastmonth==firstmonth+1) %>% arrange(parent.pop, year_cal) #0 cases 
+snow_60_last_month_col %>% filter(lastmonth==firstmonth+2) #6 cases where there was sig snowpack in the second month after the first month of 0 snowpack 
 heavysnow_60 <- snow_60_last_month_col %>% filter(lastmonth<=firstmonth+2) %>% filter(month==firstmonth)
-summary(heavysnow_60) #*min temps range from just above freezing (0.080) to 3.31 (which seems like an acceptable temp given we vernalize at 4C)
-unique(heavysnow_60$parent.pop) #9 pops included
-#START THE CHECK IN FEB FOR POPS > 6000 FT? 
-heavysnow_60 %>% filter(elev_m>1800) #(ONLY 5 of the 9 ABOVE 6000 FEET)
-xtabs(~firstmonth, data=heavysnow_60) #most of these have a first month of 1 or 2, but a few = 8 or 9
-xtabs(~lastmonth, data=heavysnow_60) #most of these have a last month of 2 or 3, but a few have 10 or 11
-heavysnow_60 %>% filter(firstmonth>2)
-snow_60_last_month_col %>% filter(parent.pop=="LV1", year_cal==1982) # a few cases with high snowpack all year except Aug-Nov, these cases are fine to leave 
+summary(heavysnow_60) 
+unique(heavysnow_60$parent.pop) #3 pops included (all Lassen)
+#high snowpack all year except Aug-Nov, these cases are fine to leave 
 
-#check what the average start and end months are for these pops
-#check what the min start months are for these pops
-no_heavy_snow <- snow_60_last_month_col %>% filter(lastmonth > firstmonth+2)
-summary(no_heavy_snow) #earliest last month = 10
-no_heavy_snow %>% 
-  group_by(parent.pop, elevation.group) %>% 
-  summarise(minStart=min(firstmonth), meanStart=mean(firstmonth), 
-            maxEnd=max(lastmonth), meanEnd=mean(lastmonth)) %>% 
-  arrange(minStart) #mid elevation populations have some years where they could grow the entire year 
-
-
+snow_60_last_month_col %>% filter(firstmonth<4) %>% filter(pck>70) %>% filter(month>firstmonth, month<10) #13 cases where Jan or Feb = first month, but high snow 1 or 2 months later 
+#look at the distribution of start and end months 
+snow_60_last_month_col %>% 
+  ggplot(aes(x=parent.pop, y=firstmonth)) +
+  geom_boxplot() +
+  scale_y_continuous(breaks=c(1, 2, 3, 4, 5,6,7,8,9,10, 11, 12)) 
+#Jan and Feb are clearly outliers for some higher elev pops 
+#SQ1, SQ2, WL1, WL2 (MAR OUTLIER TOO?), WV, YO4
+snow_60_last_month_col %>% filter(parent.pop=="SQ1", firstmonth==1) %>% 
+  filter(pck>70, month>firstmonth, month<10) #no cases of high snowpack soon after germ
+snow_60_last_month_col %>% filter(parent.pop=="SQ2", firstmonth==2) %>% 
+  filter(pck>70, month>firstmonth, month<10) #no cases of high snowpack soon after germ
+snow_60_last_month_col %>% filter(parent.pop=="WV", firstmonth==1) %>% 
+  filter(pck>70, month>firstmonth, month<10) #no cases of high snowpack soon after germ
+snow_60_last_month_col %>% filter(parent.pop=="YO4", firstmonth<3) %>% 
+  filter(pck>70, month>firstmonth, month<10) #no cases of high snowpack soon after germ
+snow_60_last_month_col %>% filter(parent.pop=="WL1", firstmonth<3) %>% 
+  filter(pck>70, month>firstmonth, month<10) #3 years with high snow pack 1 or 2 months post germ (1991, 2009, 2018)
+snow_60_last_month_col %>% filter(parent.pop=="WL2", firstmonth<=3) %>% 
+  filter(pck>70, month>firstmonth, month<10) #1 year with high snow pack 1 month post germ (2014) 
+#Check with J&J about the above WL1 and WL2 cases, for now just leave them in 
 ```
 
 #### Deal with weird cases
 ```{r}
-snow_60_last_month_grwyr <- snow_60_last_month_col %>%
+#search for the last month in the grow year rather than calendar year for the cases without a last month 
+snow_60_last_month_grwyr <- snow_60_last_month_col %>% 
   filter(month<9) %>% 
   group_by(parent.pop, elevation.group, elev_m, grow_yr) %>% 
   filter(if_else(pck>70, pck>70, 
@@ -529,53 +537,67 @@ snow_60_last_month_grwyr <- snow_60_last_month_col %>%
   filter(row_number()==1)
 snow_60_last_month_grwyr_tomerge <- snow_60_last_month_grwyr %>% 
   ungroup() %>% 
+  mutate(year_cal=grow_yr-1) %>% #will apply these last months to the previous cal year
   select(parent.pop:elev_m, year_cal,lastmonth_grwyr=growmonth) %>% 
   arrange(parent.pop, year_cal)
 snow_60_last_grw_month_col <- left_join(snow_60_last_month_col, snow_60_last_month_grwyr_tomerge) %>% 
   select(firstmonth, lastmonth, lastmonth_grwyr, year_cal:tmx) 
 
-snow_60_last_grw_month_col %>% filter(is.na(lastmonth), !is.na(lastmonth_grwyr)) #use the grow year last month for th
+
 snow_60_last_grw_month_col %>% filter(is.na(lastmonth), is.na(lastmonth_grwyr)) #still some with no last month - use the max last month for these 
-```
+snow_60_last_grw_month_col %>% group_by(parent.pop) %>% summarise(maxEnd=max(lastmonth, na.rm = TRUE)) #max end for every pop = 12 
+snow_60first_last_month <- snow_60_last_grw_month_col %>% 
+  mutate(lastmonth=if_else(is.na(lastmonth) & is.na(lastmonth_grwyr), 12,#assign the max end 
+                           lastmonth))
 
-#### Average first and last month
+snow_60_last_grw_month_col %>% filter(is.na(lastmonth), !is.na(lastmonth_grwyr)) #use the grow year last month for these
+snow_no_end <- snow_60first_last_month %>% 
+  filter(is.na(lastmonth)) %>% 
+  select(-lastmonth)
+snow_no_end_nextyr <- snow_no_end %>%
+  filter(grow_yr>year_cal) %>% #want the next calendar year
+  ungroup() %>% 
+  select(parent.pop, year_cal=grow_yr, firstmonth, lastmonth_grwyr) %>% 
+  distinct() %>% 
+  left_join(pop_elev_climate_60) %>% 
+  filter(growmonth>4) %>% #want only Jan + 
+  filter(growmonth<=lastmonth_grwyr) %>% #only keep the rows for the months between Jan and whatever the end month is in growthmonth format 
+  mutate(year_cal=year_cal-1, #change the calendar year to the previous 
+         month=month+12, #change the month number appropriately 
+          lastmonth=(lastmonth_grwyr-4)+12)
 
-```{r, eval=FALSE}
-snow_60first_last_month_for_calc <- snow_60_last_month_col %>% 
-  mutate(lastmonth=if_else(is.na(lastmonth), 12, lastmonth)) %>% #for cases with no last month - make last month 12
-  filter(lastmonth > firstmonth+2) %>% #remove cases where last month is first month +1 or 2 
-  select(firstmonth:lastmonth, parent.pop, elevation.group, elev_m, year) %>% 
-  distinct()
-#snow_60first_last_month_for_calc %>% filter(parent.pop=="CP2", year=="2011") #converting last month to 12 worked for the cases where it was NA before 
-
-snow_60_avg_first_last_month <- snow_60first_last_month_for_calc %>% 
-  group_by(parent.pop, elevation.group, elev_m) %>% 
-  summarise(AvgFirstMonth=mean(firstmonth), First_sem=sem(firstmonth),
-            AvgLastMonth=mean(lastmonth), Last_sem=sem(lastmonth)) %>% 
-  arrange(elevation.group, elev_m)
-snow_60_avg_first_last_month
-#Start = May-July for "high" elev, Feb-May for "mid" elevation 
-#End = Nov-Dec
-
-#Used Standard Rounding
-snow_avg_first_last_month_60 <- snow_60_avg_first_last_month %>% 
-  mutate(AvgFirstMonth=true_round(AvgFirstMonth, 0), AvgLastMonth=true_round(AvgLastMonth, 0)) %>% 
-  select(parent.pop:elev_m, AvgFirstMonth, AvgLastMonth)
-
-snow_60_avg_first_last_month_allmonths <- left_join(snow_pops_60_years, snow_avg_first_last_month_60)
+snow_no_end_nextyr_lastmonth <- snow_no_end_nextyr %>% 
+  select(parent.pop, year_cal, lastmonth) %>% 
+  distinct() %>% 
+  left_join(snow_no_end) #add last month info to snow_no_end
+  
+#snow_no_end_nextyr
+#snow_60_last_grw_month_col %>% filter(parent.pop=="CP2", year_cal>1975) #the above code worked!
 ```
 
 #### Fill in all the months b/t the first and last
 
-```{r, eval=FALSE}
-snow_grwseason_60 <- snow_60_avg_first_last_month_allmonths %>% 
-  group_by(parent.pop, elevation.group, elev_m, year) %>% 
-  filter(month>AvgFirstMonth) %>% 
-  filter(month<=AvgLastMonth)
+```{r}
+snow_no_end_last_month_fixed <- snow_no_end_nextyr_lastmonth %>% 
+  bind_rows(snow_no_end_nextyr) %>% #add rows for additional months in 
+  arrange(year_cal, month) %>% 
+  select(-Lat, -Long, -growmonth) %>% #remove this since we lost it on the new rows 
+  group_by(parent.pop, elevation.group, elev_m, year_cal) %>% 
+  filter(month>firstmonth) %>%  
+  filter(month<=lastmonth) %>% 
+  arrange(parent.pop, year_cal, month)
+
+snow_grwseason_60 <- snow_60first_last_month %>% 
+  group_by(parent.pop, elevation.group, elev_m, year_cal) %>% 
+  filter(month>firstmonth) %>% #first and last month are in grow month format not calendar year 
+  filter(month<=lastmonth) %>% 
+  bind_rows(snow_no_end_last_month_fixed) %>% 
+  arrange(parent.pop, year_cal, month) %>% 
+  select(parent.pop:elev_m, firstmonth, lastmonth, year_cal:month, cwd:tmx)
 
 xtabs(~parent.pop+month, data=snow_grwseason_60)
 snow_grwseason_60 %>% ggplot(aes(x=month)) + geom_histogram() +
-  scale_x_continuous(breaks=c(1, 2, 3, 4, 5,6,7,8,9,10, 11, 12)) +
+  scale_x_continuous(breaks=c(1, 2, 3, 4, 5,6,7,8,9,10, 11, 12,13)) +
   facet_wrap(~parent.pop)
 ```
 
