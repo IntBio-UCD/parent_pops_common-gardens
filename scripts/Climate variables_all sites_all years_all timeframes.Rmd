@@ -674,9 +674,14 @@ snow_grwseason_60_prep <- snow_grwseason_60 %>%
 WL2_2024_grwssn_prep <- WL2_2024_grwssn %>% 
   select(parent.pop:elev_m, year=year_cal,
          firstmonth:lastmonth, month:tmx)
+WL2_2023_July <- pop_elev_climate %>% 
+  filter(parent.pop=="WL2_Garden", month=="jul", year==2023) %>% #add July 2023 back in 
+  mutate(month=7) %>% 
+  select(parent.pop:elev_m, year, month, cwd, pck, ppt, tmn, tmx)
 
 flint_60_grwseason <- rbind(nosnow_grwseason_60_prep, snow_grwseason_60_prep) %>%
   bind_rows(WL2_2024_grwssn_prep) %>% 
+  bind_rows(WL2_2023_July) %>% 
   mutate(timeframe = case_when(
                                 year >= 1964 & year < 1994 ~ "historic",
                                 year >= 1994 & year < 2024 ~ "recent")) %>% 
