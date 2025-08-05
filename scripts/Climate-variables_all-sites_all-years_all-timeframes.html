@@ -555,10 +555,11 @@ flint_all_year_wtr_yr &lt;- flint_all_year_mosnums %&gt;%
   mutate(timeframe = case_when(
                                 wtr_yr &lt; 1964 ~ &quot;beforehistoric&quot;,
                                 wtr_yr &gt;= 1964 &amp; wtr_yr &lt; 1994 ~ &quot;historic&quot;,
-                                wtr_yr &gt;= 1994 &amp; wtr_yr &lt; 2024 ~ &quot;recent&quot;)) %&gt;%
+                                wtr_yr &gt;= 1994 &amp; wtr_yr &lt; 2024 ~ &quot;recent&quot;,
+                                wtr_yr == 2024 ~ &quot;2024&quot;)) %&gt;%
                          mutate(timeframe = as.factor(timeframe), month = as.factor(month)) %&gt;%
                          filter(wtr_yr != 1895) %&gt;% #remove years with less than 12 months of data 
-  filter(if_else(parent.pop!=&quot;WL2_Garden&quot;, wtr_yr&lt;2024, wtr_yr&lt;=2024)) %&gt;% #only keep the WL2 garden climate for 2024 water year 
+  filter(if_else(parent.pop!=&quot;WL2_Garden&quot;, wtr_yr&lt;2024, wtr_yr&lt;=2024)) %&gt;% #Since the home sites climate ends in 2023, need to keep 2024 for the garden (for climate distance comparisons)
                          mutate(months_wtryr = case_when(
                            month == &quot;nov&quot; ~ 1,
                            month == &quot;dec&quot; ~ 2,
@@ -583,10 +584,10 @@ summary(flint_all_year_wtr_yr)</code></pre>
 ##                                        Max.   :2872.3                     
 ##                                                                           
 ##      Long                year          month                timeframe    
-##  Length:38412       Min.   :1895   apr    : 3201   beforehistoric:20400  
-##  Class :character   1st Qu.:1927   aug    : 3201   historic      : 9000  
-##  Mode  :character   Median :1959   dec    : 3201   recent        : 9000  
-##                     Mean   :1959   feb    : 3201   NA&#39;s          :   12  
+##  Length:38412       Min.   :1895   apr    : 3201   2024          :   12  
+##  Class :character   1st Qu.:1927   aug    : 3201   beforehistoric:20400  
+##  Mode  :character   Median :1959   dec    : 3201   historic      : 9000  
+##                     Mean   :1959   feb    : 3201   recent        : 9000  
 ##                     3rd Qu.:1991   jan    : 3201                         
 ##                     Max.   :2024   jul    : 3201                         
 ##                                    (Other):19206                         
@@ -686,10 +687,10 @@ bioclim_wtryr &lt;- full_join(bioclim_wtr_yr_calc, all_periods_wtryr)</code></pr
 ## wtr_yr)`</code></pre>
 <pre class="r"><code>summary(bioclim_wtryr)</code></pre>
 <pre><code>##   parent.pop        elevation.group        elev_m                timeframe   
-##  Length:3201        Length:3201        Min.   :  16.0   beforehistoric:1700  
-##  Class :character   Class :character   1st Qu.: 748.9   historic      : 750  
-##  Mode  :character   Mode  :character   Median :1934.5   recent        : 750  
-##                                        Mean   :1599.3   NA&#39;s          :   1  
+##  Length:3201        Length:3201        Min.   :  16.0   2024          :   1  
+##  Class :character   Class :character   1st Qu.: 748.9   beforehistoric:1700  
+##  Mode  :character   Mode  :character   Median :1934.5   historic      : 750  
+##                                        Mean   :1599.3   recent        : 750  
 ##                                        3rd Qu.:2353.6                        
 ##                                        Max.   :2872.3                        
 ##      wtr_yr       ann_tmean       mean_diurnal_range temp_seasonality
@@ -754,7 +755,7 @@ pop_elev_climate_60 &lt;- pop_elev_climate %&gt;%
   arrange(parent.pop, year_cal, month)</code></pre>
 <pre><code>## Joining with `by = join_by(month)`</code></pre>
 <pre class="r"><code>pop_elev_climate_60_avgs &lt;- pop_elev_climate_60 %&gt;% 
-  group_by(parent.pop, elevation.group, elev_m, month) %&gt;% 
+  group_by(parent.pop, elevation.group, elev_m,  Lat, Long, month) %&gt;% 
   summarise_at(c(&quot;cwd&quot;, &quot;pck&quot;, &quot;ppt&quot;, &quot;tmn&quot;, &quot;tmx&quot;), c(mean, sem), na.rm = TRUE) #60 year averages per month for each pop
 names(pop_elev_climate_60_avgs) &lt;- gsub(&quot;fn2&quot;, &quot;sem&quot;, colnames(pop_elev_climate_60_avgs))
 names(pop_elev_climate_60_avgs) &lt;-gsub(&quot;fn1&quot;, &quot;mean&quot;, colnames(pop_elev_climate_60_avgs))
@@ -782,37 +783,44 @@ pops</p>
 unique(nosnow_pops_60$parent.pop) #BH, CC, TM2, SC, IH </code></pre>
 <pre><code>## [1] &quot;BH&quot;  &quot;CC&quot;  &quot;IH&quot;  &quot;SC&quot;  &quot;TM2&quot;</code></pre>
 <pre class="r"><code>summary(nosnow_pops_60) #3rd quartile of CWD = 85.15</code></pre>
-<pre><code>##   parent.pop        elevation.group        elev_m          month      
-##  Length:60          Length:60          Min.   :313.0   Min.   : 1.00  
-##  Class :character   Class :character   1st Qu.:379.2   1st Qu.: 3.75  
-##  Mode  :character   Mode  :character   Median :421.5   Median : 6.50  
-##                                        Mean   :415.8   Mean   : 6.50  
-##                                        3rd Qu.:454.1   3rd Qu.: 9.25  
-##                                        Max.   :511.4   Max.   :12.00  
-##     cwd_mean         pck_mean         ppt_mean          tmn_mean     
-##  Min.   : 12.60   Min.   :0.0000   Min.   :  1.187   Min.   : 1.908  
-##  1st Qu.: 30.12   1st Qu.:0.0000   1st Qu.: 12.895   1st Qu.: 4.387  
-##  Median : 56.57   Median :0.0000   Median : 59.540   Median : 8.216  
-##  Mean   : 62.21   Mean   :0.2264   Mean   : 75.540   Mean   : 8.674  
-##  3rd Qu.: 85.15   3rd Qu.:0.0000   3rd Qu.:134.436   3rd Qu.:13.258  
-##  Max.   :165.57   Max.   :4.8048   Max.   :208.515   Max.   :17.019  
-##     tmx_mean        cwd_sem          pck_sem          ppt_sem       
-##  Min.   :12.29   Min.   :0.1267   Min.   :0.0000   Min.   : 0.5377  
-##  1st Qu.:15.99   1st Qu.:0.4431   1st Qu.:0.0000   1st Qu.: 2.1691  
-##  Median :22.38   Median :1.1976   Median :0.0000   Median : 7.0161  
-##  Mean   :22.75   Mean   :1.7809   Mean   :0.1455   Mean   : 7.7627  
-##  3rd Qu.:30.46   3rd Qu.:3.1102   3rd Qu.:0.0000   3rd Qu.:12.1532  
-##  Max.   :34.94   Max.   :7.2511   Max.   :2.5238   Max.   :18.8062  
-##     tmn_sem          tmx_sem           PckSum      
-##  Min.   :0.1526   Min.   :0.1682   Min.   :0.1170  
-##  1st Qu.:0.1783   1st Qu.:0.2054   1st Qu.:0.4248  
-##  Median :0.1858   Median :0.2393   Median :0.4755  
-##  Mean   :0.1880   Mean   :0.2426   Mean   :2.7170  
-##  3rd Qu.:0.1990   3rd Qu.:0.2769   3rd Qu.:2.7337  
-##  Max.   :0.2163   Max.   :0.3145   Max.   :9.8342</code></pre>
-<pre class="r"><code>nosnow_pops_60_tojoin &lt;- nosnow_pops_60 %&gt;% select(parent.pop:elev_m, PckSum) %&gt;% distinct() #pull out PckSum
+<pre><code>##   parent.pop        elevation.group        elev_m          Lat           
+##  Length:60          Length:60          Min.   :313.0   Length:60         
+##  Class :character   Class :character   1st Qu.:379.2   Class :character  
+##  Mode  :character   Mode  :character   Median :421.5   Mode  :character  
+##                                        Mean   :415.8                     
+##                                        3rd Qu.:454.1                     
+##                                        Max.   :511.4                     
+##      Long               month          cwd_mean         pck_mean     
+##  Length:60          Min.   : 1.00   Min.   : 12.60   Min.   :0.0000  
+##  Class :character   1st Qu.: 3.75   1st Qu.: 30.12   1st Qu.:0.0000  
+##  Mode  :character   Median : 6.50   Median : 56.57   Median :0.0000  
+##                     Mean   : 6.50   Mean   : 62.21   Mean   :0.2264  
+##                     3rd Qu.: 9.25   3rd Qu.: 85.15   3rd Qu.:0.0000  
+##                     Max.   :12.00   Max.   :165.57   Max.   :4.8048  
+##     ppt_mean          tmn_mean         tmx_mean        cwd_sem      
+##  Min.   :  1.187   Min.   : 1.908   Min.   :12.29   Min.   :0.1267  
+##  1st Qu.: 12.895   1st Qu.: 4.387   1st Qu.:15.99   1st Qu.:0.4431  
+##  Median : 59.540   Median : 8.216   Median :22.38   Median :1.1976  
+##  Mean   : 75.540   Mean   : 8.674   Mean   :22.75   Mean   :1.7809  
+##  3rd Qu.:134.436   3rd Qu.:13.258   3rd Qu.:30.46   3rd Qu.:3.1102  
+##  Max.   :208.515   Max.   :17.019   Max.   :34.94   Max.   :7.2511  
+##     pck_sem          ppt_sem           tmn_sem          tmx_sem      
+##  Min.   :0.0000   Min.   : 0.5377   Min.   :0.1526   Min.   :0.1682  
+##  1st Qu.:0.0000   1st Qu.: 2.1691   1st Qu.:0.1783   1st Qu.:0.2054  
+##  Median :0.0000   Median : 7.0161   Median :0.1858   Median :0.2393  
+##  Mean   :0.1455   Mean   : 7.7627   Mean   :0.1880   Mean   :0.2426  
+##  3rd Qu.:0.0000   3rd Qu.:12.1532   3rd Qu.:0.1990   3rd Qu.:0.2769  
+##  Max.   :2.5238   Max.   :18.8062   Max.   :0.2163   Max.   :0.3145  
+##      PckSum      
+##  Min.   :0.1170  
+##  1st Qu.:0.4248  
+##  Median :0.4755  
+##  Mean   :2.7170  
+##  3rd Qu.:2.7337  
+##  Max.   :9.8342</code></pre>
+<pre class="r"><code>nosnow_pops_60_tojoin &lt;- nosnow_pops_60 %&gt;% select(parent.pop:Long, PckSum) %&gt;% distinct() #pull out PckSum
 nosnow_pops_60_years &lt;- left_join(nosnow_pops_60_tojoin, pop_elev_climate_60) #add PckSum to full 60 year data frame </code></pre>
-<pre><code>## Joining with `by = join_by(parent.pop, elevation.group, elev_m)`</code></pre>
+<pre><code>## Joining with `by = join_by(parent.pop, elevation.group, elev_m, Lat, Long)`</code></pre>
 <pre class="r"><code>#first month
 nosnow_60_first_month &lt;- nosnow_pops_60_years %&gt;%
   group_by(parent.pop, elevation.group, elev_m, grow_yr) %&gt;% 
@@ -820,10 +828,11 @@ nosnow_60_first_month &lt;- nosnow_pops_60_years %&gt;%
   arrange(growmonth) %&gt;% 
   filter(row_number()==1) #get first month for each pop and year with germinating inducing rain 
 nosnow_60_first_month_tomerge &lt;- nosnow_60_first_month %&gt;% 
-  select(parent.pop:elev_m, grow_yr, firstmonth=growmonth) #first month is in grow month not calendar month format
+  select(parent.pop:Long, grow_yr, firstmonth=growmonth) #first month is in grow month not calendar month format
 #merge:
 nosnow_60_first_month_col &lt;- full_join(nosnow_pops_60_years, nosnow_60_first_month_tomerge)</code></pre>
-<pre><code>## Joining with `by = join_by(parent.pop, elevation.group, elev_m, grow_yr)`</code></pre>
+<pre><code>## Joining with `by = join_by(parent.pop, elevation.group, elev_m, Lat, Long,
+## grow_yr)`</code></pre>
 <pre class="r"><code>#last month
 nosnow_60_last_month &lt;- nosnow_60_first_month_col %&gt;%
   group_by(parent.pop, elevation.group, elev_m, grow_yr) %&gt;% 
@@ -832,45 +841,46 @@ nosnow_60_last_month &lt;- nosnow_60_first_month_col %&gt;%
   arrange(growmonth) %&gt;% 
   filter(row_number()==1)
 nosnow_60_last_month_tomerge &lt;- nosnow_60_last_month %&gt;% 
-  select(parent.pop:elev_m, grow_yr, lastmonth=growmonth) #last month is in grow month not calendar month format
+  select(parent.pop:Long, grow_yr, lastmonth=growmonth) #last month is in grow month not calendar month format
 nosnow_60_last_month_col &lt;- full_join(nosnow_60_first_month_col, nosnow_60_last_month_tomerge) %&gt;% 
   select(parent.pop:growmonth, firstmonth, lastmonth, cwd:tmx)</code></pre>
-<pre><code>## Joining with `by = join_by(parent.pop, elevation.group, elev_m, grow_yr)`</code></pre>
+<pre><code>## Joining with `by = join_by(parent.pop, elevation.group, elev_m, Lat, Long,
+## grow_yr)`</code></pre>
 <div id="checking-for-weird-cases" class="section level4">
 <h4>Checking for weird cases</h4>
 <pre class="r"><code>nosnow_60_last_month_col %&gt;% filter(is.na(lastmonth)) %&gt;% arrange(grow_yr) #16 cases in IH with no last month </code></pre>
 <pre><code>## # A tibble: 192 × 17
-## # Groups:   parent.pop, elevation.group, elev_m [1]
-##    parent.pop elevation.group elev_m PckSum Lat     Long  year_cal grow_yr month
-##    &lt;chr&gt;      &lt;chr&gt;            &lt;dbl&gt;  &lt;dbl&gt; &lt;chr&gt;   &lt;chr&gt;    &lt;int&gt;   &lt;int&gt; &lt;dbl&gt;
-##  1 IH         low               454.   9.83 39.093… -120…     1964    1965     9
-##  2 IH         low               454.   9.83 39.093… -120…     1964    1965    10
-##  3 IH         low               454.   9.83 39.093… -120…     1964    1965    11
-##  4 IH         low               454.   9.83 39.093… -120…     1964    1965    12
-##  5 IH         low               454.   9.83 39.093… -120…     1965    1965     1
-##  6 IH         low               454.   9.83 39.093… -120…     1965    1965     2
-##  7 IH         low               454.   9.83 39.093… -120…     1965    1965     3
-##  8 IH         low               454.   9.83 39.093… -120…     1965    1965     4
-##  9 IH         low               454.   9.83 39.093… -120…     1965    1965     5
-## 10 IH         low               454.   9.83 39.093… -120…     1965    1965     6
+## # Groups:   parent.pop, elevation.group, elev_m, Lat, Long [1]
+##    parent.pop elevation.group elev_m Lat     Long  PckSum year_cal grow_yr month
+##    &lt;chr&gt;      &lt;chr&gt;            &lt;dbl&gt; &lt;chr&gt;   &lt;chr&gt;  &lt;dbl&gt;    &lt;int&gt;   &lt;int&gt; &lt;dbl&gt;
+##  1 IH         low               454. 39.093… -120…   9.83     1964    1965     9
+##  2 IH         low               454. 39.093… -120…   9.83     1964    1965    10
+##  3 IH         low               454. 39.093… -120…   9.83     1964    1965    11
+##  4 IH         low               454. 39.093… -120…   9.83     1964    1965    12
+##  5 IH         low               454. 39.093… -120…   9.83     1965    1965     1
+##  6 IH         low               454. 39.093… -120…   9.83     1965    1965     2
+##  7 IH         low               454. 39.093… -120…   9.83     1965    1965     3
+##  8 IH         low               454. 39.093… -120…   9.83     1965    1965     4
+##  9 IH         low               454. 39.093… -120…   9.83     1965    1965     5
+## 10 IH         low               454. 39.093… -120…   9.83     1965    1965     6
 ## # ℹ 182 more rows
 ## # ℹ 8 more variables: growmonth &lt;dbl&gt;, firstmonth &lt;dbl&gt;, lastmonth &lt;dbl&gt;,
 ## #   cwd &lt;dbl&gt;, pck &lt;dbl&gt;, ppt &lt;dbl&gt;, tmn &lt;dbl&gt;, tmx &lt;dbl&gt;</code></pre>
 <pre class="r"><code>nosnow_60_last_month_col %&gt;% filter(parent.pop==&quot;IH&quot;) #most of above = cases where the next Sept is the month with cwd past the threshold --&gt; figure out how to add this month into the final climate </code></pre>
 <pre><code>## # A tibble: 720 × 17
-## # Groups:   parent.pop, elevation.group, elev_m [1]
-##    parent.pop elevation.group elev_m PckSum Lat     Long  year_cal grow_yr month
-##    &lt;chr&gt;      &lt;chr&gt;            &lt;dbl&gt;  &lt;dbl&gt; &lt;chr&gt;   &lt;chr&gt;    &lt;int&gt;   &lt;int&gt; &lt;dbl&gt;
-##  1 IH         low               454.   9.83 39.093… -120…     1963    1964     9
-##  2 IH         low               454.   9.83 39.093… -120…     1963    1964    10
-##  3 IH         low               454.   9.83 39.093… -120…     1963    1964    11
-##  4 IH         low               454.   9.83 39.093… -120…     1963    1964    12
-##  5 IH         low               454.   9.83 39.093… -120…     1964    1964     1
-##  6 IH         low               454.   9.83 39.093… -120…     1964    1964     2
-##  7 IH         low               454.   9.83 39.093… -120…     1964    1964     3
-##  8 IH         low               454.   9.83 39.093… -120…     1964    1964     4
-##  9 IH         low               454.   9.83 39.093… -120…     1964    1964     5
-## 10 IH         low               454.   9.83 39.093… -120…     1964    1964     6
+## # Groups:   parent.pop, elevation.group, elev_m, Lat, Long [1]
+##    parent.pop elevation.group elev_m Lat     Long  PckSum year_cal grow_yr month
+##    &lt;chr&gt;      &lt;chr&gt;            &lt;dbl&gt; &lt;chr&gt;   &lt;chr&gt;  &lt;dbl&gt;    &lt;int&gt;   &lt;int&gt; &lt;dbl&gt;
+##  1 IH         low               454. 39.093… -120…   9.83     1963    1964     9
+##  2 IH         low               454. 39.093… -120…   9.83     1963    1964    10
+##  3 IH         low               454. 39.093… -120…   9.83     1963    1964    11
+##  4 IH         low               454. 39.093… -120…   9.83     1963    1964    12
+##  5 IH         low               454. 39.093… -120…   9.83     1964    1964     1
+##  6 IH         low               454. 39.093… -120…   9.83     1964    1964     2
+##  7 IH         low               454. 39.093… -120…   9.83     1964    1964     3
+##  8 IH         low               454. 39.093… -120…   9.83     1964    1964     4
+##  9 IH         low               454. 39.093… -120…   9.83     1964    1964     5
+## 10 IH         low               454. 39.093… -120…   9.83     1964    1964     6
 ## # ℹ 710 more rows
 ## # ℹ 8 more variables: growmonth &lt;dbl&gt;, firstmonth &lt;dbl&gt;, lastmonth &lt;dbl&gt;,
 ## #   cwd &lt;dbl&gt;, pck &lt;dbl&gt;, ppt &lt;dbl&gt;, tmn &lt;dbl&gt;, tmx &lt;dbl&gt;</code></pre>
@@ -883,129 +893,129 @@ pop_elev_climate %&gt;% filter(parent.pop==&quot;IH&quot;) %&gt;% filter(month==
 ## # ℹ 4 more variables: pet &lt;dbl&gt;, ppt &lt;dbl&gt;, tmn &lt;dbl&gt;, tmx &lt;dbl&gt;</code></pre>
 <pre class="r"><code>nosnow_60_last_month_col %&gt;% filter(is.na(firstmonth)) %&gt;% arrange(grow_yr) #0 cases </code></pre>
 <pre><code>## # A tibble: 0 × 17
-## # Groups:   parent.pop, elevation.group, elev_m [0]
+## # Groups:   parent.pop, elevation.group, elev_m, Lat, Long [0]
 ## # ℹ 17 variables: parent.pop &lt;chr&gt;, elevation.group &lt;chr&gt;, elev_m &lt;dbl&gt;,
-## #   PckSum &lt;dbl&gt;, Lat &lt;chr&gt;, Long &lt;chr&gt;, year_cal &lt;int&gt;, grow_yr &lt;int&gt;,
+## #   Lat &lt;chr&gt;, Long &lt;chr&gt;, PckSum &lt;dbl&gt;, year_cal &lt;int&gt;, grow_yr &lt;int&gt;,
 ## #   month &lt;dbl&gt;, growmonth &lt;dbl&gt;, firstmonth &lt;dbl&gt;, lastmonth &lt;dbl&gt;, cwd &lt;dbl&gt;,
 ## #   pck &lt;dbl&gt;, ppt &lt;dbl&gt;, tmn &lt;dbl&gt;, tmx &lt;dbl&gt;</code></pre>
-<pre class="r"><code>nosnow_60_last_month_col %&gt;% filter(firstmonth&gt;4) #1 case in BH (2014) where first month is after December, this is fine, right?</code></pre>
+<pre class="r"><code>nosnow_60_last_month_col %&gt;% filter(firstmonth&gt;4) #1 case in BH (2014) where first month is after December, this is fine, right? #JRG: yes, probably real - that was during the 2012-2015 drought</code></pre>
 <pre><code>## # A tibble: 12 × 17
-## # Groups:   parent.pop, elevation.group, elev_m [1]
-##    parent.pop elevation.group elev_m PckSum Lat     Long  year_cal grow_yr month
-##    &lt;chr&gt;      &lt;chr&gt;            &lt;dbl&gt;  &lt;dbl&gt; &lt;chr&gt;   &lt;chr&gt;    &lt;int&gt;   &lt;int&gt; &lt;dbl&gt;
-##  1 BH         low               511.  0.117 37.409… -119…     2013    2014     9
-##  2 BH         low               511.  0.117 37.409… -119…     2013    2014    10
-##  3 BH         low               511.  0.117 37.409… -119…     2013    2014    11
-##  4 BH         low               511.  0.117 37.409… -119…     2013    2014    12
-##  5 BH         low               511.  0.117 37.409… -119…     2014    2014     1
-##  6 BH         low               511.  0.117 37.409… -119…     2014    2014     2
-##  7 BH         low               511.  0.117 37.409… -119…     2014    2014     3
-##  8 BH         low               511.  0.117 37.409… -119…     2014    2014     4
-##  9 BH         low               511.  0.117 37.409… -119…     2014    2014     5
-## 10 BH         low               511.  0.117 37.409… -119…     2014    2014     6
-## 11 BH         low               511.  0.117 37.409… -119…     2014    2014     7
-## 12 BH         low               511.  0.117 37.409… -119…     2014    2014     8
+## # Groups:   parent.pop, elevation.group, elev_m, Lat, Long [1]
+##    parent.pop elevation.group elev_m Lat     Long  PckSum year_cal grow_yr month
+##    &lt;chr&gt;      &lt;chr&gt;            &lt;dbl&gt; &lt;chr&gt;   &lt;chr&gt;  &lt;dbl&gt;    &lt;int&gt;   &lt;int&gt; &lt;dbl&gt;
+##  1 BH         low               511. 37.409… -119…  0.117     2013    2014     9
+##  2 BH         low               511. 37.409… -119…  0.117     2013    2014    10
+##  3 BH         low               511. 37.409… -119…  0.117     2013    2014    11
+##  4 BH         low               511. 37.409… -119…  0.117     2013    2014    12
+##  5 BH         low               511. 37.409… -119…  0.117     2014    2014     1
+##  6 BH         low               511. 37.409… -119…  0.117     2014    2014     2
+##  7 BH         low               511. 37.409… -119…  0.117     2014    2014     3
+##  8 BH         low               511. 37.409… -119…  0.117     2014    2014     4
+##  9 BH         low               511. 37.409… -119…  0.117     2014    2014     5
+## 10 BH         low               511. 37.409… -119…  0.117     2014    2014     6
+## 11 BH         low               511. 37.409… -119…  0.117     2014    2014     7
+## 12 BH         low               511. 37.409… -119…  0.117     2014    2014     8
 ## # ℹ 8 more variables: growmonth &lt;dbl&gt;, firstmonth &lt;dbl&gt;, lastmonth &lt;dbl&gt;,
 ## #   cwd &lt;dbl&gt;, pck &lt;dbl&gt;, ppt &lt;dbl&gt;, tmn &lt;dbl&gt;, tmx &lt;dbl&gt;</code></pre>
 <pre class="r"><code>nosnow_60_last_month_col %&gt;% filter(lastmonth&lt;4) %&gt;% arrange(parent.pop, grow_yr) #1 case in BH 1979 where last month is less than 4 (earlier than December), it&#39;s actually only 1 month post start</code></pre>
 <pre><code>## # A tibble: 12 × 17
-## # Groups:   parent.pop, elevation.group, elev_m [1]
-##    parent.pop elevation.group elev_m PckSum Lat     Long  year_cal grow_yr month
-##    &lt;chr&gt;      &lt;chr&gt;            &lt;dbl&gt;  &lt;dbl&gt; &lt;chr&gt;   &lt;chr&gt;    &lt;int&gt;   &lt;int&gt; &lt;dbl&gt;
-##  1 BH         low               511.  0.117 37.409… -119…     1978    1979     9
-##  2 BH         low               511.  0.117 37.409… -119…     1978    1979    10
-##  3 BH         low               511.  0.117 37.409… -119…     1978    1979    11
-##  4 BH         low               511.  0.117 37.409… -119…     1978    1979    12
-##  5 BH         low               511.  0.117 37.409… -119…     1979    1979     1
-##  6 BH         low               511.  0.117 37.409… -119…     1979    1979     2
-##  7 BH         low               511.  0.117 37.409… -119…     1979    1979     3
-##  8 BH         low               511.  0.117 37.409… -119…     1979    1979     4
-##  9 BH         low               511.  0.117 37.409… -119…     1979    1979     5
-## 10 BH         low               511.  0.117 37.409… -119…     1979    1979     6
-## 11 BH         low               511.  0.117 37.409… -119…     1979    1979     7
-## 12 BH         low               511.  0.117 37.409… -119…     1979    1979     8
+## # Groups:   parent.pop, elevation.group, elev_m, Lat, Long [1]
+##    parent.pop elevation.group elev_m Lat     Long  PckSum year_cal grow_yr month
+##    &lt;chr&gt;      &lt;chr&gt;            &lt;dbl&gt; &lt;chr&gt;   &lt;chr&gt;  &lt;dbl&gt;    &lt;int&gt;   &lt;int&gt; &lt;dbl&gt;
+##  1 BH         low               511. 37.409… -119…  0.117     1978    1979     9
+##  2 BH         low               511. 37.409… -119…  0.117     1978    1979    10
+##  3 BH         low               511. 37.409… -119…  0.117     1978    1979    11
+##  4 BH         low               511. 37.409… -119…  0.117     1978    1979    12
+##  5 BH         low               511. 37.409… -119…  0.117     1979    1979     1
+##  6 BH         low               511. 37.409… -119…  0.117     1979    1979     2
+##  7 BH         low               511. 37.409… -119…  0.117     1979    1979     3
+##  8 BH         low               511. 37.409… -119…  0.117     1979    1979     4
+##  9 BH         low               511. 37.409… -119…  0.117     1979    1979     5
+## 10 BH         low               511. 37.409… -119…  0.117     1979    1979     6
+## 11 BH         low               511. 37.409… -119…  0.117     1979    1979     7
+## 12 BH         low               511. 37.409… -119…  0.117     1979    1979     8
 ## # ℹ 8 more variables: growmonth &lt;dbl&gt;, firstmonth &lt;dbl&gt;, lastmonth &lt;dbl&gt;,
 ## #   cwd &lt;dbl&gt;, pck &lt;dbl&gt;, ppt &lt;dbl&gt;, tmn &lt;dbl&gt;, tmx &lt;dbl&gt;</code></pre>
 <pre class="r"><code>nosnow_60_last_month_col %&gt;% filter(lastmonth==firstmonth) %&gt;% arrange(parent.pop, grow_yr) #0 cases</code></pre>
 <pre><code>## # A tibble: 0 × 17
-## # Groups:   parent.pop, elevation.group, elev_m [0]
+## # Groups:   parent.pop, elevation.group, elev_m, Lat, Long [0]
 ## # ℹ 17 variables: parent.pop &lt;chr&gt;, elevation.group &lt;chr&gt;, elev_m &lt;dbl&gt;,
-## #   PckSum &lt;dbl&gt;, Lat &lt;chr&gt;, Long &lt;chr&gt;, year_cal &lt;int&gt;, grow_yr &lt;int&gt;,
+## #   Lat &lt;chr&gt;, Long &lt;chr&gt;, PckSum &lt;dbl&gt;, year_cal &lt;int&gt;, grow_yr &lt;int&gt;,
 ## #   month &lt;dbl&gt;, growmonth &lt;dbl&gt;, firstmonth &lt;dbl&gt;, lastmonth &lt;dbl&gt;, cwd &lt;dbl&gt;,
 ## #   pck &lt;dbl&gt;, ppt &lt;dbl&gt;, tmn &lt;dbl&gt;, tmx &lt;dbl&gt;</code></pre>
 <pre class="r"><code>nosnow_60_last_month_col %&gt;% filter(lastmonth==1) %&gt;% arrange(parent.pop, grow_yr) #0 cases where Sept is last month </code></pre>
 <pre><code>## # A tibble: 0 × 17
-## # Groups:   parent.pop, elevation.group, elev_m [0]
+## # Groups:   parent.pop, elevation.group, elev_m, Lat, Long [0]
 ## # ℹ 17 variables: parent.pop &lt;chr&gt;, elevation.group &lt;chr&gt;, elev_m &lt;dbl&gt;,
-## #   PckSum &lt;dbl&gt;, Lat &lt;chr&gt;, Long &lt;chr&gt;, year_cal &lt;int&gt;, grow_yr &lt;int&gt;,
+## #   Lat &lt;chr&gt;, Long &lt;chr&gt;, PckSum &lt;dbl&gt;, year_cal &lt;int&gt;, grow_yr &lt;int&gt;,
 ## #   month &lt;dbl&gt;, growmonth &lt;dbl&gt;, firstmonth &lt;dbl&gt;, lastmonth &lt;dbl&gt;, cwd &lt;dbl&gt;,
 ## #   pck &lt;dbl&gt;, ppt &lt;dbl&gt;, tmn &lt;dbl&gt;, tmx &lt;dbl&gt;</code></pre>
 <pre class="r"><code>nosnow_60_last_month_col %&gt;% filter(lastmonth&lt;6) #1 case where Oct-Dec is the last month (same BH as above)</code></pre>
 <pre><code>## # A tibble: 12 × 17
-## # Groups:   parent.pop, elevation.group, elev_m [1]
-##    parent.pop elevation.group elev_m PckSum Lat     Long  year_cal grow_yr month
-##    &lt;chr&gt;      &lt;chr&gt;            &lt;dbl&gt;  &lt;dbl&gt; &lt;chr&gt;   &lt;chr&gt;    &lt;int&gt;   &lt;int&gt; &lt;dbl&gt;
-##  1 BH         low               511.  0.117 37.409… -119…     1978    1979     9
-##  2 BH         low               511.  0.117 37.409… -119…     1978    1979    10
-##  3 BH         low               511.  0.117 37.409… -119…     1978    1979    11
-##  4 BH         low               511.  0.117 37.409… -119…     1978    1979    12
-##  5 BH         low               511.  0.117 37.409… -119…     1979    1979     1
-##  6 BH         low               511.  0.117 37.409… -119…     1979    1979     2
-##  7 BH         low               511.  0.117 37.409… -119…     1979    1979     3
-##  8 BH         low               511.  0.117 37.409… -119…     1979    1979     4
-##  9 BH         low               511.  0.117 37.409… -119…     1979    1979     5
-## 10 BH         low               511.  0.117 37.409… -119…     1979    1979     6
-## 11 BH         low               511.  0.117 37.409… -119…     1979    1979     7
-## 12 BH         low               511.  0.117 37.409… -119…     1979    1979     8
+## # Groups:   parent.pop, elevation.group, elev_m, Lat, Long [1]
+##    parent.pop elevation.group elev_m Lat     Long  PckSum year_cal grow_yr month
+##    &lt;chr&gt;      &lt;chr&gt;            &lt;dbl&gt; &lt;chr&gt;   &lt;chr&gt;  &lt;dbl&gt;    &lt;int&gt;   &lt;int&gt; &lt;dbl&gt;
+##  1 BH         low               511. 37.409… -119…  0.117     1978    1979     9
+##  2 BH         low               511. 37.409… -119…  0.117     1978    1979    10
+##  3 BH         low               511. 37.409… -119…  0.117     1978    1979    11
+##  4 BH         low               511. 37.409… -119…  0.117     1978    1979    12
+##  5 BH         low               511. 37.409… -119…  0.117     1979    1979     1
+##  6 BH         low               511. 37.409… -119…  0.117     1979    1979     2
+##  7 BH         low               511. 37.409… -119…  0.117     1979    1979     3
+##  8 BH         low               511. 37.409… -119…  0.117     1979    1979     4
+##  9 BH         low               511. 37.409… -119…  0.117     1979    1979     5
+## 10 BH         low               511. 37.409… -119…  0.117     1979    1979     6
+## 11 BH         low               511. 37.409… -119…  0.117     1979    1979     7
+## 12 BH         low               511. 37.409… -119…  0.117     1979    1979     8
 ## # ℹ 8 more variables: growmonth &lt;dbl&gt;, firstmonth &lt;dbl&gt;, lastmonth &lt;dbl&gt;,
 ## #   cwd &lt;dbl&gt;, pck &lt;dbl&gt;, ppt &lt;dbl&gt;, tmn &lt;dbl&gt;, tmx &lt;dbl&gt;</code></pre>
 <pre class="r"><code>nosnow_60_last_month_col %&gt;% filter(growmonth==firstmonth+1, cwd&gt;85.15) %&gt;% arrange(parent.pop, grow_yr) #1 case where cwd is high in the second growth month (same BH as above - 1979)</code></pre>
 <pre><code>## # A tibble: 1 × 17
-## # Groups:   parent.pop, elevation.group, elev_m [1]
-##   parent.pop elevation.group elev_m PckSum Lat      Long  year_cal grow_yr month
-##   &lt;chr&gt;      &lt;chr&gt;            &lt;dbl&gt;  &lt;dbl&gt; &lt;chr&gt;    &lt;chr&gt;    &lt;int&gt;   &lt;int&gt; &lt;dbl&gt;
-## 1 BH         low               511.  0.117 37.40985 -119…     1978    1979    10
+## # Groups:   parent.pop, elevation.group, elev_m, Lat, Long [1]
+##   parent.pop elevation.group elev_m Lat      Long  PckSum year_cal grow_yr month
+##   &lt;chr&gt;      &lt;chr&gt;            &lt;dbl&gt; &lt;chr&gt;    &lt;chr&gt;  &lt;dbl&gt;    &lt;int&gt;   &lt;int&gt; &lt;dbl&gt;
+## 1 BH         low               511. 37.40985 -119…  0.117     1978    1979    10
 ## # ℹ 8 more variables: growmonth &lt;dbl&gt;, firstmonth &lt;dbl&gt;, lastmonth &lt;dbl&gt;,
 ## #   cwd &lt;dbl&gt;, pck &lt;dbl&gt;, ppt &lt;dbl&gt;, tmn &lt;dbl&gt;, tmx &lt;dbl&gt;</code></pre>
 <pre class="r"><code>nosnow_60_last_month_col %&gt;% filter(parent.pop==&quot;BH&quot;, grow_yr==1979) #next growmonth with high enough CWD = 10, use that instead of 2? </code></pre>
 <pre><code>## # A tibble: 12 × 17
-## # Groups:   parent.pop, elevation.group, elev_m [1]
-##    parent.pop elevation.group elev_m PckSum Lat     Long  year_cal grow_yr month
-##    &lt;chr&gt;      &lt;chr&gt;            &lt;dbl&gt;  &lt;dbl&gt; &lt;chr&gt;   &lt;chr&gt;    &lt;int&gt;   &lt;int&gt; &lt;dbl&gt;
-##  1 BH         low               511.  0.117 37.409… -119…     1978    1979     9
-##  2 BH         low               511.  0.117 37.409… -119…     1978    1979    10
-##  3 BH         low               511.  0.117 37.409… -119…     1978    1979    11
-##  4 BH         low               511.  0.117 37.409… -119…     1978    1979    12
-##  5 BH         low               511.  0.117 37.409… -119…     1979    1979     1
-##  6 BH         low               511.  0.117 37.409… -119…     1979    1979     2
-##  7 BH         low               511.  0.117 37.409… -119…     1979    1979     3
-##  8 BH         low               511.  0.117 37.409… -119…     1979    1979     4
-##  9 BH         low               511.  0.117 37.409… -119…     1979    1979     5
-## 10 BH         low               511.  0.117 37.409… -119…     1979    1979     6
-## 11 BH         low               511.  0.117 37.409… -119…     1979    1979     7
-## 12 BH         low               511.  0.117 37.409… -119…     1979    1979     8
+## # Groups:   parent.pop, elevation.group, elev_m, Lat, Long [1]
+##    parent.pop elevation.group elev_m Lat     Long  PckSum year_cal grow_yr month
+##    &lt;chr&gt;      &lt;chr&gt;            &lt;dbl&gt; &lt;chr&gt;   &lt;chr&gt;  &lt;dbl&gt;    &lt;int&gt;   &lt;int&gt; &lt;dbl&gt;
+##  1 BH         low               511. 37.409… -119…  0.117     1978    1979     9
+##  2 BH         low               511. 37.409… -119…  0.117     1978    1979    10
+##  3 BH         low               511. 37.409… -119…  0.117     1978    1979    11
+##  4 BH         low               511. 37.409… -119…  0.117     1978    1979    12
+##  5 BH         low               511. 37.409… -119…  0.117     1979    1979     1
+##  6 BH         low               511. 37.409… -119…  0.117     1979    1979     2
+##  7 BH         low               511. 37.409… -119…  0.117     1979    1979     3
+##  8 BH         low               511. 37.409… -119…  0.117     1979    1979     4
+##  9 BH         low               511. 37.409… -119…  0.117     1979    1979     5
+## 10 BH         low               511. 37.409… -119…  0.117     1979    1979     6
+## 11 BH         low               511. 37.409… -119…  0.117     1979    1979     7
+## 12 BH         low               511. 37.409… -119…  0.117     1979    1979     8
 ## # ℹ 8 more variables: growmonth &lt;dbl&gt;, firstmonth &lt;dbl&gt;, lastmonth &lt;dbl&gt;,
 ## #   cwd &lt;dbl&gt;, pck &lt;dbl&gt;, ppt &lt;dbl&gt;, tmn &lt;dbl&gt;, tmx &lt;dbl&gt;</code></pre>
 </div>
 <div id="deal-with-weird-cases" class="section level4">
 <h4>Deal with weird cases</h4>
 <pre class="r"><code>summary(nosnow_60_last_month_col) #first month in data set = 1, last month in data set = 12 (in grow months)</code></pre>
-<pre><code>##   parent.pop        elevation.group        elev_m          PckSum      
-##  Length:3600        Length:3600        Min.   :313.0   Min.   :0.1170  
-##  Class :character   Class :character   1st Qu.:379.2   1st Qu.:0.4248  
-##  Mode  :character   Mode  :character   Median :421.5   Median :0.4755  
-##                                        Mean   :415.8   Mean   :2.7170  
-##                                        3rd Qu.:454.1   3rd Qu.:2.7337  
-##                                        Max.   :511.4   Max.   :9.8342  
-##                                                                        
-##      Lat                Long              year_cal       grow_yr    
-##  Length:3600        Length:3600        Min.   :1963   Min.   :1964  
-##  Class :character   Class :character   1st Qu.:1978   1st Qu.:1979  
-##  Mode  :character   Mode  :character   Median :1993   Median :1994  
-##                                        Mean   :1993   Mean   :1994  
-##                                        3rd Qu.:2008   3rd Qu.:2008  
-##                                        Max.   :2023   Max.   :2023  
-##                                                                     
+<pre><code>##   parent.pop        elevation.group        elev_m          Lat           
+##  Length:3600        Length:3600        Min.   :313.0   Length:3600       
+##  Class :character   Class :character   1st Qu.:379.2   Class :character  
+##  Mode  :character   Mode  :character   Median :421.5   Mode  :character  
+##                                        Mean   :415.8                     
+##                                        3rd Qu.:454.1                     
+##                                        Max.   :511.4                     
+##                                                                          
+##      Long               PckSum          year_cal       grow_yr    
+##  Length:3600        Min.   :0.1170   Min.   :1963   Min.   :1964  
+##  Class :character   1st Qu.:0.4248   1st Qu.:1978   1st Qu.:1979  
+##  Mode  :character   Median :0.4755   Median :1993   Median :1994  
+##                     Mean   :2.7170   Mean   :1993   Mean   :1994  
+##                     3rd Qu.:2.7337   3rd Qu.:2008   3rd Qu.:2008  
+##                     Max.   :9.8342   Max.   :2023   Max.   :2023  
+##                                                                   
 ##      month         growmonth       firstmonth      lastmonth    
 ##  Min.   : 1.00   Min.   : 1.00   Min.   :1.000   Min.   : 2.00  
 ##  1st Qu.: 3.75   1st Qu.: 3.75   1st Qu.:2.000   1st Qu.:10.00  
@@ -1031,13 +1041,13 @@ pop_elev_climate %&gt;% filter(parent.pop==&quot;IH&quot;) %&gt;% filter(month==
 ##  Max.   :37.76  
 ## </code></pre>
 <pre class="r"><code>nosnow_60_last_month_col %&gt;% filter(parent.pop==&quot;IH&quot;) %&gt;% summarise(maxEnd=max(lastmonth, na.rm=TRUE)) #max end = 12 in grow months </code></pre>
-<pre><code>## `summarise()` has grouped output by &#39;parent.pop&#39;, &#39;elevation.group&#39;. You can
-## override using the `.groups` argument.</code></pre>
-<pre><code>## # A tibble: 1 × 4
-## # Groups:   parent.pop, elevation.group [1]
-##   parent.pop elevation.group elev_m maxEnd
-##   &lt;chr&gt;      &lt;chr&gt;            &lt;dbl&gt;  &lt;dbl&gt;
-## 1 IH         low               454.     12</code></pre>
+<pre><code>## `summarise()` has grouped output by &#39;parent.pop&#39;, &#39;elevation.group&#39;, &#39;elev_m&#39;,
+## &#39;Lat&#39;. You can override using the `.groups` argument.</code></pre>
+<pre><code>## # A tibble: 1 × 6
+## # Groups:   parent.pop, elevation.group, elev_m, Lat [1]
+##   parent.pop elevation.group elev_m Lat      Long       maxEnd
+##   &lt;chr&gt;      &lt;chr&gt;            &lt;dbl&gt; &lt;chr&gt;    &lt;chr&gt;       &lt;dbl&gt;
+## 1 IH         low               454. 39.09332 -120.92114     12</code></pre>
 <pre class="r"><code>nosnow_60first_last_month &lt;- nosnow_60_last_month_col %&gt;% 
   mutate(lastmonth=if_else(parent.pop==&quot;IH&quot; &amp; grow_yr==2005, 12, #use the max end for the cases were CWD never &gt; 85.15
          if_else(parent.pop==&quot;IH&quot; &amp; grow_yr==2019, 12, #use the max end for the cases were CWD never &gt; 85.15
@@ -1048,7 +1058,7 @@ pop_elev_climate %&gt;% filter(parent.pop==&quot;IH&quot;) %&gt;% filter(month==
 IH_sept_last_month &lt;- nosnow_60first_last_month %&gt;% 
   filter(is.na(lastmonth)) %&gt;% 
   mutate(lastmonth=13) %&gt;% #last month will be the 13th month 
-  arrange(grow_yr) #14 years left for IH with no last month (last month = next year&#39;s Sept)
+  arrange(grow_yr) #14 years for IH where the last month = next year&#39;s Sept which is technically month 13 due to the way &quot;grow years&quot; are set up. I confirmed this by checking for CWD &gt; 85.15 in the &quot;nosnow_60_last_month_col %&gt;% filter(parent.pop==&quot;IH&quot;)&quot; output in the above code chunk
 
 IH_sept_last_month_only &lt;- IH_sept_last_month %&gt;% 
   ungroup() %&gt;% 
@@ -1099,19 +1109,19 @@ xtabs(~parent.pop+month, data=nosnow_grwseason_60)</code></pre>
 <pre class="r"><code>nosnow_grwseason_60 %&gt;% filter(parent.pop==&quot;IH&quot;, grow_yr==1965)</code></pre>
 <pre><code>## # A tibble: 11 × 17
 ## # Groups:   parent.pop, elevation.group, elev_m, grow_yr [1]
-##    parent.pop elevation.group elev_m PckSum Lat     Long  year_cal grow_yr month
-##    &lt;chr&gt;      &lt;chr&gt;            &lt;dbl&gt;  &lt;dbl&gt; &lt;chr&gt;   &lt;chr&gt;    &lt;int&gt;   &lt;int&gt; &lt;dbl&gt;
-##  1 IH         low               454.     NA 39.093… -120…     1964    1965    11
-##  2 IH         low               454.     NA 39.093… -120…     1964    1965    12
-##  3 IH         low               454.     NA 39.093… -120…     1965    1965     1
-##  4 IH         low               454.     NA 39.093… -120…     1965    1965     2
-##  5 IH         low               454.     NA 39.093… -120…     1965    1965     3
-##  6 IH         low               454.     NA 39.093… -120…     1965    1965     4
-##  7 IH         low               454.     NA 39.093… -120…     1965    1965     5
-##  8 IH         low               454.     NA 39.093… -120…     1965    1965     6
-##  9 IH         low               454.     NA 39.093… -120…     1965    1965     7
-## 10 IH         low               454.     NA 39.093… -120…     1965    1965     8
-## 11 IH         low               454.     NA 39.093… -120…     1965    1965     9
+##    parent.pop elevation.group elev_m Lat     Long  PckSum year_cal grow_yr month
+##    &lt;chr&gt;      &lt;chr&gt;            &lt;dbl&gt; &lt;chr&gt;   &lt;chr&gt;  &lt;dbl&gt;    &lt;int&gt;   &lt;int&gt; &lt;dbl&gt;
+##  1 IH         low               454. 39.093… -120…     NA     1964    1965    11
+##  2 IH         low               454. 39.093… -120…     NA     1964    1965    12
+##  3 IH         low               454. 39.093… -120…     NA     1965    1965     1
+##  4 IH         low               454. 39.093… -120…     NA     1965    1965     2
+##  5 IH         low               454. 39.093… -120…     NA     1965    1965     3
+##  6 IH         low               454. 39.093… -120…     NA     1965    1965     4
+##  7 IH         low               454. 39.093… -120…     NA     1965    1965     5
+##  8 IH         low               454. 39.093… -120…     NA     1965    1965     6
+##  9 IH         low               454. 39.093… -120…     NA     1965    1965     7
+## 10 IH         low               454. 39.093… -120…     NA     1965    1965     8
+## 11 IH         low               454. 39.093… -120…     NA     1965    1965     9
 ## # ℹ 8 more variables: growmonth &lt;dbl&gt;, firstmonth &lt;dbl&gt;, lastmonth &lt;dbl&gt;,
 ## #   cwd &lt;dbl&gt;, pck &lt;dbl&gt;, ppt &lt;dbl&gt;, tmn &lt;dbl&gt;, tmx &lt;dbl&gt;</code></pre>
 </div>
@@ -1141,7 +1151,7 @@ unique(snow_pops_60$parent.pop) #18 pops + garden site get some significant snow
 ## [16] &quot;YO11&quot;       &quot;YO4&quot;        &quot;YO7&quot;        &quot;YO8&quot;</code></pre>
 <pre class="r"><code>#add rest of 2023 calendar year 
 snow_pop_ids &lt;- snow_pops_60 %&gt;% select(parent.pop) %&gt;% distinct()</code></pre>
-<pre><code>## Adding missing grouping variables: `elevation.group`, `elev_m`</code></pre>
+<pre><code>## Adding missing grouping variables: `elevation.group`, `elev_m`, `Lat`, `Long`</code></pre>
 <pre class="r"><code>snow_pops_2023_cal_year &lt;- pop_elev_climate %&gt;% 
   filter(parent.pop != &quot;UCD_Garden&quot;) %&gt;%  
   mutate(month = recode(month, 
@@ -1164,27 +1174,28 @@ snow_pop_ids &lt;- snow_pops_60 %&gt;% select(parent.pop) %&gt;% distinct()</cod
   filter(grow_yr == 2024, year_cal==2023) %&gt;%  
   right_join(snow_pop_ids) </code></pre>
 <pre><code>## Joining with `by = join_by(month)`
-## Joining with `by = join_by(parent.pop, elevation.group, elev_m)`</code></pre>
-<pre class="r"><code>snow_pops_60_tojoin &lt;- snow_pops_60 %&gt;% select(parent.pop:elev_m, PckSum) %&gt;% distinct()
+## Joining with `by = join_by(parent.pop, elevation.group, elev_m, Lat, Long)`</code></pre>
+<pre class="r"><code>snow_pops_60_tojoin &lt;- snow_pops_60 %&gt;% select(parent.pop:Long, PckSum) %&gt;% distinct()
 snow_pops_60_years &lt;- left_join(snow_pops_60_tojoin, pop_elev_climate_60) %&gt;% 
   filter(year_cal &gt;1963) %&gt;%  #remove 1963 calendar year 
   bind_rows(snow_pops_2023_cal_year) %&gt;% #add rest of 2023 calendar year 
   arrange(parent.pop, year_cal, month)</code></pre>
-<pre><code>## Joining with `by = join_by(parent.pop, elevation.group, elev_m)`</code></pre>
+<pre><code>## Joining with `by = join_by(parent.pop, elevation.group, elev_m, Lat, Long)`</code></pre>
 <pre class="r"><code>#first month
 snow_60_first_month &lt;- snow_pops_60_years %&gt;%
-  group_by(parent.pop, elevation.group, elev_m, year_cal) %&gt;% #find snow pops growth season within the normal calendar year since they can end as late as December 
+  group_by(parent.pop, elevation.group, elev_m, Lat, Long, year_cal) %&gt;% #find snow pops growth season within the normal calendar year since they can end as late as December 
   filter(pck==0) %&gt;% 
   filter(tmn &gt; 0) %&gt;% 
   arrange(month) %&gt;% 
   filter(row_number()==1) #get first month for each pop and year with no snowpack for germ
 snow_60_first_month_tomerge &lt;- snow_60_first_month %&gt;% 
-  select(parent.pop:elev_m, year_cal, firstmonth=month)
+  select(parent.pop:Long, year_cal, firstmonth=month)
 snow_60_first_month_col &lt;- full_join(snow_pops_60_years, snow_60_first_month_tomerge)</code></pre>
-<pre><code>## Joining with `by = join_by(parent.pop, elevation.group, elev_m, year_cal)`</code></pre>
+<pre><code>## Joining with `by = join_by(parent.pop, elevation.group, elev_m, Lat, Long,
+## year_cal)`</code></pre>
 <pre class="r"><code>#last month 
 snow_60_last_month &lt;- snow_60_first_month_col %&gt;%
-  group_by(parent.pop, elevation.group, elev_m, year_cal) %&gt;% 
+  group_by(parent.pop, elevation.group, elev_m,  Lat, Long, year_cal) %&gt;% 
   filter(month&gt;firstmonth) %&gt;% 
   filter(month&gt;4) %&gt;% #before adding this, the min last month was 10 (except for cases with Jan germ and Feb snow)
   filter(if_else(pck&gt;70, pck&gt;70, 
@@ -1192,120 +1203,128 @@ snow_60_last_month &lt;- snow_60_first_month_col %&gt;%
   arrange(month) %&gt;% 
   filter(row_number()==1) #get first month after growstart for each pop and year with pck &gt;70 OR pck&gt;0 &amp; tmn &lt;0 OR tmn &lt;-5
 snow_60_last_month_tomerge &lt;- snow_60_last_month %&gt;% 
-  select(parent.pop:elev_m, year_cal, firstmonth,lastmonth=month)
+  select(parent.pop:Long, year_cal, firstmonth,lastmonth=month)
 snow_60_last_month_col &lt;- full_join(snow_60_first_month_col, snow_60_last_month_tomerge) %&gt;% 
   select(firstmonth, lastmonth, year_cal:tmx)</code></pre>
-<pre><code>## Joining with `by = join_by(parent.pop, elevation.group, elev_m, year_cal,
-## firstmonth)`
-## Adding missing grouping variables: `parent.pop`, `elevation.group`, `elev_m`</code></pre>
+<pre><code>## Joining with `by = join_by(parent.pop, elevation.group, elev_m, Lat, Long,
+## year_cal, firstmonth)`
+## Adding missing grouping variables: `parent.pop`, `elevation.group`, `elev_m`,
+## `Lat`, `Long`</code></pre>
 <div id="checking-for-weird-cases-1" class="section level4">
 <h4>Checking for weird cases</h4>
 <pre class="r"><code>snow_60_last_month_col %&gt;% filter(is.na(firstmonth)) #no cases where there isn&#39;t a firstmonth</code></pre>
-<pre><code>## # A tibble: 0 × 14
-## # Groups:   parent.pop, elevation.group, elev_m [0]
-## # ℹ 14 variables: parent.pop &lt;chr&gt;, elevation.group &lt;chr&gt;, elev_m &lt;dbl&gt;,
-## #   firstmonth &lt;dbl&gt;, lastmonth &lt;dbl&gt;, year_cal &lt;int&gt;, grow_yr &lt;int&gt;,
-## #   month &lt;dbl&gt;, growmonth &lt;dbl&gt;, cwd &lt;dbl&gt;, pck &lt;dbl&gt;, ppt &lt;dbl&gt;, tmn &lt;dbl&gt;,
-## #   tmx &lt;dbl&gt;</code></pre>
+<pre><code>## # A tibble: 0 × 16
+## # Groups:   parent.pop, elevation.group, elev_m, Lat, Long [0]
+## # ℹ 16 variables: parent.pop &lt;chr&gt;, elevation.group &lt;chr&gt;, elev_m &lt;dbl&gt;,
+## #   Lat &lt;chr&gt;, Long &lt;chr&gt;, firstmonth &lt;dbl&gt;, lastmonth &lt;dbl&gt;, year_cal &lt;int&gt;,
+## #   grow_yr &lt;int&gt;, month &lt;dbl&gt;, growmonth &lt;dbl&gt;, cwd &lt;dbl&gt;, pck &lt;dbl&gt;,
+## #   ppt &lt;dbl&gt;, tmn &lt;dbl&gt;, tmx &lt;dbl&gt;</code></pre>
 <pre class="r"><code>snow_60_last_month_col %&gt;% filter(lastmonth==firstmonth) %&gt;% arrange(parent.pop, year_cal) #no cases where last month is first month </code></pre>
-<pre><code>## # A tibble: 0 × 14
-## # Groups:   parent.pop, elevation.group, elev_m [0]
-## # ℹ 14 variables: parent.pop &lt;chr&gt;, elevation.group &lt;chr&gt;, elev_m &lt;dbl&gt;,
-## #   firstmonth &lt;dbl&gt;, lastmonth &lt;dbl&gt;, year_cal &lt;int&gt;, grow_yr &lt;int&gt;,
-## #   month &lt;dbl&gt;, growmonth &lt;dbl&gt;, cwd &lt;dbl&gt;, pck &lt;dbl&gt;, ppt &lt;dbl&gt;, tmn &lt;dbl&gt;,
-## #   tmx &lt;dbl&gt;</code></pre>
+<pre><code>## # A tibble: 0 × 16
+## # Groups:   parent.pop, elevation.group, elev_m, Lat, Long [0]
+## # ℹ 16 variables: parent.pop &lt;chr&gt;, elevation.group &lt;chr&gt;, elev_m &lt;dbl&gt;,
+## #   Lat &lt;chr&gt;, Long &lt;chr&gt;, firstmonth &lt;dbl&gt;, lastmonth &lt;dbl&gt;, year_cal &lt;int&gt;,
+## #   grow_yr &lt;int&gt;, month &lt;dbl&gt;, growmonth &lt;dbl&gt;, cwd &lt;dbl&gt;, pck &lt;dbl&gt;,
+## #   ppt &lt;dbl&gt;, tmn &lt;dbl&gt;, tmx &lt;dbl&gt;</code></pre>
 <pre class="r"><code>snow_60_last_month_col %&gt;% filter(is.na(lastmonth)) #238 cases where there isn&#39;t a lastmonth #*no snow_pack, or min temp &gt; -5 </code></pre>
-<pre><code>## # A tibble: 2,856 × 14
-## # Groups:   parent.pop, elevation.group, elev_m [15]
-##    parent.pop elevation.group elev_m firstmonth lastmonth year_cal grow_yr month
-##    &lt;chr&gt;      &lt;chr&gt;            &lt;dbl&gt;      &lt;dbl&gt;     &lt;dbl&gt;    &lt;int&gt;   &lt;int&gt; &lt;dbl&gt;
-##  1 CP2        high             2244.          5        NA     1976    1976     1
-##  2 CP2        high             2244.          5        NA     1976    1976     2
-##  3 CP2        high             2244.          5        NA     1976    1976     3
-##  4 CP2        high             2244.          5        NA     1976    1976     4
-##  5 CP2        high             2244.          5        NA     1976    1976     5
-##  6 CP2        high             2244.          5        NA     1976    1976     6
-##  7 CP2        high             2244.          5        NA     1976    1976     7
-##  8 CP2        high             2244.          5        NA     1976    1976     8
-##  9 CP2        high             2244.          5        NA     1976    1977     9
-## 10 CP2        high             2244.          5        NA     1976    1977    10
+<pre><code>## # A tibble: 2,856 × 16
+## # Groups:   parent.pop, elevation.group, elev_m, Lat, Long [15]
+##    parent.pop elevation.group elev_m Lat     Long  firstmonth lastmonth year_cal
+##    &lt;chr&gt;      &lt;chr&gt;            &lt;dbl&gt; &lt;chr&gt;   &lt;chr&gt;      &lt;dbl&gt;     &lt;dbl&gt;    &lt;int&gt;
+##  1 CP2        high             2244. 38.661… -120…          5        NA     1976
+##  2 CP2        high             2244. 38.661… -120…          5        NA     1976
+##  3 CP2        high             2244. 38.661… -120…          5        NA     1976
+##  4 CP2        high             2244. 38.661… -120…          5        NA     1976
+##  5 CP2        high             2244. 38.661… -120…          5        NA     1976
+##  6 CP2        high             2244. 38.661… -120…          5        NA     1976
+##  7 CP2        high             2244. 38.661… -120…          5        NA     1976
+##  8 CP2        high             2244. 38.661… -120…          5        NA     1976
+##  9 CP2        high             2244. 38.661… -120…          5        NA     1976
+## 10 CP2        high             2244. 38.661… -120…          5        NA     1976
 ## # ℹ 2,846 more rows
-## # ℹ 6 more variables: growmonth &lt;dbl&gt;, cwd &lt;dbl&gt;, pck &lt;dbl&gt;, ppt &lt;dbl&gt;,
-## #   tmn &lt;dbl&gt;, tmx &lt;dbl&gt;</code></pre>
-<pre class="r"><code>#***WHAT TO DO FOR THESE CASES? check the next calendar year to see when pck &gt; 70 and make the last month 12 (Dec) for the ones without that 
+## # ℹ 8 more variables: grow_yr &lt;int&gt;, month &lt;dbl&gt;, growmonth &lt;dbl&gt;, cwd &lt;dbl&gt;,
+## #   pck &lt;dbl&gt;, ppt &lt;dbl&gt;, tmn &lt;dbl&gt;, tmx &lt;dbl&gt;</code></pre>
+<pre class="r"><code>#***WHAT TO DO FOR THESE CASES? check the next calendar year to see when pck &gt; 70 and make the last month 12 (Dec) for the ones without that #JRG - let&#39;s use the max  of last month for these cases.  
 
 snow_60_last_month_col %&gt;% filter(lastmonth==firstmonth+1) %&gt;% arrange(parent.pop, year_cal) #0 cases </code></pre>
-<pre><code>## # A tibble: 0 × 14
-## # Groups:   parent.pop, elevation.group, elev_m [0]
-## # ℹ 14 variables: parent.pop &lt;chr&gt;, elevation.group &lt;chr&gt;, elev_m &lt;dbl&gt;,
-## #   firstmonth &lt;dbl&gt;, lastmonth &lt;dbl&gt;, year_cal &lt;int&gt;, grow_yr &lt;int&gt;,
-## #   month &lt;dbl&gt;, growmonth &lt;dbl&gt;, cwd &lt;dbl&gt;, pck &lt;dbl&gt;, ppt &lt;dbl&gt;, tmn &lt;dbl&gt;,
-## #   tmx &lt;dbl&gt;</code></pre>
+<pre><code>## # A tibble: 0 × 16
+## # Groups:   parent.pop, elevation.group, elev_m, Lat, Long [0]
+## # ℹ 16 variables: parent.pop &lt;chr&gt;, elevation.group &lt;chr&gt;, elev_m &lt;dbl&gt;,
+## #   Lat &lt;chr&gt;, Long &lt;chr&gt;, firstmonth &lt;dbl&gt;, lastmonth &lt;dbl&gt;, year_cal &lt;int&gt;,
+## #   grow_yr &lt;int&gt;, month &lt;dbl&gt;, growmonth &lt;dbl&gt;, cwd &lt;dbl&gt;, pck &lt;dbl&gt;,
+## #   ppt &lt;dbl&gt;, tmn &lt;dbl&gt;, tmx &lt;dbl&gt;</code></pre>
 <pre class="r"><code>snow_60_last_month_col %&gt;% filter(lastmonth==firstmonth+2) #6 cases where there was sig snowpack in the second month after the first month of 0 snowpack </code></pre>
-<pre><code>## # A tibble: 72 × 14
-## # Groups:   parent.pop, elevation.group, elev_m [3]
-##    parent.pop elevation.group elev_m firstmonth lastmonth year_cal grow_yr month
-##    &lt;chr&gt;      &lt;chr&gt;            &lt;dbl&gt;      &lt;dbl&gt;     &lt;dbl&gt;    &lt;int&gt;   &lt;int&gt; &lt;dbl&gt;
-##  1 LV1        high             2593.          8        10     1982    1982     1
-##  2 LV1        high             2593.          8        10     1982    1982     2
-##  3 LV1        high             2593.          8        10     1982    1982     3
-##  4 LV1        high             2593.          8        10     1982    1982     4
-##  5 LV1        high             2593.          8        10     1982    1982     5
-##  6 LV1        high             2593.          8        10     1982    1982     6
-##  7 LV1        high             2593.          8        10     1982    1982     7
-##  8 LV1        high             2593.          8        10     1982    1982     8
-##  9 LV1        high             2593.          8        10     1982    1983     9
-## 10 LV1        high             2593.          8        10     1982    1983    10
+<pre><code>## # A tibble: 72 × 16
+## # Groups:   parent.pop, elevation.group, elev_m, Lat, Long [3]
+##    parent.pop elevation.group elev_m Lat     Long  firstmonth lastmonth year_cal
+##    &lt;chr&gt;      &lt;chr&gt;            &lt;dbl&gt; &lt;chr&gt;   &lt;chr&gt;      &lt;dbl&gt;     &lt;dbl&gt;    &lt;int&gt;
+##  1 LV1        high             2593. 40.474… -121…          8        10     1982
+##  2 LV1        high             2593. 40.474… -121…          8        10     1982
+##  3 LV1        high             2593. 40.474… -121…          8        10     1982
+##  4 LV1        high             2593. 40.474… -121…          8        10     1982
+##  5 LV1        high             2593. 40.474… -121…          8        10     1982
+##  6 LV1        high             2593. 40.474… -121…          8        10     1982
+##  7 LV1        high             2593. 40.474… -121…          8        10     1982
+##  8 LV1        high             2593. 40.474… -121…          8        10     1982
+##  9 LV1        high             2593. 40.474… -121…          8        10     1982
+## 10 LV1        high             2593. 40.474… -121…          8        10     1982
 ## # ℹ 62 more rows
-## # ℹ 6 more variables: growmonth &lt;dbl&gt;, cwd &lt;dbl&gt;, pck &lt;dbl&gt;, ppt &lt;dbl&gt;,
-## #   tmn &lt;dbl&gt;, tmx &lt;dbl&gt;</code></pre>
+## # ℹ 8 more variables: grow_yr &lt;int&gt;, month &lt;dbl&gt;, growmonth &lt;dbl&gt;, cwd &lt;dbl&gt;,
+## #   pck &lt;dbl&gt;, ppt &lt;dbl&gt;, tmn &lt;dbl&gt;, tmx &lt;dbl&gt;</code></pre>
 <pre class="r"><code>heavysnow_60 &lt;- snow_60_last_month_col %&gt;% filter(lastmonth&lt;=firstmonth+2) %&gt;% filter(month==firstmonth)
 summary(heavysnow_60) </code></pre>
-<pre><code>##   parent.pop        elevation.group        elev_m       firstmonth 
-##  Length:6           Length:6           Min.   :2354   Min.   :8.0  
-##  Class :character   Class :character   1st Qu.:2414   1st Qu.:8.0  
-##  Mode  :character   Mode  :character   Median :2593   Median :8.5  
-##                                        Mean   :2563   Mean   :8.5  
-##                                        3rd Qu.:2704   3rd Qu.:9.0  
-##                                        Max.   :2741   Max.   :9.0  
-##    lastmonth       year_cal       grow_yr         month       growmonth   
-##  Min.   :10.0   Min.   :1982   Min.   :1982   Min.   :8.0   Min.   : 1.0  
-##  1st Qu.:10.0   1st Qu.:1982   1st Qu.:1982   1st Qu.:8.0   1st Qu.: 1.0  
-##  Median :10.5   Median :1982   Median :1983   Median :8.5   Median : 6.5  
-##  Mean   :10.5   Mean   :1982   Mean   :1983   Mean   :8.5   Mean   : 6.5  
-##  3rd Qu.:11.0   3rd Qu.:1983   3rd Qu.:1984   3rd Qu.:9.0   3rd Qu.:12.0  
-##  Max.   :11.0   Max.   :1983   Max.   :1984   Max.   :9.0   Max.   :12.0  
-##       cwd             pck         ppt             tmn              tmx       
-##  Min.   :45.70   Min.   :0   Min.   :11.06   Min.   :0.7100   Min.   :17.14  
-##  1st Qu.:55.24   1st Qu.:0   1st Qu.:11.30   1st Qu.:0.7825   1st Qu.:17.34  
-##  Median :66.81   Median :0   Median :34.41   Median :1.3600   Median :18.95  
-##  Mean   :64.21   Mean   :0   Mean   :34.40   Mean   :1.4000   Mean   :18.95  
-##  3rd Qu.:73.01   3rd Qu.:0   3rd Qu.:56.98   3rd Qu.:2.0125   3rd Qu.:20.64  
-##  Max.   :79.47   Max.   :0   Max.   :58.43   Max.   :2.1500   Max.   :20.68</code></pre>
+<pre><code>##   parent.pop        elevation.group        elev_m         Lat           
+##  Length:6           Length:6           Min.   :2354   Length:6          
+##  Class :character   Class :character   1st Qu.:2414   Class :character  
+##  Mode  :character   Mode  :character   Median :2593   Mode  :character  
+##                                        Mean   :2563                     
+##                                        3rd Qu.:2704                     
+##                                        Max.   :2741                     
+##      Long             firstmonth    lastmonth       year_cal       grow_yr    
+##  Length:6           Min.   :8.0   Min.   :10.0   Min.   :1982   Min.   :1982  
+##  Class :character   1st Qu.:8.0   1st Qu.:10.0   1st Qu.:1982   1st Qu.:1982  
+##  Mode  :character   Median :8.5   Median :10.5   Median :1982   Median :1983  
+##                     Mean   :8.5   Mean   :10.5   Mean   :1982   Mean   :1983  
+##                     3rd Qu.:9.0   3rd Qu.:11.0   3rd Qu.:1983   3rd Qu.:1984  
+##                     Max.   :9.0   Max.   :11.0   Max.   :1983   Max.   :1984  
+##      month       growmonth         cwd             pck         ppt       
+##  Min.   :8.0   Min.   : 1.0   Min.   :45.70   Min.   :0   Min.   :11.06  
+##  1st Qu.:8.0   1st Qu.: 1.0   1st Qu.:55.24   1st Qu.:0   1st Qu.:11.30  
+##  Median :8.5   Median : 6.5   Median :66.81   Median :0   Median :34.41  
+##  Mean   :8.5   Mean   : 6.5   Mean   :64.21   Mean   :0   Mean   :34.40  
+##  3rd Qu.:9.0   3rd Qu.:12.0   3rd Qu.:73.01   3rd Qu.:0   3rd Qu.:56.98  
+##  Max.   :9.0   Max.   :12.0   Max.   :79.47   Max.   :0   Max.   :58.43  
+##       tmn              tmx       
+##  Min.   :0.7100   Min.   :17.14  
+##  1st Qu.:0.7825   1st Qu.:17.34  
+##  Median :1.3600   Median :18.95  
+##  Mean   :1.4000   Mean   :18.95  
+##  3rd Qu.:2.0125   3rd Qu.:20.64  
+##  Max.   :2.1500   Max.   :20.68</code></pre>
 <pre class="r"><code>unique(heavysnow_60$parent.pop) #3 pops included (all Lassen)</code></pre>
 <pre><code>## [1] &quot;LV1&quot;   &quot;LV3&quot;   &quot;LVTR1&quot;</code></pre>
 <pre class="r"><code>#high snowpack all year except Aug-Nov, these cases are fine to leave 
 
 snow_60_last_month_col %&gt;% filter(firstmonth&lt;4) %&gt;% filter(pck&gt;70) %&gt;% filter(month&gt;firstmonth, month&lt;10) #13 cases where Jan or Feb = first month, but high snow 1 or 2 months later </code></pre>
-<pre><code>## # A tibble: 13 × 14
-## # Groups:   parent.pop, elevation.group, elev_m [4]
-##    parent.pop elevation.group elev_m firstmonth lastmonth year_cal grow_yr month
-##    &lt;chr&gt;      &lt;chr&gt;            &lt;dbl&gt;      &lt;dbl&gt;     &lt;dbl&gt;    &lt;int&gt;   &lt;int&gt; &lt;dbl&gt;
-##  1 DPR        mid              1019.          1        NA     1991    1991     3
-##  2 DPR        mid              1019.          1        NA     1999    1999     2
-##  3 DPR        mid              1019.          1        NA     2019    2019     2
-##  4 DPR        mid              1019.          1        NA     2019    2019     3
-##  5 WL1        mid              1614.          2        NA     1991    1991     3
-##  6 WL1        mid              1614.          1        12     2009    2009     2
-##  7 WL1        mid              1614.          1        NA     2018    2018     3
-##  8 WL2        high             2020.          1        12     2014    2014     2
-##  9 WR         mid              1158           1        NA     1986    1986     2
-## 10 WR         mid              1158           2        NA     1991    1991     3
-## 11 WR         mid              1158           1        11     1994    1994     2
-## 12 WR         mid              1158           1        NA     2019    2019     2
-## 13 WR         mid              1158           1        NA     2019    2019     3
-## # ℹ 6 more variables: growmonth &lt;dbl&gt;, cwd &lt;dbl&gt;, pck &lt;dbl&gt;, ppt &lt;dbl&gt;,
-## #   tmn &lt;dbl&gt;, tmx &lt;dbl&gt;</code></pre>
+<pre><code>## # A tibble: 13 × 16
+## # Groups:   parent.pop, elevation.group, elev_m, Lat, Long [4]
+##    parent.pop elevation.group elev_m Lat     Long  firstmonth lastmonth year_cal
+##    &lt;chr&gt;      &lt;chr&gt;            &lt;dbl&gt; &lt;chr&gt;   &lt;chr&gt;      &lt;dbl&gt;     &lt;dbl&gt;    &lt;int&gt;
+##  1 DPR        mid              1019. 39.228… -120…          1        NA     1991
+##  2 DPR        mid              1019. 39.228… -120…          1        NA     1999
+##  3 DPR        mid              1019. 39.228… -120…          1        NA     2019
+##  4 DPR        mid              1019. 39.228… -120…          1        NA     2019
+##  5 WL1        mid              1614. 38.786… -120…          2        NA     1991
+##  6 WL1        mid              1614. 38.786… -120…          1        12     2009
+##  7 WL1        mid              1614. 38.786… -120…          1        NA     2018
+##  8 WL2        high             2020. 38.8263 -120…          1        12     2014
+##  9 WR         mid              1158  39.343… -120…          1        NA     1986
+## 10 WR         mid              1158  39.343… -120…          2        NA     1991
+## 11 WR         mid              1158  39.343… -120…          1        11     1994
+## 12 WR         mid              1158  39.343… -120…          1        NA     2019
+## 13 WR         mid              1158  39.343… -120…          1        NA     2019
+## # ℹ 8 more variables: grow_yr &lt;int&gt;, month &lt;dbl&gt;, growmonth &lt;dbl&gt;, cwd &lt;dbl&gt;,
+## #   pck &lt;dbl&gt;, ppt &lt;dbl&gt;, tmn &lt;dbl&gt;, tmx &lt;dbl&gt;</code></pre>
 <pre class="r"><code>#look at the distribution of start and end months 
 snow_60_last_month_col %&gt;% 
   ggplot(aes(x=parent.pop, y=firstmonth)) +
@@ -1316,56 +1335,56 @@ snow_60_last_month_col %&gt;%
 #SQ1, SQ2, WL1, WL2 (MAR OUTLIER TOO?), WV, YO4
 snow_60_last_month_col %&gt;% filter(parent.pop==&quot;SQ1&quot;, firstmonth==1) %&gt;% 
   filter(pck&gt;70, month&gt;firstmonth, month&lt;10) #no cases of high snowpack soon after germ</code></pre>
-<pre><code>## # A tibble: 0 × 14
-## # Groups:   parent.pop, elevation.group, elev_m [0]
-## # ℹ 14 variables: parent.pop &lt;chr&gt;, elevation.group &lt;chr&gt;, elev_m &lt;dbl&gt;,
-## #   firstmonth &lt;dbl&gt;, lastmonth &lt;dbl&gt;, year_cal &lt;int&gt;, grow_yr &lt;int&gt;,
-## #   month &lt;dbl&gt;, growmonth &lt;dbl&gt;, cwd &lt;dbl&gt;, pck &lt;dbl&gt;, ppt &lt;dbl&gt;, tmn &lt;dbl&gt;,
-## #   tmx &lt;dbl&gt;</code></pre>
+<pre><code>## # A tibble: 0 × 16
+## # Groups:   parent.pop, elevation.group, elev_m, Lat, Long [0]
+## # ℹ 16 variables: parent.pop &lt;chr&gt;, elevation.group &lt;chr&gt;, elev_m &lt;dbl&gt;,
+## #   Lat &lt;chr&gt;, Long &lt;chr&gt;, firstmonth &lt;dbl&gt;, lastmonth &lt;dbl&gt;, year_cal &lt;int&gt;,
+## #   grow_yr &lt;int&gt;, month &lt;dbl&gt;, growmonth &lt;dbl&gt;, cwd &lt;dbl&gt;, pck &lt;dbl&gt;,
+## #   ppt &lt;dbl&gt;, tmn &lt;dbl&gt;, tmx &lt;dbl&gt;</code></pre>
 <pre class="r"><code>snow_60_last_month_col %&gt;% filter(parent.pop==&quot;SQ2&quot;, firstmonth==2) %&gt;% 
   filter(pck&gt;70, month&gt;firstmonth, month&lt;10) #no cases of high snowpack soon after germ</code></pre>
-<pre><code>## # A tibble: 0 × 14
-## # Groups:   parent.pop, elevation.group, elev_m [0]
-## # ℹ 14 variables: parent.pop &lt;chr&gt;, elevation.group &lt;chr&gt;, elev_m &lt;dbl&gt;,
-## #   firstmonth &lt;dbl&gt;, lastmonth &lt;dbl&gt;, year_cal &lt;int&gt;, grow_yr &lt;int&gt;,
-## #   month &lt;dbl&gt;, growmonth &lt;dbl&gt;, cwd &lt;dbl&gt;, pck &lt;dbl&gt;, ppt &lt;dbl&gt;, tmn &lt;dbl&gt;,
-## #   tmx &lt;dbl&gt;</code></pre>
+<pre><code>## # A tibble: 0 × 16
+## # Groups:   parent.pop, elevation.group, elev_m, Lat, Long [0]
+## # ℹ 16 variables: parent.pop &lt;chr&gt;, elevation.group &lt;chr&gt;, elev_m &lt;dbl&gt;,
+## #   Lat &lt;chr&gt;, Long &lt;chr&gt;, firstmonth &lt;dbl&gt;, lastmonth &lt;dbl&gt;, year_cal &lt;int&gt;,
+## #   grow_yr &lt;int&gt;, month &lt;dbl&gt;, growmonth &lt;dbl&gt;, cwd &lt;dbl&gt;, pck &lt;dbl&gt;,
+## #   ppt &lt;dbl&gt;, tmn &lt;dbl&gt;, tmx &lt;dbl&gt;</code></pre>
 <pre class="r"><code>snow_60_last_month_col %&gt;% filter(parent.pop==&quot;WV&quot;, firstmonth==1) %&gt;% 
   filter(pck&gt;70, month&gt;firstmonth, month&lt;10) #no cases of high snowpack soon after germ</code></pre>
-<pre><code>## # A tibble: 0 × 14
-## # Groups:   parent.pop, elevation.group, elev_m [0]
-## # ℹ 14 variables: parent.pop &lt;chr&gt;, elevation.group &lt;chr&gt;, elev_m &lt;dbl&gt;,
-## #   firstmonth &lt;dbl&gt;, lastmonth &lt;dbl&gt;, year_cal &lt;int&gt;, grow_yr &lt;int&gt;,
-## #   month &lt;dbl&gt;, growmonth &lt;dbl&gt;, cwd &lt;dbl&gt;, pck &lt;dbl&gt;, ppt &lt;dbl&gt;, tmn &lt;dbl&gt;,
-## #   tmx &lt;dbl&gt;</code></pre>
+<pre><code>## # A tibble: 0 × 16
+## # Groups:   parent.pop, elevation.group, elev_m, Lat, Long [0]
+## # ℹ 16 variables: parent.pop &lt;chr&gt;, elevation.group &lt;chr&gt;, elev_m &lt;dbl&gt;,
+## #   Lat &lt;chr&gt;, Long &lt;chr&gt;, firstmonth &lt;dbl&gt;, lastmonth &lt;dbl&gt;, year_cal &lt;int&gt;,
+## #   grow_yr &lt;int&gt;, month &lt;dbl&gt;, growmonth &lt;dbl&gt;, cwd &lt;dbl&gt;, pck &lt;dbl&gt;,
+## #   ppt &lt;dbl&gt;, tmn &lt;dbl&gt;, tmx &lt;dbl&gt;</code></pre>
 <pre class="r"><code>snow_60_last_month_col %&gt;% filter(parent.pop==&quot;YO4&quot;, firstmonth&lt;3) %&gt;% 
   filter(pck&gt;70, month&gt;firstmonth, month&lt;10) #no cases of high snowpack soon after germ</code></pre>
-<pre><code>## # A tibble: 0 × 14
-## # Groups:   parent.pop, elevation.group, elev_m [0]
-## # ℹ 14 variables: parent.pop &lt;chr&gt;, elevation.group &lt;chr&gt;, elev_m &lt;dbl&gt;,
-## #   firstmonth &lt;dbl&gt;, lastmonth &lt;dbl&gt;, year_cal &lt;int&gt;, grow_yr &lt;int&gt;,
-## #   month &lt;dbl&gt;, growmonth &lt;dbl&gt;, cwd &lt;dbl&gt;, pck &lt;dbl&gt;, ppt &lt;dbl&gt;, tmn &lt;dbl&gt;,
-## #   tmx &lt;dbl&gt;</code></pre>
+<pre><code>## # A tibble: 0 × 16
+## # Groups:   parent.pop, elevation.group, elev_m, Lat, Long [0]
+## # ℹ 16 variables: parent.pop &lt;chr&gt;, elevation.group &lt;chr&gt;, elev_m &lt;dbl&gt;,
+## #   Lat &lt;chr&gt;, Long &lt;chr&gt;, firstmonth &lt;dbl&gt;, lastmonth &lt;dbl&gt;, year_cal &lt;int&gt;,
+## #   grow_yr &lt;int&gt;, month &lt;dbl&gt;, growmonth &lt;dbl&gt;, cwd &lt;dbl&gt;, pck &lt;dbl&gt;,
+## #   ppt &lt;dbl&gt;, tmn &lt;dbl&gt;, tmx &lt;dbl&gt;</code></pre>
 <pre class="r"><code>snow_60_last_month_col %&gt;% filter(parent.pop==&quot;WL1&quot;, firstmonth&lt;3) %&gt;% 
   filter(pck&gt;70, month&gt;firstmonth, month&lt;10) #3 years with high snow pack 1 or 2 months post germ (1991, 2009, 2018)</code></pre>
-<pre><code>## # A tibble: 3 × 14
-## # Groups:   parent.pop, elevation.group, elev_m [1]
-##   parent.pop elevation.group elev_m firstmonth lastmonth year_cal grow_yr month
-##   &lt;chr&gt;      &lt;chr&gt;            &lt;dbl&gt;      &lt;dbl&gt;     &lt;dbl&gt;    &lt;int&gt;   &lt;int&gt; &lt;dbl&gt;
-## 1 WL1        mid              1614.          2        NA     1991    1991     3
-## 2 WL1        mid              1614.          1        12     2009    2009     2
-## 3 WL1        mid              1614.          1        NA     2018    2018     3
-## # ℹ 6 more variables: growmonth &lt;dbl&gt;, cwd &lt;dbl&gt;, pck &lt;dbl&gt;, ppt &lt;dbl&gt;,
-## #   tmn &lt;dbl&gt;, tmx &lt;dbl&gt;</code></pre>
+<pre><code>## # A tibble: 3 × 16
+## # Groups:   parent.pop, elevation.group, elev_m, Lat, Long [1]
+##   parent.pop elevation.group elev_m Lat      Long  firstmonth lastmonth year_cal
+##   &lt;chr&gt;      &lt;chr&gt;            &lt;dbl&gt; &lt;chr&gt;    &lt;chr&gt;      &lt;dbl&gt;     &lt;dbl&gt;    &lt;int&gt;
+## 1 WL1        mid              1614. 38.78608 -120…          2        NA     1991
+## 2 WL1        mid              1614. 38.78608 -120…          1        12     2009
+## 3 WL1        mid              1614. 38.78608 -120…          1        NA     2018
+## # ℹ 8 more variables: grow_yr &lt;int&gt;, month &lt;dbl&gt;, growmonth &lt;dbl&gt;, cwd &lt;dbl&gt;,
+## #   pck &lt;dbl&gt;, ppt &lt;dbl&gt;, tmn &lt;dbl&gt;, tmx &lt;dbl&gt;</code></pre>
 <pre class="r"><code>snow_60_last_month_col %&gt;% filter(parent.pop==&quot;WL2&quot;, firstmonth&lt;=3) %&gt;% 
   filter(pck&gt;70, month&gt;firstmonth, month&lt;10) #1 year with high snow pack 1 month post germ (2014) </code></pre>
-<pre><code>## # A tibble: 1 × 14
-## # Groups:   parent.pop, elevation.group, elev_m [1]
-##   parent.pop elevation.group elev_m firstmonth lastmonth year_cal grow_yr month
-##   &lt;chr&gt;      &lt;chr&gt;            &lt;dbl&gt;      &lt;dbl&gt;     &lt;dbl&gt;    &lt;int&gt;   &lt;int&gt; &lt;dbl&gt;
-## 1 WL2        high             2020.          1        12     2014    2014     2
-## # ℹ 6 more variables: growmonth &lt;dbl&gt;, cwd &lt;dbl&gt;, pck &lt;dbl&gt;, ppt &lt;dbl&gt;,
-## #   tmn &lt;dbl&gt;, tmx &lt;dbl&gt;</code></pre>
+<pre><code>## # A tibble: 1 × 16
+## # Groups:   parent.pop, elevation.group, elev_m, Lat, Long [1]
+##   parent.pop elevation.group elev_m Lat     Long   firstmonth lastmonth year_cal
+##   &lt;chr&gt;      &lt;chr&gt;            &lt;dbl&gt; &lt;chr&gt;   &lt;chr&gt;       &lt;dbl&gt;     &lt;dbl&gt;    &lt;int&gt;
+## 1 WL2        high             2020. 38.8263 -120.…          1        12     2014
+## # ℹ 8 more variables: grow_yr &lt;int&gt;, month &lt;dbl&gt;, growmonth &lt;dbl&gt;, cwd &lt;dbl&gt;,
+## #   pck &lt;dbl&gt;, ppt &lt;dbl&gt;, tmn &lt;dbl&gt;, tmx &lt;dbl&gt;</code></pre>
 <pre class="r"><code>#Check with J&amp;J about the above WL1 and WL2 cases, for now just leave them in </code></pre>
 </div>
 <div id="deal-with-weird-cases-1" class="section level4">
@@ -1373,7 +1392,7 @@ snow_60_last_month_col %&gt;% filter(parent.pop==&quot;SQ1&quot;, firstmonth==1)
 <pre class="r"><code>#search for the last month in the grow year rather than calendar year for the cases without a last month 
 snow_60_last_month_grwyr &lt;- snow_60_last_month_col %&gt;% 
   filter(month&lt;9) %&gt;% 
-  group_by(parent.pop, elevation.group, elev_m, grow_yr) %&gt;% 
+  group_by(parent.pop, elevation.group, elev_m,  Lat, Long, grow_yr) %&gt;% 
   filter(if_else(pck&gt;70, pck&gt;70, 
                  if_else(pck&gt;0, tmn &lt; 0, tmn &lt;= -5))) %&gt;%  #-5 is moderate freeze (Pardee et al. 2017)
   arrange(growmonth) %&gt;%  
@@ -1381,30 +1400,33 @@ snow_60_last_month_grwyr &lt;- snow_60_last_month_col %&gt;%
 snow_60_last_month_grwyr_tomerge &lt;- snow_60_last_month_grwyr %&gt;% 
   ungroup() %&gt;% 
   mutate(year_cal=grow_yr-1) %&gt;% #will apply these last months to the previous cal year
-  select(parent.pop:elev_m, year_cal,lastmonth_grwyr=growmonth) %&gt;% 
+  select(parent.pop:Long, year_cal,lastmonth_grwyr=growmonth) %&gt;% 
   arrange(parent.pop, year_cal)
 snow_60_last_grw_month_col &lt;- left_join(snow_60_last_month_col, snow_60_last_month_grwyr_tomerge) %&gt;% 
   select(firstmonth, lastmonth, lastmonth_grwyr, year_cal:tmx) </code></pre>
-<pre><code>## Joining with `by = join_by(parent.pop, elevation.group, elev_m, year_cal)`
-## Adding missing grouping variables: `parent.pop`, `elevation.group`, `elev_m`</code></pre>
+<pre><code>## Joining with `by = join_by(parent.pop, elevation.group, elev_m, Lat, Long,
+## year_cal)`
+## Adding missing grouping variables: `parent.pop`, `elevation.group`, `elev_m`,
+## `Lat`, `Long`</code></pre>
 <pre class="r"><code>snow_60_last_grw_month_col %&gt;% filter(is.na(lastmonth), is.na(lastmonth_grwyr)) #still some with no last month - use the max last month for these </code></pre>
-<pre><code>## # A tibble: 1,020 × 15
-## # Groups:   parent.pop, elevation.group, elev_m [9]
-##    parent.pop elevation.group elev_m firstmonth lastmonth lastmonth_grwyr
-##    &lt;chr&gt;      &lt;chr&gt;            &lt;dbl&gt;      &lt;dbl&gt;     &lt;dbl&gt;           &lt;dbl&gt;
-##  1 DPR        mid              1019.          5        NA              NA
-##  2 DPR        mid              1019.          5        NA              NA
-##  3 DPR        mid              1019.          5        NA              NA
-##  4 DPR        mid              1019.          5        NA              NA
-##  5 DPR        mid              1019.          5        NA              NA
-##  6 DPR        mid              1019.          5        NA              NA
-##  7 DPR        mid              1019.          5        NA              NA
-##  8 DPR        mid              1019.          5        NA              NA
-##  9 DPR        mid              1019.          5        NA              NA
-## 10 DPR        mid              1019.          5        NA              NA
+<pre><code>## # A tibble: 1,020 × 17
+## # Groups:   parent.pop, elevation.group, elev_m, Lat, Long [9]
+##    parent.pop elevation.group elev_m Lat      Long       firstmonth lastmonth
+##    &lt;chr&gt;      &lt;chr&gt;            &lt;dbl&gt; &lt;chr&gt;    &lt;chr&gt;           &lt;dbl&gt;     &lt;dbl&gt;
+##  1 DPR        mid              1019. 39.22846 -120.81518          5        NA
+##  2 DPR        mid              1019. 39.22846 -120.81518          5        NA
+##  3 DPR        mid              1019. 39.22846 -120.81518          5        NA
+##  4 DPR        mid              1019. 39.22846 -120.81518          5        NA
+##  5 DPR        mid              1019. 39.22846 -120.81518          5        NA
+##  6 DPR        mid              1019. 39.22846 -120.81518          5        NA
+##  7 DPR        mid              1019. 39.22846 -120.81518          5        NA
+##  8 DPR        mid              1019. 39.22846 -120.81518          5        NA
+##  9 DPR        mid              1019. 39.22846 -120.81518          5        NA
+## 10 DPR        mid              1019. 39.22846 -120.81518          5        NA
 ## # ℹ 1,010 more rows
-## # ℹ 9 more variables: year_cal &lt;dbl&gt;, grow_yr &lt;int&gt;, month &lt;dbl&gt;,
-## #   growmonth &lt;dbl&gt;, cwd &lt;dbl&gt;, pck &lt;dbl&gt;, ppt &lt;dbl&gt;, tmn &lt;dbl&gt;, tmx &lt;dbl&gt;</code></pre>
+## # ℹ 10 more variables: lastmonth_grwyr &lt;dbl&gt;, year_cal &lt;dbl&gt;, grow_yr &lt;int&gt;,
+## #   month &lt;dbl&gt;, growmonth &lt;dbl&gt;, cwd &lt;dbl&gt;, pck &lt;dbl&gt;, ppt &lt;dbl&gt;, tmn &lt;dbl&gt;,
+## #   tmx &lt;dbl&gt;</code></pre>
 <pre class="r"><code>snow_60_last_grw_month_col %&gt;% group_by(parent.pop) %&gt;% summarise(maxEnd=max(lastmonth, na.rm = TRUE)) #max end for every pop = 12 </code></pre>
 <pre><code>## # A tibble: 19 × 2
 ##    parent.pop maxEnd
@@ -1433,23 +1455,24 @@ snow_60_last_grw_month_col &lt;- left_join(snow_60_last_month_col, snow_60_last_
                            lastmonth))
 
 snow_60_last_grw_month_col %&gt;% filter(is.na(lastmonth), !is.na(lastmonth_grwyr)) #use the grow year last month for these</code></pre>
-<pre><code>## # A tibble: 1,836 × 15
-## # Groups:   parent.pop, elevation.group, elev_m [15]
-##    parent.pop elevation.group elev_m firstmonth lastmonth lastmonth_grwyr
-##    &lt;chr&gt;      &lt;chr&gt;            &lt;dbl&gt;      &lt;dbl&gt;     &lt;dbl&gt;           &lt;dbl&gt;
-##  1 CP2        high             2244.          5        NA               5
-##  2 CP2        high             2244.          5        NA               5
-##  3 CP2        high             2244.          5        NA               5
-##  4 CP2        high             2244.          5        NA               5
-##  5 CP2        high             2244.          5        NA               5
-##  6 CP2        high             2244.          5        NA               5
-##  7 CP2        high             2244.          5        NA               5
-##  8 CP2        high             2244.          5        NA               5
-##  9 CP2        high             2244.          5        NA               5
-## 10 CP2        high             2244.          5        NA               5
+<pre><code>## # A tibble: 1,836 × 17
+## # Groups:   parent.pop, elevation.group, elev_m, Lat, Long [15]
+##    parent.pop elevation.group elev_m Lat      Long       firstmonth lastmonth
+##    &lt;chr&gt;      &lt;chr&gt;            &lt;dbl&gt; &lt;chr&gt;    &lt;chr&gt;           &lt;dbl&gt;     &lt;dbl&gt;
+##  1 CP2        high             2244. 38.66169 -120.13065          5        NA
+##  2 CP2        high             2244. 38.66169 -120.13065          5        NA
+##  3 CP2        high             2244. 38.66169 -120.13065          5        NA
+##  4 CP2        high             2244. 38.66169 -120.13065          5        NA
+##  5 CP2        high             2244. 38.66169 -120.13065          5        NA
+##  6 CP2        high             2244. 38.66169 -120.13065          5        NA
+##  7 CP2        high             2244. 38.66169 -120.13065          5        NA
+##  8 CP2        high             2244. 38.66169 -120.13065          5        NA
+##  9 CP2        high             2244. 38.66169 -120.13065          5        NA
+## 10 CP2        high             2244. 38.66169 -120.13065          5        NA
 ## # ℹ 1,826 more rows
-## # ℹ 9 more variables: year_cal &lt;dbl&gt;, grow_yr &lt;int&gt;, month &lt;dbl&gt;,
-## #   growmonth &lt;dbl&gt;, cwd &lt;dbl&gt;, pck &lt;dbl&gt;, ppt &lt;dbl&gt;, tmn &lt;dbl&gt;, tmx &lt;dbl&gt;</code></pre>
+## # ℹ 10 more variables: lastmonth_grwyr &lt;dbl&gt;, year_cal &lt;dbl&gt;, grow_yr &lt;int&gt;,
+## #   month &lt;dbl&gt;, growmonth &lt;dbl&gt;, cwd &lt;dbl&gt;, pck &lt;dbl&gt;, ppt &lt;dbl&gt;, tmn &lt;dbl&gt;,
+## #   tmx &lt;dbl&gt;</code></pre>
 <pre class="r"><code>snow_no_end &lt;- snow_60first_last_month %&gt;% 
   filter(is.na(lastmonth)) %&gt;% 
   select(-lastmonth)
@@ -1478,19 +1501,19 @@ snow_no_end_nextyr &lt;- snow_no_end %&gt;%
 <pre class="r"><code>snow_no_end_last_month_fixed &lt;- snow_no_end_nextyr_lastmonth %&gt;% 
   bind_rows(snow_no_end_nextyr) %&gt;% #add rows for additional months in 
   arrange(year_cal, month) %&gt;% 
-  select(-Lat, -Long, -growmonth) %&gt;% #remove this since we lost it on the new rows 
-  group_by(parent.pop, elevation.group, elev_m, year_cal) %&gt;% 
+  select(-growmonth) %&gt;% #remove this since we lost it on the new rows 
+  group_by(parent.pop, elevation.group, elev_m,  Lat, Long,  year_cal) %&gt;% 
   filter(month&gt;firstmonth) %&gt;%  
   filter(month&lt;=lastmonth) %&gt;% 
   arrange(parent.pop, year_cal, month)
 
 snow_grwseason_60 &lt;- snow_60first_last_month %&gt;% 
-  group_by(parent.pop, elevation.group, elev_m, year_cal) %&gt;% 
+  group_by(parent.pop, elevation.group, elev_m,  Lat, Long, year_cal) %&gt;% 
   filter(month&gt;firstmonth) %&gt;% 
   filter(month&lt;=lastmonth) %&gt;% 
   bind_rows(snow_no_end_last_month_fixed) %&gt;% 
   arrange(parent.pop, year_cal, month) %&gt;% 
-  select(parent.pop:elev_m, firstmonth, lastmonth, year_cal:month, cwd:tmx)
+  select(parent.pop:Long, firstmonth, lastmonth, year_cal:month, cwd:tmx)
 
 xtabs(~parent.pop+month, data=snow_grwseason_60)</code></pre>
 <pre><code>##             month
@@ -1547,18 +1570,19 @@ stats</p>
 
 #first month
 WL2_2024_first_month &lt;- WL2_2024_clim %&gt;%
-  group_by(parent.pop, elevation.group, elev_m, year_cal) %&gt;% 
+  group_by(parent.pop, elevation.group, elev_m,  Lat, Long, year_cal) %&gt;% #need to group here so that &quot;row_number()==1&quot; will get the first month for each pop, not just the first pop in the data frame 
   filter(pck==0) %&gt;% 
   filter(tmn &gt; 0) %&gt;% 
   arrange(month) %&gt;% 
   filter(row_number()==1) #get first month for each pop and year with no snowpack for germ
 WL2_2024_first_month_tomerge &lt;- WL2_2024_first_month %&gt;% 
-  select(parent.pop:elev_m, year_cal, firstmonth=month)
+  select(parent.pop:Long, year_cal, firstmonth=month)
 WL2_2024_first_month_col &lt;- full_join(WL2_2024_clim, WL2_2024_first_month_tomerge)</code></pre>
-<pre><code>## Joining with `by = join_by(parent.pop, elevation.group, elev_m, year_cal)`</code></pre>
+<pre><code>## Joining with `by = join_by(parent.pop, elevation.group, elev_m, Lat, Long,
+## year_cal)`</code></pre>
 <pre class="r"><code>#last month 
 WL2_2024_last_month &lt;- WL2_2024_first_month_col %&gt;%
-  group_by(parent.pop, elevation.group, elev_m, year_cal) %&gt;% 
+  group_by(parent.pop, elevation.group, elev_m,  Lat, Long, year_cal) %&gt;% 
   filter(month&gt;firstmonth) %&gt;% 
   #filter(month&gt;4) %&gt;% #before adding this, the min last month was 10 (except for cases with Jan germ and Feb snow)
   filter(if_else(pck&gt;70, pck&gt;70, 
@@ -1566,38 +1590,38 @@ WL2_2024_last_month &lt;- WL2_2024_first_month_col %&gt;%
   arrange(month) %&gt;% 
   filter(row_number()==1) #get first month after growstart for each pop and year with pck &gt;70 OR pck&gt;0 &amp; tmn &lt;0 OR tmn &lt;-5
 WL2_2024_last_month_tomerge &lt;- WL2_2024_last_month %&gt;% 
-  select(parent.pop:elev_m, year_cal, firstmonth,lastmonth=month)
+  select(parent.pop:Long, year_cal, firstmonth,lastmonth=month)
 WL2_2024_last_month_col &lt;- full_join(WL2_2024_first_month_col, WL2_2024_last_month_tomerge) %&gt;% 
-  select(parent.pop, elevation.group, elev_m, firstmonth, lastmonth, year_cal:tmx)</code></pre>
-<pre><code>## Joining with `by = join_by(parent.pop, elevation.group, elev_m, year_cal,
-## firstmonth)`</code></pre>
+  select(parent.pop, elevation.group, elev_m, Lat, Long, firstmonth, lastmonth, year_cal:tmx)</code></pre>
+<pre><code>## Joining with `by = join_by(parent.pop, elevation.group, elev_m, Lat, Long,
+## year_cal, firstmonth)`</code></pre>
 <pre class="r"><code>#first month = 5, last month = 11
 
 #filter growth season months only
 WL2_2024_grwssn &lt;- WL2_2024_last_month_col %&gt;% 
-  group_by(parent.pop, elevation.group, elev_m, year_cal) %&gt;% 
+  group_by(parent.pop, elevation.group, elev_m,  Lat, Long, year_cal) %&gt;% 
   filter(month&gt;firstmonth) %&gt;% 
   filter(month&lt;=lastmonth) %&gt;% 
   arrange(parent.pop, year_cal, month) %&gt;% 
-  select(parent.pop:elev_m, firstmonth, lastmonth, year_cal:month, cwd:tmx)</code></pre>
+  select(parent.pop:Long, firstmonth, lastmonth, year_cal:month, cwd:tmx)</code></pre>
 </div>
 </div>
 <div id="flint-for-growing-season-months-only" class="section level2">
 <h2>Flint for growing season months only</h2>
 <p>Bind snow and no_snow pops together</p>
 <pre class="r"><code>nosnow_grwseason_60_prep &lt;- nosnow_grwseason_60 %&gt;% 
-  select(parent.pop:elev_m, year=grow_yr, #grow season months in grow year format for no snow pops
+  select(parent.pop:Long, year=grow_yr, #grow season months in grow year format for no snow pops
          month, firstmonth:tmx)
 snow_grwseason_60_prep &lt;- snow_grwseason_60 %&gt;% 
-  select(parent.pop:elev_m, year=year_cal, #grow season months in calendar year format for snow pops
+  select(parent.pop:Long, year=year_cal, #grow season months in calendar year format for snow pops
          firstmonth:lastmonth, month:tmx)
 WL2_2024_grwssn_prep &lt;- WL2_2024_grwssn %&gt;% 
-  select(parent.pop:elev_m, year=year_cal,
+  select(parent.pop:Long, year=year_cal,
          firstmonth:lastmonth, month:tmx)
 WL2_2023_July &lt;- pop_elev_climate %&gt;% 
   filter(parent.pop==&quot;WL2_Garden&quot;, month==&quot;jul&quot;, year==2023) %&gt;% #add July 2023 back in 
   mutate(month=7) %&gt;% 
-  select(parent.pop:elev_m, year, month, cwd, pck, ppt, tmn, tmx)
+  select(parent.pop:Long, year, month, cwd, pck, ppt, tmn, tmx)
 
 flint_60_grwseason &lt;- rbind(nosnow_grwseason_60_prep, snow_grwseason_60_prep) %&gt;%
   bind_rows(WL2_2024_grwssn_prep) %&gt;% 
@@ -1606,9 +1630,9 @@ flint_60_grwseason &lt;- rbind(nosnow_grwseason_60_prep, snow_grwseason_60_prep)
                                 year &gt;= 1964 &amp; year &lt; 1994 ~ &quot;historic&quot;,
                                 year &gt;= 1994 &amp; year &lt; 2024 ~ &quot;recent&quot;)) %&gt;% 
   mutate(grwssn_length = lastmonth-firstmonth) %&gt;% 
-  select(parent.pop:elev_m, timeframe, year, month,grwssn_length, cwd:tmx) #organize the columns 
+  select(parent.pop:Long, timeframe, year, month,grwssn_length, cwd:tmx) #organize the columns 
 summary(flint_60_grwseason)</code></pre>
-<pre><code>##   parent.pop        elevation.group        elev_m        timeframe        
+<pre><code>##   parent.pop        elevation.group        elev_m           Lat           
 ##  Length:10183       Length:10183       Min.   : 313.0   Length:10183      
 ##  Class :character   Class :character   1st Qu.: 748.9   Class :character  
 ##  Mode  :character   Mode  :character   Median :1613.8   Mode  :character  
@@ -1616,21 +1640,29 @@ summary(flint_60_grwseason)</code></pre>
 ##                                        3rd Qu.:2244.1                     
 ##                                        Max.   :2872.3                     
 ##                                                                           
-##       year          month        grwssn_length        cwd        
-##  Min.   :1964   Min.   : 1.000   Min.   : 2.00   Min.   :  0.00  
-##  1st Qu.:1980   1st Qu.: 6.000   1st Qu.: 6.00   1st Qu.: 28.06  
-##  Median :1994   Median : 8.000   Median : 8.00   Median : 56.82  
-##  Mean   :1994   Mean   : 7.962   Mean   : 7.69   Mean   : 59.18  
-##  3rd Qu.:2009   3rd Qu.:10.000   3rd Qu.: 9.00   3rd Qu.: 86.47  
-##  Max.   :2024   Max.   :15.000   Max.   :14.00   Max.   :183.92  
-##                                  NA&#39;s   :1                       
-##       pck              ppt              tmn               tmx       
-##  Min.   :  0.00   Min.   :  0.00   Min.   :-11.170   Min.   :-0.10  
-##  1st Qu.:  0.00   1st Qu.:  5.08   1st Qu.:  1.450   1st Qu.:12.88  
-##  Median :  0.00   Median : 31.51   Median :  5.280   Median :18.99  
-##  Mean   : 13.05   Mean   : 78.28   Mean   :  5.205   Mean   :18.69  
-##  3rd Qu.:  0.00   3rd Qu.:108.39   3rd Qu.:  9.280   3rd Qu.:24.04  
-##  Max.   :882.99   Max.   :894.02   Max.   : 19.740   Max.   :37.21  
+##      Long            timeframe              year          month       
+##  Length:10183       Length:10183       Min.   :1964   Min.   : 1.000  
+##  Class :character   Class :character   1st Qu.:1980   1st Qu.: 6.000  
+##  Mode  :character   Mode  :character   Median :1994   Median : 8.000  
+##                                        Mean   :1994   Mean   : 7.962  
+##                                        3rd Qu.:2009   3rd Qu.:10.000  
+##                                        Max.   :2024   Max.   :15.000  
+##                                                                       
+##  grwssn_length        cwd              pck              ppt        
+##  Min.   : 2.00   Min.   :  0.00   Min.   :  0.00   Min.   :  0.00  
+##  1st Qu.: 6.00   1st Qu.: 28.06   1st Qu.:  0.00   1st Qu.:  5.08  
+##  Median : 8.00   Median : 56.82   Median :  0.00   Median : 31.51  
+##  Mean   : 7.69   Mean   : 59.18   Mean   : 13.05   Mean   : 78.28  
+##  3rd Qu.: 9.00   3rd Qu.: 86.47   3rd Qu.:  0.00   3rd Qu.:108.39  
+##  Max.   :14.00   Max.   :183.92   Max.   :882.99   Max.   :894.02  
+##  NA&#39;s   :1                                                         
+##       tmn               tmx       
+##  Min.   :-11.170   Min.   :-0.10  
+##  1st Qu.:  1.450   1st Qu.:12.88  
+##  Median :  5.280   Median :18.99  
+##  Mean   :  5.205   Mean   :18.69  
+##  3rd Qu.:  9.280   3rd Qu.:24.04  
+##  Max.   : 19.740   Max.   :37.21  
 ## </code></pre>
 <pre class="r"><code>unique(flint_60_grwseason$parent.pop)</code></pre>
 <pre><code>##  [1] &quot;BH&quot;         &quot;CC&quot;         &quot;IH&quot;         &quot;SC&quot;         &quot;TM2&quot;       
@@ -1660,56 +1692,58 @@ bioclim_60_meantemp_prep &lt;- flint_60_grwseason %&gt;%
 
 # Bio 1, 2, 4, 7, 12, 15
 bioclim_60_calc &lt;- bioclim_60_meantemp_prep %&gt;% 
-  group_by(parent.pop, elevation.group, elev_m, year) %&gt;% 
+  group_by(parent.pop, elevation.group, elev_m,  Lat, Long, year) %&gt;% 
   summarise(ann_tmean=mean(tavg),  #Bio1 - Annual Mean Temperature
             mean_diurnal_range=mean(t_diurnal), #Bio2 - Mean Diurnal Range
             temp_seasonality=sd(tavg), #Bio4 - Temperature Seasonality
             temp_ann_range=(max(tmx))-(min(tmn)), #bio7 - temp annual range
             ann_ppt=sum(ppt), #bio12 - annual precip
             ppt_seasonality=cv(ppt+1)) #bio15 - Precipitation Seasonality (+1 to avoid strange CVs for areas where mean rainfaill is &lt; 1)</code></pre>
-<pre><code>## `summarise()` has grouped output by &#39;parent.pop&#39;, &#39;elevation.group&#39;, &#39;elev_m&#39;.
-## You can override using the `.groups` argument.</code></pre>
+<pre><code>## `summarise()` has grouped output by &#39;parent.pop&#39;, &#39;elevation.group&#39;, &#39;elev_m&#39;,
+## &#39;Lat&#39;, &#39;Long&#39;. You can override using the `.groups` argument.</code></pre>
 <pre class="r"><code># Calculating wettest, driest, warmest, and coldest months 
 wettest_month &lt;- bioclim_60_meantemp_prep %&gt;%  #there&#39;s one wettest month per pop/year
-  group_by(parent.pop, elevation.group, elev_m, timeframe, year) %&gt;% 
+  group_by(parent.pop, elevation.group, elev_m, Lat, Long, timeframe, year) %&gt;% 
   slice_max(ppt)
 driest_month &lt;- bioclim_60_meantemp_prep %&gt;%  #there&#39;s more than one driest month for some pops and years 
-  group_by(parent.pop, elevation.group, elev_m, timeframe, year) %&gt;% 
+  group_by(parent.pop, elevation.group, elev_m,  Lat, Long, timeframe, year) %&gt;% 
   slice_min(ppt)
 warmest_month &lt;- bioclim_60_meantemp_prep %&gt;% #there&#39;s one warmest month per pop/year
-  group_by(parent.pop, elevation.group, elev_m, timeframe, year) %&gt;% 
+  group_by(parent.pop, elevation.group, elev_m,  Lat, Long, timeframe, year) %&gt;% 
   slice_max(tavg)
 coldest_month &lt;- bioclim_60_meantemp_prep %&gt;% #there&#39;s one coldest month per pop/year
-  group_by(parent.pop, elevation.group, elev_m, timeframe, year) %&gt;% 
+  group_by(parent.pop, elevation.group, elev_m,  Lat, Long, timeframe, year) %&gt;% 
   slice_min(tavg)
 
 # Bio 8, 9, 18, 19
 bio8_60 &lt;- wettest_month %&gt;% #bio8 = tmean_wettest_month
-  dplyr::select(parent.pop, elevation.group, elev_m, year, tmean_wettest_month=tavg)</code></pre>
+  dplyr::select(parent.pop, elevation.group, elev_m,  Lat, Long, year, tmean_wettest_month=tavg)</code></pre>
 <pre><code>## Adding missing grouping variables: `timeframe`</code></pre>
 <pre class="r"><code>bio9_60 &lt;- driest_month %&gt;% #bio9 = tmean_driest_month
-  group_by(parent.pop, elevation.group, elev_m, year) %&gt;% 
+  group_by(parent.pop, elevation.group, elev_m,  Lat, Long, year) %&gt;% 
   summarise(tmean_driest_month=mean(tavg)) #taking the average b/c some years where there are multiple driest months </code></pre>
-<pre><code>## `summarise()` has grouped output by &#39;parent.pop&#39;, &#39;elevation.group&#39;, &#39;elev_m&#39;.
-## You can override using the `.groups` argument.</code></pre>
+<pre><code>## `summarise()` has grouped output by &#39;parent.pop&#39;, &#39;elevation.group&#39;, &#39;elev_m&#39;,
+## &#39;Lat&#39;, &#39;Long&#39;. You can override using the `.groups` argument.</code></pre>
 <pre class="r"><code>bio18_60 &lt;- warmest_month %&gt;% #bio18 = ppt_warmest_month
-  dplyr::select(parent.pop, elevation.group, elev_m, year, ppt_warmest_month=ppt)</code></pre>
+  dplyr::select(parent.pop, elevation.group, elev_m,  Lat, Long, year, ppt_warmest_month=ppt)</code></pre>
 <pre><code>## Adding missing grouping variables: `timeframe`</code></pre>
 <pre class="r"><code>bio19_60 &lt;- coldest_month %&gt;% #bio19 = ppt_coldest_month
-  dplyr::select(parent.pop, elevation.group, elev_m, year, ppt_coldest_month=ppt)</code></pre>
+  dplyr::select(parent.pop, elevation.group, elev_m,  Lat, Long, year, ppt_coldest_month=ppt)</code></pre>
 <pre><code>## Adding missing grouping variables: `timeframe`</code></pre>
 <pre class="r"><code># Merge:
 bio8_9_60 &lt;- full_join(bio8_60, bio9_60)</code></pre>
-<pre><code>## Joining with `by = join_by(parent.pop, elevation.group, elev_m, year)`</code></pre>
+<pre><code>## Joining with `by = join_by(parent.pop, elevation.group, elev_m, Lat, Long,
+## year)`</code></pre>
 <pre class="r"><code>bio18_19_60 &lt;- full_join(bio18_60, bio19_60)</code></pre>
-<pre><code>## Joining with `by = join_by(timeframe, parent.pop, elevation.group, elev_m,
-## year)`</code></pre>
+<pre><code>## Joining with `by = join_by(timeframe, parent.pop, elevation.group, elev_m, Lat,
+## Long, year)`</code></pre>
 <pre class="r"><code>all_periods_60 &lt;- full_join(bio8_9_60, bio18_19_60)</code></pre>
-<pre><code>## Joining with `by = join_by(timeframe, parent.pop, elevation.group, elev_m,
-## year)`</code></pre>
+<pre><code>## Joining with `by = join_by(timeframe, parent.pop, elevation.group, elev_m, Lat,
+## Long, year)`</code></pre>
 <pre class="r"><code># Merge all bioclims:
 bioclim_60_grwseason &lt;- full_join(bioclim_60_calc, all_periods_60)</code></pre>
-<pre><code>## Joining with `by = join_by(parent.pop, elevation.group, elev_m, year)`</code></pre>
+<pre><code>## Joining with `by = join_by(parent.pop, elevation.group, elev_m, Lat, Long,
+## year)`</code></pre>
 <pre class="r"><code>write_csv(bioclim_60_grwseason, &quot;../output/Climate/BioClim_growthseason_60.csv&quot;)</code></pre>
 </div>
 <div id="merge-water-year-and-growing-season" class="section level2">
@@ -1721,19 +1755,17 @@ bioclim_60_grwseason &lt;- full_join(bioclim_60_calc, all_periods_60)</code></pr
 
 #summarize flint by year to merge it with the bioclim data
 flint_yrly_avgs_wtr_yr &lt;- flint_all_year_wtr_yr %&gt;% 
-  mutate(timeframe=if_else(parent.pop==&quot;WL2_Garden&quot;, &quot;2024&quot;, timeframe)) %&gt;% #keep WL2 2024 clim 
   filter(timeframe!=&quot;beforehistoric&quot;, parent.pop!=&quot;UCD_Garden&quot;) %&gt;% 
   rename(year=wtr_yr, year_cal=year) %&gt;% 
   group_by(parent.pop, elevation.group, elev_m, Lat, Long, timeframe, year) %&gt;% 
   summarise_at(c(&quot;cwd&quot;, &quot;pck&quot;, &quot;ppt&quot;, &quot;tmn&quot;, &quot;tmx&quot;), c(mean), na.rm = TRUE)
 
 flint_yrly_avgs_grwssn &lt;- flint_60_grwseason %&gt;% 
-  group_by(parent.pop, elevation.group, elev_m, timeframe, year) %&gt;% 
+  group_by(parent.pop, elevation.group, elev_m, Lat, Long,  timeframe, year) %&gt;% 
   summarise_at(c(&quot;cwd&quot;, &quot;pck&quot;, &quot;ppt&quot;, &quot;tmn&quot;, &quot;tmx&quot;), c(mean), na.rm = TRUE)
 
 #subset bioclim water year
 bioclim_wtryr_to_merge &lt;- bioclim_wtryr %&gt;% 
-  mutate(timeframe=if_else(parent.pop==&quot;WL2_Garden&quot;, &quot;2024&quot;, timeframe)) %&gt;% #keep WL2 2024 clim 
   filter(timeframe!=&quot;beforehistoric&quot;, parent.pop!=&quot;UCD_Garden&quot;) %&gt;% 
   rename(year=wtr_yr) 
 
@@ -1742,8 +1774,8 @@ wtr_yr_clim &lt;- left_join(flint_yrly_avgs_wtr_yr, bioclim_wtryr_to_merge) %&gt
 <pre><code>## Joining with `by = join_by(parent.pop, elevation.group, elev_m, timeframe,
 ## year)`</code></pre>
 <pre class="r"><code>grwssn_clim &lt;- left_join(flint_yrly_avgs_grwssn, bioclim_60_grwseason) %&gt;% mutate(Season=&quot;Growth Season&quot;)</code></pre>
-<pre><code>## Joining with `by = join_by(parent.pop, elevation.group, elev_m, timeframe,
-## year)`</code></pre>
+<pre><code>## Joining with `by = join_by(parent.pop, elevation.group, elev_m, Lat, Long,
+## timeframe, year)`</code></pre>
 <pre class="r"><code>all_clim &lt;- bind_rows(wtr_yr_clim, grwssn_clim)
 write_csv(all_clim, &quot;../output/Climate/All_Clim.csv&quot;)</code></pre>
 </div>

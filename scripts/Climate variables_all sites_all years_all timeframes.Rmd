@@ -169,10 +169,11 @@ flint_all_year_wtr_yr <- flint_all_year_mosnums %>%
   mutate(timeframe = case_when(
                                 wtr_yr < 1964 ~ "beforehistoric",
                                 wtr_yr >= 1964 & wtr_yr < 1994 ~ "historic",
-                                wtr_yr >= 1994 & wtr_yr < 2024 ~ "recent")) %>%
+                                wtr_yr >= 1994 & wtr_yr < 2024 ~ "recent",
+                                wtr_yr == 2024 ~ "2024")) %>%
                          mutate(timeframe = as.factor(timeframe), month = as.factor(month)) %>%
                          filter(wtr_yr != 1895) %>% #remove years with less than 12 months of data 
-  filter(if_else(parent.pop!="WL2_Garden", wtr_yr<2024, wtr_yr<=2024)) %>% #only keep the WL2 garden climate for 2024 water year #JRG, why not keep it in until we need to use it?  that way, if we wanted to look at the range of variation (or whatever), we have it.
+  filter(if_else(parent.pop!="WL2_Garden", wtr_yr<2024, wtr_yr<=2024)) %>% #Since the home sites climate ends in 2023, need to keep 2024 for the garden (for climate distance comparisons)
                          mutate(months_wtryr = case_when(
                            month == "nov" ~ 1,
                            month == "dec" ~ 2,
@@ -288,7 +289,7 @@ pop_elev_climate_60 <- pop_elev_climate %>%
   arrange(parent.pop, year_cal, month)
 
 pop_elev_climate_60_avgs <- pop_elev_climate_60 %>% 
-  group_by(parent.pop, elevation.group, elev_m, month) %>% 
+  group_by(parent.pop, elevation.group, elev_m,  Lat, Long, month) %>% 
   summarise_at(c("cwd", "pck", "ppt", "tmn", "tmx"), c(mean, sem), na.rm = TRUE) #60 year averages per month for each pop
 names(pop_elev_climate_60_avgs) <- gsub("fn2", "sem", colnames(pop_elev_climate_60_avgs))
 names(pop_elev_climate_60_avgs) <-gsub("fn1", "mean", colnames(pop_elev_climate_60_avgs))
@@ -312,7 +313,7 @@ nosnow_pops_60 <- pop_elev_climate_60_avgs %>% filter(PckSum < 70)
 unique(nosnow_pops_60$parent.pop) #BH, CC, TM2, SC, IH 
 summary(nosnow_pops_60) #3rd quartile of CWD = 85.15
 
-nosnow_pops_60_tojoin <- nosnow_pops_60 %>% select(parent.pop:elev_m, PckSum) %>% distinct() #pull out PckSum
+nosnow_pops_60_tojoin <- nosnow_pops_60 %>% select(parent.pop:Long, PckSum) %>% distinct() #pull out PckSum
 nosnow_pops_60_years <- left_join(nosnow_pops_60_tojoin, pop_elev_climate_60) #add PckSum to full 60 year data frame 
 
 #first month
@@ -322,7 +323,7 @@ nosnow_60_first_month <- nosnow_pops_60_years %>%
   arrange(growmonth) %>% 
   filter(row_number()==1) #get first month for each pop and year with germinating inducing rain 
 nosnow_60_first_month_tomerge <- nosnow_60_first_month %>% 
-  select(parent.pop:elev_m, grow_yr, firstmonth=growmonth) #first month is in grow month not calendar month format
+  select(parent.pop:Long, grow_yr, firstmonth=growmonth) #first month is in grow month not calendar month format
 #merge:
 nosnow_60_first_month_col <- full_join(nosnow_pops_60_years, nosnow_60_first_month_tomerge)
 
@@ -334,7 +335,7 @@ nosnow_60_last_month <- nosnow_60_first_month_col %>%
   arrange(growmonth) %>% 
   filter(row_number()==1)
 nosnow_60_last_month_tomerge <- nosnow_60_last_month %>% 
-  select(parent.pop:elev_m, grow_yr, lastmonth=growmonth) #last month is in grow month not calendar month format
+  select(parent.pop:Long, grow_yr, lastmonth=growmonth) #last month is in grow month not calendar month format
 nosnow_60_last_month_col <- full_join(nosnow_60_first_month_col, nosnow_60_last_month_tomerge) %>% 
   select(parent.pop:growmonth, firstmonth, lastmonth, cwd:tmx)
 ```
@@ -374,7 +375,7 @@ nosnow_60first_last_month <- nosnow_60_last_month_col %>%
 IH_sept_last_month <- nosnow_60first_last_month %>% 
   filter(is.na(lastmonth)) %>% 
   mutate(lastmonth=13) %>% #last month will be the 13th month 
-  arrange(grow_yr) #14 years left for IH with no last month (last month = next year's Sept) #JRG: I thought we were going to use the max of the full time series when there wasn't any last month?  
+  arrange(grow_yr) #14 years for IH where the last month = next year's Sept which is technically month 13 due to the way "grow years" are set up. I confirmed this by checking for CWD > 85.15 in the "nosnow_60_last_month_col %>% filter(parent.pop=="IH")" output in the above code chunk
 
 IH_sept_last_month_only <- IH_sept_last_month %>% 
   ungroup() %>% 
@@ -455,7 +456,7 @@ snow_pops_2023_cal_year <- pop_elev_climate %>%
   filter(grow_yr == 2024, year_cal==2023) %>%  
   right_join(snow_pop_ids) 
 
-snow_pops_60_tojoin <- snow_pops_60 %>% select(parent.pop:elev_m, PckSum) %>% distinct()
+snow_pops_60_tojoin <- snow_pops_60 %>% select(parent.pop:Long, PckSum) %>% distinct()
 snow_pops_60_years <- left_join(snow_pops_60_tojoin, pop_elev_climate_60) %>% 
   filter(year_cal >1963) %>%  #remove 1963 calendar year 
   bind_rows(snow_pops_2023_cal_year) %>% #add rest of 2023 calendar year 
@@ -463,18 +464,18 @@ snow_pops_60_years <- left_join(snow_pops_60_tojoin, pop_elev_climate_60) %>%
 
 #first month
 snow_60_first_month <- snow_pops_60_years %>%
-  group_by(parent.pop, elevation.group, elev_m, year_cal) %>% #find snow pops growth season within the normal calendar year since they can end as late as December 
+  group_by(parent.pop, elevation.group, elev_m, Lat, Long, year_cal) %>% #find snow pops growth season within the normal calendar year since they can end as late as December 
   filter(pck==0) %>% 
   filter(tmn > 0) %>% 
   arrange(month) %>% 
   filter(row_number()==1) #get first month for each pop and year with no snowpack for germ
 snow_60_first_month_tomerge <- snow_60_first_month %>% 
-  select(parent.pop:elev_m, year_cal, firstmonth=month)
+  select(parent.pop:Long, year_cal, firstmonth=month)
 snow_60_first_month_col <- full_join(snow_pops_60_years, snow_60_first_month_tomerge)
 
 #last month 
 snow_60_last_month <- snow_60_first_month_col %>%
-  group_by(parent.pop, elevation.group, elev_m, year_cal) %>% 
+  group_by(parent.pop, elevation.group, elev_m,  Lat, Long, year_cal) %>% 
   filter(month>firstmonth) %>% 
   filter(month>4) %>% #before adding this, the min last month was 10 (except for cases with Jan germ and Feb snow)
   filter(if_else(pck>70, pck>70, 
@@ -482,7 +483,7 @@ snow_60_last_month <- snow_60_first_month_col %>%
   arrange(month) %>% 
   filter(row_number()==1) #get first month after growstart for each pop and year with pck >70 OR pck>0 & tmn <0 OR tmn <-5
 snow_60_last_month_tomerge <- snow_60_last_month %>% 
-  select(parent.pop:elev_m, year_cal, firstmonth,lastmonth=month)
+  select(parent.pop:Long, year_cal, firstmonth,lastmonth=month)
 snow_60_last_month_col <- full_join(snow_60_first_month_col, snow_60_last_month_tomerge) %>% 
   select(firstmonth, lastmonth, year_cal:tmx)
 ```
@@ -531,7 +532,7 @@ snow_60_last_month_col %>% filter(parent.pop=="WL2", firstmonth<=3) %>%
 #search for the last month in the grow year rather than calendar year for the cases without a last month 
 snow_60_last_month_grwyr <- snow_60_last_month_col %>% 
   filter(month<9) %>% 
-  group_by(parent.pop, elevation.group, elev_m, grow_yr) %>% 
+  group_by(parent.pop, elevation.group, elev_m,  Lat, Long, grow_yr) %>% 
   filter(if_else(pck>70, pck>70, 
                  if_else(pck>0, tmn < 0, tmn <= -5))) %>%  #-5 is moderate freeze (Pardee et al. 2017)
   arrange(growmonth) %>%  
@@ -539,7 +540,7 @@ snow_60_last_month_grwyr <- snow_60_last_month_col %>%
 snow_60_last_month_grwyr_tomerge <- snow_60_last_month_grwyr %>% 
   ungroup() %>% 
   mutate(year_cal=grow_yr-1) %>% #will apply these last months to the previous cal year
-  select(parent.pop:elev_m, year_cal,lastmonth_grwyr=growmonth) %>% 
+  select(parent.pop:Long, year_cal,lastmonth_grwyr=growmonth) %>% 
   arrange(parent.pop, year_cal)
 snow_60_last_grw_month_col <- left_join(snow_60_last_month_col, snow_60_last_month_grwyr_tomerge) %>% 
   select(firstmonth, lastmonth, lastmonth_grwyr, year_cal:tmx) 
@@ -582,19 +583,19 @@ snow_no_end_nextyr_lastmonth <- snow_no_end_nextyr %>%
 snow_no_end_last_month_fixed <- snow_no_end_nextyr_lastmonth %>% 
   bind_rows(snow_no_end_nextyr) %>% #add rows for additional months in 
   arrange(year_cal, month) %>% 
-  select(-Lat, -Long, -growmonth) %>% #remove this since we lost it on the new rows 
-  group_by(parent.pop, elevation.group, elev_m, year_cal) %>% 
+  select(-growmonth) %>% #remove this since we lost it on the new rows 
+  group_by(parent.pop, elevation.group, elev_m,  Lat, Long,  year_cal) %>% 
   filter(month>firstmonth) %>%  
   filter(month<=lastmonth) %>% 
   arrange(parent.pop, year_cal, month)
 
 snow_grwseason_60 <- snow_60first_last_month %>% 
-  group_by(parent.pop, elevation.group, elev_m, year_cal) %>% 
+  group_by(parent.pop, elevation.group, elev_m,  Lat, Long, year_cal) %>% 
   filter(month>firstmonth) %>% 
   filter(month<=lastmonth) %>% 
   bind_rows(snow_no_end_last_month_fixed) %>% 
   arrange(parent.pop, year_cal, month) %>% 
-  select(parent.pop:elev_m, firstmonth, lastmonth, year_cal:month, cwd:tmx)
+  select(parent.pop:Long, firstmonth, lastmonth, year_cal:month, cwd:tmx)
 
 xtabs(~parent.pop+month, data=snow_grwseason_60)
 snow_grwseason_60 %>% ggplot(aes(x=month)) + geom_histogram() +
@@ -628,18 +629,18 @@ WL2_2024_clim <- pop_elev_climate %>%
 
 #first month
 WL2_2024_first_month <- WL2_2024_clim %>%
-  group_by(parent.pop, elevation.group, elev_m, year_cal) %>% #JRG: why group if you've already filtered to the one site and year?
+  group_by(parent.pop, elevation.group, elev_m,  Lat, Long, year_cal) %>% #need to group here so that "row_number()==1" will get the first month for each pop, not just the first pop in the data frame 
   filter(pck==0) %>% 
   filter(tmn > 0) %>% 
   arrange(month) %>% 
   filter(row_number()==1) #get first month for each pop and year with no snowpack for germ
 WL2_2024_first_month_tomerge <- WL2_2024_first_month %>% 
-  select(parent.pop:elev_m, year_cal, firstmonth=month)
+  select(parent.pop:Long, year_cal, firstmonth=month)
 WL2_2024_first_month_col <- full_join(WL2_2024_clim, WL2_2024_first_month_tomerge)
 
 #last month 
 WL2_2024_last_month <- WL2_2024_first_month_col %>%
-  group_by(parent.pop, elevation.group, elev_m, year_cal) %>% 
+  group_by(parent.pop, elevation.group, elev_m,  Lat, Long, year_cal) %>% 
   filter(month>firstmonth) %>% 
   #filter(month>4) %>% #before adding this, the min last month was 10 (except for cases with Jan germ and Feb snow)
   filter(if_else(pck>70, pck>70, 
@@ -647,18 +648,18 @@ WL2_2024_last_month <- WL2_2024_first_month_col %>%
   arrange(month) %>% 
   filter(row_number()==1) #get first month after growstart for each pop and year with pck >70 OR pck>0 & tmn <0 OR tmn <-5
 WL2_2024_last_month_tomerge <- WL2_2024_last_month %>% 
-  select(parent.pop:elev_m, year_cal, firstmonth,lastmonth=month)
+  select(parent.pop:Long, year_cal, firstmonth,lastmonth=month)
 WL2_2024_last_month_col <- full_join(WL2_2024_first_month_col, WL2_2024_last_month_tomerge) %>% 
-  select(parent.pop, elevation.group, elev_m, firstmonth, lastmonth, year_cal:tmx)
+  select(parent.pop, elevation.group, elev_m, Lat, Long, firstmonth, lastmonth, year_cal:tmx)
 #first month = 5, last month = 11
 
 #filter growth season months only
 WL2_2024_grwssn <- WL2_2024_last_month_col %>% 
-  group_by(parent.pop, elevation.group, elev_m, year_cal) %>% 
+  group_by(parent.pop, elevation.group, elev_m,  Lat, Long, year_cal) %>% 
   filter(month>firstmonth) %>% 
   filter(month<=lastmonth) %>% 
   arrange(parent.pop, year_cal, month) %>% 
-  select(parent.pop:elev_m, firstmonth, lastmonth, year_cal:month, cwd:tmx)
+  select(parent.pop:Long, firstmonth, lastmonth, year_cal:month, cwd:tmx)
 ```
 
 ## Flint for growing season months only
@@ -667,18 +668,18 @@ Bind snow and no_snow pops together
 
 ```{r}
 nosnow_grwseason_60_prep <- nosnow_grwseason_60 %>% 
-  select(parent.pop:elev_m, year=grow_yr, #grow season months in grow year format for no snow pops
+  select(parent.pop:Long, year=grow_yr, #grow season months in grow year format for no snow pops
          month, firstmonth:tmx)
 snow_grwseason_60_prep <- snow_grwseason_60 %>% 
-  select(parent.pop:elev_m, year=year_cal, #grow season months in calendar year format for snow pops
+  select(parent.pop:Long, year=year_cal, #grow season months in calendar year format for snow pops
          firstmonth:lastmonth, month:tmx)
 WL2_2024_grwssn_prep <- WL2_2024_grwssn %>% 
-  select(parent.pop:elev_m, year=year_cal,
+  select(parent.pop:Long, year=year_cal,
          firstmonth:lastmonth, month:tmx)
 WL2_2023_July <- pop_elev_climate %>% 
   filter(parent.pop=="WL2_Garden", month=="jul", year==2023) %>% #add July 2023 back in 
   mutate(month=7) %>% 
-  select(parent.pop:elev_m, year, month, cwd, pck, ppt, tmn, tmx)
+  select(parent.pop:Long, year, month, cwd, pck, ppt, tmn, tmx)
 
 flint_60_grwseason <- rbind(nosnow_grwseason_60_prep, snow_grwseason_60_prep) %>%
   bind_rows(WL2_2024_grwssn_prep) %>% 
@@ -687,7 +688,7 @@ flint_60_grwseason <- rbind(nosnow_grwseason_60_prep, snow_grwseason_60_prep) %>
                                 year >= 1964 & year < 1994 ~ "historic",
                                 year >= 1994 & year < 2024 ~ "recent")) %>% 
   mutate(grwssn_length = lastmonth-firstmonth) %>% 
-  select(parent.pop:elev_m, timeframe, year, month,grwssn_length, cwd:tmx) #organize the columns 
+  select(parent.pop:Long, timeframe, year, month,grwssn_length, cwd:tmx) #organize the columns 
 summary(flint_60_grwseason)
 unique(flint_60_grwseason$parent.pop)
 flint_60_grwseason %>% 
@@ -712,7 +713,7 @@ bioclim_60_meantemp_prep <- flint_60_grwseason %>%
 
 # Bio 1, 2, 4, 7, 12, 15
 bioclim_60_calc <- bioclim_60_meantemp_prep %>% 
-  group_by(parent.pop, elevation.group, elev_m, year) %>% 
+  group_by(parent.pop, elevation.group, elev_m,  Lat, Long, year) %>% 
   summarise(ann_tmean=mean(tavg),  #Bio1 - Annual Mean Temperature
             mean_diurnal_range=mean(t_diurnal), #Bio2 - Mean Diurnal Range
             temp_seasonality=sd(tavg), #Bio4 - Temperature Seasonality
@@ -722,28 +723,28 @@ bioclim_60_calc <- bioclim_60_meantemp_prep %>%
 
 # Calculating wettest, driest, warmest, and coldest months 
 wettest_month <- bioclim_60_meantemp_prep %>%  #there's one wettest month per pop/year
-  group_by(parent.pop, elevation.group, elev_m, timeframe, year) %>% 
+  group_by(parent.pop, elevation.group, elev_m, Lat, Long, timeframe, year) %>% 
   slice_max(ppt)
 driest_month <- bioclim_60_meantemp_prep %>%  #there's more than one driest month for some pops and years 
-  group_by(parent.pop, elevation.group, elev_m, timeframe, year) %>% 
+  group_by(parent.pop, elevation.group, elev_m,  Lat, Long, timeframe, year) %>% 
   slice_min(ppt)
 warmest_month <- bioclim_60_meantemp_prep %>% #there's one warmest month per pop/year
-  group_by(parent.pop, elevation.group, elev_m, timeframe, year) %>% 
+  group_by(parent.pop, elevation.group, elev_m,  Lat, Long, timeframe, year) %>% 
   slice_max(tavg)
 coldest_month <- bioclim_60_meantemp_prep %>% #there's one coldest month per pop/year
-  group_by(parent.pop, elevation.group, elev_m, timeframe, year) %>% 
+  group_by(parent.pop, elevation.group, elev_m,  Lat, Long, timeframe, year) %>% 
   slice_min(tavg)
 
 # Bio 8, 9, 18, 19
 bio8_60 <- wettest_month %>% #bio8 = tmean_wettest_month
-  dplyr::select(parent.pop, elevation.group, elev_m, year, tmean_wettest_month=tavg)
+  dplyr::select(parent.pop, elevation.group, elev_m,  Lat, Long, year, tmean_wettest_month=tavg)
 bio9_60 <- driest_month %>% #bio9 = tmean_driest_month
-  group_by(parent.pop, elevation.group, elev_m, year) %>% 
+  group_by(parent.pop, elevation.group, elev_m,  Lat, Long, year) %>% 
   summarise(tmean_driest_month=mean(tavg)) #taking the average b/c some years where there are multiple driest months 
 bio18_60 <- warmest_month %>% #bio18 = ppt_warmest_month
-  dplyr::select(parent.pop, elevation.group, elev_m, year, ppt_warmest_month=ppt)
+  dplyr::select(parent.pop, elevation.group, elev_m,  Lat, Long, year, ppt_warmest_month=ppt)
 bio19_60 <- coldest_month %>% #bio19 = ppt_coldest_month
-  dplyr::select(parent.pop, elevation.group, elev_m, year, ppt_coldest_month=ppt)
+  dplyr::select(parent.pop, elevation.group, elev_m,  Lat, Long, year, ppt_coldest_month=ppt)
 # Merge:
 bio8_9_60 <- full_join(bio8_60, bio9_60)
 bio18_19_60 <- full_join(bio18_60, bio19_60)
@@ -764,19 +765,17 @@ write_csv(bioclim_60_grwseason, "../output/Climate/BioClim_growthseason_60.csv")
 
 #summarize flint by year to merge it with the bioclim data
 flint_yrly_avgs_wtr_yr <- flint_all_year_wtr_yr %>% 
-  mutate(timeframe=if_else(parent.pop=="WL2_Garden", "2024", timeframe)) %>% #keep WL2 2024 clim 
   filter(timeframe!="beforehistoric", parent.pop!="UCD_Garden") %>% 
   rename(year=wtr_yr, year_cal=year) %>% 
   group_by(parent.pop, elevation.group, elev_m, Lat, Long, timeframe, year) %>% 
   summarise_at(c("cwd", "pck", "ppt", "tmn", "tmx"), c(mean), na.rm = TRUE)
 
 flint_yrly_avgs_grwssn <- flint_60_grwseason %>% 
-  group_by(parent.pop, elevation.group, elev_m, timeframe, year) %>% 
+  group_by(parent.pop, elevation.group, elev_m, Lat, Long,  timeframe, year) %>% 
   summarise_at(c("cwd", "pck", "ppt", "tmn", "tmx"), c(mean), na.rm = TRUE)
 
 #subset bioclim water year
 bioclim_wtryr_to_merge <- bioclim_wtryr %>% 
-  mutate(timeframe=if_else(parent.pop=="WL2_Garden", "2024", timeframe)) %>% #keep WL2 2024 clim   
   filter(timeframe!="beforehistoric", parent.pop!="UCD_Garden") %>% 
   rename(year=wtr_yr) 
 
