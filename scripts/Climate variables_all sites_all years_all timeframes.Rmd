@@ -172,7 +172,7 @@ flint_all_year_wtr_yr <- flint_all_year_mosnums %>%
                                 wtr_yr >= 1994 & wtr_yr < 2024 ~ "recent")) %>%
                          mutate(timeframe = as.factor(timeframe), month = as.factor(month)) %>%
                          filter(wtr_yr != 1895) %>% #remove years with less than 12 months of data 
-  filter(if_else(parent.pop!="WL2_Garden", wtr_yr<2024, wtr_yr<=2024)) %>% #only keep the WL2 garden climate for 2024 water year 
+  filter(if_else(parent.pop!="WL2_Garden", wtr_yr<2024, wtr_yr<=2024)) %>% #only keep the WL2 garden climate for 2024 water year #JRG, why not keep it in until we need to use it?  that way, if we wanted to look at the range of variation (or whatever), we have it.
                          mutate(months_wtryr = case_when(
                            month == "nov" ~ 1,
                            month == "dec" ~ 2,
@@ -348,7 +348,7 @@ nosnow_60_last_month_col %>% filter(parent.pop=="IH") #most of above = cases whe
 pop_elev_climate %>% filter(parent.pop=="IH") %>% filter(month=="sep", year==2023) #high cwd in sept 2023
 
 nosnow_60_last_month_col %>% filter(is.na(firstmonth)) %>% arrange(grow_yr) #0 cases 
-nosnow_60_last_month_col %>% filter(firstmonth>4) #1 case in BH (2014) where first month is after December, this is fine, right?
+nosnow_60_last_month_col %>% filter(firstmonth>4) #1 case in BH (2014) where first month is after December, this is fine, right? #JRG: yes, probably real - that was during the 2012-2015 drought
 
 nosnow_60_last_month_col %>% filter(lastmonth<4) %>% arrange(parent.pop, grow_yr) #1 case in BH 1979 where last month is less than 4 (earlier than December), it's actually only 1 month post start
 nosnow_60_last_month_col %>% filter(lastmonth==firstmonth) %>% arrange(parent.pop, grow_yr) #0 cases
@@ -374,7 +374,7 @@ nosnow_60first_last_month <- nosnow_60_last_month_col %>%
 IH_sept_last_month <- nosnow_60first_last_month %>% 
   filter(is.na(lastmonth)) %>% 
   mutate(lastmonth=13) %>% #last month will be the 13th month 
-  arrange(grow_yr) #14 years left for IH with no last month (last month = next year's Sept)
+  arrange(grow_yr) #14 years left for IH with no last month (last month = next year's Sept) #JRG: I thought we were going to use the max of the full time series when there wasn't any last month?  
 
 IH_sept_last_month_only <- IH_sept_last_month %>% 
   ungroup() %>% 
@@ -494,7 +494,7 @@ snow_60_last_month_col %>% filter(is.na(firstmonth)) #no cases where there isn't
 snow_60_last_month_col %>% filter(lastmonth==firstmonth) %>% arrange(parent.pop, year_cal) #no cases where last month is first month 
 
 snow_60_last_month_col %>% filter(is.na(lastmonth)) #238 cases where there isn't a lastmonth #*no snow_pack, or min temp > -5 
-#***WHAT TO DO FOR THESE CASES? check the next calendar year to see when pck > 70 and make the last month 12 (Dec) for the ones without that 
+#***WHAT TO DO FOR THESE CASES? check the next calendar year to see when pck > 70 and make the last month 12 (Dec) for the ones without that #JRG - let's use the max  of last month for these cases.  
 
 snow_60_last_month_col %>% filter(lastmonth==firstmonth+1) %>% arrange(parent.pop, year_cal) #0 cases 
 snow_60_last_month_col %>% filter(lastmonth==firstmonth+2) #6 cases where there was sig snowpack in the second month after the first month of 0 snowpack 
@@ -604,6 +604,7 @@ snow_grwseason_60 %>% ggplot(aes(x=month)) + geom_histogram() +
 
 ### WL2 Garden 2024 Growth Season Climate
 Calculate this separately so it's not included in the 60 year summary stats 
+
 ```{r}
 WL2_2024_clim <- pop_elev_climate %>% 
   filter(parent.pop == "WL2_Garden") %>% 
@@ -627,7 +628,7 @@ WL2_2024_clim <- pop_elev_climate %>%
 
 #first month
 WL2_2024_first_month <- WL2_2024_clim %>%
-  group_by(parent.pop, elevation.group, elev_m, year_cal) %>% 
+  group_by(parent.pop, elevation.group, elev_m, year_cal) %>% #JRG: why group if you've already filtered to the one site and year?
   filter(pck==0) %>% 
   filter(tmn > 0) %>% 
   arrange(month) %>% 
@@ -775,7 +776,7 @@ flint_yrly_avgs_grwssn <- flint_60_grwseason %>%
 
 #subset bioclim water year
 bioclim_wtryr_to_merge <- bioclim_wtryr %>% 
-  mutate(timeframe=if_else(parent.pop=="WL2_Garden", "2024", timeframe)) %>% #keep WL2 2024 clim 
+  mutate(timeframe=if_else(parent.pop=="WL2_Garden", "2024", timeframe)) %>% #keep WL2 2024 clim   
   filter(timeframe!="beforehistoric", parent.pop!="UCD_Garden") %>% 
   rename(year=wtr_yr) 
 
