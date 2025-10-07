@@ -1,7 +1,7 @@
 ---
 title: "WL2_Spatial_Variation"
 author: "Brandie QC"
-date: "2025-10-03"
+date: "2025-10-07"
 output: 
   html_document: 
     keep_md: true
@@ -13,13 +13,11 @@ output:
 
 Purpose: See if we could take advantage of the natural variation at WL2 for the 2026 planting
 
--   Some packages in R for autocorrelation
+-   Note: There are some packages in R for autocorrelation
 
 To Do:
 
--   Add size 
-
--   Spatial plots for all variables 
+-   Consider looking at stem diameter and canopy area in year 2
 
 -   For TDR data, compare top of beds avg across the season (See Rachel's github)
 
@@ -54,7 +52,7 @@ library(viridis)
 ```
 
 ``` r
-sem <- function(x, na.rm=FALSE) {           #for caclulating standard error
+sem <- function(x, na.rm=FALSE) {           #for calculating standard error
   sd(x,na.rm=na.rm)/sqrt(length(na.omit(x)))
 } 
 ```
@@ -178,8 +176,82 @@ totfruit <- read_csv("../output/WL2_Traits/WL2_TotalRepOutput.csv") %>%
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
 ```
 
-## Load Size (Height 2 months post transplant, stem diameter at end of season 2, canopy area?)
+## Load Size (Height and herbivory 2 months post transplant; stem diameter end of first year)
 
+``` r
+WL2_twomonths_size <- read_csv("../input/WL2_Data/CorrectedCSVs/WL2_size_survey_20230913_corrected.csv", 
+                               na = c("", "NA", "-", "N/A")) %>% 
+  filter(!is.na(pop)) %>% 
+  rename(parent.pop=pop) %>% 
+  mutate(parent.pop= str_replace(parent.pop, ".*VTR.*", "LVTR1")) %>% 
+  unite(BedLoc, bed:bed.col, sep="_", remove = FALSE) %>% 
+  filter(BedLoc!="K_5_C", BedLoc!="B_32_A", BedLoc!="C_4_D", BedLoc!="C_5_D") %>% 
+  mutate(mf=as.double(mf), rep=as.double(rep)) %>% 
+  unite(Genotype, parent.pop:rep, sep="_", remove = FALSE) %>% 
+  filter(!str_detect(Genotype, ".*buff*")) %>% 
+  select(block:height.cm, herbiv.y.n)
+```
+
+```
+## Rows: 1826 Columns: 11
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: ","
+## chr (8): block, bed, bed.col, pop, mf, rep, herbiv.y.n, survey.notes
+## dbl (3): bed.row, height.cm, long.leaf.cm
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+```
+
+```
+## Warning: There were 2 warnings in `mutate()`.
+## The first warning was:
+## ℹ In argument: `mf = as.double(mf)`.
+## Caused by warning:
+## ! NAs introduced by coercion
+## ℹ Run `dplyr::last_dplyr_warnings()` to see the 1 remaining warning.
+```
+
+``` r
+wl2_anncensus <- read_csv("../input/WL2_Data/CorrectedCSVs/WL2_annual_census_20231027_corrected.csv") %>% 
+  select(block, bed, bed.row=`bed-row`, bed.col=`bed-col`, pop:diam.mm) %>% 
+  filter(!is.na(pop)) %>% 
+  rename(parent.pop=pop) %>% 
+  mutate(parent.pop= str_replace(parent.pop, ".*VTR.*", "LVTR1")) %>% 
+  unite(BedLoc, bed:bed.col, sep="_", remove = FALSE) %>% 
+  filter(BedLoc!="K_5_C", BedLoc!="B_32_A", BedLoc!="C_4_D", BedLoc!="C_5_D") %>% 
+  mutate(mf=as.double(mf), rep=as.double(rep)) %>% 
+  unite(Genotype, parent.pop:rep, sep="_", remove = FALSE) %>% 
+  filter(!str_detect(Genotype, ".*buff*"))
+```
+
+```
+## Warning: One or more parsing issues, call `problems()` on your data frame for details,
+## e.g.:
+##   dat <- vroom(...)
+##   problems(dat)
+```
+
+```
+## Rows: 1826 Columns: 19
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: ","
+## chr (10): date, block, bed, bed-col, pop, mf, rep, pheno, herbiv.y.n, survey...
+## dbl  (7): bed-row, diam.mm, num.flw, num.fruit, long.fruit.cm, total.branch,...
+## lgl  (2): height.cm, long.leaf.cm
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+```
+
+```
+## Warning: There were 2 warnings in `mutate()`.
+## The first warning was:
+## ℹ In argument: `mf = as.double(mf)`.
+## Caused by warning:
+## ! NAs introduced by coercion
+## ℹ Run `dplyr::last_dplyr_warnings()` to see the 1 remaining warning.
+```
 
 ## Box Plots
 
@@ -239,6 +311,46 @@ totfruit %>%
 
 ![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-4-7.png)<!-- -->
 
+``` r
+WL2_twomonths_size %>% 
+  ggplot(aes(x=bed, y=height.cm)) +
+  geom_boxplot()
+```
+
+```
+## Warning: Removed 1025 rows containing non-finite outside the scale range
+## (`stat_boxplot()`).
+```
+
+![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-4-8.png)<!-- -->
+
+``` r
+WL2_twomonths_size %>% 
+  mutate(herbiv.bin = if_else(herbiv.y.n=="Y", 1, 0)) %>% 
+  ggplot(aes(x=bed, y=herbiv.bin)) +
+  geom_boxplot()
+```
+
+```
+## Warning: Removed 1024 rows containing non-finite outside the scale range
+## (`stat_boxplot()`).
+```
+
+![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-4-9.png)<!-- -->
+
+``` r
+wl2_anncensus %>% 
+  ggplot(aes(x=bed, y=diam.mm)) +
+  geom_boxplot()
+```
+
+```
+## Warning: Removed 1198 rows containing non-finite outside the scale range
+## (`stat_boxplot()`).
+```
+
+![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-4-10.png)<!-- -->
+
 ## Summaries
 
 ``` r
@@ -269,6 +381,19 @@ probfruit_summary <- probfruit %>%
 totfruit_summary <- totfruit %>% 
   group_by(bed) %>% 
   summarise(meanSurv=mean(Total_Fitness, na.rm=TRUE), semSurv=sem(Total_Fitness, na.rm=TRUE))
+
+height_summary <- WL2_twomonths_size %>% 
+  group_by(bed) %>% 
+  summarise(meanHeight=mean(height.cm, na.rm=TRUE), semHeight=sem(height.cm, na.rm=TRUE))
+
+herbiv_summary <- WL2_twomonths_size %>% 
+  mutate(herbiv.bin = if_else(herbiv.y.n=="Y", 1, 0)) %>% 
+  group_by(bed) %>% 
+  summarise(meanHerb=mean(herbiv.bin, na.rm=TRUE), semHerb=sem(herbiv.bin, na.rm = TRUE))
+
+diam_summary <- wl2_anncensus %>% 
+  group_by(bed) %>% 
+  summarise(meanDiam=mean(diam.mm, na.rm=TRUE), semDiam=sem(diam.mm, na.rm=TRUE))
 ```
 
 ## Bar Plots
@@ -357,6 +482,42 @@ totfruit_summary %>%
 
 ![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-6-7.png)<!-- -->
 
+``` r
+height_summary %>% 
+  ggplot(aes(x=fct_reorder(bed, meanHeight), y=meanHeight)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) + 
+  geom_errorbar(aes(ymin=meanHeight-semHeight,ymax=meanHeight+semHeight),width=.2, position = 
+                  position_dodge(0.75)) +
+  theme_classic() +
+  labs(x="Bed", y="Height (cm)", title = "Two Months Post-Transplant")
+```
+
+![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-6-8.png)<!-- -->
+
+``` r
+herbiv_summary %>% 
+  ggplot(aes(x=fct_reorder(bed, meanHerb), y=meanHerb)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) + 
+  geom_errorbar(aes(ymin=meanHerb-semHerb,ymax=meanHerb+semHerb),width=.2, position = 
+                  position_dodge(0.75)) +
+  theme_classic() +
+  labs(x="Bed", y="Prob of Herbivory", title = "Two Months Post-Transplant")
+```
+
+![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-6-9.png)<!-- -->
+
+``` r
+diam_summary %>% 
+  ggplot(aes(x=fct_reorder(bed, meanDiam), y=meanDiam)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) + 
+  geom_errorbar(aes(ymin=meanDiam-semDiam,ymax=meanDiam+semDiam),width=.2, position = 
+                  position_dodge(0.75)) +
+  theme_classic() +
+  labs(x="Bed", y="Stem Diameter (mm)")
+```
+
+![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-6-10.png)<!-- -->
+
 ## Spatial Plots Prep
 x = beds + cols
 y = row 
@@ -400,6 +561,15 @@ bed_col_info
 ## # ℹ 34 more rows
 ```
 
+``` r
+bed_rect <- data.frame( #data frame for bed rectangles 
+  xmin = c(1, 7, 13, 19, 25, 31, 37, 43, 49, 55, 61),
+  xmax = c(4, 10, 16, 22, 28, 34, 40, 46, 52, 58, 64),
+  ymin = 1,
+  ymax = c(59, 59, 58, 59, 51, 46, 43, 34, 22, 18, 13)
+)
+```
+
 ## Spatial Plots
 
 ``` r
@@ -418,3 +588,166 @@ wl2_est %>%
 ```
 
 ![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-8-1.png)<!-- -->
+
+``` r
+y1_surv %>% 
+  left_join(bed_col_info) %>% 
+  mutate(Y1Surv=as.character(Y1Surv)) %>% 
+  ggplot(aes(x=x_pos, y=bed.row, colour=Y1Surv)) +
+  geom_point(size=3) +
+  scale_y_reverse() +
+  scale_color_manual(values = c("gray", "darkgreen")) + 
+  theme_classic()
+```
+
+```
+## Joining with `by = join_by(bed, bed.col)`
+```
+
+![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-8-2.png)<!-- -->
+
+``` r
+wintersurv %>% 
+  left_join(bed_col_info) %>% 
+  mutate(WinterSurv=as.character(WinterSurv)) %>% 
+  ggplot(aes(x=x_pos, y=bed.row, colour=WinterSurv)) +
+  geom_point(size=3) +
+  scale_y_reverse() +
+  scale_color_manual(values = c("gray", "darkgreen")) + 
+  theme_classic()
+```
+
+```
+## Joining with `by = join_by(bed, bed.col)`
+```
+
+![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-8-3.png)<!-- -->
+
+``` r
+repsurvy2 %>% 
+  rename(bed.row=row, bed.col=col) %>% 
+  left_join(bed_col_info) %>% 
+  mutate(SurvtoRep_y2=as.character(SurvtoRep_y2)) %>% 
+  ggplot(aes(x=x_pos, y=bed.row, colour=SurvtoRep_y2)) +
+  geom_point(size=3) +
+  scale_y_reverse() +
+  scale_color_manual(values = c("gray", "darkgreen")) + 
+  geom_rect(data=bed_rect, aes(xmin = xmin, xmax = xmax, ymin = ymin, ymax = ymax), colour = "black", alpha=0, inherit.aes = FALSE) +
+  theme_classic()
+```
+
+```
+## Joining with `by = join_by(bed, bed.col)`
+```
+
+![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-8-4.png)<!-- -->
+
+``` r
+probfruit %>% 
+  rename(bed.row=row, bed.col=col) %>% 
+  left_join(bed_col_info) %>% 
+  mutate(ProbFruits=as.character(ProbFruits)) %>% 
+  ggplot(aes(x=x_pos, y=bed.row, colour=ProbFruits)) +
+  geom_point(size=3) +
+  scale_y_reverse() +
+  scale_color_manual(values = c("gray", "darkgreen")) + 
+  geom_rect(data=bed_rect, aes(xmin = xmin, xmax = xmax, ymin = ymin, ymax = ymax), colour = "black", alpha=0, inherit.aes = FALSE) +
+  theme_classic()
+```
+
+```
+## Joining with `by = join_by(bed, bed.col)`
+```
+
+![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-8-5.png)<!-- -->
+
+``` r
+ WL2_twomonths_size %>% 
+  mutate(herbiv.bin = if_else(herbiv.y.n=="Y", 1, 0)) %>% 
+  left_join(bed_col_info) %>% 
+  mutate(herbiv.bin=as.character(herbiv.bin)) %>% 
+   filter(!is.na(herbiv.bin)) %>% 
+  ggplot(aes(x=x_pos, y=bed.row, colour=herbiv.bin)) +
+  geom_point(size=3) +
+  scale_y_reverse() +
+  scale_color_manual(values = c("gray", "darkgreen")) + 
+  theme_classic()
+```
+
+```
+## Joining with `by = join_by(bed, bed.col)`
+```
+
+![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-8-6.png)<!-- -->
+
+### Continuous Traits (fruit number and size)
+
+``` r
+fruitsy2 %>% 
+  rename(bed.row=row, bed.col=col) %>% 
+  left_join(bed_col_info) %>% 
+  ggplot(aes(x=x_pos, y=bed.row, colour=fruits)) +
+  geom_point(size=3) +
+  scale_y_reverse() +
+  scale_color_viridis() +
+  geom_rect(data=bed_rect, aes(xmin = xmin, xmax = xmax, ymin = ymin, ymax = ymax), colour = "black", alpha=0, inherit.aes = FALSE) +
+  theme_classic()
+```
+
+```
+## Joining with `by = join_by(bed, bed.col)`
+```
+
+![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-9-1.png)<!-- -->
+
+``` r
+totfruit %>% 
+  left_join(bed_col_info) %>% 
+  ggplot(aes(x=x_pos, y=bed.row, colour=Total_Fitness)) +
+  geom_point(size=3) +
+  scale_y_reverse() +
+  scale_color_viridis() +
+  geom_rect(data=bed_rect, aes(xmin = xmin, xmax = xmax, ymin = ymin, ymax = ymax), colour = "black", alpha=0, inherit.aes = FALSE) +
+  theme_classic()
+```
+
+```
+## Joining with `by = join_by(bed, bed.col)`
+```
+
+![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-9-2.png)<!-- -->
+
+``` r
+WL2_twomonths_size %>% 
+  left_join(bed_col_info) %>% 
+  filter(!is.na(height.cm)) %>% 
+  ggplot(aes(x=x_pos, y=bed.row, colour=height.cm)) +
+  geom_point(size=3) +
+  scale_y_reverse() +
+  scale_color_viridis() +
+  theme_classic()
+```
+
+```
+## Joining with `by = join_by(bed, bed.col)`
+```
+
+![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-9-3.png)<!-- -->
+
+``` r
+wl2_anncensus %>% 
+  left_join(bed_col_info) %>% 
+  filter(!is.na(diam.mm)) %>% 
+  ggplot(aes(x=x_pos, y=bed.row, colour=diam.mm)) +
+  geom_point(size=3) +
+  scale_y_reverse() +
+  scale_color_viridis() +
+  theme_classic()
+```
+
+```
+## Joining with `by = join_by(bed, bed.col)`
+```
+
+![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-9-4.png)<!-- -->
+
