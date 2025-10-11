@@ -19,11 +19,13 @@ Purpose: See if we could take advantage of the natural variation at WL2 for the 
 
 To Do:
 
+-   Look at spatial variation in iButton data 
+
 -   Consider looking at stem diameter and canopy area in year 2
 
 -   For TDR data, compare top of beds avg across the season (See Rachel's github)
 
--   Correlate TDR data to fitness/size data somehow 
+-   Correlate TDR and iButton data to fitness/size data somehow 
 
 ## Load Libraries
 
@@ -87,6 +89,22 @@ wl2_anncensus <- read_csv("../input/WL2_Data/CorrectedCSVs/WL2_annual_census_202
   mutate(mf=as.double(mf), rep=as.double(rep)) %>% 
   unite(Genotype, parent.pop:rep, sep="_", remove = FALSE) %>% 
   filter(!str_detect(Genotype, ".*buff*"))
+```
+
+## Read in soil temp
+
+```{r}
+temp_2023 <- read_csv("../input/WL2_Data/WL2_2022_2023_iButton_Data_Corrected.csv") %>%
+  select(-`...3`) %>%
+  mutate(Date_Time = mdy_hm(Date_Time)) %>%
+  filter(Date_Time > ymd("2023-07-06"))
+head(temp_2023)
+unique(temp_2023$Bed) #only have Bed A and D
+#2 at each end of bed A and 3 in bed D ends and middle
+
+temp_2024 <- read_csv("../input/WL2_Data/WL2_2024_iButton_Data_Corrected.csv")
+head(temp_2024)
+unique(temp_2024$Bed) #have data for all beds 
 ```
 
 ## Box Plots
