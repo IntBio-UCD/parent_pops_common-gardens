@@ -1,7 +1,7 @@
 ---
 title: "Ann_Cens_Size_RxnNorms"
 author: "Brandie QC"
-date: "2025-03-31"
+date: "2025-10-13"
 output: 
   html_document: 
     keep_md: true
@@ -293,94 +293,61 @@ wl2_ann_cens_2024_pops <- left_join(wl2_y2_pops_blocks, wl2_ann_cens_2024) %>%
 
 
 ``` r
-ucd_gowers_size <- read_csv("../output/Climate/Gowers_UCD.csv") %>% 
-  select(parent.pop:GrwSsn_GD, Wtr_Year_GD) %>% 
-  pivot_wider(names_from = TimePd, values_from = c(GrwSsn_GD, Wtr_Year_GD)) %>% 
-  mutate(Site="UCD", Garden_Lat=38.53250, Garden_Long=-121.7830, Garden_Elev=16) %>% 
-  mutate(Geographic_Dist=distHaversine(cbind(Garden_Long, Garden_Lat), cbind(Long, Lat)),
-         Elev_Dist=elev_m-Garden_Elev) # Calculate the distance using the haversine formula (dist in meters)
+#pop info
+pops_common_garden <- read_csv("../input/WL2_Data/Pops_for_2023_WL2.csv") #pops included in common garden 
 ```
 
 ```
-## Rows: 46 Columns: 12
+## Rows: 23 Columns: 5
 ## ── Column specification ────────────────────────────────────────────────────────
 ## Delimiter: ","
-## chr (3): parent.pop, elevation.group, TimePd
-## dbl (9): elev_m, Lat, Long, GrwSsn_GD, GrwSsn_FLINT_GD, GrwSsn_BIOCLIM_GD, W...
+## chr (2): parent.pop, elevation.group
+## dbl (2): phylogroup, seed year
+## lgl (1): notes
 ## 
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
 ```
 
 ``` r
-wl2_gowers_2023_size <- read_csv("../output/Climate/Gowers_WL2.csv") %>% 
-  select(parent.pop:GrwSsn_GD, Wtr_Year_GD) %>% 
-  pivot_wider(names_from = TimePd, values_from = c(GrwSsn_GD, Wtr_Year_GD)) %>% 
-  mutate(Site="WL2", Garden_Lat=38.82599, Garden_Long=-120.2509, Garden_Elev=2020) %>% 
-  mutate(Geographic_Dist=distHaversine(cbind(Garden_Long, Garden_Lat), cbind(Long, Lat)),
-         Elev_Dist=elev_m-Garden_Elev) # Calculate the distance using the haversine formula
+pops_common_garden_nonotes <- pops_common_garden %>% select(parent.pop, elevation.group) #subset columns
+
+#extra location info 
+pop_loc <- read_csv("../input/Strep_tort_locs.csv")
 ```
 
 ```
-## Rows: 46 Columns: 12
+## Rows: 54 Columns: 7
 ## ── Column specification ────────────────────────────────────────────────────────
 ## Delimiter: ","
-## chr (3): parent.pop, elevation.group, TimePd
-## dbl (9): elev_m, Lat, Long, GrwSsn_GD, GrwSsn_FLINT_GD, GrwSsn_BIOCLIM_GD, W...
+## chr (6): Species epithet, Species Code, Site, Site code, Lat, Long
+## dbl (1): Elevation (m)
 ## 
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
 ```
 
 ``` r
-gowersdist_all <- bind_rows(ucd_gowers_size, wl2_gowers_2023_size) %>% 
-  select(Site, Garden_Lat:Garden_Elev, parent.pop:Wtr_Year_GD_Historical, Geographic_Dist:Elev_Dist)
-head(gowersdist_all)
+#need to change YOSE to YO
+pop_loc_yo <- pop_loc %>% mutate(parent.pop = str_replace(`Site code`, "YOSE(\\d+)", "YO\\1")) %>% select(Lat, Long, elev_m=`Elevation (m)`, parent.pop)
+
+#merge in location info
+pop_elev <- left_join(pops_common_garden_nonotes, pop_loc_yo)
 ```
 
 ```
-## # A tibble: 6 × 15
-##   Site  Garden_Lat Garden_Long Garden_Elev parent.pop elevation.group elev_m
-##   <chr>      <dbl>       <dbl>       <dbl> <chr>      <chr>            <dbl>
-## 1 UCD         38.5       -122.          16 WL1        Mid              1614.
-## 2 UCD         38.5       -122.          16 IH         Low               454.
-## 3 UCD         38.5       -122.          16 CC         Low               313 
-## 4 UCD         38.5       -122.          16 BH         Low               511.
-## 5 UCD         38.5       -122.          16 WR         Mid              1158 
-## 6 UCD         38.5       -122.          16 FR         Mid               787 
-## # ℹ 8 more variables: Lat <dbl>, Long <dbl>, GrwSsn_GD_Recent <dbl>,
-## #   GrwSsn_GD_Historical <dbl>, Wtr_Year_GD_Recent <dbl>,
-## #   Wtr_Year_GD_Historical <dbl>, Geographic_Dist <dbl>, Elev_Dist <dbl>
-```
-
-``` r
-wl2_gowers_2024 <- read_csv("../output/Climate/Gowers_WL2_2024.csv") %>% 
-  pivot_wider(names_from = TimePd, values_from = c(GrwSsn_GD, Wtr_Year_GD)) %>% 
-  mutate(WL2_Lat=38.82599, WL2_Long=-120.2509, WL2_Elev=2020) %>% 
-  mutate(Geographic_Dist=distHaversine(cbind(WL2_Long, WL2_Lat), cbind(Long, Lat)),
-         Elev_Dist=elev_m-WL2_Elev) # Calculate the distance using the haversine formula
-```
-
-```
-## Rows: 46 Columns: 8
-## ── Column specification ────────────────────────────────────────────────────────
-## Delimiter: ","
-## chr (3): parent.pop, elevation.group, TimePd
-## dbl (5): elev_m, Lat, Long, GrwSsn_GD, Wtr_Year_GD
-## 
-## ℹ Use `spec()` to retrieve the full column specification for this data.
-## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Joining with `by = join_by(parent.pop)`
 ```
 
 ## Add in location info
 
 
 ``` r
-anncens_rxnnorms_loc <-left_join(anncens_rxnnorms, gowersdist_all) 
+anncens_rxnnorms_loc <-left_join(anncens_rxnnorms, pop_elev) 
 ```
 
 ```
-## Joining with `by = join_by(parent.pop, Site)`
+## Joining with `by = join_by(parent.pop)`
 ```
 
 ``` r
@@ -388,7 +355,7 @@ head(anncens_rxnnorms_loc)
 ```
 
 ```
-## # A tibble: 6 × 26
+## # A tibble: 6 × 17
 ##   BedLoc  block Genotype pop.mf parent.pop    mf   rep diam.mm height.cm
 ##   <chr>   <chr> <chr>    <chr>  <chr>      <dbl> <dbl>   <dbl>     <dbl>
 ## 1 J2_37_B J2    BH_1_7   BH_1   BH             1     7   16.1       44.6
@@ -397,12 +364,9 @@ head(anncens_rxnnorms_loc)
 ## 4 B_6_C   D     BH_1_6   BH_1   BH             1     6   NA         NA  
 ## 5 B_46_D  C     BH_1_5   BH_1   BH             1     5   NA         NA  
 ## 6 C_40_B  E     BH_1_7   BH_1   BH             1     7    2.06      NA  
-## # ℹ 17 more variables: long.leaf.cm <dbl>, total.branch <dbl>,
-## #   repro.branch <dbl>, Site <chr>, Garden_Lat <dbl>, Garden_Long <dbl>,
-## #   Garden_Elev <dbl>, elevation.group <chr>, elev_m <dbl>, Lat <dbl>,
-## #   Long <dbl>, GrwSsn_GD_Recent <dbl>, GrwSsn_GD_Historical <dbl>,
-## #   Wtr_Year_GD_Recent <dbl>, Wtr_Year_GD_Historical <dbl>,
-## #   Geographic_Dist <dbl>, Elev_Dist <dbl>
+## # ℹ 8 more variables: long.leaf.cm <dbl>, total.branch <dbl>,
+## #   repro.branch <dbl>, Site <chr>, elevation.group <chr>, Lat <chr>,
+## #   Long <chr>, elev_m <dbl>
 ```
 
 ``` r
@@ -411,7 +375,7 @@ head(anncens_rxnnorms_loc)
 
 
 ``` r
-wl2_ann_cens_2024_pops_loc <- left_join(wl2_ann_cens_2024_pops, wl2_gowers_2024)
+wl2_ann_cens_2024_pops_loc <- left_join(wl2_ann_cens_2024_pops, pop_elev)
 ```
 
 ```
@@ -423,7 +387,7 @@ head(wl2_ann_cens_2024_pops_loc)
 ```
 
 ```
-## # A tibble: 6 × 34
+## # A tibble: 6 × 25
 ##   Pop.Type   loc   bed     row col   parent.pop    mf   rep Genotype block phen 
 ##   <chr>      <chr> <chr> <dbl> <chr> <chr>      <dbl> <dbl> <chr>    <chr> <chr>
 ## 1 2023-surv… A_6_B A         6 B     CC             3     3 CC_3_3   A     <NA> 
@@ -432,14 +396,107 @@ head(wl2_ann_cens_2024_pops_loc)
 ## 4 2023-surv… A_18… A        18 A     BH             4     3 BH_4_3   A     <NA> 
 ## 5 2023-surv… A_24… A        24 A     WL2            7     9 WL2_7_9  A     P    
 ## 6 2023-surv… A_32… A        32 B     IH             7     4 IH_7_4   B     P    
-## # ℹ 23 more variables: diam.mm <dbl>, num.flw <dbl>, num.fruit <dbl>,
+## # ℹ 14 more variables: diam.mm <dbl>, num.flw <dbl>, num.fruit <dbl>,
 ## #   long.fruit.cm <dbl>, total.branch <dbl>, overhd.diam <dbl>,
 ## #   overhd.perp <dbl>, survey.date <chr>, collected.date <chr>,
-## #   survey.notes <chr>, elevation.group <chr>, elev_m <dbl>, Lat <dbl>,
-## #   Long <dbl>, GrwSsn_GD_Recent <dbl>, GrwSsn_GD_Historical <dbl>,
-## #   Wtr_Year_GD_Recent <dbl>, Wtr_Year_GD_Historical <dbl>, WL2_Lat <dbl>,
-## #   WL2_Long <dbl>, WL2_Elev <dbl>, Geographic_Dist <dbl>, Elev_Dist <dbl>
+## #   survey.notes <chr>, elevation.group <chr>, Lat <chr>, Long <chr>,
+## #   elev_m <dbl>
 ```
+
+## Maternal Family Sample Sizes 
+
+``` r
+#restrict to mfs with data at both sites 
+anncens_surv_mfs_wide <- anncens_rxnnorms_loc %>% 
+  group_by(pop.mf, parent.pop, Site, elev_m) %>% 
+  summarise(N_height = sum(!is.na(height.cm))) %>% 
+  select(pop.mf, Site, N_height) %>% 
+  spread(Site, N_height) %>% 
+  mutate(Both.Sites=if_else(!is.na(UCD) & !is.na(WL2), TRUE, FALSE)) %>% 
+  filter(Both.Sites != "FALSE")
+```
+
+```
+## `summarise()` has grouped output by 'pop.mf', 'parent.pop', 'Site'. You can
+## override using the `.groups` argument.
+## Adding missing grouping variables: `parent.pop`
+```
+
+``` r
+anncens_surv_mfs_bothsites <- left_join(anncens_surv_mfs_wide, anncens_rxnnorms_loc)
+```
+
+```
+## Joining with `by = join_by(parent.pop, pop.mf)`
+```
+
+``` r
+mf_sample_size <- anncens_surv_mfs_bothsites %>% 
+  count(parent.pop, pop.mf, Site) %>% 
+  arrange(n)
+mf_sample_size #24 mfs with data at both sites 
+```
+
+```
+## # A tibble: 48 × 4
+## # Groups:   pop.mf, parent.pop [24]
+##    pop.mf parent.pop Site      n
+##    <chr>  <chr>      <chr> <int>
+##  1 BH_1   BH         UCD       1
+##  2 CP2_1  CP2        UCD       1
+##  3 DPR_5  DPR        UCD       1
+##  4 DPR_6  DPR        UCD       1
+##  5 IH_4   IH         UCD       1
+##  6 IH_6   IH         UCD       1
+##  7 SC_4   SC         UCD       1
+##  8 SC_5   SC         UCD       1
+##  9 SQ3_4  SQ3        UCD       1
+## 10 TM2_6  TM2        UCD       1
+## # ℹ 38 more rows
+```
+
+``` r
+summary(mf_sample_size)
+```
+
+```
+##     pop.mf           parent.pop            Site                 n         
+##  Length:48          Length:48          Length:48          Min.   : 1.000  
+##  Class :character   Class :character   Class :character   1st Qu.: 2.000  
+##  Mode  :character   Mode  :character   Mode  :character   Median : 6.500  
+##                                                           Mean   : 7.542  
+##                                                           3rd Qu.:13.000  
+##                                                           Max.   :21.000
+```
+
+``` r
+mf_sample_size %>% 
+  ggplot(aes(x=pop.mf, y=n)) +
+  geom_col() + 
+  labs(x="Pop.MF", y="Sample Size", title="Annual Census") +
+  facet_wrap(~Site)
+```
+
+![](Ann_Cens_Size_RxnNorms_files/figure-html/unnamed-chunk-8-1.png)<!-- -->
+
+``` r
+mf_per_pop <- anncens_surv_mfs_bothsites %>% 
+  select(parent.pop, pop.mf) %>% 
+  distinct() %>% 
+  group_by(parent.pop) %>% 
+  summarise(n = n()) %>% 
+  arrange(n)
+
+mf_per_pop %>% 
+  ggplot(aes(x=fct_reorder(parent.pop, n), y=n)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) + 
+  theme_classic() +
+  scale_y_continuous(limits = c(0,8), breaks = c(2, 4, 6, 8), expand = c(0, 0)) +
+  theme(axis.text.x = element_text(angle = 45,  hjust = 1)) +
+  labs(x="Parent Population", y="# Maternal Families", title="Annual Census")
+```
+
+![](Ann_Cens_Size_RxnNorms_files/figure-html/unnamed-chunk-8-2.png)<!-- -->
 
 ## Plot Reaction Norms
 ### Means by Pop
@@ -489,7 +546,7 @@ anncens_rxnnorms_summary_pops2 %>%
   theme(text=element_text(size=28))
 ```
 
-![](Ann_Cens_Size_RxnNorms_files/figure-html/unnamed-chunk-9-1.png)<!-- -->
+![](Ann_Cens_Size_RxnNorms_files/figure-html/unnamed-chunk-10-1.png)<!-- -->
 
 ``` r
 ggsave("../output/AnnCens_RxNorms_Diam_ALL_PopAvgs.png", width = 14, height = 8, units = "in")
@@ -504,7 +561,7 @@ anncens_rxnnorms_summary_pops2 %>%
   theme(text=element_text(size=28))
 ```
 
-![](Ann_Cens_Size_RxnNorms_files/figure-html/unnamed-chunk-9-2.png)<!-- -->
+![](Ann_Cens_Size_RxnNorms_files/figure-html/unnamed-chunk-10-2.png)<!-- -->
 
 ``` r
 ggsave("../output/AnnCens_RxNorms_Tot_Bas_Branch_ALL_PopAvgs.png", width = 14, height = 8, units = "in")
@@ -520,7 +577,7 @@ wl2_ann_cens_2024_pops_loc %>%
   geom_boxplot()
 ```
 
-![](Ann_Cens_Size_RxnNorms_files/figure-html/unnamed-chunk-10-1.png)<!-- -->
+![](Ann_Cens_Size_RxnNorms_files/figure-html/unnamed-chunk-11-1.png)<!-- -->
 
 ``` r
 wl2_ann_cens_2024_pops_loc %>% 
@@ -529,7 +586,7 @@ wl2_ann_cens_2024_pops_loc %>%
   geom_boxplot()
 ```
 
-![](Ann_Cens_Size_RxnNorms_files/figure-html/unnamed-chunk-10-2.png)<!-- -->
+![](Ann_Cens_Size_RxnNorms_files/figure-html/unnamed-chunk-11-2.png)<!-- -->
 
 ``` r
 wl2_ann_cens_2024_pops_loc %>% 
@@ -538,7 +595,7 @@ wl2_ann_cens_2024_pops_loc %>%
   geom_boxplot()
 ```
 
-![](Ann_Cens_Size_RxnNorms_files/figure-html/unnamed-chunk-10-3.png)<!-- -->
+![](Ann_Cens_Size_RxnNorms_files/figure-html/unnamed-chunk-11-3.png)<!-- -->
 
 ``` r
 wl2_ann_cens_2024_pops_loc %>% 
@@ -547,15 +604,13 @@ wl2_ann_cens_2024_pops_loc %>%
   geom_boxplot()
 ```
 
-![](Ann_Cens_Size_RxnNorms_files/figure-html/unnamed-chunk-10-4.png)<!-- -->
+![](Ann_Cens_Size_RxnNorms_files/figure-html/unnamed-chunk-11-4.png)<!-- -->
 
 
 
 ``` r
 wl2_ann_cens_2024_summary <- wl2_ann_cens_2024_pops_loc %>% 
-  group_by(parent.pop, GrwSsn_GD_Recent, GrwSsn_GD_Historical, 
-           Wtr_Year_GD_Recent, Wtr_Year_GD_Historical, 
-           Geographic_Dist, Elev_Dist) %>% 
+  group_by(parent.pop) %>% 
   summarise(N_diam = sum(!is.na(diam.mm)), 
             mean_diam.mm = mean(diam.mm, na.rm=TRUE), sem_diam.mm=sem(diam.mm, na.rm=TRUE), 
             #N_branch = sum(!is.na(total.branch)), #very little variation in this trait 
@@ -564,38 +619,26 @@ wl2_ann_cens_2024_summary <- wl2_ann_cens_2024_pops_loc %>%
             mean_overhd.diam=mean(overhd.diam, na.rm=TRUE), sem_overhd.diam=sem(overhd.diam, na.rm=TRUE),
             N_overhd.perp = sum(!is.na(overhd.perp)),
             mean_overhd.perp=mean(overhd.perp, na.rm=TRUE), sem_overhd.perp=sem(overhd.perp, na.rm=TRUE))
-```
 
-```
-## `summarise()` has grouped output by 'parent.pop', 'GrwSsn_GD_Recent',
-## 'GrwSsn_GD_Historical', 'Wtr_Year_GD_Recent', 'Wtr_Year_GD_Historical',
-## 'Geographic_Dist'. You can override using the `.groups` argument.
-```
-
-``` r
 wl2_ann_cens_2024_summary %>% arrange(N_diam) #different sample sizes depending on the trait 
 ```
 
 ```
-## # A tibble: 10 × 16
-## # Groups:   parent.pop, GrwSsn_GD_Recent, GrwSsn_GD_Historical,
-## #   Wtr_Year_GD_Recent, Wtr_Year_GD_Historical, Geographic_Dist [10]
-##    parent.pop GrwSsn_GD_Recent GrwSsn_GD_Historical Wtr_Year_GD_Recent
-##    <chr>                 <dbl>                <dbl>              <dbl>
-##  1 LV1                   0.414                0.615              0.406
-##  2 SQ1                   0.159                0.217              0.310
-##  3 WR                    0.366                0.372              0.355
-##  4 TM2                   0.566                0.566              0.406
-##  5 WL2                   0.238                0.298              0.226
-##  6 CC                    0.435                0.510              0.445
-##  7 SC                    0.449                0.447              0.497
-##  8 IH                    0.453                0.456              0.422
-##  9 YO7                   0.353                0.343              0.328
-## 10 BH                    0.360                0.382              0.566
-## # ℹ 12 more variables: Wtr_Year_GD_Historical <dbl>, Geographic_Dist <dbl>,
-## #   Elev_Dist <dbl>, N_diam <int>, mean_diam.mm <dbl>, sem_diam.mm <dbl>,
-## #   N_overhd.diam <int>, mean_overhd.diam <dbl>, sem_overhd.diam <dbl>,
-## #   N_overhd.perp <int>, mean_overhd.perp <dbl>, sem_overhd.perp <dbl>
+## # A tibble: 10 × 10
+##    parent.pop N_diam mean_diam.mm sem_diam.mm N_overhd.diam mean_overhd.diam
+##    <chr>       <int>        <dbl>       <dbl>         <int>            <dbl>
+##  1 LV1             0       NaN         NA                 0           NaN   
+##  2 SQ1             1         3.58      NA                 0           NaN   
+##  3 WR              1         4.62      NA                 1            40.9 
+##  4 TM2             3         3.27       1.09              0           NaN   
+##  5 WL2             5         1.84       0.551             0           NaN   
+##  6 CC             10         3.02       0.380             3            11.1 
+##  7 SC             12         5.11       0.624             4            27.5 
+##  8 IH             17         3.24       0.307             7            16.0 
+##  9 YO7            17         1.85       0.261            11             8.54
+## 10 BH             19         3.86       0.370            11            20.2 
+## # ℹ 4 more variables: sem_overhd.diam <dbl>, N_overhd.perp <int>,
+## #   mean_overhd.perp <dbl>, sem_overhd.perp <dbl>
 ```
 
 

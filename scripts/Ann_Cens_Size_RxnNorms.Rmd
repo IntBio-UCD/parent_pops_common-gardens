@@ -98,43 +98,72 @@ wl2_ann_cens_2024_pops <- left_join(wl2_y2_pops_blocks, wl2_ann_cens_2024) %>%
 ## Load the pop and location data
 
 ```{r}
-ucd_gowers_size <- read_csv("../output/Climate/Gowers_UCD.csv") %>% 
-  select(parent.pop:GrwSsn_GD, Wtr_Year_GD) %>% 
-  pivot_wider(names_from = TimePd, values_from = c(GrwSsn_GD, Wtr_Year_GD)) %>% 
-  mutate(Site="UCD", Garden_Lat=38.53250, Garden_Long=-121.7830, Garden_Elev=16) %>% 
-  mutate(Geographic_Dist=distHaversine(cbind(Garden_Long, Garden_Lat), cbind(Long, Lat)),
-         Elev_Dist=elev_m-Garden_Elev) # Calculate the distance using the haversine formula (dist in meters)
+#pop info
+pops_common_garden <- read_csv("../input/WL2_Data/Pops_for_2023_WL2.csv") #pops included in common garden 
+pops_common_garden_nonotes <- pops_common_garden %>% select(parent.pop, elevation.group) #subset columns
 
-wl2_gowers_2023_size <- read_csv("../output/Climate/Gowers_WL2.csv") %>% 
-  select(parent.pop:GrwSsn_GD, Wtr_Year_GD) %>% 
-  pivot_wider(names_from = TimePd, values_from = c(GrwSsn_GD, Wtr_Year_GD)) %>% 
-  mutate(Site="WL2", Garden_Lat=38.82599, Garden_Long=-120.2509, Garden_Elev=2020) %>% 
-  mutate(Geographic_Dist=distHaversine(cbind(Garden_Long, Garden_Lat), cbind(Long, Lat)),
-         Elev_Dist=elev_m-Garden_Elev) # Calculate the distance using the haversine formula
+#extra location info 
+pop_loc <- read_csv("../input/Strep_tort_locs.csv")
 
-gowersdist_all <- bind_rows(ucd_gowers_size, wl2_gowers_2023_size) %>% 
-  select(Site, Garden_Lat:Garden_Elev, parent.pop:Wtr_Year_GD_Historical, Geographic_Dist:Elev_Dist)
-head(gowersdist_all)
+#need to change YOSE to YO
+pop_loc_yo <- pop_loc %>% mutate(parent.pop = str_replace(`Site code`, "YOSE(\\d+)", "YO\\1")) %>% select(Lat, Long, elev_m=`Elevation (m)`, parent.pop)
 
-wl2_gowers_2024 <- read_csv("../output/Climate/Gowers_WL2_2024.csv") %>% 
-  pivot_wider(names_from = TimePd, values_from = c(GrwSsn_GD, Wtr_Year_GD)) %>% 
-  mutate(WL2_Lat=38.82599, WL2_Long=-120.2509, WL2_Elev=2020) %>% 
-  mutate(Geographic_Dist=distHaversine(cbind(WL2_Long, WL2_Lat), cbind(Long, Lat)),
-         Elev_Dist=elev_m-WL2_Elev) # Calculate the distance using the haversine formula
+#merge in location info
+pop_elev <- left_join(pops_common_garden_nonotes, pop_loc_yo)
 ```
 
 ## Add in location info
 
 ```{r}
-anncens_rxnnorms_loc <-left_join(anncens_rxnnorms, gowersdist_all) 
+anncens_rxnnorms_loc <-left_join(anncens_rxnnorms, pop_elev) 
 head(anncens_rxnnorms_loc)
 
 #write_csv(anncens_rxnnorms_loc, "../output/AnnCens_Size_BothSites_Y1.csv")
 ```
 
 ```{r}
-wl2_ann_cens_2024_pops_loc <- left_join(wl2_ann_cens_2024_pops, wl2_gowers_2024)
+wl2_ann_cens_2024_pops_loc <- left_join(wl2_ann_cens_2024_pops, pop_elev)
 head(wl2_ann_cens_2024_pops_loc)
+```
+
+## Maternal Family Sample Sizes 
+```{r}
+#restrict to mfs with data at both sites 
+anncens_surv_mfs_wide <- anncens_rxnnorms_loc %>% 
+  group_by(pop.mf, parent.pop, Site, elev_m) %>% 
+  summarise(N_height = sum(!is.na(height.cm))) %>% 
+  select(pop.mf, Site, N_height) %>% 
+  spread(Site, N_height) %>% 
+  mutate(Both.Sites=if_else(!is.na(UCD) & !is.na(WL2), TRUE, FALSE)) %>% 
+  filter(Both.Sites != "FALSE")
+
+anncens_surv_mfs_bothsites <- left_join(anncens_surv_mfs_wide, anncens_rxnnorms_loc)
+
+mf_sample_size <- anncens_surv_mfs_bothsites %>% 
+  count(parent.pop, pop.mf, Site) %>% 
+  arrange(n)
+mf_sample_size #24 mfs with data at both sites 
+summary(mf_sample_size)
+mf_sample_size %>% 
+  ggplot(aes(x=pop.mf, y=n)) +
+  geom_col() + 
+  labs(x="Pop.MF", y="Sample Size", title="Annual Census") +
+  facet_wrap(~Site)
+
+mf_per_pop <- anncens_surv_mfs_bothsites %>% 
+  select(parent.pop, pop.mf) %>% 
+  distinct() %>% 
+  group_by(parent.pop) %>% 
+  summarise(n = n()) %>% 
+  arrange(n)
+
+mf_per_pop %>% 
+  ggplot(aes(x=fct_reorder(parent.pop, n), y=n)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) + 
+  theme_classic() +
+  scale_y_continuous(limits = c(0,8), breaks = c(2, 4, 6, 8), expand = c(0, 0)) +
+  theme(axis.text.x = element_text(angle = 45,  hjust = 1)) +
+  labs(x="Parent Population", y="# Maternal Families", title="Annual Census")
 ```
 
 ## Plot Reaction Norms
@@ -213,9 +242,7 @@ wl2_ann_cens_2024_pops_loc %>%
 
 ```{r}
 wl2_ann_cens_2024_summary <- wl2_ann_cens_2024_pops_loc %>% 
-  group_by(parent.pop, GrwSsn_GD_Recent, GrwSsn_GD_Historical, 
-           Wtr_Year_GD_Recent, Wtr_Year_GD_Historical, 
-           Geographic_Dist, Elev_Dist) %>% 
+  group_by(parent.pop) %>% 
   summarise(N_diam = sum(!is.na(diam.mm)), 
             mean_diam.mm = mean(diam.mm, na.rm=TRUE), sem_diam.mm=sem(diam.mm, na.rm=TRUE), 
             #N_branch = sum(!is.na(total.branch)), #very little variation in this trait 
