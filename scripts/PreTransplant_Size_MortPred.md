@@ -1,7 +1,7 @@
 ---
 title: "PreTransplant_Size"
 author: "Brandie Quarles"
-date: "2024-07-17"
+date: "2025-10-13"
 output: 
   html_document: 
     keep_md: yes
@@ -16,7 +16,7 @@ Is there a relationship between pre-transplant size and survival to the end of t
 ## Relevant Libraries and Functions
 
 
-```r
+``` r
 library(tidyverse)
 ```
 
@@ -33,18 +33,18 @@ library(tidyverse)
 ## ℹ Use the conflicted package (<http://conflicted.r-lib.org/>) to force all conflicts to become errors
 ```
 
-```r
+``` r
 library(tidymodels)
 ```
 
 ```
 ## ── Attaching packages ────────────────────────────────────── tidymodels 1.2.0 ──
-## ✔ broom        1.0.5      ✔ rsample      1.2.1 
-## ✔ dials        1.2.1      ✔ tune         1.2.1 
-## ✔ infer        1.0.7      ✔ workflows    1.1.4 
-## ✔ modeldata    1.3.0      ✔ workflowsets 1.1.0 
-## ✔ parsnip      1.2.1      ✔ yardstick    1.3.1 
-## ✔ recipes      1.0.10     
+## ✔ broom        1.0.7     ✔ rsample      1.2.1
+## ✔ dials        1.3.0     ✔ tune         1.2.1
+## ✔ infer        1.0.7     ✔ workflows    1.1.4
+## ✔ modeldata    1.4.0     ✔ workflowsets 1.1.0
+## ✔ parsnip      1.2.1     ✔ yardstick    1.3.1
+## ✔ recipes      1.1.0     
 ## ── Conflicts ───────────────────────────────────────── tidymodels_conflicts() ──
 ## ✖ scales::discard() masks purrr::discard()
 ## ✖ dplyr::filter()   masks stats::filter()
@@ -52,10 +52,10 @@ library(tidymodels)
 ## ✖ dplyr::lag()      masks stats::lag()
 ## ✖ yardstick::spec() masks readr::spec()
 ## ✖ recipes::step()   masks stats::step()
-## • Search for functions across packages at https://www.tidymodels.org/find/
+## • Use suppressPackageStartupMessages() to eliminate package startup messages
 ```
 
-```r
+``` r
 tidymodels_prefer()
 library(lmerTest) #for mixed effect models
 ```
@@ -71,7 +71,7 @@ library(lmerTest) #for mixed effect models
 ##     expand, pack, unpack
 ```
 
-```r
+``` r
 conflicted::conflicts_prefer(lmerTest::lmer)
 ```
 
@@ -79,9 +79,18 @@ conflicted::conflicts_prefer(lmerTest::lmer)
 ## [conflicted] Will prefer lmerTest::lmer over any other package.
 ```
 
-```r
+``` r
 library(broom.mixed) #tidy method for lmerTest
 library(emmeans) #for post-hoc pairwise comparisons 
+```
+
+```
+## Welcome to emmeans.
+## Caution: You lose important information if you filter this package's results.
+## See '? untidy'
+```
+
+``` r
 library(naniar) #replaces values with NA
 
 sem <- function(x, na.rm=FALSE) {           #for caclulating standard error
@@ -95,9 +104,9 @@ elev_order <- c("High", "Mid", "Low") #for proper arrangement in figures
 ## Load the pop and location data
 
 
-```r
-gowersdist_UCD <- read_csv("../output/Climate/Pops_GowersEnvtalDist_UCD.csv") %>% 
-  rename(Recent_Gowers_Dist_UCD = Recent_Gowers_Dist, Historic_Gowers_Dist_UCD = Historic_Gowers_Dist)
+``` r
+#pop info
+pops_common_garden <- read_csv("../input/WL2_Data/Pops_for_2023_WL2.csv") #pops included in common garden 
 ```
 
 ```
@@ -105,57 +114,46 @@ gowersdist_UCD <- read_csv("../output/Climate/Pops_GowersEnvtalDist_UCD.csv") %>
 ## ── Column specification ────────────────────────────────────────────────────────
 ## Delimiter: ","
 ## chr (2): parent.pop, elevation.group
-## dbl (3): elev_m, Recent_Gowers_Dist, Historic_Gowers_Dist
+## dbl (2): phylogroup, seed year
+## lgl (1): notes
 ## 
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
 ```
 
-```r
-gowersdist_WL2 <- read_csv("../output/Climate/Pops_GowersEnvtalDist_WL2.csv") %>% 
-  rename(Recent_Gowers_Dist_WL2 = Recent_Gowers_Dist, Historic_Gowers_Dist_WL2 = Historic_Gowers_Dist)
+``` r
+pops_common_garden_nonotes <- pops_common_garden %>% select(parent.pop, elevation.group) #subset columns
+
+#extra location info 
+pop_loc <- read_csv("../input/Strep_tort_locs.csv")
 ```
 
 ```
-## Rows: 23 Columns: 5
+## Rows: 54 Columns: 7
 ## ── Column specification ────────────────────────────────────────────────────────
 ## Delimiter: ","
-## chr (2): parent.pop, elevation.group
-## dbl (3): elev_m, Recent_Gowers_Dist, Historic_Gowers_Dist
+## chr (6): Species epithet, Species Code, Site, Site code, Lat, Long
+## dbl (1): Elevation (m)
 ## 
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
 ```
 
-```r
-gowersdist_all <- full_join(gowersdist_UCD, gowersdist_WL2)
+``` r
+#need to change YOSE to YO
+pop_loc_yo <- pop_loc %>% mutate(parent.pop = str_replace(`Site code`, "YOSE(\\d+)", "YO\\1")) %>% select(Lat, Long, elev_m=`Elevation (m)`, parent.pop)
+
+#merge in location info
+pop_elev <- left_join(pops_common_garden_nonotes, pop_loc_yo)
 ```
 
 ```
-## Joining with `by = join_by(parent.pop, elevation.group, elev_m)`
-```
-
-```r
-head(gowersdist_all)
-```
-
-```
-## # A tibble: 6 × 7
-##   parent.pop elevation.group elev_m Recent_Gowers_Dist_UCD
-##   <chr>      <chr>            <dbl>                  <dbl>
-## 1 BH         Low               511.                  0.273
-## 2 CC         Low               313                   0.331
-## 3 CP2        High             2244.                  0.445
-## 4 CP3        High             2266.                  0.476
-## 5 DPR        Mid              1019.                  0.267
-## 6 FR         Mid               787                   0.296
-## # ℹ 3 more variables: Historic_Gowers_Dist_UCD <dbl>,
-## #   Recent_Gowers_Dist_WL2 <dbl>, Historic_Gowers_Dist_WL2 <dbl>
+## Joining with `by = join_by(parent.pop)`
 ```
 
 ## Load Pre-Transplant Size data from both Gardens
 
-```r
+``` r
 ucd_pretrans_size <- read_csv("../input/UCD_Data/CorrectedCSVs/UCD_garden_size_measurements_20221128_corrected.csv",
                               na = c("", "NA", "-", "N/A"))
 ```
@@ -178,7 +176,7 @@ ucd_pretrans_size <- read_csv("../input/UCD_Data/CorrectedCSVs/UCD_garden_size_m
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
 ```
 
-```r
+``` r
 head(ucd_pretrans_size) #includes germs and non-germs 
 ```
 
@@ -194,7 +192,7 @@ head(ucd_pretrans_size) #includes germs and non-germs
 ## 6 BH             1     6             0            NA                  NA <NA>
 ```
 
-```r
+``` r
 ucd_pretrans_size_germonly <- ucd_pretrans_size %>% 
   rename(germ = `germinated?`, height.cm = `Height (cm)`, long.leaf.cm=`Longest leaf (cm)`) %>% 
   filter(germ==1) %>% 
@@ -215,7 +213,7 @@ head(ucd_pretrans_size_germonly)
 ## 6 BH_2_3   BH_2   BH             2     3     1       1.1          1.7 <NA>
 ```
 
-```r
+``` r
 unique(ucd_pretrans_size_germonly$parent.pop) #looks correct
 ```
 
@@ -226,7 +224,7 @@ unique(ucd_pretrans_size_germonly$parent.pop) #looks correct
 ```
 
 
-```r
+``` r
 wl2_pretrans_size1 <- read_csv("../input/WL2_Data/CorrectedCSVs/WL2_DNA_Collection_Size_survey_combined20230703_corrected.csv")
 ```
 
@@ -241,23 +239,7 @@ wl2_pretrans_size1 <- read_csv("../input/WL2_Data/CorrectedCSVs/WL2_DNA_Collecti
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
 ```
 
-```r
-head(wl2_pretrans_size1)
-```
-
-```
-## # A tibble: 6 × 7
-##   Pop      mf   rep   DNA `height (cm)` `longest leaf (cm)` Notes
-##   <chr> <dbl> <dbl> <dbl>         <dbl>               <dbl> <chr>
-## 1 CP2       1     1     1           0.5                 1.6 KN   
-## 2 CP2       1     2     1           0.7                 1.8 KN   
-## 3 CP2       1     3     1           1.1                 1.8 KN   
-## 4 CP2       1     4     1           0.8                 1.6 KN   
-## 5 CP2       1     5     1           0.9                 1.8 KN   
-## 6 CP2       1     6     1           1                   1.9 KN
-```
-
-```r
+``` r
 wl2_pretrans_size2 <- read_csv("../input/WL2_Data/CorrectedCSVs/WL2_Extras_DNA_collection_size_survey_combined20230706_corrected.csv") %>% 
   filter(!is.na(`height (cm)`)) #to get rid of genotypes that were measured on the other data sheet (NAs on this sheet)
 ```
@@ -273,23 +255,7 @@ wl2_pretrans_size2 <- read_csv("../input/WL2_Data/CorrectedCSVs/WL2_Extras_DNA_c
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
 ```
 
-```r
-head(wl2_pretrans_size2)
-```
-
-```
-## # A tibble: 6 × 7
-##   Pop      mf   rep   DNA `height (cm)` `longest leaf (cm)` Notes
-##   <chr> <dbl> <dbl> <dbl>         <dbl>               <dbl> <chr>
-## 1 CP2       1    14     1           1.2                 0.9 <NA> 
-## 2 CP2       2    14     1           0.8                 0.7 <NA> 
-## 3 CP2       3    14     1           0.5                 1   <NA> 
-## 4 CP2       4    14     1           1.1                 0.9 <NA> 
-## 5 CP2       5    14     1           1.4                 1.6 <NA> 
-## 6 CP2       7    14     1           0.9                 0.8 <NA>
-```
-
-```r
+``` r
 wl2_pretrans_size_all <- bind_rows(wl2_pretrans_size1, wl2_pretrans_size2) %>%
   rename(parent.pop=Pop, height.cm = `height (cm)`, long.leaf.cm=`longest leaf (cm)`) %>% 
   unite(Genotype, parent.pop:rep, sep="_", remove = FALSE) %>% 
@@ -311,7 +277,7 @@ head(wl2_pretrans_size_all)
 
 ## Merge the two sites
 
-```r
+``` r
 ucd_pretrans_size_prep <- ucd_pretrans_size_germonly %>% select(Genotype:rep, height.cm:long.leaf.cm) %>%
   mutate(Site="UCD")
 names(ucd_pretrans_size_prep)
@@ -322,7 +288,7 @@ names(ucd_pretrans_size_prep)
 ## [6] "height.cm"    "long.leaf.cm" "Site"
 ```
 
-```r
+``` r
 wl2_pretrans_size_prep <- wl2_pretrans_size_all %>% select(Genotype:rep, height.cm:long.leaf.cm) %>%
   mutate(Site="WL2")
 names(wl2_pretrans_size_prep)
@@ -333,7 +299,7 @@ names(wl2_pretrans_size_prep)
 ## [6] "height.cm"    "long.leaf.cm" "Site"
 ```
 
-```r
+``` r
 pretrans_rxnnorms <- bind_rows(ucd_pretrans_size_prep, wl2_pretrans_size_prep) %>% 
   arrange(pop.mf, Site)
 head(pretrans_rxnnorms)
@@ -353,20 +319,20 @@ head(pretrans_rxnnorms)
 
 ## Add in Location Info
 
-```r
-pretrans_rxnnorms_loc <-left_join(pretrans_rxnnorms, gowersdist_all) 
+``` r
+pretrans_rxnnorms_loc <-left_join(pretrans_rxnnorms, pop_elev) 
 ```
 
 ```
 ## Joining with `by = join_by(parent.pop)`
 ```
 
-```r
+``` r
 head(pretrans_rxnnorms_loc)
 ```
 
 ```
-## # A tibble: 6 × 14
+## # A tibble: 6 × 12
 ##   Genotype pop.mf parent.pop    mf   rep height.cm long.leaf.cm Site 
 ##   <chr>    <chr>  <chr>      <dbl> <dbl>     <dbl>        <dbl> <chr>
 ## 1 BH_1_7   BH_1   BH             1     7       1.7          1.9 UCD  
@@ -375,14 +341,14 @@ head(pretrans_rxnnorms_loc)
 ## 4 BH_1_1   BH_1   BH             1     1       2            2.2 WL2  
 ## 5 BH_1_2   BH_1   BH             1     2       2.3          2.1 WL2  
 ## 6 BH_1_3   BH_1   BH             1     3       3.6          2.6 WL2  
-## # ℹ 6 more variables: elevation.group <chr>, elev_m <dbl>,
-## #   Recent_Gowers_Dist_UCD <dbl>, Historic_Gowers_Dist_UCD <dbl>,
-## #   Recent_Gowers_Dist_WL2 <dbl>, Historic_Gowers_Dist_WL2 <dbl>
+## # ℹ 4 more variables: elevation.group <chr>, Lat <chr>, Long <chr>,
+## #   elev_m <dbl>
 ```
+
 
 ## Load survival to end of first year data
 
-```r
+``` r
 firstyear_surv <- read_csv("../output/firstyear_mort_both_sites.csv")
 ```
 
@@ -397,7 +363,7 @@ firstyear_surv <- read_csv("../output/firstyear_mort_both_sites.csv")
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
 ```
 
-```r
+``` r
 head(firstyear_surv)
 ```
 
@@ -416,28 +382,26 @@ head(firstyear_surv)
 ## #   Historic_Gowers_Dist_WL2 <dbl>
 ```
 
-```r
-firstyear_surv_merge_prep <- firstyear_surv %>% select(Genotype:rep, Site:Historic_Gowers_Dist_WL2)
+``` r
+firstyear_surv_merge_prep <- firstyear_surv %>% select(Genotype:rep, Site:Survival)
 ```
 
 ## Merge size and survival
 
-```r
+``` r
 pretrans_surv <- left_join(pretrans_rxnnorms_loc, firstyear_surv_merge_prep)
 ```
 
 ```
-## Joining with `by = join_by(Genotype, pop.mf, parent.pop, mf, rep, Site,
-## elevation.group, elev_m, Recent_Gowers_Dist_UCD, Historic_Gowers_Dist_UCD,
-## Recent_Gowers_Dist_WL2, Historic_Gowers_Dist_WL2)`
+## Joining with `by = join_by(Genotype, pop.mf, parent.pop, mf, rep, Site)`
 ```
 
-```r
-pretrans_surv %>% filter(is.na(Survival)) #12 genotypes with no survival information... should investigate
+``` r
+pretrans_surv %>% filter(is.na(Survival)) #12 genotypes with no survival information... likely did not survive to the time of planting 
 ```
 
 ```
-## # A tibble: 12 × 15
+## # A tibble: 12 × 13
 ##    Genotype  pop.mf  parent.pop    mf   rep height.cm long.leaf.cm Site 
 ##    <chr>     <chr>   <chr>      <dbl> <dbl>     <dbl>        <dbl> <chr>
 ##  1 DPR_4_2   DPR_4   DPR            4     2       1.4          0.9 WL2  
@@ -452,22 +416,114 @@ pretrans_surv %>% filter(is.na(Survival)) #12 genotypes with no survival informa
 ## 10 WL2_3_8   WL2_3   WL2            3     8      NA           NA   UCD  
 ## 11 WL2_4_10  WL2_4   WL2            4    10       1.7          1.1 UCD  
 ## 12 WR_1_7    WR_1    WR             1     7       0.7          1.6 WL2  
-## # ℹ 7 more variables: elevation.group <chr>, elev_m <dbl>,
-## #   Recent_Gowers_Dist_UCD <dbl>, Historic_Gowers_Dist_UCD <dbl>,
-## #   Recent_Gowers_Dist_WL2 <dbl>, Historic_Gowers_Dist_WL2 <dbl>,
-## #   Survival <dbl>
+## # ℹ 5 more variables: elevation.group <chr>, Lat <chr>, Long <chr>,
+## #   elev_m <dbl>, Survival <dbl>
 ```
 
-```r
+``` r
 pretrans_surv_complete <- pretrans_surv %>% filter(!is.na(Survival))
 ```
 
+## Maternal Family Sample Sizes 
+
+``` r
+#restrict to mfs with data at both sites 
+pretrans_surv_mfs_wide <- pretrans_surv_complete %>% 
+  group_by(pop.mf, parent.pop, Site, elev_m) %>% 
+  summarise(N_height = sum(!is.na(height.cm))) %>% 
+  select(pop.mf, Site, N_height) %>% 
+  spread(Site, N_height) %>% 
+  mutate(Both.Sites=if_else(!is.na(UCD) & !is.na(WL2), TRUE, FALSE)) %>% 
+  filter(Both.Sites != "FALSE")
+```
+
+```
+## `summarise()` has grouped output by 'pop.mf', 'parent.pop', 'Site'. You can
+## override using the `.groups` argument.
+## Adding missing grouping variables: `parent.pop`
+```
+
+``` r
+pretrans_surv_mfs_bothsites <- left_join(pretrans_surv_mfs_wide, pretrans_surv_complete)
+```
+
+```
+## Joining with `by = join_by(parent.pop, pop.mf)`
+```
+
+``` r
+mf_sample_size <- pretrans_surv_mfs_bothsites %>% 
+  count(parent.pop, pop.mf, Site) %>% 
+  arrange(n)
+mf_sample_size
+```
+
+```
+## # A tibble: 216 × 4
+## # Groups:   pop.mf, parent.pop [108]
+##    pop.mf parent.pop Site      n
+##    <chr>  <chr>      <chr> <int>
+##  1 CP3_5  CP3        UCD       1
+##  2 CP3_6  CP3        UCD       1
+##  3 CP3_7  CP3        UCD       1
+##  4 DPR_3  DPR        UCD       1
+##  5 DPR_5  DPR        UCD       1
+##  6 DPR_7  DPR        UCD       1
+##  7 LV1_4  LV1        UCD       1
+##  8 LV1_6  LV1        UCD       1
+##  9 LV3_1  LV3        WL2       1
+## 10 LV3_2  LV3        WL2       1
+## # ℹ 206 more rows
+```
+
+``` r
+summary(mf_sample_size)
+```
+
+```
+##     pop.mf           parent.pop            Site                 n         
+##  Length:216         Length:216         Length:216         Min.   : 1.000  
+##  Class :character   Class :character   Class :character   1st Qu.: 3.000  
+##  Mode  :character   Mode  :character   Mode  :character   Median : 7.000  
+##                                                           Mean   : 8.125  
+##                                                           3rd Qu.:13.000  
+##                                                           Max.   :31.000
+```
+
+``` r
+mf_sample_size %>% 
+  ggplot(aes(x=pop.mf, y=n)) +
+  geom_col() + 
+  labs(x="Pop.MF", y="Sample Size", title="Pre-Transplant Size") +
+  facet_wrap(~Site)
+```
+
+![](PreTransplant_Size_MortPred_files/figure-html/unnamed-chunk-9-1.png)<!-- -->
+
+``` r
+mf_per_pop <- pretrans_surv_mfs_bothsites %>% 
+  select(parent.pop, pop.mf) %>% 
+  distinct() %>% 
+  group_by(parent.pop) %>% 
+  summarise(n = n()) %>% 
+  arrange(n)
+
+mf_per_pop %>% 
+  ggplot(aes(x=fct_reorder(parent.pop, n), y=n)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) + 
+  theme_classic() +
+  scale_y_continuous(limits = c(0,8), breaks = c(2, 4, 6, 8), expand = c(0, 0)) +
+  theme(axis.text.x = element_text(angle = 45,  hjust = 1)) +
+  labs(x="Parent Population", y="# Maternal Families", title="Pre-Transplant Size")
+```
+
+![](PreTransplant_Size_MortPred_files/figure-html/unnamed-chunk-9-2.png)<!-- -->
 
 ## Plot Reaction Norms
 
 ### Means by Pop
 
-```r
+``` r
 pretrans_rxnnorms_summary <- pretrans_rxnnorms_loc %>% 
   group_by(parent.pop, Site, elev_m) %>% 
   summarise(N_height = sum(!is.na(height.cm)), mean_height.cm = mean(height.cm,na.rm=(TRUE)), 
@@ -483,7 +539,7 @@ pretrans_rxnnorms_summary <- pretrans_rxnnorms_loc %>%
 ## using the `.groups` argument.
 ```
 
-```r
+``` r
 pretrans_rxnnorms_summary
 ```
 
@@ -506,14 +562,14 @@ pretrans_rxnnorms_summary
 ## # ℹ 2 more variables: mean_long.leaf.cm <dbl>, sem_long.leaf.cm <dbl>
 ```
 
-```r
+``` r
 pretrans_rxnnorms_summary$Site <- factor(pretrans_rxnnorms_summary$Site,
                                                levels = c('Low Elev','High Elev'))
 ```
 
 ### Plot Pop Avgs
 
-```r
+``` r
 pretrans_rxnnorms_summary %>% 
   filter(N_height != 1) %>% 
   ggplot(aes(x=Site, y=mean_height.cm, group=parent.pop, color=elev_m)) + 
@@ -525,9 +581,9 @@ pretrans_rxnnorms_summary %>%
   theme(text=element_text(size=28)) 
 ```
 
-![](PreTransplant_Size_MortPred_files/figure-html/unnamed-chunk-10-1.png)<!-- -->
+![](PreTransplant_Size_MortPred_files/figure-html/unnamed-chunk-11-1.png)<!-- -->
 
-```r
+``` r
 ggsave("../output/PreTrans_RxNorms_Height_ALL_PopAvgs.png", width = 14, height = 8, units = "in")
 
 pretrans_rxnnorms_summary %>% 
@@ -541,16 +597,16 @@ pretrans_rxnnorms_summary %>%
   theme(text=element_text(size=28))
 ```
 
-![](PreTransplant_Size_MortPred_files/figure-html/unnamed-chunk-10-2.png)<!-- -->
+![](PreTransplant_Size_MortPred_files/figure-html/unnamed-chunk-11-2.png)<!-- -->
 
-```r
+``` r
 ggsave("../output/PreTrans_RxNorms_LongestLength_ALL_PopAvgs.png", width = 14, height = 8, units = "in")
 ```
 Plants were overall smaller when planted at WL2 than at Davis.
 
 ## Connection to survival to end of first year
 
-```r
+``` r
 pretrans_surv_pop_avgs <- pretrans_surv_complete %>% 
   group_by(parent.pop, Site, elev_m) %>% 
   summarise(N_Surv = sum(!is.na(Survival)), mean_Surv = mean(Survival,na.rm=(TRUE)), 
@@ -568,7 +624,7 @@ pretrans_surv_pop_avgs <- pretrans_surv_complete %>%
 ## using the `.groups` argument.
 ```
 
-```r
+``` r
 pretrans_surv_pop_avgs %>% arrange(desc(mean_height.cm))
 ```
 
@@ -592,13 +648,13 @@ pretrans_surv_pop_avgs %>% arrange(desc(mean_height.cm))
 ## #   mean_long.leaf.cm <dbl>, sem_long.leaf.cm <dbl>
 ```
 
-```r
+``` r
 pretrans_surv_pop_avgs$Site <- factor(pretrans_surv_pop_avgs$Site,
                                                levels = c('Low Elev','High Elev'))
 ```
 
 
-```r
+``` r
 pretrans_surv_pop_avgs %>% 
   ggplot(aes(x=mean_height.cm, y=mean_Surv, group=parent.pop, color=elev_m)) +
   geom_point(size=8) +
@@ -608,9 +664,9 @@ pretrans_surv_pop_avgs %>%
   facet_wrap(vars(Site), scales="free")
 ```
 
-![](PreTransplant_Size_MortPred_files/figure-html/unnamed-chunk-12-1.png)<!-- -->
+![](PreTransplant_Size_MortPred_files/figure-html/unnamed-chunk-13-1.png)<!-- -->
 
-```r
+``` r
 ggsave("../output/Surv_PreTrans_Height_BothGardens.png", width = 18, height = 8, units = "in")
 
 pretrans_surv_pop_avgs %>% 
@@ -622,16 +678,16 @@ pretrans_surv_pop_avgs %>%
   facet_wrap(vars(Site), scales="free")
 ```
 
-![](PreTransplant_Size_MortPred_files/figure-html/unnamed-chunk-12-2.png)<!-- -->
+![](PreTransplant_Size_MortPred_files/figure-html/unnamed-chunk-13-2.png)<!-- -->
 
-```r
+``` r
 ggsave("../output/Surv_PreTrans_Length_BothGardens.png", width = 18, height = 8, units = "in")
 ```
 
 ### Log Reg survival ~ size 
 Height
 
-```r
+``` r
 basiclogit_height <- glm(Survival ~ height.cm, data = pretrans_surv_complete, family = "binomial")
 basiclogit_height
 ```
@@ -642,15 +698,15 @@ basiclogit_height
 ## 
 ## Coefficients:
 ## (Intercept)    height.cm  
-##     -1.7251       0.2726  
+##     -1.7190       0.2708  
 ## 
 ## Degrees of Freedom: 2311 Total (i.e. Null);  2310 Residual
 ##   (9 observations deleted due to missingness)
 ## Null Deviance:	    2467 
-## Residual Deviance: 2430 	AIC: 2434
+## Residual Deviance: 2432 	AIC: 2436
 ```
 
-```r
+``` r
 summary(basiclogit_height)
 ```
 
@@ -661,22 +717,22 @@ summary(basiclogit_height)
 ## 
 ## Coefficients:
 ##             Estimate Std. Error z value Pr(>|z|)    
-## (Intercept) -1.72508    0.09646 -17.884  < 2e-16 ***
-## height.cm    0.27260    0.04403   6.192 5.95e-10 ***
+## (Intercept) -1.71903    0.09742 -17.646  < 2e-16 ***
+## height.cm    0.27084    0.04491   6.031 1.63e-09 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
 ## (Dispersion parameter for binomial family taken to be 1)
 ## 
 ##     Null deviance: 2467.3  on 2311  degrees of freedom
-## Residual deviance: 2429.7  on 2310  degrees of freedom
+## Residual deviance: 2431.8  on 2310  degrees of freedom
 ##   (9 observations deleted due to missingness)
-## AIC: 2433.7
+## AIC: 2435.8
 ## 
 ## Number of Fisher Scoring iterations: 4
 ```
 
-```r
+``` r
 basiclogit_height2 <- glmer(Survival ~ height.cm + (1|parent.pop/mf), data = pretrans_surv_complete, family = binomial(link = "logit"))
 summary(basiclogit_height2)
 ```
@@ -689,62 +745,85 @@ summary(basiclogit_height2)
 ##    Data: pretrans_surv_complete
 ## 
 ##      AIC      BIC   logLik deviance df.resid 
-##   2226.1   2249.1  -1109.1   2218.1     2308 
+##   2225.9   2248.9  -1109.0   2217.9     2308 
 ## 
 ## Scaled residuals: 
 ##     Min      1Q  Median      3Q     Max 
-## -1.0051 -0.6268 -0.3178 -0.2218  4.5087 
+## -1.0235 -0.6255 -0.3185 -0.2221  4.4857 
 ## 
 ## Random effects:
 ##  Groups        Name        Variance Std.Dev.
-##  mf:parent.pop (Intercept) 0.1528   0.3908  
-##  parent.pop    (Intercept) 0.9468   0.9730  
+##  mf:parent.pop (Intercept) 0.1527   0.3908  
+##  parent.pop    (Intercept) 0.9734   0.9866  
 ## Number of obs: 2312, groups:  mf:parent.pop, 173; parent.pop, 23
 ## 
 ## Fixed effects:
-##              Estimate Std. Error z value Pr(>|z|)    
-## (Intercept) -1.692737   0.244878  -6.913 4.76e-12 ***
-## height.cm    0.000592   0.066621   0.009    0.993    
+##             Estimate Std. Error z value Pr(>|z|)    
+## (Intercept) -1.64439    0.24854  -6.616 3.69e-11 ***
+## height.cm   -0.03114    0.06957  -0.448    0.654    
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
 ## Correlation of Fixed Effects:
 ##           (Intr)
-## height.cm -0.420
+## height.cm -0.425
 ```
 
-```r
-logit_height <- glm(Survival ~ height.cm*Site, data = pretrans_surv_complete, family = "binomial")
+``` r
+logit_height <- glm(Survival ~ height.cm*Site*elev_m, data = pretrans_surv_complete, family = "binomial")
 summary(logit_height)
 ```
 
 ```
 ## 
 ## Call:
-## glm(formula = Survival ~ height.cm * Site, family = "binomial", 
+## glm(formula = Survival ~ height.cm * Site * elev_m, family = "binomial", 
 ##     data = pretrans_surv_complete)
 ## 
 ## Coefficients:
-##                   Estimate Std. Error z value Pr(>|z|)    
-## (Intercept)        -2.9821     0.3021  -9.870  < 2e-16 ***
-## height.cm           0.2187     0.1144   1.912   0.0559 .  
-## SiteWL2             1.2549     0.3211   3.907 9.33e-05 ***
-## height.cm:SiteWL2   0.3193     0.1274   2.506   0.0122 *  
+##                            Estimate Std. Error z value Pr(>|z|)   
+## (Intercept)              -1.5440886  0.5135630  -3.007  0.00264 **
+## height.cm                 0.1906472  0.1966738   0.969  0.33237   
+## SiteWL2                   1.6527532  0.5729029   2.885  0.00392 **
+## elev_m                   -0.0003897  0.0004756  -0.819  0.41255   
+## height.cm:SiteWL2        -0.1171912  0.2229239  -0.526  0.59910   
+## height.cm:elev_m         -0.0004891  0.0002771  -1.765  0.07755 . 
+## SiteWL2:elev_m           -0.0004297  0.0004989  -0.861  0.38912   
+## height.cm:SiteWL2:elev_m  0.0005769  0.0002948   1.957  0.05032 . 
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
 ## (Dispersion parameter for binomial family taken to be 1)
 ## 
 ##     Null deviance: 2467.3  on 2311  degrees of freedom
-## Residual deviance: 2202.6  on 2308  degrees of freedom
+## Residual deviance: 2087.8  on 2304  degrees of freedom
 ##   (9 observations deleted due to missingness)
-## AIC: 2210.6
+## AIC: 2103.8
 ## 
-## Number of Fisher Scoring iterations: 5
+## Number of Fisher Scoring iterations: 6
 ```
 
-```r
-logit_height2 <- glmer(Survival ~ height.cm*Site + (1|parent.pop/mf), data = pretrans_surv_complete, family = binomial(link = "logit")) 
+``` r
+logit_height2 <- glmer(Survival ~ height.cm*Site*elev_m + (1|parent.pop/mf), data = pretrans_surv_complete, family = binomial(link = "logit")) 
+```
+
+```
+## Warning: Some predictor variables are on very different scales: consider
+## rescaling
+```
+
+```
+## Warning in checkConv(attr(opt, "derivs"), opt$par, ctrl = control$checkConv, :
+## Model failed to converge with max|grad| = 0.0996635 (tol = 0.002, component 1)
+```
+
+```
+## Warning in checkConv(attr(opt, "derivs"), opt$par, ctrl = control$checkConv, : Model is nearly unidentifiable: very large eigenvalue
+##  - Rescale variables?;Model is nearly unidentifiable: large eigenvalue ratio
+##  - Rescale variables?
+```
+
+``` r
 summary(logit_height2)
 ```
 
@@ -752,64 +831,88 @@ summary(logit_height2)
 ## Generalized linear mixed model fit by maximum likelihood (Laplace
 ##   Approximation) [glmerMod]
 ##  Family: binomial  ( logit )
-## Formula: Survival ~ height.cm * Site + (1 | parent.pop/mf)
+## Formula: Survival ~ height.cm * Site * elev_m + (1 | parent.pop/mf)
 ##    Data: pretrans_surv_complete
 ## 
 ##      AIC      BIC   logLik deviance df.resid 
-##   2027.4   2061.9  -1007.7   2015.4     2306 
+##   2021.9   2079.3  -1000.9   2001.9     2302 
 ## 
 ## Scaled residuals: 
 ##     Min      1Q  Median      3Q     Max 
-## -1.7083 -0.4698 -0.3152 -0.1267  5.7453 
+## -1.6015 -0.4684 -0.2978 -0.1070  6.8102 
 ## 
 ## Random effects:
 ##  Groups        Name        Variance Std.Dev.
-##  mf:parent.pop (Intercept) 0.02034  0.1426  
-##  parent.pop    (Intercept) 0.90473  0.9512  
+##  mf:parent.pop (Intercept) 0.02825  0.1681  
+##  parent.pop    (Intercept) 0.45174  0.6721  
 ## Number of obs: 2312, groups:  mf:parent.pop, 173; parent.pop, 23
 ## 
 ## Fixed effects:
-##                   Estimate Std. Error z value Pr(>|z|)    
-## (Intercept)       -3.53680    0.40034  -8.835  < 2e-16 ***
-## height.cm          0.14673    0.13002   1.129    0.259    
-## SiteWL2            2.02271    0.36607   5.526 3.29e-08 ***
-## height.cm:SiteWL2  0.04186    0.14101   0.297    0.767    
+##                            Estimate Std. Error z value Pr(>|z|)    
+## (Intercept)              -2.3882810  0.6196147  -3.854 0.000116 ***
+## height.cm                 0.3013593  0.1963181   1.535 0.124770    
+## SiteWL2                   2.3268222  0.5912320   3.936  8.3e-05 ***
+## elev_m                   -0.0002815  0.0004776  -0.589 0.555598    
+## height.cm:SiteWL2        -0.2363297  0.2209070  -1.070 0.284703    
+## height.cm:elev_m         -0.0003975  0.0002598  -1.530 0.125986    
+## SiteWL2:elev_m           -0.0005700  0.0004700  -1.213 0.225183    
+## height.cm:SiteWL2:elev_m  0.0005005  0.0002748   1.821 0.068615 .  
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
 ## Correlation of Fixed Effects:
-##             (Intr) hght.c SitWL2
-## height.cm   -0.750              
-## SiteWL2     -0.800  0.784       
-## hght.c:SWL2  0.688 -0.838 -0.888
+##             (Intr) hght.c SitWL2 elev_m hg.:SWL2 hgh.:_ SWL2:_
+## height.cm   -0.729                                            
+## SiteWL2     -0.741  0.705                                     
+## elev_m      -0.729  0.710  0.567                              
+## hght.c:SWL2  0.614 -0.805 -0.864 -0.590                       
+## hght.cm:lv_  0.359 -0.710 -0.338 -0.784  0.566                
+## SitWL2:lv_m  0.558 -0.677 -0.717 -0.866  0.756    0.761       
+## hgh.:SWL2:_ -0.320  0.621  0.426  0.711 -0.693   -0.899 -0.834
+## fit warnings:
+## Some predictor variables are on very different scales: consider rescaling
+## optimizer (Nelder_Mead) convergence code: 0 (OK)
+## Model failed to converge with max|grad| = 0.0996635 (tol = 0.002, component 1)
+## Model is nearly unidentifiable: very large eigenvalue
+##  - Rescale variables?
+## Model is nearly unidentifiable: large eigenvalue ratio
+##  - Rescale variables?
 ```
 
-```r
+``` r
 emtrends(logit_height2, pairwise ~ Site, var = "height.cm")
 ```
 
 ```
+## NOTE: Results may be misleading due to involvement in interactions
+```
+
+```
 ## $emtrends
-##  Site height.cm.trend     SE  df asymp.LCL asymp.UCL
-##  UCD            0.147 0.1300 Inf   -0.1081     0.402
-##  WL2            0.189 0.0778 Inf    0.0361     0.341
+##  Site height.cm.trend    SE  df asymp.LCL asymp.UCL
+##  UCD           -0.321 0.301 Inf   -0.9106     0.269
+##  WL2            0.226 0.122 Inf   -0.0132     0.466
 ## 
 ## Confidence level used: 0.95 
 ## 
 ## $contrasts
-##  contrast  estimate    SE  df z.ratio p.value
-##  UCD - WL2  -0.0419 0.141 Inf  -0.297  0.7666
+##  contrast  estimate   SE  df z.ratio p.value
+##  UCD - WL2   -0.547 0.32 Inf  -1.711  0.0871
 ```
 
-```r
+``` r
 emmip(logit_height2, Site ~ height.cm, cov.reduce = range)
 ```
 
-![](PreTransplant_Size_MortPred_files/figure-html/unnamed-chunk-13-1.png)<!-- -->
+```
+## NOTE: Results may be misleading due to involvement in interactions
+```
+
+![](PreTransplant_Size_MortPred_files/figure-html/unnamed-chunk-14-1.png)<!-- -->
 
 Length
 
-```r
+``` r
 basiclogit_length <- glm(Survival ~ long.leaf.cm, data = pretrans_surv_complete, family = "binomial")
 summary(basiclogit_length)
 ```
@@ -836,7 +939,7 @@ summary(basiclogit_length)
 ## Number of Fisher Scoring iterations: 4
 ```
 
-```r
+``` r
 basiclogit_length2 <- glmer(Survival ~ long.leaf.cm + (1|parent.pop/mf), data = pretrans_surv_complete, family = binomial(link = "logit"))
 summary(basiclogit_length2)
 ```
@@ -873,7 +976,7 @@ summary(basiclogit_length2)
 ## long.lef.cm -0.598
 ```
 
-```r
+``` r
 logit_length2 <- glmer(Survival ~ long.leaf.cm*Site + (1|parent.pop/mf), data = pretrans_surv_complete, family = binomial(link = "logit")) 
 summary(logit_length2)
 ```
@@ -900,10 +1003,10 @@ summary(logit_length2)
 ## 
 ## Fixed effects:
 ##                      Estimate Std. Error z value Pr(>|z|)    
-## (Intercept)           -3.6245     0.5232  -6.928 4.26e-12 ***
-## long.leaf.cm           0.2662     0.2104   1.265  0.20584    
-## SiteWL2                1.4023     0.5264   2.664  0.00773 ** 
-## long.leaf.cm:SiteWL2   0.3656     0.2296   1.593  0.11122    
+## (Intercept)           -3.6245     0.5231  -6.929 4.24e-12 ***
+## long.leaf.cm           0.2662     0.2104   1.265  0.20579    
+## SiteWL2                1.4023     0.5263   2.664  0.00772 ** 
+## long.leaf.cm:SiteWL2   0.3656     0.2295   1.593  0.11118    
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
@@ -914,7 +1017,7 @@ summary(logit_length2)
 ## lng.l.:SWL2  0.801 -0.865 -0.948
 ```
 
-```r
+``` r
 emtrends(logit_length2, pairwise ~ Site, var = "long.leaf.cm")
 ```
 
@@ -931,8 +1034,8 @@ emtrends(logit_length2, pairwise ~ Site, var = "long.leaf.cm")
 ##  UCD - WL2   -0.366 0.23 Inf  -1.593  0.1112
 ```
 
-```r
+``` r
 emmip(logit_length2, Site ~ long.leaf.cm, cov.reduce = range)
 ```
 
-![](PreTransplant_Size_MortPred_files/figure-html/unnamed-chunk-14-1.png)<!-- -->
+![](PreTransplant_Size_MortPred_files/figure-html/unnamed-chunk-15-1.png)<!-- -->

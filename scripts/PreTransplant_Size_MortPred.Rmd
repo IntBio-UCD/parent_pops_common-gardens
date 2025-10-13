@@ -38,14 +38,18 @@ elev_order <- c("High", "Mid", "Low") #for proper arrangement in figures
 ## Load the pop and location data
 
 ```{r}
-gowersdist_UCD <- read_csv("../output/Climate/Pops_GowersEnvtalDist_UCD.csv") %>% 
-  rename(Recent_Gowers_Dist_UCD = Recent_Gowers_Dist, Historic_Gowers_Dist_UCD = Historic_Gowers_Dist)
+#pop info
+pops_common_garden <- read_csv("../input/WL2_Data/Pops_for_2023_WL2.csv") #pops included in common garden 
+pops_common_garden_nonotes <- pops_common_garden %>% select(parent.pop, elevation.group) #subset columns
 
-gowersdist_WL2 <- read_csv("../output/Climate/Pops_GowersEnvtalDist_WL2.csv") %>% 
-  rename(Recent_Gowers_Dist_WL2 = Recent_Gowers_Dist, Historic_Gowers_Dist_WL2 = Historic_Gowers_Dist)
+#extra location info 
+pop_loc <- read_csv("../input/Strep_tort_locs.csv")
 
-gowersdist_all <- full_join(gowersdist_UCD, gowersdist_WL2)
-head(gowersdist_all)
+#need to change YOSE to YO
+pop_loc_yo <- pop_loc %>% mutate(parent.pop = str_replace(`Site code`, "YOSE(\\d+)", "YO\\1")) %>% select(Lat, Long, elev_m=`Elevation (m)`, parent.pop)
+
+#merge in location info
+pop_elev <- left_join(pops_common_garden_nonotes, pop_loc_yo)
 ```
 
 ## Load Pre-Transplant Size data from both Gardens
@@ -65,11 +69,9 @@ unique(ucd_pretrans_size_germonly$parent.pop) #looks correct
 
 ```{r}
 wl2_pretrans_size1 <- read_csv("../input/WL2_Data/CorrectedCSVs/WL2_DNA_Collection_Size_survey_combined20230703_corrected.csv")
-head(wl2_pretrans_size1)
 
 wl2_pretrans_size2 <- read_csv("../input/WL2_Data/CorrectedCSVs/WL2_Extras_DNA_collection_size_survey_combined20230706_corrected.csv") %>% 
   filter(!is.na(`height (cm)`)) #to get rid of genotypes that were measured on the other data sheet (NAs on this sheet)
-head(wl2_pretrans_size2)
 
 wl2_pretrans_size_all <- bind_rows(wl2_pretrans_size1, wl2_pretrans_size2) %>%
   rename(parent.pop=Pop, height.cm = `height (cm)`, long.leaf.cm=`longest leaf (cm)`) %>% 
@@ -95,26 +97,66 @@ head(pretrans_rxnnorms)
 
 ## Add in Location Info
 ```{r}
-pretrans_rxnnorms_loc <-left_join(pretrans_rxnnorms, gowersdist_all) 
+pretrans_rxnnorms_loc <-left_join(pretrans_rxnnorms, pop_elev) 
 head(pretrans_rxnnorms_loc)
 ```
+
 
 ## Load survival to end of first year data
 ```{r}
 firstyear_surv <- read_csv("../output/firstyear_mort_both_sites.csv")
 head(firstyear_surv)
 
-firstyear_surv_merge_prep <- firstyear_surv %>% select(Genotype:rep, Site:Historic_Gowers_Dist_WL2)
+firstyear_surv_merge_prep <- firstyear_surv %>% select(Genotype:rep, Site:Survival)
 ```
 
 ## Merge size and survival
 ```{r}
 pretrans_surv <- left_join(pretrans_rxnnorms_loc, firstyear_surv_merge_prep)
-pretrans_surv %>% filter(is.na(Survival)) #12 genotypes with no survival information... should investigate
+pretrans_surv %>% filter(is.na(Survival)) #12 genotypes with no survival information... likely did not survive to the time of planting 
 
 pretrans_surv_complete <- pretrans_surv %>% filter(!is.na(Survival))
 ```
 
+## Maternal Family Sample Sizes 
+```{r}
+#restrict to mfs with data at both sites 
+pretrans_surv_mfs_wide <- pretrans_surv_complete %>% 
+  group_by(pop.mf, parent.pop, Site, elev_m) %>% 
+  summarise(N_height = sum(!is.na(height.cm))) %>% 
+  select(pop.mf, Site, N_height) %>% 
+  spread(Site, N_height) %>% 
+  mutate(Both.Sites=if_else(!is.na(UCD) & !is.na(WL2), TRUE, FALSE)) %>% 
+  filter(Both.Sites != "FALSE")
+
+pretrans_surv_mfs_bothsites <- left_join(pretrans_surv_mfs_wide, pretrans_surv_complete)
+
+mf_sample_size <- pretrans_surv_mfs_bothsites %>% 
+  count(parent.pop, pop.mf, Site) %>% 
+  arrange(n)
+mf_sample_size
+summary(mf_sample_size)
+mf_sample_size %>% 
+  ggplot(aes(x=pop.mf, y=n)) +
+  geom_col() + 
+  labs(x="Pop.MF", y="Sample Size", title="Pre-Transplant Size") +
+  facet_wrap(~Site)
+
+mf_per_pop <- pretrans_surv_mfs_bothsites %>% 
+  select(parent.pop, pop.mf) %>% 
+  distinct() %>% 
+  group_by(parent.pop) %>% 
+  summarise(n = n()) %>% 
+  arrange(n)
+
+mf_per_pop %>% 
+  ggplot(aes(x=fct_reorder(parent.pop, n), y=n)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) + 
+  theme_classic() +
+  scale_y_continuous(limits = c(0,8), breaks = c(2, 4, 6, 8), expand = c(0, 0)) +
+  theme(axis.text.x = element_text(angle = 45,  hjust = 1)) +
+  labs(x="Parent Population", y="# Maternal Families", title="Pre-Transplant Size")
+```
 
 ## Plot Reaction Norms
 
