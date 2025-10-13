@@ -1,23 +1,13 @@
 ---
 title: "Single Time Size Reaction Norms"
 author: "Brandie Quarles"
-date: "2025-04-09"
+date: "2025-10-13"
 output: 
   html_document: 
     keep_md: yes
 ---
 
 
-
-To Do:
-
--   Finalize linear models
-
--   Pull out Site slopes for each pop as estimate of plasticity to compare to prob of fitness
-
--   Try using ggcirlce to make different sized points for environmental distance
-
--   Lines = elevation Points = distance from home, filter by site? - how to represent it though? dark black = close, light gray = far?
 
 # Reaction Norms of Size (between UCD and WL2) - Two Months Post-Transplanting
 
@@ -328,75 +318,61 @@ head(twomonths_rxnnorms)
 
 
 ``` r
-ucd_gowers_size <- read_csv("../output/Climate/Gowers_UCD.csv") %>% 
-  select(parent.pop:GrwSsn_GD, Wtr_Year_GD) %>% 
-  pivot_wider(names_from = TimePd, values_from = c(GrwSsn_GD, Wtr_Year_GD)) %>% 
-  mutate(Site="UCD", Garden_Lat=38.53250, Garden_Long=-121.7830, Garden_Elev=16) %>% 
-  mutate(Geographic_Dist=distHaversine(cbind(Garden_Long, Garden_Lat), cbind(Long, Lat)),
-         Elev_Dist=elev_m-Garden_Elev) # Calculate the distance using the haversine formula (dist in meters)
+#pop info
+pops_common_garden <- read_csv("../input/WL2_Data/Pops_for_2023_WL2.csv") #pops included in common garden 
 ```
 
 ```
-## Rows: 46 Columns: 12
+## Rows: 23 Columns: 5
 ## ── Column specification ────────────────────────────────────────────────────────
 ## Delimiter: ","
-## chr (3): parent.pop, elevation.group, TimePd
-## dbl (9): elev_m, Lat, Long, GrwSsn_GD, GrwSsn_FLINT_GD, GrwSsn_BIOCLIM_GD, W...
+## chr (2): parent.pop, elevation.group
+## dbl (2): phylogroup, seed year
+## lgl (1): notes
 ## 
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
 ```
 
 ``` r
-wl2_gowers_2023_size <- read_csv("../output/Climate/Gowers_WL2.csv") %>% 
-  select(parent.pop:GrwSsn_GD, Wtr_Year_GD) %>% 
-  pivot_wider(names_from = TimePd, values_from = c(GrwSsn_GD, Wtr_Year_GD)) %>% 
-  mutate(Site="WL2", Garden_Lat=38.82599, Garden_Long=-120.2509, Garden_Elev=2020) %>% 
-  mutate(Geographic_Dist=distHaversine(cbind(Garden_Long, Garden_Lat), cbind(Long, Lat)),
-         Elev_Dist=elev_m-Garden_Elev) # Calculate the distance using the haversine formula
+pops_common_garden_nonotes <- pops_common_garden %>% select(parent.pop, elevation.group) #subset columns
+
+#extra location info 
+pop_loc <- read_csv("../input/Strep_tort_locs.csv")
 ```
 
 ```
-## Rows: 46 Columns: 12
+## Rows: 54 Columns: 7
 ## ── Column specification ────────────────────────────────────────────────────────
 ## Delimiter: ","
-## chr (3): parent.pop, elevation.group, TimePd
-## dbl (9): elev_m, Lat, Long, GrwSsn_GD, GrwSsn_FLINT_GD, GrwSsn_BIOCLIM_GD, W...
+## chr (6): Species epithet, Species Code, Site, Site code, Lat, Long
+## dbl (1): Elevation (m)
 ## 
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
 ```
 
 ``` r
-gowersdist_all <- bind_rows(ucd_gowers_size, wl2_gowers_2023_size) %>% 
-  select(Site, Garden_Lat:Garden_Elev, parent.pop:Wtr_Year_GD_Historical, Geographic_Dist:Elev_Dist)
-head(gowersdist_all)
+#need to change YOSE to YO
+pop_loc_yo <- pop_loc %>% mutate(parent.pop = str_replace(`Site code`, "YOSE(\\d+)", "YO\\1")) %>% select(Lat, Long, elev_m=`Elevation (m)`, parent.pop)
+
+#merge in location info
+pop_elev <- left_join(pops_common_garden_nonotes, pop_loc_yo)
 ```
 
 ```
-## # A tibble: 6 × 15
-##   Site  Garden_Lat Garden_Long Garden_Elev parent.pop elevation.group elev_m
-##   <chr>      <dbl>       <dbl>       <dbl> <chr>      <chr>            <dbl>
-## 1 UCD         38.5       -122.          16 WL1        Mid              1614.
-## 2 UCD         38.5       -122.          16 IH         Low               454.
-## 3 UCD         38.5       -122.          16 CC         Low               313 
-## 4 UCD         38.5       -122.          16 BH         Low               511.
-## 5 UCD         38.5       -122.          16 WR         Mid              1158 
-## 6 UCD         38.5       -122.          16 FR         Mid               787 
-## # ℹ 8 more variables: Lat <dbl>, Long <dbl>, GrwSsn_GD_Recent <dbl>,
-## #   GrwSsn_GD_Historical <dbl>, Wtr_Year_GD_Recent <dbl>,
-## #   Wtr_Year_GD_Historical <dbl>, Geographic_Dist <dbl>, Elev_Dist <dbl>
+## Joining with `by = join_by(parent.pop)`
 ```
 
 ## Add in location info
 
 
 ``` r
-twomonths_rxnnorms_loc <-left_join(twomonths_rxnnorms, gowersdist_all) 
+twomonths_rxnnorms_loc <-left_join(twomonths_rxnnorms, pop_elev) 
 ```
 
 ```
-## Joining with `by = join_by(parent.pop, Site)`
+## Joining with `by = join_by(parent.pop)`
 ```
 
 ``` r
@@ -404,7 +380,7 @@ head(twomonths_rxnnorms_loc)
 ```
 
 ```
-## # A tibble: 6 × 23
+## # A tibble: 6 × 14
 ##   BedLoc  block Genotype pop.mf parent.pop    mf   rep height.cm long.leaf.cm
 ##   <chr>   <chr> <chr>    <chr>  <chr>      <dbl> <dbl>     <dbl>        <dbl>
 ## 1 D1_9_C  D1    BH_1_8   BH_1   BH             1     8       2.1          2.2
@@ -413,16 +389,108 @@ head(twomonths_rxnnorms_loc)
 ## 4 A_7_D   A     BH_1_3   BH_1   BH             1     3      NA           NA  
 ## 5 A_37_D  B     BH_1_4   BH_1   BH             1     4       2.1          3.4
 ## 6 B_6_C   D     BH_1_6   BH_1   BH             1     6      NA           NA  
-## # ℹ 14 more variables: Site <chr>, Garden_Lat <dbl>, Garden_Long <dbl>,
-## #   Garden_Elev <dbl>, elevation.group <chr>, elev_m <dbl>, Lat <dbl>,
-## #   Long <dbl>, GrwSsn_GD_Recent <dbl>, GrwSsn_GD_Historical <dbl>,
-## #   Wtr_Year_GD_Recent <dbl>, Wtr_Year_GD_Historical <dbl>,
-## #   Geographic_Dist <dbl>, Elev_Dist <dbl>
+## # ℹ 5 more variables: Site <chr>, elevation.group <chr>, Lat <chr>, Long <chr>,
+## #   elev_m <dbl>
 ```
 
 ``` r
 #write_csv(twomonths_rxnnorms_loc, "../output/TwoMonths_Size_BothSites.csv")
 ```
+
+## Maternal Family Sample Sizes 
+
+``` r
+#restrict to mfs with data at both sites 
+twomonths_surv_mfs_wide <- twomonths_rxnnorms_loc %>% 
+  group_by(pop.mf, parent.pop, Site, elev_m) %>% 
+  summarise(N_height = sum(!is.na(height.cm))) %>% 
+  select(pop.mf, Site, N_height) %>% 
+  spread(Site, N_height) %>% 
+  mutate(Both.Sites=if_else(!is.na(UCD) & !is.na(WL2), TRUE, FALSE)) %>% 
+  filter(Both.Sites != "FALSE")
+```
+
+```
+## `summarise()` has grouped output by 'pop.mf', 'parent.pop', 'Site'. You can
+## override using the `.groups` argument.
+## Adding missing grouping variables: `parent.pop`
+```
+
+``` r
+twomonths_surv_mfs_bothsites <- left_join(twomonths_surv_mfs_wide, twomonths_rxnnorms_loc)
+```
+
+```
+## Joining with `by = join_by(parent.pop, pop.mf)`
+```
+
+``` r
+mf_sample_size <- twomonths_surv_mfs_bothsites %>% 
+  count(parent.pop, pop.mf, Site) %>% 
+  arrange(n)
+mf_sample_size #108 mfs with data at both sites 
+```
+
+```
+## # A tibble: 216 × 4
+## # Groups:   pop.mf, parent.pop [108]
+##    pop.mf parent.pop Site      n
+##    <chr>  <chr>      <chr> <int>
+##  1 CP3_5  CP3        UCD       1
+##  2 CP3_6  CP3        UCD       1
+##  3 CP3_7  CP3        UCD       1
+##  4 DPR_3  DPR        UCD       1
+##  5 DPR_5  DPR        UCD       1
+##  6 DPR_7  DPR        UCD       1
+##  7 LV1_4  LV1        UCD       1
+##  8 LV1_6  LV1        UCD       1
+##  9 LV3_1  LV3        WL2       1
+## 10 LV3_2  LV3        WL2       1
+## # ℹ 206 more rows
+```
+
+``` r
+summary(mf_sample_size)
+```
+
+```
+##     pop.mf           parent.pop            Site                 n         
+##  Length:216         Length:216         Length:216         Min.   : 1.000  
+##  Class :character   Class :character   Class :character   1st Qu.: 3.000  
+##  Mode  :character   Mode  :character   Mode  :character   Median : 7.000  
+##                                                           Mean   : 8.157  
+##                                                           3rd Qu.:13.000  
+##                                                           Max.   :31.000
+```
+
+``` r
+mf_sample_size %>% 
+  ggplot(aes(x=pop.mf, y=n)) +
+  geom_col() + 
+  labs(x="Pop.MF", y="Sample Size", title="Size Two Months Post-Transplant") +
+  facet_wrap(~Site)
+```
+
+![](TwoMonths_Size_RxnNorms_files/figure-html/unnamed-chunk-6-1.png)<!-- -->
+
+``` r
+mf_per_pop <- twomonths_surv_mfs_bothsites %>% 
+  select(parent.pop, pop.mf) %>% 
+  distinct() %>% 
+  group_by(parent.pop) %>% 
+  summarise(n = n()) %>% 
+  arrange(n)
+
+mf_per_pop %>% 
+  ggplot(aes(x=fct_reorder(parent.pop, n), y=n)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) + 
+  theme_classic() +
+  scale_y_continuous(limits = c(0,8), breaks = c(2, 4, 6, 8), expand = c(0, 0)) +
+  theme(axis.text.x = element_text(angle = 45,  hjust = 1)) +
+  labs(x="Parent Population", y="# Maternal Families", title="Size Two Months Post-Transplant")
+```
+
+![](TwoMonths_Size_RxnNorms_files/figure-html/unnamed-chunk-6-2.png)<!-- -->
 
 ## Plot Reaction Norms
 
@@ -536,7 +604,7 @@ twomonths_rxnnorms_summary_mfs2 %>%
   theme(text=element_text(size=28))
 ```
 
-![](TwoMonths_Size_RxnNorms_files/figure-html/unnamed-chunk-8-1.png)<!-- -->
+![](TwoMonths_Size_RxnNorms_files/figure-html/unnamed-chunk-9-1.png)<!-- -->
 
 ``` r
 ggsave("../output/TwoMonths_RxNorms_Height_MFAvgs.png", width = 14, height = 8, units = "in")
@@ -552,7 +620,7 @@ twomonths_rxnnorms_summary_mfs2 %>%
   theme(text=element_text(size=28))
 ```
 
-![](TwoMonths_Size_RxnNorms_files/figure-html/unnamed-chunk-8-2.png)<!-- -->
+![](TwoMonths_Size_RxnNorms_files/figure-html/unnamed-chunk-9-2.png)<!-- -->
 
 ``` r
 ggsave("../output/TwoMonths_RxNorms_LongestLength_MFAvgs.png", width = 14, height = 8, units = "in")
@@ -571,7 +639,7 @@ twomonths_rxnnorms_summary_mfs2 %>%
   theme(text=element_text(size=28))
 ```
 
-![](TwoMonths_Size_RxnNorms_files/figure-html/unnamed-chunk-9-1.png)<!-- -->
+![](TwoMonths_Size_RxnNorms_files/figure-html/unnamed-chunk-10-1.png)<!-- -->
 
 ``` r
 #ggsave("../output/TwoMonths_RxNorms_Height_BH_WL1_CP2_MFAvgs.png", width = 14, height = 8, units = "in")
@@ -588,7 +656,7 @@ twomonths_rxnnorms_summary_mfs2 %>%
   theme(text=element_text(size=28))
 ```
 
-![](TwoMonths_Size_RxnNorms_files/figure-html/unnamed-chunk-9-2.png)<!-- -->
+![](TwoMonths_Size_RxnNorms_files/figure-html/unnamed-chunk-10-2.png)<!-- -->
 
 ``` r
 #ggsave("../output/TwoMonths_RxNorms_LongestLength_BH_WL1_CP2_MFAvgs.png", width = 14, height = 8, units = "in")
@@ -600,7 +668,7 @@ twomonths_rxnnorms_summary_mfs2 %>%
 ``` r
 twomonths_rxnnorms_summary_pops <- twomonths_rxnnorms_loc %>% 
   filter(!is.na(parent.pop)) %>% 
-  group_by(parent.pop, Site, elev_m, Wtr_Year_GD_Recent, Wtr_Year_GD_Historical) %>% 
+  group_by(parent.pop, Site, elev_m) %>% 
   summarise(N_height = sum(!is.na(height.cm)), mean_height.cm = mean(height.cm,na.rm=(TRUE)), 
             sem_height.cm=sem(height.cm, na.rm=(TRUE)), N_length = sum(!is.na(long.leaf.cm)),
             mean_long.leaf.cm=mean(long.leaf.cm, na.rm=(TRUE)), 
@@ -608,8 +676,8 @@ twomonths_rxnnorms_summary_pops <- twomonths_rxnnorms_loc %>%
 ```
 
 ```
-## `summarise()` has grouped output by 'parent.pop', 'Site', 'elev_m',
-## 'Wtr_Year_GD_Recent'. You can override using the `.groups` argument.
+## `summarise()` has grouped output by 'parent.pop', 'Site'. You can override
+## using the `.groups` argument.
 ```
 
 ``` r
@@ -619,23 +687,22 @@ twomonths_rxnnorms_summary_pops %>% arrange(N_height)
 ```
 
 ```
-## # A tibble: 46 × 11
-## # Groups:   parent.pop, Site, elev_m, Wtr_Year_GD_Recent [46]
-##    parent.pop Site  elev_m Wtr_Year_GD_Recent Wtr_Year_GD_Historical N_height
-##    <chr>      <chr>  <dbl>              <dbl>                  <dbl>    <int>
-##  1 WV         WL2     749.              0.481                  0.493        0
-##  2 LV1        UCD    2593.              0.791                  0.789        1
-##  3 WV         UCD     749.              0.410                  0.441        1
-##  4 WR         WL2    1158               0.418                  0.407        3
-##  5 YO4        UCD    2158.              0.540                  0.525        5
-##  6 CP3        UCD    2266.              0.636                  0.640        6
-##  7 WR         UCD    1158               0.515                  0.483        7
-##  8 LV3        WL2    2354.              0.373                  0.466        8
-##  9 YO11       UCD    2872.              0.579                  0.583        8
-## 10 LVTR1      UCD    2741.              0.801                  0.801        9
+## # A tibble: 46 × 9
+## # Groups:   parent.pop, Site [46]
+##    parent.pop Site  elev_m N_height mean_height.cm sem_height.cm N_length
+##    <chr>      <chr>  <dbl>    <int>          <dbl>         <dbl>    <int>
+##  1 WV         WL2     749.        0         NaN           NA            0
+##  2 LV1        UCD    2593.        1           1.2         NA            1
+##  3 WV         UCD     749.        1           3.9         NA            1
+##  4 WR         WL2    1158         3           5.07         1.42         3
+##  5 YO4        UCD    2158.        5           2.24         0.191        5
+##  6 CP3        UCD    2266.        6           1.23         0.436        6
+##  7 WR         UCD    1158         7           2.77         0.534        7
+##  8 LV3        WL2    2354.        8           2.55         0.338        5
+##  9 YO11       UCD    2872.        8           2.44         0.304        8
+## 10 LVTR1      UCD    2741.        9           1.78         0.293        9
 ## # ℹ 36 more rows
-## # ℹ 5 more variables: mean_height.cm <dbl>, sem_height.cm <dbl>,
-## #   N_length <int>, mean_long.leaf.cm <dbl>, sem_long.leaf.cm <dbl>
+## # ℹ 2 more variables: mean_long.leaf.cm <dbl>, sem_long.leaf.cm <dbl>
 ```
 
 ``` r
@@ -643,27 +710,27 @@ twomonths_rxnnorms_summary_pops %>% filter(elev_m>2800) %>% filter(Site=="WL2") 
 ```
 
 ```
-##   parent.pop            Site               elev_m     Wtr_Year_GD_Recent
-##  Length:1           Length:1           Min.   :2872   Min.   :0.4605    
-##  Class :character   Class :character   1st Qu.:2872   1st Qu.:0.4605    
-##  Mode  :character   Mode  :character   Median :2872   Median :0.4605    
-##                                        Mean   :2872   Mean   :0.4605    
-##                                        3rd Qu.:2872   3rd Qu.:0.4605    
-##                                        Max.   :2872   Max.   :0.4605    
-##  Wtr_Year_GD_Historical    N_height  mean_height.cm  sem_height.cm   
-##  Min.   :0.5558         Min.   :28   Min.   :2.625   Min.   :0.2669  
-##  1st Qu.:0.5558         1st Qu.:28   1st Qu.:2.625   1st Qu.:0.2669  
-##  Median :0.5558         Median :28   Median :2.625   Median :0.2669  
-##  Mean   :0.5558         Mean   :28   Mean   :2.625   Mean   :0.2669  
-##  3rd Qu.:0.5558         3rd Qu.:28   3rd Qu.:2.625   3rd Qu.:0.2669  
-##  Max.   :0.5558         Max.   :28   Max.   :2.625   Max.   :0.2669  
-##     N_length  mean_long.leaf.cm sem_long.leaf.cm
-##  Min.   :22   Min.   :1.941     Min.   :0.2728  
-##  1st Qu.:22   1st Qu.:1.941     1st Qu.:0.2728  
-##  Median :22   Median :1.941     Median :0.2728  
-##  Mean   :22   Mean   :1.941     Mean   :0.2728  
-##  3rd Qu.:22   3rd Qu.:1.941     3rd Qu.:0.2728  
-##  Max.   :22   Max.   :1.941     Max.   :0.2728
+##   parent.pop            Site               elev_m        N_height 
+##  Length:1           Length:1           Min.   :2872   Min.   :28  
+##  Class :character   Class :character   1st Qu.:2872   1st Qu.:28  
+##  Mode  :character   Mode  :character   Median :2872   Median :28  
+##                                        Mean   :2872   Mean   :28  
+##                                        3rd Qu.:2872   3rd Qu.:28  
+##                                        Max.   :2872   Max.   :28  
+##  mean_height.cm  sem_height.cm       N_length  mean_long.leaf.cm
+##  Min.   :2.625   Min.   :0.2669   Min.   :22   Min.   :1.941    
+##  1st Qu.:2.625   1st Qu.:0.2669   1st Qu.:22   1st Qu.:1.941    
+##  Median :2.625   Median :0.2669   Median :22   Median :1.941    
+##  Mean   :2.625   Mean   :0.2669   Mean   :22   Mean   :1.941    
+##  3rd Qu.:2.625   3rd Qu.:0.2669   3rd Qu.:22   3rd Qu.:1.941    
+##  Max.   :2.625   Max.   :0.2669   Max.   :22   Max.   :1.941    
+##  sem_long.leaf.cm
+##  Min.   :0.2728  
+##  1st Qu.:0.2728  
+##  Median :0.2728  
+##  Mean   :0.2728  
+##  3rd Qu.:0.2728  
+##  Max.   :0.2728
 ```
 
 ``` r
@@ -671,27 +738,27 @@ twomonths_rxnnorms_summary_pops %>% filter(elev_m>2800) %>% filter(Site=="UCD") 
 ```
 
 ```
-##   parent.pop            Site               elev_m     Wtr_Year_GD_Recent
-##  Length:1           Length:1           Min.   :2872   Min.   :0.5789    
-##  Class :character   Class :character   1st Qu.:2872   1st Qu.:0.5789    
-##  Mode  :character   Mode  :character   Median :2872   Median :0.5789    
-##                                        Mean   :2872   Mean   :0.5789    
-##                                        3rd Qu.:2872   3rd Qu.:0.5789    
-##                                        Max.   :2872   Max.   :0.5789    
-##  Wtr_Year_GD_Historical    N_height mean_height.cm  sem_height.cm   
-##  Min.   :0.5831         Min.   :8   Min.   :2.438   Min.   :0.3041  
-##  1st Qu.:0.5831         1st Qu.:8   1st Qu.:2.438   1st Qu.:0.3041  
-##  Median :0.5831         Median :8   Median :2.438   Median :0.3041  
-##  Mean   :0.5831         Mean   :8   Mean   :2.438   Mean   :0.3041  
-##  3rd Qu.:0.5831         3rd Qu.:8   3rd Qu.:2.438   3rd Qu.:0.3041  
-##  Max.   :0.5831         Max.   :8   Max.   :2.438   Max.   :0.3041  
-##     N_length mean_long.leaf.cm sem_long.leaf.cm
-##  Min.   :8   Min.   :1.525     Min.   :0.1623  
-##  1st Qu.:8   1st Qu.:1.525     1st Qu.:0.1623  
-##  Median :8   Median :1.525     Median :0.1623  
-##  Mean   :8   Mean   :1.525     Mean   :0.1623  
-##  3rd Qu.:8   3rd Qu.:1.525     3rd Qu.:0.1623  
-##  Max.   :8   Max.   :1.525     Max.   :0.1623
+##   parent.pop            Site               elev_m        N_height
+##  Length:1           Length:1           Min.   :2872   Min.   :8  
+##  Class :character   Class :character   1st Qu.:2872   1st Qu.:8  
+##  Mode  :character   Mode  :character   Median :2872   Median :8  
+##                                        Mean   :2872   Mean   :8  
+##                                        3rd Qu.:2872   3rd Qu.:8  
+##                                        Max.   :2872   Max.   :8  
+##  mean_height.cm  sem_height.cm       N_length mean_long.leaf.cm
+##  Min.   :2.438   Min.   :0.3041   Min.   :8   Min.   :1.525    
+##  1st Qu.:2.438   1st Qu.:0.3041   1st Qu.:8   1st Qu.:1.525    
+##  Median :2.438   Median :0.3041   Median :8   Median :1.525    
+##  Mean   :2.438   Mean   :0.3041   Mean   :8   Mean   :1.525    
+##  3rd Qu.:2.438   3rd Qu.:0.3041   3rd Qu.:8   3rd Qu.:1.525    
+##  Max.   :2.438   Max.   :0.3041   Max.   :8   Max.   :1.525    
+##  sem_long.leaf.cm
+##  Min.   :0.1623  
+##  1st Qu.:0.1623  
+##  Median :0.1623  
+##  Mean   :0.1623  
+##  3rd Qu.:0.1623  
+##  Max.   :0.1623
 ```
 
 ``` r
@@ -716,7 +783,7 @@ twomonths_rxnnorms_summary_pops %>%
    theme(text=element_text(size=25))
 ```
 
-![](TwoMonths_Size_RxnNorms_files/figure-html/unnamed-chunk-11-1.png)<!-- -->
+![](TwoMonths_Size_RxnNorms_files/figure-html/unnamed-chunk-12-1.png)<!-- -->
 
 ``` r
 ggsave("../output/TwoMonths_RxNorms_Height_ALL_PopAvgs2.png", width = 12, height = 8, units = "in")
@@ -730,7 +797,7 @@ twomonths_rxnnorms_summary_pops %>%
    theme(text=element_text(size=25))
 ```
 
-![](TwoMonths_Size_RxnNorms_files/figure-html/unnamed-chunk-11-2.png)<!-- -->
+![](TwoMonths_Size_RxnNorms_files/figure-html/unnamed-chunk-12-2.png)<!-- -->
 
 ``` r
 ggsave("../output/TwoMonths_RxNorms_LongestLength_ALL_PopAvgs2.png", width = 12, height = 8, units = "in")
@@ -749,7 +816,7 @@ twomonths_rxnnorms_summary_pops2 %>%
   theme(text=element_text(size=28))
 ```
 
-![](TwoMonths_Size_RxnNorms_files/figure-html/unnamed-chunk-12-1.png)<!-- -->
+![](TwoMonths_Size_RxnNorms_files/figure-html/unnamed-chunk-13-1.png)<!-- -->
 
 ``` r
 ggsave("../output/TwoMonths_RxNorms_Height_ALL_PopAvgs.png", width = 14, height = 8, units = "in")
@@ -765,62 +832,10 @@ twomonths_rxnnorms_summary_pops2 %>%
   theme(text=element_text(size=28))
 ```
 
-![](TwoMonths_Size_RxnNorms_files/figure-html/unnamed-chunk-12-2.png)<!-- -->
+![](TwoMonths_Size_RxnNorms_files/figure-html/unnamed-chunk-13-2.png)<!-- -->
 
 ``` r
 ggsave("../output/TwoMonths_RxNorms_LongestLength_ALL_PopAvgs.png", width = 14, height = 8, units = "in")
-```
-
-### By Gowers Distance
-
-
-``` r
-ggplot() +
-  geom_line(data = filter(twomonths_rxnnorms_summary_pops2, N_height>2), linewidth=1.5, aes(x = Site, y = mean_height.cm, group=parent.pop, color=elev_m)) + scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
-  labs(color="Elevation (m)") +
-   
-  # start a new scale
-  new_scale_colour() +
-  
-  geom_point(data = filter(twomonths_rxnnorms_summary_pops2, N_height>2), 
-             size=2.5, aes(x = Site,y = mean_height.cm, color=Wtr_Year_GD_Recent), alpha=0.9) +
-  geom_errorbar(data = filter(twomonths_rxnnorms_summary_pops2, N_height >2), 
-                aes(x=Site, y=mean_height.cm,ymin=mean_height.cm-sem_height.cm,ymax=mean_height.cm+sem_height.cm,
-                    color=Wtr_Year_GD_Recent), alpha=0.9, width=.1) +
-  theme_classic() + scale_colour_gradientn(colours = c("black", "grey80")) +
-  labs(y="Height (cm)", color="Envtal Dist \n(from garden year)") +
-  theme(text=element_text(size=28))
-```
-
-![](TwoMonths_Size_RxnNorms_files/figure-html/unnamed-chunk-13-1.png)<!-- -->
-
-``` r
-ggsave("../output/TwoMonths_RxNorms_Height_ALL_PopAvgs_Gowers.png", width = 14, height = 8, units = "in")
-```
-
-
-``` r
-ggplot() +
-  geom_line(data = filter(twomonths_rxnnorms_summary_pops2, N_length >2), linewidth=1.5, aes(x = Site, y = mean_long.leaf.cm, group=parent.pop, color=elev_m)) + scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
-  labs(color="Elevation (m)") +
-   
-  # start a new scale
-  new_scale_colour() +
-  
-  geom_point(data = filter(twomonths_rxnnorms_summary_pops2, N_length >2), 
-             size=2.5, aes(x = Site,y = mean_long.leaf.cm, color=Wtr_Year_GD_Recent), alpha=0.9) +
-  geom_errorbar(data = filter(twomonths_rxnnorms_summary_pops2, N_length >2), 
-                aes(x=Site, y=mean_long.leaf.cm,ymin=mean_long.leaf.cm-sem_long.leaf.cm,ymax=mean_long.leaf.cm+sem_long.leaf.cm,
-                    color=Wtr_Year_GD_Recent), alpha=0.9, width=.1) +
-  theme_classic() + scale_colour_gradientn(colours = c("black", "grey80")) +
-  labs(y="Leaf Length (cm)", color="Envtal Dist \n(from garden year)") +
-  theme(text=element_text(size=28))
-```
-
-![](TwoMonths_Size_RxnNorms_files/figure-html/unnamed-chunk-14-1.png)<!-- -->
-
-``` r
-ggsave("../output/TwoMonths_RxNorms_LongestLength_ALL_PopAvgs_Gowers.png", width = 14, height = 8, units = "in")
 ```
 
 ### Combine mf and pop averages
@@ -858,7 +873,7 @@ twomonths_rxnnorms_summary_pops2 %>%
 ## (`geom_point()`).
 ```
 
-![](TwoMonths_Size_RxnNorms_files/figure-html/unnamed-chunk-15-1.png)<!-- -->
+![](TwoMonths_Size_RxnNorms_files/figure-html/unnamed-chunk-14-1.png)<!-- -->
 
 ``` r
 ggsave("../output/TwoMonths_RxNorms_Height_ALL_PopMFAvgs.png", width = 14, height = 8, units = "in")
@@ -896,7 +911,7 @@ geom_line(data = twomonths_rxnnorms_summary_mfs2, size=0.2) +
 ## (`geom_point()`).
 ```
 
-![](TwoMonths_Size_RxnNorms_files/figure-html/unnamed-chunk-15-2.png)<!-- -->
+![](TwoMonths_Size_RxnNorms_files/figure-html/unnamed-chunk-14-2.png)<!-- -->
 
 ``` r
 ggsave("../output/TwoMonths_RxNorms_LongestLength_ALL_PopMFAvgs.png", width = 14, height = 8, units = "in")
@@ -920,7 +935,7 @@ twomonths_rxnnorms_summary_pops2 %>%
    theme(text=element_text(size=25))
 ```
 
-![](TwoMonths_Size_RxnNorms_files/figure-html/unnamed-chunk-16-1.png)<!-- -->
+![](TwoMonths_Size_RxnNorms_files/figure-html/unnamed-chunk-15-1.png)<!-- -->
 
 ``` r
 ggsave("../output/TwoMonths_RxNorms_Height_TM2_WL2_PopAvgs.png", width = 12, height = 8, units = "in")
@@ -934,7 +949,7 @@ twomonths_rxnnorms_summary_pops2 %>%
    theme(text=element_text(size=25))
 ```
 
-![](TwoMonths_Size_RxnNorms_files/figure-html/unnamed-chunk-16-2.png)<!-- -->
+![](TwoMonths_Size_RxnNorms_files/figure-html/unnamed-chunk-15-2.png)<!-- -->
 
 ``` r
 ggsave("../output/TwoMonths_RxNorms_LongestLength_TM2_WL2_PopAvgs.png", width = 12, height = 8, units = "in")
@@ -966,12 +981,12 @@ twomonths_rxnnorms_summary_elev
 ## # Groups:   elevation.group [3]
 ##   elevation.group Site  N_height mean_height.cm sem_height.cm N_length
 ##   <chr>           <chr>    <int>          <dbl>         <dbl>    <int>
-## 1 High            UCD        163           1.94        0.0811      163
-## 2 High            WL2        284           2.73        0.0885      216
-## 3 Low             UCD        243           3.91        0.112       243
-## 4 Low             WL2        246           9.53        0.415       246
-## 5 Mid             UCD        208           2.87        0.100       207
-## 6 Mid             WL2        112           4.01        0.262        96
+## 1 high            UCD        163           1.94        0.0811      163
+## 2 high            WL2        284           2.73        0.0885      216
+## 3 low             UCD        243           3.91        0.112       243
+## 4 low             WL2        246           9.53        0.415       246
+## 5 mid             UCD        208           2.87        0.100       207
+## 6 mid             WL2        112           4.01        0.262        96
 ## # ℹ 2 more variables: mean_long.leaf.cm <dbl>, sem_long.leaf.cm <dbl>
 ```
 
@@ -985,7 +1000,7 @@ twomonths_rxnnorms_summary_elev %>%
   theme_classic() + scale_colour_manual(values=elev_three_palette)
 ```
 
-![](TwoMonths_Size_RxnNorms_files/figure-html/unnamed-chunk-18-1.png)<!-- -->
+![](TwoMonths_Size_RxnNorms_files/figure-html/unnamed-chunk-17-1.png)<!-- -->
 
 ``` r
 twomonths_rxnnorms_summary_elev %>% 
@@ -995,7 +1010,7 @@ twomonths_rxnnorms_summary_elev %>%
   theme_classic() + scale_colour_manual(values=elev_three_palette)
 ```
 
-![](TwoMonths_Size_RxnNorms_files/figure-html/unnamed-chunk-18-2.png)<!-- -->
+![](TwoMonths_Size_RxnNorms_files/figure-html/unnamed-chunk-17-2.png)<!-- -->
 
 ## Stats
 
@@ -1020,7 +1035,7 @@ twomonths_rxnnorms_loc %>%
 ## (`stat_bin()`).
 ```
 
-![](TwoMonths_Size_RxnNorms_files/figure-html/unnamed-chunk-19-1.png)<!-- -->
+![](TwoMonths_Size_RxnNorms_files/figure-html/unnamed-chunk-18-1.png)<!-- -->
 
 ``` r
 twomonths_rxnnorms_loc %>% 
@@ -1038,7 +1053,7 @@ twomonths_rxnnorms_loc %>%
 ## (`stat_bin()`).
 ```
 
-![](TwoMonths_Size_RxnNorms_files/figure-html/unnamed-chunk-19-2.png)<!-- -->
+![](TwoMonths_Size_RxnNorms_files/figure-html/unnamed-chunk-18-2.png)<!-- -->
 
 ``` r
 twomonths_rxnnorms_loc %>% 
@@ -1055,7 +1070,7 @@ twomonths_rxnnorms_loc %>%
 ## (`stat_bin()`).
 ```
 
-![](TwoMonths_Size_RxnNorms_files/figure-html/unnamed-chunk-19-3.png)<!-- -->
+![](TwoMonths_Size_RxnNorms_files/figure-html/unnamed-chunk-18-3.png)<!-- -->
 
 Test that log transformation will help 
 
@@ -1268,6 +1283,19 @@ coef(lmeheight3)$parent.pop
 ## YO7    0.30935876  0.56318421
 ## YO8    0.68879322  0.28416135
 ```
+
+``` r
+plot(lmeheight3, which = 1)
+```
+
+![](TwoMonths_Size_RxnNorms_files/figure-html/unnamed-chunk-22-1.png)<!-- -->
+
+``` r
+qqnorm(resid(lmeheight3))
+qqline(resid(lmeheight3)) #fit diagnostics not great 
+```
+
+![](TwoMonths_Size_RxnNorms_files/figure-html/unnamed-chunk-22-2.png)<!-- -->
 
 ``` r
 height_slopes <- coef(lmeheight3)$parent.pop %>% 
