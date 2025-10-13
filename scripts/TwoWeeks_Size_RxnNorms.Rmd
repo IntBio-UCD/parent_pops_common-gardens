@@ -15,6 +15,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r}
 library(tidyverse)
+conflicted::conflicts_prefer(dplyr::filter)
 library(lmerTest) #for mixed effect models
 conflicted::conflicts_prefer(lmerTest::lmer)
 library(emmeans) #for post-hoc pairwise comparisons 
@@ -32,27 +33,18 @@ elev_order <- c("High", "Mid", "Low") #for proper arrangement in figures
 ## Load the pop and location data
 
 ```{r}
-gowersdist_UCD <- read_csv("../output/Climate/Pops_GowersEnvtalDist_UCD.csv") %>% 
-  rename(Recent_Gowers_Dist_UCD = Recent_Gowers_Dist, Historic_Gowers_Dist_UCD = Historic_Gowers_Dist)
+#pop info
+pops_common_garden <- read_csv("../input/WL2_Data/Pops_for_2023_WL2.csv") #pops included in common garden 
+pops_common_garden_nonotes <- pops_common_garden %>% select(parent.pop, elevation.group) #subset columns
 
-gowersdist_WL2 <- read_csv("../output/Climate/Pops_GowersEnvtalDist_WL2.csv") %>% 
-  rename(Recent_Gowers_Dist_WL2 = Recent_Gowers_Dist, Historic_Gowers_Dist_WL2 = Historic_Gowers_Dist)
+#extra location info 
+pop_loc <- read_csv("../input/Strep_tort_locs.csv")
 
-gowersdist_all <- full_join(gowersdist_UCD, gowersdist_WL2)
-head(gowersdist_all)
-```
+#need to change YOSE to YO
+pop_loc_yo <- pop_loc %>% mutate(parent.pop = str_replace(`Site code`, "YOSE(\\d+)", "YO\\1")) %>% select(Lat, Long, elev_m=`Elevation (m)`, parent.pop)
 
-Relationship between WL2 and UCD distance
-```{r}
-gowersdist_all %>% 
-  ggplot(aes(x=Recent_Gowers_Dist_WL2, y=Recent_Gowers_Dist_UCD, color=elev_m)) +
-  geom_point() +
-  scale_colour_gradient(low = "#F5A540", high = "#0043F0")
-
-gowersdist_all %>% 
-  ggplot(aes(x=Historic_Gowers_Dist_WL2, y=Historic_Gowers_Dist_UCD, color=elev_m)) +
-  geom_point() +
-  scale_colour_gradient(low = "#F5A540", high = "#0043F0")
+#merge in location info
+pop_elev <- left_join(pops_common_garden_nonotes, pop_loc_yo)
 ```
 
 
@@ -98,8 +90,48 @@ head(twowks_rxnnorms)
 
 ## Add in location info
 ```{r}
-twowks_rxnnorms_loc <-left_join(twowks_rxnnorms, gowersdist_all) 
+twowks_rxnnorms_loc <-left_join(twowks_rxnnorms, pop_elev) 
 head(twowks_rxnnorms_loc)
+```
+
+## Maternal Family Sample Sizes 
+```{r}
+#restrict to mfs with data at both sites 
+pretrans_surv_mfs_wide <- twowks_rxnnorms_loc %>% 
+  group_by(pop.mf, parent.pop, Site, elev_m) %>% 
+  summarise(N_height = sum(!is.na(height.cm))) %>% 
+  select(pop.mf, Site, N_height) %>% 
+  spread(Site, N_height) %>% 
+  mutate(Both.Sites=if_else(!is.na(UCD) & !is.na(WL2), TRUE, FALSE)) %>% 
+  filter(Both.Sites != "FALSE")
+
+pretrans_surv_mfs_bothsites <- left_join(pretrans_surv_mfs_wide, twowks_rxnnorms_loc)
+
+mf_sample_size <- pretrans_surv_mfs_bothsites %>% 
+  count(parent.pop, pop.mf, Site) %>% 
+  arrange(n)
+mf_sample_size
+summary(mf_sample_size)
+mf_sample_size %>% 
+  ggplot(aes(x=pop.mf, y=n)) +
+  geom_col() + 
+  labs(x="Pop.MF", y="Sample Size", title="Size Two Weeks Post-Transplant") +
+  facet_wrap(~Site)
+
+mf_per_pop <- pretrans_surv_mfs_bothsites %>% 
+  select(parent.pop, pop.mf) %>% 
+  distinct() %>% 
+  group_by(parent.pop) %>% 
+  summarise(n = n()) %>% 
+  arrange(n)
+
+mf_per_pop %>% 
+  ggplot(aes(x=fct_reorder(parent.pop, n), y=n)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) + 
+  theme_classic() +
+  scale_y_continuous(limits = c(0,8), breaks = c(2, 4, 6, 8), expand = c(0, 0)) +
+  theme(axis.text.x = element_text(angle = 45,  hjust = 1)) +
+  labs(x="Parent Population", y="# Maternal Families", title="Size Two Weeks Post-Transplant")
 ```
 
 ## Plot Reaction Norms
@@ -163,7 +195,7 @@ ggsave("../output/TwoWeeks_RxNorms_LongestLength_MFAvgs.png", width = 14, height
 ```{r}
 twowks_rxnnorms_summary_pops <- twowks_rxnnorms_loc %>% 
   filter(!is.na(parent.pop)) %>% 
-  group_by(parent.pop, Site, elev_m, Recent_Gowers_Dist_UCD, Recent_Gowers_Dist_WL2, Historic_Gowers_Dist_UCD, Historic_Gowers_Dist_WL2) %>% 
+  group_by(parent.pop, Site, elev_m) %>% 
   summarise(N_height = sum(!is.na(height.cm)), mean_height.cm = mean(height.cm,na.rm=(TRUE)), 
             sem_height.cm=sem(height.cm, na.rm=(TRUE)), N_length = sum(!is.na(long.leaf.cm)),
             mean_long.leaf.cm=mean(long.leaf.cm, na.rm=(TRUE)), 
