@@ -97,7 +97,7 @@ head(twowks_rxnnorms_loc)
 ## Maternal Family Sample Sizes 
 ```{r}
 #restrict to mfs with data at both sites 
-pretrans_surv_mfs_wide <- twowks_rxnnorms_loc %>% 
+twowks_surv_mfs_wide <- twowks_rxnnorms_loc %>% 
   group_by(pop.mf, parent.pop, Site, elev_m) %>% 
   summarise(N_height = sum(!is.na(height.cm))) %>% 
   select(pop.mf, Site, N_height) %>% 
@@ -105,9 +105,9 @@ pretrans_surv_mfs_wide <- twowks_rxnnorms_loc %>%
   mutate(Both.Sites=if_else(!is.na(UCD) & !is.na(WL2), TRUE, FALSE)) %>% 
   filter(Both.Sites != "FALSE")
 
-pretrans_surv_mfs_bothsites <- left_join(pretrans_surv_mfs_wide, twowks_rxnnorms_loc)
+twowks_surv_mfs_bothsites <- left_join(twowks_surv_mfs_wide, twowks_rxnnorms_loc)
 
-mf_sample_size <- pretrans_surv_mfs_bothsites %>% 
+mf_sample_size <- twowks_surv_mfs_bothsites %>% 
   count(parent.pop, pop.mf, Site) %>% 
   arrange(n)
 mf_sample_size
@@ -118,7 +118,7 @@ mf_sample_size %>%
   labs(x="Pop.MF", y="Sample Size", title="Size Two Weeks Post-Transplant") +
   facet_wrap(~Site)
 
-mf_per_pop <- pretrans_surv_mfs_bothsites %>% 
+mf_per_pop <- twowks_surv_mfs_bothsites %>% 
   select(parent.pop, pop.mf) %>% 
   distinct() %>% 
   group_by(parent.pop) %>% 
