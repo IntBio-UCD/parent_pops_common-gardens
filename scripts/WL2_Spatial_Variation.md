@@ -1,7 +1,7 @@
 ---
 title: "WL2_Spatial_Variation"
 author: "Brandie QC"
-date: "2025-10-07"
+date: "2025-10-13"
 output: 
   html_document: 
     keep_md: true
@@ -21,7 +21,7 @@ To Do:
 
 -   For TDR data, compare top of beds avg across the season (See Rachel's github)
 
--   Correlate TDR data to fitness/size data somehow 
+-   Correlate TDR and iButton data to fitness/size data somehow 
 
 ## Load Libraries
 
@@ -253,6 +253,93 @@ wl2_anncensus <- read_csv("../input/WL2_Data/CorrectedCSVs/WL2_annual_census_202
 ## ℹ Run `dplyr::last_dplyr_warnings()` to see the 1 remaining warning.
 ```
 
+## Read in soil temp
+
+
+``` r
+temp_2023 <- read_csv("../input/WL2_Data/WL2_2022_2023_iButton_Data_Corrected.csv") %>%
+  select(-`...3`) %>%
+  mutate(Date_Time = mdy_hm(Date_Time)) %>%
+  filter(Date_Time > ymd("2023-07-06"))
+```
+
+```
+## New names:
+## Rows: 14253 Columns: 4
+## ── Column specification
+## ──────────────────────────────────────────────────────── Delimiter: "," chr
+## (3): Bed, Date_Time, ...3 dbl (1): SoilTemp
+## ℹ Use `spec()` to retrieve the full column specification for this data. ℹ
+## Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## • `` -> `...3`
+```
+
+``` r
+head(temp_2023)
+```
+
+```
+## # A tibble: 6 × 3
+##   Bed   Date_Time           SoilTemp
+##   <chr> <dttm>                 <dbl>
+## 1 A_1   2023-07-13 14:46:00     27.5
+## 2 A_1   2023-07-13 15:46:00     32  
+## 3 A_1   2023-07-13 16:46:00     31.5
+## 4 A_1   2023-07-13 17:46:00     28.5
+## 5 A_1   2023-07-13 18:46:00     25  
+## 6 A_1   2023-07-13 19:46:00     22
+```
+
+``` r
+unique(temp_2023$Bed) #only have Bed A and D
+```
+
+```
+## [1] "A_1" "A_2" "D_1" "D_2" "D_3"
+```
+
+``` r
+#2 at each end of bed A and 3 in bed D ends and middle
+
+temp_2024 <- read_csv("../input/WL2_Data/WL2_2024_iButton_Data_Corrected.csv")
+```
+
+```
+## Rows: 49326 Columns: 3
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: ","
+## chr  (1): Bed
+## dbl  (1): SoilTemp
+## dttm (1): Date_Time
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+```
+
+``` r
+head(temp_2024)
+```
+
+```
+## # A tibble: 6 × 3
+##   Bed   Date_Time           SoilTemp
+##   <chr> <dttm>                 <dbl>
+## 1 A     2023-10-27 18:10:00      3.5
+## 2 A     2023-10-27 21:10:00      1  
+## 3 A     2023-10-28 00:10:00      0.5
+## 4 A     2023-10-28 03:10:00     -0.5
+## 5 A     2023-10-28 06:10:00     -1  
+## 6 A     2023-10-28 09:10:00     -1
+```
+
+``` r
+unique(temp_2024$Bed) #have data for all beds 
+```
+
+```
+##  [1] "A" "B" "C" "D" "E" "F" "G" "H" "I" "J" "K"
+```
+
 ## Box Plots
 
 ``` r
@@ -261,7 +348,7 @@ wl2_est %>%
   geom_boxplot()
 ```
 
-![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-4-1.png)<!-- -->
+![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-5-1.png)<!-- -->
 
 ``` r
 y1_surv %>% 
@@ -269,7 +356,7 @@ y1_surv %>%
   geom_boxplot()
 ```
 
-![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-4-2.png)<!-- -->
+![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-5-2.png)<!-- -->
 
 ``` r
 wintersurv %>% 
@@ -277,7 +364,7 @@ wintersurv %>%
   geom_boxplot()
 ```
 
-![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-4-3.png)<!-- -->
+![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-5-3.png)<!-- -->
 
 ``` r
 repsurvy2 %>% 
@@ -285,7 +372,7 @@ repsurvy2 %>%
   geom_boxplot()
 ```
 
-![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-4-4.png)<!-- -->
+![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-5-4.png)<!-- -->
 
 ``` r
 fruitsy2 %>% 
@@ -293,7 +380,7 @@ fruitsy2 %>%
   geom_boxplot()
 ```
 
-![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-4-5.png)<!-- -->
+![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-5-5.png)<!-- -->
 
 ``` r
 probfruit %>% 
@@ -301,7 +388,7 @@ probfruit %>%
   geom_boxplot()
 ```
 
-![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-4-6.png)<!-- -->
+![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-5-6.png)<!-- -->
 
 ``` r
 totfruit %>% 
@@ -309,7 +396,7 @@ totfruit %>%
   geom_boxplot()
 ```
 
-![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-4-7.png)<!-- -->
+![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-5-7.png)<!-- -->
 
 ``` r
 WL2_twomonths_size %>% 
@@ -322,7 +409,7 @@ WL2_twomonths_size %>%
 ## (`stat_boxplot()`).
 ```
 
-![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-4-8.png)<!-- -->
+![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-5-8.png)<!-- -->
 
 ``` r
 WL2_twomonths_size %>% 
@@ -336,7 +423,7 @@ WL2_twomonths_size %>%
 ## (`stat_boxplot()`).
 ```
 
-![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-4-9.png)<!-- -->
+![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-5-9.png)<!-- -->
 
 ``` r
 wl2_anncensus %>% 
@@ -349,7 +436,23 @@ wl2_anncensus %>%
 ## (`stat_boxplot()`).
 ```
 
-![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-4-10.png)<!-- -->
+![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-5-10.png)<!-- -->
+
+``` r
+temp_2023 %>% 
+  ggplot(aes(x=Bed, y=SoilTemp)) +
+  geom_boxplot()
+```
+
+![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-5-11.png)<!-- -->
+
+``` r
+temp_2024 %>% 
+  ggplot(aes(x=Bed, y=SoilTemp)) +
+  geom_boxplot()
+```
+
+![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-5-12.png)<!-- -->
 
 ## Summaries
 
@@ -396,6 +499,89 @@ diam_summary <- wl2_anncensus %>%
   summarise(meanDiam=mean(diam.mm, na.rm=TRUE), semDiam=sem(diam.mm, na.rm=TRUE))
 ```
 
+
+``` r
+temp_2023_daily_summary <- temp_2023 %>%
+  mutate(Date=as.Date(Date_Time)) %>%
+  group_by(Bed, Date) %>% #summarize hourly data by date
+  summarize(
+    min_temp_d = min(SoilTemp),
+    max_temp_d = max(SoilTemp),
+    mean_temp_d = mean(SoilTemp),
+    diurnal_temp_d = max_temp_d - min_temp_d
+  )
+```
+
+```
+## `summarise()` has grouped output by 'Bed'. You can override using the `.groups`
+## argument.
+```
+
+``` r
+temp_2023_beds_summary <- temp_2023_daily_summary %>% 
+  group_by(Bed) %>% 
+  summarise(AvgMin=mean(min_temp_d), semMin=sem(min_temp_d),
+            AvgMax=mean(max_temp_d), semMax=sem(max_temp_d),
+            AvgTemp=mean(mean_temp_d), semMean=sem(mean_temp_d),
+            AvgDiurnal=mean(diurnal_temp_d), semDiurnal=sem(diurnal_temp_d))
+temp_2023_beds_summary
+```
+
+```
+## # A tibble: 5 × 9
+##   Bed   AvgMin semMin AvgMax semMax AvgTemp semMean AvgDiurnal semDiurnal
+##   <chr>  <dbl>  <dbl>  <dbl>  <dbl>   <dbl>   <dbl>      <dbl>      <dbl>
+## 1 A_1     9.12  0.374   30.8  1.25     17.7   0.694       21.6      1.03 
+## 2 A_2     9.53  0.308   32.8  0.958    18.4   0.437       23.3      0.891
+## 3 D_1     8.66  0.369   28.0  0.884    15.4   0.485       19.3      0.719
+## 4 D_2     9.01  0.348   26.5  0.740    14.9   0.441       17.4      0.579
+## 5 D_3     8.65  0.354   27.3  1.01     14.8   0.487       18.7      0.852
+```
+
+``` r
+temp_2024_daily_summary <- temp_2024 %>%
+  mutate(Date=as.Date(Date_Time)) %>%
+  group_by(Bed, Date) %>% #summarize hourly data by date
+  summarize(
+    min_temp_d = min(SoilTemp),
+    max_temp_d = max(SoilTemp),
+    mean_temp_d = mean(SoilTemp),
+    diurnal_temp_d = max_temp_d - min_temp_d
+  )
+```
+
+```
+## `summarise()` has grouped output by 'Bed'. You can override using the `.groups`
+## argument.
+```
+
+``` r
+temp_2024_beds_summary <- temp_2024_daily_summary %>% 
+  group_by(Bed) %>% 
+  summarise(AvgMin=mean(min_temp_d), semMin=sem(min_temp_d),
+            AvgMax=mean(max_temp_d), semMax=sem(max_temp_d),
+            AvgTemp=mean(mean_temp_d), semMean=sem(mean_temp_d),
+            AvgDiurnal=mean(diurnal_temp_d), semDiurnal=sem(diurnal_temp_d))
+temp_2024_beds_summary
+```
+
+```
+## # A tibble: 11 × 9
+##    Bed   AvgMin semMin AvgMax semMax AvgTemp semMean AvgDiurnal semDiurnal
+##    <chr>  <dbl>  <dbl>  <dbl>  <dbl>   <dbl>   <dbl>      <dbl>      <dbl>
+##  1 A       3.83  0.267   18.2  1.07     9.04   0.560       14.3      0.833
+##  2 B       3.74  0.289   17.1  1.15     8.73   0.609       13.3      0.890
+##  3 C       2.71  0.235   17.2  1.11     7.87   0.536       14.5      0.908
+##  4 D       3.51  0.243   16.0  0.984    7.76   0.483       12.5      0.775
+##  5 E       3.20  0.263   15.0  1.04     7.20   0.510       11.8      0.807
+##  6 F       3.02  0.252   14.2  0.899    7.00   0.468       11.2      0.672
+##  7 G       2.92  0.224   15.9  0.975    7.47   0.475       13.0      0.780
+##  8 H       3.38  0.240   14.7  0.932    7.21   0.463       11.3      0.717
+##  9 I       3.08  0.214   14.0  0.862    6.77   0.421       10.9      0.669
+## 10 J       3.03  0.239   13.9  0.897    6.49   0.431       10.9      0.681
+## 11 K       4.85  0.359   20.2  1.18     9.85   0.600       15.4      0.861
+```
+
 ## Bar Plots
 
 ``` r
@@ -408,7 +594,7 @@ wl2_est_summary %>%
   labs(x="Bed", y="Establishment")
 ```
 
-![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-6-1.png)<!-- -->
+![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-8-1.png)<!-- -->
 
 ``` r
 y1surv_summary %>% 
@@ -420,7 +606,7 @@ y1surv_summary %>%
   labs(x="Bed", y="Y1 Surv")
 ```
 
-![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-6-2.png)<!-- -->
+![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-8-2.png)<!-- -->
 
 ``` r
 wintersurv_summary %>% 
@@ -432,7 +618,7 @@ wintersurv_summary %>%
   labs(x="Bed", y="Winter Surv")
 ```
 
-![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-6-3.png)<!-- -->
+![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-8-3.png)<!-- -->
 
 ``` r
 repsurvy2_summary %>% 
@@ -444,7 +630,7 @@ repsurvy2_summary %>%
   labs(x="Bed", y="Surv to Bud Y2")
 ```
 
-![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-6-4.png)<!-- -->
+![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-8-4.png)<!-- -->
 
 ``` r
 fruitsy2_summary %>% 
@@ -456,7 +642,7 @@ fruitsy2_summary %>%
   labs(x="Bed", y="Fruits Y2")
 ```
 
-![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-6-5.png)<!-- -->
+![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-8-5.png)<!-- -->
 
 ``` r
 probfruit_summary %>% 
@@ -468,7 +654,7 @@ probfruit_summary %>%
   labs(x="Bed", y="Prob. Fruit")
 ```
 
-![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-6-6.png)<!-- -->
+![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-8-6.png)<!-- -->
 
 ``` r
 totfruit_summary %>% 
@@ -480,7 +666,7 @@ totfruit_summary %>%
   labs(x="Bed", y="Total Fruit")
 ```
 
-![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-6-7.png)<!-- -->
+![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-8-7.png)<!-- -->
 
 ``` r
 height_summary %>% 
@@ -492,7 +678,7 @@ height_summary %>%
   labs(x="Bed", y="Height (cm)", title = "Two Months Post-Transplant")
 ```
 
-![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-6-8.png)<!-- -->
+![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-8-8.png)<!-- -->
 
 ``` r
 herbiv_summary %>% 
@@ -504,7 +690,7 @@ herbiv_summary %>%
   labs(x="Bed", y="Prob of Herbivory", title = "Two Months Post-Transplant")
 ```
 
-![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-6-9.png)<!-- -->
+![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-8-9.png)<!-- -->
 
 ``` r
 diam_summary %>% 
@@ -516,7 +702,7 @@ diam_summary %>%
   labs(x="Bed", y="Stem Diameter (mm)")
 ```
 
-![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-6-10.png)<!-- -->
+![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-8-10.png)<!-- -->
 
 ## Spatial Plots Prep
 x = beds + cols
@@ -587,7 +773,7 @@ wl2_est %>%
 ## Joining with `by = join_by(bed, bed.col)`
 ```
 
-![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-8-1.png)<!-- -->
+![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-10-1.png)<!-- -->
 
 ``` r
 y1_surv %>% 
@@ -604,7 +790,7 @@ y1_surv %>%
 ## Joining with `by = join_by(bed, bed.col)`
 ```
 
-![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-8-2.png)<!-- -->
+![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-10-2.png)<!-- -->
 
 ``` r
 wintersurv %>% 
@@ -621,7 +807,7 @@ wintersurv %>%
 ## Joining with `by = join_by(bed, bed.col)`
 ```
 
-![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-8-3.png)<!-- -->
+![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-10-3.png)<!-- -->
 
 ``` r
 repsurvy2 %>% 
@@ -640,7 +826,7 @@ repsurvy2 %>%
 ## Joining with `by = join_by(bed, bed.col)`
 ```
 
-![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-8-4.png)<!-- -->
+![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-10-4.png)<!-- -->
 
 ``` r
 probfruit %>% 
@@ -659,7 +845,7 @@ probfruit %>%
 ## Joining with `by = join_by(bed, bed.col)`
 ```
 
-![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-8-5.png)<!-- -->
+![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-10-5.png)<!-- -->
 
 ``` r
  WL2_twomonths_size %>% 
@@ -678,7 +864,7 @@ probfruit %>%
 ## Joining with `by = join_by(bed, bed.col)`
 ```
 
-![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-8-6.png)<!-- -->
+![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-10-6.png)<!-- -->
 
 ### Continuous Traits (fruit number and size)
 
@@ -698,7 +884,7 @@ fruitsy2 %>%
 ## Joining with `by = join_by(bed, bed.col)`
 ```
 
-![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-9-1.png)<!-- -->
+![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-11-1.png)<!-- -->
 
 ``` r
 totfruit %>% 
@@ -715,7 +901,7 @@ totfruit %>%
 ## Joining with `by = join_by(bed, bed.col)`
 ```
 
-![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-9-2.png)<!-- -->
+![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-11-2.png)<!-- -->
 
 ``` r
 WL2_twomonths_size %>% 
@@ -732,7 +918,7 @@ WL2_twomonths_size %>%
 ## Joining with `by = join_by(bed, bed.col)`
 ```
 
-![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-9-3.png)<!-- -->
+![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-11-3.png)<!-- -->
 
 ``` r
 wl2_anncensus %>% 
@@ -749,5 +935,134 @@ wl2_anncensus %>%
 ## Joining with `by = join_by(bed, bed.col)`
 ```
 
-![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-9-4.png)<!-- -->
+![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-11-4.png)<!-- -->
+
+## Temperature Plots
+### 2023
+
+``` r
+temp_2023_beds_summary %>% 
+  ggplot(aes(x=fct_reorder(Bed, AvgMin), y=AvgMin)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) + 
+  geom_errorbar(aes(ymin=AvgMin-semMin,ymax=AvgMin+semMin),width=.2, position = 
+                  position_dodge(0.75)) +
+  theme_classic() +
+  labs(x="Bed")
+```
+
+![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-12-1.png)<!-- -->
+
+``` r
+temp_2023_beds_summary %>% 
+  ggplot(aes(x=fct_reorder(Bed, AvgMax), y=AvgMax)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) + 
+  geom_errorbar(aes(ymin=AvgMax-semMax,ymax=AvgMax+semMax),width=.2, position = 
+                  position_dodge(0.75)) +
+  theme_classic() +
+  labs(x="Bed")
+```
+
+![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-12-2.png)<!-- -->
+
+``` r
+temp_2023_beds_summary %>% 
+  ggplot(aes(x=fct_reorder(Bed, AvgTemp), y=AvgTemp)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) + 
+  geom_errorbar(aes(ymin=AvgTemp-semMean,ymax=AvgTemp+semMean),width=.2, position = 
+                  position_dodge(0.75)) +
+  theme_classic() +
+  labs(x="Bed")
+```
+
+![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-12-3.png)<!-- -->
+
+``` r
+temp_2023_beds_summary %>% 
+  ggplot(aes(x=fct_reorder(Bed, AvgDiurnal), y=AvgDiurnal)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) + 
+  geom_errorbar(aes(ymin=AvgDiurnal-semDiurnal,ymax=AvgDiurnal+semDiurnal),width=.2, position = 
+                  position_dodge(0.75)) +
+  theme_classic() +
+  labs(x="Bed", y="Avg Diurnal Range")
+```
+
+![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-12-4.png)<!-- -->
+
+``` r
+temp_2023_daily_summary %>% 
+  ggplot(aes(x=Date, y=mean_temp_d, group=Bed, colour=Bed)) +
+  geom_point() +
+  geom_line()
+```
+
+![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-12-5.png)<!-- -->
+
+### 2024
+
+``` r
+temp_2024_beds_summary %>% 
+  ggplot(aes(x=fct_reorder(Bed, AvgMin), y=AvgMin)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) + 
+  geom_errorbar(aes(ymin=AvgMin-semMin,ymax=AvgMin+semMin),width=.2, position = 
+                  position_dodge(0.75)) +
+  theme_classic() +
+  labs(x="Bed")
+```
+
+![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-13-1.png)<!-- -->
+
+``` r
+temp_2024_beds_summary %>% 
+  ggplot(aes(x=fct_reorder(Bed, AvgMax), y=AvgMax)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) + 
+  geom_errorbar(aes(ymin=AvgMax-semMax,ymax=AvgMax+semMax),width=.2, position = 
+                  position_dodge(0.75)) +
+  theme_classic() +
+  labs(x="Bed")
+```
+
+![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-13-2.png)<!-- -->
+
+``` r
+temp_2024_beds_summary %>% 
+  ggplot(aes(x=fct_reorder(Bed, AvgTemp), y=AvgTemp)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) + 
+  geom_errorbar(aes(ymin=AvgTemp-semMean,ymax=AvgTemp+semMean),width=.2, position = 
+                  position_dodge(0.75)) +
+  theme_classic() +
+  labs(x="Bed")
+```
+
+![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-13-3.png)<!-- -->
+
+``` r
+temp_2024_beds_summary %>% 
+  ggplot(aes(x=fct_reorder(Bed, AvgDiurnal), y=AvgDiurnal)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) + 
+  geom_errorbar(aes(ymin=AvgDiurnal-semDiurnal,ymax=AvgDiurnal+semDiurnal),width=.2, position = 
+                  position_dodge(0.75)) +
+  theme_classic() +
+  labs(x="Bed", y="Avg Diurnal Range")
+```
+
+![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-13-4.png)<!-- -->
+
+``` r
+temp_2024_daily_summary %>% 
+  ggplot(aes(x=Date, y=mean_temp_d, group=Bed, colour=Bed)) +
+  geom_point() +
+  geom_line() 
+```
+
+![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-13-5.png)<!-- -->
+
+``` r
+temp_2024_daily_summary %>% 
+  filter(Date>"2024-05-01") %>% 
+  ggplot(aes(x=Date, y=mean_temp_d, group=Bed, colour=Bed)) +
+  geom_point() +
+  geom_line() 
+```
+
+![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-13-6.png)<!-- -->
 

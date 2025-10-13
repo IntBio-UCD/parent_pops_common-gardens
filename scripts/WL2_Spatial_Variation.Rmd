@@ -19,8 +19,6 @@ Purpose: See if we could take advantage of the natural variation at WL2 for the 
 
 To Do:
 
--   Look at spatial variation in iButton data 
-
 -   Consider looking at stem diameter and canopy area in year 2
 
 -   For TDR data, compare top of beds avg across the season (See Rachel's github)
@@ -149,6 +147,14 @@ WL2_twomonths_size %>%
 wl2_anncensus %>% 
   ggplot(aes(x=bed, y=diam.mm)) +
   geom_boxplot()
+
+temp_2023 %>% 
+  ggplot(aes(x=Bed, y=SoilTemp)) +
+  geom_boxplot()
+
+temp_2024 %>% 
+  ggplot(aes(x=Bed, y=SoilTemp)) +
+  geom_boxplot()
 ```
 
 ## Summaries
@@ -193,6 +199,42 @@ herbiv_summary <- WL2_twomonths_size %>%
 diam_summary <- wl2_anncensus %>% 
   group_by(bed) %>% 
   summarise(meanDiam=mean(diam.mm, na.rm=TRUE), semDiam=sem(diam.mm, na.rm=TRUE))
+```
+
+```{r}
+temp_2023_daily_summary <- temp_2023 %>%
+  mutate(Date=as.Date(Date_Time)) %>%
+  group_by(Bed, Date) %>% #summarize hourly data by date
+  summarize(
+    min_temp_d = min(SoilTemp),
+    max_temp_d = max(SoilTemp),
+    mean_temp_d = mean(SoilTemp),
+    diurnal_temp_d = max_temp_d - min_temp_d
+  )
+temp_2023_beds_summary <- temp_2023_daily_summary %>% 
+  group_by(Bed) %>% 
+  summarise(AvgMin=mean(min_temp_d), semMin=sem(min_temp_d),
+            AvgMax=mean(max_temp_d), semMax=sem(max_temp_d),
+            AvgTemp=mean(mean_temp_d), semMean=sem(mean_temp_d),
+            AvgDiurnal=mean(diurnal_temp_d), semDiurnal=sem(diurnal_temp_d))
+temp_2023_beds_summary
+
+temp_2024_daily_summary <- temp_2024 %>%
+  mutate(Date=as.Date(Date_Time)) %>%
+  group_by(Bed, Date) %>% #summarize hourly data by date
+  summarize(
+    min_temp_d = min(SoilTemp),
+    max_temp_d = max(SoilTemp),
+    mean_temp_d = mean(SoilTemp),
+    diurnal_temp_d = max_temp_d - min_temp_d
+  )
+temp_2024_beds_summary <- temp_2024_daily_summary %>% 
+  group_by(Bed) %>% 
+  summarise(AvgMin=mean(min_temp_d), semMin=sem(min_temp_d),
+            AvgMax=mean(max_temp_d), semMax=sem(max_temp_d),
+            AvgTemp=mean(mean_temp_d), semMean=sem(mean_temp_d),
+            AvgDiurnal=mean(diurnal_temp_d), semDiurnal=sem(diurnal_temp_d))
+temp_2024_beds_summary
 ```
 
 ## Bar Plots
@@ -411,5 +453,84 @@ wl2_anncensus %>%
   scale_y_reverse() +
   scale_color_viridis() +
   theme_classic()
+```
+
+## Temperature Plots
+### 2023
+```{r}
+temp_2023_beds_summary %>% 
+  ggplot(aes(x=fct_reorder(Bed, AvgMin), y=AvgMin)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) + 
+  geom_errorbar(aes(ymin=AvgMin-semMin,ymax=AvgMin+semMin),width=.2, position = 
+                  position_dodge(0.75)) +
+  theme_classic() +
+  labs(x="Bed")
+temp_2023_beds_summary %>% 
+  ggplot(aes(x=fct_reorder(Bed, AvgMax), y=AvgMax)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) + 
+  geom_errorbar(aes(ymin=AvgMax-semMax,ymax=AvgMax+semMax),width=.2, position = 
+                  position_dodge(0.75)) +
+  theme_classic() +
+  labs(x="Bed")
+temp_2023_beds_summary %>% 
+  ggplot(aes(x=fct_reorder(Bed, AvgTemp), y=AvgTemp)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) + 
+  geom_errorbar(aes(ymin=AvgTemp-semMean,ymax=AvgTemp+semMean),width=.2, position = 
+                  position_dodge(0.75)) +
+  theme_classic() +
+  labs(x="Bed")
+temp_2023_beds_summary %>% 
+  ggplot(aes(x=fct_reorder(Bed, AvgDiurnal), y=AvgDiurnal)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) + 
+  geom_errorbar(aes(ymin=AvgDiurnal-semDiurnal,ymax=AvgDiurnal+semDiurnal),width=.2, position = 
+                  position_dodge(0.75)) +
+  theme_classic() +
+  labs(x="Bed", y="Avg Diurnal Range")
+temp_2023_daily_summary %>% 
+  ggplot(aes(x=Date, y=mean_temp_d, group=Bed, colour=Bed)) +
+  geom_point() +
+  geom_line()
+```
+
+### 2024
+```{r}
+temp_2024_beds_summary %>% 
+  ggplot(aes(x=fct_reorder(Bed, AvgMin), y=AvgMin)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) + 
+  geom_errorbar(aes(ymin=AvgMin-semMin,ymax=AvgMin+semMin),width=.2, position = 
+                  position_dodge(0.75)) +
+  theme_classic() +
+  labs(x="Bed")
+temp_2024_beds_summary %>% 
+  ggplot(aes(x=fct_reorder(Bed, AvgMax), y=AvgMax)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) + 
+  geom_errorbar(aes(ymin=AvgMax-semMax,ymax=AvgMax+semMax),width=.2, position = 
+                  position_dodge(0.75)) +
+  theme_classic() +
+  labs(x="Bed")
+temp_2024_beds_summary %>% 
+  ggplot(aes(x=fct_reorder(Bed, AvgTemp), y=AvgTemp)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) + 
+  geom_errorbar(aes(ymin=AvgTemp-semMean,ymax=AvgTemp+semMean),width=.2, position = 
+                  position_dodge(0.75)) +
+  theme_classic() +
+  labs(x="Bed")
+temp_2024_beds_summary %>% 
+  ggplot(aes(x=fct_reorder(Bed, AvgDiurnal), y=AvgDiurnal)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) + 
+  geom_errorbar(aes(ymin=AvgDiurnal-semDiurnal,ymax=AvgDiurnal+semDiurnal),width=.2, position = 
+                  position_dodge(0.75)) +
+  theme_classic() +
+  labs(x="Bed", y="Avg Diurnal Range")
+temp_2024_daily_summary %>% 
+  ggplot(aes(x=Date, y=mean_temp_d, group=Bed, colour=Bed)) +
+  geom_point() +
+  geom_line() 
+
+temp_2024_daily_summary %>% 
+  filter(Date>"2024-05-01") %>% 
+  ggplot(aes(x=Date, y=mean_temp_d, group=Bed, colour=Bed)) +
+  geom_point() +
+  geom_line() 
 ```
 
