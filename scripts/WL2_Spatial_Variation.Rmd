@@ -623,7 +623,7 @@ summary(diurnal_temp_2024_model)
 Example code for spatial autoregression models 
 https://paulbuerkner.com/brms/reference/car.html 
 
-```{r}
+```{r, eval=FALSE}
 # generate some spatial data
 east <- north <- 1:10
 Grid <- expand.grid(east, north)
@@ -688,14 +688,53 @@ summary(est_space_fit)
 dim(W)
 ```
 
-### Fitness ~ Bed|Temp
+### Fitness ~ Bed
 ```{r}
+#Establishment 
 est_mod_1 <- glm(Establishment ~ bed, data=wl2_est, family = "binomial")
 summary(est_mod_1)
 
 est_mod_2 <- glm(Establishment ~ bed + bed:bed.row, data=wl2_est, family = "binomial")
 summary(est_mod_2)
-#Interpretation: The coefficients for A:B will represent the differences in Y for each row within each bed, relative to the baseline level of bed
+#Interpretation: The coefficients for A:B will represent the differences in est for each row within each bed, relative to the baseline level of bed
 
-#min_temp_2023_model - could either use the full year averages for each bed (only two in 2023) or could use the first three weeks or just see if the model results match differences in temp/moisture?
+#Y1 Surv
+y1surv_mod <- glm(Y1Surv ~ bed + bed:bed.row, data=y1_surv, family = "binomial")
+summary(y1surv_mod)
+
+#WinterSurv
+wintersurv_mod <- glm(WinterSurv ~ bed/bed.row, data=wintersurv, family="binomial")
+summary(wintersurv_mod)
+
+#Surv to Bud Y2
+repsurvy2_mod <- glm(SurvtoRep_y2 ~ bed/row, data=repsurvy2, family = "binomial")
+summary(repsurvy2_mod)
+
+#Fruits Y2 
+fruitsy2_mod <- lm(fruits ~ bed/row, data=fruitsy2)
+summary(fruitsy2_mod)
+
+#Height
+height_mod <- lm(height.cm ~ bed/bed.row, data=WL2_twomonths_size)
+summary(height_mod)
+
+#Herbiv
+herbiv.bin <- WL2_twomonths_size %>% 
+  mutate(herbiv.bin = if_else(herbiv.y.n=="Y", 1, 0))
+herb_mod <- glm(herbiv.bin ~ bed/bed.row, data=herbiv.bin, family="binomial")
+summary(herb_mod)
+
+#Stem Diameter
+diam_mod <- lm(diam.mm ~ bed/bed.row, data=wl2_anncensus)
+summary(diam_mod)
 ```
+
+### Fitness ~ Temp + (1|bed)
+```{r}
+#establishment - use the avg temp for the first 3 weeks 
+names(wl2_est) #note that this is from 2023
+names(temp_2024_daily_summary) #this is from 2024
+
+
+```
+
