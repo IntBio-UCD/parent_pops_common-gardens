@@ -19,6 +19,8 @@ Purpose: See if we could take advantage of the natural variation at WL2 for the 
 
 To Do:
 
+-   Models with bed & temp/moisture as a fixed predictor of fitness 
+
 -   Consider looking at stem diameter and canopy area in year 2
 
 -   For TDR data, compare top of beds avg across the season (See Rachel's github)
@@ -30,6 +32,7 @@ To Do:
 ```{r}
 library(tidyverse)
 library(viridis)
+library(brms)
 
 sem <- function(x, na.rm=FALSE) {           #for calculating standard error
   sd(x,na.rm=na.rm)/sqrt(length(na.omit(x)))
@@ -245,7 +248,9 @@ wl2_est_summary %>%
   geom_errorbar(aes(ymin=meanSurv-semSurv,ymax=meanSurv+semSurv),width=.2, position = 
                   position_dodge(0.75)) +
   theme_classic() +
-  labs(x="Bed", y="Establishment")
+  labs(x="Bed", y="Establishment") +
+  theme(text=element_text(size=25)) 
+ggsave("../output/WL2_Traits/Beds_Est.png", width = 12, height = 8, units = "in")
 
 y1surv_summary %>% 
   ggplot(aes(x=fct_reorder(bed, meanSurv), y=meanSurv)) +
@@ -253,7 +258,9 @@ y1surv_summary %>%
   geom_errorbar(aes(ymin=meanSurv-semSurv,ymax=meanSurv+semSurv),width=.2, position = 
                   position_dodge(0.75)) +
   theme_classic() +
-  labs(x="Bed", y="Y1 Surv")
+  labs(x="Bed", y="Y1 Surv") +
+  theme(text=element_text(size=25)) 
+ggsave("../output/WL2_Traits/Beds_Y1Surv.png", width = 12, height = 8, units = "in")
 
 wintersurv_summary %>% 
   ggplot(aes(x=fct_reorder(bed, meanSurv), y=meanSurv)) +
@@ -261,7 +268,9 @@ wintersurv_summary %>%
   geom_errorbar(aes(ymin=meanSurv-semSurv,ymax=meanSurv+semSurv),width=.2, position = 
                   position_dodge(0.75)) +
   theme_classic() +
-  labs(x="Bed", y="Winter Surv")
+  labs(x="Bed", y="Winter Surv") +
+  theme(text=element_text(size=25)) 
+ggsave("../output/WL2_Traits/Beds_WinterSurv.png", width = 12, height = 8, units = "in")
 
 repsurvy2_summary %>% 
   ggplot(aes(x=fct_reorder(bed, meanSurv), y=meanSurv)) +
@@ -269,7 +278,9 @@ repsurvy2_summary %>%
   geom_errorbar(aes(ymin=meanSurv-semSurv,ymax=meanSurv+semSurv),width=.2, position = 
                   position_dodge(0.75)) +
   theme_classic() +
-  labs(x="Bed", y="Surv to Bud Y2")
+  labs(x="Bed", y="Surv to Bud Y2") +
+  theme(text=element_text(size=25)) 
+ggsave("../output/WL2_Traits/Beds_Y2RepSurv.png", width = 12, height = 8, units = "in")
 
 fruitsy2_summary %>% 
   ggplot(aes(x=fct_reorder(bed, meanSurv), y=meanSurv)) +
@@ -277,7 +288,9 @@ fruitsy2_summary %>%
   geom_errorbar(aes(ymin=meanSurv-semSurv,ymax=meanSurv+semSurv),width=.2, position = 
                   position_dodge(0.75)) +
   theme_classic() +
-  labs(x="Bed", y="Fruits Y2")
+  labs(x="Bed", y="Fruits Y2") +
+  theme(text=element_text(size=25)) 
+ggsave("../output/WL2_Traits/Beds_Y2Fruits.png", width = 12, height = 8, units = "in")
 
 probfruit_summary %>% 
   ggplot(aes(x=fct_reorder(bed, meanSurv), y=meanSurv)) +
@@ -285,7 +298,9 @@ probfruit_summary %>%
   geom_errorbar(aes(ymin=meanSurv-semSurv,ymax=meanSurv+semSurv),width=.2, position = 
                   position_dodge(0.75)) +
   theme_classic() +
-  labs(x="Bed", y="Prob. Fruit")
+  labs(x="Bed", y="Prob. Fruit") +
+  theme(text=element_text(size=25)) 
+ggsave("../output/WL2_Traits/Beds_ProbRep.png", width = 12, height = 8, units = "in")
 
 totfruit_summary %>% 
   ggplot(aes(x=fct_reorder(bed, meanSurv), y=meanSurv)) +
@@ -293,7 +308,9 @@ totfruit_summary %>%
   geom_errorbar(aes(ymin=meanSurv-semSurv,ymax=meanSurv+semSurv),width=.2, position = 
                   position_dodge(0.75)) +
   theme_classic() +
-  labs(x="Bed", y="Total Fruit")
+  labs(x="Bed", y="Total Fruit") +
+  theme(text=element_text(size=25)) 
+ggsave("../output/WL2_Traits/Beds_TotRep.png", width = 12, height = 8, units = "in")
 
 height_summary %>% 
   ggplot(aes(x=fct_reorder(bed, meanHeight), y=meanHeight)) +
@@ -301,7 +318,9 @@ height_summary %>%
   geom_errorbar(aes(ymin=meanHeight-semHeight,ymax=meanHeight+semHeight),width=.2, position = 
                   position_dodge(0.75)) +
   theme_classic() +
-  labs(x="Bed", y="Height (cm)", title = "Two Months Post-Transplant")
+  labs(x="Bed", y="Height (cm)", title = "Two Months Post-Transplant") +
+  theme(text=element_text(size=25)) 
+ggsave("../output/WL2_Traits/Beds_Height.png", width = 12, height = 8, units = "in")
 
 herbiv_summary %>% 
   ggplot(aes(x=fct_reorder(bed, meanHerb), y=meanHerb)) +
@@ -309,7 +328,9 @@ herbiv_summary %>%
   geom_errorbar(aes(ymin=meanHerb-semHerb,ymax=meanHerb+semHerb),width=.2, position = 
                   position_dodge(0.75)) +
   theme_classic() +
-  labs(x="Bed", y="Prob of Herbivory", title = "Two Months Post-Transplant")
+  labs(x="Bed", y="Prob of Herbivory", title = "Two Months Post-Transplant") +
+  theme(text=element_text(size=25)) 
+ggsave("../output/WL2_Traits/Beds_Herbiv.png", width = 12, height = 8, units = "in")
 
 diam_summary %>% 
   ggplot(aes(x=fct_reorder(bed, meanDiam), y=meanDiam)) +
@@ -317,7 +338,9 @@ diam_summary %>%
   geom_errorbar(aes(ymin=meanDiam-semDiam,ymax=meanDiam+semDiam),width=.2, position = 
                   position_dodge(0.75)) +
   theme_classic() +
-  labs(x="Bed", y="Stem Diameter (mm)")
+  labs(x="Bed", y="Stem Diameter (mm)") +
+  theme(text=element_text(size=25)) 
+ggsave("../output/WL2_Traits/Beds_Diam.png", width = 12, height = 8, units = "in")
 ```
 
 ## Spatial Plots Prep
@@ -361,7 +384,9 @@ wl2_est %>%
   geom_point(size=3) +
   scale_y_reverse() +
   scale_color_manual(values = c("gray", "darkgreen")) + 
-  theme_classic()
+  theme_classic() +
+  theme(text=element_text(size=25)) 
+ggsave("../output/WL2_Traits/SpatialVar_Est.png", width = 12, height = 8, units = "in")
 
 y1_surv %>% 
   left_join(bed_col_info) %>% 
@@ -370,7 +395,9 @@ y1_surv %>%
   geom_point(size=3) +
   scale_y_reverse() +
   scale_color_manual(values = c("gray", "darkgreen")) + 
-  theme_classic()
+  theme_classic() +
+  theme(text=element_text(size=25)) 
+ggsave("../output/WL2_Traits/SpatialVar_Y1Surv.png", width = 12, height = 8, units = "in")
 
 wintersurv %>% 
   left_join(bed_col_info) %>% 
@@ -379,7 +406,9 @@ wintersurv %>%
   geom_point(size=3) +
   scale_y_reverse() +
   scale_color_manual(values = c("gray", "darkgreen")) + 
-  theme_classic()
+  theme_classic() +
+  theme(text=element_text(size=25)) 
+ggsave("../output/WL2_Traits/SpatialVar_WinterSurv.png", width = 12, height = 8, units = "in")
 
 repsurvy2 %>% 
   rename(bed.row=row, bed.col=col) %>% 
@@ -463,33 +492,49 @@ temp_2023_beds_summary %>%
   geom_col(width = 0.7,position = position_dodge(0.75)) + 
   geom_errorbar(aes(ymin=AvgMin-semMin,ymax=AvgMin+semMin),width=.2, position = 
                   position_dodge(0.75)) +
-  theme_classic() +
-  labs(x="Bed")
+  theme_minimal() +
+  theme(text=element_text(size=25)) +
+  labs(x="Bed", y="Min Temp", title = "WL2 2023")
+ggsave("../output/Climate/MinTemp_2023.png", width = 12, height = 8, units = "in")
+
 temp_2023_beds_summary %>% 
   ggplot(aes(x=fct_reorder(Bed, AvgMax), y=AvgMax)) +
   geom_col(width = 0.7,position = position_dodge(0.75)) + 
   geom_errorbar(aes(ymin=AvgMax-semMax,ymax=AvgMax+semMax),width=.2, position = 
                   position_dodge(0.75)) +
-  theme_classic() +
-  labs(x="Bed")
+  theme_minimal() +
+  theme(text=element_text(size=25)) +
+  labs(x="Bed", y="Max Temp", title = "WL2 2023")
+ggsave("../output/Climate/MaxTemp_2023.png", width = 12, height = 8, units = "in")
+
 temp_2023_beds_summary %>% 
   ggplot(aes(x=fct_reorder(Bed, AvgTemp), y=AvgTemp)) +
   geom_col(width = 0.7,position = position_dodge(0.75)) + 
   geom_errorbar(aes(ymin=AvgTemp-semMean,ymax=AvgTemp+semMean),width=.2, position = 
                   position_dodge(0.75)) +
-  theme_classic() +
-  labs(x="Bed")
+  theme_minimal() +
+  theme(text=element_text(size=25)) +
+  labs(x="Bed", y="Mean Temp", title = "WL2 2023")
+ggsave("../output/Climate/MeanTemp_2023.png", width = 12, height = 8, units = "in")
+
 temp_2023_beds_summary %>% 
   ggplot(aes(x=fct_reorder(Bed, AvgDiurnal), y=AvgDiurnal)) +
   geom_col(width = 0.7,position = position_dodge(0.75)) + 
   geom_errorbar(aes(ymin=AvgDiurnal-semDiurnal,ymax=AvgDiurnal+semDiurnal),width=.2, position = 
                   position_dodge(0.75)) +
-  theme_classic() +
-  labs(x="Bed", y="Avg Diurnal Range")
+  theme_minimal() +
+  theme(text=element_text(size=25)) +
+  labs(x="Bed", y="Diurnal Range", title = "WL2 2023")
+ggsave("../output/Climate/DiurnalTemp_2023.png", width = 12, height = 8, units = "in")
+
 temp_2023_daily_summary %>% 
   ggplot(aes(x=Date, y=mean_temp_d, group=Bed, colour=Bed)) +
   geom_point() +
-  geom_line()
+  geom_line() +
+  theme_classic() +
+  theme(text=element_text(size=25)) +
+  labs(x="Date", y="Mean Temp", title = "WL2 2023")
+ggsave("../output/Climate/MeanTemp_Time_2023.png", width = 12, height = 8, units = "in")
 ```
 
 ### 2024
@@ -499,29 +544,41 @@ temp_2024_beds_summary %>%
   geom_col(width = 0.7,position = position_dodge(0.75)) + 
   geom_errorbar(aes(ymin=AvgMin-semMin,ymax=AvgMin+semMin),width=.2, position = 
                   position_dodge(0.75)) +
-  theme_classic() +
-  labs(x="Bed")
+  theme_minimal() +
+  theme(text=element_text(size=25)) +
+  labs(x="Bed", y="Min Temp", title = "WL2 2024")
+ggsave("../output/Climate/MinTemp_2024.png", width = 12, height = 8, units = "in")
+
 temp_2024_beds_summary %>% 
   ggplot(aes(x=fct_reorder(Bed, AvgMax), y=AvgMax)) +
   geom_col(width = 0.7,position = position_dodge(0.75)) + 
   geom_errorbar(aes(ymin=AvgMax-semMax,ymax=AvgMax+semMax),width=.2, position = 
                   position_dodge(0.75)) +
-  theme_classic() +
-  labs(x="Bed")
+  theme_minimal() +
+  theme(text=element_text(size=25)) +
+  labs(x="Bed", y="Max Temp", title = "WL2 2024")
+ggsave("../output/Climate/MaxTemp_2024.png", width = 12, height = 8, units = "in")
+
 temp_2024_beds_summary %>% 
   ggplot(aes(x=fct_reorder(Bed, AvgTemp), y=AvgTemp)) +
   geom_col(width = 0.7,position = position_dodge(0.75)) + 
   geom_errorbar(aes(ymin=AvgTemp-semMean,ymax=AvgTemp+semMean),width=.2, position = 
                   position_dodge(0.75)) +
-  theme_classic() +
-  labs(x="Bed")
+  theme_minimal() +
+  theme(text=element_text(size=25)) +
+  labs(x="Bed", y="Mean Temp", title = "WL2 2024")
+ggsave("../output/Climate/MeanTemp_2024.png", width = 12, height = 8, units = "in")
+
 temp_2024_beds_summary %>% 
   ggplot(aes(x=fct_reorder(Bed, AvgDiurnal), y=AvgDiurnal)) +
   geom_col(width = 0.7,position = position_dodge(0.75)) + 
   geom_errorbar(aes(ymin=AvgDiurnal-semDiurnal,ymax=AvgDiurnal+semDiurnal),width=.2, position = 
                   position_dodge(0.75)) +
-  theme_classic() +
-  labs(x="Bed", y="Avg Diurnal Range")
+  theme_minimal() +
+  theme(text=element_text(size=25)) +
+  labs(x="Bed", y="Diurnal Range", title = "WL2 2024")
+ggsave("../output/Climate/DiurnalTemp_2024.png", width = 12, height = 8, units = "in")
+
 temp_2024_daily_summary %>% 
   ggplot(aes(x=Date, y=mean_temp_d, group=Bed, colour=Bed)) +
   geom_point() +
@@ -531,6 +588,114 @@ temp_2024_daily_summary %>%
   filter(Date>"2024-05-01") %>% 
   ggplot(aes(x=Date, y=mean_temp_d, group=Bed, colour=Bed)) +
   geom_point() +
-  geom_line() 
+  geom_line() +
+  theme_classic() +
+  theme(text=element_text(size=25)) +
+  labs(x="Date", y="Mean Temp", title = "WL2 2024")
+ggsave("../output/Climate/MeanTemp_Time_2024.png", width = 12, height = 8, units = "in")
 ```
 
+## Models
+
+### Temp ~ Bed 
+```{r}
+min_temp_2023_model <- lm(min_temp_d ~ Bed*Date, data=temp_2023_daily_summary)
+summary(min_temp_2023_model)
+min_temp_2024_model <- lm(min_temp_d ~ Bed*Date, data=temp_2024_daily_summary)
+summary(min_temp_2024_model)
+
+max_temp_2023_model <- lm(max_temp_d ~ Bed*Date, data=temp_2023_daily_summary)
+summary(max_temp_2023_model)
+max_temp_2024_model <- lm(max_temp_d ~ Bed*Date, data=temp_2024_daily_summary)
+summary(max_temp_2024_model)
+
+mean_temp_2023_model <- lm(mean_temp_d ~ Bed*Date, data=temp_2023_daily_summary)
+summary(mean_temp_2023_model)
+mean_temp_2024_model <- lm(mean_temp_d ~ Bed*Date, data=temp_2024_daily_summary)
+summary(mean_temp_2024_model)
+
+diurnal_temp_2023_model <- lm(diurnal_temp_d ~ Bed*Date, data=temp_2023_daily_summary)
+summary(diurnal_temp_2023_model)
+diurnal_temp_2024_model <- lm(diurnal_temp_d ~ Bed*Date, data=temp_2024_daily_summary)
+summary(diurnal_temp_2024_model)
+```
+
+Example code for spatial autoregression models 
+https://paulbuerkner.com/brms/reference/car.html 
+
+```{r}
+# generate some spatial data
+east <- north <- 1:10
+Grid <- expand.grid(east, north)
+K <- nrow(Grid)
+
+# set up distance and neighbourhood matrices
+distance <- as.matrix(dist(Grid))
+W <- array(0, c(K, K))
+W[distance == 1] <- 1
+
+# generate the covariates and response data
+x1 <- rnorm(K)
+x2 <- rnorm(K)
+theta <- rnorm(K, sd = 0.05)
+phi <- rmulti_normal(
+  1, mu = rep(0, K), Sigma = 0.4 * exp(-0.1 * distance)
+)
+eta <- x1 + x2 + phi
+prob <- exp(eta) / (1 + exp(eta))
+size <- rep(50, K)
+y <- rbinom(n = K, size = size, prob = prob)
+dat <- data.frame(y, size, x1, x2)
+
+# fit a CAR model
+fit <- brm(y | trials(size) ~ x1 + x2 + car(W),
+           data = dat, data2 = list(W = W),
+           family = binomial())
+summary(fit)
+#Warning: Using CAR terms without a grouping factor is deprecated. Please use argument 'gr' even if each observation represents its own location.
+```
+
+### Fitness - Spatial auto-correlation
+```{r, eval=FALSE}
+wl2_est_space <- wl2_est %>% 
+  left_join(bed_col_info)
+
+# pull out the spatial data
+y_pos <- wl2_est_space %>% 
+  select(bed.row) %>% 
+  distinct() %>% 
+  pull(bed.row)
+x_pos <- wl2_est_space %>% 
+  select(x_pos) %>% 
+  distinct()%>% 
+  pull(x_pos)
+Grid <- expand.grid(x_pos, y_pos)
+K <- nrow(Grid)
+
+# set up distance and neighbourhood matrices
+distance <- as.matrix(dist(Grid))
+W <- array(0, c(K, K))
+W[distance == 1] <- 1
+
+
+# fit a CAR model
+est_space_fit <- brm(Establishment~ car(W),
+           data = wl2_est_space, data2 = list(W = W),
+           family = bernoulli())
+summary(est_space_fit)
+#Error: Dimensions of 'M' for CAR terms must be equal to the number of observations.
+##But M must also be symmetric... our data is not spatially symmetric...
+dim(W)
+```
+
+### Fitness ~ Bed|Temp
+```{r}
+est_mod_1 <- glm(Establishment ~ bed, data=wl2_est, family = "binomial")
+summary(est_mod_1)
+
+est_mod_2 <- glm(Establishment ~ bed + bed:bed.row, data=wl2_est, family = "binomial")
+summary(est_mod_2)
+#Interpretation: The coefficients for A:B will represent the differences in Y for each row within each bed, relative to the baseline level of bed
+
+#min_temp_2023_model - could either use the full year averages for each bed (only two in 2023) or could use the first three weeks or just see if the model results match differences in temp/moisture?
+```
