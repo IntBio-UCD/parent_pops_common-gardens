@@ -19,13 +19,7 @@ Purpose: See if we could take advantage of the natural variation at WL2 for the 
 
 To Do:
 
--   Models with bed & temp/moisture as a fixed predictor of fitness 
-
 -   Consider looking at stem diameter and canopy area in year 2
-
--   For TDR data, compare top of beds avg across the season (See Rachel's github)
-
--   Correlate TDR and iButton data to fitness/size data somehow 
 
 ## Load Libraries
 
@@ -33,6 +27,8 @@ To Do:
 library(tidyverse)
 library(viridis)
 library(brms)
+library(zoo) #rollmean function
+library(lmerTest)
 
 sem <- function(x, na.rm=FALSE) {           #for calculating standard error
   sd(x,na.rm=na.rm)/sqrt(length(na.omit(x)))
@@ -731,10 +727,21 @@ summary(diam_mod)
 
 ### Fitness ~ Temp + (1|bed)
 ```{r}
+#no models for est, y1 surv, y1 prob. herb, or y1 diam since no 2023 temp bed data (other than A and D)
 #establishment - use the avg temp for the first 3 weeks 
-names(wl2_est) #note that this is from 2023
-names(temp_2024_daily_summary) #this is from 2024
 
+#fruits y2 - use bed means
+fruitsy2_temp <- fruitsy2 %>% 
+  left_join(temp_2024_beds_summary, by=c("bed" = "Bed"))
 
+fruitsy2_mod2 <- lmer(fruits ~ AvgMin + (1|bed), data=fruitsy2_temp)
+summary(fruitsy2_mod2)
+fruitsy2_mod3 <- lmer(fruits ~ AvgMax + (1|bed), data=fruitsy2_temp)
+summary(fruitsy2_mod3)
+fruitsy2_mod4 <- lmer(fruits ~ AvgTemp + (1|bed), data=fruitsy2_temp)
+summary(fruitsy2_mod4)
+fruitsy2_mod5 <- lmer(fruits ~ AvgDiurnal + (1|bed), data=fruitsy2_temp)
+summary(fruitsy2_mod5)
+#no sig relats with temp 
 ```
 
