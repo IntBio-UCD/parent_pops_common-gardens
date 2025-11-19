@@ -616,7 +616,7 @@ diurnal_temp_2024_model <- lm(diurnal_temp_d ~ Bed*Date, data=temp_2024_daily_su
 summary(diurnal_temp_2024_model)
 ```
 
-Example code for spatial autoregression models 
+### Example code for spatial autoregression models 
 https://paulbuerkner.com/brms/reference/car.html 
 
 ```{r, eval=FALSE}
