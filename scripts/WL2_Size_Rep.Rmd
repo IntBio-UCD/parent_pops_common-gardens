@@ -1,0 +1,254 @@
+---
+title: "WL2_Size_Rep"
+author: "Brandie QC"
+date: "`r Sys.Date()`"
+output: 
+  html_document: 
+    keep_md: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Checking the relationships between size and reproduction for IntDemo Models
+
+## Libraries
+```{r}
+library(tidyverse)
+library(lmerTest)
+
+sem <- function(x, na.rm=FALSE) {           #for calculating standard error
+  sd(x,na.rm=na.rm)/sqrt(length(na.omit(x)))
+} 
+```
+
+## Load the pop and location data
+
+```{r}
+#pop info
+pops_common_garden <- read_csv("../input/WL2_Data/Pops_for_2023_WL2.csv") #pops included in common garden 
+pops_common_garden_nonotes <- pops_common_garden %>% select(parent.pop, elevation.group) #subset columns
+
+#extra location info 
+pop_loc <- read_csv("../input/Strep_tort_locs.csv")
+
+#need to change YOSE to YO
+pop_loc_yo <- pop_loc %>% mutate(parent.pop = str_replace(`Site code`, "YOSE(\\d+)", "YO\\1")) %>% select(Lat, Long, elev_m=`Elevation (m)`, parent.pop)
+
+#merge in location info
+pop_elev <- left_join(pops_common_garden_nonotes, pop_loc_yo)
+```
+
+## Pre-Transplant Size
+```{r}
+wl2_pretrans_size1 <- read_csv("../input/WL2_Data/CorrectedCSVs/WL2_DNA_Collection_Size_survey_combined20230703_corrected.csv")
+
+wl2_pretrans_size2 <- read_csv("../input/WL2_Data/CorrectedCSVs/WL2_Extras_DNA_collection_size_survey_combined20230706_corrected.csv") %>% 
+  filter(!is.na(`height (cm)`)) #to get rid of genotypes that were measured on the other data sheet (NAs on this sheet)
+
+wl2_pretrans_size_all <- bind_rows(wl2_pretrans_size1, wl2_pretrans_size2) %>%
+  rename(parent.pop=Pop, height.cm = `height (cm)`, long.leaf.cm=`longest leaf (cm)`) %>% 
+  unite(Genotype, parent.pop:rep, sep="_", remove = FALSE) %>% 
+  unite(pop.mf, parent.pop:mf, sep="_", remove = FALSE)
+head(wl2_pretrans_size_all)
+```
+
+### Merge in loc info
+```{r}
+wl2_pretrans_size_pops <- left_join(wl2_pretrans_size_all, pop_elev)
+names(wl2_pretrans_size_pops)
+```
+
+### Check for variation in pre-tranpslant size
+```{r}
+wl2_pretrans_size_pops %>% 
+  group_by(parent.pop, elev_m) %>% 
+  summarise(meanHeight=mean(height.cm, na.rm=TRUE), semHeight=sem(height.cm, na.rm = TRUE)) %>% 
+  ggplot(aes(x=fct_reorder(parent.pop, meanHeight), y=meanHeight, fill = elev_m)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) + 
+  geom_errorbar(aes(ymin=meanHeight-semHeight,ymax=meanHeight+semHeight),width=.2, position = 
+                  position_dodge(0.75)) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust =1)) +
+  labs(x = "Parent Population", y="Height (cm)", fill="Elev (m)", title="Pre-Transplant") +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0")
+```
+
+## Year 2 Pop Info
+```{r}
+wl2_y2_pops <- read_csv("../input/WL2_Data/Final_2023_2024_Pop_Loc_Info.csv") %>%
+  select(Pop.Type:unique.ID) %>% 
+  filter(Pop.Type=="2023-survivor") %>% 
+  select(Pop.Type, loc:bed, row=bedrow, col=bedcol, pop:unique.ID)
+
+wl2_blocks <- read_csv("../input/WL2_Data/CorrectedCSVs/WL2_mort_pheno_20231020_corrected.csv") %>% 
+  unite(BedLoc, bed:bed.col, sep="_", remove = FALSE) %>% 
+  filter(BedLoc!="K_5_C") %>% #get rid of duplicate locations
+  select(block, pop, mf, rep) %>% #add in block info 
+  mutate(mf=as.double(mf), rep=as.double(rep)) #convert to num
+
+#wl2_blocks %>% rowwise() %>%  #checking if mf and rep can be converted to numeric (all buffers)
+#  filter(!is.na(mf)) %>%  
+#  filter(is.na(as.numeric(mf)))
+
+wl2_y2_pops_blocks <- left_join(wl2_y2_pops, wl2_blocks)
+```
+
+## Reproductive Info
+```{r}
+wl2_20241023 <- read_csv("../input/WL2_Data/WL2_mort_pheno_20241023_corrected.csv") %>%  #this has plants planted in 2023 and 2024
+  select(-block) #this only has block info for 2024 plants 
+
+mort_pheno_y2_2023plants <- left_join(wl2_y2_pops_blocks, wl2_20241023) %>%  #add in block and pop info and remove 2024 plants 
+  rename(Genotype=unique.ID, parent.pop=pop) 
+
+probflw <- mort_pheno_y2_2023plants %>% 
+  mutate(ProbFlw=if_else(is.na(flower.date), 0, 1),
+         flower.date=mdy(flower.date)) %>% 
+  select(block, bed:col, Genotype, parent.pop:rep, flower.date, ProbFlw)
+
+fruitsy2 <- read_csv("../output/WL2_Traits/WL2_Fruits_Y2_2324.csv") %>% 
+  select(block, bed:col, Genotype, parent.pop=pop, mf:rep, fruits)
+```
+
+## Prob Flowering ~ Pre-transplant size
+```{r}
+probflw_presize <- left_join(probflw, wl2_pretrans_size_pops) 
+probflw_presize %>% filter(is.na(height.cm)) #check for any merge issues 
+wl2_pretrans_size_pops %>% filter(Genotype=="IH_4_14") #no pre-transplant size for one of the plants
+
+probflw_presize %>% 
+  ggplot(aes(x=height.cm, y=ProbFlw)) +
+  geom_point()
+
+probflw_presize_summary <- probflw_presize %>% 
+  group_by(parent.pop) %>% 
+  summarise(meanProbFlw=mean(ProbFlw, na.rm=TRUE), meanHeight=mean(height.cm))
+probflw_presize_summary %>% 
+  ggplot(aes(x=meanHeight, y=meanProbFlw)) +
+  geom_point()
+#no clear patterns from these plots
+
+##model
+probflw_presize_formodel <- probflw_presize %>% drop_na(height.cm)
+probflw_mod1 <- glmer(ProbFlw ~ height.cm + (1|parent.pop/mf), data = probflw_presize_formodel, family = binomial())
+summary(probflw_mod1)
+#pop and mf explain 0 var 
+#height -0.5307**
+```
+
+## Fruit ~ Pre-transplant size
+```{r}
+fruitsy2_presize <- left_join(fruitsy2, wl2_pretrans_size_pops)
+fruitsy2_presize %>% filter(is.na(height.cm)) #check for any merge issues - none
+
+fruitsy2_presize %>% 
+  ggplot(aes(x=height.cm, y=fruits)) +
+  geom_point()
+#no clear pattern
+
+##model
+fruitsy2_presize_mod <- lmer(fruits ~ height.cm + (1|parent.pop/mf), data = fruitsy2_presize)
+summary(fruitsy2_presize_mod)
+#mf explains 0 var
+#height 7.614*
+```
+
+## 2024 Field Size
+```{r}
+size_2024 <- dir("../../crosses_common-gardens/input/WL2_2024_Data/CorrectedCSVs/",
+             pattern="WL2_size_survey.*corrected.*csv",
+             full.names=TRUE)
+
+size_2024_dat_wl2 <- tibble(path=size_2024, filename=basename(path)) %>% 
+  filter(filename != "WL2_size_survey_20240618_corrected.csv", 
+         filename != "WL2_size_survey_20240625_corrected.csv",
+         filename != "WL2_size_survey_20240703_corrected.csv") %>%  #remove files with incorrect unique_ids for 2023 plants
+  mutate(survey_date=str_extract(filename, "20[0-9]*"),
+         survey_date=if_else(survey_date=="20240703", "20240702", survey_date), #fix date mismatch 
+         survey_date=lubridate::ymd(survey_date))
+size_2024_dat_wl2
+
+size_2024_dat_wl22 <- size_2024_dat_wl2 %>%
+  mutate(sheets=map(path, 
+                    read_csv,
+                    na = c("", "NA", "-", "N/A") # sets NA strings. 
+                    )) %>%
+  select(-path)
+
+#check for data issues
+#map(size_2024_dat_wl22$sheets, colnames) %>% #get unique column names 
+#  unlist() %>%
+#  unique() %>%
+#  sort()
+#map(size_2024_dat_wl22$sheets, head,10) #look at first 10 lines of each sheet 
+#no issues 
+
+all_2024_size <- size_2024_dat_wl22 %>% 
+  unnest(sheets) %>% 
+  select(bed:col, unique.ID, survey_date, height.cm)
+names(all_2024_size)
+
+all_2024_size_2023plants <- left_join(all_2024_size, wl2_y2_pops_blocks) %>% 
+  filter(Pop.Type=="2023-survivor") %>% 
+  rename(Genotype=unique.ID) %>% 
+  rename(parent.pop=pop)
+```
+
+## Prob Flowering ~ Size at Initiation of Rep (Common Garden-Level)
+```{r}
+summary(probflw) #first flower date is 6/18/2024
+june18_size <- all_2024_size_2023plants %>% 
+  filter(survey_date=="2024-06-18")
+
+probflw_june18size <- left_join(probflw, june18_size) %>% 
+  drop_na(height.cm)
+
+probflw_june18size %>% 
+  ggplot(aes(x=height.cm, y=ProbFlw)) +
+  geom_point() #mostly small plants with low prob of flowering
+
+probflw_june18size_summary <- probflw_june18size %>% 
+  group_by(parent.pop) %>% 
+  summarise(meanProbFlw=mean(ProbFlw, na.rm=TRUE), meanHeight=mean(height.cm))
+probflw_june18size_summary %>% 
+  ggplot(aes(x=meanHeight, y=meanProbFlw)) +
+  geom_point() #pops with bigger indivs had low prob of flowering?
+
+##model
+probflw_mod2 <- glmer(ProbFlw ~ height.cm + (1|parent.pop/mf), data = probflw_june18size, family = binomial())
+summary(probflw_mod2) 
+#mf explains very little var
+#height 0.20192***
+```
+
+## Fruit ~ Size @ Budding (Individual Plant-level)
+```{r}
+sizeatrep <- all_2024_size_2023plants %>% 
+  left_join(probflw) %>% 
+  filter(!is.na(flower.date)) %>% 
+  filter(survey_date==flower.date) %>% 
+  select(block, bed:Genotype, parent.pop:rep, survey_date, flower.date, height.cm)
+summary(sizeatrep)
+
+fruitsy2_repsize <- left_join(fruitsy2, sizeatrep)
+fruitsy2_repsize %>% filter(is.na(survey_date)) #check for any merge issues - 21 plants with no match in size at rep...
+probflw %>% filter(Genotype=="CC_9_6") #no flower date or bud date
+probflw %>% filter(Genotype=="TM2_6_4") #no flower date, does have a bud date 
+probflw %>% filter(Genotype=="YO7_3_8") #no flower date, does have a bud date 
+mort_pheno_y2_2023plants %>% filter(Genotype=="YO7_3_8") 
+#for now leave these out 
+
+fruitsy2_repsize %>% 
+  ggplot(aes(x=height.cm, y=fruits)) +
+  geom_point()
+#maybe a pos relat?
+
+##model
+fruitsy2_repsize_formod <- fruitsy2_repsize %>% drop_na(height.cm)
+fruitsy2_repsize_mod <- lmer(fruits ~ height.cm + (1|parent.pop/mf), data = fruitsy2_repsize_formod)
+summary(fruitsy2_repsize_mod)
+#mf explains 0 var
+#height 0.5239**
+```
