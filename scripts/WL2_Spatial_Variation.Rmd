@@ -17,9 +17,10 @@ Purpose: See if we could take advantage of the natural variation at WL2 for the 
 
 -   Note: There are some packages in R for autocorrelation
 
-To Do:
 
--   Consider looking at stem diameter and canopy area in year 2
+-   One option would be to put out more ibuttons to get a more fine-scale estimate of temperature variation that we could relate to our fitness metrics
+
+    -   Do we want to plant in bed A to capture more mortality and variation? - Depends on how much variation temperature explains in our data
 
 ## Load Libraries
 
@@ -29,6 +30,7 @@ library(viridis)
 library(brms)
 library(zoo) #rollmean function
 library(lmerTest)
+library(MuMIn) #for calculated R^2 of mixed effects models 
 
 sem <- function(x, na.rm=FALSE) {           #for calculating standard error
   sd(x,na.rm=na.rm)/sqrt(length(na.omit(x)))
@@ -63,6 +65,7 @@ totfruit <- read_csv("../output/WL2_Traits/WL2_TotalRepOutput.csv") %>%
 ```
 
 ## Load Size (Height and herbivory 2 months post transplant; stem diameter end of first year)
+
 ```{r}
 WL2_twomonths_size <- read_csv("../input/WL2_Data/CorrectedCSVs/WL2_size_survey_20230913_corrected.csv", 
                                na = c("", "NA", "-", "N/A")) %>% 
@@ -105,6 +108,7 @@ unique(temp_2024$Bed) #have data for all beds
 ```
 
 ## Box Plots
+
 ```{r}
 wl2_est %>% 
   ggplot(aes(x=bed, y=Establishment)) +
@@ -157,6 +161,7 @@ temp_2024 %>%
 ```
 
 ## Summaries
+
 ```{r}
 wl2_est_summary <- wl2_est %>% 
   group_by(bed) %>% 
@@ -237,6 +242,7 @@ temp_2024_beds_summary
 ```
 
 ## Bar Plots
+
 ```{r}
 wl2_est_summary %>% 
   ggplot(aes(x=fct_reorder(bed, meanSurv), y=meanSurv)) +
@@ -340,8 +346,9 @@ ggsave("../output/WL2_Traits/Beds_Diam.png", width = 12, height = 8, units = "in
 ```
 
 ## Spatial Plots Prep
-x = beds + cols
-y = row 
+
+x = beds + cols y = row
+
 ```{r}
 bed_col_info <- wl2_est %>% 
   select(bed, bed.col) %>% 
@@ -372,6 +379,7 @@ bed_rect <- data.frame( #data frame for bed rectangles
 ```
 
 ## Spatial Plots
+
 ```{r}
 wl2_est %>% 
   left_join(bed_col_info) %>% 
@@ -441,6 +449,7 @@ probfruit %>%
 ```
 
 ### Continuous Traits (fruit number and size)
+
 ```{r}
 fruitsy2 %>% 
   rename(bed.row=row, bed.col=col) %>% 
@@ -481,7 +490,9 @@ wl2_anncensus %>%
 ```
 
 ## Temperature Plots
+
 ### 2023
+
 ```{r}
 temp_2023_beds_summary %>% 
   ggplot(aes(x=fct_reorder(Bed, AvgMin), y=AvgMin)) +
@@ -534,6 +545,7 @@ ggsave("../output/Climate/MeanTemp_Time_2023.png", width = 12, height = 8, units
 ```
 
 ### 2024
+
 ```{r}
 temp_2024_beds_summary %>% 
   ggplot(aes(x=fct_reorder(Bed, AvgMin), y=AvgMin)) +
@@ -591,9 +603,99 @@ temp_2024_daily_summary %>%
 ggsave("../output/Climate/MeanTemp_Time_2024.png", width = 12, height = 8, units = "in")
 ```
 
+## Winter Temps
+
+-   Check overwinter temps
+
+    -   Good control/sanity check - they should be the same while under the snow
+    
+```{r}
+summary(temp_2024_daily_summary)
+
+temp_2024_daily_summary %>% 
+  filter(Date >= "2023-12-01") %>% 
+  filter(Date < "2024-05-12") %>% 
+  ggplot(aes(x=Date, y=mean_temp_d, group=Bed, colour=Bed)) +
+  geom_point() +
+  geom_line() +
+  theme_classic() +
+  theme(text=element_text(size=25)) +
+  labs(x="Date", y="Mean Temp", title = "WL2 2024")
+ggsave("../output/Climate/MeanTemp_Time_Wint2024.png", width = 12, height = 8, units = "in")
+
+temp_2024_daily_summary %>% 
+  filter(Date >= "2023-12-01") %>% 
+  filter(Date < "2024-05-12") %>% 
+  ggplot(aes(x=Date, y=min_temp_d, group=Bed, colour=Bed)) +
+  geom_point() +
+  geom_line() +
+  theme_classic() +
+  theme(text=element_text(size=25)) +
+  labs(x="Date", y="Min Temp", title = "WL2 2024")
+
+temp_2024_daily_summary %>% 
+  filter(Date >= "2023-12-01") %>% 
+  filter(Date < "2024-05-12") %>% 
+  ggplot(aes(x=Date, y=max_temp_d, group=Bed, colour=Bed)) +
+  geom_point() +
+  geom_line() +
+  theme_classic() +
+  theme(text=element_text(size=25)) +
+  labs(x="Date", y="Max Temp", title = "WL2 2024")
+
+winter_temps <- temp_2024_daily_summary %>% 
+  filter(Date >= "2023-12-01", Date < "2024-05-12") %>% 
+  group_by(Bed) %>% 
+  summarise(AvgMin=mean(min_temp_d), semMin=sem(min_temp_d),
+            AvgMax=mean(max_temp_d), semMax=sem(max_temp_d),
+            AvgTemp=mean(mean_temp_d), semMean=sem(mean_temp_d),
+            AvgDiurnal=mean(diurnal_temp_d), semDiurnal=sem(diurnal_temp_d))
+
+winter_temps %>% 
+  ggplot(aes(x=fct_reorder(Bed, AvgMin), y=AvgMin)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) + 
+  geom_errorbar(aes(ymin=AvgMin-semMin,ymax=AvgMin+semMin),width=.2, position = 
+                  position_dodge(0.75)) +
+  theme_minimal() +
+  theme(text=element_text(size=25)) +
+  labs(x="Bed", y="Min Temp", title = "Winter 2023-2024")
+ggsave("../output/Climate/MinTemp_Wint2024.png", width = 12, height = 8, units = "in")
+
+winter_temps %>% 
+  ggplot(aes(x=fct_reorder(Bed, AvgMax), y=AvgMax)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) + 
+  geom_errorbar(aes(ymin=AvgMax-semMax,ymax=AvgMax+semMax),width=.2, position = 
+                  position_dodge(0.75)) +
+  theme_minimal() +
+  theme(text=element_text(size=25)) +
+  labs(x="Bed", y="Max Temp", title = "Winter 2023-2024")
+ggsave("../output/Climate/MaxTemp_Wint2024.png", width = 12, height = 8, units = "in")
+
+winter_temps %>% 
+  ggplot(aes(x=fct_reorder(Bed, AvgTemp), y=AvgTemp)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) + 
+  geom_errorbar(aes(ymin=AvgTemp-semMean,ymax=AvgTemp+semMean),width=.2, position = 
+                  position_dodge(0.75)) +
+  theme_minimal() +
+  theme(text=element_text(size=25)) +
+  labs(x="Bed", y="Mean Temp", title = "Winter 2023-2024")
+ggsave("../output/Climate/MeanTemp_Wint2024.png", width = 12, height = 8, units = "in")
+
+winter_temps %>% 
+  ggplot(aes(x=fct_reorder(Bed, AvgDiurnal), y=AvgDiurnal)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) + 
+  geom_errorbar(aes(ymin=AvgDiurnal-semDiurnal,ymax=AvgDiurnal+semDiurnal),width=.2, position = 
+                  position_dodge(0.75)) +
+  theme_minimal() +
+  theme(text=element_text(size=25)) +
+  labs(x="Bed", y="Diurnal Range", title = "Winter 2023-2024")
+ggsave("../output/Climate/DiurnalTemp_Wint2024.png", width = 12, height = 8, units = "in")
+```
+
 ## Models
 
-### Temp ~ Bed 
+### Temp \~ Bed
+
 ```{r}
 min_temp_2023_model <- lm(min_temp_d ~ Bed*Date, data=temp_2023_daily_summary)
 summary(min_temp_2023_model)
@@ -616,8 +718,9 @@ diurnal_temp_2024_model <- lm(diurnal_temp_d ~ Bed*Date, data=temp_2024_daily_su
 summary(diurnal_temp_2024_model)
 ```
 
-### Example code for spatial autoregression models 
-https://paulbuerkner.com/brms/reference/car.html 
+### Example code for spatial autoregression models
+
+<https://paulbuerkner.com/brms/reference/car.html>
 
 ```{r, eval=FALSE}
 # generate some spatial data
@@ -652,6 +755,7 @@ summary(fit)
 ```
 
 ### Fitness - Spatial auto-correlation
+
 ```{r, eval=FALSE}
 wl2_est_space <- wl2_est %>% 
   left_join(bed_col_info)
@@ -684,7 +788,8 @@ summary(est_space_fit)
 dim(W)
 ```
 
-### Fitness ~ Bed
+### Fitness \~ Bed
+
 ```{r}
 #Establishment 
 est_mod_1 <- glm(Establishment ~ bed, data=wl2_est, family = "binomial")
@@ -725,11 +830,58 @@ diam_mod <- lm(diam.mm ~ bed/bed.row, data=wl2_anncensus)
 summary(diam_mod)
 ```
 
-### Fitness ~ Temp + (1|bed)
-```{r}
-#no models for est, y1 surv, y1 prob. herb, or y1 diam since no 2023 temp bed data (other than A and D)
-#establishment - use the avg temp for the first 3 weeks 
+### Fitness \~ Temp + (1\|bed)
 
+-   Try models with 2024 temperature/TDR data and 2023 establishment
+
+    -   2024 data does at least proxy bed differences
+
+    -   How much variation does temperature explain?
+    
+```{r}
+#establishment - use the avg temp for the first 3 weeks (use Month/Day from 2023, but use 2024 data)
+#Finished planting 7/19, 3 weeks later = 8/9
+est_temps <- temp_2024_daily_summary %>% 
+  filter(Date > "2024-07-19", Date <= "2024-08-09") %>% 
+  group_by(Bed) %>% 
+  summarise(AvgMin=mean(min_temp_d), semMin=sem(min_temp_d),
+            AvgMax=mean(max_temp_d), semMax=sem(max_temp_d),
+            AvgTemp=mean(mean_temp_d), semMean=sem(mean_temp_d),
+            AvgDiurnal=mean(diurnal_temp_d), semDiurnal=sem(diurnal_temp_d))
+
+wl2_est_temp <- wl2_est %>% 
+  left_join(est_temps, by=c("bed" = "Bed"))
+
+est_mod3 <- glmer(Establishment ~ AvgMin + (1|bed), data=wl2_est_temp, family = "binomial")
+summary(est_mod3)
+
+est_mod4 <- glmer(Establishment ~ AvgMax + (1|bed), data=wl2_est_temp, family = "binomial")
+summary(est_mod4)
+r.squaredGLMM(est_mod4)
+
+est_mod5 <- glmer(Establishment ~ AvgTemp + (1|bed), data=wl2_est_temp, family = "binomial")
+summary(est_mod5)
+anova(est_mod5)
+r.squaredGLMM(est_mod5) #calculate r^2
+#Marginal R² quantifies the variance explained by the fixed effects alone, whereas conditional R² accounts for the variance explained by both the fixed and random effects together
+est_mod5b <- glm(Establishment ~ AvgTemp, data=wl2_est_temp, family = "binomial") #remove random effect 
+anova(est_mod5, est_mod5b) #model with random effeccts is the best 
+
+est_mod6 <- glmer(Establishment ~ AvgDiurnal + (1|bed), data=wl2_est_temp, family = "binomial")
+summary(est_mod6)
+
+wl2_est_temp %>% 
+  ggplot(aes(x=AvgMax, y=Establishment)) +
+  geom_point()
+
+wl2_est_temp %>% 
+  ggplot(aes(x=AvgTemp, y=Establishment)) +
+  geom_point()
+```
+
+-   2024 Fruits with 2024 Temps
+
+```{r}
 #fruits y2 - use bed means
 fruitsy2_temp <- fruitsy2 %>% 
   left_join(temp_2024_beds_summary, by=c("bed" = "Bed"))
@@ -744,4 +896,3 @@ fruitsy2_mod5 <- lmer(fruits ~ AvgDiurnal + (1|bed), data=fruitsy2_temp)
 summary(fruitsy2_mod5)
 #no sig relats with temp 
 ```
-

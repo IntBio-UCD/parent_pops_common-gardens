@@ -1,7 +1,7 @@
 ---
 title: "WL2_Spatial_Variation"
 author: "Brandie QC"
-date: "2025-11-18"
+date: "2025-11-25"
 output: 
   html_document: 
     keep_md: true
@@ -15,9 +15,10 @@ Purpose: See if we could take advantage of the natural variation at WL2 for the 
 
 -   Note: There are some packages in R for autocorrelation
 
-To Do:
 
--   Consider looking at stem diameter and canopy area in year 2
+-   One option would be to put out more ibuttons to get a more fine-scale estimate of temperature variation that we could relate to our fitness metrics
+
+    -   Do we want to plant in bed A to capture more mortality and variation? - Depends on how much variation temperature explains in our data
 
 ## Load Libraries
 
@@ -108,6 +109,19 @@ library(lmerTest)
 ## The following object is masked from 'package:stats':
 ## 
 ##     step
+```
+
+``` r
+library(MuMIn) #for calculated R^2 of mixed effects models 
+```
+
+```
+## 
+## Attaching package: 'MuMIn'
+## 
+## The following object is masked from 'package:brms':
+## 
+##     loo
 ```
 
 ``` r
@@ -236,6 +250,7 @@ totfruit <- read_csv("../output/WL2_Traits/WL2_TotalRepOutput.csv") %>%
 ```
 
 ## Load Size (Height and herbivory 2 months post transplant; stem diameter end of first year)
+
 
 ``` r
 WL2_twomonths_size <- read_csv("../input/WL2_Data/CorrectedCSVs/WL2_size_survey_20230913_corrected.csv", 
@@ -401,6 +416,7 @@ unique(temp_2024$Bed) #have data for all beds
 
 ## Box Plots
 
+
 ``` r
 wl2_est %>% 
   ggplot(aes(x=bed, y=Establishment)) +
@@ -514,6 +530,7 @@ temp_2024 %>%
 ![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-5-12.png)<!-- -->
 
 ## Summaries
+
 
 ``` r
 wl2_est_summary <- wl2_est %>% 
@@ -642,6 +659,7 @@ temp_2024_beds_summary
 ```
 
 ## Bar Plots
+
 
 ``` r
 wl2_est_summary %>% 
@@ -796,8 +814,9 @@ ggsave("../output/WL2_Traits/Beds_Diam.png", width = 12, height = 8, units = "in
 ```
 
 ## Spatial Plots Prep
-x = beds + cols
-y = row 
+
+x = beds + cols y = row
+
 
 ``` r
 bed_col_info <- wl2_est %>% 
@@ -848,6 +867,7 @@ bed_rect <- data.frame( #data frame for bed rectangles
 ```
 
 ## Spatial Plots
+
 
 ``` r
 wl2_est %>% 
@@ -968,6 +988,7 @@ probfruit %>%
 
 ### Continuous Traits (fruit number and size)
 
+
 ``` r
 fruitsy2 %>% 
   rename(bed.row=row, bed.col=col) %>% 
@@ -1038,7 +1059,9 @@ wl2_anncensus %>%
 ![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-11-4.png)<!-- -->
 
 ## Temperature Plots
+
 ### 2023
+
 
 ``` r
 temp_2023_beds_summary %>% 
@@ -1117,6 +1140,7 @@ ggsave("../output/Climate/MeanTemp_Time_2023.png", width = 12, height = 8, units
 ```
 
 ### 2024
+
 
 ``` r
 temp_2024_beds_summary %>% 
@@ -1204,9 +1228,152 @@ temp_2024_daily_summary %>%
 ggsave("../output/Climate/MeanTemp_Time_2024.png", width = 12, height = 8, units = "in")
 ```
 
+## Winter Temps
+
+-   Check overwinter temps
+
+    -   Good control/sanity check - they should be the same while under the snow
+    
+
+``` r
+summary(temp_2024_daily_summary)
+```
+
+```
+##      Bed                 Date              min_temp_d       max_temp_d   
+##  Length:3778        Min.   :2023-10-27   Min.   :-5.000   Min.   :-0.50  
+##  Class :character   1st Qu.:2024-01-22   1st Qu.: 0.000   1st Qu.: 0.00  
+##  Mode  :character   Median :2024-04-25   Median : 0.500   Median : 4.50  
+##                     Mean   :2024-04-24   Mean   : 3.318   Mean   :15.84  
+##                     3rd Qu.:2024-07-26   3rd Qu.: 7.000   3rd Qu.:32.00  
+##                     Max.   :2024-10-25   Max.   :17.500   Max.   :63.00  
+##   mean_temp_d     diurnal_temp_d 
+##  Min.   :-2.750   Min.   : 0.00  
+##  1st Qu.: 0.000   1st Qu.: 0.00  
+##  Median : 1.344   Median : 4.50  
+##  Mean   : 7.663   Mean   :12.52  
+##  3rd Qu.:15.969   3rd Qu.:24.50  
+##  Max.   :34.812   Max.   :53.50
+```
+
+``` r
+temp_2024_daily_summary %>% 
+  filter(Date >= "2023-12-01") %>% 
+  filter(Date < "2024-05-12") %>% 
+  ggplot(aes(x=Date, y=mean_temp_d, group=Bed, colour=Bed)) +
+  geom_point() +
+  geom_line() +
+  theme_classic() +
+  theme(text=element_text(size=25)) +
+  labs(x="Date", y="Mean Temp", title = "WL2 2024")
+```
+
+![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-14-1.png)<!-- -->
+
+``` r
+ggsave("../output/Climate/MeanTemp_Time_Wint2024.png", width = 12, height = 8, units = "in")
+
+temp_2024_daily_summary %>% 
+  filter(Date >= "2023-12-01") %>% 
+  filter(Date < "2024-05-12") %>% 
+  ggplot(aes(x=Date, y=min_temp_d, group=Bed, colour=Bed)) +
+  geom_point() +
+  geom_line() +
+  theme_classic() +
+  theme(text=element_text(size=25)) +
+  labs(x="Date", y="Min Temp", title = "WL2 2024")
+```
+
+![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-14-2.png)<!-- -->
+
+``` r
+temp_2024_daily_summary %>% 
+  filter(Date >= "2023-12-01") %>% 
+  filter(Date < "2024-05-12") %>% 
+  ggplot(aes(x=Date, y=max_temp_d, group=Bed, colour=Bed)) +
+  geom_point() +
+  geom_line() +
+  theme_classic() +
+  theme(text=element_text(size=25)) +
+  labs(x="Date", y="Max Temp", title = "WL2 2024")
+```
+
+![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-14-3.png)<!-- -->
+
+``` r
+winter_temps <- temp_2024_daily_summary %>% 
+  filter(Date >= "2023-12-01", Date < "2024-05-12") %>% 
+  group_by(Bed) %>% 
+  summarise(AvgMin=mean(min_temp_d), semMin=sem(min_temp_d),
+            AvgMax=mean(max_temp_d), semMax=sem(max_temp_d),
+            AvgTemp=mean(mean_temp_d), semMean=sem(mean_temp_d),
+            AvgDiurnal=mean(diurnal_temp_d), semDiurnal=sem(diurnal_temp_d))
+
+winter_temps %>% 
+  ggplot(aes(x=fct_reorder(Bed, AvgMin), y=AvgMin)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) + 
+  geom_errorbar(aes(ymin=AvgMin-semMin,ymax=AvgMin+semMin),width=.2, position = 
+                  position_dodge(0.75)) +
+  theme_minimal() +
+  theme(text=element_text(size=25)) +
+  labs(x="Bed", y="Min Temp", title = "Winter 2023-2024")
+```
+
+![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-14-4.png)<!-- -->
+
+``` r
+ggsave("../output/Climate/MinTemp_Wint2024.png", width = 12, height = 8, units = "in")
+
+winter_temps %>% 
+  ggplot(aes(x=fct_reorder(Bed, AvgMax), y=AvgMax)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) + 
+  geom_errorbar(aes(ymin=AvgMax-semMax,ymax=AvgMax+semMax),width=.2, position = 
+                  position_dodge(0.75)) +
+  theme_minimal() +
+  theme(text=element_text(size=25)) +
+  labs(x="Bed", y="Max Temp", title = "Winter 2023-2024")
+```
+
+![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-14-5.png)<!-- -->
+
+``` r
+ggsave("../output/Climate/MaxTemp_Wint2024.png", width = 12, height = 8, units = "in")
+
+winter_temps %>% 
+  ggplot(aes(x=fct_reorder(Bed, AvgTemp), y=AvgTemp)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) + 
+  geom_errorbar(aes(ymin=AvgTemp-semMean,ymax=AvgTemp+semMean),width=.2, position = 
+                  position_dodge(0.75)) +
+  theme_minimal() +
+  theme(text=element_text(size=25)) +
+  labs(x="Bed", y="Mean Temp", title = "Winter 2023-2024")
+```
+
+![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-14-6.png)<!-- -->
+
+``` r
+ggsave("../output/Climate/MeanTemp_Wint2024.png", width = 12, height = 8, units = "in")
+
+winter_temps %>% 
+  ggplot(aes(x=fct_reorder(Bed, AvgDiurnal), y=AvgDiurnal)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) + 
+  geom_errorbar(aes(ymin=AvgDiurnal-semDiurnal,ymax=AvgDiurnal+semDiurnal),width=.2, position = 
+                  position_dodge(0.75)) +
+  theme_minimal() +
+  theme(text=element_text(size=25)) +
+  labs(x="Bed", y="Diurnal Range", title = "Winter 2023-2024")
+```
+
+![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-14-7.png)<!-- -->
+
+``` r
+ggsave("../output/Climate/DiurnalTemp_Wint2024.png", width = 12, height = 8, units = "in")
+```
+
 ## Models
 
-### Temp ~ Bed 
+### Temp \~ Bed
+
 
 ``` r
 min_temp_2023_model <- lm(min_temp_d ~ Bed*Date, data=temp_2023_daily_summary)
@@ -1528,8 +1695,9 @@ summary(diurnal_temp_2024_model)
 ## F-statistic: 189.4 on 21 and 3756 DF,  p-value: < 2.2e-16
 ```
 
-Example code for spatial autoregression models 
-https://paulbuerkner.com/brms/reference/car.html 
+### Example code for spatial autoregression models
+
+<https://paulbuerkner.com/brms/reference/car.html>
 
 
 ``` r
@@ -1566,6 +1734,7 @@ summary(fit)
 
 ### Fitness - Spatial auto-correlation
 
+
 ``` r
 wl2_est_space <- wl2_est %>% 
   left_join(bed_col_info)
@@ -1598,7 +1767,8 @@ summary(est_space_fit)
 dim(W)
 ```
 
-### Fitness ~ Bed
+### Fitness \~ Bed
+
 
 ``` r
 #Establishment 
@@ -2018,12 +2188,248 @@ summary(diam_mod)
 ## F-statistic: 5.627 on 21 and 447 DF,  p-value: 1.619e-13
 ```
 
-### Fitness ~ Temp + (1|bed)
+### Fitness \~ Temp + (1\|bed)
+
+-   Try models with 2024 temperature/TDR data and 2023 establishment
+
+    -   2024 data does at least proxy bed differences
+
+    -   How much variation does temperature explain?
+    
 
 ``` r
-#no models for est, y1 surv, y1 prob. herb, or y1 diam since no 2023 temp bed data (other than A and D)
-#establishment - use the avg temp for the first 3 weeks 
+#establishment - use the avg temp for the first 3 weeks (use Month/Day from 2023, but use 2024 data)
+#Finished planting 7/19, 3 weeks later = 8/9
+est_temps <- temp_2024_daily_summary %>% 
+  filter(Date > "2024-07-19", Date <= "2024-08-09") %>% 
+  group_by(Bed) %>% 
+  summarise(AvgMin=mean(min_temp_d), semMin=sem(min_temp_d),
+            AvgMax=mean(max_temp_d), semMax=sem(max_temp_d),
+            AvgTemp=mean(mean_temp_d), semMean=sem(mean_temp_d),
+            AvgDiurnal=mean(diurnal_temp_d), semDiurnal=sem(diurnal_temp_d))
 
+wl2_est_temp <- wl2_est %>% 
+  left_join(est_temps, by=c("bed" = "Bed"))
+
+est_mod3 <- glmer(Establishment ~ AvgMin + (1|bed), data=wl2_est_temp, family = "binomial")
+summary(est_mod3)
+```
+
+```
+## Generalized linear mixed model fit by maximum likelihood (Laplace
+##   Approximation) [glmerMod]
+##  Family: binomial  ( logit )
+## Formula: Establishment ~ AvgMin + (1 | bed)
+##    Data: wl2_est_temp
+## 
+##      AIC      BIC   logLik deviance df.resid 
+##   2101.5   2117.6  -1047.8   2095.5     1570 
+## 
+## Scaled residuals: 
+##     Min      1Q  Median      3Q     Max 
+## -1.7221 -0.8737 -0.6358  1.0031  1.5729 
+## 
+## Random effects:
+##  Groups Name        Variance Std.Dev.
+##  bed    (Intercept) 0.3418   0.5847  
+## Number of obs: 1573, groups:  bed, 11
+## 
+## Fixed effects:
+##             Estimate Std. Error z value Pr(>|z|)
+## (Intercept)   3.1628     2.4232   1.305    0.192
+## AvgMin       -0.2748     0.2106  -1.305    0.192
+## 
+## Correlation of Fixed Effects:
+##        (Intr)
+## AvgMin -0.997
+```
+
+``` r
+est_mod4 <- glmer(Establishment ~ AvgMax + (1|bed), data=wl2_est_temp, family = "binomial")
+summary(est_mod4)
+```
+
+```
+## Generalized linear mixed model fit by maximum likelihood (Laplace
+##   Approximation) [glmerMod]
+##  Family: binomial  ( logit )
+## Formula: Establishment ~ AvgMax + (1 | bed)
+##    Data: wl2_est_temp
+## 
+##      AIC      BIC   logLik deviance df.resid 
+##   2099.4   2115.5  -1046.7   2093.4     1570 
+## 
+## Scaled residuals: 
+##     Min      1Q  Median      3Q     Max 
+## -1.7074 -0.8752 -0.6393  0.9982  1.5641 
+## 
+## Random effects:
+##  Groups Name        Variance Std.Dev.
+##  bed    (Intercept) 0.2842   0.5331  
+## Number of obs: 1573, groups:  bed, 11
+## 
+## Fixed effects:
+##             Estimate Std. Error z value Pr(>|z|)  
+## (Intercept)  3.53677    1.73532   2.038   0.0415 *
+## AvgMax      -0.07333    0.03583  -2.046   0.0407 *
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Correlation of Fixed Effects:
+##        (Intr)
+## AvgMax -0.995
+```
+
+``` r
+r.squaredGLMM(est_mod4)
+```
+
+```
+## Warning: the null model is only correct if all the variables it uses are identical 
+## to those used in fitting the original model.
+```
+
+```
+##                    R2m       R2c
+## theoretical 0.02960169 0.1067588
+## delta       0.02481574 0.0894982
+```
+
+``` r
+est_mod5 <- glmer(Establishment ~ AvgTemp + (1|bed), data=wl2_est_temp, family = "binomial")
+summary(est_mod5)
+```
+
+```
+## Generalized linear mixed model fit by maximum likelihood (Laplace
+##   Approximation) [glmerMod]
+##  Family: binomial  ( logit )
+## Formula: Establishment ~ AvgTemp + (1 | bed)
+##    Data: wl2_est_temp
+## 
+##      AIC      BIC   logLik deviance df.resid 
+##   2098.4   2114.5  -1046.2   2092.4     1570 
+## 
+## Scaled residuals: 
+##     Min      1Q  Median      3Q     Max 
+## -1.7275 -0.8688 -0.6338  0.9941  1.5779 
+## 
+## Random effects:
+##  Groups Name        Variance Std.Dev.
+##  bed    (Intercept) 0.2538   0.5038  
+## Number of obs: 1573, groups:  bed, 11
+## 
+## Fixed effects:
+##             Estimate Std. Error z value Pr(>|z|)  
+## (Intercept)  3.29756    1.40512   2.347   0.0189 *
+## AvgTemp     -0.13860    0.05864  -2.363   0.0181 *
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Correlation of Fixed Effects:
+##         (Intr)
+## AvgTemp -0.993
+```
+
+``` r
+anova(est_mod5)
+```
+
+```
+## Analysis of Variance Table
+##         npar Sum Sq Mean Sq F value
+## AvgTemp    1 5.6377  5.6377  5.6377
+```
+
+``` r
+r.squaredGLMM(est_mod5) #calculate r^2
+```
+
+```
+## Warning: the null model is only correct if all the variables it uses are identical 
+## to those used in fitting the original model.
+```
+
+```
+##                    R2m        R2c
+## theoretical 0.03869745 0.10755887
+## delta       0.03244560 0.09018197
+```
+
+``` r
+#Marginal R² quantifies the variance explained by the fixed effects alone, whereas conditional R² accounts for the variance explained by both the fixed and random effects together
+est_mod5b <- glm(Establishment ~ AvgTemp, data=wl2_est_temp, family = "binomial") #remove random effect 
+anova(est_mod5, est_mod5b) #model with random effeccts is the best 
+```
+
+```
+## Data: wl2_est_temp
+## Models:
+## est_mod5b: Establishment ~ AvgTemp
+## est_mod5: Establishment ~ AvgTemp + (1 | bed)
+##           npar    AIC    BIC  logLik deviance  Chisq Df Pr(>Chisq)    
+## est_mod5b    2 2141.7 2152.4 -1068.8   2137.7                         
+## est_mod5     3 2098.4 2114.5 -1046.2   2092.4 45.222  1   1.76e-11 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+```
+
+``` r
+est_mod6 <- glmer(Establishment ~ AvgDiurnal + (1|bed), data=wl2_est_temp, family = "binomial")
+summary(est_mod6)
+```
+
+```
+## Generalized linear mixed model fit by maximum likelihood (Laplace
+##   Approximation) [glmerMod]
+##  Family: binomial  ( logit )
+## Formula: Establishment ~ AvgDiurnal + (1 | bed)
+##    Data: wl2_est_temp
+## 
+##      AIC      BIC   logLik deviance df.resid 
+##   2100.0   2116.1  -1047.0   2094.0     1570 
+## 
+## Scaled residuals: 
+##     Min      1Q  Median      3Q     Max 
+## -1.7147 -0.8779 -0.6415  0.9973  1.5588 
+## 
+## Random effects:
+##  Groups Name        Variance Std.Dev.
+##  bed    (Intercept) 0.3058   0.553   
+## Number of obs: 1573, groups:  bed, 11
+## 
+## Fixed effects:
+##             Estimate Std. Error z value Pr(>|z|)  
+## (Intercept)  2.63173    1.43960   1.828   0.0675 .
+## AvgDiurnal  -0.07157    0.03893  -1.838   0.0660 .
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Correlation of Fixed Effects:
+##            (Intr)
+## AvgDiurnal -0.992
+```
+
+``` r
+wl2_est_temp %>% 
+  ggplot(aes(x=AvgMax, y=Establishment)) +
+  geom_point()
+```
+
+![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-19-1.png)<!-- -->
+
+``` r
+wl2_est_temp %>% 
+  ggplot(aes(x=AvgTemp, y=Establishment)) +
+  geom_point()
+```
+
+![](WL2_Spatial_Variation_files/figure-html/unnamed-chunk-19-2.png)<!-- -->
+
+-   2024 Fruits with 2024 Temps
+
+
+``` r
 #fruits y2 - use bed means
 fruitsy2_temp <- fruitsy2 %>% 
   left_join(temp_2024_beds_summary, by=c("bed" = "Bed"))
@@ -2162,4 +2568,3 @@ summary(fruitsy2_mod5)
 ``` r
 #no sig relats with temp 
 ```
-
