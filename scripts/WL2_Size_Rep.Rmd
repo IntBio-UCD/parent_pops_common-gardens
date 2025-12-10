@@ -110,6 +110,15 @@ probflw <- mort_pheno_y2_2023plants %>%
 
 fruitsy2 <- read_csv("../output/WL2_Traits/WL2_Fruits_Y2_2324.csv") %>% 
   select(block, bed:col, Genotype, parent.pop=pop, mf:rep, fruits)
+
+wl2_20241023 %>% mutate(unique.ID = as.numeric(unique.ID)) %>% filter(!is.na(unique.ID)) %>% filter(!is.na(flower.date)) #0 plants flowered in their first year in 2024
+```
+
+### Year 1 TM2 plants
+```{r}
+wl2_y1_pheno <- read_csv("../input/WL2_Data/CorrectedCSVs/WL2_mort_pheno_20231020_corrected.csv")
+
+wl2_y1_pheno %>% filter(!is.na(flower.date))
 ```
 
 ## Prob Flowering ~ Pre-transplant size
@@ -153,6 +162,39 @@ fruitsy2_presize_mod <- lmer(fruits ~ height.cm + (1|parent.pop/mf), data = frui
 summary(fruitsy2_presize_mod)
 #mf explains 0 var
 #height 7.614*
+```
+
+## 2023 Field Size
+```{r}
+size_2023 <- dir("../input/WL2_Data/CorrectedCSVs/",
+             pattern="WL2_size_survey.*corrected.*csv",
+             full.names=TRUE)
+
+size_2023_dat_wl2 <- tibble(path=size_2023, filename=basename(path)) %>% 
+  mutate(survey_date=str_extract(filename, "20[0-9]*"),
+         survey_date=lubridate::ymd(survey_date))
+size_2023_dat_wl2
+
+size_2023_dat_wl22 <- size_2023_dat_wl2 %>%
+  mutate(sheets=map(path, 
+                    read_csv,
+                    na = c("", "NA", "-", "N/A") # sets NA strings. 
+                    )) %>%
+  select(-path)
+
+#check for data issues
+#map(size_2023_dat_wl22$sheets, colnames) %>% #get unique column names 
+#  unlist() %>%
+#  unique() %>%
+#  sort()
+#lots of different cols and rows, notes, herbiv, and leaf length
+map(size_2023_dat_wl22$sheets, head,10) #look at first 10 lines of each sheet 
+#no issues 
+
+all_2023_size <- size_2023_dat_wl22 %>% 
+  unnest(sheets) %>% 
+  select(pop, mf, rep, survey_date, height.cm)
+names(all_2023_size)
 ```
 
 ## 2024 Field Size
@@ -223,7 +265,19 @@ summary(probflw_mod2)
 #height 0.20192***
 ```
 
-## Fruit ~ Size @ Budding (Individual Plant-level)
+## 2023 Size @ Flowering (Individual Plant Level)
+```{r}
+sizeatrep_2023 <- all_2023_size %>% 
+  left_join(wl2_y1_pheno) %>% 
+  mutate(flower.date = lubridate::mdy(flower.date)) %>% 
+  filter(!is.na(flower.date)) %>% 
+  filter(survey_date==flower.date) %>% 
+  select(pop:rep, survey_date, flower.date, height.cm)
+
+summary(sizeatrep_2023)
+```
+
+## 2024 Fruit ~ Size @ Flowering (Individual Plant-level)
 ```{r}
 sizeatrep <- all_2024_size_2023plants %>% 
   left_join(probflw) %>% 
